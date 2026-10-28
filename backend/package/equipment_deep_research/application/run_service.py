@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import os
 from threading import Lock
 
@@ -54,9 +54,7 @@ class RunNotFoundError(KeyError):
     """Raised when a requested research run no longer exists."""
 
 
-PERMANENTLY_DELETABLE_STATUSES = frozenset(
-    {"draft", "queued", "completed", "failed", "cancelled", "archived"}
-)
+PERMANENTLY_DELETABLE_STATUSES = frozenset({"draft", "queued", "completed", "failed", "cancelled", "archived"})
 
 # Every user-facing phase that can be left behind by an interrupted Worker.
 # Keep this aligned with interfaces.worker.runtime_status_for_event(): later
@@ -161,9 +159,7 @@ class ResearchApplicationService:
                 "status": view.status,
                 "actor": command.created_by,
                 "knowledge_enabled": view.knowledge_enabled,
-                "knowledge_scope_count": (
-                    None if view.knowledge_ids is None else len(view.knowledge_ids)
-                ),
+                "knowledge_scope_count": (None if view.knowledge_ids is None else len(view.knowledge_ids)),
                 "evolution_scope": {
                     "tenant_id": view.tenant_id,
                     "workspace_id": view.workspace_id,
@@ -215,51 +211,25 @@ class ResearchApplicationService:
             interaction_mode=command.interaction_mode,
             discovery_branch=command.discovery_branch,
             execution_profile_id=command.execution_profile_id,
-            report_template_mode=(
-                command.report_template_mode or current.report_template_mode
-            ),
+            report_template_mode=(command.report_template_mode or current.report_template_mode),
             supplemental_information=(
                 current.supplemental_information
                 if command.supplemental_information is None
                 else command.supplemental_information.strip()
             ),
-            model_profile_id=(
-                command.model_profile_id or current.model_profile_id
-            ),
-            tenant_id=(
-                _scope_id(command.tenant_id)
-                if command.tenant_id
-                else current.tenant_id
-            ),
-            workspace_id=(
-                _scope_id(command.workspace_id)
-                if command.workspace_id
-                else current.workspace_id
-            ),
-            project_id=(
-                _scope_id(command.project_id)
-                if command.project_id
-                else current.project_id
-            ),
-            profile_id=(
-                _scope_id(command.profile_id)
-                if command.profile_id
-                else current.profile_id
-            ),
+            model_profile_id=(command.model_profile_id or current.model_profile_id),
+            tenant_id=(_scope_id(command.tenant_id) if command.tenant_id else current.tenant_id),
+            workspace_id=(_scope_id(command.workspace_id) if command.workspace_id else current.workspace_id),
+            project_id=(_scope_id(command.project_id) if command.project_id else current.project_id),
+            profile_id=(_scope_id(command.profile_id) if command.profile_id else current.profile_id),
             stage_scope=(
-                _stage_scope(command.stage_scope)
-                if command.stage_scope is not None
-                else list(current.stage_scope)
+                _stage_scope(command.stage_scope) if command.stage_scope is not None else list(current.stage_scope)
             ),
             knowledge_enabled=(
-                current.knowledge_enabled
-                if command.knowledge_enabled is None
-                else bool(command.knowledge_enabled)
+                current.knowledge_enabled if command.knowledge_enabled is None else bool(command.knowledge_enabled)
             ),
             knowledge_ids=(
-                current.knowledge_ids
-                if not command.knowledge_ids_present
-                else _knowledge_ids(command.knowledge_ids)
+                current.knowledge_ids if not command.knowledge_ids_present else _knowledge_ids(command.knowledge_ids)
             ),
             updated_at=now_iso(),
         )
@@ -273,11 +243,7 @@ class ResearchApplicationService:
                 "research_route": updated.research_route,
                 "selected_agent_ids": updated.selected_agent_ids,
                 "max_rounds": updated.max_rounds,
-                "execution": {
-                    key: value
-                    for key, value in updated.execution.items()
-                    if key != "api_key"
-                },
+                "execution": {key: value for key, value in updated.execution.items() if key != "api_key"},
                 "analyst_confirmed": updated.analyst_confirmed,
                 "interaction_mode": updated.interaction_mode,
                 "discovery_branch": updated.discovery_branch,
@@ -285,12 +251,8 @@ class ResearchApplicationService:
                 "report_template_mode": updated.report_template_mode,
                 "model_profile_id": updated.model_profile_id,
                 "knowledge_enabled": updated.knowledge_enabled,
-                "knowledge_scope_count": (
-                    None if updated.knowledge_ids is None else len(updated.knowledge_ids)
-                ),
-                "supplemental_information_present": bool(
-                    updated.supplemental_information
-                ),
+                "knowledge_scope_count": (None if updated.knowledge_ids is None else len(updated.knowledge_ids)),
+                "supplemental_information_present": bool(updated.supplemental_information),
                 "evolution_scope": {
                     "tenant_id": updated.tenant_id,
                     "workspace_id": updated.workspace_id,
@@ -329,9 +291,7 @@ class ResearchApplicationService:
         if callable(remove):
             remove(run_id)
         self._runs.pop(run_id, None)
-        self._idempotency = {
-            key: value for key, value in self._idempotency.items() if key[0] != run_id
-        }
+        self._idempotency = {key: value for key, value in self._idempotency.items() if key[0] != run_id}
         remove_pending = getattr(self.queue, "remove", None)
         if callable(remove_pending):
             remove_pending(run_id)
@@ -341,7 +301,9 @@ class ResearchApplicationService:
         return self._command(run_id, actor, idempotency_key, {"draft", "paused"}, "queued", enqueue=True)
 
     def pause_run(self, run_id: str, *, actor: str, idempotency_key: str) -> RunView:
-        return self._command(run_id, actor, idempotency_key, {"queued", "planning", "researching", "recalling"}, "pause_requested")
+        return self._command(
+            run_id, actor, idempotency_key, {"queued", "planning", "researching", "recalling"}, "pause_requested"
+        )
 
     def resume_run(
         self,
@@ -363,18 +325,14 @@ class ResearchApplicationService:
         }
         if run_id in active_run_ids:
             raise InvalidRunTransition("run is already executing; duplicate resume was ignored")
-        resumable_completed_delivery = (
-            current.status == "completed"
-            and str(current.result.get("audit_status", "")).strip().lower()
-            not in {"approved", "passed"}
-        )
+        resumable_completed_delivery = current.status == "completed" and str(
+            current.result.get("audit_status", "")
+        ).strip().lower() not in {"approved", "passed"}
         allowed_statuses = {"paused", "failed"}
         if resumable_completed_delivery:
             allowed_statuses.add("completed")
         if current.status not in allowed_statuses:
-            raise InvalidRunTransition(
-                f"{current.status} cannot transition to queued"
-            )
+            raise InvalidRunTransition(f"{current.status} cannot transition to queued")
 
         # A Worker can be interrupted after its checkpoint is committed but
         # before its provider children have exited.  Those children run in
@@ -410,8 +368,7 @@ class ResearchApplicationService:
         refreshed_execution = dict(execution or current.execution)
         if refreshed_execution != current.execution:
             refreshed_model_profile_id = str(
-                refreshed_execution.get("model_profile_id")
-                or current.model_profile_id
+                refreshed_execution.get("model_profile_id") or current.model_profile_id
             ).strip()
             updated = replace(
                 current,
@@ -430,9 +387,7 @@ class ResearchApplicationService:
                     "model": refreshed_execution.get("model", ""),
                     "base_url": refreshed_execution.get("base_url", ""),
                     "api_key_env": refreshed_execution.get("api_key_env", ""),
-                    "agent_model_count": len(
-                        refreshed_execution.get("agent_models", {})
-                    ),
+                    "agent_model_count": len(refreshed_execution.get("agent_models", {})),
                 },
             )
         return self._command(
@@ -596,11 +551,9 @@ class ResearchApplicationService:
     def recover_orphaned_runs(self, *, stale_after_seconds: int | None = None) -> list[str]:
         """Stop orphaned active runs and require an explicit user resume."""
         stale_after_seconds = (
-            _configured_worker_stale_after_seconds()
-            if stale_after_seconds is None
-            else max(0, stale_after_seconds)
+            _configured_worker_stale_after_seconds() if stale_after_seconds is None else max(0, stale_after_seconds)
         )
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         recovered: list[str] = []
         for view in self.list_runs():
             if view.status not in ACTIVE_RUN_STATUSES:
@@ -623,15 +576,13 @@ class ResearchApplicationService:
             try:
                 current_age = max(
                     0.0,
-                    (datetime.now(timezone.utc) - datetime.fromisoformat(current.updated_at)).total_seconds(),
+                    (datetime.now(UTC) - datetime.fromisoformat(current.updated_at)).total_seconds(),
                 )
             except (TypeError, ValueError):
                 current_age = float("inf")
             active_run_ids = {
                 str(worker.get("current_run_id", ""))
-                for worker in self.runtime_health(
-                    stale_after_seconds=stale_after_seconds
-                ).get("workers", [])
+                for worker in self.runtime_health(stale_after_seconds=stale_after_seconds).get("workers", [])
                 if worker.get("online") and worker.get("current_run_id")
             }
             if (
@@ -656,54 +607,28 @@ class ResearchApplicationService:
                         }:
                             continue
                         raw_payload = recent.get("payload", {})
-                        event_payload = (
-                            raw_payload.get("event", raw_payload)
-                            if isinstance(raw_payload, dict)
-                            else {}
-                        )
-                        details = (
-                            event_payload.get("payload", event_payload)
-                            if isinstance(event_payload, dict)
-                            else {}
-                        )
+                        event_payload = raw_payload.get("event", raw_payload) if isinstance(raw_payload, dict) else {}
+                        details = event_payload.get("payload", event_payload) if isinstance(event_payload, dict) else {}
                         running_instances = details.get("running_instances", [])
                         waiting_actor = ""
                         waiting_node = ""
                         if isinstance(running_instances, list) and running_instances:
                             first_running = running_instances[0]
                             if isinstance(first_running, dict):
-                                waiting_actor = str(
-                                    first_running.get("agent_instance_id", "")
-                                ).strip()
-                                waiting_node = str(
-                                    first_running.get("mission_node", "")
-                                ).strip()
+                                waiting_actor = str(first_running.get("agent_instance_id", "")).strip()
+                                waiting_node = str(first_running.get("mission_node", "")).strip()
                         actor = str(
-                            waiting_actor
-                            or details.get("agent_instance_id")
-                            or event_payload.get("actor")
-                            or ""
+                            waiting_actor or details.get("agent_instance_id") or event_payload.get("actor") or ""
                         ).strip()
                         node = str(
-                            waiting_node
-                            or details.get("mission_node")
-                            or details.get("merge_target")
-                            or ""
+                            waiting_node or details.get("mission_node") or details.get("merge_target") or ""
                         ).strip()
                         if actor and actor != "winning_swarm_controller":
-                            stuck_detail = (
-                                f"（最后活动实例：{actor}"
-                                + (f"，节点 {node}" if node else "")
-                                + "）"
-                            )
+                            stuck_detail = f"（最后活动实例：{actor}" + (f"，节点 {node}" if node else "") + "）"
                             break
                 except Exception:
                     stuck_detail = ""
-            error = (
-                "执行 Worker 已中断，检查点已保留"
-                + stuck_detail
-                + "；请人工点击“从断点继续”，系统不会自动恢复。"
-            )
+            error = "执行 Worker 已中断，检查点已保留" + stuck_detail + "；请人工点击“从断点继续”，系统不会自动恢复。"
             cleanup = terminate_run_process_groups(view.run_id)
             self.publish_runtime_event(
                 view.run_id,
@@ -772,31 +697,29 @@ class ResearchApplicationService:
 
     def runtime_health(self, *, stale_after_seconds: int | None = None) -> dict:
         stale_after_seconds = (
-            _configured_worker_stale_after_seconds()
-            if stale_after_seconds is None
-            else max(0, stale_after_seconds)
+            _configured_worker_stale_after_seconds() if stale_after_seconds is None else max(0, stale_after_seconds)
         )
         rows = []
         load = getattr(self.repository, "worker_heartbeats", None)
         if callable(load):
             rows = load()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         active = []
         for row in rows:
             try:
                 age = max(0.0, (now - datetime.fromisoformat(row["updated_at"])).total_seconds())
             except (KeyError, TypeError, ValueError):
                 age = float("inf")
-            active.append({
-                **row,
-                "age_seconds": round(age, 1),
-                "online": age <= stale_after_seconds and row.get("status") != "stopped",
-            })
+            active.append(
+                {
+                    **row,
+                    "age_seconds": round(age, 1),
+                    "online": age <= stale_after_seconds and row.get("status") != "stopped",
+                }
+            )
         online_workers = [item for item in active if item["online"]]
         online_workers.sort(key=lambda item: str(item.get("worker_id", "")))
-        research_workers = [
-            item for item in online_workers if item.get("status") != "internal"
-        ]
+        research_workers = [item for item in online_workers if item.get("status") != "internal"]
         # Slot numbers describe the outer research-task capacity only. Internal
         # S6 workers share their owner process and must never create gaps (or
         # appear to consume slots) in the user-facing numbering.
@@ -806,14 +729,10 @@ class ResearchApplicationService:
             if worker.get("status") == "internal":
                 worker.pop("slot_index", None)
         active_workers = [
-            item
-            for item in research_workers
-            if item.get("status") == "working" and item.get("current_run_id")
+            item for item in research_workers if item.get("status") == "working" and item.get("current_run_id")
         ]
         internal_workers = [
-            item
-            for item in online_workers
-            if item.get("status") == "internal" and item.get("current_run_id")
+            item for item in online_workers if item.get("status") == "internal" and item.get("current_run_id")
         ]
         owned_workers = [*active_workers, *internal_workers]
         configured_capacity = _configured_worker_concurrency()
@@ -838,15 +757,15 @@ class ResearchApplicationService:
             "active_count": len(active_workers),
             "idle_count": sum(item.get("status") == "idle" for item in research_workers),
             "internal_count": len(internal_workers),
-            "internal_run_ids": [
-                str(item["current_run_id"]) for item in internal_workers
-            ],
+            "internal_run_ids": [str(item["current_run_id"]) for item in internal_workers],
             "available_slots": max(0, len(research_workers) - len(active_workers)),
             "parallel_enabled": len(research_workers) > 1,
             "utilization_percent": round(
                 len(active_workers) / worker_capacity * 100,
                 1,
-            ) if worker_capacity else 0.0,
+            )
+            if worker_capacity
+            else 0.0,
             # Includes internal owners for duplicate-resume/liveness checks,
             # while active_count excludes them from research-slot capacity.
             "active_run_ids": [str(item["current_run_id"]) for item in owned_workers],

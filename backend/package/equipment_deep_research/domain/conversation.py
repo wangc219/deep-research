@@ -53,9 +53,7 @@ def parse_quoted_user_message(content: Any) -> tuple[str, str]:
         body = "" if separator < 0 else rest[separator + 2 :]
         lines = quote_block.split("\n")
         if lines and all(line == ">" or line.startswith("> ") for line in lines):
-            quote = "\n".join(
-                "" if line == ">" else line[2:] for line in lines
-            ).strip()
+            quote = "\n".join("" if line == ">" else line[2:] for line in lines).strip()
             return quote, body.strip()
     return "", raw
 
@@ -122,18 +120,13 @@ def branch_message_path(
     if wanted == DEFAULT_BRANCH_ID:
         return [item for item in rows if item["branch_id"] == DEFAULT_BRANCH_ID]
 
-    by_id = {
-        str(item.get("message_id", "")): item
-        for item in rows
-        if str(item.get("message_id", "")).strip()
-    }
+    by_id = {str(item.get("message_id", "")): item for item in rows if str(item.get("message_id", "")).strip()}
     candidates = [item for item in rows if item["branch_id"] == wanted]
     branch = next(
         (
             item
             for item in (branches or ())
-            if isinstance(item, Mapping)
-            and normalize_branch_id(item.get("branch_id")) == wanted
+            if isinstance(item, Mapping) and normalize_branch_id(item.get("branch_id")) == wanted
         ),
         None,
     )
@@ -218,10 +211,7 @@ def living_transcript(
             if user_turns >= limit:
                 break
     kept.reverse()
-    return [
-        {"role": str(item["role"]), "content": bounded_visible_text(item["content"], 800)}
-        for item in kept
-    ]
+    return [{"role": str(item["role"]), "content": bounded_visible_text(item["content"], 800)} for item in kept]
 
 
 def living_user_questions(
@@ -262,9 +252,7 @@ def conversation_context_usage(
         "question": bounded_text(current_question, 1200),
     }
     try:
-        estimated_chars = len(
-            json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
-        )
+        estimated_chars = len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str))
     except (TypeError, ValueError, OverflowError):
         estimated_chars = 0
     budget_chars = max(1, int(budget or CONTEXT_BUDGET_CHARS))
@@ -290,18 +278,12 @@ def conversation_context_usage(
         "current_objective": bounded_text(memory.get("current_objective"), 240),
         "constraint_count": len(constraints) if isinstance(constraints, list) else 0,
         "decision_count": len(decisions) if isinstance(decisions, list) else 0,
-        "open_question_count": (
-            len(open_questions) if isinstance(open_questions, list) else 0
-        ),
-        "active_skill_count": (
-            len(active_skills) if isinstance(active_skills, list) else 0
-        ),
+        "open_question_count": (len(open_questions) if isinstance(open_questions, list) else 0),
+        "active_skill_count": (len(active_skills) if isinstance(active_skills, list) else 0),
         "frontier_count": len(frontier) if isinstance(frontier, list) else 0,
         "assumption_count": len(assumptions) if isinstance(assumptions, list) else 0,
         "explored_lens_count": len(lenses) if isinstance(lenses, list) else 0,
-        "research_gap_count": (
-            len(research_gaps) if isinstance(research_gaps, list) else 0
-        ),
+        "research_gap_count": (len(research_gaps) if isinstance(research_gaps, list) else 0),
     }
 
 
@@ -411,9 +393,7 @@ def _research_memory(
     )
     raw_directions = source.get("concept_directions")
     has_new_directions = bool(
-        isinstance(raw_directions, Sequence)
-        and not isinstance(raw_directions, (str, bytes))
-        and raw_directions
+        isinstance(raw_directions, Sequence) and not isinstance(raw_directions, (str, bytes)) and raw_directions
     )
     if not frontier and has_new_directions:
         for index, item in enumerate(directions[:6]):
@@ -425,9 +405,7 @@ def _research_memory(
                     "direction": name,
                     "status": "stable" if item.get("stable") else "exploring",
                     "why_promising": bounded_text(
-                        item.get("winning_angle")
-                        or item.get("innovation_thesis")
-                        or item.get("disruptive_difference"),
+                        item.get("winning_angle") or item.get("innovation_thesis") or item.get("disruptive_difference"),
                         420,
                     ),
                     "assumption": bounded_text(item.get("changed_assumption"), 420),
@@ -499,8 +477,16 @@ def _research_memory(
     explored_lenses = _string_list(
         [
             *(strategy.get("lenses", []) if isinstance(strategy.get("lenses"), list) else []),
-            *(orchestration.get("divergence_axes", []) if isinstance(orchestration.get("divergence_axes"), list) else []),
-            *(orchestration.get("internal_dimensions", []) if isinstance(orchestration.get("internal_dimensions"), list) else []),
+            *(
+                orchestration.get("divergence_axes", [])
+                if isinstance(orchestration.get("divergence_axes"), list)
+                else []
+            ),
+            *(
+                orchestration.get("internal_dimensions", [])
+                if isinstance(orchestration.get("internal_dimensions"), list)
+                else []
+            ),
             *[
                 item.get("axis") or item.get("title") or item.get("stage")
                 for item in steps[:8]
@@ -539,12 +525,8 @@ def _research_memory(
         "actions": _string_list(actions, limit=6, item_limit=64),
         "lenses": _string_list(strategy.get("lenses", []), limit=8, item_limit=120),
     }
-    last_strategy = {
-        key: value for key, value in last_strategy.items() if value not in (None, "", [], {})
-    } or (
-        dict(prior.get("last_research_strategy"))
-        if isinstance(prior.get("last_research_strategy"), Mapping)
-        else {}
+    last_strategy = {key: value for key, value in last_strategy.items() if value not in (None, "", [], {})} or (
+        dict(prior.get("last_research_strategy")) if isinstance(prior.get("last_research_strategy"), Mapping) else {}
     )
     try:
         iteration = max(0, int(prior.get("research_iteration", 0) or 0)) + 1
@@ -576,9 +558,7 @@ def build_working_memory(
     source = answer if isinstance(answer, Mapping) else {}
     prior = previous if isinstance(previous, Mapping) else {}
     quoted_excerpt, question_body = parse_quoted_user_message(question)
-    quoted_constraint = (
-        f"专家点名引用：{bounded_text(quoted_excerpt, 420)}" if quoted_excerpt else ""
-    )
+    quoted_constraint = f"专家点名引用：{bounded_text(quoted_excerpt, 420)}" if quoted_excerpt else ""
     constraints = _string_list(
         [
             quoted_constraint,
@@ -591,9 +571,7 @@ def build_working_memory(
 
     directions: list[dict[str, Any]] = []
     raw_directions = source.get("concept_directions", [])
-    if not isinstance(raw_directions, Sequence) or isinstance(
-        raw_directions, (str, bytes)
-    ) or not raw_directions:
+    if not isinstance(raw_directions, Sequence) or isinstance(raw_directions, (str, bytes)) or not raw_directions:
         raw_directions = prior.get("candidate_directions", [])
     if isinstance(raw_directions, Sequence) and not isinstance(raw_directions, (str, bytes)):
         for item in list(raw_directions)[:3]:
@@ -649,9 +627,7 @@ def build_working_memory(
             row = {
                 "candidate": bounded_text(item.get("candidate_name"), 160),
                 "verdict": bounded_text(item.get("verdict"), 24).lower(),
-                "reason": bounded_text(
-                    item.get("decisive_issue") or item.get("required_revision"), 420
-                ),
+                "reason": bounded_text(item.get("decisive_issue") or item.get("required_revision"), 420),
             }
             if not row["candidate"]:
                 continue
@@ -666,14 +642,10 @@ def build_working_memory(
             if not isinstance(item, Mapping):
                 continue
             row = {
-                "candidate": bounded_text(
-                    item.get("candidate") or item.get("candidate_name"), 160
-                ),
+                "candidate": bounded_text(item.get("candidate") or item.get("candidate_name"), 160),
                 "verdict": bounded_text(item.get("verdict"), 24).lower(),
                 "reason": bounded_text(
-                    item.get("reason")
-                    or item.get("decisive_issue")
-                    or item.get("required_revision"),
+                    item.get("reason") or item.get("decisive_issue") or item.get("required_revision"),
                     420,
                 ),
             }
@@ -693,17 +665,13 @@ def build_working_memory(
         if clean
     ]
     if not summaries:
-        rationale = sanitize_public_research_prose(
-            source.get("selection_rationale"), limit=1000
-        )
+        rationale = sanitize_public_research_prose(source.get("selection_rationale"), limit=1000)
         if rationale:
             summaries = [rationale]
     if not summaries:
         summaries = [
             clean
-            for item in _string_list(
-                prior.get("latest_summary", []), limit=4, item_limit=600
-            )
+            for item in _string_list(prior.get("latest_summary", []), limit=4, item_limit=600)
             for clean in [sanitize_public_research_prose(item, limit=600)]
             if clean
         ]
@@ -718,9 +686,7 @@ def build_working_memory(
         item_limit=500,
     )
     if not open_questions:
-        open_questions = sanitize_public_research_gaps(
-            prior.get("open_questions", []), limit=5, item_limit=500
-        )
+        open_questions = sanitize_public_research_gaps(prior.get("open_questions", []), limit=5, item_limit=500)
 
     try:
         answer_fingerprint = hashlib.sha256(
@@ -757,9 +723,7 @@ def build_working_memory(
         "schema_version": "deep-working-memory-v2",
         "branch_id": normalize_branch_id(branch_id),
         "turn_id": bounded_text(turn_id, 128),
-        "current_objective": bounded_text(
-            question_body or question or prior.get("current_objective"), 1200
-        ),
+        "current_objective": bounded_text(question_body or question or prior.get("current_objective"), 1200),
         "user_constraints": constraints,
         "candidate_directions": directions,
         "decisions": decisions[:6],
@@ -786,9 +750,7 @@ def build_working_memory(
         "assistant_sequence": max(0, int(source_sequence or 0)),
         "answer_fingerprint": answer_fingerprint,
     }
-    memory["source_checkpoint"] = {
-        key: value for key, value in source_checkpoint.items() if value not in (None, "", 0)
-    }
+    memory["source_checkpoint"] = {key: value for key, value in source_checkpoint.items() if value not in (None, "", 0)}
     return memory
 
 
@@ -819,23 +781,15 @@ def working_memory_prompt(memory: Mapping[str, Any] | None) -> dict[str, Any]:
         "research_gaps",
         "last_research_strategy",
     )
-    projected = {
-        key: memory.get(key)
-        for key in allowed
-        if memory.get(key) not in (None, "", [], {})
-    }
+    projected = {key: memory.get(key) for key in allowed if memory.get(key) not in (None, "", [], {})}
     for key, limit in (("latest_summary", 6), ("open_questions", 8)):
         if key in projected:
-            projected[key] = sanitize_public_research_gaps(
-                projected.get(key, []), limit=limit, item_limit=700
-            )
+            projected[key] = sanitize_public_research_gaps(projected.get(key, []), limit=limit, item_limit=700)
     if "selection_rationale" in projected:
         projected["selection_rationale"] = sanitize_public_research_prose(
             projected.get("selection_rationale"), limit=1200
         )
-    return {
-        key: value for key, value in projected.items() if value not in (None, "", [], {})
-    }
+    return {key: value for key, value in projected.items() if value not in (None, "", [], {})}
 
 
 def branch_working_memory(

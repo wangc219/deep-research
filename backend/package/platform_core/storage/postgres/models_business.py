@@ -57,7 +57,8 @@ LOGIN_LOCK_DURATION_SECONDS = 300
 AGENT_RUN_TERMINAL_STATUSES = ("completed", "failed", "cancelled", "interrupted")
 MODEL_AUDIT_MESSAGE_TYPE = "model_audit"
 TOOL_AUDIT_MESSAGE_TYPE = "tool_audit"
-AUDIT_MESSAGE_TYPES = (MODEL_AUDIT_MESSAGE_TYPE, TOOL_AUDIT_MESSAGE_TYPE)
+SUPERSEDED_MESSAGE_TYPE = "superseded"
+AUDIT_MESSAGE_TYPES = (MODEL_AUDIT_MESSAGE_TYPE, TOOL_AUDIT_MESSAGE_TYPE, SUPERSEDED_MESSAGE_TYPE)
 AGENT_RUN_SHAPE_CONSTRAINT_NAME = "ck_agent_runs_nonterminal_shape"
 AGENT_RUN_SHAPE_CONSTRAINT_SQL = """
 status IN ('completed', 'failed', 'cancelled', 'interrupted')
@@ -757,6 +758,7 @@ class MCPServer(Base):
     # 状态字段
     enabled = Column(Integer, nullable=False, default=1, comment="是否启用：1=是，0=否")
     disabled_tools = Column(JSON, nullable=True, comment="禁用的工具名称列表")
+    access_policy = Column(JSON, nullable=True, comment="MCP 使用角色与共享范围")
 
     # 用户追踪
     created_by = Column(String(100), nullable=False, comment="创建人用户名")
@@ -784,6 +786,7 @@ class MCPServer(Base):
             "icon": self.icon,
             "enabled": bool(self.enabled),
             "disabled_tools": self.disabled_tools or [],
+            "access_policy": self.access_policy,
             "created_by": self.created_by,
             "updated_by": self.updated_by,
             "created_at": format_utc_datetime(self.created_at),

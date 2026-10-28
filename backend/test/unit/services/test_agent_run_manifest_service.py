@@ -275,7 +275,11 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
     )
     binding = SimpleNamespace(workdir_path="projects/project")
     result = await service.prepare_run_execution(
-        run=run, user=SimpleNamespace(uid="user"), db=object(), workdir_binding=binding, worker_id="owner"
+        run=run,
+        user=SimpleNamespace(uid="user"),
+        db=SimpleNamespace(commit=AsyncMock()),
+        workdir_binding=binding,
+        worker_id="owner",
     )
     assert result.context is seen[0]
     assert result.context.model == result.manifest["model"]["spec"] == "chosen"
@@ -294,12 +298,20 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
     first_digest = result.manifest["config_digest"]
     run.id, run.request_id = "different-run", "different-request"
     same_config = await service.prepare_run_execution(
-        run=run, user=SimpleNamespace(uid="user"), db=object(), workdir_binding=binding, worker_id="different-owner"
+        run=run,
+        user=SimpleNamespace(uid="user"),
+        db=SimpleNamespace(commit=AsyncMock()),
+        workdir_binding=binding,
+        worker_id="different-owner",
     )
     assert same_config.manifest["config_digest"] == first_digest
     monkeypatch.setattr("platform_core.agents.context._load_workspace_agent_context", lambda uid: "changed policy")
     changed = await service.prepare_run_execution(
-        run=run, user=SimpleNamespace(uid="user"), db=object(), workdir_binding=binding, worker_id="owner"
+        run=run,
+        user=SimpleNamespace(uid="user"),
+        db=SimpleNamespace(commit=AsyncMock()),
+        workdir_binding=binding,
+        worker_id="owner",
     )
     assert changed.manifest["config_digest"] != first_digest
     assert result.context.system_prompt == f"{expected_runtime_prompt}\n\nworkspace policy"
@@ -344,7 +356,7 @@ async def test_execution_preparation_rejects_missing_dependencies(monkeypatch, m
         await service.prepare_run_execution(
             run=run,
             user=SimpleNamespace(uid="user"),
-            db=object(),
+            db=SimpleNamespace(commit=AsyncMock()),
             workdir_binding=SimpleNamespace(workdir_path="projects/project"),
             worker_id="owner",
         )

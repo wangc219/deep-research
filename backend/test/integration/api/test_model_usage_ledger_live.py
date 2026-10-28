@@ -217,8 +217,9 @@ async def test_model_requests_reach_dashboard_without_double_counting(monkeypatc
         )
         try:
             assert await reranker.acompute_score(["test", ["document"]], normalize=False) == [0.9]
-            # 保留业务降级，但协议无效仍应计为失败，不能误计为成功。
-            assert await reranker.acompute_score(["invalid", ["document"]], normalize=False) == [0.5]
+            # 无效响应显式失败，由知识检索层统一降级；账本仍必须记录失败及 usage。
+            with pytest.raises(ValueError, match="Rerank response"):
+                await reranker.acompute_score(["invalid", ["document"]], normalize=False)
         finally:
             await reranker.aclose()
 

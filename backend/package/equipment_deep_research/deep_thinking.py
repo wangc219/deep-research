@@ -15,7 +15,7 @@ filesystem recovery; callers must not treat them as the source of truth.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import json
 import os
@@ -324,7 +324,18 @@ def single_equipment_innovation_context(
                     continue
                 # Do not let aliases such as ``prior_evidence`` or
                 # ``validation_notes`` bypass the explicit field list.
-                if any(token in normalized for token in ("evidence", "validation", "verification", "failure_boundary", "provider", "trace", "audit")):
+                if any(
+                    token in normalized
+                    for token in (
+                        "evidence",
+                        "validation",
+                        "verification",
+                        "failure_boundary",
+                        "provider",
+                        "trace",
+                        "audit",
+                    )
+                ):
                     continue
                 if equipment_object and normalized not in _INNOVATION_ALLOWED_EQUIPMENT_KEYS:
                     continue
@@ -358,9 +369,7 @@ def single_equipment_innovation_context(
     prior_round_conclusions = ""
     if durable_memory:
         prior_constraints = durable_memory.get("user_constraints", [])
-        if isinstance(prior_constraints, Sequence) and not isinstance(
-            prior_constraints, (str, bytes)
-        ):
+        if isinstance(prior_constraints, Sequence) and not isinstance(prior_constraints, (str, bytes)):
             for item in list(prior_constraints)[-8:]:
                 text = _bounded_text(item, 1600)
                 if text and text not in prior_questions:
@@ -377,9 +386,7 @@ def single_equipment_innovation_context(
             )
             if durable_memory.get(key) not in (None, "", [], {})
         }
-        prior_round_conclusions = json.dumps(
-            memory_summary, ensure_ascii=False, separators=(",", ":")
-        )[:4200]
+        prior_round_conclusions = json.dumps(memory_summary, ensure_ascii=False, separators=(",", ":"))[:4200]
     elif living_messages:
         # A follow-up turn must iterate on the previous round's directions
         # rather than re-derive them from the raw seed.  Extract only the
@@ -401,9 +408,7 @@ def single_equipment_innovation_context(
                 )
                 if match and match.group(1).strip():
                     sections.append(f"{title}：{match.group(1).strip()}")
-            prior_round_conclusions = _bounded_text(
-                "\n".join(sections) or content, 2400
-            )
+            prior_round_conclusions = _bounded_text("\n".join(sections) or content, 2400)
             break
     # A caller can pass the session history through context_refs when this
     # helper is used outside the API worker.
@@ -462,6 +467,7 @@ def single_equipment_innovation_context(
     }
     return bounded if isinstance(bounded, dict) else fallback
 
+
 # Context is assembled from browser payloads and interaction projections.  Do
 # not persist or return credential-like fields even when a caller accidentally
 # includes them in a card/context object.  This is intentionally key-based;
@@ -475,7 +481,7 @@ _LOCK = RLock()
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def new_id(prefix: str) -> str:
@@ -670,7 +676,11 @@ def _session_files(output_root: str | Path, run_id: str) -> list[Path]:
     if not directory.is_dir() or directory.is_symlink():
         return []
     return sorted(
-        (item for item in directory.glob("*.json") if item.name != "reference-research.json" and item.is_file() and not item.is_symlink()),
+        (
+            item
+            for item in directory.glob("*.json")
+            if item.name != "reference-research.json" and item.is_file() and not item.is_symlink()
+        ),
         key=lambda item: item.name,
     )
 
@@ -720,11 +730,7 @@ def _session_public(record: Mapping[str, Any]) -> dict[str, Any]:
         "created_at",
         "updated_at",
     }
-    result = {
-        key: record.get(key)
-        for key in public_keys
-        if key in record and key != "_storage_path"
-    }
+    result = {key: record.get(key) for key in public_keys if key in record and key != "_storage_path"}
     messages = result.get("messages")
     if isinstance(messages, list):
         # The browser needs the visible answer but never provider metadata that
@@ -769,9 +775,7 @@ def _session_public(record: Mapping[str, Any]) -> dict[str, Any]:
 
     stored_memory = result.get("working_memory")
     stored_memory = stored_memory if isinstance(stored_memory, Mapping) else {}
-    active_branch = normalize_branch_id(
-        stored_memory.get("active_branch_id") or DEFAULT_BRANCH_ID
-    )
+    active_branch = normalize_branch_id(stored_memory.get("active_branch_id") or DEFAULT_BRANCH_ID)
     result["context_usage"] = conversation_context_usage(
         messages=branch_message_path(
             result.get("messages") if isinstance(result.get("messages"), list) else [],
@@ -861,9 +865,7 @@ def list_sessions(output_root: str | Path, *, run_id: str) -> list[dict[str, Any
     return rows[:MAX_SESSIONS_PER_RUN]
 
 
-def delete_session(
-    output_root: str | Path, *, run_id: str, session_id: str
-) -> bool:
+def delete_session(output_root: str | Path, *, run_id: str, session_id: str) -> bool:
     """Delete one compatibility sidecar without touching capability outputs."""
 
     try:
@@ -920,16 +922,8 @@ def append_message(
         normalized_turn = _bounded_text(turn_id, 128)
         normalized_kind = _bounded_text(message_kind or "message", 32) or "message"
         normalized_status = _bounded_text(status or "completed", 32)
-        normalized_artifacts = [
-            _bounded_text(ref, 180)
-            for ref in list(artifact_refs)[:16]
-            if _bounded_text(ref, 180)
-        ]
-        normalized_versions = [
-            _bounded_text(ref, 180)
-            for ref in list(version_refs)[:16]
-            if _bounded_text(ref, 180)
-        ]
+        normalized_artifacts = [_bounded_text(ref, 180) for ref in list(artifact_refs)[:16] if _bounded_text(ref, 180)]
+        normalized_versions = [_bounded_text(ref, 180) for ref in list(version_refs)[:16] if _bounded_text(ref, 180)]
 
         # A retry may replay the same assistant turn after the durable write
         # succeeded but a compatibility projection or memory checkpoint did
@@ -943,22 +937,23 @@ def append_message(
                     continue
                 if (
                     str(existing.get("role", "")).strip().lower() == "assistant"
-                    and _bounded_text(existing.get("turn_id", ""), 128)
-                    == normalized_turn
-                    and (_bounded_text(existing.get("branch_id") or "main", 128) or "main")
-                    == normalized_branch
-                    and (_bounded_text(existing.get("message_kind") or "message", 32) or "message")
-                    == normalized_kind
+                    and _bounded_text(existing.get("turn_id", ""), 128) == normalized_turn
+                    and (_bounded_text(existing.get("branch_id") or "main", 128) or "main") == normalized_branch
+                    and (_bounded_text(existing.get("message_kind") or "message", 32) or "message") == normalized_kind
                 ):
                     existing_index = index
                     break
         if existing_index is not None:
             current = dict(messages[existing_index])
-            merged_artifacts = list(current.get("artifact_refs", [])) if isinstance(current.get("artifact_refs", []), list) else []
+            merged_artifacts = (
+                list(current.get("artifact_refs", [])) if isinstance(current.get("artifact_refs", []), list) else []
+            )
             for value in normalized_artifacts:
                 if value not in merged_artifacts:
                     merged_artifacts.append(value)
-            merged_versions = list(current.get("version_refs", [])) if isinstance(current.get("version_refs", []), list) else []
+            merged_versions = (
+                list(current.get("version_refs", [])) if isinstance(current.get("version_refs", []), list) else []
+            )
             for value in normalized_versions:
                 if value not in merged_versions:
                     merged_versions.append(value)
@@ -998,8 +993,7 @@ def append_message(
                     str(existing.get("message_id", ""))
                     for existing in reversed(messages)
                     if isinstance(existing, Mapping)
-                    and str(existing.get("branch_id", "main") or "main")
-                    == item["branch_id"]
+                    and str(existing.get("branch_id", "main") or "main") == item["branch_id"]
                 ),
                 "",
             )
@@ -1033,16 +1027,11 @@ def update_session(
             # one reviewable artifact per stable identity instead of growing a
             # duplicate list and presenting multiple identical merge buttons.
             normalized_items = [
-                item
-                for item in (_bounded_json(item, limit=12000) for item in artifacts)
-                if isinstance(item, Mapping)
+                item for item in (_bounded_json(item, limit=12000) for item in artifacts) if isinstance(item, Mapping)
             ]
             for incoming in normalized_items:
                 incoming_key = str(
-                    incoming.get("artifact_id")
-                    or incoming.get("capability_id")
-                    or incoming.get("hypothesis_id")
-                    or ""
+                    incoming.get("artifact_id") or incoming.get("capability_id") or incoming.get("hypothesis_id") or ""
                 ).strip()
                 existing_index = None
                 if incoming_key:
@@ -1172,7 +1161,7 @@ def _context_name_list(
         items = container.get(key)
         if not isinstance(items, Sequence) or isinstance(items, (str, bytes)):
             continue
-        for item in list(items)[:limit * 2]:
+        for item in list(items)[: limit * 2]:
             if not isinstance(item, Mapping):
                 continue
             value = _first_text(item, fields, "")
@@ -1208,7 +1197,13 @@ def synthesize_reply(
     )
     mechanism = _first_context_text(
         equipment_sources,
-        ("mechanism_chain", "winning_mechanism", "core_disruptive_difference", "reference_overview", "concise_winning_summary"),
+        (
+            "mechanism_chain",
+            "winning_mechanism",
+            "core_disruptive_difference",
+            "reference_overview",
+            "concise_winning_summary",
+        ),
         "需进一步确认该方向如何改变现有任务链和对手反应节奏",
     )
     equipment_form = _first_context_text(
@@ -1225,18 +1220,10 @@ def synthesize_reply(
     query = _bounded_text(query, 1800)
     query_weapon_names = [
         str(item.get("name") or item.get("title") or "").strip()
-        for item in (
-            context.get("query_weapons", [])
-            if isinstance(context.get("query_weapons"), list)
-            else []
-        )
+        for item in (context.get("query_weapons", []) if isinstance(context.get("query_weapons"), list) else [])
         if isinstance(item, Mapping) and str(item.get("name") or item.get("title") or "").strip()
     ][:4]
-    catalog_clause = (
-        f"当前 Query 下已有武器基线包括：{'、'.join(query_weapon_names)}。"
-        if query_weapon_names
-        else ""
-    )
+    catalog_clause = f"当前 Query 下已有武器基线包括：{'、'.join(query_weapon_names)}。" if query_weapon_names else ""
     context_sentence = (
         "本轮以当前 Query 下已有武器装备为种子展开深度发散，推理新质颠覆构型。"
         if query_weapon_names
@@ -1337,9 +1324,7 @@ def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, A
     def clean_list(value: Any, *, limit: int, item_limit: int = 600) -> list[str]:
         if not isinstance(value, (list, tuple)):
             return []
-        return sanitize_public_research_gaps(
-            list(value), limit=limit, item_limit=item_limit
-        )
+        return sanitize_public_research_gaps(list(value), limit=limit, item_limit=item_limit)
 
     for key, limit in (
         ("visible_summary", 6),
@@ -1374,9 +1359,7 @@ def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, A
             projected_item: dict[str, Any] = {}
             for key, value in item.items():
                 if isinstance(value, str):
-                    projected_item[key] = sanitize_public_research_prose(
-                        value, limit=1200
-                    )
+                    projected_item[key] = sanitize_public_research_prose(value, limit=1200)
                 else:
                     projected_item[key] = value
             projected_directions.append(projected_item)
@@ -1405,9 +1388,7 @@ def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, A
         projected = dict(value)
         for list_key in ("gaps", "research_gaps", "advisories", "block_reasons"):
             if list_key in projected:
-                projected[list_key] = clean_list(
-                    projected.get(list_key), limit=8, item_limit=500
-                )
+                projected[list_key] = clean_list(projected.get(list_key), limit=8, item_limit=500)
         result[key] = projected
 
     for key in ("adjudication",):
@@ -1419,9 +1400,7 @@ def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, A
                 ("mission_focus", 900),
             ):
                 if text_key in projected:
-                    projected[text_key] = sanitize_public_research_prose(
-                        projected.get(text_key), limit=limit
-                    )
+                    projected[text_key] = sanitize_public_research_prose(projected.get(text_key), limit=limit)
             result[key] = projected
 
     for key in ("agent_dialogue", "divergence_steps"):
@@ -1438,13 +1417,8 @@ def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, A
                 ("text", 1600),
             ):
                 if text_key in projected_row:
-                    projected_row[text_key] = sanitize_public_research_prose(
-                        projected_row.get(text_key), limit=limit
-                    )
-            if any(
-                str(projected_row.get(text_key, "") or "").strip()
-                for text_key in ("summary", "text")
-            ):
+                    projected_row[text_key] = sanitize_public_research_prose(projected_row.get(text_key), limit=limit)
+            if any(str(projected_row.get(text_key, "") or "").strip() for text_key in ("summary", "text")):
                 projected_rows.append(projected_row)
         result[key] = projected_rows
 
@@ -1517,18 +1491,10 @@ def build_deep_complete_sections(
     questions = sanitize_public_research_gaps(open_questions or [], limit=6, item_limit=500)
     reasons = sanitize_public_research_gaps(block_reasons or [], limit=6, item_limit=500)
     rationale = sanitize_public_research_prose(selection_rationale, limit=1400)
-    mission = sanitize_public_research_prose(
-        adjudication_row.get("mission_focus", ""), limit=900
-    )
-    review = sanitize_public_research_prose(
-        adjudication_row.get("review_summary", ""), limit=1400
-    )
+    mission = sanitize_public_research_prose(adjudication_row.get("mission_focus", ""), limit=900)
+    review = sanitize_public_research_prose(adjudication_row.get("review_summary", ""), limit=1400)
     seed_label = str(source_equipment_label or "").strip()
-    catalog_names = [
-        str(item).strip()
-        for item in (query_weapon_names or [])
-        if str(item).strip()
-    ][:6]
+    catalog_names = [str(item).strip() for item in (query_weapon_names or []) if str(item).strip()][:6]
     new_names = [
         str(item.get("name") or item.get("innovation_variant_name") or "").strip()
         for item in direction_rows
@@ -1538,9 +1504,7 @@ def build_deep_complete_sections(
     if seed_label or catalog_names:
         baseline = "、".join(catalog_names[:4]) or seed_label
         arrived = "、".join(new_names) if new_names else "新质颠覆候选"
-        leap_line = (
-            f"以当前 Query 已有装备「{baseline}」为基线，本轮已推理出与其相关但构型/机理跃迁的方向：{arrived}。"
-        )
+        leap_line = f"以当前 Query 已有装备「{baseline}」为基线，本轮已推理出与其相关但构型/机理跃迁的方向：{arrived}。"
 
     complete_bits = [
         part
@@ -1566,10 +1530,7 @@ def build_deep_complete_sections(
     sections: list[dict[str, str]] = [
         {
             "title": "本轮完整结果",
-            "text": (
-                "\n\n".join(deduped_complete)[:3200]
-                or "已完成本轮内部多维发散、对抗裁决与综合收敛。"
-            ),
+            "text": ("\n\n".join(deduped_complete)[:3200] or "已完成本轮内部多维发散、对抗裁决与综合收敛。"),
         },
         {
             "title": "多 Agent 交叉审议 · 深度发散过程",
@@ -1630,14 +1591,14 @@ def build_deep_complete_sections(
                         f"- 机理：{item['operational_mechanism']}" if item.get("operational_mechanism") else "",
                         (
                             f"- 效果：{item.get('direct_military_effects') or item.get('military_value') or item.get('function')}"
-                            if (item.get("direct_military_effects") or item.get("military_value") or item.get("function"))
+                            if (
+                                item.get("direct_military_effects")
+                                or item.get("military_value")
+                                or item.get("function")
+                            )
                             else ""
                         ),
-                        (
-                            f"- 打击对象：{item.get('decisive_target')}"
-                            if item.get("decisive_target")
-                            else ""
-                        ),
+                        (f"- 打击对象：{item.get('decisive_target')}" if item.get("decisive_target") else ""),
                         (
                             f"- 直接毁伤：{item.get('direct_damage_mechanism')}"
                             if item.get("direct_damage_mechanism")
@@ -1680,8 +1641,7 @@ def build_deep_complete_sections(
             {
                 "title": "发布质量门",
                 "text": (
-                    "本轮讨论可见，但未写入正式能力画像版本。"
-                    + (f"\n\n原因：\n{reason_text}" if reason_text else "")
+                    "本轮讨论可见，但未写入正式能力画像版本。" + (f"\n\n原因：\n{reason_text}" if reason_text else "")
                 )[:2200],
             }
         )
@@ -1699,8 +1659,7 @@ def build_deep_complete_sections(
     sections.append(
         {
             "title": "下一轮创新问题",
-            "text": question_text[:2200]
-            or "继续追问装备构型、作用机理和作战角色的跃迁。",
+            "text": question_text[:2200] or "继续追问装备构型、作用机理和作战角色的跃迁。",
         }
     )
     return sections
@@ -1761,8 +1720,16 @@ def build_reference_capability(
     """Build a versioned capability-card artifact from a reference candidate."""
 
     hypothesis_id = _first_text(candidate, ("hypothesis_id", "candidate_id", "id"), new_id("hypothesis"))
-    source_equipment_identity = _first_text(candidate, ("source_equipment_identity", "title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
-    name = _first_text(candidate, ("innovation_variant_name", "title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
+    source_equipment_identity = _first_text(
+        candidate,
+        ("source_equipment_identity", "title", "name", "primary_equipment_identity", "equipment_form"),
+        "参考装备方向",
+    )
+    name = _first_text(
+        candidate,
+        ("innovation_variant_name", "title", "name", "primary_equipment_identity", "equipment_form"),
+        "参考装备方向",
+    )
     capability_id = f"deep-{safe_segment(hypothesis_id, limit=100) or uuid4().hex}"
     # Card identity is stable across retries and conversation turns.  Version
     # numbers, rather than random card ids, represent subsequent deep-research
@@ -1782,16 +1749,18 @@ def build_reference_capability(
     )
     equipment_form = _first_text(
         candidate,
-        ("innovation_equipment_form", "new_equipment_form", "equipment_form", "primary_equipment_identity", "equipment_forms"),
+        (
+            "innovation_equipment_form",
+            "new_equipment_form",
+            "equipment_form",
+            "primary_equipment_identity",
+            "equipment_forms",
+        ),
         name,
     )
     raw_forms = candidate.get("equipment_forms", candidate.get("equipment_form", []))
     if isinstance(raw_forms, (list, tuple, set, frozenset)):
-        equipment_forms = [
-            _bounded_text(item, 320)
-            for item in list(raw_forms)[:8]
-            if _bounded_text(item, 320)
-        ]
+        equipment_forms = [_bounded_text(item, 320) for item in list(raw_forms)[:8] if _bounded_text(item, 320)]
     elif raw_forms:
         equipment_forms = [_bounded_text(raw_forms, 320)]
     else:
@@ -1817,7 +1786,9 @@ def build_reference_capability(
         "补充可定位来源，并以任务前后对照、对手适应和失效边界验证该假设。",
     )
     related_scenario = _first_text(candidate, ("related_scenario", "scenario", "mission_node"), "当前 Query 关联场景")
-    capability_gap = _first_text(candidate, ("capability_gap", "failure_boundary", "failure_boundaries"), "参考方向对应的能力缺口待验证")
+    capability_gap = _first_text(
+        candidate, ("capability_gap", "failure_boundary", "failure_boundaries"), "参考方向对应的能力缺口待验证"
+    )
     evidence_ids = candidate.get("evidence_ids", [])
     if not isinstance(evidence_ids, list):
         evidence_ids = [str(evidence_ids)] if evidence_ids else []
@@ -1836,7 +1807,9 @@ def build_reference_capability(
         "novelty": _first_text(candidate, ("novelty",), ""),
         "disruptive_difference": _first_text(candidate, ("disruptive_difference",), ""),
         "implementation_concept": _first_text(candidate, ("implementation_concept",), ""),
-        "equipment_category": _first_text(candidate, ("equipment_category", "category"), equipment_form or "参考装备能力方向"),
+        "equipment_category": _first_text(
+            candidate, ("equipment_category", "category"), equipment_form or "参考装备能力方向"
+        ),
         "equipment_form": equipment_form,
         "equipment_forms": equipment_forms,
         "capability_type": "new_capability",
@@ -1861,21 +1834,9 @@ def build_reference_capability(
         "confidence": 0.35,
         "confidence_limited": True,
         "verification_status": "pending",
-        "portrait_authoring_status": (
-            "deep_research_authored"
-            if modules_complete
-            else "pending_s6_authoring"
-        ),
-        "analysis_provenance_status": (
-            "deep_research_reference"
-            if modules_complete
-            else "pending_authoring"
-        ),
-        "capability_card_status": (
-            "authored"
-            if modules_complete
-            else "analysis_only_pending_authoring"
-        ),
+        "portrait_authoring_status": ("deep_research_authored" if modules_complete else "pending_s6_authoring"),
+        "analysis_provenance_status": ("deep_research_reference" if modules_complete else "pending_authoring"),
+        "capability_card_status": ("authored" if modules_complete else "analysis_only_pending_authoring"),
         "source": "reference_weapon_deep_research",
         "source_run_id": run_id,
         "source_session_id": source_session_id,
@@ -1917,16 +1878,32 @@ def save_reference_research(
             items = []
         key = str(capability.get("hypothesis_id") or capability.get("capability_id") or "").strip()
         replaced = False
-        is_deep = bool(capability.get("is_deep_research") or capability.get("source") in {"reference_weapon_deep_research", "deep-thinking"})
+        is_deep = bool(
+            capability.get("is_deep_research")
+            or capability.get("source") in {"reference_weapon_deep_research", "deep-thinking"}
+        )
         for index, item in enumerate(items):
-            if isinstance(item, Mapping) and key and str(item.get("hypothesis_id") or item.get("capability_id") or "").strip() == key and not is_deep:
+            if (
+                isinstance(item, Mapping)
+                and key
+                and str(item.get("hypothesis_id") or item.get("capability_id") or "").strip() == key
+                and not is_deep
+            ):
                 items[index] = dict(capability)
                 replaced = True
                 break
         if not replaced:
             if is_deep:
-                prior = [int(item.get("research_version", 1) or 1) for item in items if isinstance(item, Mapping) and str(item.get("hypothesis_id") or "").strip() == key]
-                persisted = {**persisted, "research_version": max(prior or [0]) + 1, "version_status": capability.get("version_status", "pending_verification")}
+                prior = [
+                    int(item.get("research_version", 1) or 1)
+                    for item in items
+                    if isinstance(item, Mapping) and str(item.get("hypothesis_id") or "").strip() == key
+                ]
+                persisted = {
+                    **persisted,
+                    "research_version": max(prior or [0]) + 1,
+                    "version_status": capability.get("version_status", "pending_verification"),
+                }
             items.append(dict(persisted))
         payload["items"] = items[-MAX_ARTIFACTS_PER_SESSION:]
         payload["status"] = _bounded_text(status, 32)
@@ -1966,7 +1943,8 @@ def merge_capability_into_snapshot(
         raise ValueError("capability card has no stable identity")
     existing_index = next(
         (
-            index for index, row in enumerate(rows)
+            index
+            for index, row in enumerate(rows)
             if isinstance(row, Mapping)
             and key
             and str(row.get("hypothesis_id") or row.get("capability_id") or "").strip() == key
@@ -1978,7 +1956,10 @@ def merge_capability_into_snapshot(
     # projection, even when the hypothesis/card binding already exists.  The
     # legacy ``replace`` mode is retained only for non-deep callers; deep
     # artifacts are identified by source/provenance and never overwrite v1.
-    is_deep = bool(candidate.get("is_deep_research") or candidate.get("source") in {"reference_weapon_deep_research", "deep-thinking"})
+    is_deep = bool(
+        candidate.get("is_deep_research")
+        or candidate.get("source") in {"reference_weapon_deep_research", "deep-thinking"}
+    )
     if existing_index is not None and normalized_mode in {"replace", "upsert"} and not is_deep:
         rows[existing_index] = {**dict(rows[existing_index]), **candidate}
         action = "replaced"
@@ -1990,7 +1971,9 @@ def merge_capability_into_snapshot(
             and str(row.get("card_binding_id", "")) == str(candidate.get("card_binding_id", ""))
         ]
         candidate.setdefault("research_version", max(existing_versions or [0]) + 1 if is_deep else 1)
-        candidate.setdefault("version_status", candidate.get("verification_status", "pending_verification") if is_deep else "formal")
+        candidate.setdefault(
+            "version_status", candidate.get("verification_status", "pending_verification") if is_deep else "formal"
+        )
         # Deep merges are retried after a successful SQLite version write
         # (for example when the filesystem projection was temporarily
         # unavailable).  Make the compatibility projection idempotent by
@@ -2011,10 +1994,8 @@ def merge_capability_into_snapshot(
                             version_no
                             and str(row.get("card_binding_id", "") or "")
                             == str(candidate.get("card_binding_id", "") or "")
-                            and str(row.get("hypothesis_id", "") or "")
-                            == str(candidate.get("hypothesis_id", "") or "")
-                            and str(row.get("version_no", row.get("research_version", "")) or "").strip()
-                            == version_no
+                            and str(row.get("hypothesis_id", "") or "") == str(candidate.get("hypothesis_id", "") or "")
+                            and str(row.get("version_no", row.get("research_version", "")) or "").strip() == version_no
                         )
                     )
                 ),
@@ -2075,10 +2056,7 @@ def list_research_links(output_root: str | Path, *, parent_run_id: str = "") -> 
     items = payload.get("items", []) if isinstance(payload, Mapping) else []
     rows = [dict(item) for item in items if isinstance(item, Mapping)]
     if parent_run_id:
-        rows = [
-            item for item in rows
-            if str(item.get("parent_run_id", "")).strip() == str(parent_run_id).strip()
-        ]
+        rows = [item for item in rows if str(item.get("parent_run_id", "")).strip() == str(parent_run_id).strip()]
     rows.sort(key=lambda item: str(item.get("created_at", "")), reverse=True)
     return rows
 
@@ -2137,10 +2115,10 @@ def delete_run_sidecars(output_root: str | Path, run_id: str) -> None:
         if not isinstance(items, list):
             return
         kept = [
-            item for item in items
+            item
+            for item in items
             if not isinstance(item, Mapping)
-            or (str(item.get("parent_run_id", "")) != str(run_id)
-                and str(item.get("child_run_id", "")) != str(run_id))
+            or (str(item.get("parent_run_id", "")) != str(run_id) and str(item.get("child_run_id", "")) != str(run_id))
         ]
         if len(kept) != len(items):
             _atomic_write(links_path, {**dict(payload), "items": kept, "updated_at": now_iso()})

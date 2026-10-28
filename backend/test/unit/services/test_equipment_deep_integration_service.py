@@ -63,6 +63,74 @@ async def test_global_read_keeps_research_and_branch_owner(monkeypatch):
     conversations.get_messages.assert_awaited_once_with(1)
 
 
+def test_compact_context_keeps_capability_identity_without_full_portrait() -> None:
+    """系统提示只注入能力索引，详细画像由按需工具读取。"""
+    value = {
+        "version_id": "version-1",
+        "run_id": "run-1",
+        "snapshot": {
+            "version_no": 2,
+            "status": "formal",
+            "name": "山地应急无人中继",
+            "capability_image": "完整五栏画像" * 1000,
+            "rationale": "详细论证" * 1000,
+            "evidence_refs": ["evidence-1"],
+            "hypothesis_id": "hypothesis-1",
+        },
+    }
+
+    compact = service._project_capability(value, compact=True)
+    detailed = service._project_capability(value)
+
+    assert compact["snapshot"]["name"] == "山地应急无人中继"
+    assert compact["snapshot"]["evidence_refs"] == ["evidence-1"]
+    assert "capability_image" not in compact["snapshot"]
+    assert "rationale" not in compact["snapshot"]
+    assert detailed["snapshot"]["capability_image"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", [service.SECTION_DEEPEN_MODE, service.NEW_WEAPON_DIVERGE_MODE])
+@pytest.mark.parametrize("enabled", [True, False])
+async def test_system_context_preserves_default_research_delegation_and_disable_override(monkeypatch, mode, enabled):
+    """两种深研模式默认委派，显式关闭时保留运行时禁用边界。"""
+    monkeypatch.setattr(service, "get_session_research_context", AsyncMock(return_value={}))
+
+    prompt = await service.build_system_context(
+        db=object(),
+        user=SimpleNamespace(uid="user-1", role="user"),
+        session=SimpleNamespace(payload={"subagents_enabled": enabled}),
+        research_mode=mode,
+    )
+
+    if enabled:
+        assert service.DEFAULT_RESEARCH_POLICY in prompt
+    else:
+        assert service.DEFAULT_RESEARCH_POLICY not in prompt
+        assert "已禁用 Subagent，不得委派子任务" in prompt
+    assert "直接研究或并行委派均可" not in prompt
+    assert "不强制先读技能、拆任务或并行委派" not in prompt
+
+
+@pytest.mark.asyncio
+async def test_system_context_requests_compact_research_context(monkeypatch) -> None:
+    """每轮系统提示避免重复注入完整能力画像与运行产物正文。"""
+    context_loader = AsyncMock(return_value={"session_id": "thinking-compact"})
+    monkeypatch.setattr(service, "get_session_research_context", context_loader)
+    user = SimpleNamespace(uid="user-1", role="user")
+    session = SimpleNamespace(payload={})
+    db = object()
+
+    await service.build_system_context(db=db, user=user, session=session)
+
+    context_loader.assert_awaited_once_with(
+        db=db,
+        user=user,
+        session=session,
+        compact=True,
+    )
+
+
 @pytest.mark.asyncio
 async def test_missing_deep_research_preset_fails_without_committing(monkeypatch) -> None:
     """请求事务内不临时初始化预置 Agent，避免仓储隐式提交。"""
@@ -115,7 +183,7 @@ async def test_runtime_overrides_enforce_knowledge_and_subagent_isolation(monkey
         config_json={
             "context": {
                 "skills": ["custom-analysis", "knowledge-base"],
-                "preload_skills": ["custom-analysis", "knowledge-base"],
+                "preload_skills": ["custom-analysis", "knowledge-base", "deep-research", "equipment-research"],
                 "knowledges": ["kb-secret"],
             }
         }
@@ -137,6 +205,7 @@ async def test_runtime_overrides_enforce_knowledge_and_subagent_isolation(monkey
     assert "knowledge-base" not in overrides["context"]["preload_skills"]
     assert "html-preview" in overrides["context"]["skills"]
     assert "html-preview" not in overrides["context"]["preload_skills"]
+    assert overrides["context"]["preload_skills"] == ["deep-research", "custom-analysis"]
     assert {
         "custom-analysis",
         "deep-research",
@@ -195,6 +264,42 @@ async def test_runtime_overrides_use_session_knowledge_scope_without_retrieval(m
 
     assert overrides["context"]["knowledges"] == ["kb-run-a", "kb-run-b"]
     assert overrides["system_prompt_append"] == "equipment context"
+
+
+@pytest.mark.asyncio
+async def test_technology_cabin_preloads_academic_and_local_knowledge_retrieval(monkeypatch) -> None:
+    """技术攻关舱三源联检不依赖用户再手动激活学术与知识库技能。"""
+    monkeypatch.setattr(
+        service,
+        "resolve_agent_resource_options",
+        AsyncMock(
+            return_value={
+                "skills": [
+                    {"key": "deep-research"},
+                    {"key": "equipment-research"},
+                    {"key": "equipment-deep-conversation"},
+                    {"key": "academic-evidence"},
+                    {"key": "knowledge-base"},
+                ]
+            }
+        ),
+    )
+    monkeypatch.setattr(service, "build_system_context", AsyncMock(return_value="technology context"))
+    agent = SimpleNamespace(config_json={"context": {"skills": None}})
+    session = SimpleNamespace(payload={"knowledge_enabled": True, "knowledge_ids": ["kb-1"]})
+
+    overrides = await service.build_runtime_context_overrides(
+        db=object(),
+        user=SimpleNamespace(uid="user-1"),
+        agent=agent,
+        session=session,
+        research_section="装备与技术实现",
+    )
+
+    assert {"deep-research", "academic-evidence", "knowledge-base"} <= set(
+        overrides["context"]["preload_skills"]
+    )
+    assert overrides["context"]["knowledges"] == ["kb-1"]
 
 
 @pytest.mark.asyncio
@@ -414,11 +519,45 @@ async def test_system_context_uses_bound_material_as_open_divergence_baseline(mo
     assert "未来战争态势" in prompt
     assert "制胜优势、制衡对手" in prompt
     assert "现有装备目录、能力画像、参考武器和既有技术路线只是启发基线" in prompt
-    assert "当前已注入能力画像卡「相变黏弹拒飞弹」及所绑定栏目" in prompt
-    assert "不是新质装备候选边界" in prompt
-    assert "折叠环网空域拦截弹" in prompt
-    assert "仅作为对照与启发基线" in prompt
-    assert "可以从其边界反推正交的新质装备方向" in prompt
+    assert "不是候选边界" in prompt
+    assert "发散维度、比较方法和收敛时机由问题与发现决定" in prompt
+    assert "正式S3/S4同等的生成聚焦方式而非末端检查表" in prompt
+    assert "可单独指认、研制、部署和试验的物理武器实体" in prompt
+    assert "直接打击、毁伤、压制、拦截或拒止具体作战对象" in prompt
+    assert "可观察直接战果" in prompt
+    assert "敌方原有应对为何失配" in prompt
+    assert "至少三种不同装备架构" in prompt
+    assert "最终只交付1至3个" in prompt
+    assert "强研究路径" in prompt
+    assert "默认一次并行委派3个正交" in prompt
+    assert "再追加第4个" in prompt
+    assert "调研探索员" in prompt
+    assert "required_terms" in prompt
+    assert "AMiner" in prompt
+    assert "完整摘要" in prompt
+    assert "高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界" in prompt
+    assert "不创建或更新待办" in prompt
+    assert "重述完整正文" in prompt
+    assert "集中读取完整摘要" in prompt
+    assert "制衡对手并赢得制胜优势" in prompt
+    for winning_lens in (
+        "对手体系关键依赖",
+        "任务链断点",
+        "接敌关系",
+        "直接战果",
+        "成本交换",
+        "前沿原理",
+        "工程可行性",
+        "成熟度边界",
+        "对手反制",
+        "反反制",
+        "环境适应",
+        "体系韧性",
+    ):
+        assert winning_lens in prompt
+    assert "不得用同义问题凑数量" in prompt
+    assert "不得擅自改写为另一种武器装备" not in prompt
+
 
 
 @pytest.mark.asyncio
@@ -446,29 +585,34 @@ async def test_system_context_defaults_to_locked_section_deepening(monkeypatch) 
     assert "section_deepen（深化当前装备）" in prompt
     assert "研究目标是「装备与技术实现」栏目" in prompt
     assert "不得擅自改写为另一种武器装备" in prompt
-    assert "研发该武器的关键技术卡点和工程痛点" in prompt
-    assert "同步推演作战流程和制胜逻辑" in prompt
-    assert "不得机械凑齐固定模板" in prompt
-    assert "技术攻关舱通用工程化契约" in prompt
-    for chapter in [
-        "能力目标",
-        "装备总体设计",
-        "技术体系",
-        "关键技术识别",
-        "突破难点",
-        "解决路径",
-        "具体实现",
-    ]:
+    assert "以用户当前问题为任务，以关联栏目为研究目标" in prompt
+    assert "自主判断问题、规划研究路径、选择工具并组织回答" in prompt
+    assert "用户当前明确要求优先于历史焦点" in prompt
+    assert "可以质疑原卡假设" in prompt
+    assert "不强制七级链、固定标题、路线数量或来源数量" in prompt
+    assert "研究必须遵循七级因果链" not in prompt
+    assert "WBS、试验矩阵" not in prompt
+    assert "360–400" not in prompt
+    assert "相变黏弹拒飞弹" in prompt
+    assert "Open Web、已授权本地知识库与 AMiner 三源均可用" in prompt
+    assert "技术攻关舱允许为支撑技术落地主动检索" in prompt
+    assert "凡技术方案在推演中形成、重构或替换武器装备" in prompt
+    assert "正式S3/S4同等的生成聚焦方式" in prompt
+    assert "具体作战制胜新质武器" in prompt
+    assert "不得先形成抽象技术方案" in prompt
+    assert "必要时重新构建新质武器装备" in prompt
+    assert "武器装备研发技术方案报告" in prompt
+    for chapter in (
+        "项目概述与研发需求",
+        "总体技术方案",
+        "核心技术体系",
+        "关键技术攻关",
+        "技术实现方案",
+        "技术路线与研发计划",
+        "预期成果与应用价值",
+    ):
         assert chapter in prompt
-    assert "前一级结论成为后一级输入" in prompt
-    assert "不得跳过能力目标直接罗列技术" in prompt
-    assert "分系统、输入输出接口、指标与预算" in prompt
-    assert "WBS、试验矩阵" in prompt
-    assert "30/60/90天启动包" in prompt
-    assert "工程假设/TBD" in prompt
-    assert "不得覆盖原交付物" in prompt
-    assert "当前已锁定能力画像卡「相变黏弹拒飞弹」" in prompt
-    assert "不是新质装备候选边界" not in prompt
+
 
 
 def test_research_mode_normalization_is_whitelisted_and_conservative() -> None:
@@ -513,7 +657,7 @@ async def test_system_context_enforces_s6_contract_during_card_authoring(monkeyp
 
 
 @pytest.mark.asyncio
-async def test_system_context_asks_before_creating_a_new_card(monkeypatch) -> None:
+async def test_system_context_does_not_save_or_interrupt_without_card_request(monkeypatch) -> None:
     monkeypatch.setattr(service, "get_session_research_context", AsyncMock(return_value={}))
 
     prompt = await service.build_system_context(
@@ -523,8 +667,7 @@ async def test_system_context_asks_before_creating_a_new_card(monkeypatch) -> No
         create_artifact=False,
     )
 
-    assert "询问用户是否" in prompt
-    assert "新的待核验能力卡" in prompt
+    assert "否则不自动保存能力卡" in prompt
     assert "不要每轮机械询问" in prompt
     assert "当前消息已经明确确认更新或成卡" in prompt
 
@@ -543,7 +686,9 @@ async def test_system_context_requires_public_search_with_source_traceability(mo
     assert "本会话已启用公网检索能力" in prompt
     assert "academic_search 可用时优先使用 AMiner" in prompt
     assert "其他公开事实使用 web_search" in prompt
-    assert "至少两个独立来源交叉核验" in prompt
+    assert "关键或有争议的结论按证据强度交叉核验" in prompt
+    assert "按需检索" in prompt
+    assert "至少两个" not in prompt
     assert "保留可点击的原始 URL" in prompt
 
 

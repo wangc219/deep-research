@@ -772,3 +772,36 @@ async def test_model_usage_overview_includes_query_s6_report_and_deep_calls(
     assert by_surface["深研对话"]["call_count"] == 1
     assert result["summary"]["call_count"] == 4
     assert result["summary"]["total_tokens"] == 60
+
+
+async def test_tool_stats_rolls_seven_days_in_two_queries(dashboard_db):
+    """滚动窗口保持开始包含、结束排除，并避免逐日重复查询。"""
+    from sqlalchemy import delete, select
+
+    message_id = await dashboard_db.scalar(select(ToolCall.message_id).where(ToolCall.tool_name == "bash"))
+    await dashboard_db.execute(delete(ToolCall))
+    now = utc_now_naive().replace(microsecond=0)
+    for offset, status in [(1, "success"), (7, "error"), (7.01, "unknown"), (0, "error"), (3.5, "success")]:
+        dashboard_db.add(
+            ToolCall(message_id=message_id, tool_name="bounded", status=status, created_at=now - timedelta(days=offset))
+        )
+    await dashboard_db.commit()
+    statements = []
+    engine = dashboard_db.get_bind()
+
+    def capture(_conn, _cursor, statement, _parameters, _context, _many):
+        statements.append(statement)
+
+    event.listen(engine, "before_cursor_execute", capture)
+    try:
+        result = await DashboardService(dashboard_db).get_tool_call_stats(now=now)
+    finally:
+        event.remove(engine, "before_cursor_execute", capture)
+    assert len(statements) == 2
+    assert result["total_calls"] == 5
+    assert result["successful_calls"] == 2
+    assert result["failed_calls"] == 3
+    assert result["tool_error_distribution"] == {"bounded": 2}
+    assert sum(day["call_count"] for day in result["daily_tool_calls"]) == 3
+    assert result["daily_tool_calls"][0]["call_count"] == 1
+    assert result["daily_tool_calls"][-1]["call_count"] == 1

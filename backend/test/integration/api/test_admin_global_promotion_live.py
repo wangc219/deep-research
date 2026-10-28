@@ -203,7 +203,7 @@ async def test_superadmin_promotion_grants_and_revokes_global_business_access_im
             }
             assert query_id in {
                 item["query_id"]
-                for item in (await client.get("/api/equipment/queries", headers=candidate_headers)).json()
+                for item in (await client.get("/api/equipment/queries", headers=candidate_headers)).json()["items"]
             }
             assert session_id in {
                 item["session_id"]

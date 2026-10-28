@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📱</text></svg>">
+    <title>微信公众号文章下载管理工具</title>
+    <meta name="description" content="微信公众号文章批量下载管理工具，支持扫码登录、公众号管理、文章下载和代理配置">
+    <!-- 使用国内 fonts.loli.net 镜像替代被墙的 Google Fonts，避免 WebView2 加载阻塞白屏 -->
+    
+    <link rel="stylesheet" href="/api/wechat-mp/app/css/style.css">
+
+    <link rel="stylesheet" href="/api/wechat-mp/app/css/platform-theme.css">
+    <!-- 腾讯防水墙 (TCaptcha) 官方验证 SDK -->
+    <script async src="https://captcha.gtimg.com/TCaptcha.js"></script>
+</head>
+<body class="mp-only wechat-theme">
+    <div id="app">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <!-- 统一系统 Workspace Logo -->
+                <div class="logo">
+                    <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-newspaper-icon lucide-newspaper"><path d="M15 18h-5"></path><path d="M18 14h-8"></path><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"></path><rect width="8" height="4" x="10" y="6" rx="1"></rect></svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>公众号文章</h1>
+                        <span class="logo-subtitle">采集 · 归档 · RSS 订阅</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- ================= 微信公众号 导航组 ================= -->
+                <div class="nav-group-title" data-group="wechat">
+                    <span>微信公众号</span>
+                    <span class="group-arrow">▼</span>
+                </div>
+                
+                <div class="nav-group-items" id="items-wechat">
+                    <a href="#login" class="nav-item active" data-page="login" id="nav-login">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-users-icon lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        </span>
+                        <span class="nav-label">账号池</span>
+                        <span class="nav-status" id="login-status-dot"></span>
+                    </a>
+                    <a href="#accounts" class="nav-item" data-page="accounts" id="nav-accounts">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-book-user-icon lucide-book-user"><path d="M15 13a3 3 0 1 0-6 0"></path><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path><circle cx="12" cy="8" r="2"></circle></svg>
+                        </span>
+                        <span class="nav-label">公众号管理</span>
+                    </a>
+                    <a href="#articles" class="nav-item" data-page="articles" id="nav-articles">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-file-down-icon lucide-file-down"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path></svg>
+                        </span>
+                        <span class="nav-label">文章下载</span>
+                    </a>
+                    <a href="#download" class="nav-item" data-page="download" id="nav-download">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-link-icon lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        </span>
+                        <span class="nav-label">网址下载</span>
+                    </a>
+                    <a href="#history" class="nav-item" data-page="history" id="nav-history">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-rotate-ccw-clock-icon lucide-rotate-ccw-clock"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>
+                        </span>
+                        <span class="nav-label">下载历史</span>
+                    </a>
+                </div>
+
+                <!-- ================= 通用公共导航组 ================= -->
+                <div class="nav-divider"></div>
+                <div class="nav-group-title" data-group="common">
+                    <span>公共服务</span>
+                    <span class="group-arrow">▶</span>
+                </div>
+                
+                <div class="nav-group-items collapsed" id="items-common">
+                    <a href="#proxy" class="nav-item" data-page="proxy" id="nav-proxy">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-globe-icon lucide-globe"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                        </span>
+                        <span class="nav-label">代理设置</span>
+                    </a>
+                    <a href="#settings" class="nav-item" data-page="settings" id="nav-settings">
+                        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </span>
+                        <span class="nav-label">系统设置</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 8px; padding: 12px var(--spacing-lg);">
+                <div class="user-status" id="user-status" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); width: 32px;">微信:</span>
+                    <div class="status-dot offline" id="status-indicator"></div>
+                    <span class="status-text" id="status-text" style="font-size: 0.8rem;">未登录</span>
+                </div>
+                <div class="sidebar-about" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.75rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                    <div id="version-display" style="cursor: pointer; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span id="version-text">公众号文章 v2.3.3</span>
+                        <span id="update-dot" style="display: none; width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 12px;">
+                        <a href="https://github.com/x554960766/wechat-mp-tools" target="_blank" style="color: var(--primary); text-decoration: none;">GitHub 地址</a>
+                        <a href="javascript:void(0)" onclick="App.showDisclaimer()" style="color: var(--primary); text-decoration: none;">免责声明</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content" id="main-content">
+            <div class="page-container" id="page-container">
+                <!-- 页面内容通过 JS 动态渲染 -->
+                <div class="loading-screen">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 模态框容器 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-dialog" id="modal-dialog"></div>
+    </div>
+
+    <!-- JS 模块 -->
+    <script defer src="/api/wechat-mp/app/js/utils/toast.js"></script>
+    <script defer src="/api/wechat-mp/app/js/utils/modal.js"></script>
+    <script defer src="/api/wechat-mp/app/js/utils/waterwall.js"></script>
+    <script defer src="/api/wechat-mp/app/js/api.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/login.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/accounts.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/articles.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/download.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/history.js"></script>
+    
+    
+    
+    
+    
+    <script defer src="/api/wechat-mp/app/js/components/proxy.js"></script>
+    <script defer src="/api/wechat-mp/app/js/components/settings.js"></script>
+    
+
+    <!-- Douyin Pages -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    <!-- Kuaishou Pages -->
+    
+    
+    
+    
+    
+
+    <!-- Xiaohongshu Pages -->
+    
+    
+    
+    
+    
+
+    <!-- Bilibili Pages -->
+    
+    
+    
+    
+    
+
+    <script defer src="/api/wechat-mp/app/js/router.js"></script>
+    <script defer src="/api/wechat-mp/app/js/platform-theme.js"></script>
+    <script defer src="/api/wechat-mp/app/js/app.js"></script>
+    
+</body>
+</html>

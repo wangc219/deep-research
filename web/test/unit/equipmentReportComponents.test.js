@@ -29,6 +29,15 @@ test('统一能力画像卡的报告模式保留深研和完整画像入口并�
   assert.match(reportCards, /section_label: section\?\.label/)
 })
 
+test('单张能力画像默认只显示概述，其余栏目由读者按需展开', () => {
+  assert.match(portraitCard, /const overviewModule = computed/)
+  assert.match(portraitCard, /const detailModules = computed/)
+  assert.match(portraitCard, /<details v-if="detailModules\.length" class="capability-portrait-secondary">/)
+  assert.match(portraitCard, /v-for="entry in detailModules"/)
+  assert.match(portraitCard, /默认仅展示概述，其余栏目按需展开/)
+  assert.doesNotMatch(portraitCard, /class="capability-portrait-secondary"\s+open/)
+})
+
 test('报告页暗色规则使用稳定的全局祖先选择器', () => {
   assert.doesNotMatch(reportsView, /:global\(\.dark\)/)
   assert.match(reportsView, /\.dark \.reports-page \.report-document \.report-markdown/)

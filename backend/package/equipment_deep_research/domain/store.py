@@ -11,7 +11,8 @@ from pathlib import Path
 import sqlite3
 import stat
 from threading import RLock
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from urllib.parse import quote
 from uuid import uuid4
 
@@ -224,18 +225,39 @@ class DomainStore:
         rows: list[dict[str, Any]] = []
         rows.extend({"type": "ResearchProblem", "payload": to_plain(item)} for item in self.problems.values())
         rows.extend({"type": "EvidenceCard", "payload": to_plain(item)} for item in self.evidence.values())
-        rows.extend({"type": "BaselineFindingPacket", "payload": to_plain(item)} for item in self.baseline_packets.values())
-        rows.extend({"type": "StrategicAssessment", "payload": to_plain(item)} for item in self.strategic_assessments.values())
+        rows.extend(
+            {"type": "BaselineFindingPacket", "payload": to_plain(item)} for item in self.baseline_packets.values()
+        )
+        rows.extend(
+            {"type": "StrategicAssessment", "payload": to_plain(item)} for item in self.strategic_assessments.values()
+        )
         rows.extend({"type": "ScenarioModel", "payload": to_plain(item)} for item in self.scenario_models.values())
-        rows.extend({"type": "EquipmentObservation", "payload": to_plain(item)} for item in self.equipment_observations.values())
-        rows.extend({"type": "OperationalSynthesis", "payload": to_plain(item)} for item in self.operational_syntheses.values())
+        rows.extend(
+            {"type": "EquipmentObservation", "payload": to_plain(item)} for item in self.equipment_observations.values()
+        )
+        rows.extend(
+            {"type": "OperationalSynthesis", "payload": to_plain(item)} for item in self.operational_syntheses.values()
+        )
         rows.extend({"type": "RecallRequest", "payload": to_plain(item)} for item in self.recall_requests.values())
-        rows.extend({"type": "AgentRecommendation", "payload": to_plain(item)} for item in self.recommendations.values())
-        rows.extend({"type": "WinningMechanismInput", "payload": to_plain(item)} for item in self.winning_inputs.values())
-        rows.extend({"type": "WinningKnowledgeProjection", "payload": to_plain(item)} for item in self.knowledge_projections.values())
-        rows.extend({"type": "WinningReasoningNode", "payload": to_plain(item)} for item in self.reasoning_nodes.values())
-        rows.extend({"type": "WinningMechanismStageOutput", "payload": to_plain(item)} for item in self.stage_outputs.values())
-        rows.extend({"type": "CapabilityImageItem", "payload": to_plain(item)} for item in self.capability_images.values())
+        rows.extend(
+            {"type": "AgentRecommendation", "payload": to_plain(item)} for item in self.recommendations.values()
+        )
+        rows.extend(
+            {"type": "WinningMechanismInput", "payload": to_plain(item)} for item in self.winning_inputs.values()
+        )
+        rows.extend(
+            {"type": "WinningKnowledgeProjection", "payload": to_plain(item)}
+            for item in self.knowledge_projections.values()
+        )
+        rows.extend(
+            {"type": "WinningReasoningNode", "payload": to_plain(item)} for item in self.reasoning_nodes.values()
+        )
+        rows.extend(
+            {"type": "WinningMechanismStageOutput", "payload": to_plain(item)} for item in self.stage_outputs.values()
+        )
+        rows.extend(
+            {"type": "CapabilityImageItem", "payload": to_plain(item)} for item in self.capability_images.values()
+        )
         rows.extend({"type": "AuditResult", "payload": to_plain(item)} for item in self.audits.values())
         rows.extend({"type": "ResearchReport", "payload": to_plain(item)} for item in self.reports.values())
         return "\n".join(
@@ -321,10 +343,7 @@ class TraceStore:
                 event_id=event_id,
                 event_type=str(row.get("event_type") or "evolution_retrieval_event"),
                 actor=actor,
-                summary=(
-                    f"{stage or 'S?'} {status}: "
-                    f"memory={len(memory_ids)} evidence={len(evidence_ids)}"
-                ),
+                summary=(f"{stage or 'S?'} {status}: memory={len(memory_ids)} evidence={len(evidence_ids)}"),
                 input_refs=[*memory_ids, *evidence_ids],
                 output_refs=[retrieval_id] if retrieval_id else [],
                 payload=row,
@@ -386,7 +405,7 @@ class SqliteRunStore:
         *,
         run_id: str,
         busy_timeout_ms: int = 5000,
-    ) -> "SqliteRunStore":
+    ) -> SqliteRunStore:
         store: SqliteRunStore | None = None
         try:
             with ExitStack() as handles:
@@ -431,9 +450,7 @@ class SqliteRunStore:
                 database_fd=database_fd,
                 database_dir_fd=database_dir_fd,
             )
-            descriptors_before = (
-                _open_descriptor_stats() if self._database_fd is not None else {}
-            )
+            descriptors_before = _open_descriptor_stats() if self._database_fd is not None else {}
             sqlite_target: str | Path = connection_path
             connect_kwargs: dict[str, Any] = {}
             if self._database_fd is not None:
@@ -515,9 +532,7 @@ class SqliteRunStore:
             return
         header = os.pread(self._database_fd, 20, 0)
         if len(header) >= 20 and (header[18] == 2 or header[19] == 2):
-            raise RuntimeError(
-                "legacy WAL SQLite databases require an offline trusted migration"
-            )
+            raise RuntimeError("legacy WAL SQLite databases require an offline trusted migration")
         for suffix in ("-wal", "-shm", "-journal"):
             try:
                 os.stat(
@@ -527,9 +542,7 @@ class SqliteRunStore:
                 )
             except FileNotFoundError:
                 continue
-            raise RuntimeError(
-                f"legacy SQLite sidecar requires an offline trusted migration: {suffix}"
-            )
+            raise RuntimeError(f"legacy SQLite sidecar requires an offline trusted migration: {suffix}")
 
     def close(self) -> None:
         connection = getattr(self, "_connection", None)
@@ -567,12 +580,10 @@ class SqliteRunStore:
         trace_proposals: Sequence[TraceProposal],
     ) -> str:
         domains, traces = self._validate_proposals(domain_proposals, trace_proposals)
-        proposal_records = [
-            {"channel": "domain", **item.proposal.to_plain()} for item in domains
-        ] + [{"channel": "trace", **item.proposal.to_plain()} for item in traces]
-        proposal_records.sort(
-            key=lambda record: (str(record["proposal_id"]), str(record["channel"]))
-        )
+        proposal_records = [{"channel": "domain", **item.proposal.to_plain()} for item in domains] + [
+            {"channel": "trace", **item.proposal.to_plain()} for item in traces
+        ]
+        proposal_records.sort(key=lambda record: (str(record["proposal_id"]), str(record["channel"])))
         request_json = _strict_json(proposal_records)
         request_fingerprint = _hash_text(request_json)
         proposal_keys_json = _strict_json(
@@ -580,11 +591,7 @@ class SqliteRunStore:
                 {
                     "channel": record["channel"],
                     "proposal_id": record["proposal_id"],
-                    **(
-                        {"idempotency_key": record["idempotency_key"]}
-                        if record["channel"] == "domain"
-                        else {}
-                    ),
+                    **({"idempotency_key": record["idempotency_key"]} if record["channel"] == "domain" else {}),
                 }
                 for record in proposal_records
             ]
@@ -607,9 +614,7 @@ class SqliteRunStore:
                 connection.commit()
                 return str(existing_checkpoint["checkpoint_id"])
 
-            domains_to_write, traces_to_write = self._preflight_writes(
-                connection, domains, traces
-            )
+            domains_to_write, traces_to_write = self._preflight_writes(connection, domains, traces)
             for item in domains_to_write:
                 self._write_domain(connection, item, committed_at)
 
@@ -692,13 +697,9 @@ class SqliteRunStore:
                 """,
                 (self.run_id,),
             ).fetchall()
-            object_counts = {
-                str(row["object_type"]): int(row["item_count"]) for row in counts
-            }
+            object_counts = {str(row["object_type"]): int(row["item_count"]) for row in counts}
             trace_count = self._trace_count(connection)
-            checkpoint_id = (
-                str(checkpoint["checkpoint_id"]) if checkpoint is not None else None
-            )
+            checkpoint_id = str(checkpoint["checkpoint_id"]) if checkpoint is not None else None
             summary = {
                 "run_id": self.run_id,
                 "checkpoint_id": checkpoint_id,
@@ -706,9 +707,7 @@ class SqliteRunStore:
                 "object_count": sum(object_counts.values()),
                 "trace_count": trace_count,
                 "last_trace_sequence": self._last_trace_sequence(connection),
-                "last_runtime_event_sequence": (
-                    self._last_runtime_event_sequence(connection)
-                ),
+                "last_runtime_event_sequence": (self._last_runtime_event_sequence(connection)),
                 "object_counts": object_counts,
             }
         finally:
@@ -952,19 +951,13 @@ class SqliteRunStore:
                 """,
                 (self.run_id,),
             ).fetchall()
-            records = [
-                {"type": str(row["object_type"]), "payload": json.loads(row["payload_json"])}
-                for row in rows
-            ]
+            records = [{"type": str(row["object_type"]), "payload": json.loads(row["payload_json"])} for row in rows]
         finally:
             connection.close()
         _write_jsonl(path, records)
 
     def export_trace_jsonl(self, path: Path) -> None:
-        records = [
-            {"type": "TraceEvent", "payload": event}
-            for event in self.trace_events(after_sequence=0)
-        ]
+        records = [{"type": "TraceEvent", "payload": event} for event in self.trace_events(after_sequence=0)]
         _write_jsonl(path, records)
 
     def _initialize(self) -> None:
@@ -1126,9 +1119,7 @@ class SqliteRunStore:
             raise StoreValidationError(f"unsupported operation: {proposal.operation}")
         id_field = _OBJECT_ID_FIELDS.get(proposal.object_type)
         if id_field is None:
-            raise StoreValidationError(
-                f"unsupported object_type: {proposal.object_type}"
-            )
+            raise StoreValidationError(f"unsupported object_type: {proposal.object_type}")
         payload = thaw_plain(proposal.payload)
         if not isinstance(payload, dict):
             raise StoreValidationError("domain proposal payload must be a JSON object")
@@ -1183,9 +1174,7 @@ class SqliteRunStore:
                 "payload": payload,
             }
         )
-        return _ValidatedTraceProposal(
-            proposal, payload, payload_json, proposal_hash
-        )
+        return _ValidatedTraceProposal(proposal, payload, payload_json, proposal_hash)
 
     def _check_ledger(
         self,
@@ -1206,9 +1195,7 @@ class SqliteRunStore:
             if row is None:
                 continue
             if row["content_hash"] != item.proposal_hash:
-                raise StoreConflictError(
-                    f"proposal_id conflict: {item.proposal.proposal_id}"
-                )
+                raise StoreConflictError(f"proposal_id conflict: {item.proposal.proposal_id}")
             existing_proposals.add(item.proposal.proposal_id)
         for item in domains:
             key = item.proposal.idempotency_key
@@ -1270,15 +1257,9 @@ class SqliteRunStore:
                 (self.run_id, proposal.object_type, item.object_id),
             ).fetchone()
             if existing is not None:
-                raise StoreConflictError(
-                    f"append conflict for {proposal.object_type}/{item.object_id}"
-                )
+                raise StoreConflictError(f"append conflict for {proposal.object_type}/{item.object_id}")
 
-        traces_to_write = [
-            item
-            for item in traces
-            if item.proposal.proposal_id not in existing_proposals
-        ]
+        traces_to_write = [item for item in traces if item.proposal.proposal_id not in existing_proposals]
         return domains_to_write, traces_to_write
 
     def _write_domain(
@@ -1433,10 +1414,7 @@ def _required_text(
 
 def _session_marker_payload(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     nested = payload.get("payload")
-    if (
-        payload.get("event_type") in {"session_write_failed", "session_reconciled"}
-        and isinstance(nested, Mapping)
-    ):
+    if payload.get("event_type") in {"session_write_failed", "session_reconciled"} and isinstance(nested, Mapping):
         return nested
     return payload
 
@@ -1455,11 +1433,7 @@ def _descriptor_directory() -> Path:
 
 def _open_descriptor_numbers() -> set[int]:
     try:
-        return {
-            int(name)
-            for name in os.listdir(_descriptor_directory())
-            if name.isdigit()
-        }
+        return {int(name) for name in os.listdir(_descriptor_directory()) if name.isdigit()}
     except OSError as exc:
         raise RuntimeError("SQLite descriptor auditing is unavailable") from exc
 

@@ -80,6 +80,64 @@ class KnowledgeFile(Base):
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class WechatChannel(Base):
+    """每个用户独立保存的视频号列表及同步状态。"""
+
+    __tablename__ = "wechat_channels"
+    __table_args__ = (UniqueConstraint("owner_uid", "username", name="uq_wechat_channel_owner_username"),)
+
+    id = Column(String(64), primary_key=True)
+    owner_uid = Column(String(64), nullable=False, index=True)
+    username = Column(String(200), nullable=False)
+    account = Column(String(200), nullable=False)
+    history_complete = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class WechatChannelVideo(Base):
+    """只保存视频元数据，不缓存媒体或带签名的下载地址。"""
+
+    __tablename__ = "wechat_channel_videos"
+    __table_args__ = (Index("ix_wechat_channel_video_date", "channel_id", "published_at"),)
+
+    channel_id = Column(String(64), ForeignKey("wechat_channels.id", ondelete="CASCADE"), primary_key=True)
+    oid = Column(String(128), primary_key=True)
+    title = Column(Text, nullable=False, default="")
+    published_at = Column(BigInteger, nullable=False, default=0)
+
+
+class VideoCollectorDevice(Base):
+    """配对到单个用户的本机微信采集端；令牌仅保存摘要。"""
+
+    __tablename__ = "wechat_collector_devices"
+
+    device_id = Column(String(64), primary_key=True)
+    owner_uid = Column(String(64), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    platform = Column(String(16), nullable=False)
+    token_digest = Column(String(64), nullable=False, unique=True)
+    state = Column(JSON_VALUE, nullable=False, default=dict)
+    last_seen_at = Column(DateTime(timezone=True), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class VideoCollectorCapture(Base):
+    """本机采集回传的交接物，由持有任务租约的 Worker 提交归档。"""
+
+    __tablename__ = "wechat_collector_captures"
+    __table_args__ = (UniqueConstraint("task_id", "execution_id", "sequence", name="uq_wechat_capture_sequence"),)
+
+    capture_id = Column(String(64), primary_key=True)
+    task_id = Column(String(32), nullable=False, index=True)
+    execution_id = Column(String(128), nullable=False)
+    device_id = Column(String(64), ForeignKey("wechat_collector_devices.device_id"), nullable=False)
+    sequence = Column(Integer, nullable=False)
+    kind = Column(String(16), nullable=False)
+    detail = Column(JSON_VALUE, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class KnowledgeChunk(Base):
     """知识库 Chunk 模型"""
 

@@ -50,6 +50,7 @@ from equipment_deep_research.agents.workflows.winning_flows.helpers import (
 )
 from equipment_deep_research.agents.workflows.coordinator import _parse_json_object
 from equipment_deep_research.agents.workflows.winning_flows.dynamic_swarm import (
+    _dynamic_finalist_target,
     _reconcile_cross_pool_s5_reviews,
     _s3_s4_first_pass_structurally_complete,
     _s3_s4_structural_dimension_identities,
@@ -101,6 +102,41 @@ def _hypothesis(**overrides: object) -> WinningHypothesis:
     }
     payload.update(overrides)
     return WinningHypothesis(**payload)
+
+
+def test_dynamic_finalist_target_honors_explicit_count_without_hard_failure() -> None:
+    target, contract = _dynamic_finalist_target(
+        {"finalist_minimum": 6, "finalist_maximum": 7},
+        {
+            "candidate_count_contract": {
+                "explicit": True,
+                "minimum": 3,
+                "target": 3,
+                "maximum": 3,
+                "source": "user_query",
+            }
+        },
+    )
+
+    assert target == 3
+    assert contract == {
+        "explicit": True,
+        "minimum": 3,
+        "target": 3,
+        "maximum": 3,
+        "source": "user_query",
+    }
+
+
+def test_dynamic_finalist_target_keeps_profile_default_without_explicit_count() -> None:
+    target, contract = _dynamic_finalist_target(
+        {"finalist_minimum": 6, "finalist_maximum": 7},
+        {"candidate_count_contract": {"explicit": False, "target": 0}},
+    )
+
+    assert target == 6
+    assert contract["explicit"] is False
+    assert contract["source"] == "profile_default"
 
 
 def test_s5_portfolio_handoff_is_strictly_name_and_summary_only() -> None:
@@ -272,6 +308,30 @@ def test_cross_pool_s5_reconciliation_does_not_intersect_reviewer_survivors() ->
     assert result["rejected_hypothesis_ids"] == ["c"]
     assert result["omitted_by_reviewer"]["reviewer-b"] == ["c"]
     assert result["aggregates"]["a"]["weighted_score"] == pytest.approx(0.805)
+
+
+def test_cross_pool_s5_empty_reviewer_is_no_vote_and_never_pads_portfolio() -> None:
+    candidates = [_hypothesis(hypothesis_id=value) for value in ("a", "b", "c")]
+    result = _reconcile_cross_pool_s5_reviews(
+        candidates,
+        [
+            {
+                "reviewer_id": "real-model-reviewer",
+                "decisions": [
+                    _s5_review_row("a", score=0.91),
+                    _s5_review_row("b", decision="reject", score=0.45),
+                    _s5_review_row("c", decision="reject", score=0.40),
+                ],
+            },
+            {"reviewer_id": "unavailable-reviewer", "decisions": []},
+        ],
+        query_domain_mode="direct_combat",
+    )
+
+    assert result["eligible_hypothesis_ids"] == ["a"]
+    assert result["rejected_hypothesis_ids"] == ["b", "c"]
+    assert result["omitted_by_reviewer"]["unavailable-reviewer"] == ["a", "b", "c"]
+    assert result["aggregates"]["a"]["review_count"] == 1
 
 
 def test_cross_pool_s5_isomorphic_group_keeps_highest_aggregate_score() -> None:

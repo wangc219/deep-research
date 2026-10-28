@@ -34,21 +34,11 @@ _HANDOFF_FIELD_HINTS = (
 # before applying the generic size bound.  Unknown roles retain the generic
 # scoring for compatibility with persisted packets and custom Agents.
 _TARGET_HANDOFF_FIELD_HINTS: dict[str, tuple[str, ...]] = {
-    "international_situation": (
-        "strategic", "threat", "actor", "move", "timeline", "warning", "risk"
-    ),
-    "combat_scenario": (
-        "scenario", "phase", "threat", "environment", "constraint", "risk", "effect"
-    ),
-    "weapon_equipment": (
-        "equipment", "capability", "gap", "baseline", "parameter", "maturity", "requirement"
-    ),
-    "operational_employment": (
-        "operational", "employment", "coa", "scenario", "dependency", "constraint", "effect"
-    ),
-    "winning_mechanism": (
-        "finding", "assessment", "effect", "gap", "requirement", "risk", "constraint"
-    ),
+    "international_situation": ("strategic", "threat", "actor", "move", "timeline", "warning", "risk"),
+    "combat_scenario": ("scenario", "phase", "threat", "environment", "constraint", "risk", "effect"),
+    "weapon_equipment": ("equipment", "capability", "gap", "baseline", "parameter", "maturity", "requirement"),
+    "operational_employment": ("operational", "employment", "coa", "scenario", "dependency", "constraint", "effect"),
+    "winning_mechanism": ("finding", "assessment", "effect", "gap", "requirement", "risk", "constraint"),
 }
 
 
@@ -144,7 +134,7 @@ class ContextPolicy:
     hide_raw_sessions: bool = True
 
     @classmethod
-    def from_agent(cls, agent: AgentDef) -> "ContextPolicy":
+    def from_agent(cls, agent: AgentDef) -> ContextPolicy:
         raw = agent.context_policy
         return cls(
             tuple(raw.get("visible_sections", ())),
@@ -161,9 +151,7 @@ class ContextPack:
 
     @property
     def context_hash(self) -> str:
-        content = json.dumps(
-            self.sections, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        )
+        content = json.dumps(self.sections, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         return "sha256:" + hashlib.sha256(content.encode()).hexdigest()
 
 
@@ -171,9 +159,7 @@ class ContextProjector:
     def __init__(self, *, compactor: ContextCompactor | None = None) -> None:
         self.compactor = compactor or ContextCompactor()
 
-    def project(
-        self, task: TaskEnvelope, agent: AgentDef, store: DomainStore
-    ) -> ContextPack:
+    def project(self, task: TaskEnvelope, agent: AgentDef, store: DomainStore) -> ContextPack:
         policy = ContextPolicy.from_agent(agent)
         sections: dict[str, Any] = {
             "task": {
@@ -183,9 +169,7 @@ class ContextProjector:
             }
         }
         if "EvidenceCard" in agent.object_read_scopes:
-            sections["evidence_index"] = store.evidence_index()[
-                : policy.max_items_per_section
-            ]
+            sections["evidence_index"] = store.evidence_index()[: policy.max_items_per_section]
         if "BaselineFindingPacket" in agent.object_read_scopes:
             sections["baseline_packets"] = [
                 {
@@ -199,30 +183,18 @@ class ContextProjector:
                     "open_questions": sanitize_open_questions(packet.open_questions),
                     "evidence_ids": packet.evidence_ids,
                 }
-                for packet in list(store.baseline_packets.values())[
-                    : policy.max_items_per_section
-                ]
+                for packet in list(store.baseline_packets.values())[: policy.max_items_per_section]
             ]
         if "WinningMechanismStageOutput" in agent.object_read_scopes:
             sections["stage_outputs"] = [
-                to_plain(item)
-                for item in list(store.stage_outputs.values())[
-                    : policy.max_items_per_section
-                ]
+                to_plain(item) for item in list(store.stage_outputs.values())[: policy.max_items_per_section]
             ]
         if "CapabilityImageItem" in agent.object_read_scopes:
             sections["capability_images"] = [
-                to_plain(item)
-                for item in list(store.capability_images.values())[
-                    : policy.max_items_per_section
-                ]
+                to_plain(item) for item in list(store.capability_images.values())[: policy.max_items_per_section]
             ]
         visible = set(policy.visible_sections)
-        sections = {
-            key: value
-            for key, value in sections.items()
-            if key == "task" or key in visible
-        }
+        sections = {key: value for key, value in sections.items() if key == "task" or key in visible}
         pack = ContextPack(agent.agent_id, sections)
         return self.compactor.compact(pack, token_budget=policy.token_budget)[0]
 
@@ -269,9 +241,7 @@ class ContextPackBuilder:
                 "research_policy": agent.research_policy,
                 "handoff_policy": agent.handoff_policy,
                 "model_profile": {
-                    key: value
-                    for key, value in agent.model_profile.items()
-                    if key not in {"provider", "model"}
+                    key: value for key, value in agent.model_profile.items() if key not in {"provider", "model"}
                 },
             },
             "upstream_handoffs": upstream_handoffs,
@@ -326,9 +296,7 @@ def _project_upstream_payload(
     if not isinstance(payload, dict):
         return payload
     order = {key: index for index, key in enumerate(payload)}
-    target_hints = _TARGET_HANDOFF_FIELD_HINTS.get(
-        str(target_agent_id), _HANDOFF_FIELD_HINTS
-    )
+    target_hints = _TARGET_HANDOFF_FIELD_HINTS.get(str(target_agent_id), _HANDOFF_FIELD_HINTS)
     candidates: list[tuple[str, Any, int]] = []
     for key, value in payload.items():
         if value in (None, "", [], {}):
@@ -344,7 +312,9 @@ def _project_upstream_payload(
     selected = (
         [(key, value, _score) for key, value, _score in candidates]
         if len(candidates) <= 5
-        else positive[:5] if positive else candidates[:1]
+        else positive[:5]
+        if positive
+        else candidates[:1]
     )
     return {key: value for key, value, _score in selected}
 
@@ -361,9 +331,7 @@ def compact_packet_handoff(
     references, uncertainty and the smallest role-relevant payload projection.
     """
 
-    payload = getattr(packet, "payload", None) or getattr(
-        packet, "analysis_sections", {}
-    )
+    payload = getattr(packet, "payload", None) or getattr(packet, "analysis_sections", {})
     agent_id = str(getattr(packet, "agent_id", ""))
     full_case_packet = agent_id == "case_research"
     finding_limit = 12 if full_case_packet else (3 if minimal else 5)
@@ -375,10 +343,7 @@ def compact_packet_handoff(
             source_agent_id=agent_id,
             payload=payload,
         )
-    findings = [
-        sanitize_handoff_summary(item)
-        for item in list(getattr(packet, "findings", []))[:finding_limit]
-    ]
+    findings = [sanitize_handoff_summary(item) for item in list(getattr(packet, "findings", []))[:finding_limit]]
     findings = [item for item in findings if item]
     summary = sanitize_handoff_summary(
         getattr(packet, "handoff_summary", ""),
@@ -388,17 +353,10 @@ def compact_packet_handoff(
     return {
         "packet_id": str(getattr(packet, "packet_id", "")),
         "agent_id": agent_id,
-        "capability_tags": list(getattr(packet, "capability_tags", []))[
-            : 5 if minimal else 12
-        ],
-        "payload_type": str(
-            getattr(packet, "payload_type", "") or "legacy_analysis_sections"
-        ),
+        "capability_tags": list(getattr(packet, "capability_tags", []))[: 5 if minimal else 12],
+        "payload_type": str(getattr(packet, "payload_type", "") or "legacy_analysis_sections"),
         "handoff_summary": _compact_text(summary, 260 if minimal else 520),
-        "key_findings": [
-            _compact_text(item, 220 if minimal else 360)
-            for item in findings
-        ],
+        "key_findings": [_compact_text(item, 220 if minimal else 360) for item in findings],
         "payload": sanitize_handoff_value(
             compact_handoff_value(
                 payload,
@@ -407,24 +365,17 @@ def compact_packet_handoff(
                 max_mapping_items=18 if full_case_packet else (5 if minimal else 10),
             )
         ),
-        "evidence_ids": list(getattr(packet, "evidence_ids", []))[
-            : 6 if minimal else 14
-        ],
+        "evidence_ids": list(getattr(packet, "evidence_ids", []))[: 6 if minimal else 14],
         "confidence": getattr(packet, "confidence", None),
-        "claim_ids": list(getattr(packet, "claim_ids", []))[
-            : 6 if minimal else 20
-        ],
+        "claim_ids": list(getattr(packet, "claim_ids", []))[: 6 if minimal else 20],
         "claim_bundle_ref": str(getattr(packet, "claim_bundle_ref", "")),
         "admission_status": str(getattr(packet, "admission_status", "")),
         "limitations": [
             _compact_text(item, 160 if minimal else 260)
-            for item in list(getattr(packet, "limitations", []))[
-                : 1 if minimal else 3
-            ]
+            for item in list(getattr(packet, "limitations", []))[: 1 if minimal else 3]
         ],
         "open_questions": [
-            _compact_text(item, 180 if minimal else 240)
-            for item in open_questions[: 1 if minimal else 3]
+            _compact_text(item, 180 if minimal else 240) for item in open_questions[: 1 if minimal else 3]
         ],
     }
 
@@ -436,16 +387,14 @@ def _dependency_handoff(
     minimal: bool,
     query: str = "",
 ) -> dict[str, Any]:
-    payload = sanitize_handoff_value(_project_upstream_payload(
-        target_agent_id=target_agent_id,
-        source_agent_id=str(getattr(packet, "agent_id", "")),
-        payload=getattr(packet, "payload", None)
-        or getattr(packet, "analysis_sections", {}),
-    ))
-    findings = [
-        sanitize_handoff_summary(item)
-        for item in list(getattr(packet, "findings", []))
-    ]
+    payload = sanitize_handoff_value(
+        _project_upstream_payload(
+            target_agent_id=target_agent_id,
+            source_agent_id=str(getattr(packet, "agent_id", "")),
+            payload=getattr(packet, "payload", None) or getattr(packet, "analysis_sections", {}),
+        )
+    )
+    findings = [sanitize_handoff_summary(item) for item in list(getattr(packet, "findings", []))]
     findings = [item for item in findings if item]
     summary = sanitize_handoff_summary(
         getattr(packet, "handoff_summary", ""),
@@ -461,14 +410,8 @@ def _dependency_handoff(
             "packet_id": str(getattr(packet, "packet_id", "")),
             "capability_tags": list(getattr(packet, "capability_tags", [])),
             "handoff_summary": _compact_text(summary, 520),
-            "key_findings": [
-                _compact_text(item, 360)
-                for item in findings[:4]
-            ],
-            "payload_type": str(
-                getattr(packet, "payload_type", "")
-                or "legacy_analysis_sections"
-            ),
+            "key_findings": [_compact_text(item, 360) for item in findings[:4]],
+            "payload_type": str(getattr(packet, "payload_type", "") or "legacy_analysis_sections"),
             "payload": compact_handoff_value(
                 payload,
                 max_string_chars=420,
@@ -477,10 +420,7 @@ def _dependency_handoff(
             ),
             "evidence_ids": list(getattr(packet, "evidence_ids", []))[:12],
             "confidence": getattr(packet, "confidence", None),
-            "open_questions": [
-                _compact_text(item, 240)
-                for item in open_questions[:3]
-            ],
+            "open_questions": [_compact_text(item, 240) for item in open_questions[:3]],
         }
     finding_limit = 3
     uncertainties = [
@@ -495,19 +435,14 @@ def _dependency_handoff(
         # while all new scheduling and audit code uses agent_id/packet_id.
         "source": str(getattr(packet, "agent_id", "")),
         "summary": _compact_text(summary, 240),
-        "decisions": [
-            _compact_text(item, 220)
-            for item in findings[: min(finding_limit, 3)]
-        ],
+        "decisions": [_compact_text(item, 220) for item in findings[: min(finding_limit, 3)]],
         "context_delta": compact_handoff_value(
             payload,
             max_string_chars=220,
             max_list_items=3,
             max_mapping_items=4,
         ),
-        "evidence_refs": list(getattr(packet, "evidence_ids", []))[
-            :8
-        ],
+        "evidence_refs": list(getattr(packet, "evidence_ids", []))[:8],
         "confidence": getattr(packet, "confidence", None),
         "uncertainties": [
             _compact_text(sanitize_handoff_summary(item), 160)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import fcntl
 from hashlib import sha256
 import json
@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from threading import RLock
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 
 from equipment_deep_research.domain.models import (
     BaselineFindingPacket,
@@ -120,13 +121,9 @@ class AgentKnowledgeIndex:
                     "memory_id": str(row.get("memory_id", "")),
                     "agent_id": agent_id,
                     "topic": str(row.get("topic", "")),
-                    "handoff_summary": sanitize_handoff_summary(
-                        row.get("handoff_summary", "")
-                    ),
+                    "handoff_summary": sanitize_handoff_summary(row.get("handoff_summary", "")),
                     "payload_type": str(row.get("payload_type", "")),
-                    "payload_projection": sanitize_handoff_value(
-                        dict(row.get("payload_projection", {}))
-                    ),
+                    "payload_projection": sanitize_handoff_value(dict(row.get("payload_projection", {}))),
                     "source_urls": list(row.get("source_urls", []))[:12],
                     "confidence": float(row.get("confidence", 0.0) or 0.0),
                     "last_verified_at": last_verified,
@@ -149,8 +146,7 @@ class AgentKnowledgeIndex:
             dict.fromkeys(
                 item.source_url
                 for item in evidence
-                if item.evidence_id in packet.evidence_ids
-                and item.source_url.startswith("https://")
+                if item.evidence_id in packet.evidence_ids and item.source_url.startswith("https://")
             )
         )
         projection = {
@@ -201,11 +197,7 @@ class AgentKnowledgeIndex:
                 key=lambda item: str(item.get("last_verified_at", "")),
                 reverse=True,
             )[:maximum]
-            payload["records"] = {
-                str(item["memory_id"]): item
-                for item in ordered
-                if item.get("memory_id")
-            }
+            payload["records"] = {str(item["memory_id"]): item for item in ordered if item.get("memory_id")}
             payload["schema_version"] = "1.0"
             payload["updated_at"] = now_iso()
             self._write(payload)
@@ -217,11 +209,7 @@ class AgentKnowledgeIndex:
             payload = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return {"schema_version": "1.0", "records": {}}
-        return (
-            payload
-            if isinstance(payload, dict)
-            else {"schema_version": "1.0", "records": {}}
-        )
+        return payload if isinstance(payload, dict) else {"schema_version": "1.0", "records": {}}
 
     def _write(self, payload: Mapping[str, Any]) -> None:
         assert self.path is not None
@@ -237,9 +225,7 @@ class AgentKnowledgeIndex:
                 delete=False,
             ) as temporary:
                 temporary_path = Path(temporary.name)
-                temporary.write(
-                    json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2)
-                )
+                temporary.write(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2))
                 temporary.flush()
                 os.fsync(temporary.fileno())
             os.replace(temporary_path, self.path)
@@ -263,9 +249,7 @@ def _index_file_lock(path: Path, *, exclusive: bool) -> Iterator[None]:
 
 
 def _terms(value: str) -> set[str]:
-    normalized = "".join(
-        character.lower() if character.isalnum() else " " for character in value
-    )
+    normalized = "".join(character.lower() if character.isalnum() else " " for character in value)
     return {item for item in normalized.split() if len(item) >= 2}
 
 
@@ -281,8 +265,8 @@ def _age_days(value: str) -> int | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return max(0, (datetime.now(timezone.utc) - parsed).days)
+        parsed = parsed.replace(tzinfo=UTC)
+    return max(0, (datetime.now(UTC) - parsed).days)
 
 
 __all__ = ["AGENT_MEMORY_FIELDS", "AgentKnowledgeIndex"]

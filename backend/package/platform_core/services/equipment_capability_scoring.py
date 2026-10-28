@@ -7,11 +7,11 @@ from typing import Any
 
 
 S5_SCORE_WEIGHTS = {
-    "innovation": 0.30,
-    "demand": 0.30,
-    "feasibility": 0.20,
-    "effectiveness": 0.10,
-    "development": 0.10,
+    "innovation": 0.45,
+    "demand": 0.15,
+    "feasibility": 0.10,
+    "effectiveness": 0.25,
+    "development": 0.05,
 }
 
 _IDENTITY_FIELDS = (

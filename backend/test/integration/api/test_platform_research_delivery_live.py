@@ -1,6 +1,7 @@
 """平台研究任务的真实 HTTP、队列、Worker 与文件交付验收；模型使用 fake。"""
 
 import asyncio
+import os
 import shutil
 from time import monotonic
 from uuid import uuid4
@@ -31,7 +32,7 @@ async def test_platform_research_preserves_profile_and_publishes_delivery():
         await db.flush()
         headers = {"Authorization": "Bearer " + AuthUtils.create_access_token({"sub": str(user.id)})}
 
-    async with httpx.AsyncClient(base_url="http://web", headers=headers, timeout=60) as client:
+    async with httpx.AsyncClient(base_url=os.getenv("TEST_BASE_URL", "http://web"), headers=headers, timeout=60) as client:
         try:
             directory = "delivery-" + uuid4().hex[:12]
             response = await client.post("/api/workspace/directory", json={"parent_path": "/", "name": directory})

@@ -5,7 +5,8 @@ import {
   collapseConversationProcess,
   formatProcessDuration,
   isConversationSettled,
-  formatEmptyRunStatus
+  formatEmptyRunStatus,
+  shouldShowEmptyRunStatus
 } from '../../src/utils/conversationProcessGrouping.js'
 
 test('关联续跑组成连续回答，消息归属不变且只累计执行耗时', () => {
@@ -161,4 +162,7 @@ test('零消息后续 Run 不隐藏上一条完成回答的操作栏，关联 re
   assert.equal(isConversationSettled([answer], answer, true), false)
   assert.equal(formatEmptyRunStatus(empty.run.status), '本次运行失败')
   assert.equal(formatEmptyRunStatus('cancelled'), '本次运行已取消')
+  assert.equal(shouldShowEmptyRunStatus([], { status: 'failed' }), true)
+  assert.equal(shouldShowEmptyRunStatus([], { status: 'completed' }), false)
+  assert.equal(shouldShowEmptyRunStatus([{ type: 'message' }], { status: 'failed' }), false)
 })

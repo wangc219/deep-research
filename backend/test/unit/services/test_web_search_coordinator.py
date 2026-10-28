@@ -34,3 +34,26 @@ def test_redis_failure_does_not_send_uncoordinated_requests(monkeypatch):
     monkeypatch.setattr(coordinator_module, "sync_redis_client", unavailable)
     result = coordinator_module.coordinated_search("public", {}, lambda: pytest.fail("request bypassed scheduler"))
     assert result["status"] == "unavailable"
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        {"status_code": 403},
+        {"code": "captcha_required"},
+        {"message": "反爬：需要人机验证"},
+        {"error": "bot challenge"},
+        {"status": "blocked"},
+    ],
+)
+def test_antibot_challenges_use_long_cooldown(failure):
+    assert coordinator_module.antibot_delay(failure) == 300
+
+
+def test_antibot_cooldown_ignores_evidence_and_bounds_configuration(monkeypatch):
+    assert coordinator_module.antibot_delay({"results": [{"title": "CAPTCHA research"}]}) == 0
+    assert coordinator_module.antibot_delay({"status": "empty"}) == 0
+    monkeypatch.setenv("WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS", "5")
+    assert coordinator_module.antibot_delay({"status": "blocked"}) == 30
+    monkeypatch.setenv("WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS", "invalid")
+    assert coordinator_module.antibot_delay({"status": "blocked"}) == 300

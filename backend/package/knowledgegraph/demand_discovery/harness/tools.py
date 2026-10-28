@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any
+from collections.abc import Awaitable, Callable
 
 from knowledgegraph.demand_discovery.harness.cancellation import CancelToken
 from knowledgegraph.demand_discovery.harness.types import ToolCall, ToolResult
@@ -44,9 +45,7 @@ def validate_arguments(schema: dict[str, Any], arguments: dict[str, Any]) -> Non
     """
 
     if schema.get("type", "object") != "object":
-        raise SchemaValidationError(
-            f"unsupported schema type: {schema.get('type')!r}"
-        )
+        raise SchemaValidationError(f"unsupported schema type: {schema.get('type')!r}")
 
     required = schema.get("required", [])
     for key in required:
@@ -66,14 +65,9 @@ def validate_arguments(schema: dict[str, Any], arguments: dict[str, Any]) -> Non
         value = arguments[key]
         # bool is a subclass of int; reject it for numeric types explicitly.
         if declared in ("number", "integer") and isinstance(value, bool):
-            raise SchemaValidationError(
-                f"argument {key!r} expected {declared}, got bool"
-            )
+            raise SchemaValidationError(f"argument {key!r} expected {declared}, got bool")
         if not isinstance(value, expected):
-            raise SchemaValidationError(
-                f"argument {key!r} expected {declared}, got "
-                f"{type(value).__name__}"
-            )
+            raise SchemaValidationError(f"argument {key!r} expected {declared}, got {type(value).__name__}")
 
 
 @dataclass
@@ -89,12 +83,8 @@ class ToolExecutionContext:
 
 
 ToolExecute = Callable[[ToolCall, ToolExecutionContext], Awaitable[ToolResult]]
-BeforeToolCall = Callable[
-    [ToolCall, ToolExecutionContext], Optional[ToolResult]
-]
-AfterToolCall = Callable[
-    [ToolCall, ToolExecutionContext, ToolResult], ToolResult
-]
+BeforeToolCall = Callable[[ToolCall, ToolExecutionContext], ToolResult | None]
+AfterToolCall = Callable[[ToolCall, ToolExecutionContext, ToolResult], ToolResult]
 
 
 @dataclass
@@ -142,15 +132,9 @@ class ToolRegistry:
     def requires_sequential(self, names: list[str]) -> bool:
         """True if any named tool declares sequential execution."""
 
-        return any(
-            name in self._tools
-            and self._tools[name].execution_mode == "sequential"
-            for name in names
-        )
+        return any(name in self._tools and self._tools[name].execution_mode == "sequential" for name in names)
 
-    async def execute(
-        self, call: ToolCall, context: ToolExecutionContext
-    ) -> ToolResult:
+    async def execute(self, call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         """Validate, run hooks, execute the tool, and normalize errors."""
 
         tool = self._tools.get(call.name)

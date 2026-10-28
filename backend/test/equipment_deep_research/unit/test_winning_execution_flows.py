@@ -60,9 +60,7 @@ def test_s6_decision_spine_excludes_indicator_and_boundary_obligations():
 
 
 @pytest.mark.parametrize("pipeline", ["0", "1"])
-def test_standard_steps_consume_committed_dependencies_and_resume_only_selected(
-    monkeypatch, pipeline
-):
+def test_standard_steps_consume_committed_dependencies_and_resume_only_selected(monkeypatch, pipeline):
     monkeypatch.setenv("EQUIPMENT_DR_USE_DYNAMIC_WINNING_SCHEDULER", pipeline)
     accumulated = {"1": "reused", "2": "reused"}
     seen = []
@@ -182,9 +180,7 @@ def test_optimized_cohort_commits_each_logical_result_before_downstream():
             physical_cohorts=[(1, 2)],
             primary_branch="B",
             run_physical_cohort=cohort,
-            run_tactic_validation_wave=lambda: pytest.fail(
-                "B does not run A validation"
-            ),
+            run_tactic_validation_wave=lambda: pytest.fail("B does not run A validation"),
         )
     )
     assert calls == [(1, 2), 3]
@@ -216,19 +212,12 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
         assert "只输出严格JSON" in prompt
     assert "S4必须独立重构路线" not in s3_prompt
     assert "S4必须独立重构路线" in s4_prompt
-    assert "只输出system规定的严格JSON结构" in load_dynamic_winning_prompt(
-        "S3", section="creative"
-    )
-    assert "只输出system规定的严格JSON结构" in load_dynamic_winning_prompt(
-        "S4", section="creative"
-    )
+    assert "只输出system规定的严格JSON结构" in load_dynamic_winning_prompt("S3", section="creative")
+    assert "只输出system规定的严格JSON结构" in load_dynamic_winning_prompt("S4", section="creative")
     # The legacy helper fragments remain a compatibility surface for the
     # quality-swarm path; the Markdown resources are the dynamic runtime
     # authority and need not be byte-for-byte copies of those fragments.
-    helper_contract = (
-        helpers._s3_s4_quality_first_instruction()
-        + helpers._creative_s3_candidate_instruction()
-    )
+    helper_contract = helpers._s3_s4_quality_first_instruction() + helpers._creative_s3_candidate_instruction()
     assert "宁缺毋滥" in helper_contract
     assert "从Query的核心战场矛盾自由创造" in helper_contract
     s5_prompt = load_dynamic_winning_prompt("S5")
@@ -238,40 +227,56 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
     assert "S5只负责决定候选入选、合并或淘汰" in s5_prompt
     assert "只能在候选入选后由S6为每张卡生成一次" in s5_prompt
     assert "coverage_steer" in load_dynamic_winning_prompt("S3")
-    assert "{axis_label}" in load_dynamic_winning_prompt(
-        "common", section="coverage_steer.instruction"
-    )
+    assert "{axis_label}" in load_dynamic_winning_prompt("common", section="coverage_steer.instruction")
     s6_prompt = load_dynamic_winning_prompt("S6")
     assert "每栏都以约400个有效中文字为中心" in s6_prompt
     assert "复杂因果尚未闭合时可适当略多" in s6_prompt
     assert "禁止按字符硬切" in s6_prompt
     assert "不能用总字数或平均数抵消短栏" in s6_prompt
     assert "五栏合计通常约2000至2250字" in s6_prompt
+    assert "五栏的固定栏名与顺序" in s6_prompt
+    assert "不是末端硬截断或发布拦截条件" in s6_prompt
     overview_prompt = load_dynamic_winning_prompt("S6", section="S6_1")
     for required in (
         "当前背景",
         "解决思路",
         "达到效果",
         "核心创新",
-        "逐字写入",
+        "不得解释结论由哪些输入或字段推导",
+        "相同结论只能归入最匹配的一项",
         "不展开工程路线",
     ):
         assert required in overview_prompt
     technology_prompt = load_dynamic_winning_prompt("S6", section="S6_2")
     for required in (
-        "solution_thesis",
-        "core_innovation_thesis",
-        "逐字复述",
+        "两项必须静默吸收，不得逐字复述",
+        "不得以“承接解决思路”“围绕核心创新”",
         "原理假设",
-        "验证判据",
-        "可行性结论",
-        "可选实现途径",
-        "推荐主路径",
+        "技术路线研究判断与成立边界",
+        "决定核心创新能否成立",
+        "耦合边界",
+        "唯一技术研究主轴",
+        "核心技术研发",
+        "新原理",
+        "新材料",
+        "新工艺",
+        "新器件",
+        "新算法",
+        "突破方法为何能改变决定性约束",
+        "功能单元、接口、落装位置和任务状态变化不设必答项",
+        "通常比较2条、最多3条有实质差异的技术原理路线",
+        "真正卡在哪项机理或方法",
+        "底层机理、关键方法或制备/实现瓶颈",
+        "不得按技术类别凑数",
+        "不得让每个分点套用相同字段和句序",
+        "只在它们直接决定路线选择或研发突破时展开",
         "核心攻关顺序",
         "联网检索能力",
         "新质概念武器研发",
     ):
         assert required in technology_prompt
+    assert "solution_thesis" not in technology_prompt
+    assert "core_innovation_thesis" not in technology_prompt
     with pytest.raises(ValueError, match="unknown dynamic winning stage"):
         load_dynamic_winning_prompt("../../unrelated")
     with pytest.raises(ValueError, match="missing dynamic prompt section"):
@@ -281,9 +286,7 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
 def test_s6_portrait_sections_are_loaded_from_independent_companion_files():
     import equipment_deep_research.agents.dynamic_prompt_resources as resources
 
-    prompt_root = (
-        Path(resources.__file__).parent / "prompts/dynamic_winning"
-    )
+    prompt_root = Path(resources.__file__).parent / "prompts/dynamic_winning"
     base = (prompt_root / "S6.md").read_text(encoding="utf-8")
     for index in range(1, 6):
         section = f"S6_{index}"
@@ -296,16 +299,12 @@ def test_s6_portrait_sections_are_loaded_from_independent_companion_files():
 
 
 def test_semantic_clustering_schema_is_loaded_from_reviewed_markdown():
-    schema = load_dynamic_winning_json(
-        "common", section="semantic_clustering.output_schema"
-    )
+    schema = load_dynamic_winning_json("common", section="semantic_clustering.output_schema")
 
     assert isinstance(schema, dict)
     assert set(schema) == {"pairwise_comparisons", "stop_reason"}
     comparison = schema["pairwise_comparisons"][0]
-    assert comparison["relationship"] == (
-        "same_thesis|non_independent_variant|independent"
-    )
+    assert comparison["relationship"] == ("same_thesis|non_independent_variant|independent")
     assert comparison["axis_equivalence"]["core_mechanism"] == "boolean"
 
     # Keep model-visible schema prose out of the execution module.  The
@@ -324,9 +323,7 @@ def test_flow_modules_do_not_import_their_coordinator_or_inject_globals():
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
-                assert (
-                    node.module != "equipment_deep_research.agents.workflows.winning"
-                ), path
+                assert node.module != "equipment_deep_research.agents.workflows.winning", path
                 assert all(alias.name != "*" for alias in node.names), path
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in {"globals", "exec"}, path
@@ -354,9 +351,7 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
         def _provider_for(self, *a, **kw):
             return SimpleNamespace(snapshot=lambda: {})
 
-        async def _run_core_json(
-            self, agent, system, payload, schema, *args, phase="", **kw
-        ):
+        async def _run_core_json(self, agent, system, payload, schema, *args, phase="", **kw):
             self.calls.append((phase, system, payload))
             if "reasoning_seeds" in schema:
                 return json.dumps({"reasoning_seeds": []})
@@ -367,7 +362,10 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
                         "hypotheses": [
                             {
                                 "name": f"载具甲{self.count}",
-                                "concise_winning_summary": "此项为隔离执行流的固定样本，用于验证输入传递和候选聚合，并在组合评审中统一判退，不构成任何实际装备方案。",
+                                "concise_winning_summary": (
+                                    "此项为隔离执行流的固定样本，用于验证输入传递和候选聚合，"
+                                    "并在组合评审中统一判退，不构成任何实际装备方案。"
+                                ),
                             }
                         ]
                     }
@@ -418,27 +416,15 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
                 "evidence_index": [],
             },
             state=state,
-            swarm_controller=WinningSwarmController(
-                {"policy_id": "winning_swarm_dynamic_v2", "enabled": True}
-            ),
+            swarm_controller=WinningSwarmController({"policy_id": "winning_swarm_dynamic_v2", "enabled": True}),
             valid_reference_ids=set(),
         )
         for stage in ["S1", "S2", "S3", "S4", "S5"]:
-            assert any(
-                load_dynamic_winning_prompt(stage) in system
-                for _, system, _ in host.calls
-            ), stage
-        creative_payloads = [
-            payload
-            for phase, _, payload in host.calls
-            if phase == "winning_swarm_dynamic_seed"
-        ]
+            assert any(load_dynamic_winning_prompt(stage) in system for _, system, _ in host.calls), stage
+        creative_payloads = [payload for phase, _, payload in host.calls if phase == "winning_swarm_dynamic_seed"]
         assert creative_payloads
         assert all("coverage_steer" in payload for payload in creative_payloads)
-        axes = {
-            str(payload["coverage_steer"]["exclusive_axis"])
-            for payload in creative_payloads
-        }
+        axes = {str(payload["coverage_steer"]["exclusive_axis"]) for payload in creative_payloads}
         assert "mechanism" in axes
         event_names = [args[0] for args, _ in events if args]
         assert "winning_semantic_cluster_skipped" in event_names
@@ -448,14 +434,8 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
         assert quantity_gate["quantity_gate_passed"] is False
         assert quantity_gate["target_direction_count"] == 6
         assert quantity_gate["quantity_shortfall"] == 6
-        assert accumulated["winning_swarm"]["stop_reason"] == (
-            "mission_graph_limited_insufficient_s5_finalists"
-        )
-        planned = [
-            details
-            for args, details in events
-            if args and args[0] == "winning_mission_graph_planned"
-        ]
+        assert accumulated["winning_swarm"]["stop_reason"] == ("mission_graph_limited_insufficient_s5_finalists")
+        planned = [details for args, details in events if args and args[0] == "winning_mission_graph_planned"]
         assert planned
         # The normalized dynamic-v2 policy targets ten first-wave seats.  This
         # catches regressions where the executor silently falls back to the
@@ -492,9 +472,7 @@ def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_
         def _provider_for(self, *args, **kwargs):
             return SimpleNamespace(snapshot=lambda: {})
 
-        async def _run_core_json(
-            self, agent, system, payload, schema, *args, phase="", **kwargs
-        ):
+        async def _run_core_json(self, agent, system, payload, schema, *args, phase="", **kwargs):
             if phase == "winning_pre_generation_active_angle_selection":
                 return json.dumps({"open_hints": []})
             if phase == "winning_swarm_dynamic_reasoning_seed":
@@ -513,18 +491,16 @@ def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_
                         "hypotheses": [
                             {
                                 "name": f"前出装备{self.creator_calls}",
-                                "concise_winning_summary": (
-                                    "在当前任务链断点前出部署并直接形成可观察战果。"
-                                ),
-                                "combat_dimension": (
-                                    f"OTHER:独立断点{self.creator_calls}"
-                                ),
+                                "concise_winning_summary": ("在当前任务链断点前出部署并直接形成可观察战果。"),
+                                "combat_dimension": (f"OTHER:独立断点{self.creator_calls}"),
                             }
                         ]
                     },
                     ensure_ascii=False,
                 )
             if phase == "winning_swarm_dynamic_portfolio_review_fast":
+                assert payload["run_id"] and payload["agent_instance_id"]
+                assert payload["mission_node"] == "S5"
                 rows = payload.get("candidate_ledger", {}).get("hypotheses", [])
                 allowed_ids = [str(row["hypothesis_id"]) for row in rows]
                 # Cross-pool reviewers see the live candidate pool, not one
@@ -546,9 +522,7 @@ def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_
                     ensure_ascii=False,
                 )
             if phase == "winning_semantic_pair_clustering":
-                return json.dumps(
-                    {"pairwise_comparisons": [], "stop_reason": "fixture"}
-                )
+                return json.dumps({"pairwise_comparisons": [], "stop_reason": "fixture"})
             raise AssertionError((phase, sorted(schema)))
 
     async def scenario():
@@ -599,9 +573,7 @@ def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_
 
 
 @pytest.mark.parametrize("max_concurrency", [1, 2])
-def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
-    monkeypatch, max_concurrency
-):
+def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(monkeypatch, max_concurrency):
     """The incremental S4 boundary must remain useful with only two lanes.
 
     S3/S4 creators share a heterogeneous first-wave pool.  A constrained
@@ -634,14 +606,10 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
         def _provider_for(self, *args, **kwargs):
             return SimpleNamespace(snapshot=lambda: {})
 
-        async def _run_core_json(
-            self, agent, system, payload, schema, *args, phase="", **kwargs
-        ):
+        async def _run_core_json(self, agent, system, payload, schema, *args, phase="", **kwargs):
             del agent, system, schema, args, kwargs
             self.active_calls += 1
-            self.maximum_active_calls = max(
-                self.maximum_active_calls, self.active_calls
-            )
+            self.maximum_active_calls = max(self.maximum_active_calls, self.active_calls)
             try:
                 if phase == "winning_pre_generation_active_angle_selection":
                     return json.dumps({"open_hints": []})
@@ -661,29 +629,19 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
                         {
                             "hypotheses": [
                                 {
-                                    "name": (
-                                        f"前出实体武器{instance_id[-4:]}"
-                                    ),
+                                    "name": (f"前出实体武器{instance_id[-4:]}"),
                                     "concise_winning_summary": (
-                                        "具体武器在任务链断点前出接敌并直接压制目标，"
-                                        "改变对手原有防御交换关系。"
+                                        "具体武器在任务链断点前出接敌并直接压制目标，改变对手原有防御交换关系。"
                                     ),
-                                    "combat_dimension": (
-                                        "OTHER:low-concurrency-dimension-"
-                                        f"{instance_id[-4:]}"
-                                    ),
+                                    "combat_dimension": (f"OTHER:low-concurrency-dimension-{instance_id[-4:]}"),
                                 }
                             ],
-                            "considered_dimensions": [
-                                "OTHER:low-concurrency-dimension"
-                            ],
+                            "considered_dimensions": ["OTHER:low-concurrency-dimension"],
                         },
                         ensure_ascii=False,
                     )
                 if phase == "winning_swarm_dynamic_portfolio_review_fast":
-                    rows = list(
-                        payload.get("candidate_ledger", {}).get("hypotheses", [])
-                    )
+                    rows = list(payload.get("candidate_ledger", {}).get("hypotheses", []))
                     ids = [str(row["hypothesis_id"]) for row in rows]
                     return json.dumps(
                         {
@@ -702,9 +660,7 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
                         ensure_ascii=False,
                     )
                 if phase == "winning_semantic_pair_clustering":
-                    return json.dumps(
-                        {"pairwise_comparisons": [], "stop_reason": "fixture"}
-                    )
+                    return json.dumps({"pairwise_comparisons": [], "stop_reason": "fixture"})
                 raise AssertionError((phase, payload))
             finally:
                 self.active_calls -= 1
@@ -736,38 +692,29 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
                 "evidence_index": [],
             },
             state=state,
-                swarm_controller=WinningSwarmController(
-                    {
-                        "policy_id": "winning_swarm_dynamic_v2",
-                        "enabled": True,
-                        "max_concurrency": max_concurrency,
-                        "coverage_expand_max_recruits": 0,
-                    }
-                ),
+            swarm_controller=WinningSwarmController(
+                {
+                    "policy_id": "winning_swarm_dynamic_v2",
+                    "enabled": True,
+                    "max_concurrency": max_concurrency,
+                    "coverage_expand_max_recruits": 0,
+                }
+            ),
             valid_reference_ids=set(),
         )
 
-        progress = [
-            {**details, "event_type": args[0] if args else ""}
-            for args, details in events
-        ]
+        progress = [{**details, "event_type": args[0] if args else ""} for args, details in events]
         s3_done = [
             index
             for index, row in enumerate(progress)
-            if row.get("event_type") == "winning_agent_session_completed"
-            and row.get("mission_node") == "S3"
+            if row.get("event_type") == "winning_agent_session_completed" and row.get("mission_node") == "S3"
         ]
         s4_started = [
             index
             for index, row in enumerate(progress)
-            if row.get("event_type") == "winning_agent_session_started"
-            and row.get("mission_node") == "S4"
+            if row.get("event_type") == "winning_agent_session_started" and row.get("mission_node") == "S4"
         ]
-        boundary = [
-            row
-            for row in progress
-            if row.get("event_type") == "winning_s4_incremental_boundary_opened"
-        ]
+        boundary = [row for row in progress if row.get("event_type") == "winning_s4_incremental_boundary_opened"]
         boundary_index = next(
             index
             for index, row in enumerate(progress)
@@ -775,13 +722,14 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
         )
         assert len(s3_done) == 3
         assert s4_started
-        assert boundary and boundary[0]["completed_s3_instance_ids"]
-        assert min(s3_done) < boundary_index < min(s4_started) < max(s3_done)
+        assert boundary
+        assert boundary[0]["parallel_start"] is True
+        assert boundary[0]["completed_s3_instance_ids"] == []
+        assert len(boundary[0]["remaining_s3_instance_ids"]) == 3
+        assert boundary_index < min(s3_done)
+        assert boundary_index < min(s4_started) < max(s3_done)
         assert host.maximum_active_calls <= max_concurrency
-        assert (
-            accumulated["winning_swarm"]["budget"]["maximum_observed_concurrency"]
-            <= max_concurrency
-        )
+        assert accumulated["winning_swarm"]["budget"]["maximum_observed_concurrency"] <= max_concurrency
 
     asyncio.run(scenario())
 
@@ -811,9 +759,7 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
         def _provider_for(self, *args, **kwargs):
             return SimpleNamespace(snapshot=lambda: {})
 
-        async def _run_core_json(
-            self, agent, system, payload, schema, *args, phase="", **kwargs
-        ):
+        async def _run_core_json(self, agent, system, payload, schema, *args, phase="", **kwargs):
             self.calls.append((phase, system, payload))
             if "reasoning_seeds" in schema:
                 return json.dumps({"reasoning_seeds": []})
@@ -826,9 +772,7 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
                         "hypotheses": [
                             {
                                 "name": f"独立前出装备{self.creator_count}",
-                                "concise_winning_summary": (
-                                    "在当前任务链断点前出部署并直接形成可观察战果。"
-                                ),
+                                "concise_winning_summary": ("在当前任务链断点前出部署并直接形成可观察战果。"),
                             }
                         ]
                     },
@@ -860,9 +804,7 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
                 return json.dumps(
                     {
                         "decisions": decisions,
-                        "portfolio_order": [
-                            str(row.get("hypothesis_id", "")) for row in rows
-                        ],
+                        "portfolio_order": [str(row.get("hypothesis_id", "")) for row in rows],
                     },
                     ensure_ascii=False,
                 )
@@ -895,28 +837,19 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
                 "evidence_index": [],
             },
             state=state,
-            swarm_controller=WinningSwarmController(
-                {"policy_id": "winning_swarm_dynamic_v2", "enabled": True}
-            ),
+            swarm_controller=WinningSwarmController({"policy_id": "winning_swarm_dynamic_v2", "enabled": True}),
             valid_reference_ids=set(),
         )
 
         invalid_rows = [
-            row
-            for row in state.swarm_rejections
-            if row.get("stage") == "full_pool_s5_invalid_merge_target"
+            row for row in state.swarm_rejections if row.get("stage") == "full_pool_s5_invalid_merge_target"
         ]
         assert invalid_rows
         rejected_id = invalid_rows[0]["hypothesis_id"]
         assert invalid_rows[0]["review_vote_only"] is True
-        assert rejected_id in {
-            row["hypothesis_id"]
-            for row in accumulated["winning_swarm"]["hypotheses"]
-        }
+        assert rejected_id in {row["hypothesis_id"] for row in accumulated["winning_swarm"]["hypotheses"]}
         assert any(
-            args
-            and args[0] == "winning_s5_invalid_merge_rejected"
-            and kwargs.get("hypothesis_id") == rejected_id
+            args and args[0] == "winning_s5_invalid_merge_rejected" and kwargs.get("hypothesis_id") == rejected_id
             for args, kwargs in events
         )
 

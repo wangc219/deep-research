@@ -122,6 +122,9 @@ def _complete_s6_test_modules(name: str) -> dict[str, str]:
             "让每次目标确认都有可追溯依据，并在证据恶化时及时降级，而不是继续沿用依赖地面席位逐帧判读的实现方式。"
             "为防止感知模块给出高置信但无法攻击的假结论，任务计算机还要将目标证据与可达域、会遇几何和引信触发条件同步更新。"
             "软件输出必须能由独立安全监控通道否决，硬件则需在震动、温升和电源波动下保持门限计算一致，才能支撑实际落装。"
+            "形成两条差异化新质技术原理路线：主路径以资源受限多模态模型和可解释安全监控器在弹载任务计算单元内闭合复核，"
+            "备选路径以事件驱动视觉器件和规则化证据门控降低算力依赖。现有方法的研发卡点是高动态目标与弹载资源双重约束，"
+            "应优先突破稀疏推理、安全联锁和接口时延闭合方法，再嵌入导引头—任务计算机—飞控的联合构型。"
         ),
         "operational_process": (
             "发射平台先装订任务区、目标类别、禁击对象和最大自主权限，随后释放武器沿组合导航"
@@ -242,14 +245,14 @@ def test_parallel_s6_card_instruction_is_compact_but_preserves_authority() -> No
     assert "solution_thesis" in instruction
     assert "core_innovation_thesis" in instruction
     assert "当前背景、解决思路、达到效果、核心创新" in instruction
-    assert "敌方具体代价" in instruction
-    assert "原理假设、公开依据、关键约束、候选路径、验证判据" in instruction
+    assert "敌方代价" in instruction
+    assert "不同原理路线如何攻克断点—研发卡点如何突破—突破后怎样转成装备功能或构型" in instruction
     assert "system_contribution_thesis、indicator_portrait" in instruction
     assert "指标从制胜机理和风险反推" in instruction
-    assert "不得复用其他卡的骨架、指标、技术路线或验收句式" in instruction
+    assert "不复用其他卡的骨架、路线或验收句式" in instruction
     assert "口号" in instruction and "因果" in instruction
     assert "严禁为凑字复用跨栏句子" in instruction
-    assert "导航精度、平台适配、保障" in instruction
+    assert "材料特性、成熟度和耦合关系只在影响路线选择时展开" in instruction
     assert "INNOVATIVE_CAPABILITY_IMAGE_GUIDANCE" not in instruction
 
 

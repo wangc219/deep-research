@@ -1,14 +1,17 @@
 import asyncio
 import copy
+import hashlib
+import unicodedata
 import os
 import re
 import tempfile
 import threading
 import time
+from html import escape
 from contextlib import suppress
 from pathlib import Path, PurePosixPath
 from typing import Annotated
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -17,7 +20,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool as langchain_tool
 from langgraph.prebuilt.tool_node import ToolRuntime
 from langgraph.types import Command, interrupt
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from platform_core.agents.backends.paths import (
     VIRTUAL_PATH_PREFIX,
@@ -27,6 +30,7 @@ from platform_core.agents.backends.sandbox import ProvisionerSandboxBackend
 from platform_core.agents.toolkits.registry import ToolExtraMetadata, _all_tool_instances, _extra_registry, tool
 from platform_core.config.options import system_options
 from platform_core.services.web_search_coordinator import (
+    antibot_delay,
     coordinated_search,
     get_active_search_coordinator,
     rate_limit_delay,
@@ -58,6 +62,37 @@ _OPEN_WEBSEARCH_SUPPORTED_ENGINES = {
     "sogou",
     "startpage",
 }
+
+# 这些域名主要承载政府/军队原文、标准或论文出版页。它们只在已经
+# 通过主题相关性过滤后获得排序加权，不会让无关的“权威站点”越过主题门槛。
+_AUTHORITATIVE_SEARCH_DOMAINS = (
+    "81.cn",
+    "acm.org",
+    "arxiv.org",
+    "avic.com",
+    "cas.cn",
+    "cetc.com.cn",
+    "cssc.net.cn",
+    "defense.gov",
+    "doi.org",
+    "dtic.mil",
+    "engineering.org.cn",
+    "europa.eu",
+    "ieee.org",
+    "iec.ch",
+    "iopscience.iop.org",
+    "iso.org",
+    "mdpi.com",
+    "nature.com",
+    "nato.int",
+    "nist.gov",
+    "norinco.com",
+    "sciencedirect.com",
+    "springer.com",
+    "spacechina.com",
+    "tandfonline.com",
+    "wiley.com",
+)
 
 # Search runs are shared by the main agent and all of its worker processes in a
 # Python worker.  Keeping provider health here prevents ten parallel research
@@ -91,14 +126,39 @@ PUBLIC_SEARCH_DESCRIPTION = """执行公网网页搜索，返回可核验的网�
 
 检索要求：每次围绕一个明确证据缺口，用实体名 + 技术/指标的 2-5 个关键词；不要把整个任务写成查询。
 每次保留核心对象/实体名，不要只查询“数据、发展、效率”等泛词；中文命中差时可用对应英文术语做一次定向查询。
-结果经过关键词相关性过滤，仍需核验是否回答当前子问题；只出现泛词的页面不能作为证据。
-重要结论至少交叉核验两个独立来源，优先原始资料和权威机构。结果摘要不等于阅读全文。
+装备类任务的完整检索计划应分别覆盖国内中文来源、国外英文来源和近 2-3 年前沿进展；这是多次互补调用的要求，
+不要在一次 query 中堆叠三组关键词。国内和国外结果互不替代；前沿检索应加入年份或
+recent/latest/prototype/trial/deployment 等词，
+并在使用结果时保留发布日期或年份，区分已部署或在役、公开试验、原型样机和论文概念；最终回答必须逐字使用这四个类别标签，
+逐项给出证据或说明无有效命中。
+任一地域无有效结果时应披露缺口。
+国内装备检索首次优先用 sites 限定 1-4 个主题相关的官方域名，例如 81.cn、mod.gov.cn、gov.cn、cas.cn、
+cetc.com.cn、avic.com、norinco.com 或 spacechina.com；限定检索为空时才放宽一次。若只返回百科、自媒体、聚合媒体或转载，
+国内覆盖尚未完成，应再做一次官方站点定向检索或明确披露缺口。
+装备类任务通常执行 6-8 次精确检索，覆盖国内官方及补充来源、国外军方/政府/原厂及具体装备、近 2-3 年前沿进展，
+并留出 1-2 次交叉核验或补缺；每次回答不同证据缺口。重复 URL、同题转载、低相关结果和泛词重合页面不计入有效证据。
+装备类任务的每一次检索都必须传 required_terms，即使 query 中已有具体型号也不能省略；通常只设 1-2 个身份锚点。
+英文检索式只保留 3-5 个有区分度的词，首次为空时缩短检索式，
+改用具体装备型号或原厂名加作用/试验词定向重查一次，不要继续堆叠同义词。
+容易发生主题漂移时，在 required_terms 中填写 1-2 个必须出现在标题或摘要里的身份锚点；
+只有三者确实必须同页共现时才使用 3 个。
+不要把待证明的结论、三个不同子问题、“技术/研究/发展”等泛词或互为同义词的多个表达设为必选锚点。
+罕见术语或新名称先按原文精确检索，再按可信来源给出的英文名/旧称分别查证；不凭空生成名称。
+跨学科问题拆为“对象/现象 + 机理”和“机理 + 目标领域”两条互补检索，核对适用条件，避免只返回常用技术。
+required_term_groups 可表达真实别名的 OR 匹配；组间仍为 AND。required_terms 中不要同时强制同一名称的中英文。
+新兴主题先发现原始论文/机构来源，再查独立复现、评论与反例；没有直接证据时明确缺口。
+结果经过关键词相关性过滤、同题去重、站点多样性和权威来源排序，并用 source_tier 标注来源层级；
+仍需核验是否回答当前子问题。
+重要结论至少交叉核验两个独立来源，优先 source_tier=authoritative 的政府/军队、标准、论文出版页等原始或权威材料；
+已有原始出版页时不要用聚合转载页代替。结果摘要不等于阅读全文。
 status=empty 表示本次查询无有效命中，可针对具体缺口调整一次；status=degraded 表示服务故障，停止网页重试。
 """
 
 
 class DoubaoSearchInput(BaseModel):
-    query: str = Field(description="搜索查询词，1-100字符，必须精准描述检索需求")
+    query: str = Field(
+        min_length=1, max_length=500, description="公开搜索词，1-500字符；保留罕见术语和新名称，按证据缺口查询"
+    )
     count: int = Field(default=10, ge=1, le=50, description="返回搜索结果数量，支持 1-50 条，默认 10 条")
     time_range: str | None = Field(
         default=None,
@@ -116,6 +176,30 @@ class DoubaoSearchInput(BaseModel):
     )
     block_hosts: list[str] | None = Field(
         default=None, description="指定屏蔽的搜索域名列表 (如 ['example.com'])，最多支持 5 个站点"
+    )
+    required_terms: list[str] | None = Field(
+        default=None,
+        max_length=3,
+        description=(
+            "核心主题锚点，最多 3 个；每个锚点都必须出现在结果标题或摘要中。"
+            "用于排除同名、泛词和主题漂移，不要填写宽泛词或互为同义词的表达"
+        ),
+    )
+    required_term_groups: (
+        list[
+            Annotated[
+                list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]],
+                Field(min_length=1, max_length=6),
+            ]
+        ]
+        | None
+    ) = Field(
+        default=None,
+        max_length=3,
+        description=(
+            "真实别名组：组内 OR，组间 AND；适用于中英文、新旧命名、学科别名。"
+            "仅填来源确认的同一实体名称，不能把无关技术放入同组"
+        ),
     )
     content_format: str = Field(
         default="text", description="正文返回格式，支持 'text' (纯文本) 或 'markdown' (Markdown 格式)，默认 'text'"
@@ -188,12 +272,15 @@ def _doubao_search(
     time_range: str | None = None,
     sites: list[str] | None = None,
     block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
 ) -> dict:
     api_key = os.getenv("DOUBAO_SEARCH_API_KEY")
     if not api_key:
         return {"query": query, "results": [], "error": "DOUBAO_SEARCH_API_KEY 未配置"}
 
+    del required_terms, required_term_groups
     payload = _build_doubao_search_payload(query, count, time_range, sites, block_hosts, content_format)
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -240,6 +327,8 @@ def _parse_open_websearch_response(
     count: int,
     block_hosts: list[str] | None = None,
     sites: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
 ) -> dict:
     """把 open-websearch daemon 响应规范为平台统一检索协议。"""
 
@@ -272,6 +361,10 @@ def _parse_open_websearch_response(
             )[:4000],
             "site_name": hostname,
         }
+        source_label = " ".join(str(item.get("source") or "").split())
+        if source_label and re.search(r"(?:[a-z0-9-]+\.)+[a-z]{2,}", source_label, re.IGNORECASE):
+            result["source_label"] = source_label[:500]
+            result["source_host"] = _normalize_search_host(source_label)
         if item.get("engine"):
             result["search_engine"] = str(item["engine"])
         results.append(result)
@@ -289,9 +382,23 @@ def _parse_open_websearch_response(
     failed_engines = {item.get("engine") for item in (partial_failures or []) if isinstance(item, dict)}
     if not results and engines and set(engines).issubset(failed_engines):
         output["error"] = "open-websearch 所有请求引擎均失败"
+        blocked_delays = [antibot_delay(item) for item in partial_failures if isinstance(item, dict)]
+        limited_delays = [rate_limit_delay(item) for item in partial_failures if isinstance(item, dict)]
+        if any(blocked_delays):
+            output.update(status="blocked", retry_after_seconds=max(blocked_delays))
+        elif any(limited_delays):
+            output.update(status="rate_limited", retry_after_seconds=max(limited_delays), engine_cooldown=True)
     elif not results:
         output["status"] = "empty"
-    return _filter_search_results(output, query, count=count, sites=sites, block_hosts=block_hosts)
+    return _filter_search_results(
+        output,
+        query,
+        count=count,
+        sites=sites,
+        block_hosts=block_hosts,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
+    )
 
 
 @langchain_tool("web_search", args_schema=DoubaoSearchInput, description=PUBLIC_SEARCH_DESCRIPTION)
@@ -301,12 +408,14 @@ def _open_websearch(
     time_range: str | None = None,
     sites: list[str] | None = None,
     block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
 ) -> dict:
     """通过随项目部署的 open-websearch daemon 执行多引擎检索。"""
 
     del time_range, content_format
-    normalized_query = " ".join(str(query or "").split())[:100]
+    normalized_query = " ".join(str(query or "").split())[:500]
     site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
     site_hosts = [host for host in site_hosts if host]
     search_query = normalized_query
@@ -334,6 +443,7 @@ def _open_websearch(
             "query": normalized_query,
             "results": [],
             "status": "rate_limited",
+            "engine_cooldown": True,
             "retry_after_seconds": min(delays.values()),
             "error": "搜索引擎正在按限流响应冷却",
         }
@@ -342,22 +452,48 @@ def _open_websearch(
             f"{base_url}/search",
             json={
                 "query": search_query,
-                "limit": max(1, min(int(count), 50)),
+                "limit": max(20, min(int(count) * 3, 50)),
                 "engines": engines,
             },
         )
+        if response.status_code == 403:
+            return _parse_open_websearch_response(
+                normalized_query,
+                {
+                    "engines": engines,
+                    "results": [],
+                    "partialFailures": [
+                        {"engine": engine, "status_code": 403, "message": "daemon access denied"} for engine in engines
+                    ],
+                },
+                count=count,
+            )
         response.raise_for_status()
-        envelope = response.json()
+        try:
+            envelope = response.json()
+        except ValueError:
+            if not antibot_delay({"message": response.text}):
+                raise
+            envelope = {"status": "error", "error": {"code": "antibot_challenge", "message": "daemon 访问验证"}}
 
     if not isinstance(envelope, dict) or envelope.get("status") != "ok":
         error = envelope.get("error") if isinstance(envelope, dict) else None
         message = error.get("message") if isinstance(error, dict) else "daemon 返回无效响应"
-        return {
+        failure = {
             "query": normalized_query,
             "results": [],
             "provider": "open-websearch",
             "error": str(message)[:300],
         }
+        if isinstance(error, dict):
+            failure["code"] = error.get("code")
+        delay = antibot_delay(failure)
+        if delay:
+            if coordinator:
+                for engine in engines:
+                    coordinator.cool_engine(engine, delay)
+            failure.update(status="blocked", retry_after_seconds=delay)
+        return failure
     data = envelope.get("data")
     if not isinstance(data, dict):
         return {
@@ -372,6 +508,8 @@ def _open_websearch(
         count=count,
         block_hosts=block_hosts,
         sites=sites,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
     )
 
 
@@ -411,6 +549,8 @@ def _parse_public_search_response(
     count: int,
     block_hosts: list[str] | None = None,
     sites: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
 ) -> dict:
     """解析公开搜索页，只输出标题、摘要和原始 URL。"""
 
@@ -453,6 +593,8 @@ def _parse_public_search_response(
         count=count,
         sites=sites,
         block_hosts=block_hosts,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
     )
 
 
@@ -536,11 +678,13 @@ def _public_search(
     time_range: str | None = None,
     sites: list[str] | None = None,
     block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
 ) -> dict:
     """无需专用 API Key 的公网检索兜底，确保深研始终可访问公开资料。"""
 
-    normalized_query = " ".join(str(query or "").split())[:100]
+    normalized_query = " ".join(str(query or "").split())[:500]
     site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
     site_hosts = [host for host in site_hosts if host]
     search_query = normalized_query
@@ -574,6 +718,7 @@ def _public_search(
     failures: list[dict[str, str | int]] = []
     coordinator = get_active_search_coordinator()
     retry_after = 0.0
+    blocked_endpoints = set()
     academic_query = _looks_academic_query(normalized_query, sites)
     crossref_delay = coordinator.engine_remaining("crossref") if academic_query and coordinator else 0
     retry_after = max(retry_after, crossref_delay)
@@ -586,7 +731,13 @@ def _public_search(
                 headers=headers,
             )
             academic = _filter_search_results(
-                academic, normalized_query, count=count, sites=sites, block_hosts=block_hosts
+                academic,
+                normalized_query,
+                count=count,
+                sites=sites,
+                block_hosts=block_hosts,
+                required_terms=required_terms,
+                required_term_groups=required_term_groups,
             )
             if academic["results"]:
                 return academic
@@ -615,26 +766,43 @@ def _public_search(
                 count=count,
                 block_hosts=block_hosts,
                 sites=sites,
+                required_terms=required_terms,
+                required_term_groups=required_term_groups,
             )
             if result["results"]:
                 result["search_endpoint"] = endpoint
                 return result
+            challenge = {"message": response.text} if isinstance(response.text, str) else {}
+            delay = antibot_delay(challenge)
+            if delay:
+                blocked_endpoints.add(endpoint)
+                retry_after = max(retry_after, delay)
+                if coordinator:
+                    coordinator.cool_engine(endpoint, delay)
             failures.append(
                 {
                     "endpoint": endpoint,
                     "status_code": response.status_code,
                     "error": (
-                        "irrelevant_results" if result.get("filtered_irrelevant_count") else "empty_or_antibot_response"
+                        "antibot_challenge"
+                        if delay
+                        else "irrelevant_results"
+                        if result.get("filtered_irrelevant_count")
+                        else "empty_response"
                     ),
                 }
             )
         except Exception as exc:
-            delay = rate_limit_delay(search_failure(exc))
+            failure = search_failure(exc)
+            blocked_delay = antibot_delay(failure)
+            delay = blocked_delay or rate_limit_delay(failure)
+            if blocked_delay:
+                blocked_endpoints.add(endpoint)
             if delay:
                 retry_after = max(retry_after, delay)
                 if coordinator:
                     coordinator.cool_engine(endpoint, delay)
-            failures.append({"endpoint": endpoint, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
+            failures.append({"endpoint": endpoint, **failure})
             logger.warning(f"Public search endpoint '{endpoint}' failed: {exc}")
     return {
         "query": normalized_query,
@@ -642,7 +810,9 @@ def _public_search(
         "provider": "public",
         "failures": failures,
         **(
-            {"status": "empty"}
+            {"status": "blocked", "retry_after_seconds": retry_after, "error": "公网搜索触发访问验证，已停止请求"}
+            if blocked_endpoints and not any(item["error"] == "empty_response" for item in failures)
+            else {"status": "empty"}
             if any(item["error"] in {"irrelevant_results", "empty_response"} for item in failures)
             else (
                 {"status": "rate_limited", "retry_after_seconds": retry_after, "error": "公网后端临时限流"}
@@ -729,6 +899,8 @@ def _web_search_cache_key(provider_order: list[str], arguments: dict) -> tuple:
         str(arguments.get("time_range") or ""),
         tuple(str(item).casefold() for item in (arguments.get("sites") or [])),
         tuple(str(item).casefold() for item in (arguments.get("block_hosts") or [])),
+        tuple(str(item).casefold() for item in (arguments.get("required_terms") or [])),
+        tuple(tuple(str(term).casefold() for term in group) for group in (arguments.get("required_term_groups") or [])),
         str(arguments.get("content_format") or "text").casefold(),
         os.getenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo").casefold(),
     )
@@ -806,6 +978,36 @@ def _normalize_provider_search_result(provider: str, query: str, raw: object) ->
     return result
 
 
+def _normalize_search_text(value: str) -> str:
+    """统一全半角、大小写和科学术语常见的 Unicode 连字符。"""
+    return " ".join(
+        unicodedata.normalize("NFKC", str(value or "")).casefold().translate(str.maketrans("‐‑‒–—−", "------")).split()
+    )
+
+
+def _search_url_identity(value: str) -> str:
+    """仅为去重移除跟踪参数与片段，引用始终保留实际返回的 URL。"""
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return ""
+    tracking = {"fbclid", "gclid", "msclkid"}
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if not key.casefold().startswith("utm_") and key.casefold() not in tracking
+    ]
+    return urlunparse(
+        (
+            parsed.scheme.casefold(),
+            parsed.netloc.casefold(),
+            parsed.path or "/",
+            parsed.params,
+            urlencode(sorted(query)),
+            "",
+        )
+    )
+
+
 def _search_query_terms(query: str) -> set[str]:
     """提取主题词，排除站点操作符、年份和不提供主题信息的泛词。"""
     ignored = {
@@ -830,6 +1032,14 @@ def _search_query_terms(query: str) -> set[str]:
         "analysis",
         "data",
         "development",
+        "latest",
+        "recent",
+        "experimental",
+        "experiment",
+        "experiments",
+        "evidence",
+        "review",
+        "progress",
         "资料",
         "相关",
         "研究",
@@ -842,38 +1052,130 @@ def _search_query_terms(query: str) -> set[str]:
         "技术",
         "计划",
     }
+    query = _normalize_search_text(query)
     detail = re.sub(r"\bsite:\S+|(?<!\S)-\S+", " ", query.casefold())
     terms = set(re.findall(r"[a-z0-9]+(?:[.-][a-z0-9]+)*|[\u4e00-\u9fff]+", detail)) - ignored
     return {term for term in terms if len(term) >= 2 and not re.fullmatch(r"(?:19|20)\d{2}", term)}
 
 
-def _rank_search_results(query: str, results: list[dict]) -> list[dict]:
-    """按独立主题词覆盖排序，避免一个长词的零散双字片段凑成相关命中。"""
+def _term_matches_text(term: str, text: str) -> bool:
+    """匹配一个完整主题词，拒绝偶然字符碎片。"""
+    term = _normalize_search_text(term).strip("\"' ")
+    text = _normalize_search_text(text)
+    if len(term) < 2:
+        return False
+    if re.fullmatch(r"[\u4e00-\u9fff]+", term):
+        pairs = {term[index : index + 2] for index in range(len(term) - 1)}
+        covered = sum(pair in text for pair in pairs)
+        return term in text or (len(term) >= 4 and covered >= 2 and covered / len(pairs) >= 0.6)
+    if " " in term:
+        return term in text or all(_term_matches_text(part, text) for part in term.split())
+    if re.fullmatch(r"[a-z0-9]+(?:[.-][a-z0-9]+)+", term):
+        parts = re.split(r"[.-]+", term)
+        return bool(re.search(r"(?<![a-z0-9])" + r"[^a-z0-9]+".join(map(re.escape, parts)) + r"(?![a-z0-9])", text))
+    return bool(re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text))
+
+
+def _search_source_tier(item: dict) -> str:
+    """标注可稳定识别的政府、军队、标准与论文原始/权威入口。"""
+    raw_url = str(item.get("url") or "")
+    hosts = {_normalize_search_host(raw_url)}
+    hosts.discard("")
+    if not hosts:
+        return "other"
+    if any(host.endswith((".gov", ".mil", ".edu", ".gov.cn", ".mil.cn", ".ac.cn", ".ac.uk")) for host in hosts):
+        return "authoritative"
+    if any(host == domain or host.endswith(f".{domain}") for host in hosts for domain in _AUTHORITATIVE_SEARCH_DOMAINS):
+        return "authoritative"
+    return "other"
+
+
+def _search_result_title_key(item: dict) -> str:
+    """同一题名的聚合页与出版页只保留排序更高的一条。"""
+    title = BeautifulSoup(str(item.get("title") or ""), "html.parser").get_text(" ", strip=True).casefold()
+    title = re.sub(r"\s+(?:-|\||–|—)\s+(?:mdpi|researchgate|springer|ieee|sciencedirect)$", "", title)
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", title)
+
+
+def _rank_search_results(
+    query: str,
+    results: list[dict],
+    *,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
+) -> list[dict]:
+    """按主题覆盖和标题命中排序，并严格执行核心主题锚点。"""
     terms = _search_query_terms(query)
     if not terms:
         return []
+    anchors = [" ".join(str(term or "").split())[:80] for term in (required_terms or [])[:3]]
+    anchors = [term for term in anchors if len(term) >= 2]
+    phrases = re.findall(r'["“]([^"”]{2,100})["”]', query)
+    groups = required_term_groups or []
+    identities = anchors + phrases + [alias for group in groups for alias in group]
+    context_terms = {
+        term
+        for term in terms
+        if not any(_term_matches_text(term, _normalize_search_text(identity)) for identity in identities)
+    }
     scored = []
     for item in results:
         if not isinstance(item, dict):
             continue
-        text = (
-            BeautifulSoup(f"{item.get('title', '')} {item.get('content', '')}", "html.parser")
-            .get_text(" ", strip=True)
-            .casefold()
-        )
+        title = BeautifulSoup(str(item.get("title") or ""), "html.parser").get_text(" ", strip=True).casefold()
+        content = BeautifulSoup(str(item.get("content") or ""), "html.parser").get_text(" ", strip=True).casefold()
+        text = f"{title} {content}".strip()
+        phrase_text = _normalize_search_text(text).replace("-", " ")
+        if phrases and not all(_normalize_search_text(phrase).replace("-", " ") in phrase_text for phrase in phrases):
+            continue
+        if anchors and not all(_term_matches_text(anchor, text) for anchor in anchors):
+            continue
+        if groups and not all(any(_term_matches_text(alias, text) for alias in group) for group in groups):
+            continue
         score = 0
+        coverage = 0
         for term in terms:
-            if re.fullmatch(r"[\u4e00-\u9fff]+", term):
-                # 长中文复合词允许词序/部分修饰变化，但必须覆盖大部分，且只计一个主题词。
-                pairs = {term[index : index + 2] for index in range(len(term) - 1)}
-                covered = sum(pair in text for pair in pairs)
-                matched = term in text or (len(term) >= 4 and covered >= 2 and covered / len(pairs) >= 0.6)
-            else:
-                matched = bool(re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text))
-            score += matched
-        scored.append((score, item))
+            title_match = _term_matches_text(term, title)
+            content_match = title_match or _term_matches_text(term, content)
+            coverage += int(content_match)
+            score += 3 if title_match else 1 if content_match else 0
+        authority = int(_search_source_tier(item) == "authoritative")
+        # 明确身份锚点（包括另一语言的真实别名）已匹配时，不再强迫命中原查询的第二个泛词。
+        if anchors or groups or phrases:
+            # 单个名称只能替代其别名，不能抹掉跨学科问题中的其他研究对象。
+            # 多个身份组已经分别执行 AND；单个组仍需命中有区分度的上下文。
+            if len(anchors) + len(groups) + len(phrases) == 1 and context_terms:
+                if not any(_term_matches_text(term, text) for term in context_terms):
+                    continue
+            coverage = max(coverage, min(2, len(terms)))
+            score += 3
+        scored.append((score + authority * 2, score, coverage, item))
     minimum_coverage = min(2, len(terms))
-    return [item for score, item in sorted(scored, key=lambda pair: pair[0], reverse=True) if score >= minimum_coverage]
+    ranked = [
+        item
+        for _weighted, _score, coverage, item in sorted(
+            scored,
+            key=lambda row: (row[0], row[1], row[2]),
+            reverse=True,
+        )
+        if coverage >= minimum_coverage
+    ]
+    unique = []
+    seen_titles: set[str] = set()
+    for item in ranked:
+        title_key = _search_result_title_key(item)
+        if title_key and title_key in seen_titles:
+            continue
+        if title_key:
+            seen_titles.add(title_key)
+        unique.append(item)
+    # 保留相关性筛选后的顺序，优先呈现不同站点；第三条同站结果延后而非丢弃。
+    diversified, deferred, host_counts = [], [], {}
+    for item in unique:
+        host = _normalize_search_host(item.get("url") or "")
+        host_counts[host] = host_counts.get(host, 0) + 1
+        (diversified if host_counts[host] <= 2 else deferred).append(item)
+    return diversified + deferred
 
 
 def _filter_search_results(
@@ -883,12 +1185,15 @@ def _filter_search_results(
     count: int = 10,
     sites: list[str] | None = None,
     block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
 ) -> dict:
     """统一执行相关性、域名和数量约束，先筛选再截断。"""
     original = result.get("results") or []
     allowed = {_normalize_search_host(host) for host in sites or []} - {""}
     blocked = {_normalize_search_host(host) for host in block_hosts or []} - {""}
     scoped = []
+    seen_urls = set()
     for item in original:
         if not isinstance(item, dict):
             continue
@@ -897,10 +1202,25 @@ def _filter_search_results(
             continue
         if any(host == domain or host.endswith(f".{domain}") for domain in blocked):
             continue
+        identity = _search_url_identity(str(item.get("url") or ""))
+        if not identity or identity in seen_urls:
+            continue
+        seen_urls.add(identity)
         scoped.append(item)
-    relevant = _rank_search_results(query, scoped)
+    relevant = _rank_search_results(
+        query, scoped, required_terms=required_terms, required_term_groups=required_term_groups
+    )
     filtered = int(result.get("filtered_irrelevant_count") or 0) + len(original) - len(relevant)
-    output = {**result, "query": query, "results": relevant[: max(1, min(int(count), 50))]}
+    selected = [{**item, "source_tier": _search_source_tier(item)} for item in relevant[: max(1, min(int(count), 50))]]
+    for index, item in enumerate(selected, 1):
+        item["source_id"] = hashlib.sha256(_search_url_identity(str(item["url"])).encode()).hexdigest()[:16]
+        item["citation"] = f'<cite source="{escape(str(item["url"]), quote=True)}" type="url">{index}</cite>'
+    output = {**result, "query": query, "results": selected}
+    output["distinct_domains"] = len({_normalize_search_host(item.get("url") or "") for item in selected})
+    output["source_quality"] = {
+        "authoritative": sum(item.get("source_tier") == "authoritative" for item in selected),
+        "other": sum(item.get("source_tier") != "authoritative" for item in selected),
+    }
     if filtered:
         output["filtered_irrelevant_count"] = filtered
     if (
@@ -911,6 +1231,7 @@ def _filter_search_results(
             "rate_limited",
             "unavailable",
             "degraded",
+            "blocked",
         }
     ):
         output["status"] = "empty"
@@ -926,10 +1247,20 @@ def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
     """执行供应商原始实现，避免嵌套工具事件生成无声明的调用 ID。"""
 
     _, factory, _ = _WEB_SEARCH_PROVIDERS[provider]
+    # required_terms is a platform-side relevance constraint, not a supplier
+    # query parameter.  Keeping it out of adapters also preserves compatibility
+    # with third-party tools such as Tavily.
+    provider_arguments = {
+        key: value for key, value in arguments.items() if key not in {"required_terms", "required_term_groups"}
+    }
+    if provider in {"open-websearch", "public", "doubao"}:
+        provider_arguments.update(
+            {key: arguments[key] for key in ("required_terms", "required_term_groups") if arguments.get(key)}
+        )
     tool = factory()
     raw_function = getattr(tool, "func", None)
     if callable(raw_function):
-        raw = raw_function(**arguments)
+        raw = raw_function(**provider_arguments)
     elif provider == "tavily":
         # Tavily exposes a BaseTool rather than a StructuredTool.  Calling its
         # implementation directly avoids nested lifecycle callbacks while
@@ -962,7 +1293,7 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
     a query and generating the repeated failure narration seen in deep research.
     """
 
-    query = " ".join(str(arguments.get("query") or "").split())[:100]
+    query = " ".join(str(arguments.get("query") or "").split())[:500]
     arguments = {**arguments, "query": query}
     if not _search_query_terms(query):
         return {
@@ -985,6 +1316,7 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
     retry_after = 0.0
     empty_result = None
     limited_result = None
+    blocked_result = None
 
     for provider in providers:
         circuit_open, remaining = _provider_circuit_open(provider, time.monotonic())
@@ -1009,6 +1341,8 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
                 count=arguments.get("count", 10),
                 sites=arguments.get("sites"),
                 block_hosts=arguments.get("block_hosts"),
+                required_terms=arguments.get("required_terms"),
+                required_term_groups=arguments.get("required_term_groups"),
             )
             if result.get("results"):
                 _record_provider_success(provider)
@@ -1021,6 +1355,12 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
                 )
                 _cache_web_search_result(cache_key, result, time.monotonic())
                 return result
+
+            if result.get("status") == "blocked":
+                blocked_result = result
+                retry_after = max(retry_after, antibot_delay(result))
+                failures.append({"provider": provider, "error": "antibot_challenge"})
+                break
 
             if result.get("status") == "rate_limited" or rate_limit_delay(result):
                 # 短暂限流由共享调度器恢复；等待预算用完后切换后端，不即时重试或永久熔断本轮。
@@ -1057,7 +1397,7 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
             "next_action": "本次查询未找到有效命中；只针对尚未覆盖的证据缺口调整一次，再无增量则交付已有发现。",
         }
 
-    if limited_result is not None:
+    if limited_result is not None and blocked_result is None:
         return {
             "query": query,
             "results": [],
@@ -1081,8 +1421,10 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
         "attempted_providers": attempted_providers,
         "failures": failures[-6:],
         "error": "所有可用公网检索后端均暂不可用",
+        **({"reason": "antibot_challenge"} if blocked_result is not None else {}),
         "next_action": (
-            "本次子任务不要再次调用 web_search 或改写同义查询；仅本轮用户显式 @知识库且工具可用时，"
+            "本次子任务不要再次调用 web_search 或改写同义查询；使用仍可用的 AMiner；"
+            "仅本轮已授权启用知识库且工具可用时，"
             "可用 query_kbs 跨库检索；否则使用已获得来源和任务上下文继续，并标注仍缺少的公网证据。"
         ),
     }
@@ -1096,6 +1438,8 @@ def _create_resilient_web_search(primary: str):
         time_range: str | None = None,
         sites: list[str] | None = None,
         block_hosts: list[str] | None = None,
+        required_terms: list[str] | None = None,
+        required_term_groups: list[list[str]] | None = None,
         content_format: str = "text",
     ) -> dict:
         return _resilient_web_search(
@@ -1106,11 +1450,21 @@ def _create_resilient_web_search(primary: str):
                 "time_range": time_range,
                 "sites": sites,
                 "block_hosts": block_hosts,
+                "required_terms": required_terms,
+                "required_term_groups": required_term_groups,
                 "content_format": content_format,
             },
         )
 
     return resilient_web_search
+
+
+def execute_public_web_search(query: str, *, count: int = 10, sites: list[str] | None = None) -> dict:
+    """为平台页面提供统一公开检索入口，复用缓存、限流和供应商恢复。"""
+    provider = _resolve_web_search_provider()
+    if provider is None:
+        return {"results": [], "status": "unavailable", "error": "公开检索尚未配置"}
+    return _resilient_web_search(provider, {"query": query, "count": count, "sites": sites})
 
 
 def _register_web_search_tool() -> None:

@@ -9,10 +9,24 @@ from unittest.mock import AsyncMock
 
 import pytest
 from langchain.messages import AIMessageChunk, HumanMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 
 from test.unit.agent_context_fixtures import prepared_execution
 from platform_core.services import chat_service as svc
 from platform_core.services.input_message_service import build_chat_input_message
+
+
+@pytest.mark.parametrize("message", [
+    HumanMessage("内部恢复指令", additional_kwargs={"model_output_recovery": True}),
+    SystemMessage("内部执行约束"),
+    ToolMessage("tool result", tool_call_id="call1"),
+    {"role": "user", "content": "user input"},
+])
+def test_non_assistant_messages_are_not_projected_as_assistant_output(message):
+    """图内纠错消息与工具结果不能混入流式正文及失败任务输出。"""
+    assert svc._message_payload_platform_events(
+        message, metadata={}, namespace=[], thread_id="t", protocol_message_ids={}
+    ) == []
 
 
 @pytest.mark.parametrize("mode", ["chat", "resume"])

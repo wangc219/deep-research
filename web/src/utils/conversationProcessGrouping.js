@@ -107,3 +107,6 @@ export const formatEmptyRunStatus = (status) => ({
   interrupted: '本次运行已中断',
   completed: '本次运行已结束'
 })[status] || '暂无消息'
+
+export const shouldShowEmptyRunStatus = (displayItems, run) =>
+  Boolean(run && !displayItems?.length && run.status !== 'completed')

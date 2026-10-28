@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 import inspect
-from typing import Any, Awaitable, Callable, cast
+from typing import Any, Literal, cast
+from collections.abc import Awaitable, Callable
 
 from equipment_deep_research.domain.proposals import DomainWriteProposal, TraceProposal, freeze_plain, thaw_plain
 
@@ -71,6 +72,7 @@ class ToolResult:
 
 
 ToolHandler = Callable[[ToolCall, ToolExecutionContext], Awaitable[ToolResult]]
+ToolConcurrency = Literal["parallel", "exclusive"]
 
 
 @dataclass(frozen=True)
@@ -79,14 +81,32 @@ class ToolDefinition:
     description: str
     input_schema: Mapping[str, Any]
     handler: ToolHandler
+    concurrency: ToolConcurrency = "parallel"
 
     def __post_init__(self) -> None:
-        if not (inspect.iscoroutinefunction(self.handler) or inspect.iscoroutinefunction(getattr(self.handler, "__call__", None))):
+        if not (
+            inspect.iscoroutinefunction(self.handler)
+            or inspect.iscoroutinefunction(getattr(self.handler, "__call__", None))
+        ):
             raise TypeError("ToolDefinition handler must be async callable")
+        if self.concurrency not in {"parallel", "exclusive"}:
+            raise ValueError("ToolDefinition concurrency must be 'parallel' or 'exclusive'")
         object.__setattr__(self, "input_schema", cast(Mapping[str, Any], freeze_plain(self.input_schema)))
 
     def to_plain(self) -> dict[str, Any]:
-        return {"name": self.name, "description": self.description, "input_schema": thaw_plain(self.input_schema)}
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": thaw_plain(self.input_schema),
+            "concurrency": self.concurrency,
+        }
 
 
-__all__ = ["ToolCall", "ToolExecutionContext", "ToolResult", "ToolHandler", "ToolDefinition"]
+__all__ = [
+    "ToolCall",
+    "ToolExecutionContext",
+    "ToolResult",
+    "ToolHandler",
+    "ToolConcurrency",
+    "ToolDefinition",
+]

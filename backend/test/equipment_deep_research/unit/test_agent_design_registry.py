@@ -67,59 +67,25 @@ def test_s6_design_owns_capability_portrait_writing_guidance() -> None:
         .prompt_guidance()
     )
 
-    innovation = guidance["innovative_capability_image"]
-    assert "S6单装备能力画像作者" in innovation
-    assert "敌方优势" in innovation and "直接战果" in innovation
-    assert "核心技术" in innovation and "攻防交换" in innovation
-    assert "攻防交换" in innovation
-    assert "未来战场态势" in innovation
-    assert "禁止按字符硬切" in innovation
+    from equipment_deep_research.agents.dynamic_prompt_resources import load_dynamic_winning_prompt
 
-    concision = guidance["capability_portrait_concision"]
-    assert "每栏都以约400个有效中文字为中心" in concision
-    assert "复杂因果尚未闭合时可适当略多" in concision
-    assert "禁止按字符硬切" in concision
-    assert "五栏合计通常约2000至2250字" in concision
-    assert "完整句和完整逻辑优先" in concision
-    assert "严禁为凑字复用跨栏句子" in concision
-    assert "同一次Codex调用内完成取舍" in concision
-    assert "低于360字时优先补足" in concision
-
-    overview = guidance["capability_overview"]
-    assert "短卡，不是研究报告摘要" in overview
-    assert "只回答三个问题" in overview
-    assert "战场上最关键的断点" in overview
-    assert "本装备改变了什么" in overview
-    assert "直接取得什么制胜结果" in overview
-    assert "以约400个有效中文字为中心" in overview
-    assert "传统关系被打破" in overview
-    assert "对手被迫承担的代价" in overview
-    assert "不要只写‘面向某场景、具备某功能、提升某指标’" in overview
-
-    implementation = guidance["technology_implementation"]
-    assert "真正决定装备能否实现的主攻关键技术" in implementation
-    assert "最核心的技术痛点" in implementation
-    assert "必要的落装位置、作用对象和关键耦合" in implementation
-    assert "不要求展开完整实现路线" in implementation
-    assert "不做零部件清单" in implementation
-
-    process = guidance["operational_feasibility"]
-    assert "真实未来战场" in process
-    assert "能否打仗、怎样打胜仗" in process
-    assert "步骤数量和叙述结构由装备专属交战因果链决定" in process
-    assert "改变任务状态或作战结果" in process
-
-    effects = guidance["capability_effects"]
-    assert "新增了什么能力、产生了什么效果" in effects
-    assert "普通指标提升与过去无法执行的新任务" in effects
-    assert "直接战果和后续影响都来自本装备的实际作用" in effects
-    assert "新质和颠覆必须体现为" in effects
-
-    winning_logic = guidance["winning_logic"]
-    assert "本装备最有价值的判断" in winning_logic
-    assert "旧作战模式、交换关系重写与新制胜作战模式" in winning_logic
-    assert "成立条件" in winning_logic
-    assert "不把这些概念写成固定开场白或逐项提示词" in winning_logic
+    # 文案以 Markdown 资源为唯一来源；不再锁定已退役版本的逐句措辞。
+    sections = {
+        "innovative_capability_image": "system",
+        "capability_portrait_concision": "system",
+        "capability_overview": "S6_1",
+        "technology_implementation": "S6_2",
+        "operational_feasibility": "S6_3",
+        "capability_effects": "S6_4",
+        "winning_logic": "S6_5",
+    }
+    for key, section in sections.items():
+        expected = load_dynamic_winning_prompt("S6", section=section)
+        assert expected.strip(), (key, section)
+        assert guidance[key] == expected, (key, section)
+    assert "query_semantics" in guidance["innovative_capability_image"]
+    assert "candidate_weapon" in guidance["innovative_capability_image"]
+    assert "winning_logic_overview" in guidance["innovative_capability_image"]
 
 
 def test_s6_guidance_and_compact_parallel_contract_are_both_wired() -> None:

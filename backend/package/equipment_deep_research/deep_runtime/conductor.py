@@ -71,9 +71,7 @@ def working_memory_snapshot(inbound: InboundTurn) -> dict[str, Any]:
         name = _text(item.get("name"), 120)
         if not name:
             continue
-        missing = [
-            field for field in _CLOSURE_FIELDS if not _text(item.get(field), 8)
-        ]
+        missing = [field for field in _CLOSURE_FIELDS if not _text(item.get(field), 8)]
         directions.append(
             {
                 "name": name,
@@ -85,9 +83,7 @@ def working_memory_snapshot(inbound: InboundTurn) -> dict[str, Any]:
         )
     questions = memory.get("open_questions")
     open_questions = [
-        _text(item, 180)
-        for item in (questions if isinstance(questions, list) else [])[:4]
-        if _text(item, 180)
+        _text(item, 180) for item in (questions if isinstance(questions, list) else [])[:4] if _text(item, 180)
     ]
     return {
         "question": inbound.content,
@@ -158,11 +154,7 @@ async def resolve_turn_plan(
         if fallback_is_council
         else "指挥链路未返回有效选择，本轮在已有方向上做内部多维发散，不重开三席。"
     )
-    fallback_summary = (
-        "回退到重新隔离发散。"
-        if fallback_is_council
-        else "回退到工作记忆上的内部多维深化。"
-    )
+    fallback_summary = "回退到重新隔离发散。" if fallback_is_council else "回退到工作记忆上的内部多维深化。"
     if not should_conduct(inbound):
         return heuristic, meta
 
@@ -220,9 +212,7 @@ async def resolve_turn_plan(
             runtime=provider_runtime,
         )
         chosen = _parse_json(raw)
-        proposed_tools = _normalize_tools(
-            chosen.get("tools"), chosen.get("intent")
-        )
+        proposed_tools = _normalize_tools(chosen.get("tools"), chosen.get("intent"))
         if not proposed_tools:
             raise ValueError("conductor returned no governed tool choice")
     except Exception:
@@ -296,9 +286,7 @@ async def resolve_next_action(state: TurnState) -> str | None:
     """
 
     attempted = set(state.completed_tools) | {
-        str(item.get("tool", ""))
-        for item in state.observations
-        if item.get("kind") == "tool_result"
+        str(item.get("tool", "")) for item in state.observations if item.get("kind") == "tool_result"
     }
     for name in sanitize_plan(state.plan, state.inbound):
         if name not in attempted:
@@ -315,20 +303,14 @@ async def resolve_next_action(state: TurnState) -> str | None:
         strategy = result.get("research_strategy")
         strategy = strategy if isinstance(strategy, Mapping) else {}
         recommended = _text(
-            assessment.get("recommended_action")
-            or strategy.get("next_action"),
+            assessment.get("recommended_action") or strategy.get("next_action"),
             40,
         )
         recommendation_scope = _text(
-            assessment.get("recommendation_scope")
-            or strategy.get("next_action_scope"),
+            assessment.get("recommendation_scope") or strategy.get("next_action_scope"),
             24,
         ).lower()
-        if (
-            recommendation_scope == "same_turn"
-            and recommended
-            and recommended not in attempted
-        ):
+        if recommendation_scope == "same_turn" and recommended and recommended not in attempted:
             return recommended
 
     # A deployment may opt into a true observation-aware continuation.  The
@@ -342,11 +324,7 @@ async def resolve_next_action(state: TurnState) -> str | None:
         return None
     if state.inbound.command in {"help", "memory", "card"}:
         return None
-    if any(
-        item.get("kind") == "adaptive_policy_decision"
-        for item in state.observations
-        if isinstance(item, Mapping)
-    ):
+    if any(item.get("kind") == "adaptive_policy_decision" for item in state.observations if isinstance(item, Mapping)):
         return None
     latest = next(
         (
@@ -430,9 +408,8 @@ async def resolve_next_action(state: TurnState) -> str | None:
                 "from_agent_id": "deep_dialogue_orchestrator",
                 "to_agent_id": f"deep_tool_{action}" if action else "deep_dialogue_response",
                 "handoff_kind": "observation_follow_up" if action else "finish",
-                "summary_text": rationale or (
-                    f"观察后选择继续执行 {action}。" if action else "当前观察已足以回答本轮问题。"
-                ),
+                "summary_text": rationale
+                or (f"观察后选择继续执行 {action}。" if action else "当前观察已足以回答本轮问题。"),
                 "text": unresolved,
             },
         )

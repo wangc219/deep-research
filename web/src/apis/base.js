@@ -1,5 +1,6 @@
 import { useUserStore, checkAdminPermission, checkSuperAdminPermission } from '@/stores/user'
 import { message } from 'ant-design-vue'
+import { notifyDataChanged } from '@/utils/dataFreshness'
 
 function safeRequestMetadata(url, requestOptions, response = null) {
   let path = '[invalid-url]'
@@ -21,7 +22,10 @@ function safeRequestMetadata(url, requestOptions, response = null) {
 }
 
 const SAFE_ERROR_RESPONSE_HEADERS = ['x-lock-remaining', 'retry-after', 'www-authenticate']
-const SAFE_CONFLICT_MESSAGES = new Set(['历史研究任务为只读数据'])
+const SAFE_CONFLICT_MESSAGES = new Set([
+  '历史研究任务为只读数据',
+  'Query 已被其他操作更新，请刷新后重试'
+])
 
 /**
  * 统一构建查询参数，保留 0 和 false，省略空值。
@@ -43,12 +47,14 @@ export const buildQuery = (params) => {
  * 这里只生成不含账号、项目或业务正文的随机标识，避免把敏感信息写入代理日志。
  */
 export const createIdempotencyKey = (prefix = 'request') => {
-  const normalizedPrefix = String(prefix || 'request')
-    .trim()
-    .replace(/[^a-zA-Z0-9:_-]+/g, '-')
-    .slice(0, 48) || 'request'
-  const randomPart = globalThis.crypto?.randomUUID?.()
-    || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  const normalizedPrefix =
+    String(prefix || 'request')
+      .trim()
+      .replace(/[^a-zA-Z0-9:_-]+/g, '-')
+      .slice(0, 48) || 'request'
+  const randomPart =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
   return `${normalizedPrefix}:${randomPart}`
 }
 
@@ -104,7 +110,7 @@ function publicErrorMessage(url, status, headers, requiresAuth) {
       : '账户已锁定，请稍后再试'
   }
   if (status === 429) return '请求过于频繁，请稍后重试'
-  if (status >= 500) return '服务器内部错误，请使用 docker compose logs api 查看详细日志'
+  if (status >= 500) return '服务暂时不可用，请稍后重试；若持续失败，请联系管理员'
   return `请求失败: ${status}`
 }
 
@@ -126,6 +132,7 @@ export async function apiRequest(url, options = {}, requiresAuth = true, respons
     const isFormData = options?.body instanceof FormData
     // 默认请求配置
     const requestOptions = {
+      cache: 'no-store',
       ...options,
       headers: {
         ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
@@ -203,6 +210,13 @@ export async function apiRequest(url, options = {}, requiresAuth = true, respons
       }
 
       throw error
+    }
+
+    if (
+      requiresAuth &&
+      !['GET', 'HEAD', 'OPTIONS'].includes((requestOptions.method || 'GET').toUpperCase())
+    ) {
+      notifyDataChanged(safeRequestMetadata(url, requestOptions).path.split('/')[2] || 'all')
     }
 
     // 根据responseType处理响应

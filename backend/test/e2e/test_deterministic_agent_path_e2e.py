@@ -1274,7 +1274,12 @@ async def test_cancelled_run_keeps_trace_and_closes_running_model_audit(
             await conn.close()
 
         assert row
-        assert row["langfuse_trace_id"]
+        from platform_core.services.langfuse_service import is_langfuse_enabled
+
+        if is_langfuse_enabled():
+            assert row["langfuse_trace_id"]
+        else:
+            assert row["langfuse_trace_id"] is None
         assert row["output_message_id"] is None
         assert row["first_model_request_at"] is not None
         assert row["visible_assistant_count"] == 0

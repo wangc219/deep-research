@@ -103,16 +103,16 @@ async def test_superadmin_globally_manages_owner_resources_without_taking_owners
             query = response.json()
             query_id = query["query_id"]
             assert query["owner_uid"] == owner_uid
-            assert (await client.post(f"/api/equipment/queries/{query_id}/publish", headers=other)).status_code == 404
-            response = await client.post(f"/api/equipment/queries/{query_id}/publish", headers=root)
+            assert (await client.post(f"/api/equipment/queries/{query_id}/publish", headers=other, json={"expected_version": query["version"]})).status_code == 404
+            response = await client.post(f"/api/equipment/queries/{query_id}/publish", headers=root, json={"expected_version": query["version"]})
             assert response.status_code == 200, response.text
             assert response.json()["status"] == "published"
             assert response.json()["owner_uid"] == owner_uid
             assert query_id in {
-                item["query_id"] for item in (await client.get("/api/equipment/queries", headers=root)).json()
+                item["query_id"] for item in (await client.get("/api/equipment/queries", headers=root)).json()["items"]
             }
             assert query_id not in {
-                item["query_id"] for item in (await client.get("/api/equipment/queries", headers=other)).json()
+                item["query_id"] for item in (await client.get("/api/equipment/queries", headers=other)).json()["items"]
             }
 
             response = await client.post(

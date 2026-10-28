@@ -55,6 +55,131 @@ async def _default_agent_slug(test_client, headers: dict[str, str]) -> str:
     return str(agent.get("slug") or agent["agent_id"])
 
 
+async def test_equipment_default_project_matches_owner_name_and_concurrent_requests(
+    test_client, project_lifecycle_database
+):
+    """真实 HTTP 并发创建专属深研工作台，保留既有项目且不重复建项。"""
+    session_factory, uid, unrelated_project_id = project_lifecycle_database
+    async with session_factory() as db:
+        user = await db.scalar(select(User).where(User.uid == uid))
+        user.department_id = await db.scalar(select(Department.id).limit(1))
+        assert user.department_id is not None
+        await db.commit()
+        token = AuthUtils.create_access_token({"sub": str(user.id)})
+        username = user.username
+    headers = {"Authorization": f"Bearer {token}"}
+    responses = await asyncio.gather(
+        *(test_client.post("/api/projects/defaults/equipment", headers=headers) for _ in range(6))
+    )
+    assert all(response.status_code == 200 for response in responses), [
+        response.text for response in responses if response.status_code != 200
+    ]
+    projects = [response.json() for response in responses]
+    assert len({project["id"] for project in projects}) == 1
+    assert all(project["name"] == f"装备深研工作台 · {username}" for project in projects)
+    assert all(project["uid"] == uid for project in projects)
+    assert projects[0]["id"] != unrelated_project_id
+    async with session_factory() as db:
+        owned_projects = (await db.scalars(select(Project).where(Project.uid == uid))).all()
+        assert len(owned_projects) == 2
+        assert any(project.id == unrelated_project_id for project in owned_projects)
+        default_project = next(project for project in owned_projects if project.id == projects[0]["id"])
+        previous_workdir = default_project.workdir_path
+        default_project.name = f"装备深研工作台+{username}"
+        await db.commit()
+    migrated = await test_client.post("/api/projects/defaults/equipment", headers=headers)
+    assert migrated.status_code == 200, migrated.text
+    assert migrated.json()["id"] == projects[0]["id"]
+    assert migrated.json()["name"] == f"装备深研工作台 · {username}"
+    assert migrated.json()["workdir_path"] == previous_workdir
+    async with session_factory() as db:
+        default_project = await db.get(Project, projects[0]["id"])
+        default_project.name = "个人自定义工作台名称"
+        await db.commit()
+    renamed = await test_client.post("/api/projects/defaults/equipment", headers=headers)
+    assert renamed.status_code == 200
+    assert renamed.json()["id"] == projects[0]["id"]
+    assert renamed.json()["name"] == "个人自定义工作台名称"
+
+
+async def test_queries_without_project_reuse_personal_workbench(test_client, project_lifecycle_database):
+    """真实 HTTP 并发写入 Query 与打开工作台时只建一个个人默认项目。"""
+    from platform_core.storage.postgres.models_equipment import (
+        EquipmentDeepSession,
+        EquipmentQuery,
+        EquipmentQueryRevision,
+        EquipmentResearchRun,
+    )
+
+    session_factory, uid, unrelated_project_id = project_lifecycle_database
+    async with session_factory() as db:
+        user = await db.scalar(select(User).where(User.uid == uid))
+        user.department_id = await db.scalar(select(Department.id).limit(1))
+        await db.commit()
+        username = user.username
+        token = AuthUtils.create_access_token({"sub": str(user.id)})
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        responses = await asyncio.gather(
+            test_client.post("/api/projects/defaults/equipment", headers=headers),
+            *(
+                test_client.post(
+                    "/api/equipment/queries",
+                    headers=headers,
+                    json={"query": f"个人工作台归属验证 {uid} {index}", "knowledge_enabled": False},
+                )
+                for index in range(3)
+            ),
+        )
+        assert all(response.status_code == 200 for response in responses), [response.text for response in responses]
+        project = responses[0].json()
+        assert project["name"] == f"装备深研工作台 · {username}"
+        assert project["id"] != unrelated_project_id
+        assert all(response.json()["project_id"] == project["id"] for response in responses[1:])
+        chat_response = await test_client.post(
+            "/api/chat/thread",
+            headers=headers,
+            json={
+                "agent_id": await _default_agent_slug(test_client, headers),
+                "title": make_test_conversation_title("default-workbench-chat"),
+                "metadata": make_test_conversation_metadata("default-workbench-chat"),
+                "project_id": project["id"],
+                "request_id": uuid.uuid4().hex,
+            },
+        )
+        assert chat_response.status_code == 200, chat_response.text
+        assert chat_response.json()["project_id"] == project["id"]
+        run_response = await test_client.post(
+            "/api/equipment/runs",
+            headers=headers,
+            json={"topic": f"默认工作台研究任务 {uid}", "knowledge_enabled": False},
+        )
+        assert run_response.status_code == 200, run_response.text
+        run = run_response.json()
+        assert run["project_id"] == project["id"]
+        deep_response = await test_client.post(
+            "/api/equipment/deep-thinking",
+            headers=headers,
+            json={"topic": f"默认工作台深研对话 {uid}", "run_id": run["run_id"], "knowledge_enabled": False},
+        )
+        assert deep_response.status_code == 200, deep_response.text
+        assert deep_response.json()["project_id"] == project["id"]
+        assert deep_response.json()["owner_uid"] == uid
+
+        async with session_factory() as db:
+            owned_projects = (await db.scalars(select(Project).where(Project.uid == uid))).all()
+            assert len(owned_projects) == 2
+            assert not any(item.name == "Query 生成" for item in owned_projects)
+    finally:
+        async with session_factory() as db:
+            await db.execute(delete(EquipmentDeepSession).where(EquipmentDeepSession.owner_uid == uid))
+            await db.execute(delete(EquipmentResearchRun).where(EquipmentResearchRun.owner_uid == uid))
+            query_ids = select(EquipmentQuery.id).where(EquipmentQuery.owner_uid == uid)
+            await db.execute(delete(EquipmentQueryRevision).where(EquipmentQueryRevision.query_id.in_(query_ids)))
+            await db.execute(delete(EquipmentQuery).where(EquipmentQuery.owner_uid == uid))
+            await db.commit()
+
+
 @pytest_asyncio.fixture()
 async def linked_directory(test_client, admin_headers):
     """创建并在用例结束后删除 linked Project 使用的目录。"""
@@ -203,7 +328,8 @@ async def test_equipment_default_project_is_created_once_for_empty_user(test_cli
 
         before = await test_client.get("/api/projects", headers=headers)
         assert before.status_code == 200, before.text
-        assert before.json() == []
+        assert len(before.json()) == 1
+        initial_project_id = before.json()[0]["id"]
 
         first = await test_client.post("/api/projects/defaults/equipment", headers=headers)
         second = await test_client.post("/api/projects/defaults/equipment", headers=headers)
@@ -211,15 +337,30 @@ async def test_equipment_default_project_is_created_once_for_empty_user(test_cli
         assert first.status_code == 200, first.text
         assert second.status_code == 200, second.text
         project = first.json()
-        assert second.json()["id"] == project["id"]
+        assert second.json()["id"] == project["id"] == initial_project_id
         assert project["uid"] == owner_uid
-        assert project["name"] == "武器装备深研"
+        assert project["name"] == f"装备深研工作台 · {owner_uid}"
         assert project["selection_status"] == "selectable"
         assert project["directory_mode"] == "managed"
 
         after = await test_client.get("/api/projects", headers=headers)
         assert after.status_code == 200, after.text
         assert [item["id"] for item in after.json()] == [project["id"]]
+
+        removed = await test_client.delete(f"/api/projects/{project['id']}", headers=headers)
+        assert removed.status_code == 200, removed.text
+        restored = await test_client.get("/api/projects", headers=headers)
+        assert restored.status_code == 200, restored.text
+        assert len(restored.json()) == 1
+        replacement = restored.json()[0]
+        assert replacement["id"] != project["id"]
+        assert replacement["name"] == project["name"]
+        concurrent = await asyncio.gather(
+            *(test_client.post("/api/projects/defaults/equipment", headers=headers) for _ in range(4))
+        )
+        assert all(response.status_code == 200 for response in concurrent)
+        assert {response.json()["id"] for response in concurrent} == {replacement["id"]}
+
     finally:
         async with session_factory() as session:
             await session.execute(delete(Project).where(Project.uid == owner_uid))

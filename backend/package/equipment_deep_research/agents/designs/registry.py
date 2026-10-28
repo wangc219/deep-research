@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from importlib import import_module
-from typing import Iterable
+from collections.abc import Iterable
 
 from equipment_deep_research.agents.designs.base import AgentDesign
 
@@ -46,23 +46,15 @@ class AgentDesignRegistry:
             self.register(design)
 
     @classmethod
-    def load_default(cls) -> "AgentDesignRegistry":
+    def load_default(cls) -> AgentDesignRegistry:
         registry = cls()
         for agent_id in DEFAULT_AGENT_IDS:
-            module = import_module(
-                f"equipment_deep_research.agents.designs.{agent_id}"
-            )
+            module = import_module(f"equipment_deep_research.agents.designs.{agent_id}")
             design = module.DESIGN
             try:
-                guidance_module = import_module(
-                    "equipment_deep_research.agents.designs.guidance."
-                    f"{agent_id}"
-                )
+                guidance_module = import_module(f"equipment_deep_research.agents.designs.guidance.{agent_id}")
             except ModuleNotFoundError as exc:
-                if exc.name != (
-                    "equipment_deep_research.agents.designs.guidance."
-                    f"{agent_id}"
-                ):
+                if exc.name != (f"equipment_deep_research.agents.designs.guidance.{agent_id}"):
                     raise
             else:
                 design = replace(design, guidance=guidance_module.GUIDANCE)

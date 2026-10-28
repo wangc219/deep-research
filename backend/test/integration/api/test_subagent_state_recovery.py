@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
 
 async def test_state_recovers_children_without_checkpoint_and_rejects_other_user(
-    test_client, standard_user, admin_headers
+    test_client, standard_user, other_user
 ):
     """创建已提交而父 checkpoint 从未写入的子 Run，页面仍能发现并读到终态。"""
     uid = standard_user["user"]["uid"]
@@ -100,7 +100,7 @@ async def test_state_recovers_children_without_checkpoint_and_rejects_other_user
         run_response = await test_client.get(f"/api/agent/runs/{child_id}", headers=standard_user["headers"])
         assert run_response.json()["run"]["status"] == "completed"
         for url in (f"/api/chat/thread/{parent_thread}/state", f"/api/agent/runs/{child_id}"):
-            denied = await test_client.get(url, headers=admin_headers)
+            denied = await test_client.get(url, headers=other_user["headers"])
             assert denied.status_code == 404, denied.text
             assert child_id not in denied.text
     finally:

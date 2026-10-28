@@ -13,7 +13,8 @@ import os
 import re
 from threading import RLock
 from time import monotonic
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from equipment_deep_research.agents.registry import AgentDef
@@ -100,15 +101,14 @@ from equipment_deep_research.agents.workflows.shared_context import (
     clean_handoff_text as _clean_capability_handoff_text,
     _truncate_complete_text,
     query_domain_contract as _query_domain_contract,
+    query_domain_narrative_instruction as _query_domain_narrative_instruction,
 )
 
 
 def _query_led_combat_equipment_theme_contract() -> dict[str, Any]:
     """Return reviewed query-first theme anchors from Markdown."""
 
-    value = load_dynamic_winning_json(
-        "common", section="query_led_combat_equipment_theme_contract"
-    )
+    value = load_dynamic_winning_json("common", section="query_led_combat_equipment_theme_contract")
     if not isinstance(value, Mapping):
         raise ValueError("query-led combat-equipment theme contract must be an object")
     return dict(value)
@@ -147,6 +147,10 @@ def _query_led_combat_equipment_theme_instruction(
         + str(contract["project_function_requirement"])
         + str(contract["support_only_exclusion"])
         + str(contract["safety_boundary"])
+        + _query_domain_narrative_instruction(
+            topic,
+            structured_query_brief=structured_query_brief,
+        )
     )
 
 
@@ -219,9 +223,7 @@ def _query_combat_equipment_divergence_brief(
             max_string_chars=260,
             max_list_items=6,
         ),
-        "equipment_semantic_boundary": str(
-            brief.get("equipment_semantic_boundary", "")
-        )[:700],
+        "equipment_semantic_boundary": str(brief.get("equipment_semantic_boundary", ""))[:700],
         "winning_problem_propositions": _compact_prompt_value(
             brief.get("winning_problem_propositions", []),
             max_string_chars=360,
@@ -310,15 +312,11 @@ class FakeAgentProvider:
                 for item in packets
             ],
             "conflicts": [],
-            "priorities": [
-                str(item.get("handoff_summary", "")) for item in packets[:6]
-            ],
+            "priorities": [str(item.get("handoff_summary", "")) for item in packets[:6]],
             "cross_branch_links": [],
-            "open_questions": [
-                str(question)
-                for item in packets
-                for question in item.get("open_questions", [])[:2]
-            ][:8],
+            "open_questions": [str(question) for item in packets for question in item.get("open_questions", [])[:2]][
+                :8
+            ],
         }
 
     def review_discovery_meta_loop(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -375,21 +373,13 @@ class FakeAgentProvider:
                 + "、".join(str(item.get("agent_id", "")) for item in upstream)
                 + "；仅消费摘要、证据索引和开放问题。"
             )
-        analysis_sections = _analysis_sections_for_agent(
-            agent.agent_id, topic, request.research_route
-        )
-        payload_type, typed_payload, packet_version = _typed_packet_payload(
-            agent.agent_id, analysis_sections
-        )
+        analysis_sections = _analysis_sections_for_agent(agent.agent_id, topic, request.research_route)
+        payload_type, typed_payload, packet_version = _typed_packet_payload(agent.agent_id, analysis_sections)
         if upstream:
             analysis_sections["upstream_synthesis"] = {
                 "consumed_agents": [item.get("agent_id") for item in upstream],
                 "handoff_summaries": [item.get("handoff_summary") for item in upstream],
-                "open_questions": [
-                    question
-                    for item in upstream
-                    for question in item.get("open_questions", [])
-                ],
+                "open_questions": [question for item in upstream for question in item.get("open_questions", [])],
             }
         packet = BaselineFindingPacket(
             packet_id=(
@@ -412,18 +402,13 @@ class FakeAgentProvider:
             ],
             handoff_summary=f"{prefix}围绕{topic}形成{len(findings)}条基线发现，并按交接策略输出给下游。",
             checkpoint=f"{agent.agent_id}: baseline round {request.round_index} complete",
-            claim_ids=[
-                "claim-" + sha256(f"{agent.agent_id}:{item}".encode()).hexdigest()[:12]
-                for item in findings
-            ],
+            claim_ids=["claim-" + sha256(f"{agent.agent_id}:{item}".encode()).hexdigest()[:12] for item in findings],
             analysis_sections=analysis_sections,
             payload_type=payload_type,
             payload=typed_payload,
             schema_version=packet_version,
         )
-        return AgentRunResult(
-            packet=packet, evidence=[evidence], raw_message=packet.handoff_summary
-        )
+        return AgentRunResult(packet=packet, evidence=[evidence], raw_message=packet.handoff_summary)
 
 
 class RealAgentProvider(FakeAgentProvider):
@@ -441,9 +426,7 @@ class RealAgentProvider(FakeAgentProvider):
         evidence = [
             EvidenceCard(
                 evidence_id=item.evidence_id.replace("-1", "-real-smoke"),
-                source_title=item.source_title.replace(
-                    "离线验证材料", "真实模式待材料化线索"
-                ),
+                source_title=item.source_title.replace("离线验证材料", "真实模式待材料化线索"),
                 source_url=public_url,
                 source_tier=item.source_tier,
                 claim=item.claim,
@@ -464,9 +447,7 @@ class RealAgentProvider(FakeAgentProvider):
                 ],
             }
         )
-        return AgentRunResult(
-            packet=packet, evidence=evidence, raw_message=packet.handoff_summary
-        )
+        return AgentRunResult(packet=packet, evidence=evidence, raw_message=packet.handoff_summary)
 
     def draft_report(self, payload: dict[str, Any]) -> str:
         """Return a bounded report fixture for the explicit ``smoke`` provider.
@@ -549,10 +530,7 @@ class ResponsesAgentProvider:
         # Capacity-only fallback chains retain the primary provider's runtime
         # contract.  Use its type for discovery/runtime feature gating while
         # keeping the complete chain in provider snapshots and metrics.
-        self.provider_kind = str(
-            snapshot.get("primary_provider_type")
-            or snapshot.get("type", "responses")
-        )
+        self.provider_kind = str(snapshot.get("primary_provider_type") or snapshot.get("type", "responses"))
         capabilities = getattr(provider, "capabilities", lambda: None)()
         self.provider_capabilities = capabilities
         self._provider_capabilities = capabilities
@@ -568,15 +546,10 @@ class ResponsesAgentProvider:
         # chat-completions/codex distinction used by source-anchor fallback
         # tests.
         self.uses_hosted_web_search = bool(
-            getattr(capabilities, "hosted_web_search", False)
-            or self.provider_kind == "fake"
+            getattr(capabilities, "hosted_web_search", False) or self.provider_kind == "fake"
         )
         self.discovery_provider = self._build_discovery_provider()
-        self.discovery_backend = (
-            "responses_http"
-            if self.discovery_provider is not None
-            else self.provider_kind
-        )
+        self.discovery_backend = "responses_http" if self.discovery_provider is not None else self.provider_kind
         self.agent_definitions = dict(agent_definitions or {})
         self.agent_designs = AgentDesignRegistry.load_default()
         self.baseline_workflow = BaselineAgentService(self.agent_designs)
@@ -625,12 +598,8 @@ class ResponsesAgentProvider:
         # the fallback for callers that do not provide a run id.
         self._run_call_gates: dict[str, AdaptiveCallGate] = {}
         self._run_call_gates_lock = RLock()
-        self._discovery_cache: dict[
-            tuple[str, str, int], tuple[str, dict[str, Any]]
-        ] = {}
-        self._discovery_inflight: dict[
-            tuple[str, str, int], Future[tuple[str, dict[str, Any]]]
-        ] = {}
+        self._discovery_cache: dict[tuple[str, str, int], tuple[str, dict[str, Any]]] = {}
+        self._discovery_inflight: dict[tuple[str, str, int], Future[tuple[str, dict[str, Any]]]] = {}
         self._discovery_lock = RLock()
         self._shared_discovery_sources: dict[str, dict[str, dict[str, Any]]] = {}
         self._runtime_budgets: dict[str, int | float] = {}
@@ -647,9 +616,7 @@ class ResponsesAgentProvider:
         self._search_batches_started = 0
         self._last_report_quality_issues: list[str] = []
         self._latest_report_draft = ""
-        self._s6_card_result_cache: dict[
-            tuple[str, str], tuple[dict[str, Any], str]
-        ] = {}
+        self._s6_card_result_cache: dict[tuple[str, str], tuple[dict[str, Any], str]] = {}
         self._budget_lock = RLock()
         self._closed = False
 
@@ -659,16 +626,12 @@ class ResponsesAgentProvider:
 
     @property
     def supports_agent_runtime(self) -> bool:
-        return bool(
-            getattr(self._provider_capabilities, "agent_runtime", False)
-            or self.provider_kind == "codex_cli"
-        )
+        return bool(getattr(self._provider_capabilities, "agent_runtime", False) or self.provider_kind == "codex_cli")
 
     @property
     def supports_isolated_sessions(self) -> bool:
         return bool(
-            getattr(self._provider_capabilities, "isolated_sessions", False)
-            or self.provider_kind == "codex_cli"
+            getattr(self._provider_capabilities, "isolated_sessions", False) or self.provider_kind == "codex_cli"
         )
 
     def supports_capability(self, name: str, *, legacy_default: bool = False) -> bool:
@@ -1070,17 +1033,9 @@ class ResponsesAgentProvider:
 
 def _winning_step_modes(payload: Mapping[str, Any]) -> dict[int, str]:
     blueprint = payload.get("discovery_blueprint", {})
-    branch = (
-        str(blueprint.get("primary_branch", ""))
-        if isinstance(blueprint, Mapping)
-        else ""
-    )
+    branch = str(blueprint.get("primary_branch", "")) if isinstance(blueprint, Mapping) else ""
     branch = branch or str(payload.get("discovery_branch", ""))
-    adaptive = (
-        blueprint.get("adaptive_winning_step_modes", {})
-        if isinstance(blueprint, Mapping)
-        else {}
-    )
+    adaptive = blueprint.get("adaptive_winning_step_modes", {}) if isinstance(blueprint, Mapping) else {}
     return winning_step_modes(
         branch,
         research_route=str(payload.get("research_route", "")),
@@ -1091,9 +1046,7 @@ def _winning_step_modes(payload: Mapping[str, Any]) -> dict[int, str]:
 def _winning_military_divergence_contract(step: int) -> dict[str, Any]:
     """Return the reviewed per-step divergence contract from Markdown."""
 
-    value = load_dynamic_winning_json(
-        "common", section="winning_military_divergence_contract"
-    )
+    value = load_dynamic_winning_json("common", section="winning_military_divergence_contract")
     if not isinstance(value, Mapping):
         raise ValueError("winning military divergence contract must be an object")
     shared = value.get("shared", {})
@@ -1101,11 +1054,7 @@ def _winning_military_divergence_contract(step: int) -> dict[str, Any]:
     result = {"step": int(step)}
     if isinstance(shared, Mapping):
         result.update(shared)
-    rule = (
-        step_rules.get(str(int(step)), step_rules.get("3", {}))
-        if isinstance(step_rules, Mapping)
-        else {}
-    )
+    rule = step_rules.get(str(int(step)), step_rules.get("3", {})) if isinstance(step_rules, Mapping) else {}
     if isinstance(rule, Mapping):
         result.update(rule)
     return result
@@ -1168,15 +1117,8 @@ def _bounded_unique_texts(
     if len(unique) > limit:
         first_count = (limit + 1) // 2
         last_count = limit - first_count
-        unique = (
-            [*unique[:first_count], *unique[-last_count:]]
-            if last_count
-            else unique[:limit]
-        )
-    return [
-        _compact_prompt_value(item, max_string_chars=max_chars, max_list_items=limit)
-        for item in unique
-    ]
+        unique = [*unique[:first_count], *unique[-last_count:]] if last_count else unique[:limit]
+    return [_compact_prompt_value(item, max_string_chars=max_chars, max_list_items=limit) for item in unique]
 
 
 def _compact_swarm_candidate_handoff(
@@ -1442,9 +1384,7 @@ def _compact_swarm_event_summary(value: Mapping[str, Any]) -> dict[str, Any]:
     """Keep UI/audit projections without copying the complete ledger twice."""
 
     raw_ledger = value.get("hypothesis_ledger", {})
-    raw_hypotheses = (
-        raw_ledger.get("hypotheses", []) if isinstance(raw_ledger, Mapping) else []
-    )
+    raw_hypotheses = raw_ledger.get("hypotheses", []) if isinstance(raw_ledger, Mapping) else []
     hypotheses = []
     for item in raw_hypotheses[:20]:
         if not isinstance(item, Mapping):
@@ -1546,27 +1486,17 @@ def _compact_swarm_event_summary(value: Mapping[str, Any]) -> dict[str, Any]:
             )
         },
         "hypothesis_ledger": {
-            "ledger_id": str(raw_ledger.get("ledger_id", ""))
-            if isinstance(raw_ledger, Mapping)
-            else "",
-            "version": raw_ledger.get("version", 0)
-            if isinstance(raw_ledger, Mapping)
-            else 0,
-            "status": str(raw_ledger.get("status", "active"))
-            if isinstance(raw_ledger, Mapping)
-            else "active",
+            "ledger_id": str(raw_ledger.get("ledger_id", "")) if isinstance(raw_ledger, Mapping) else "",
+            "version": raw_ledger.get("version", 0) if isinstance(raw_ledger, Mapping) else 0,
+            "status": str(raw_ledger.get("status", "active")) if isinstance(raw_ledger, Mapping) else "active",
             "hypotheses": hypotheses,
         },
         "merge_receipts": receipts,
         "portfolio_quality_gate": dict(value.get("portfolio_quality_gate", {}))
         if isinstance(value.get("portfolio_quality_gate"), Mapping)
         else {},
-        "budget": dict(value.get("budget", {}))
-        if isinstance(value.get("budget"), Mapping)
-        else {},
-        "final_merge": dict(value.get("final_merge", {}))
-        if isinstance(value.get("final_merge"), Mapping)
-        else {},
+        "budget": dict(value.get("budget", {})) if isinstance(value.get("budget"), Mapping) else {},
+        "final_merge": dict(value.get("final_merge", {})) if isinstance(value.get("final_merge"), Mapping) else {},
         "stop_reason": str(value.get("stop_reason", "")),
     }
 
@@ -1643,14 +1573,8 @@ def _effective_expert_judge_status(
     latest = str(rounds[-1].get("status", "limited")) if rounds else "failed"
     if latest == "completed":
         return "completed"
-    complete_prior_round = any(
-        str(item.get("status", "")) == "completed" for item in rounds[:-1]
-    )
-    if (
-        complete_prior_round
-        and int(expected_count) > 0
-        and int(assessed_count) >= int(expected_count)
-    ):
+    complete_prior_round = any(str(item.get("status", "")) == "completed" for item in rounds[:-1])
+    if complete_prior_round and int(expected_count) > 0 and int(assessed_count) >= int(expected_count):
         return "completed"
     return latest
 
@@ -1681,15 +1605,10 @@ def _quality_judge_scoped_evidence_index(
 
     rows = (
         [dict(item) for item in evidence_index if isinstance(item, Mapping)]
-        if isinstance(evidence_index, Sequence)
-        and not isinstance(evidence_index, (str, bytes))
+        if isinstance(evidence_index, Sequence) and not isinstance(evidence_index, (str, bytes))
         else []
     )
-    scoped = [
-        item
-        for item in rows
-        if str(item.get("evidence_id", "")) in candidate_evidence_ids
-    ]
+    scoped = [item for item in rows if str(item.get("evidence_id", "")) in candidate_evidence_ids]
     return scoped or rows
 
 
@@ -2135,9 +2054,7 @@ def _bind_s6_quality_helpers(module: Any | None = None) -> bool:
         # The source module is still being initialized.  Its own completion
         # hook will retry the binding once all helpers exist.
         return False
-    globals().update(
-        {name: getattr(module, name) for name in _S6_QUALITY_HELPER_NAMES}
-    )
+    globals().update({name: getattr(module, name) for name in _S6_QUALITY_HELPER_NAMES})
     return True
 
 
@@ -2168,11 +2085,7 @@ def _latest_inner_loop_failures(
         if step not in range(1, 7):
             continue
         latest_by_step[step] = dict(item)
-    return [
-        latest_by_step[step]
-        for step in sorted(latest_by_step)
-        if latest_by_step[step].get("passed") is not True
-    ]
+    return [latest_by_step[step] for step in sorted(latest_by_step) if latest_by_step[step].get("passed") is not True]
 
 
 def _partition_tracks(tracks: Sequence[str], slots: int) -> list[list[str]]:
@@ -2233,9 +2146,7 @@ def _compact_discovered_sources(
             {
                 "title": " ".join(str(item.get("title", "")).split())[:140],
                 "url": url,
-                "evidence_hint": " ".join(
-                    str(item.get("snippet") or item.get("claim") or "").split()
-                )[:240],
+                "evidence_hint": " ".join(str(item.get("snippet") or item.get("claim") or "").split())[:240],
             }
         )
         if len(result) >= limit:
@@ -2291,9 +2202,7 @@ def _merge_required_source_anchors(
         anchored_row["required_source_anchor_index"] = anchor_index
         anchored.append(anchored_row)
 
-    remaining = [
-        item for item in normalized_rows if str(item.get("url", "")) not in anchor_set
-    ]
+    remaining = [item for item in normalized_rows if str(item.get("url", "")) not in anchor_set]
     return [*anchored, *remaining][: max(0, limit)]
 
 
@@ -2311,11 +2220,7 @@ def _prioritize_specialized_anchor_urls(
     """
 
     anchor_groups = [
-        [
-            str(url)
-            for url in item.get("source_anchors", [])
-            if str(url).startswith("https://")
-        ]
+        [str(url) for url in item.get("source_anchors", []) if str(url).startswith("https://")]
         for item in channels
         if isinstance(item, Mapping)
     ]
@@ -2332,19 +2237,13 @@ def _query_specific_weapon_evidence_channels(
     """Build evidence lanes from Query semantics instead of a weapon catalogue."""
 
     brief = dict(structured_query_brief or {})
-    resource = load_dynamic_winning_json(
-        "common", section="query_specific_weapon_evidence_channels"
-    )
+    resource = load_dynamic_winning_json("common", section="query_specific_weapon_evidence_channels")
     if not isinstance(resource, Mapping):
-        raise ValueError(
-            "query-specific weapon evidence-channel resource must be an object"
-        )
+        raise ValueError("query-specific weapon evidence-channel resource must be an object")
     fallbacks = resource.get("fallbacks", {})
     channel_specs = resource.get("channels", [])
     if not isinstance(fallbacks, Mapping) or not isinstance(channel_specs, list):
-        raise ValueError(
-            "query-specific weapon evidence-channel resource has invalid shape"
-        )
+        raise ValueError("query-specific weapon evidence-channel resource has invalid shape")
 
     def compact(value: Any, fallback_key: str) -> str:
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
@@ -2367,8 +2266,7 @@ def _query_specific_weapon_evidence_channels(
         "effects",
     )
     architectures = compact(
-        brief.get("winning_problem_propositions")
-        or brief.get("query_specific_weapon_architectures"),
+        brief.get("winning_problem_propositions") or brief.get("query_specific_weapon_architectures"),
         "architectures",
     )
     channels: list[dict[str, Any]] = []
@@ -2391,22 +2289,16 @@ def _query_specific_weapon_evidence_channels(
 def _query_combat_equipment_generation_rules() -> list[str]:
     """Load the reviewed Query-divergence rules from Markdown resources."""
 
-    value = load_dynamic_winning_json(
-        "common", section="query_combat_equipment_divergence.generation_rules"
-    )
+    value = load_dynamic_winning_json("common", section="query_combat_equipment_divergence.generation_rules")
     if not isinstance(value, list):
-        raise ValueError(
-            "query-combat equipment generation rules must be a JSON list"
-        )
+        raise ValueError("query-combat equipment generation rules must be a JSON list")
     return [str(item).strip() for item in value if str(item).strip()]
 
 
 def _evidence_channel_activation_rule() -> str:
     """Load the shared optional-evidence-channel guard from Markdown."""
 
-    return load_dynamic_winning_prompt(
-        "common", section="evidence_channel.activation_rule"
-    )
+    return load_dynamic_winning_prompt("common", section="evidence_channel.activation_rule")
 
 
 def _agent_plan_mode(context: Mapping[str, Any]) -> str:
@@ -2454,9 +2346,7 @@ def _weapon_specialized_evidence_channels(
             structured_query_brief=structured_query_brief,
         )
     }
-    resource = load_dynamic_winning_json(
-        "common", section="weapon_specialized_evidence_channels"
-    )
+    resource = load_dynamic_winning_json("common", section="weapon_specialized_evidence_channels")
     if not isinstance(resource, list):
         raise ValueError("weapon-specialized evidence-channel resource must be a list")
     optional_channels: list[dict[str, Any]] = []
@@ -2469,31 +2359,19 @@ def _weapon_specialized_evidence_channels(
         if not channel_id:
             continue
         raw_lenses = channel.pop("activation_lenses", [])
-        if isinstance(raw_lenses, Sequence) and not isinstance(
-            raw_lenses, (str, bytes)
-        ):
-            channel_lenses[channel_id] = {
-                str(item).strip()
-                for item in raw_lenses
-                if str(item).strip()
-            }
+        if isinstance(raw_lenses, Sequence) and not isinstance(raw_lenses, (str, bytes)):
+            channel_lenses[channel_id] = {str(item).strip() for item in raw_lenses if str(item).strip()}
         else:
             channel_lenses[channel_id] = set()
         channel["query_anchor"] = topic
         optional_channels.append(channel)
     active_channels = [
-        item
-        for item in optional_channels
-        if channel_lenses.get(str(item.get("channel_id", "")), set()) & lenses
+        item for item in optional_channels if channel_lenses.get(str(item.get("channel_id", "")), set()) & lenses
     ]
     # Avoid even the cached Markdown lookup when this Query activates no
     # specialist lane; the always-on Query lanes do not need this guard.
-    activation_rule = (
-        _evidence_channel_activation_rule() if active_channels else ""
-    )
-    selected = [
-        {**item, "activation_rule": activation_rule} for item in active_channels
-    ]
+    activation_rule = _evidence_channel_activation_rule() if active_channels else ""
+    selected = [{**item, "activation_rule": activation_rule} for item in active_channels]
     return [
         *_query_specific_weapon_evidence_channels(
             topic,
@@ -2506,26 +2384,20 @@ def _weapon_specialized_evidence_channels(
 def _direct_combat_generator_diversity_instruction() -> str:
     """Load the reviewed direct-combat generator instruction."""
 
-    return load_dynamic_winning_prompt(
-        "common", section="direct_combat_generator_diversity_instruction"
-    )
+    return load_dynamic_winning_prompt("common", section="direct_combat_generator_diversity_instruction")
 
 
 def _portfolio_gap_completion_instruction(topic: str = "") -> str:
     """Load the reviewed portfolio-gap completion instruction."""
 
     del topic
-    return load_dynamic_winning_prompt(
-        "common", section="portfolio_gap_completion_instruction"
-    )
+    return load_dynamic_winning_prompt("common", section="portfolio_gap_completion_instruction")
 
 
 def _portfolio_frontier_completion_instruction() -> str:
     """Load the reviewed portfolio-frontier completion instruction."""
 
-    return load_dynamic_winning_prompt(
-        "common", section="portfolio_frontier_completion_instruction"
-    )
+    return load_dynamic_winning_prompt("common", section="portfolio_frontier_completion_instruction")
 
 
 def _normalize_portfolio_innovation_audit(value: Any) -> dict[str, Any]:
@@ -2577,9 +2449,7 @@ def _normalize_portfolio_innovation_audit(value: Any) -> dict[str, Any]:
 
 
 def _portfolio_innovation_completion_requested(value: Any) -> bool:
-    return bool(
-        _normalize_portfolio_innovation_audit(value).get("completion_recommended")
-    )
+    return bool(_normalize_portfolio_innovation_audit(value).get("completion_recommended"))
 
 
 def _portfolio_remaining_repair_slots(
@@ -2654,17 +2524,11 @@ def _substantive_query_seed_row(value: Mapping[str, Any]) -> bool:
     """Recognize a model row worth preserving ahead of deterministic fallback."""
 
     forms = value.get("equipment_forms", value.get("equipment_form", []))
-    effects = value.get(
-        "direct_military_effects", value.get("direct_military_effect", [])
-    )
+    effects = value.get("direct_military_effects", value.get("direct_military_effect", []))
     evidence = value.get("evidence_ids", value.get("evidence_refs", []))
     form_text = " ".join(
         str(item)
-        for item in (
-            forms
-            if isinstance(forms, Sequence) and not isinstance(forms, (str, bytes))
-            else [forms]
-        )
+        for item in (forms if isinstance(forms, Sequence) and not isinstance(forms, (str, bytes)) else [forms])
     )
     has_weapon = any(
         marker in form_text
@@ -2685,9 +2549,7 @@ def _substantive_query_seed_row(value: Mapping[str, Any]) -> bool:
     has_effect = bool(effects)
     has_evidence = bool(evidence)
     has_difference = bool(
-        value.get("changed_confrontation_variable")
-        or value.get("novelty_delta")
-        or value.get("mechanism_chain")
+        value.get("changed_confrontation_variable") or value.get("novelty_delta") or value.get("mechanism_chain")
     )
     return has_weapon and has_effect and has_evidence and has_difference
 
@@ -2722,9 +2584,7 @@ def _discovery_system_prompt(agent_id: str) -> str:
     def fallback() -> str:
         nonlocal fallback_prompt
         if fallback_prompt is None:
-            fallback_prompt = load_dynamic_winning_prompt(
-                "common", section="discovery.default_system_prompt"
-            )
+            fallback_prompt = load_dynamic_winning_prompt("common", section="discovery.default_system_prompt")
         return fallback_prompt
 
     try:
@@ -2751,22 +2611,19 @@ def _missing_baseline_fields(
         )
         if payload.get(field) in (None, "", [], {})
     ]
-    if agent.research_policy.get("require_counter_evidence", False) and payload.get(
-        "contradictions"
-    ) in (None, "", [], {}):
+    if agent.research_policy.get("require_counter_evidence", False) and payload.get("contradictions") in (
+        None,
+        "",
+        [],
+        {},
+    ):
         missing.append("contradictions")
     sections = payload.get("analysis_sections", {})
     if not isinstance(sections, Mapping):
         sections = {}
-    properties = (
-        agent.output_contract.get("properties", [])
-        if isinstance(agent.output_contract, Mapping)
-        else []
-    )
+    properties = agent.output_contract.get("properties", []) if isinstance(agent.output_contract, Mapping) else []
     missing.extend(
-        f"analysis_sections.{field}"
-        for field in properties
-        if sections.get(str(field)) in (None, "", [], {})
+        f"analysis_sections.{field}" for field in properties if sections.get(str(field)) in (None, "", [], {})
     )
     return missing
 
@@ -2782,9 +2639,7 @@ def _repair_schema(
         if field_name.startswith("analysis_sections."):
             name = field_name.split(".", 1)[1]
             if isinstance(schema_sections, Mapping):
-                section_fields[name] = schema_sections.get(
-                    name, "string | object | array"
-                )
+                section_fields[name] = schema_sections.get(name, "string | object | array")
         elif field_name in schema:
             result[field_name] = schema[field_name]
     if section_fields:
@@ -2820,9 +2675,7 @@ def _is_harness_budget_error(exc: BaseException) -> bool:
     if isinstance(exc, TimeoutError):
         return True
     message = str(exc).lower()
-    return "harness v2" in message and any(
-        marker in message for marker in ("budget", "deadline", "no new model call")
-    )
+    return "harness v2" in message and any(marker in message for marker in ("budget", "deadline", "no new model call"))
 
 
 def _is_transient_provider_failure(exc: BaseException) -> bool:
@@ -2860,9 +2713,7 @@ def _trim_deadline_partial_text(value: object) -> str:
     if text.count("```") % 2:
         text = text[: text.rfind("```")].rstrip()
     floor = max(0, int(len(text) * 0.6))
-    sentence_end = max(
-        text.rfind(marker, floor) for marker in ("。", "！", "？", ".", "!", "?")
-    )
+    sentence_end = max(text.rfind(marker, floor) for marker in ("。", "！", "？", ".", "!", "?"))
     if sentence_end >= floor:
         text = text[: sentence_end + 1]
     return text.strip()
@@ -2875,9 +2726,7 @@ def _minimum_viable_model_report(
     """Accept a model-written deadline draft only when it is reviewable."""
 
     normalized = str(text).strip()
-    if not normalized or not _report_has_complete_canonical_structure(
-        normalized, payload
-    ):
+    if not normalized or not _report_has_complete_canonical_structure(normalized, payload):
         return False
     if re.search(
         r"(?<![A-Za-z0-9_])(?:ev|packet|cap)-[A-Za-z0-9]",
@@ -2891,9 +2740,7 @@ def _minimum_viable_model_report(
         for item in catalog
         if isinstance(item, Mapping) and str(item.get("url", "")).strip()
     }
-    cited_urls = {
-        item.rstrip("/)") for item in re.findall(r"https://[^\s)]+", normalized)
-    }
+    cited_urls = {item.rstrip("/)") for item in re.findall(r"https://[^\s)]+", normalized)}
     if allowed_urls and any(url.rstrip("/") not in allowed_urls for url in cited_urls):
         return False
     return normalized[-1] not in "，、（([【“‘："
@@ -2912,9 +2759,7 @@ def _merge_partial_report_with_limited_completion(
     """
 
     def h3_blocks(text: str) -> dict[str, str]:
-        matches = list(
-            re.finditer(r"^###\s+(?P<title>.+?)\s*$", str(text), flags=re.MULTILINE)
-        )
+        matches = list(re.finditer(r"^###\s+(?P<title>.+?)\s*$", str(text), flags=re.MULTILINE))
         blocks: dict[str, str] = {}
         for index, match in enumerate(matches):
             next_h3 = matches[index + 1].start() if index + 1 < len(matches) else len(text)
@@ -2923,21 +2768,13 @@ def _merge_partial_report_with_limited_completion(
                 str(text)[match.end() : next_h3],
                 flags=re.MULTILINE,
             )
-            end = (
-                match.end() + next_h2_match.start()
-                if next_h2_match is not None
-                else next_h3
-            )
+            end = match.end() + next_h2_match.start() if next_h2_match is not None else next_h3
             blocks[match.group("title").strip()] = text[match.start() : end].strip()
         return blocks
 
     def required_h3(h2: str) -> list[str]:
         if _report_template_mode(payload) == "project_argument_v1":
-            return [
-                title
-                for title, parent in _PROJECT_REPORT_H3_PARENT.items()
-                if parent == h2
-            ]
+            return [title for title, parent in _PROJECT_REPORT_H3_PARENT.items() if parent == h2]
         index = list(_REPORT_CANONICAL_H2).index(h2)
         return list(_REPORT_CANONICAL_H3[index * 3 : index * 3 + 3])
 
@@ -2947,11 +2784,7 @@ def _merge_partial_report_with_limited_completion(
         body_only = re.sub(r"^#{2,4}\s+.+?$", "", block, flags=re.MULTILINE).strip()
         if len(body_only) < 20 or block.rstrip()[-1:] in "，、（([【“‘：":
             return False
-        required_h4 = [
-            title
-            for title, parent_h3 in _PROJECT_REPORT_H4_PARENT.items()
-            if parent_h3 == h3
-        ]
+        required_h4 = [title for title, parent_h3 in _PROJECT_REPORT_H4_PARENT.items() if parent_h3 == h3]
         if not all(f"#### {title}" in block for title in required_h4):
             return False
         for title in required_h4:
@@ -2960,13 +2793,17 @@ def _merge_partial_report_with_limited_completion(
                 block,
                 flags=re.MULTILINE | re.DOTALL,
             )
-            if not h4_match or len(
-                re.sub(
-                    r"[^0-9A-Za-z\u4e00-\u9fff]",
-                    "",
-                    h4_match.group("body"),
+            if (
+                not h4_match
+                or len(
+                    re.sub(
+                        r"[^0-9A-Za-z\u4e00-\u9fff]",
+                        "",
+                        h4_match.group("body"),
+                    )
                 )
-            ) < 8:
+                < 8
+            ):
                 return False
         if any(
             marker in block
@@ -3053,11 +2890,17 @@ def _build_project_limited_report_from_cues(
         return [clean(item, 240) for item in value[:limit] if clean(item, 240)]
 
     def joined(values: Sequence[str], fallback: str) -> str:
-        unique = list(dict.fromkeys(str(item).strip() for item in values if str(item).strip()))
+        unique = list(
+            dict.fromkeys(
+                str(item).strip().rstrip("。；; ")
+                for item in values
+                if str(item).strip().rstrip("。；; ")
+            )
+        )
         return "；".join(unique) if unique else fallback
 
     def missing(name: str, subject: str) -> str:
-        return f"本次交接尚无可归属于{name}的{subject}证据"
+        return f"关于{name}的{subject}尚缺可核验公开证据，相关判断保持待验证"
 
     def combine(*values: str) -> str:
         return "；".join(dict.fromkeys(value for value in values if value))
@@ -3071,10 +2914,7 @@ def _build_project_limited_report_from_cues(
         for value in values[:5]:
             if isinstance(value, Mapping):
                 identity = clean(
-                    value.get("equipment_or_project")
-                    or value.get("equipment")
-                    or value.get("project")
-                    or label,
+                    value.get("equipment_or_project") or value.get("equipment") or value.get("project") or label,
                     100,
                 )
                 facts = combine(
@@ -3089,7 +2929,7 @@ def _build_project_limited_report_from_cues(
                 fact = clean(value, 260)
                 if fact:
                     rendered.append(f"- {fact}")
-        return "\n".join(rendered) or f"本次交接未提供可核验的{label}具体案例，因而不形成型号、状态或性能判断。"
+        return "\n".join(rendered) or f"公开资料尚不能支持{label}的型号、状态或性能判断。"
 
     topic = clean(payload.get("topic", "装备研究项目"), 220)
     anchors = rows("decisive_anchors")
@@ -3103,6 +2943,10 @@ def _build_project_limited_report_from_cues(
     indicator_rows: list[str] = []
     architecture_rows: list[str] = []
     participant_rows: list[str] = []
+    background_rows: list[str] = []
+    capability_need_rows: list[str] = []
+    baseline_delta_rows: list[str] = []
+    boundary_rows: list[str] = []
     portrait_rows: list[str] = [
         "| 武器装备 | 核心技术 | 形成能力 | 作战概念与主要效果 |",
         "|---|---|---|---|",
@@ -3124,12 +2968,18 @@ def _build_project_limited_report_from_cues(
         name = first(item, ("direction",), 100) or "具体装备方向"
         scenario = first(item, ("target_scenario", "problem_statement", "capability_gap"), 220)
         equipment = first(item, ("equipment_form", "equipment_hint", "platform"), 220)
-        target_effect = first(item, ("target_and_direct_effect", "mission_effect", "capability_outcome", "military_effect"), 240)
-        engagement = first(item, ("operational_process", "operational_concept", "mechanism_chain", "mechanism_hint"), 280)
+        target_effect = first(
+            item, ("target_and_direct_effect", "mission_effect", "capability_outcome", "military_effect"), 240
+        )
+        engagement = first(
+            item, ("operational_process", "operational_concept", "mechanism_chain", "mechanism_hint"), 280
+        )
         mechanism = first(item, ("scientific_principle", "winning_mechanism", "mechanism_hint"), 240)
         technology = first(item, ("enabling_technologies", "scientific_principle", "technical_route"), 260)
         baseline = first(item, ("baseline_system", "public_equipment_baseline"), 200)
-        contribution = first(item, ("system_contribution_thesis", "non_substitutable_difference", "disruptive_relationship"), 280)
+        contribution = first(
+            item, ("system_contribution_thesis", "non_substitutable_difference", "disruptive_relationship"), 280
+        )
         interfaces = first(item, ("system_interfaces",), 220)
         adversary = first(item, ("adversary_adaptation",), 200)
         failure = first(item, ("failure_boundary", "boundary", "coupling_risk"), 240)
@@ -3139,12 +2989,19 @@ def _build_project_limited_report_from_cues(
         route = first(item, ("development_path", "technical_route"), 220)
         indicator = first(item, ("indicator_portrait", "indicator_direction", "performance_portrait"), 220)
         capability = target_effect or missing(name, "直接任务能力")
-        concept = combine(scenario, engagement, target_effect) or missing(
-            name, "作战动作与直接效果"
-        )
-        portrait_rows.append(
-            f"| {name} | {technology or missing(name, '关键技术')} | {capability} | {concept} |"
-        )
+        concept = combine(scenario, engagement, target_effect) or missing(name, "作战动作与直接效果")
+        portrait_rows.append(f"| {name} | {technology or missing(name, '关键技术')} | {capability} | {concept} |")
+
+        if scenario:
+            background_rows.append(scenario)
+        if combine(first(item, ("capability_gap", "problem_statement"), 220), target_effect):
+            capability_need_rows.append(
+                combine(first(item, ("capability_gap", "problem_statement"), 220), target_effect)
+            )
+        if combine(baseline, contribution, target_effect):
+            baseline_delta_rows.append(combine(baseline, contribution, target_effect))
+        if combine(failure, evidence):
+            boundary_rows.append(combine(failure, evidence))
 
         relation = combine(equipment, scenario, engagement, target_effect, failure)
         equipment_rows.append(f"- **{name}**：{relation or missing(name, '装备作用关系')}。")
@@ -3199,7 +3056,7 @@ def _build_project_limited_report_from_cues(
             participant_rows.append(f"- **{name}**：{participant}。")
 
     comparative = handoff.get("comparative_status", {})
-    comparative_text = "本次交接未提供可核验的国内外对比结论，因此不推定型号差距或技术状态。"
+    comparative_text = "公开资料尚不能支持型号差距或技术状态对比，相关结论保持待核验。"
     if isinstance(comparative, Mapping):
         findings = comparative.get("comparative_findings")
         if isinstance(findings, Mapping):
@@ -3211,14 +3068,39 @@ def _build_project_limited_report_from_cues(
             comparative_text = joined([clean(value, 220) for value in findings], comparative_text)
         elif findings:
             comparative_text = clean(findings, 600)
+    comparative_text = comparative_text.rstrip("。；; ") + "。"
 
     subsystem_table_text = "\n".join(subsystem_table)
     technology_table_text = "\n".join(technology_table)
     foundation_table_text = "\n".join(foundation_table)
     participant_text = "\n".join(participant_rows) or (
-        "现有交接没有能够归属到具体武器的承研单位或责任主体证据，"
-        "因此本节不生成通用单位分工表。"
+        "公开资料尚不能确认与具体武器对应的承研单位或责任主体，因此不推定单位名称和承担关系。"
     )
+    background_text = joined(
+        [*background_rows, *breaks, *anchors],
+        f"围绕“{topic}”的公开证据尚不足以确认现实任务断点；背景判断保持待核验",
+    )
+    capability_need_text = joined(
+        [*breaks, *capability_need_rows],
+        "尚无足够证据确认具体任务链断点、装备形态与直接效果",
+    )
+    operation_gap_text = joined(
+        [*breaks, *capability_need_rows],
+        "具体作战对象、阶段和能力缺口尚缺可核验证据",
+    )
+    baseline_delta_text = joined(
+        baseline_delta_rows,
+        "尚无足够的基线与直接效果证据，暂不宣称能力跃升",
+    )
+    spectrum_position_text = joined(
+        baseline_delta_rows,
+        "当前证据不足，暂不外推装备谱系位置或替代关系",
+    )
+    boundary_text = joined(
+        [*limits, *boundary_rows],
+        "公开证据不足，关键工程边界仍待验证",
+    )
+    priority_text = joined(priorities, "尚无足够依据确定建设优先序")
 
     report = f"""## 一、需求分析
 
@@ -3226,15 +3108,15 @@ def _build_project_limited_report_from_cues(
 
 #### 1. 背景分析
 
-研究主题为“{topic}”。本次交接形成的决定性判断为：{joined(anchors, "尚未提供可核验的决定性判断")}。
+{background_text}。
 
 #### 2. 需求阐述
 
-从 Query 角度归纳相关装备需求：已识别的任务链问题为：{joined(breaks, "尚未提供可核验的任务链断点")}；据此说明需要何种装备能力与形态，以及现有手段缺口所在。
+现有能力缺口集中在：{capability_need_text}。
 
 #### 3. 项目画像
 
-围绕拟研装备主体，说明其研发作用、应对态势威胁与作战前景：
+拟研装备的作用、威胁对象、关键动作与直接效果如下：
 
 {chr(10).join(equipment_rows)}
 
@@ -3256,19 +3138,19 @@ def _build_project_limited_report_from_cues(
 
 #### 1. 作战使用角度
 
-现有材料能够支持的作战使用缺口为：{joined(breaks, "尚未形成可核验的作战使用缺口")}。
+作战使用缺口为：{operation_gap_text}。
 
 #### 2. 装备能力提升角度
 
-逐装备能力增量见项目画像中的体系贡献分析；没有基线和直接结果证据的方向不宣称能力跃升。
+相对现有基线的能力增量为：{baseline_delta_text}。
 
 #### 3. 领域占位角度
 
-本次只保留交接中已有装备主体；材料没有说明的领域位置和替代关系不作外推。
+领域位置与替代关系以具体装备的非替代性贡献为准；{spectrum_position_text}。
 
 #### 4. 综合效益
 
-当前证据限制为：{joined(limits, "尚未提供可核验的反证或工程边界")}。已有优先信号为：{joined(priorities, "尚未形成可核验的建设优先序")}。
+主要证据与工程边界为：{boundary_text}。建设优先序为：{priority_text}。
 
 ## 二、项目画像
 
@@ -3298,7 +3180,7 @@ def _build_project_limited_report_from_cues(
 
 ### （一）总体架构
 
-总体关系只保留交接中能够归属到具体武器的装备本体、作用机理、接口和工程边界。若后续证据确认存在任务状态与授权控制层，只把它作为实际共享接口保留，不预设为所有装备的共同方案：
+总体关系只保留能够归属到具体武器的装备本体、作用机理、接口和工程边界。只有证据确认存在共享任务状态或授权关系时，才将其设为公共接口：
 
 {chr(10).join(architecture_rows)}
 
@@ -3351,8 +3233,7 @@ def _build_limited_report(
         cues = [
             dict(item)
             for item in handoff.get("capability_cues", [])
-            if isinstance(item, Mapping)
-            and _report_capability_cue_is_substantive(item)
+            if isinstance(item, Mapping) and _report_capability_cue_is_substantive(item)
         ]
         comparative = handoff.get("comparative_status", {})
         comparative = comparative if isinstance(comparative, Mapping) else {}
@@ -3380,17 +3261,14 @@ def _build_limited_report(
             return rows
 
         def prose_list(values: Sequence[str], fallback: str) -> str:
-            rows = list(
-                dict.fromkeys(str(item).strip() for item in values if str(item).strip())
-            )
+            rows = list(dict.fromkeys(str(item).strip() for item in values if str(item).strip()))
             return "；".join(rows) if rows else fallback
 
         def comparative_findings_text() -> str:
             value = comparative.get("comparative_findings")
             if isinstance(value, Mapping):
                 rows = [
-                    f"{_clean_reporter_clue_text(key, max_chars=40)}："
-                    f"{_clean_reporter_clue_text(item, max_chars=240)}"
+                    f"{_clean_reporter_clue_text(key, max_chars=40)}：{_clean_reporter_clue_text(item, max_chars=240)}"
                     for key, item in list(value.items())[:6]
                     if _clean_reporter_clue_text(item)
                 ]
@@ -3401,9 +3279,7 @@ def _build_limited_report(
                     if _clean_reporter_clue_text(item)
                 ]
             else:
-                rows = (
-                    [_clean_reporter_clue_text(value, max_chars=500)] if value else []
-                )
+                rows = [_clean_reporter_clue_text(value, max_chars=500)] if value else []
             if rows:
                 return "；".join(rows)
             return (
@@ -3435,43 +3311,49 @@ def _build_limited_report(
             # route. Keep the five-chapter artifact reviewable, but make every
             # missing column an explicit evidence state instead of filling all
             # later sections with the same generic military workflow.
-            topic = _clean_reporter_clue_text(
-                payload.get("topic", "装备研究项目"), max_chars=220
-            )
             anchors = text_rows("decisive_anchors", 4)
             breaks = text_rows("mission_chain_breaks", 4)
             limits = text_rows("counterevidence_and_limits", 4)
             priorities = text_rows("priority_signals", 4)
 
             def evidence_sentence(values: Sequence[str], fallback: str) -> str:
-                rows = list(dict.fromkeys(str(item).strip() for item in values if str(item).strip()))
+                rows = list(
+                    dict.fromkeys(
+                        str(item).strip().rstrip("。；; ")
+                        for item in values
+                        if str(item).strip().rstrip("。；; ")
+                    )
+                )
                 return "；".join(rows) if rows else fallback
 
             foreign = case_paragraphs(
                 "foreign_cases",
-                "暂未形成可核验的国外具体装备案例；本次不以常识补造型号、单位或性能结论。",
+                "公开资料尚不能支持国外具体装备的型号、单位或性能结论。",
             )
             domestic = case_paragraphs(
                 "domestic_cases",
-                "暂未形成可核验的中国国内具体装备案例；参与单位、技术状态和指标边界留待前置研究补齐。",
+                "公开资料尚不能支持中国国内具体装备、参与单位、技术状态或指标边界的判断。",
             )
             comparative_text = comparative.get("comparative_findings")
             if isinstance(comparative_text, Mapping):
                 comparative_text = "；".join(
-                    f"{_clean_reporter_clue_text(key, max_chars=50)}："
-                    f"{_clean_reporter_clue_text(value, max_chars=220)}"
+                    f"{_clean_reporter_clue_text(key, max_chars=50)}：{_clean_reporter_clue_text(value, max_chars=220)}"
                     for key, value in list(comparative_text.items())[:5]
                     if _clean_reporter_clue_text(value)
                 )
-            elif isinstance(comparative_text, Sequence) and not isinstance(
-                comparative_text, (str, bytes)
-            ):
+            elif isinstance(comparative_text, Sequence) and not isinstance(comparative_text, (str, bytes)):
                 comparative_text = "；".join(
                     _clean_reporter_clue_text(value, max_chars=220)
                     for value in comparative_text[:5]
                     if _clean_reporter_clue_text(value)
                 )
             comparative_text = _clean_reporter_clue_text(comparative_text, max_chars=600)
+            background_text = evidence_sentence(
+                [*breaks, *anchors],
+                "公开证据尚不足以确认现实任务断点、威胁对象和可改变的作战结果，相关判断保持待核验",
+            )
+            task_break_text = evidence_sentence(breaks, "具体任务链断点尚缺可复核证据")
+            priority_text = evidence_sentence(priorities, "核验装备主体、公开证据和任务边界")
 
             report = f"""## 一、需求分析
 
@@ -3479,15 +3361,16 @@ def _build_limited_report(
 
 #### 1. 背景分析
 
-本次研究主题为“{topic}”。前置材料尚未形成可核验的具体装备画像；已有判断仅限于：{evidence_sentence(anchors, "尚无可直接支撑装备选择的决定性判断")}。
+{background_text}。
 
 #### 2. 需求阐述
 
-已记录的任务链问题为：{evidence_sentence(breaks, "尚未形成可复核的任务链断点")}。在装备方向、作战阶段和直接军事效果尚未收敛前，仅从 Query 指出相关装备需求与能力缺口，不把抽象能力或技术词直接写成型号方案。
+现有能力缺口为：{task_break_text}。装备方向、作战阶段和直接军事效果尚未明确，
+不能把抽象能力或技术词直接写成型号方案。
 
 #### 3. 项目画像
 
-本次仅保留 Query 与前置证据边界下的研发作用与威胁应对判断，不预设平台、载荷、感知火控、交战方式或成本规模；待形成装备主体后再展开作战前景与制胜增量。
+公开证据尚不能支持具体装备主体及其研发作用，不预设平台、载荷、感知火控、交战方式或成本规模，也不外推作战前景与制胜增量。
 
 ### （二）国内外现状
 
@@ -3525,51 +3408,52 @@ def _build_limited_report(
 
 ### （一）装备图像概述
 
-前置研究未提供可核验的具体装备方向，暂不生成比较表或逐装备画像。
+具体装备方向尚缺可核验证据，暂不生成比较表或逐装备画像。
 
 ### （二）作战运用模式
 
 #### 1. 作战运用流程
 
-暂无可核验装备动作、交战对象和直接战果，待装备画像形成后按实际任务补写。
+装备动作、交战对象和直接战果尚缺可核验证据，不能用通用作战步骤替代。
 
 #### 2. 链路闭环分析
 
-暂无可核验链路断点或装备专属失效边界，待具体装备、作战阶段和证据到位后分析。
+链路断点与装备专属失效边界尚缺可核验证据，不能以抽象闭环概念代替。
 
 ### （三）体系贡献率分析
 
-暂无可用装备基线，暂不套用统一贡献指标；后续按任务结果选择可比较变量并标明证据条件。
+现有装备基线不足以支撑贡献判断，暂不套用统一贡献指标或点值。
 
 ### （四）主要战技指标
 
-暂无装备主体和适用条件，暂不列统一指标或点值；指标方向由后续装备机理与证据共同决定。
+装备主体和适用条件尚未明确，暂不列统一指标或点值。
 
 ## 三、总体方案
 
 ### （一）总体架构
 
-暂无装备边界，暂不预设平台—载荷—感知火控—通信—软件—保障的固定组合；待具体装备收敛后再确定必要接口和集成边界。
+装备边界尚未明确，不预设平台—载荷—感知火控—通信—软件—保障的固定组合，也不虚构共享接口和集成关系。
 
 ### （二）子系统方案
 
-暂无足够输入形成硬件产品、软件系统或数据流分解；不以通用子系统清单替代方案论证。
+现有证据不足以形成硬件产品、软件系统或数据流分解；不以通用子系统清单替代方案论证。
 
 ## 四、关键技术
 
 ### （一）关键技术清单与攻关途径
 
-暂无具体装备技术对象，暂不罗列通用技术、成熟度或统一验证条目；待装备主体、现有基础和工程瓶颈明确后逐项形成攻关路径。
+具体装备技术对象尚未明确，暂不罗列通用技术、成熟度或统一验证条目。
 
 ## 五、研制基础
 
 ### （一）参与单位
 
-暂无公开来源支持的具体承研单位；后续按与本项目装备研发大致相关的总体设计、平台/载荷、感知火控、任务软件和试验鉴定等实际分工确定单位类型。
+公开来源尚不能支持具体承研单位及其承担关系；只能保留总体设计、平台/载荷、感知火控、任务软件和试验鉴定等单位类型作为待核验范围。
 
 ### （二）技术基础
 
-暂无可核验的成熟平台、样机、算法、试验设施或供应链与本项目的对应关系，尚不能证明已具备新质装备研发基础；近期抓手为：{evidence_sentence(priorities, "补齐装备画像、公开证据和任务边界")}。"""
+成熟平台、样机、算法、试验设施或供应链与项目的对应关系尚缺可核验证据，
+不能据此宣称已具备新质装备研发基础；近期抓手为：{priority_text}。"""
             return report.strip()
 
         # Keep the recovery path equipment-specific as well.  The older
@@ -3578,11 +3462,7 @@ def _build_limited_report(
         # is precisely the mechanical repetition the project contract avoids.
         return _build_project_limited_report_from_cues(payload, handoff, cues)
 
-        names = [
-            str(item.get("direction", "")).strip()
-            for item in cues
-            if str(item.get("direction", "")).strip()
-        ]
+        names = [str(item.get("direction", "")).strip() for item in cues if str(item.get("direction", "")).strip()]
         direction_text = "、".join(names) or "具体装备方向待前置研究收敛"
         anchors = text_rows("decisive_anchors", 4)
         breaks = text_rows("mission_chain_breaks", 4)
@@ -3617,9 +3497,7 @@ def _build_limited_report(
                 max_chars=180,
             ).replace("|", "/")
             operation = _clean_reporter_clue_text(
-                item.get("operational_concept")
-                or item.get("winning_mechanism")
-                or item.get("mechanism_hint", ""),
+                item.get("operational_concept") or item.get("winning_mechanism") or item.get("mechanism_hint", ""),
                 max_chars=200,
             ).replace("|", "/")
             portrait_rows.append(
@@ -3640,28 +3518,19 @@ def _build_limited_report(
             if not name:
                 continue
             scenario = _clean_reporter_clue_text(
-                item.get("target_scenario")
-                or item.get("problem_statement")
-                or "目标短时暴露、机动或链路受压场景",
+                item.get("target_scenario") or item.get("problem_statement") or "目标短时暴露、机动或链路受压场景",
                 max_chars=180,
             )
             operation = _clean_reporter_clue_text(
-                item.get("operational_process")
-                or item.get("operational_concept")
-                or item.get("mechanism_hint")
-                or "",
+                item.get("operational_process") or item.get("operational_concept") or item.get("mechanism_hint") or "",
                 max_chars=240,
             )
             effect = _clean_reporter_clue_text(
-                item.get("mission_effect")
-                or item.get("capability_outcome")
-                or "",
+                item.get("mission_effect") or item.get("capability_outcome") or "",
                 max_chars=180,
             )
             boundary = _clean_reporter_clue_text(
-                item.get("boundary")
-                or item.get("coupling_risk")
-                or "目标证据、授权或平台状态不足时中止或降级",
+                item.get("boundary") or item.get("coupling_risk") or "目标证据、授权或平台状态不足时中止或降级",
                 max_chars=180,
             )
             operation_rows.append(
@@ -3675,16 +3544,13 @@ def _build_limited_report(
                 f"{('链路重点为' + operation) if operation else '链路断点待前置研究确认'}"
                 f"{('；失效或中止边界为' + boundary) if boundary else '；失效边界待装备专属证据确认'}。"
             )
-        operational_flow_text = "\n".join(operation_rows) or "本栏暂缺具体装备动作与直接战果，待前置研究形成可核验装备画像后补写。"
+        operational_flow_text = (
+            "\n".join(operation_rows) or "本栏暂缺具体装备动作与直接战果，待前置研究形成可核验装备画像后补写。"
+        )
         chain_closure_text = "\n".join(closure_rows) or "本栏暂缺可核验链路断点与失效边界，待前置研究补充。"
 
         def table_cell(value: object, fallback: str, *, limit: int = 180) -> str:
-            return (
-                _clean_reporter_clue_text(value, max_chars=limit)
-                .replace("|", "／")
-                .strip(" ；。")
-                or fallback
-            )
+            return _clean_reporter_clue_text(value, max_chars=limit).replace("|", "／").strip(" ；。") or fallback
 
         subsystem_rows: list[str] = []
         technology_rows: list[str] = []
@@ -3697,13 +3563,10 @@ def _build_limited_report(
             )
             technologies = item.get("enabling_technologies", [])
             technology_list = (
-                [str(value) for value in technologies[:5]]
-                if isinstance(technologies, list)
-                else [str(technologies)]
+                [str(value) for value in technologies[:5]] if isinstance(technologies, list) else [str(technologies)]
             )
             technology = table_cell(
-                "、".join(value for value in technology_list if value)
-                or item.get("scientific_principle"),
+                "、".join(value for value in technology_list if value) or item.get("scientific_principle"),
                 "任务软件、感知导航、火控和安全控制技术",
             )
             operation = table_cell(
@@ -3726,12 +3589,8 @@ def _build_limited_report(
             # indicator column produced identical "待校准/验证" filler for
             # every weapon; equipment-specific boundaries belong in the
             # bottleneck/path prose instead.
-            subsystem_rows.append(
-                f"| {name} | {equipment} | {technology} | {operation} | {boundary} | {development} |"
-            )
-            technology_rows.append(
-                f"| {name}关键技术组合 | {technology} | {baseline} | {boundary} | {development} |"
-            )
+            subsystem_rows.append(f"| {name} | {equipment} | {technology} | {operation} | {boundary} | {development} |")
+            technology_rows.append(f"| {name}关键技术组合 | {technology} | {baseline} | {boundary} | {development} |")
             foundation_rows.append(
                 f"- **{name}**：国内可承接基础为{baseline}；结合{equipment}，优先由具备相应平台/载荷、"
                 f"任务软件或材料工艺积累的总体设计院所、军工集团主机厂和试验鉴定机构分工推进。"
@@ -3742,15 +3601,20 @@ def _build_limited_report(
         for item in cues:
             name = table_cell(item.get("direction"), "具体装备方向", limit=90)
             equipment = table_cell(item.get("equipment_hint"), "该装备平台、载荷与发射/保障组件", limit=160)
-            operation = table_cell(item.get("operational_concept") or item.get("operational_process"), "按本装备的进入、交战和效果回传流程闭合", limit=180)
+            operation = table_cell(
+                item.get("operational_concept") or item.get("operational_process"),
+                "按本装备的进入、交战和效果回传流程闭合",
+                limit=180,
+            )
             architecture_parts.append(
                 f"{name}单独配置{equipment}，由本装备的{operation}决定任务状态、授权来源和效果回传字段；"
                 "不与其他方向共用无法解释其差异的传感器、效应器或作战动作。"
             )
         architecture_text = (
             "总体架构只保留任务状态与授权控制层、平台/载荷效应、感知导航与接口、保障试验四类公共边界，"
-            "具体装备的功能不被公共层概念吞没。" + "".join(architecture_parts) +
-            "信息流从目标发现与证据分级进入任务状态包，经适配的授权门限分配给具体射手，"
+            "具体装备的功能不被公共层概念吞没。"
+            + "".join(architecture_parts)
+            + "信息流从目标发现与证据分级进入任务状态包，经适配的授权门限分配给具体射手，"
             "交战后回传本装备能够产生的效果摘要并触发补击、等待、改打或中止；节点受损时按装备专属"
             "的安全状态降级，而不是套用统一的‘断链自治’表述。"
         )
@@ -3903,16 +3767,13 @@ def _build_limited_report(
     cues = [
         dict(item)
         for item in handoff.get("capability_cues", [])
-        if isinstance(item, Mapping)
-        and _report_capability_cue_is_substantive(item)
+        if isinstance(item, Mapping) and _report_capability_cue_is_substantive(item)
     ]
     anchors = text_rows("decisive_anchors", limit=4)
     breaks = text_rows("mission_chain_breaks", limit=4)
     limits = text_rows("counterevidence_and_limits", limit=4)
     priorities = text_rows("priority_signals", limit=4)
-    query = _clean_reporter_clue_text(
-        payload.get("topic", "装备需求研究"), max_chars=220
-    )
+    query = _clean_reporter_clue_text(payload.get("topic", "装备需求研究"), max_chars=220)
 
     if not cues:
         # The three-layer fallback follows the same evidence rule as the
@@ -3926,8 +3787,7 @@ def _build_limited_report(
             return fallback
 
         priority_fallback = (
-            "- 先完成装备方向收敛，再开展技术成熟度和作战效能判断。\n"
-            "- 未形成证据前不发布精确指标或具体单位结论。"
+            "- 先完成装备方向收敛，再开展技术成熟度和作战效能判断。\n- 未形成证据前不发布精确指标或具体单位结论。"
         )
 
         return f"""## 第一层：需求挖掘层——场景·战法/技术·装备能力特征
@@ -3992,18 +3852,10 @@ Query为“{query}”。当前交接未形成可核验的具体装备主体、�
             cue.get("direction") or cue.get("equipment_hint") or f"候选装备方向{index}",
             max_chars=90,
         )
-        equipment = _clean_reporter_clue_text(
-            cue.get("equipment_hint", ""), max_chars=120
-        )
-        mission = _clean_reporter_clue_text(
-            cue.get("mission_effect", ""), max_chars=180
-        )
-        mechanism = _clean_reporter_clue_text(
-            cue.get("mechanism_hint", ""), max_chars=180
-        )
-        trigger = _clean_reporter_clue_text(
-            cue.get("future_trigger", ""), max_chars=140
-        )
+        equipment = _clean_reporter_clue_text(cue.get("equipment_hint", ""), max_chars=120)
+        mission = _clean_reporter_clue_text(cue.get("mission_effect", ""), max_chars=180)
+        mechanism = _clean_reporter_clue_text(cue.get("mechanism_hint", ""), max_chars=180)
+        trigger = _clean_reporter_clue_text(cue.get("future_trigger", ""), max_chars=140)
         direction_rows.append(
             f"P{index}｜{name}：{equipment or '装备形态以已审计研究交接为准'}；"
             f"任务贡献为{mission or '补齐相关任务链能力，具体指标待演示验证'}。"
@@ -4017,11 +3869,7 @@ Query为“{query}”。当前交接未形成可核验的具体装备主体、�
                 f"{name}：围绕{mechanism or '任务机理'}开展技术分解；"
                 f"触发条件为{trigger or '威胁压力与工程成熟度达到验证门槛'}。"
             )
-        lineage = (
-            "现役升级"
-            if str(cue.get("type", "")).strip() == "upgrade"
-            else "新研装备"
-        )
+        lineage = "现役升级" if str(cue.get("type", "")).strip() == "upgrade" else "新研装备"
         operation = mechanism or mission or "按任务阶段编组运用，具体流程待演示验证"
         capability_table_rows.append(
             f"| {name} | {mission or '直接打击、压制、毁伤或拒止能力'} | "
@@ -4032,8 +3880,7 @@ Query为“{query}”。当前交接未形成可核验的具体装备主体、�
     source_rows = [
         f"- [{_clean_reporter_clue_text(item.get('title', '公开来源'), max_chars=80)}]({str(item.get('url', '')).strip()})"
         for item in generation.get("public_sources", [])
-        if isinstance(item, Mapping)
-        and str(item.get("url", "")).startswith(("http://", "https://"))
+        if isinstance(item, Mapping) and str(item.get("url", "")).startswith(("http://", "https://"))
     ][:6]
     del draft  # Never splice a potentially truncated model fragment into delivery.
     capability_table = "\n".join(
@@ -4112,14 +3959,8 @@ def _swarm_provider_isolation_id(
     payload: Mapping[str, Any],
 ) -> str:
     parallel_s6 = str(agent_id) == "winning_s6_image"
-    deep_dialogue_role = str(agent_id).startswith("deep_dialogue_") or str(
-        agent_id
-    ) == "deep_thinking_dialogue"
-    if (
-        not str(agent_id).startswith("winning_swarm_")
-        and not parallel_s6
-        and not deep_dialogue_role
-    ):
+    deep_dialogue_role = str(agent_id).startswith("deep_dialogue_") or str(agent_id) == "deep_thinking_dialogue"
+    if not str(agent_id).startswith("winning_swarm_") and not parallel_s6 and not deep_dialogue_role:
         return ""
     candidates: list[Mapping[str, Any]] = [payload]
     for key in ("input", "task_input"):
@@ -4133,7 +3974,7 @@ def _swarm_provider_isolation_id(
         if deep_dialogue_role:
             run_id = str(candidate.get("run_id", "")).strip()
             if run_id:
-                digest = sha256(f"{run_id}:{agent_id}".encode("utf-8")).hexdigest()[:16]
+                digest = sha256(f"{run_id}:{agent_id}".encode()).hexdigest()[:16]
                 return f"deep-dialogue-{digest}"
         if parallel_s6:
             card_id = str(candidate.get("parallel_card_id", "")).strip()
@@ -4146,9 +3987,7 @@ def _swarm_provider_isolation_id(
             # shared winning_s6_image provider.
             candidate_weapon = candidate.get("candidate_weapon")
             if isinstance(candidate_weapon, Mapping):
-                binding_id = str(
-                    candidate_weapon.get("card_binding_id", "")
-                ).strip()
+                binding_id = str(candidate_weapon.get("card_binding_id", "")).strip()
                 if binding_id:
                     return binding_id
         task = candidate.get("specialist_task")
@@ -4158,9 +3997,7 @@ def _swarm_provider_isolation_id(
 
 
 def _swarm_session_ref(task: SpecialistTask) -> str:
-    digest = sha256(
-        f"{task.task_id}:{task.agent_instance_id}".encode("utf-8")
-    ).hexdigest()[:12]
+    digest = sha256(f"{task.task_id}:{task.agent_instance_id}".encode()).hexdigest()[:12]
     return f"cli-session-{digest}"
 
 
@@ -4173,8 +4010,7 @@ def _swarm_runtime_audit_contract(
 ) -> dict[str, Any]:
     provider_type = str(provider_snapshot.get("type", "unknown"))
     session_mode = str(
-        provider_snapshot.get("session_mode")
-        or ("ephemeral" if provider_type == "codex_cli" else "provider_managed")
+        provider_snapshot.get("session_mode") or ("ephemeral" if provider_type == "codex_cli" else "provider_managed")
     )
     return {
         "task_id": task.task_id,
@@ -4189,21 +4025,13 @@ def _swarm_runtime_audit_contract(
         "provider_type": provider_type,
         "execution_backend": str(
             provider_snapshot.get("execution_backend")
-            or (
-                "independent_codex_cli"
-                if provider_type == "codex_cli"
-                else "isolated_model_turn"
-            )
+            or ("independent_codex_cli" if provider_type == "codex_cli" else "isolated_model_turn")
         ),
         "context_isolation": session_mode,
         "provider_isolation_id": str(provider_snapshot.get("context_isolation", "")),
         "process_isolation": str(
             provider_snapshot.get("process_isolation")
-            or (
-                "new_process_per_turn"
-                if provider_type == "codex_cli"
-                else "provider_managed"
-            )
+            or ("new_process_per_turn" if provider_type == "codex_cli" else "provider_managed")
         ),
         "sandbox_mode": str(provider_snapshot.get("sandbox_mode", "")),
         "model": str(provider_snapshot.get("model", "")),
@@ -4226,9 +4054,7 @@ def _phase_reasoning_effort(
 ) -> str:
     """Keep quality-critical reasoning high and trim only auxiliary phases."""
     normalized = str(configured).lower()
-    configured_effort = (
-        normalized if normalized in {"low", "medium", "high", "xhigh"} else "high"
-    )
+    configured_effort = normalized if normalized in {"low", "medium", "high", "xhigh"} else "high"
     winning_step_agents = {
         "winning_s1_opponent",
         "winning_s2_operations",
@@ -4329,16 +4155,10 @@ def _agent_model_options(
 ) -> dict[str, Any]:
     profile = agent.model_profile
     options = {**defaults}
-    options["reasoning_effort"] = str(
-        profile.get("reasoning_effort", options.get("reasoning_effort", "high"))
-    )
-    options["max_output_tokens"] = int(
-        profile.get("max_output_tokens", options.get("max_output_tokens", 5000))
-    )
+    options["reasoning_effort"] = str(profile.get("reasoning_effort", options.get("reasoning_effort", "high")))
+    options["max_output_tokens"] = int(profile.get("max_output_tokens", options.get("max_output_tokens", 5000)))
     search = dict(options.get("web_search", {}))
-    search["search_context_size"] = str(
-        profile.get("search_context_size", search.get("search_context_size", "high"))
-    )
+    search["search_context_size"] = str(profile.get("search_context_size", search.get("search_context_size", "high")))
     options["web_search"] = search
     return _apply_codex_performance_options(options, provider_kind)
 
@@ -4374,9 +4194,7 @@ def _apply_codex_performance_options(
     search = result.get("web_search")
     if isinstance(search, Mapping):
         search_options = dict(search)
-        search_options["search_context_size"] = (
-            "medium" if profile == "balanced" else "low"
-        )
+        search_options["search_context_size"] = "medium" if profile == "balanced" else "low"
         result["web_search"] = search_options
     return result
 
@@ -4389,17 +4207,11 @@ def _evidence_from_web_sources(
     provider_kind: str = "responses",
 ) -> list[EvidenceCard]:
     claims = {
-        _without_tracking_parameters(str(item.get("url", "")).strip()): str(
-            item.get("claim", "")
-        ).strip()
+        _without_tracking_parameters(str(item.get("url", "")).strip()): str(item.get("claim", "")).strip()
         for item in payload.get("source_claims", [])
         if isinstance(item, dict) and str(item.get("url", "")).strip()
     }
-    source_rows = (
-        list(sources)
-        if isinstance(sources, Sequence) and not isinstance(sources, (str, bytes))
-        else []
-    )
+    source_rows = list(sources) if isinstance(sources, Sequence) and not isinstance(sources, (str, bytes)) else []
     # Some Responses-compatible gateways omit citation annotations when the
     # model is constrained to strict JSON. These remain discovery leads only:
     # the scheduler must fetch, materialize, score, and accept them before use.
@@ -4426,11 +4238,7 @@ def _evidence_from_web_sources(
                     }
                 )
     fallback_claim = next(
-        (
-            str(item).strip()
-            for item in payload.get("findings", [])
-            if str(item).strip()
-        ),
+        (str(item).strip() for item in payload.get("findings", []) if str(item).strip()),
         f"{request.agent.display_name}关于{request.topic}的公开资料研判。",
     )
     result: list[EvidenceCard] = []
@@ -4449,16 +4257,10 @@ def _evidence_from_web_sources(
         required_source_anchor = bool(source.get("required_source_anchor")) or (
             str(source.get("retrieval_lane", "")) == "required_source_anchor"
         )
-        hosted_source = bool(
-            snippet
-            or (title and title != url)
-            or (provider_kind == "codex_cli" and structured_claim)
-        )
+        hosted_source = bool(snippet or (title and title != url) or (provider_kind == "codex_cli" and structured_claim))
         source_prefix = "codex" if provider_kind == "codex_cli" else "responses"
         evidence_markers = [
-            f"{source_prefix}_web_search_source"
-            if hosted_source
-            else f"{source_prefix}_web_search_lead"
+            f"{source_prefix}_web_search_source" if hosted_source else f"{source_prefix}_web_search_lead"
         ]
         if not structured_claim:
             evidence_markers.append("finding_fallback")
@@ -4508,9 +4310,7 @@ def _without_tracking_parameters(url: str) -> str:
         ],
         doseq=True,
     )
-    return urlunsplit(
-        (parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment)
-    )
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))
 
 
 def _source_rows_from_discovery_text(text: str) -> list[dict[str, str]]:
@@ -4763,21 +4563,15 @@ def _typed_packet_payload(
     if definition is None:
         return "", {}, "1.0"
     payload_type, required_fields = definition
-    payload_fields = required_fields + BASELINE_OPTIONAL_PAYLOAD_FIELDS.get(
-        agent_id, ()
-    )
+    payload_fields = required_fields + BASELINE_OPTIONAL_PAYLOAD_FIELDS.get(agent_id, ())
     payload = {name: analysis_sections.get(name, "") for name in payload_fields}
     frontier_inspirations = analysis_sections.get("frontier_inspirations", [])
     if isinstance(frontier_inspirations, list) and frontier_inspirations:
         payload["frontier_inspirations"] = [
-            dict(item)
-            for item in frontier_inspirations[:3]
-            if isinstance(item, Mapping)
+            dict(item) for item in frontier_inspirations[:3] if isinstance(item, Mapping)
         ]
     if agent_id == "weapon_equipment":
-        payload["parameter_observations"] = _normalize_parameter_observations(
-            payload.get("parameter_observations")
-        )
+        payload["parameter_observations"] = _normalize_parameter_observations(payload.get("parameter_observations"))
     elif agent_id == "operational_employment":
         payload["coa"] = _normalize_coa(payload.get("coa"))
     return payload_type, payload, "2.0"
@@ -4892,9 +4686,7 @@ def _findings_for_agent(agent_id: str, topic: str, route: str) -> list[str]:
     return [f"{agent_id} produced baseline finding for {topic} under {route}."]
 
 
-def _analysis_sections_for_agent(
-    agent_id: str, topic: str, route: str
-) -> dict[str, Any]:
+def _analysis_sections_for_agent(agent_id: str, topic: str, route: str) -> dict[str, Any]:
     values: dict[str, dict[str, Any]] = {
         "international_situation": {
             "situation_assessment": f"围绕{topic}研判国际安全环境、装备竞争态势和外部驱动因素。",
@@ -4952,9 +4744,7 @@ def _analysis_sections_for_agent(
                 "按核心技术、技术途径和工程成熟度比较差异",
                 "据此说明本项目的差异化优势和补位价值",
             ],
-            "equipment_profiles": [
-                {"model": "baseline-model", "variant": "public-baseline"}
-            ],
+            "equipment_profiles": [{"model": "baseline-model", "variant": "public-baseline"}],
             "current_parameters": f"梳理与{topic}相关的现有装备功能、参数和体系接口。",
             "parameter_observations": [
                 {
@@ -4969,9 +4759,7 @@ def _analysis_sections_for_agent(
             "parameter_conflicts": ["冲突参数并列保留，不做无依据覆盖"],
             "development_models": "跟踪在研型号、验证项目、替代路线和潜在迭代方向。",
             "technology_readiness": "按可获得性、验证程度、集成条件和工程风险评估成熟度。",
-            "system_dependencies": [
-                "指挥控制、数据链、传感器、任务载荷、保障和供应链依赖"
-            ],
+            "system_dependencies": ["指挥控制、数据链、传感器、任务载荷、保障和供应链依赖"],
             "capability_constraints": "识别探测、决策、载荷、协同、保障和成本边界。",
             "scenario_fit": ["按目标场景标注适用与不适用边界"],
             "capability_gaps": ["将装备边界映射为可追溯能力差距"],
@@ -4993,15 +4781,11 @@ def _analysis_sections_for_agent(
             "defensive_countermeasure_options": [
                 "将国外装备能力与依赖映射为探测、防护、抗干扰、韧性和体系协同等防御功能"
             ],
-            "upgrade_requirements": [
-                "优先形成可由现役平台、任务系统、软件或保障体系承载的升级需求"
-            ],
+            "upgrade_requirements": ["优先形成可由现役平台、任务系统、软件或保障体系承载的升级需求"],
             "new_equipment_requirements": [
                 "当现役平台无法覆盖关键能力边界时形成新装备任务需求、能力目标和技术路线候选"
             ],
-            "verification_plan": [
-                "通过公开数据复核、仿真、半实物试验、场景演练或工程样机验证需求"
-            ],
+            "verification_plan": ["通过公开数据复核、仿真、半实物试验、场景演练或工程样机验证需求"],
         },
         "operational_employment": {
             "operational_constraints": f"明确{topic}在任务规则、指挥关系和保障条件下的运用约束。",
@@ -5072,9 +4856,7 @@ def _analysis_sections_for_agent(
             ],
         },
     }
-    sections = values.get(
-        agent_id, {"finding": f"{agent_id}围绕{topic}执行{route}路线研究。"}
-    )
+    sections = values.get(agent_id, {"finding": f"{agent_id}围绕{topic}执行{route}路线研究。"})
     return {**sections, "research_route": route}
 
 

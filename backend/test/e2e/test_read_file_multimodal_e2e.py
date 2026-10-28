@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import uuid
 from pathlib import Path
 
 import httpx
 import pytest
+import asyncpg
 from PIL import Image, ImageDraw, ImageFont
 
-from e2e_helpers import delete_agent
+from e2e_helpers import delete_agent, postgres_dsn
 from test.live_api_cleanup import make_test_conversation_metadata, make_test_conversation_title
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.e2e, pytest.mark.slow]
@@ -38,7 +40,7 @@ async def _create_agent(
                 "context": {
                     "model": model,
                     "system_prompt": (
-                        "你是 read_file 端到端测试智能体。用户要求读取附件时，必须先调用 read_file，"
+                        "你是附件端到端测试智能体。附件尚未提供解析正文时，必须先调用 read_file，"
                         "不得根据文件名猜测内容。严格按用户指定格式回答。"
                     ),
                     "tools": [],
@@ -118,6 +120,7 @@ async def _run(
     thread_id: str,
     query: str,
     attachment_file_id: str,
+    require_read_file: bool = True,
 ) -> str:
     response = await client.post(
         "/api/agent/runs",
@@ -143,7 +146,27 @@ async def _run(
         status = str(payload.get("status") or "")
         if status in {"completed", "failed", "cancelled", "interrupted"}:
             assert status == "completed", payload
-            return str(payload.get("output") or "")
+            conn = await asyncpg.connect(postgres_dsn())
+            try:
+                read_calls = await conn.fetchval(
+                    "SELECT count(*) FROM tool_calls t JOIN messages m ON m.id=t.message_id "
+                    "WHERE m.run_id=$1 AND t.tool_name='read_file' AND t.status='success'",
+                    run_id,
+                )
+            finally:
+                await conn.close()
+            if require_read_file:
+                assert read_calls, "模型未实际成功调用 read_file，不能用文件名猜测冒充工具验收"
+            output = str(payload.get("output") or "")
+            if not output:
+                history = await client.get(f"/api/chat/thread/{thread_id}/history", headers=headers)
+                ai_messages = [
+                    {key: m.get(key) for key in ("id", "content", "reasoning_content", "message_type")}
+                    for m in history.json().get("history", [])
+                    if m.get("type") == "ai"
+                ]
+                pytest.fail(f"完成任务却没有输出: {payload}; assistant_history={ai_messages}")
+            return output
         await asyncio.sleep(2)
     pytest.fail(f"read_file E2E run timed out: {run_id}")
 
@@ -161,7 +184,7 @@ def _write_ocr_test_image(path: Path) -> None:
     image.save(path, format="PNG")
 
 
-async def test_read_file_image_and_document_real_agent_runs(
+async def test_read_file_image_and_pdf_attachment_real_agent_runs(
     tmp_path: Path,
     e2e_client: httpx.AsyncClient,
     e2e_headers: dict[str, str],
@@ -192,7 +215,9 @@ async def test_read_file_image_and_document_real_agent_runs(
         assert image_output.strip().lower() == "blue", image_output
 
         document_path = tmp_path / "sample.pdf"
-        document_path.write_bytes(b"%PDF-1.4\n% read_file boundary test\n")
+        document_image = Image.new("RGB", (720, 180), "white")
+        ImageDraw.Draw(document_image).text((35, 55), "PDF read_file boundary test", fill="black")
+        document_image.save(document_path, format="PDF")
         document_thread = await _create_thread(e2e_client, e2e_headers, slug)
         document_file_id = await _upload(
             e2e_client,
@@ -205,10 +230,12 @@ async def test_read_file_image_and_document_real_agent_runs(
             e2e_headers,
             agent_slug=slug,
             thread_id=document_thread,
-            query="只调用 read_file 读取 sample.pdf，不要调用其他工具。简短复述工具返回的处理建议。",
+            query="读取附件 sample.pdf，复述其中实际存在的英文文字。若附件已有解析正文，直接根据正文回答。",
             attachment_file_id=document_file_id,
+            require_read_file=False,
         )
-        assert "ocr_parse_file" in document_output, document_output
+        # 有效 PDF 会在附件准备阶段实际 OCR；验收已解析文字，不能再要求旧版固定建议文案。
+        assert "BOUNDARY TEST" in " ".join(re.findall(r"[A-Z]+", document_output.upper())), document_output
     finally:
         await delete_agent(e2e_client, e2e_headers, slug)
 
@@ -241,6 +268,6 @@ async def test_non_vision_model_uses_ocr_fallback(
             query="调用 read_file 读取 ocr-text.png 中的文字，只回答图片中的英文文字。",
             attachment_file_id=image_file_id,
         )
-        assert "OCR FALLBACK OK" in " ".join(output.upper().split()), output
+        assert "OCR FALLBACK OK" in " ".join(re.findall(r"[A-Z]+", output.upper())), output
     finally:
         await delete_agent(e2e_client, e2e_headers, slug)

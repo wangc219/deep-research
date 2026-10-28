@@ -40,9 +40,7 @@ class AgentDef:
     output_contract: str | dict[str, Any] = "baseline_finding_packet"
     object_read_scopes: list[str] = field(default_factory=list)
     object_write_scopes: list[str] = field(default_factory=list)
-    model_profile: dict[str, Any] = field(
-        default_factory=lambda: dict(DEFAULT_MODEL_PROFILE)
-    )
+    model_profile: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_MODEL_PROFILE))
     skills: list[dict[str, Any]] = field(default_factory=list)
     research_policy: dict[str, Any] = field(default_factory=dict)
     handoff_policy: dict[str, Any] = field(default_factory=dict)
@@ -61,9 +59,7 @@ class AgentDef:
 
         unknown_tools = sorted(set(self.tools) - TOOL_CATALOG)
         if unknown_tools:
-            raise ValueError(
-                f"agent {self.agent_id} declares unknown tools: {unknown_tools}"
-            )
+            raise ValueError(f"agent {self.agent_id} declares unknown tools: {unknown_tools}")
 
         validate_named_contract(self.input_contract, field_name="input_contract")
         validate_named_contract(self.output_contract, field_name="output_contract")
@@ -73,10 +69,7 @@ class AgentDef:
             raise ValueError("context_policy visible_sections must be a list")
         unknown_sections = sorted(set(visible_sections) - VISIBLE_SECTION_CATALOG)
         if unknown_sections:
-            raise ValueError(
-                f"agent {self.agent_id} declares unknown visible sections: "
-                f"{unknown_sections}"
-            )
+            raise ValueError(f"agent {self.agent_id} declares unknown visible sections: {unknown_sections}")
 
         _validate_scopes(
             self.agent_id,
@@ -90,25 +83,18 @@ class AgentDef:
         )
         validate_model_profile(self.model_profile)
         if self.skills and not all(
-            isinstance(item, Mapping) and str(item.get("name", "")).strip()
-            for item in self.skills
+            isinstance(item, Mapping) and str(item.get("name", "")).strip() for item in self.skills
         ):
             raise ValueError(f"agent {self.agent_id} skills must be named objects")
         if self.shared_skills and not all(
-            isinstance(item, Mapping) and str(item.get("name", "")).strip()
-            for item in self.shared_skills
+            isinstance(item, Mapping) and str(item.get("name", "")).strip() for item in self.shared_skills
         ):
-            raise ValueError(
-                f"agent {self.agent_id} shared_skills must be named objects"
-            )
+            raise ValueError(f"agent {self.agent_id} shared_skills must be named objects")
         if self.knowledge_packs and not all(
-            isinstance(item, Mapping)
-            and str(item.get("knowledge_pack_id", "")).strip()
+            isinstance(item, Mapping) and str(item.get("knowledge_pack_id", "")).strip()
             for item in self.knowledge_packs
         ):
-            raise ValueError(
-                f"agent {self.agent_id} knowledge_packs must be named objects"
-            )
+            raise ValueError(f"agent {self.agent_id} knowledge_packs must be named objects")
         validate_agent_extension(self.research_policy, field_name="research_policy")
         validate_agent_extension(self.handoff_policy, field_name="handoff_policy")
 
@@ -130,7 +116,7 @@ class AgentRegistry:
         cls,
         path: str | Path,
         harness_config_path: str | Path | None = None,
-    ) -> "AgentRegistry":
+    ) -> AgentRegistry:
         config_path = Path(path)
         data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
         if not isinstance(data, Mapping):
@@ -139,14 +125,10 @@ class AgentRegistry:
         if not isinstance(rows, list):
             raise ValueError("agents must be a list")
         candidate_harness_path = (
-            Path(harness_config_path)
-            if harness_config_path is not None
-            else config_path.parent / "harness.yaml"
+            Path(harness_config_path) if harness_config_path is not None else config_path.parent / "harness.yaml"
         )
         harness_catalog = (
-            HarnessCatalog.load(candidate_harness_path)
-            if candidate_harness_path.is_file()
-            else HarnessCatalog.empty()
+            HarnessCatalog.load(candidate_harness_path) if candidate_harness_path.is_file() else HarnessCatalog.empty()
         )
         agents: dict[str, AgentDef] = {}
         for row in rows:
@@ -175,21 +157,16 @@ class AgentRegistry:
             model_profile["model"] = resolve_model(
                 agent_id,
                 requested=str(model_profile.get("model", "")),
-                fallback=str(data.get("default_model", ""))
-                or DEFAULT_MODEL_PROFILE["model"],
+                fallback=str(data.get("default_model", "")) or DEFAULT_MODEL_PROFILE["model"],
                 provider=str(model_profile.get("provider", "")),
             )
             harness_profile = str(row.get("harness_profile", "")).strip()
             if harness_profile and harness_profile not in harness_catalog.profiles:
-                raise ValueError(
-                    f"agent {agent_id} references unknown harness profile: {harness_profile}"
-                )
+                raise ValueError(f"agent {agent_id} references unknown harness profile: {harness_profile}")
             skill_ids = [str(item) for item in row.get("skill_ids", [])]
             unknown_skills = sorted(set(skill_ids) - set(harness_catalog.skills))
             if unknown_skills:
-                raise ValueError(
-                    f"agent {agent_id} references unknown skills: {unknown_skills}"
-                )
+                raise ValueError(f"agent {agent_id} references unknown skills: {unknown_skills}")
             legacy_skills = row.get(
                 "skills",
                 [{"name": "general_research", "objective": agent_id}],
@@ -200,30 +177,16 @@ class AgentRegistry:
                 else [dict(item) for item in legacy_skills]
             )
             shared_skills = (
-                []
-                if agent_id == "reporter"
-                else [
-                    item.to_agent_skill()
-                    for item in harness_catalog.shared_skills()
-                ]
+                [] if agent_id == "reporter" else [item.to_agent_skill() for item in harness_catalog.shared_skills()]
             )
-            requested_pack_ids = [
-                str(item) for item in row.get("knowledge_pack_ids", [])
-            ]
-            unknown_packs = sorted(
-                set(requested_pack_ids) - set(harness_catalog.knowledge_packs)
-            )
+            requested_pack_ids = [str(item) for item in row.get("knowledge_pack_ids", [])]
+            unknown_packs = sorted(set(requested_pack_ids) - set(harness_catalog.knowledge_packs))
             if unknown_packs:
-                raise ValueError(
-                    f"agent {agent_id} references unknown knowledge packs: {unknown_packs}"
-                )
+                raise ValueError(f"agent {agent_id} references unknown knowledge packs: {unknown_packs}")
             shared_pack_ids = (
                 []
                 if agent_id == "reporter"
-                else [
-                    item.knowledge_pack_id
-                    for item in harness_catalog.shared_knowledge_packs()
-                ]
+                else [item.knowledge_pack_id for item in harness_catalog.shared_knowledge_packs()]
             )
             knowledge_pack_ids = list(
                 dict.fromkeys(
@@ -238,10 +201,7 @@ class AgentRegistry:
                     ]
                 )
             )
-            knowledge_packs = [
-                harness_catalog.knowledge_packs[item].to_runtime()
-                for item in knowledge_pack_ids
-            ]
+            knowledge_packs = [harness_catalog.knowledge_packs[item].to_runtime() for item in knowledge_pack_ids]
             agent = AgentDef(
                 agent_id=agent_id,
                 display_name=str(row.get("display_name", row["agent_id"])),
@@ -293,11 +253,7 @@ class AgentRegistry:
         return self._agents[agent_id]
 
     def enabled_baseline_agents(self) -> list[AgentDef]:
-        return [
-            agent
-            for agent in self._agents.values()
-            if agent.enabled and not agent.system_agent
-        ]
+        return [agent for agent in self._agents.values() if agent.enabled and not agent.system_agent]
 
     def select_agents(self, requested_ids: list[str] | None = None) -> list[AgentDef]:
         if requested_ids:
@@ -395,6 +351,4 @@ def _validate_scopes(
 ) -> None:
     unknown = sorted(set(scopes) - OBJECT_SCOPE_CATALOG)
     if unknown:
-        raise ValueError(
-            f"agent {agent_id} declares unknown object {scope_kind} scopes: {unknown}"
-        )
+        raise ValueError(f"agent {agent_id} declares unknown object {scope_kind} scopes: {unknown}")

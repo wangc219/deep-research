@@ -34,7 +34,6 @@ from platform_core.services.input_message_service import restore_chat_input_mess
 from platform_core.services.run_queue_service import (
     RUN_RECONCILIATION_SECONDS,
     WORKER_HEALTH_INTERVAL_SECONDS,
-    WORKER_HEALTH_KEY,
     WORKER_RECONCILIATION_HEALTH_KEY,
     WORKER_RECONCILIATION_HEALTH_TTL_SECONDS,
     append_run_stream_event,
@@ -54,6 +53,14 @@ from platform_core.services.task_queue_service import (
     reconcile_and_publish_tasks,
 )
 from platform_core.services.task_service import TASKER_DEFAULT_TIMEOUT_SECONDS, process_task
+from platform_core.services.run_scheduling import (
+    AGENT_QUEUES,
+    agent_health_key,
+    run_lane,
+    split_agent_queues,
+    user_run_limit,
+    worker_kind,
+)
 from platform_core.services.workdir_service import (
     AuthorizedWorkdir,
     resolve_authorized_workdir,
@@ -399,10 +406,17 @@ async def _flush_writer_best_effort(writer: ChunkedEventWriter) -> None:
 async def mark_run_running(run_id: str, worker_id: str) -> bool:
     async with pg_manager.get_async_session_context() as db:
         repo = AgentRunRepository(db)
+        capacity = {}
+        if split_agent_queues():
+            run = await repo.get_run(run_id)
+            if run is None:
+                return False
+            capacity["max_user_running"] = user_run_limit(run_lane(run))
         _, acquired = await repo.mark_running(
             run_id,
             worker_id=worker_id,
             lease_seconds=RUN_LEASE_SECONDS,
+            **capacity,
         )
         return acquired
 
@@ -1052,6 +1066,8 @@ async def process_agent_run(ctx, run_id: str):
             meta["source"] = input_metadata.get("source")
         if isinstance(input_metadata.get("agent_invocation_meta"), dict):
             meta["agent_invocation_meta"] = input_metadata.get("agent_invocation_meta") or {}
+        if isinstance(input_metadata.get("message_replacement"), dict):
+            meta["message_replacement"] = dict(input_metadata["message_replacement"])
 
         metadata_event = {
             "request_id": request_id,
@@ -1489,6 +1505,9 @@ async def process_agent_run(ctx, run_id: str):
                 agent_slug=agent_slug,
                 thread_id=thread_id,
             )
+        if split_agent_queues() and final_run and final_run.status in TERMINAL_RUN_STATUSES:
+            # 当前用户释放配额后立即补发其他线程；周期恢复仍作为进程退出时的兜底。
+            await recover_pending_dispatches(owner_uid=uid)
 
 
 async def _load_input_message(message_id: int | None) -> Message | None:
@@ -1585,6 +1604,9 @@ async def _worker_startup(ctx):
         )
     async with pg_manager.get_async_session_context() as session:
         await init_builtin_skills(session)
+    if worker_kind() in AGENT_QUEUES:
+        # 调度、恢复和定时任务由后台池统一负责，各执行池只领取自己的队列。
+        return
     reconciled_ids = await reconcile_expired_run_leases()
     if reconciled_ids:
         logger.warning(f"Reconciled expired AgentRun leases at startup: count={len(reconciled_ids)}")
@@ -1597,6 +1619,10 @@ async def _worker_startup(ctx):
     await _publish_reconciliation_health()
     ctx[_RECONCILIATION_TASK_KEY] = asyncio.create_task(_reconcile_agent_run_leases_forever())
     ctx[_TASK_RECONCILIATION_TASK_KEY] = asyncio.create_task(_reconcile_durable_tasks_forever())
+    from platform_core.services.resource_budget import governor_enabled, resource_governor
+
+    if governor_enabled():
+        ctx['resource_governor_task'] = asyncio.create_task(resource_governor())
 
 
 async def _worker_shutdown(ctx):
@@ -1606,6 +1632,7 @@ async def _worker_shutdown(ctx):
         reconciliation_tasks = [
             ctx.pop(_RECONCILIATION_TASK_KEY, None),
             ctx.pop(_TASK_RECONCILIATION_TASK_KEY, None),
+            ctx.pop('resource_governor_task', None),
         ]
         reconciliation_tasks = [task for task in reconciliation_tasks if task is not None]
         for task in reconciliation_tasks:
@@ -1623,6 +1650,12 @@ class WorkerSettings:
         process_agent_run,
         func(process_task, timeout=TASKER_DEFAULT_TIMEOUT_SECONDS + 30),
     ]
+    if worker_kind() in AGENT_QUEUES:
+        # 配额不足时保留 PG pending 意图，完成 ARQ 唤醒且不缓存空结果，以便及时补发。
+        functions = [func(process_agent_run, keep_result=0)]
+    elif worker_kind() == "background":
+        functions = [func(process_task, timeout=TASKER_DEFAULT_TIMEOUT_SECONDS + 30)]
+    queue_name = AGENT_QUEUES.get(worker_kind(), "arq:queue")
     max_jobs = worker_max_jobs()
     # 交互请求避免继承 ARQ 默认的 500ms 空闲轮询等待。
     poll_delay = 0.05
@@ -1633,7 +1666,7 @@ class WorkerSettings:
     job_timeout = int(deep_research_env("JOB_TIMEOUT_SECONDS", "3600") or "3600")
     keep_result = 60
     health_check_interval = WORKER_HEALTH_INTERVAL_SECONDS
-    health_check_key = WORKER_HEALTH_KEY
+    health_check_key = agent_health_key(worker_kind())
     on_startup = _worker_startup
     on_shutdown = _worker_shutdown
     redis_settings = get_arq_redis_settings()

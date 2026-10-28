@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
+from collections.abc import Awaitable, Callable
 from uuid import uuid4
 
 from knowledgegraph.demand_discovery.domain.candidate_synthesis import (
@@ -81,9 +82,7 @@ def evaluate_stop_conditions(
         return StopDecision(True, "consecutive_no_new_sources")
     if judgement.stop_or_continue == "stop":
         return StopDecision(True, "judge_stop")
-    if new_strong_evidence_count <= 0 and not _has_v1_follow_up_tasks(
-        judgement.next_round_plan
-    ):
+    if new_strong_evidence_count <= 0 and not _has_v1_follow_up_tasks(judgement.next_round_plan):
         return StopDecision(True, "no_new_strong_evidence")
     return StopDecision(False, "continue")
 
@@ -108,9 +107,7 @@ class ResearchLoopController:
         self.registry = registry
         self.max_rounds = max(1, max_rounds)
         self.judge_provider_factory = judge_provider_factory
-        self.judge_sessions_dir = Path(
-            judge_sessions_dir or Path("outputs") / "runs" / run_id / "judge"
-        )
+        self.judge_sessions_dir = Path(judge_sessions_dir or Path("outputs") / "runs" / run_id / "judge")
         self.trace: list[str] = ["source_strategy"]
         self.candidate_synthesis: CandidateSynthesisDraft | None = None
 
@@ -221,17 +218,10 @@ class ResearchLoopController:
                             *self.candidate_synthesis.evidence_ids,
                         ],
                         output_refs=[self.candidate_synthesis.candidate_id],
-                        summary=(
-                            "candidate synthesized from judgement "
-                            f"{judgement.judgement_id}"
-                        ),
+                        summary=(f"candidate synthesized from judgement {judgement.judgement_id}"),
                         decision=self.candidate_synthesis.status,
                         rationale=self.candidate_synthesis.rationale,
-                        payload={
-                            "open_questions": list(
-                                self.candidate_synthesis.open_questions
-                            )
-                        },
+                        payload={"open_questions": list(self.candidate_synthesis.open_questions)},
                     )
                 self.trace.append("candidate_synthesis")
                 round_rows.append(_round_row(research_round, judgement))
@@ -252,13 +242,9 @@ class ResearchLoopController:
             "rounds": round_rows,
             "trace": list(self.trace),
             "candidate_synthesis": (
-                self.candidate_synthesis.to_dict()
-                if self.candidate_synthesis is not None
-                else None
+                self.candidate_synthesis.to_dict() if self.candidate_synthesis is not None else None
             ),
-            "open_search_plans": [
-                plan.to_dict() for plan in self.store.open_search_plans.values()
-            ],
+            "open_search_plans": [plan.to_dict() for plan in self.store.open_search_plans.values()],
         }
 
     async def run_network_loop(
@@ -328,15 +314,9 @@ class ResearchLoopController:
                 previous_judgement=previous_judgement,
                 planned_tasks=planned_tasks,
                 allow_open_search=active_open_search_plan is not None,
-                open_search_plan_id=(
-                    active_open_search_plan.plan_id
-                    if active_open_search_plan is not None
-                    else ""
-                ),
+                open_search_plan_id=(active_open_search_plan.plan_id if active_open_search_plan is not None else ""),
                 open_search_plan_payload=(
-                    active_open_search_plan.to_dict()
-                    if active_open_search_plan is not None
-                    else None
+                    active_open_search_plan.to_dict() if active_open_search_plan is not None else None
                 ),
             )
             imported = self._import_network_worker_domain(worker_result.domain_path)
@@ -399,25 +379,17 @@ class ResearchLoopController:
                     "run_dir": str(getattr(worker_result, "run_dir", "")),
                     "artifact_dir": str(getattr(worker_result, "artifact_dir", "")),
                     "domain_path": str(getattr(worker_result, "domain_path", "")),
-                    "trace_event_count": int(
-                        getattr(worker_result, "trace_event_count", 0) or 0
-                    ),
-                    "report_trace_event_count": int(
-                        getattr(worker_result, "report_trace_event_count", 0) or 0
-                    ),
+                    "trace_event_count": int(getattr(worker_result, "trace_event_count", 0) or 0),
+                    "report_trace_event_count": int(getattr(worker_result, "report_trace_event_count", 0) or 0),
                     "evidence_ids": list(imported["evidence_ids"]),
                     "new_evidence_ids": list(imported["new_evidence_ids"]),
                     "allow_open_search": active_open_search_plan is not None,
                     "open_search_plan_id": (
-                        active_open_search_plan.plan_id
-                        if active_open_search_plan is not None
-                        else ""
+                        active_open_search_plan.plan_id if active_open_search_plan is not None else ""
                     ),
                 }
             )
-            new_strong_evidence_count = self._count_new_strong_evidence(
-                imported["new_evidence_ids"]
-            )
+            new_strong_evidence_count = self._count_new_strong_evidence(imported["new_evidence_ids"])
             next_open_search_plan = self._maybe_create_open_search_plan(
                 round_index=index,
                 research_round=research_round,
@@ -481,17 +453,10 @@ class ResearchLoopController:
                             *self.candidate_synthesis.evidence_ids,
                         ],
                         output_refs=[self.candidate_synthesis.candidate_id],
-                        summary=(
-                            "candidate synthesized from judgement "
-                            f"{judgement.judgement_id}"
-                        ),
+                        summary=(f"candidate synthesized from judgement {judgement.judgement_id}"),
                         decision=self.candidate_synthesis.status,
                         rationale=self.candidate_synthesis.rationale,
-                        payload={
-                            "open_questions": list(
-                                self.candidate_synthesis.open_questions
-                            )
-                        },
+                        payload={"open_questions": list(self.candidate_synthesis.open_questions)},
                     )
                 self.trace.append("candidate_synthesis")
                 round_rows.append(_round_row(research_round, judgement))
@@ -512,14 +477,10 @@ class ResearchLoopController:
             "rounds": round_rows,
             "trace": list(self.trace),
             "candidate_synthesis": (
-                self.candidate_synthesis.to_dict()
-                if self.candidate_synthesis is not None
-                else None
+                self.candidate_synthesis.to_dict() if self.candidate_synthesis is not None else None
             ),
             "network_worker_runs": network_worker_runs,
-            "open_search_plans": [
-                plan.to_dict() for plan in self.store.open_search_plans.values()
-            ],
+            "open_search_plans": [plan.to_dict() for plan in self.store.open_search_plans.values()],
         }
 
     async def run_network_open_search_repair_round(
@@ -656,11 +617,7 @@ class ResearchLoopController:
                 "status": "stopped" if judgement.stop_or_continue == "stop" else "judged",
                 "judgement_id": judgement.judgement_id,
                 "next_round_plan": judgement.next_round_plan,
-                "stop_reason": (
-                    "audit_repair_judge_stop"
-                    if judgement.stop_or_continue == "stop"
-                    else None
-                ),
+                "stop_reason": ("audit_repair_judge_stop" if judgement.stop_or_continue == "stop" else None),
             }
         )
         self.store.upsert_research_round(research_round)
@@ -681,17 +638,10 @@ class ResearchLoopController:
                         *self.candidate_synthesis.evidence_ids,
                     ],
                     output_refs=[self.candidate_synthesis.candidate_id],
-                    summary=(
-                        "candidate synthesized from audit repair judgement "
-                        f"{judgement.judgement_id}"
-                    ),
+                    summary=(f"candidate synthesized from audit repair judgement {judgement.judgement_id}"),
                     decision=self.candidate_synthesis.status,
                     rationale=self.candidate_synthesis.rationale,
-                    payload={
-                        "open_questions": list(
-                            self.candidate_synthesis.open_questions
-                        )
-                    },
+                    payload={"open_questions": list(self.candidate_synthesis.open_questions)},
                 )
             self.trace.append("candidate_synthesis")
         return {
@@ -701,21 +651,15 @@ class ResearchLoopController:
                 "run_id": str(getattr(worker_result, "run_id", "")),
                 "run_dir": str(getattr(worker_result, "run_dir", "")),
                 "domain_path": str(getattr(worker_result, "domain_path", "")),
-                "trace_event_count": int(
-                    getattr(worker_result, "trace_event_count", 0) or 0
-                ),
-                "report_trace_event_count": int(
-                    getattr(worker_result, "report_trace_event_count", 0) or 0
-                ),
+                "trace_event_count": int(getattr(worker_result, "trace_event_count", 0) or 0),
+                "report_trace_event_count": int(getattr(worker_result, "report_trace_event_count", 0) or 0),
                 "evidence_ids": list(imported["evidence_ids"]),
                 "new_evidence_ids": list(imported["new_evidence_ids"]),
                 "allow_open_search": True,
                 "open_search_plan_id": plan.plan_id,
             },
             "candidate_synthesis": (
-                self.candidate_synthesis.to_dict()
-                if self.candidate_synthesis is not None
-                else None
+                self.candidate_synthesis.to_dict() if self.candidate_synthesis is not None else None
             ),
             "open_search_plan": plan.to_dict(),
         }
@@ -744,16 +688,8 @@ class ResearchLoopController:
             target_id=judgement.judgement_id,
             input_refs=[
                 *research_round.worker_report_ids,
-                *[
-                    evidence_id
-                    for report in reports
-                    for evidence_id in report.evidence_refs
-                ],
-                *[
-                    lead_id
-                    for report in reports
-                    for lead_id in report.lead_refs
-                ],
+                *[evidence_id for report in reports for evidence_id in report.evidence_refs],
+                *[lead_id for report in reports for lead_id in report.lead_refs],
             ],
             output_refs=[judgement.judgement_id],
             summary=f"controller consumed judgement {judgement.judgement_id}",
@@ -893,9 +829,7 @@ class ResearchLoopController:
         if task.get("source_scope") == "open_web_after_whitelist_exhausted":
             return True
         completion_check = str(task.get("completion_check", ""))
-        return "白名单" in completion_check and (
-            "耗尽" in completion_check or "无新增" in completion_check
-        )
+        return "白名单" in completion_check and ("耗尽" in completion_check or "无新增" in completion_check)
 
     def _open_search_queries_from_judgement(
         self,
@@ -951,11 +885,7 @@ class ResearchLoopController:
                 },
             )
             self.trace.append("judge_plan_brief_mismatch")
-        event_type = (
-            "judge_plan_repaired"
-            if repaired_assessment.is_valid
-            else "judge_plan_needs_revision"
-        )
+        event_type = "judge_plan_repaired" if repaired_assessment.is_valid else "judge_plan_needs_revision"
         self._append_domain_trace(
             event_type=event_type,
             target_type="JudgementReport",
@@ -990,15 +920,8 @@ class ResearchLoopController:
             target_type="JudgementReport",
             target_id=previous_judgement.judgement_id,
             input_refs=[previous_judgement.judgement_id],
-            output_refs=[
-                str(task.get("task_id", ""))
-                for task in assignments
-                if str(task.get("task_id", "")).strip()
-            ],
-            summary=(
-                "planned worker assignments from judgement "
-                f"{previous_judgement.judgement_id}"
-            ),
+            output_refs=[str(task.get("task_id", "")) for task in assignments if str(task.get("task_id", "")).strip()],
+            summary=(f"planned worker assignments from judgement {previous_judgement.judgement_id}"),
             payload={
                 "next_round_id": next_round_id,
                 "assignment_count": len(assignments),
@@ -1033,11 +956,7 @@ class ResearchLoopController:
             previous_judgement,
             next_round_id=round_id,
         )
-        previous_plan = (
-            dict(previous_judgement.next_round_plan)
-            if previous_judgement is not None
-            else {}
-        )
+        previous_plan = dict(previous_judgement.next_round_plan) if previous_judgement is not None else {}
         plan_query = _first_plan_query(previous_plan)
         hypothesis = (
             f"第 {index} 轮按上一轮 next_round_plan 追问：{plan_query}"
@@ -1067,11 +986,7 @@ class ResearchLoopController:
             target_id=round_id,
             input_refs=[
                 self.strategy.strategy_id,
-                *(
-                    [previous_judgement.judgement_id]
-                    if previous_judgement is not None
-                    else []
-                ),
+                *([previous_judgement.judgement_id] if previous_judgement is not None else []),
             ],
             output_refs=[round_id],
             summary=hypothesis,
@@ -1081,11 +996,7 @@ class ResearchLoopController:
         skipped_lead_id = f"lead-{index}-skipped"
         failed_lead_id = f"lead-{index}-failed"
         source = next(
-            (
-                item
-                for item in self.strategy.selected_sources
-                if item.source_tier == "A"
-            ),
+            (item for item in self.strategy.selected_sources if item.source_tier == "A"),
             self.strategy.selected_sources[0],
         )
         lead = ResearchLead(
@@ -1107,9 +1018,7 @@ class ResearchLoopController:
             credibility_score=0.9,
             status="read",
             selection_reason=(
-                f"fake topic match from previous next_round_plan: {plan_query}"
-                if plan_query
-                else "fake topic match"
+                f"fake topic match from previous next_round_plan: {plan_query}" if plan_query else "fake topic match"
             ),
             skip_reason="",
             artifact_refs=[],
@@ -1150,9 +1059,7 @@ class ResearchLoopController:
                 budget_snapshot={
                     "round": index,
                     "planned_from_judgement_id": (
-                        previous_judgement.judgement_id
-                        if previous_judgement is not None
-                        else ""
+                        previous_judgement.judgement_id if previous_judgement is not None else ""
                     ),
                     "next_round_plan": previous_plan,
                 },
@@ -1199,12 +1106,8 @@ class ResearchLoopController:
                 new_evidence_cards=evidence_ids[:1],
                 evidence_refs=evidence_ids[:1],
                 lead_refs=[selected_lead_id],
-                open_questions=[
-                    first_round_open_question
-                ] if not evidence_ids else [],
-                risk_or_conflict=[
-                    "白名单 route/query 无新增强证据"
-                ] if not evidence_ids else [],
+                open_questions=[first_round_open_question] if not evidence_ids else [],
+                risk_or_conflict=["白名单 route/query 无新增强证据"] if not evidence_ids else [],
                 need_more_sources=not bool(evidence_ids),
             ),
             WorkerReport(
@@ -1219,12 +1122,8 @@ class ResearchLoopController:
                 new_evidence_cards=evidence_ids[1:2],
                 evidence_refs=evidence_ids[1:2],
                 lead_refs=[selected_lead_id],
-                open_questions=[
-                    first_round_open_question
-                ] if not evidence_ids else [],
-                risk_or_conflict=[
-                    "白名单 route/query 无新增强证据"
-                ] if not evidence_ids else [],
+                open_questions=[first_round_open_question] if not evidence_ids else [],
+                risk_or_conflict=["白名单 route/query 无新增强证据"] if not evidence_ids else [],
                 need_more_sources=not bool(evidence_ids),
             ),
         ]
@@ -1256,11 +1155,7 @@ class ResearchLoopController:
         previous_judgement: JudgementReport | None,
     ) -> ResearchRound:
         round_id = f"round-{index}"
-        previous_plan = (
-            dict(previous_judgement.next_round_plan)
-            if previous_judgement is not None
-            else {}
-        )
+        previous_plan = dict(previous_judgement.next_round_plan) if previous_judgement is not None else {}
         plan_query = _first_plan_query(previous_plan)
         hypothesis = (
             f"第 {index} 轮按上一轮 next_round_plan 追问：{plan_query}"
@@ -1290,11 +1185,7 @@ class ResearchLoopController:
             target_id=round_id,
             input_refs=[
                 self.strategy.strategy_id,
-                *(
-                    [previous_judgement.judgement_id]
-                    if previous_judgement is not None
-                    else []
-                ),
+                *([previous_judgement.judgement_id] if previous_judgement is not None else []),
             ],
             output_refs=[round_id],
             summary=hypothesis,
@@ -1350,15 +1241,9 @@ class ResearchLoopController:
             budget_snapshot={
                 "round": index,
                 "planned_from_judgement_id": (
-                    previous_judgement.judgement_id
-                    if previous_judgement is not None
-                    else ""
+                    previous_judgement.judgement_id if previous_judgement is not None else ""
                 ),
-                "next_round_plan": (
-                    dict(previous_judgement.next_round_plan)
-                    if previous_judgement is not None
-                    else {}
-                ),
+                "next_round_plan": (dict(previous_judgement.next_round_plan) if previous_judgement is not None else {}),
             },
             created_at=_now(),
             updated_at=_now(),
@@ -1402,38 +1287,20 @@ class ResearchLoopController:
                 continue
             self.store.upsert_evidence(evidence)
         source_ids = list(imported_store.sources)
-        evidence_ids = [
-            evidence_id
-            for evidence_id in imported_store.evidence
-            if evidence_id in self.store.evidence
-        ]
+        evidence_ids = [evidence_id for evidence_id in imported_store.evidence if evidence_id in self.store.evidence]
         return {
             "source_ids": source_ids,
             "evidence_ids": evidence_ids,
-            "new_source_ids": [
-                source_id
-                for source_id in source_ids
-                if source_id not in before_sources
-            ],
-            "new_evidence_ids": [
-                evidence_id
-                for evidence_id in evidence_ids
-                if evidence_id not in before_evidence
-            ],
+            "new_source_ids": [source_id for source_id in source_ids if source_id not in before_sources],
+            "new_evidence_ids": [evidence_id for evidence_id in evidence_ids if evidence_id not in before_evidence],
             "open_search_plan_ids": list(imported_store.open_search_plans),
             "open_source_lead_ids": list(imported_store.open_source_leads),
-            "source_quality_assessment_ids": list(
-                imported_store.source_quality_assessments
-            ),
+            "source_quality_assessment_ids": list(imported_store.source_quality_assessments),
             "new_open_search_plan_ids": [
-                plan_id
-                for plan_id in imported_store.open_search_plans
-                if plan_id not in before_open_search_plans
+                plan_id for plan_id in imported_store.open_search_plans if plan_id not in before_open_search_plans
             ],
             "new_open_source_lead_ids": [
-                lead_id
-                for lead_id in imported_store.open_source_leads
-                if lead_id not in before_open_source_leads
+                lead_id for lead_id in imported_store.open_source_leads if lead_id not in before_open_source_leads
             ],
             "new_open_source_body_artifact_ids": [
                 body_id
@@ -1461,11 +1328,7 @@ class ResearchLoopController:
         default_open_question = "继续补充白名单正文材料交叉验证能力缺口"
         worker_error = str(getattr(worker_result, "error", "") or "")
         has_strong_evidence = self._count_new_strong_evidence(evidence_ids) > 0
-        needs_more_sources = (
-            bool(worker_error)
-            or bool(parsed["need_more_sources"])
-            or not has_strong_evidence
-        )
+        needs_more_sources = bool(worker_error) or bool(parsed["need_more_sources"]) or not has_strong_evidence
         risks: list[str] = []
         if needs_more_sources:
             risks.append("部分真实网络证据可能来自入口页或访问状态页，需继续读取正文材料")
@@ -1477,11 +1340,7 @@ class ResearchLoopController:
             [
                 *list(parsed["open_questions"]),
                 *list(parsed["remaining_gaps"]),
-                *(
-                    [default_open_question]
-                    if needs_more_sources and not parsed["remaining_gaps"]
-                    else []
-                ),
+                *([default_open_question] if needs_more_sources and not parsed["remaining_gaps"] else []),
             ],
             limit=12,
         )
@@ -1496,9 +1355,7 @@ class ResearchLoopController:
             "risk_or_conflict": risks,
             "usage": {
                 "network_worker_run_id": str(getattr(worker_result, "run_id", "")),
-                "network_trace_event_count": int(
-                    getattr(worker_result, "trace_event_count", 0) or 0
-                ),
+                "network_trace_event_count": int(getattr(worker_result, "trace_event_count", 0) or 0),
             },
             "session_path": str(getattr(worker_result, "run_dir", "")),
             "error": worker_error,
@@ -1725,8 +1582,7 @@ class ResearchLoopController:
                     source_id=source_id,
                     claim=f"{self.topic}存在需要补强的能力缺口",
                     evidence_summary=(
-                        "fake open-web body provides a usable cross-source "
-                        "signal for candidate synthesis."
+                        "fake open-web body provides a usable cross-source signal for candidate synthesis."
                     ),
                     excerpt=f"公开正文第 {offset + 1} 段讨论{self.topic}的能力缺口。",
                     source_location=location,
@@ -1791,7 +1647,7 @@ def _round_row(round_obj: ResearchRound, judgement: JudgementReport) -> dict[str
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _stable_id(prefix: str, value: str) -> str:
@@ -1883,10 +1739,7 @@ def _audit_repair_planned_tasks(
     trigger_audit_id: str,
     repair_queries: list[str],
 ) -> list[dict[str, Any]]:
-    queries = [
-        {"language": "auto", "query": query}
-        for query in _dedupe_nonempty(repair_queries, limit=6)
-    ]
+    queries = [{"language": "auto", "query": query} for query in _dedupe_nonempty(repair_queries, limit=6)]
     query_text = "；".join(item["query"] for item in queries)
     return [
         {

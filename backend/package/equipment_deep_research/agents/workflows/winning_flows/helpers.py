@@ -45,32 +45,22 @@ from equipment_deep_research.orchestration.winning_swarm import (
     winning_summary_language_issues,
 )
 
-S6_PORTRAIT_QUALITY_CONTRACT_VERSION = (
-    CAPABILITY_PORTRAIT_QUALITY_CONTRACT_VERSION
-)
+S6_PORTRAIT_QUALITY_CONTRACT_VERSION = CAPABILITY_PORTRAIT_QUALITY_CONTRACT_VERSION
+
 
 def _structured_prompt_records(section: str) -> tuple[dict[str, str], ...]:
     """Load a reviewed JSON catalog from ``common.md`` without mutable aliases."""
 
     value = load_dynamic_winning_json("common", section=section)
-    if not isinstance(value, list) or not all(
-        isinstance(item, Mapping) for item in value
-    ):
+    if not isinstance(value, list) or not all(isinstance(item, Mapping) for item in value):
         raise ValueError(f"dynamic resource section must be a JSON object list: {section}")
-    return tuple(
-        {str(key): str(item_value) for key, item_value in item.items()}
-        for item in value
-    )
+    return tuple({str(key): str(item_value) for key, item_value in item.items()} for item in value)
 
 
 # Keep these names as compatibility surfaces while making common.md the only
 # source of the model-facing naming and winning-dimension prose.
-S3_S4_WEAPON_NAMING_TYPES: tuple[dict[str, str], ...] = _structured_prompt_records(
-    "s3_s4.naming_types"
-)
-S3_S4_WINNING_DIMENSION_PACKS: tuple[dict[str, str], ...] = _structured_prompt_records(
-    "s3_s4.dimension_packs"
-)
+S3_S4_WEAPON_NAMING_TYPES: tuple[dict[str, str], ...] = _structured_prompt_records("s3_s4.naming_types")
+S3_S4_WINNING_DIMENSION_PACKS: tuple[dict[str, str], ...] = _structured_prompt_records("s3_s4.dimension_packs")
 
 
 def _s3_s4_dimension_assignments(
@@ -100,34 +90,19 @@ def _s3_s4_dimension_assignments(
         return {}
     ranked_seats = sorted(
         seats,
-        key=lambda value: sha256(
-            f"{seed}|dimension-seat|{value}".encode()
-        ).digest(),
+        key=lambda value: sha256(f"{seed}|dimension-seat|{value}".encode()).digest(),
     )
-    mandatory = [
-        item for item in S3_S4_WINNING_DIMENSION_PACKS if item["code"] == "D7"
-    ]
-    optional = [
-        item for item in S3_S4_WINNING_DIMENSION_PACKS if item["code"] != "D7"
-    ]
+    mandatory = [item for item in S3_S4_WINNING_DIMENSION_PACKS if item["code"] == "D7"]
+    optional = [item for item in S3_S4_WINNING_DIMENSION_PACKS if item["code"] != "D7"]
     ranked_optional = sorted(
         optional,
-        key=lambda item: sha256(
-            f"{seed}|dimension-pack|{item['code']}".encode()
-        ).digest(),
+        key=lambda item: sha256(f"{seed}|dimension-pack|{item['code']}".encode()).digest(),
     )
     selected_packs = [*mandatory, *ranked_optional[: max(0, len(seats) - 1)]]
     # Keep the legacy D7 reference on a deterministic, seed-dependent seat;
     # this branch is compatibility-only and does not constrain dynamic-v2.
-    selected_packs.sort(
-        key=lambda item: sha256(
-            f"{seed}|dimension-pack|{item['code']}".encode()
-        ).digest()
-    )
-    return {
-        seat: dict(selected_packs[index])
-        for index, seat in enumerate(ranked_seats)
-    }
+    selected_packs.sort(key=lambda item: sha256(f"{seed}|dimension-pack|{item['code']}".encode()).digest())
+    return {seat: dict(selected_packs[index]) for index, seat in enumerate(ranked_seats)}
 
 
 def _s3_s4_dimension_portfolios(
@@ -162,9 +137,7 @@ def _s3_s4_dimension_portfolios(
     # exploration surface.
     bounded = max(3, min(int(dimensions_per_seat), len(S3_S4_WINNING_DIMENSION_PACKS)))
     primary = _s3_s4_dimension_assignments(seed, seats)
-    packs_by_code = {
-        str(item["code"]): dict(item) for item in S3_S4_WINNING_DIMENSION_PACKS
-    }
+    packs_by_code = {str(item["code"]): dict(item) for item in S3_S4_WINNING_DIMENSION_PACKS}
     all_codes = [str(item["code"]) for item in S3_S4_WINNING_DIMENSION_PACKS]
     portfolios: dict[str, dict[str, Any]] = {}
 
@@ -172,14 +145,8 @@ def _s3_s4_dimension_portfolios(
         primary_pack = dict(primary[seat])
         primary_code = str(primary_pack.get("code", ""))
         ranked_alternatives = sorted(
-            (
-                dict(item)
-                for item in S3_S4_WINNING_DIMENSION_PACKS
-                if str(item.get("code", "")) != primary_code
-            ),
-            key=lambda item: sha256(
-                f"{seed}|dimension-portfolio|{seat}|{item['code']}".encode()
-            ).digest(),
+            (dict(item) for item in S3_S4_WINNING_DIMENSION_PACKS if str(item.get("code", "")) != primary_code),
+            key=lambda item: sha256(f"{seed}|dimension-portfolio|{seat}|{item['code']}".encode()).digest(),
         )
         alternatives = ranked_alternatives[: max(0, bounded - 1)]
         portfolio = [
@@ -194,9 +161,9 @@ def _s3_s4_dimension_portfolios(
             "dimension_codes": [str(item.get("code", "")) for item in portfolio],
             "dimension_labels": [str(item.get("label", "")) for item in portfolio],
             "dimension_selection_rule": str(
-                load_dynamic_winning_json(
-                    "common", section="s3_s4.dimension_portfolio_metadata"
-                ).get("closed_selection_rule", "")
+                load_dynamic_winning_json("common", section="s3_s4.dimension_portfolio_metadata").get(
+                    "closed_selection_rule", ""
+                )
             ),
         }
 
@@ -205,18 +172,13 @@ def _s3_s4_dimension_portfolios(
     # seat instead of being lost merely because the primary hash happened to
     # omit it.  Replace only an alternate slot, never the mandatory D7 or a
     # seat's primary lane.
-    covered = {
-        code
-        for item in portfolios.values()
-        for code in item.get("dimension_codes", [])
-    }
+    covered = {code for item in portfolios.values() for code in item.get("dimension_codes", [])}
     missing = [code for code in all_codes if code not in covered]
     for missing_code in missing:
         candidates = [
             seat
             for seat in seats
-            if missing_code
-            not in set(portfolios[seat].get("dimension_codes", []))
+            if missing_code not in set(portfolios[seat].get("dimension_codes", []))
             and len(portfolios[seat].get("alternate_dimensions", [])) >= 1
         ]
         if not candidates:
@@ -225,9 +187,7 @@ def _s3_s4_dimension_portfolios(
             candidates,
             key=lambda value: (
                 len(portfolios[value].get("dimension_codes", [])),
-                sha256(
-                    f"{seed}|dimension-coverage|{value}|{missing_code}".encode()
-                ).digest(),
+                sha256(f"{seed}|dimension-coverage|{value}|{missing_code}".encode()).digest(),
             ),
         )
         replacement = dict(packs_by_code[missing_code])
@@ -240,12 +200,10 @@ def _s3_s4_dimension_portfolios(
             *[{"role": "alternate", **dict(item)} for item in old],
         ]
         portfolios[seat]["dimension_codes"] = [
-            str(item.get("code", ""))
-            for item in portfolios[seat]["dimension_portfolio"]
+            str(item.get("code", "")) for item in portfolios[seat]["dimension_portfolio"]
         ]
         portfolios[seat]["dimension_labels"] = [
-            str(item.get("label", ""))
-            for item in portfolios[seat]["dimension_portfolio"]
+            str(item.get("label", "")) for item in portfolios[seat]["dimension_portfolio"]
         ]
 
     return portfolios
@@ -310,22 +268,12 @@ def _s3_s4_open_dimension_slots(
             merged = dict(nested)
             merged.update({key: value for key, value in row.items() if key != "dimension"})
             row = merged
-        code = _text(
-            row.get("dimension_code")
-            or row.get("code")
-            or row.get("winning_dimension_code")
-        )
+        code = _text(row.get("dimension_code") or row.get("code") or row.get("winning_dimension_code"))
         label = _text(
-            row.get("combat_dimension")
-            or row.get("label")
-            or row.get("dimension_name")
-            or row.get("dimension")
+            row.get("combat_dimension") or row.get("label") or row.get("dimension_name") or row.get("dimension")
         )
         logic = _text(
-            row.get("dimension_winning_logic")
-            or row.get("winning_logic")
-            or row.get("focus")
-            or row.get("logic")
+            row.get("dimension_winning_logic") or row.get("winning_logic") or row.get("focus") or row.get("logic")
         )
         relationship = _text(
             row.get("battlefield_relationship")
@@ -334,9 +282,7 @@ def _s3_s4_open_dimension_slots(
             or row.get("task_chain_breakpoint")
         )
         result = _text(
-            row.get("desired_direct_result")
-            or row.get("direct_military_result")
-            or row.get("direct_military_effect")
+            row.get("desired_direct_result") or row.get("direct_military_result") or row.get("direct_military_effect")
         )
         if not any((code, label, logic, relationship, result)):
             return None
@@ -383,11 +329,7 @@ def _s3_s4_open_dimension_slots(
                 item.get("dimensions") or item.get("dimension_slots") or item.get("slots"),
                 list,
             ):
-                rows = list(
-                    item.get("dimensions")
-                    or item.get("dimension_slots")
-                    or item.get("slots")
-                )
+                rows = list(item.get("dimensions") or item.get("dimension_slots") or item.get("slots"))
                 for nested in rows:
                     normalized = _hint_row(nested)
                     if normalized is not None:
@@ -443,9 +385,7 @@ def _s3_s4_open_dimension_slots(
                         normalized = _hint_row(item)
                         if normalized is not None:
                             global_hints.append(normalized)
-    elif isinstance(dimension_hints, Sequence) and not isinstance(
-        dimension_hints, (str, bytes)
-    ):
+    elif isinstance(dimension_hints, Sequence) and not isinstance(dimension_hints, (str, bytes)):
         for item in dimension_hints:
             if not isinstance(item, Mapping):
                 normalized = _hint_row(item)
@@ -519,10 +459,7 @@ def _s3_s4_open_dimension_slots(
         seats,
         key=lambda value: sha256(f"{seed}|open-dimension-reference|{value}".encode()).digest(),
     )
-    packs_by_code = {
-        _text(item.get("code")).upper(): dict(item)
-        for item in S3_S4_WINNING_DIMENSION_PACKS
-    }
+    packs_by_code = {_text(item.get("code")).upper(): dict(item) for item in S3_S4_WINNING_DIMENSION_PACKS}
     reference_pack = packs_by_code.get(_text(mandatory_reference_code).upper())
     portfolios: dict[str, dict[str, Any]] = {}
     for seat_index, seat in enumerate(seats):
@@ -545,16 +482,12 @@ def _s3_s4_open_dimension_slots(
             hint = dict(rows[slot_index]) if slot_index < len(rows) else {}
             explicit_code = _text(hint.get("code"))
             explicit_label = _text(hint.get("label"))
-            digest = sha256(
-                f"{seed}|open-dimension-slot|{seat}|{slot_index + 1}".encode()
-            ).hexdigest()[:12]
+            digest = sha256(f"{seed}|open-dimension-slot|{seat}|{slot_index + 1}".encode()).hexdigest()[:12]
             slot_code = explicit_code or f"OPEN-{digest}-{slot_index + 1}"
-            metadata = load_dynamic_winning_json(
-                "common", section="s3_s4.dimension_portfolio_metadata"
+            metadata = load_dynamic_winning_json("common", section="s3_s4.dimension_portfolio_metadata")
+            slot_label = explicit_label or str(metadata.get("open_slot_label_template", "")).format(
+                slot_index=slot_index + 1
             )
-            slot_label = explicit_label or str(
-                metadata.get("open_slot_label_template", "")
-            ).format(slot_index=slot_index + 1)
             slot = {
                 "role": "open_slot",
                 "slot_id": f"{seat}::open-dimension::{slot_index + 1}",
@@ -575,9 +508,7 @@ def _s3_s4_open_dimension_slots(
             }
             if seat == reference_seat and slot_index == 0:
                 slot["reference_code"] = _text(mandatory_reference_code).upper()
-                slot["reference_label"] = _text(
-                    (reference_pack or {}).get("label")
-                ) or "源头前出"
+                slot["reference_label"] = _text((reference_pack or {}).get("label")) or "源头前出"
                 slot["reference_only"] = True
                 # Keep the D7 pack's explanatory fields as optional inspiration
                 # only when the model did not provide a relationship of its own.
@@ -611,27 +542,19 @@ def _s3_s4_open_dimension_slots(
             "dimension_codes": [_text(item.get("code")) for item in slots],
             "dimension_labels": [_text(item.get("label")) for item in slots],
             "reference_dimension_codes": sorted(
-                {
-                    _text(item.get("reference_code"))
-                    for item in slots
-                    if _text(item.get("reference_code"))
-                }
+                {_text(item.get("reference_code")) for item in slots if _text(item.get("reference_code"))}
             ),
             # Explicit alias for consumers that must distinguish a
             # reference-only hint from a hard production dimension.  Keep the
             # historical ``reference_dimension_codes`` field above for
             # checkpoint/UI compatibility.
             "reference_only_dimension_codes": sorted(
-                {
-                    _text(item.get("reference_code"))
-                    for item in slots
-                    if _text(item.get("reference_code"))
-                }
+                {_text(item.get("reference_code")) for item in slots if _text(item.get("reference_code"))}
             ),
             "dimension_selection_rule": str(
-                load_dynamic_winning_json(
-                    "common", section="s3_s4.dimension_portfolio_metadata"
-                ).get("open_selection_rule", "")
+                load_dynamic_winning_json("common", section="s3_s4.dimension_portfolio_metadata").get(
+                    "open_selection_rule", ""
+                )
             ),
         }
     return portfolios
@@ -713,9 +636,7 @@ def _canonical_dimension_identity(
         if str(pack.get("code", "")).strip()
     }
     labels_by_token = {
-        unicodedata.normalize("NFKC", str(pack.get("label", "")))
-        .strip()
-        .casefold(): code
+        unicodedata.normalize("NFKC", str(pack.get("label", ""))).strip().casefold(): code
         for code, pack in packs_by_code.items()
         if str(pack.get("label", "")).strip()
     }
@@ -815,9 +736,7 @@ def _s3_s4_dimension_catalog(
         if not isinstance(item, Mapping):
             continue
         code = str(item.get("code", "")).strip()
-        pack = _s3_s4_dimension_pack_for(code) or _s3_s4_dimension_pack_for(
-            item.get("label", "")
-        )
+        pack = _s3_s4_dimension_pack_for(code) or _s3_s4_dimension_pack_for(item.get("label", ""))
         # Open slots may carry a model-authored label/relationship that is not
         # present in the reviewed D1--D7 hint catalog.  Preserve those rows
         # rather than silently reducing the creator to a one-dimensional (or
@@ -833,31 +752,14 @@ def _s3_s4_dimension_catalog(
                 {
                     "code": custom_code,
                     "label": str(item.get("label", "") or custom_code).strip(),
-                    "winning_logic": str(
-                        item.get("winning_logic")
-                        or item.get("dimension_winning_logic", "")
-                    ).strip(),
-                    "task_chain_breakpoint": str(
-                        item.get("task_chain_breakpoint", "")
-                    ).strip(),
-                    "battlefield_relationship": str(
-                        item.get("battlefield_relationship", "")
-                    ).strip(),
-                    "engagement_geometry": str(
-                        item.get("engagement_geometry", "")
-                    ).strip(),
-                    "time_space_position": str(
-                        item.get("time_space_position", "")
-                    ).strip(),
-                    "desired_direct_result": str(
-                        item.get("desired_direct_result", "")
-                    ).strip(),
-                    "forward_winning_question": str(
-                        item.get("forward_winning_question", "")
-                    ).strip(),
-                    "exclusion_boundary": str(
-                        item.get("exclusion_boundary", "")
-                    ).strip(),
+                    "winning_logic": str(item.get("winning_logic") or item.get("dimension_winning_logic", "")).strip(),
+                    "task_chain_breakpoint": str(item.get("task_chain_breakpoint", "")).strip(),
+                    "battlefield_relationship": str(item.get("battlefield_relationship", "")).strip(),
+                    "engagement_geometry": str(item.get("engagement_geometry", "")).strip(),
+                    "time_space_position": str(item.get("time_space_position", "")).strip(),
+                    "desired_direct_result": str(item.get("desired_direct_result", "")).strip(),
+                    "forward_winning_question": str(item.get("forward_winning_question", "")).strip(),
+                    "exclusion_boundary": str(item.get("exclusion_boundary", "")).strip(),
                     "open": bool(item.get("open", True)),
                     "slot_id": str(item.get("slot_id", "")).strip(),
                     "reference_code": str(item.get("reference_code", "")).strip(),
@@ -886,9 +788,7 @@ def _s3_s4_dimension_catalog(
     # Compatibility fallback for assignments persisted before the portfolio
     # field was introduced.
     if not rows:
-        pack = _s3_s4_dimension_pack_for(
-            raw.get("dimension_code") or raw.get("combat_dimension")
-        )
+        pack = _s3_s4_dimension_pack_for(raw.get("dimension_code") or raw.get("combat_dimension"))
         if pack is not None:
             rows.append(
                 {
@@ -929,25 +829,29 @@ def _s5_dimension_key(item: Any) -> str:
         marker = token.casefold().replace(" ", "")
         if "::open-dimension::" in marker:
             return True
-        return marker in {
-            "open",
-            "open_slot",
-            "open-slot",
-            "auto",
-            "dynamic",
-            "dynamic-open",
-            "dynamic_open",
-            "dynamicopen",
-            "query开放制胜维度",
-            # Resolver fallback when no authored dimension survives.  This is
-            # a transport placeholder, not a model-authored competition lane.
-            "primary",
-        } or marker.startswith("query开放制胜槽位") or bool(
-            re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker)
-        ) or bool(
-            re.match(
-                r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
-                marker,
+        return (
+            marker
+            in {
+                "open",
+                "open_slot",
+                "open-slot",
+                "auto",
+                "dynamic",
+                "dynamic-open",
+                "dynamic_open",
+                "dynamicopen",
+                "query开放制胜维度",
+                # Resolver fallback when no authored dimension survives.  This is
+                # a transport placeholder, not a model-authored competition lane.
+                "primary",
+            }
+            or marker.startswith("query开放制胜槽位")
+            or bool(re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker))
+            or bool(
+                re.match(
+                    r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
+                    marker,
+                )
             )
         )
 
@@ -981,12 +885,8 @@ def _s5_dimension_key(item: Any) -> str:
     # between candidates.
     if angle_dimension and "::" in angle and not usable_code:
         dimension = angle_dimension
-    if (
-        angle_dimension.startswith("other:")
-        and (
-            not usable_code
-            or _canonical_dimension_identity(usable_code) == "other"
-        )
+    if angle_dimension.startswith("other:") and (
+        not usable_code or _canonical_dimension_identity(usable_code) == "other"
     ):
         dimension = angle_dimension
     if dimension:
@@ -995,11 +895,7 @@ def _s5_dimension_key(item: Any) -> str:
         # An angle id often embeds the explicit dimension (for example
         # ``query-winning-angle-2::D3``).  Use that code when present; retain
         # the full opaque id for genuinely model-authored OTHER angles.
-        angle_dimension = (
-            ""
-            if is_transport_marker(angle_suffix)
-            else _canonical_dimension_identity(angle_suffix)
-        )
+        angle_dimension = "" if is_transport_marker(angle_suffix) else _canonical_dimension_identity(angle_suffix)
         if angle_dimension:
             return f"dimension:{angle_dimension}"
         normalized_angle = re.sub(
@@ -1064,41 +960,18 @@ def _s3_s4_resolve_authored_dimension(
     # dimensions.  Keep an explicit code ahead of a display label—even when
     # that code is the generic ``OTHER`` marker—so a paired label can be used
     # to derive a stable ``OTHER:<short-id>`` rather than losing its identity.
-    code_values = [
-        value
-        for value in (raw_code, sidecar_code)
-        if value and not _is_open_marker(value)
-    ]
-    label_values = [
-        value
-        for value in (raw_label, sidecar_label)
-        if value and not _is_open_marker(value)
-    ]
+    code_values = [value for value in (raw_code, sidecar_code) if value and not _is_open_marker(value)]
+    label_values = [value for value in (raw_label, sidecar_label) if value and not _is_open_marker(value)]
     specific_code_values = [
         value
         for value in code_values
-        if not (
-            _other_dimension_suffix(value) == ""
-            and _dimension_marker_text(value).casefold() == "other"
-        )
+        if not (_other_dimension_suffix(value) == "" and _dimension_marker_text(value).casefold() == "other")
     ]
     authored_code = (specific_code_values or code_values or label_values or [""])[0]
-    authored_logic = str(
-        raw.get("dimension_winning_logic")
-        or sidecar.get("dimension_winning_logic")
-        or ""
-    ).strip()
-    authored_angle = str(
-        raw.get("winning_angle_id")
-        or sidecar.get("winning_angle_id")
-        or ""
-    ).strip()
+    authored_logic = str(raw.get("dimension_winning_logic") or sidecar.get("dimension_winning_logic") or "").strip()
+    authored_angle = str(raw.get("winning_angle_id") or sidecar.get("winning_angle_id") or "").strip()
     authored_label = next(
-        (
-            value
-            for value in (raw_label, sidecar_label)
-            if value and not _is_open_marker(value)
-        ),
+        (value for value in (raw_label, sidecar_label) if value and not _is_open_marker(value)),
         "",
     )
     pack = _s3_s4_dimension_pack_for(authored_code)
@@ -1111,8 +984,7 @@ def _s3_s4_resolve_authored_dimension(
         if authored_code.casefold() == code.casefold():
             combat_dimension = code
         return {
-            "winning_angle_id": authored_angle
-            or f"{assignment.get('assignment_id', 'seat-angle')}::{code}",
+            "winning_angle_id": authored_angle or f"{assignment.get('assignment_id', 'seat-angle')}::{code}",
             "combat_dimension": combat_dimension,
             "dimension_winning_logic": authored_logic or pack["focus"],
             "dimension_code": code,
@@ -1120,32 +992,25 @@ def _s3_s4_resolve_authored_dimension(
     if authored_code:
         # Preserve a genuinely model-authored OTHER relation.  Do not turn an
         # arbitrary phrase into a built-in D1-D7 lane by lexical guessing.
-        stable_code = _stable_authored_dimension_code(
-            authored_code,
-            fallback_label=authored_label,
-        ) or "OTHER"
+        stable_code = (
+            _stable_authored_dimension_code(
+                authored_code,
+                fallback_label=authored_label,
+            )
+            or "OTHER"
+        )
         bare_other_code = (
-            _other_dimension_suffix(authored_code) == ""
-            and _dimension_marker_text(authored_code).casefold() == "other"
+            _other_dimension_suffix(authored_code) == "" and _dimension_marker_text(authored_code).casefold() == "other"
         )
-        display_dimension = (
-            stable_code if bare_other_code else (authored_label or authored_code)
-        )
+        display_dimension = stable_code if bare_other_code else (authored_label or authored_code)
         return {
-            "winning_angle_id": authored_angle
-            or f"{assignment.get('assignment_id', 'seat-angle')}::{stable_code}",
+            "winning_angle_id": authored_angle or f"{assignment.get('assignment_id', 'seat-angle')}::{stable_code}",
             "combat_dimension": display_dimension,
             "dimension_winning_logic": authored_logic,
             "dimension_code": stable_code,
         }
-    fallback_code = str(
-        assignment.get("primary_dimension_code")
-        or assignment.get("dimension_code", "")
-    ).strip()
-    fallback_label = str(
-        assignment.get("primary_dimension_label")
-        or assignment.get("combat_dimension", "")
-    ).strip()
+    fallback_code = str(assignment.get("primary_dimension_code") or assignment.get("dimension_code", "")).strip()
+    fallback_label = str(assignment.get("primary_dimension_label") or assignment.get("combat_dimension", "")).strip()
     fallback_pack = _s3_s4_dimension_pack_for(fallback_code or fallback_label)
     if fallback_pack is not None:
         fallback_code = fallback_pack["code"]
@@ -1179,14 +1044,9 @@ def _s5_merge_target_is_valid(
     source_id = str(source_hypothesis_id or "").strip()
     target_id = str(target_hypothesis_id or "").strip()
     known_ids = {str(value).strip() for value in known_hypothesis_ids if str(value).strip()}
-    scope_ids = {
-        str(value).strip() for value in (candidate_scope or set()) if str(value).strip()
-    }
+    scope_ids = {str(value).strip() for value in (candidate_scope or set()) if str(value).strip()}
     return bool(
-        target_id
-        and target_id in known_ids
-        and target_id != source_id
-        and (not scope_ids or target_id in scope_ids)
+        target_id and target_id in known_ids and target_id != source_id and (not scope_ids or target_id in scope_ids)
     )
 
 
@@ -1277,17 +1137,11 @@ def _s5_diverse_portfolio_order(
         ordered = sorted(rows, key=rank, reverse=True)
         winner = ordered[0]
         winners.append(winner)
-        winner_by_dimension[dimension_key] = str(
-            candidate_field(winner, "hypothesis_id")
-        )
-        competition[dimension_key] = [
-            str(candidate_field(row, "hypothesis_id")) for row in ordered
-        ]
+        winner_by_dimension[dimension_key] = str(candidate_field(winner, "hypothesis_id"))
+        competition[dimension_key] = [str(candidate_field(row, "hypothesis_id")) for row in ordered]
     winners.sort(key=rank, reverse=True)
     selected = winners[:limit]
-    selected_ids = {
-        str(candidate_field(item, "hypothesis_id")) for item in selected
-    }
+    selected_ids = {str(candidate_field(item, "hypothesis_id")) for item in selected}
     # If independent dimensions do not fill the requested cap, only legacy
     # rows with no explicit dimension metadata may be used as overflow. An
     # explicit dimension is a competition lane: its runner-up remains a
@@ -1297,11 +1151,7 @@ def _s5_diverse_portfolio_order(
     # Dimension-less legacy rows are strictly a final backfill.  Explicit
     # dimension runner-ups never enter this list, even if they score higher.
     backups = sorted(
-        [
-            item
-            for item in legacy_rows
-            if str(candidate_field(item, "hypothesis_id")) not in selected_ids
-        ],
+        [item for item in legacy_rows if str(candidate_field(item, "hypothesis_id")) not in selected_ids],
         key=rank,
         reverse=True,
     )
@@ -1316,9 +1166,7 @@ def _s5_diverse_portfolio_order(
     return selected, {
         "dimension_groups": competition,
         "dimension_winner_ids": winner_by_dimension,
-        "legacy_candidate_ids": [
-            str(candidate_field(item, "hypothesis_id")) for item in legacy_rows
-        ],
+        "legacy_candidate_ids": [str(candidate_field(item, "hypothesis_id")) for item in legacy_rows],
         "selected_backup_ids": selected_backup_ids,
         "selection_rule": "dimension_winners_first_then_weighted_score_backfill",
     }
@@ -1335,18 +1183,14 @@ def _random_s3_s4_naming_types(seed: str, *, count: int = 2) -> list[dict[str, s
     bounded_count = max(1, min(int(count), len(S3_S4_WEAPON_NAMING_TYPES)))
     ranked = sorted(
         S3_S4_WEAPON_NAMING_TYPES,
-        key=lambda item: sha256(
-            f"{seed}|{item['code']}|新质武器装备命名".encode("utf-8")
-        ).digest(),
+        key=lambda item: sha256(f"{seed}|{item['code']}|新质武器装备命名".encode()).digest(),
     )
     return [dict(item) for item in ranked[:bounded_count]]
 
 
 def _s3_s4_naming_assignment(seed: str, *, count: int = 2) -> dict[str, Any]:
     naming_types = _random_s3_s4_naming_types(seed, count=count)
-    metadata = load_dynamic_winning_json(
-        "common", section="s3_s4.naming_assignment_metadata"
-    )
+    metadata = load_dynamic_winning_json("common", section="s3_s4.naming_assignment_metadata")
     return {
         "source": "新质武器装备命名类型体系.md（A—O）",
         "selection_mode": "random_without_replacement",
@@ -1382,9 +1226,7 @@ def _targeted_expert_feedback(
         raw_targets = item.get("target_agent_ids")
         targets = {
             str(value).upper().strip()
-            for value in (
-                raw_targets if isinstance(raw_targets, (list, tuple)) else [raw_targets]
-            )
+            for value in (raw_targets if isinstance(raw_targets, (list, tuple)) else [raw_targets])
             if str(value).strip()
         }
         # Older records without target metadata remain usable by every quality
@@ -1422,14 +1264,10 @@ def _open_s3_exploration_brief(
         "winning_problem_propositions",
     )
     return {
-        **{
-            key: full.get(key, [] if key.endswith("s") else "") for key in boundary_keys
-        },
+        **{key: full.get(key, [] if key.endswith("s") else "") for key in boundary_keys},
         "generation_rules": [
             item.strip(" -*")
-            for item in load_dynamic_winning_prompt(
-                "common", section="s3_s4.generation_rules"
-            ).splitlines()
+            for item in load_dynamic_winning_prompt("common", section="s3_s4.generation_rules").splitlines()
             if item.strip(" -*")
         ],
         "solution_hypotheses_withheld": True,
@@ -1440,18 +1278,10 @@ def _open_s3_theme_contract() -> dict[str, Any]:
     """Keep shared examples and fixed lenses out of creative generation."""
 
     return {
-        "authority": load_dynamic_winning_prompt(
-            "common", section="s3_s4.theme_authority"
-        ),
-        "candidate_boundary": load_dynamic_winning_prompt(
-            "common", section="s3_s4.theme_candidate_boundary"
-        ),
-        "creative_freedom": load_dynamic_winning_prompt(
-            "common", section="s3_s4.theme_creative_freedom"
-        ),
-        "template_guard": load_dynamic_winning_prompt(
-            "common", section="s3_s4.theme_template_guard"
-        ),
+        "authority": load_dynamic_winning_prompt("common", section="s3_s4.theme_authority"),
+        "candidate_boundary": load_dynamic_winning_prompt("common", section="s3_s4.theme_candidate_boundary"),
+        "creative_freedom": load_dynamic_winning_prompt("common", section="s3_s4.theme_creative_freedom"),
+        "template_guard": load_dynamic_winning_prompt("common", section="s3_s4.theme_template_guard"),
         "examples_withheld": True,
     }
 
@@ -1530,11 +1360,7 @@ def _s3_s4_name_authoring_issues(name: Any) -> list[str]:
         "example",
         "testname",
     )
-    return (
-        ["placeholder_or_nonfinal_marker"]
-        if any(marker in normalized for marker in markers)
-        else []
-    )
+    return ["placeholder_or_nonfinal_marker"] if any(marker in normalized for marker in markers) else []
 
 
 def _bounded_semantic_review_window(
@@ -1580,15 +1406,9 @@ def _minimal_s6_card_handoff(brief: Mapping[str, Any]) -> dict[str, Any]:
             boundary = max(candidate.rfind(mark) for mark in "。！？；")
             return candidate[: boundary + 1] if boundary >= limit // 2 else candidate
         if isinstance(value, Mapping):
-            return {
-                str(k): compact(v, 180)
-                for k, v in list(value.items())[:8]
-                if v not in (None, "", [], {})
-            }
+            return {str(k): compact(v, 180) for k, v in list(value.items())[:8] if v not in (None, "", [], {})}
         if isinstance(value, (list, tuple)):
-            return [
-                compact(v, 180) for v in list(value)[:4] if v not in (None, "", [], {})
-            ]
+            return [compact(v, 180) for v in list(value)[:4] if v not in (None, "", [], {})]
         return value
 
     fields = (
@@ -1618,14 +1438,8 @@ def _minimal_s6_card_handoff(brief: Mapping[str, Any]) -> dict[str, Any]:
         "new_operational_mode",
         "winning_relation_shift",
     )
-    result = {
-        key: compact(brief[key])
-        for key in fields
-        if brief.get(key) not in (None, "", [], {})
-    }
-    result["handoff_contract"] = load_dynamic_winning_prompt(
-        "common", section="s6.handoff_contract"
-    )
+    result = {key: compact(brief[key]) for key in fields if brief.get(key) not in (None, "", [], {})}
+    result["handoff_contract"] = load_dynamic_winning_prompt("common", section="s6.handoff_contract")
     return result
 
 
@@ -1692,9 +1506,7 @@ def _dynamic_s6_card_input(
     if hypothesis_id:
         candidate["hypothesis_id"] = hypothesis_id
 
-    logic_labels = load_dynamic_winning_json(
-        "common", section="s6.handoff_logic_labels"
-    )
+    logic_labels = load_dynamic_winning_json("common", section="s6.handoff_logic_labels")
     if not isinstance(logic_labels, Mapping):
         logic_labels = {}
     logic_parts: list[str] = []
@@ -1770,29 +1582,17 @@ def _minimal_portfolio_candidate_handoff(
             "primary_equipment_identity": equipment_form,
             "winning_angle_id": str(getattr(item, "winning_angle_id", "") or "").strip(),
             "combat_dimension": str(getattr(item, "combat_dimension", "") or "").strip(),
-            "dimension_winning_logic": str(
-                getattr(item, "dimension_winning_logic", "") or ""
-            ).strip(),
-            "dimension_task_chain_breakpoint": str(
-                getattr(item, "dimension_task_chain_breakpoint", "") or ""
-            ).strip(),
-            "dimension_engagement_geometry": str(
-                getattr(item, "dimension_engagement_geometry", "") or ""
-            ).strip(),
-            "dimension_time_space_position": str(
-                getattr(item, "dimension_time_space_position", "") or ""
-            ).strip(),
-            "dimension_desired_direct_result": str(
-                getattr(item, "dimension_desired_direct_result", "") or ""
-            ).strip(),
+            "dimension_winning_logic": str(getattr(item, "dimension_winning_logic", "") or "").strip(),
+            "dimension_task_chain_breakpoint": str(getattr(item, "dimension_task_chain_breakpoint", "") or "").strip(),
+            "dimension_engagement_geometry": str(getattr(item, "dimension_engagement_geometry", "") or "").strip(),
+            "dimension_time_space_position": str(getattr(item, "dimension_time_space_position", "") or "").strip(),
+            "dimension_desired_direct_result": str(getattr(item, "dimension_desired_direct_result", "") or "").strip(),
             "frontier_principle": str(item.frontier_principle).strip(),
             "technology_discontinuity": str(item.technology_discontinuity).strip(),
             "core_disruptive_difference": str(item.core_disruptive_difference).strip(),
             "naming_style": str(item.naming_style).strip(),
             "naming_rationale": str(item.naming_rationale).strip(),
-            "winning_relation_shift": str(
-                item.disruptive_shift or item.changed_confrontation_variable
-            ).strip(),
+            "winning_relation_shift": str(item.disruptive_shift or item.changed_confrontation_variable).strip(),
             "direct_military_effects": list(item.direct_military_effects[:2]),
         }
     )
@@ -1802,18 +1602,12 @@ def _minimal_portfolio_candidate_handoff(
         str(result.get("technology_discontinuity", "")).strip(),
         str(result.get("core_disruptive_difference", "")).strip(),
         str(result.get("winning_relation_shift", "")).strip(),
-        "；".join(
-            str(value).strip()
-            for value in item.direct_military_effects[:2]
-            if str(value).strip()
-        ),
+        "；".join(str(value).strip() for value in item.direct_military_effects[:2] if str(value).strip()),
     ]
     compact_spine = "；".join(value for value in semantic_parts if value)
     if compact_spine:
         result["semantic_spine"] = compact_spine[:1200]
-    return {
-        key: value for key, value in result.items() if value not in (None, "", [], {})
-    }
+    return {key: value for key, value in result.items() if value not in (None, "", [], {})}
 
 
 def _dynamic_portfolio_innovation_priority(
@@ -1838,9 +1632,7 @@ def _dynamic_portfolio_innovation_priority(
         "independence_thesis",
         "novelty_delta",
     )
-    authored = sum(
-        bool(str(getattr(item, key, "") or "").strip()) for key in structural_fields
-    )
+    authored = sum(bool(str(getattr(item, key, "") or "").strip()) for key in structural_fields)
     return round(min(0.74, 0.44 + authored * 0.05), 4)
 
 
@@ -1855,11 +1647,11 @@ _S5_DISRUPTION_TIER_RANK = {
 # deliberately kept in one place so prompt language, deterministic ordering,
 # fallback behaviour and the UI all use the same rubric.
 S5_DIMENSION_WEIGHTS: dict[str, float] = {
-    "innovation": 0.30,
-    "demand": 0.30,
-    "feasibility": 0.20,
-    "effectiveness": 0.10,
-    "development": 0.10,
+    "innovation": 0.45,
+    "demand": 0.15,
+    "feasibility": 0.10,
+    "effectiveness": 0.25,
+    "development": 0.05,
 }
 
 S5_INNOVATION_COMPONENT_WEIGHTS: dict[str, float] = {
@@ -1915,16 +1707,8 @@ def _s5_naming_assessment(value: Mapping[str, Any]) -> dict[str, Any]:
             "naming_new_quality": None,
             "naming_semantic_alignment": None,
             "effective_innovation": None,
-            "naming_anchor": str(
-                value.get("naming_anchor")
-                or value.get("name_semantic_anchor")
-                or ""
-            ).strip()[:240],
-            "naming_reason": str(
-                value.get("naming_reason")
-                or value.get("naming_rationale")
-                or ""
-            ).strip()[:500],
+            "naming_anchor": str(value.get("naming_anchor") or value.get("name_semantic_anchor") or "").strip()[:240],
+            "naming_reason": str(value.get("naming_reason") or value.get("naming_rationale") or "").strip()[:500],
         }
 
     mechanism_score = _s5_numeric_score(
@@ -1964,10 +1748,7 @@ def _s5_naming_assessment(value: Mapping[str, Any]) -> dict[str, Any]:
     # A legacy provider may put the extended assessment in prose instead of
     # emitting the new nested fields.  Parse only explicit ``label=number``
     # statements; never infer a score from the name itself.
-    basis_text = " ".join(
-        str(value.get(key, "") or "")
-        for key in ("innovation_basis", "reason", "score_basis")
-    )
+    basis_text = " ".join(str(value.get(key, "") or "") for key in ("innovation_basis", "reason", "score_basis"))
 
     def score_from_text(
         current: float | None,
@@ -2018,10 +1799,8 @@ def _s5_naming_assessment(value: Mapping[str, Any]) -> dict[str, Any]:
     if complete:
         effective_innovation = round(
             mechanism_score * S5_INNOVATION_COMPONENT_WEIGHTS["mechanism"]
-            + naming_new_quality
-            * S5_INNOVATION_COMPONENT_WEIGHTS["naming_new_quality"]
-            + naming_semantic_alignment
-            * S5_INNOVATION_COMPONENT_WEIGHTS["naming_semantic_alignment"],
+            + naming_new_quality * S5_INNOVATION_COMPONENT_WEIGHTS["naming_new_quality"]
+            + naming_semantic_alignment * S5_INNOVATION_COMPONENT_WEIGHTS["naming_semantic_alignment"],
             4,
         )
         status = "assessed"
@@ -2045,16 +1824,10 @@ def _s5_naming_assessment(value: Mapping[str, Any]) -> dict[str, Any]:
         "naming_semantic_alignment": naming_semantic_alignment,
         "effective_innovation": effective_innovation,
         "naming_anchor": str(
-            value.get("naming_anchor")
-            or value.get("name_semantic_anchor")
-            or nested.get("naming_anchor")
-            or ""
+            value.get("naming_anchor") or value.get("name_semantic_anchor") or nested.get("naming_anchor") or ""
         ).strip()[:240],
         "naming_reason": str(
-            value.get("naming_reason")
-            or value.get("naming_rationale")
-            or nested.get("naming_reason")
-            or ""
+            value.get("naming_reason") or value.get("naming_rationale") or nested.get("naming_reason") or ""
         ).strip()[:500],
     }
 
@@ -2069,10 +1842,7 @@ def _s5_dimension_scores(value: Mapping[str, Any]) -> tuple[dict[str, float], fl
     # innovation_basis as ``创新性=0.82；需求性=0.76`` (or English aliases).
     # This parser only transports the model's judgement; it never invents a
     # novelty score from local keywords.
-    basis_text = " ".join(
-        str(value.get(key, "") or "")
-        for key in ("innovation_basis", "reason", "score_basis")
-    )
+    basis_text = " ".join(str(value.get(key, "") or "") for key in ("innovation_basis", "reason", "score_basis"))
     score_aliases = {
         "innovation": ("innovation", "创新性"),
         "demand": ("demand", "需求性"),
@@ -2117,9 +1887,7 @@ def _s5_dimension_scores(value: Mapping[str, Any]) -> tuple[dict[str, float], fl
         # unreported non-innovation dimensions remain neutral (0.5) until a
         # weighted S5 reviewer supplies them explicitly.
         if candidate in (None, ""):
-            candidate = (
-                value.get("innovation_priority") if dimension == "innovation" else 0.5
-            )
+            candidate = value.get("innovation_priority") if dimension == "innovation" else 0.5
         try:
             score = float(candidate)
         except (TypeError, ValueError):
@@ -2132,10 +1900,8 @@ def _s5_dimension_scores(value: Mapping[str, Any]) -> tuple[dict[str, float], fl
         scores["innovation"] = naming_assessment["effective_innovation"]
     # The five model-authored dimensions are authoritative. Always recompute
     # the total locally so a rounding mistake or an inconsistent provider
-    # total cannot silently change the requested 30/30/20/10/10 ranking.
-    weighted = sum(
-        scores[dimension] * weight for dimension, weight in S5_DIMENSION_WEIGHTS.items()
-    )
+    # total cannot silently change the requested 45/15/10/25/5 ranking.
+    weighted = sum(scores[dimension] * weight for dimension, weight in S5_DIMENSION_WEIGHTS.items())
     return scores, round(max(0.0, min(1.0, weighted)), 4)
 
 
@@ -2147,22 +1913,12 @@ def _s5_innovation_basis(
 ) -> str:
     """Keep the final innovation basis consistent with the recomputed score."""
 
-    naming = (
-        dict(naming_assessment)
-        if isinstance(naming_assessment, Mapping)
-        else _s5_naming_assessment(value)
-    )
+    naming = dict(naming_assessment) if isinstance(naming_assessment, Mapping) else _s5_naming_assessment(value)
     raw_text = str(value.get("innovation_basis", "") or "").strip()
     if naming.get("status") != "assessed":
         return raw_text[:500]
-    scores = (
-        dict(dimension_scores)
-        if isinstance(dimension_scores, Mapping)
-        else _s5_dimension_scores(value)[0]
-    )
-    canonical = load_dynamic_winning_prompt(
-        "common", section="s5.assessed_score_basis"
-    ).format(
+    scores = dict(dimension_scores) if isinstance(dimension_scores, Mapping) else _s5_dimension_scores(value)[0]
+    canonical = load_dynamic_winning_prompt("common", section="s5.assessed_score_basis").format(
         innovation=float(scores.get("innovation", 0.0) or 0.0),
         demand=float(scores.get("demand", 0.0) or 0.0),
         feasibility=float(scores.get("feasibility", 0.0) or 0.0),
@@ -2180,12 +1936,12 @@ def _s5_innovation_basis(
         )
         raw_text = score_prefix.sub("", raw_text, count=1).strip()
     details = [
-        load_dynamic_winning_prompt(
-            "common", section="s5.assessed_naming_anchor"
-        ).format(value=str(naming.get("naming_anchor", "") or "").strip()),
-        load_dynamic_winning_prompt(
-            "common", section="s5.assessed_naming_reason"
-        ).format(value=str(naming.get("naming_reason", "") or "").strip()),
+        load_dynamic_winning_prompt("common", section="s5.assessed_naming_anchor").format(
+            value=str(naming.get("naming_anchor", "") or "").strip()
+        ),
+        load_dynamic_winning_prompt("common", section="s5.assessed_naming_reason").format(
+            value=str(naming.get("naming_reason", "") or "").strip()
+        ),
     ]
     suffix = "；".join(item for item in details if not item.endswith("="))
     return (canonical + raw_text + ("；" if raw_text and suffix else "") + suffix)[:900]
@@ -2201,9 +1957,7 @@ def _s5_disruption_tier_rank(
     if normalized in _S5_DISRUPTION_TIER_RANK:
         return _S5_DISRUPTION_TIER_RANK[normalized]
     try:
-        priority = (
-            float(innovation_priority) if innovation_priority is not None else 0.0
-        )
+        priority = float(innovation_priority) if innovation_priority is not None else 0.0
     except (TypeError, ValueError):
         priority = 0.0
     if priority >= 0.80:
@@ -2236,14 +1990,12 @@ def _s5_retain_passes_concrete_weapon_contract(
     # rejecting a reviewer that clearly identifies an ordinary physical name.
     naming_style = str(value.get("naming_style", "")).strip().lower()
     codename_check_failed = value.get("codename_or_metaphor_explainable") is False and (
-        not naming_style
-        or naming_style in {"codename", "metaphor", "codename_or_metaphor"}
+        not naming_style or naming_style in {"codename", "metaphor", "codename_or_metaphor"}
     )
     original_name = str(value.get("name", "") or "").strip()
     final_name = str(value.get("final_name", "") or "").strip()
     naming_repaired = bool(final_name) and bool(
-        value.get("name_changed") is True
-        or (original_name and final_name != original_name)
+        value.get("name_changed") is True or (original_name and final_name != original_name)
     )
     naming_alignment_low = False
     explicit_alignment = value.get("naming_semantic_alignment")
@@ -2253,13 +2005,10 @@ def _s5_retain_passes_concrete_weapon_contract(
         except (TypeError, ValueError):
             naming_alignment_low = False
     mission_equipment = str(query_domain_mode).strip().lower() == "mission_equipment"
-    combat_object_gate_failed = (
-        not mission_equipment
-        and (
-            value.get("direct_equipment") is False
-            or value.get("weapon_object_specific") is False
-            or value.get("weapon_body_mechanism_closes") is False
-        )
+    combat_object_gate_failed = not mission_equipment and (
+        value.get("direct_equipment") is False
+        or value.get("weapon_object_specific") is False
+        or value.get("weapon_body_mechanism_closes") is False
     )
     return not (
         combat_object_gate_failed
@@ -2270,8 +2019,7 @@ def _s5_retain_passes_concrete_weapon_contract(
         or value.get("known_science_consistent") is False
         or value.get("material_innovation_breakpoint_present") is False
         or value.get("ordinary_upgrade_or_function_packaging") is True
-        or str(value.get("disruption_tier", "")).strip().lower()
-        == "incremental_upgrade"
+        or str(value.get("disruption_tier", "")).strip().lower() == "incremental_upgrade"
     )
 
 
@@ -2303,9 +2051,7 @@ def _s5_portfolio_fallback_result(
     rows: list[tuple[Any, int, float]] = []
     excluded: list[tuple[Any, str, str]] = []
     for item in candidates:
-        implementation_path = str(
-            field(item, "implementation_path") or ""
-        ).strip().lower()
+        implementation_path = str(field(item, "implementation_path") or "").strip().lower()
         # An explicitly labelled upgrade/support branch has no independent
         # S5 innovation judgement during fallback.  Leave it out so the
         # dynamic decision repair below synthesizes a reject instead of
@@ -2321,32 +2067,22 @@ def _s5_portfolio_fallback_result(
             excluded.append(
                 (
                     item,
-                    load_dynamic_winning_prompt(
-                        "common", section="s5.fallback.excluded_upgrade"
-                    ).strip(),
+                    load_dynamic_winning_prompt("common", section="s5.fallback.excluded_upgrade").strip(),
                     "explicit_upgrade_or_support_path",
                 )
             )
             continue
         direct_effects = [
-            str(value).strip()
-            for value in field(item, "direct_military_effects", [])
-            if str(value).strip()
+            str(value).strip() for value in field(item, "direct_military_effects", []) if str(value).strip()
         ]
-        equipment_forms = [
-            str(value).strip()
-            for value in field(item, "equipment_forms", [])
-            if str(value).strip()
-        ]
+        equipment_forms = [str(value).strip() for value in field(item, "equipment_forms", []) if str(value).strip()]
         if not direct_effects or not equipment_forms:
             # A support-only or structurally empty branch is not rescued by a
             # transport fallback.  S5 remains the authority on membership.
             excluded.append(
                 (
                     item,
-                    load_dynamic_winning_prompt(
-                        "common", section="s5.fallback.excluded_missing_weapon"
-                    ).strip(),
+                    load_dynamic_winning_prompt("common", section="s5.fallback.excluded_missing_weapon").strip(),
                     "missing_direct_weapon_fields",
                 )
             )
@@ -2359,10 +2095,7 @@ def _s5_portfolio_fallback_result(
             "independence_thesis",
             "novelty_delta",
         )
-        spine_count = sum(
-            bool(str(field(item, field_name) or "").strip())
-            for field_name in authored_fields
-        )
+        spine_count = sum(bool(str(field(item, field_name) or "").strip()) for field_name in authored_fields)
         try:
             score = float(field(item, "score", 0.0) or 0.0)
         except (TypeError, ValueError):
@@ -2388,14 +2121,8 @@ def _s5_portfolio_fallback_result(
         hypothesis_id = str(field(item, "hypothesis_id") or "")
         if not hypothesis_id:
             continue
-        direct_effects = [
-            value
-            for value in field(item, "direct_military_effects", [])
-            if str(value).strip()
-        ]
-        changed_variable = str(
-            field(item, "changed_confrontation_variable") or ""
-        ).strip()
+        direct_effects = [value for value in field(item, "direct_military_effects", []) if str(value).strip()]
+        changed_variable = str(field(item, "changed_confrontation_variable") or "").strip()
         dimension_scores = {
             "innovation": round(min(1.0, 0.34 + 0.08 * spine_count), 4),
             "demand": 0.70 if changed_variable else 0.50,
@@ -2404,10 +2131,7 @@ def _s5_portfolio_fallback_result(
             "development": 0.55,
         }
         fallback_weighted_scores[hypothesis_id] = round(
-            sum(
-                dimension_scores[name] * weight
-                for name, weight in S5_DIMENSION_WEIGHTS.items()
-            ),
+            sum(dimension_scores[name] * weight for name, weight in S5_DIMENSION_WEIGHTS.items()),
             4,
         )
         fallback_priorities[hypothesis_id] = round(
@@ -2415,11 +2139,7 @@ def _s5_portfolio_fallback_result(
             4,
         )
         fallback_tiers[hypothesis_id] = (
-            "new_quality_breakthrough"
-            if spine_count >= 4
-            else "significant_innovation"
-            if spine_count >= 2
-            else ""
+            "new_quality_breakthrough" if spine_count >= 4 else "significant_innovation" if spine_count >= 2 else ""
         )
         fallback_order_hints[hypothesis_id] = index
     selected_items, portfolio_diversity_audit = _s5_diverse_portfolio_order(
@@ -2430,26 +2150,18 @@ def _s5_portfolio_fallback_result(
         portfolio_order_hints=fallback_order_hints,
         maximum=limit,
     )
-    selected_ids = {
-        str(field(item, "hypothesis_id")) for item in selected_items
-    }
+    selected_ids = {str(field(item, "hypothesis_id")) for item in selected_items}
     decisions: list[dict[str, Any]] = []
     for item, spine_count, _score in rows:
         hypothesis_id = str(field(item, "hypothesis_id"))
         direct_effects = [
-            str(value).strip()
-            for value in field(item, "direct_military_effects", [])
-            if str(value).strip()
+            str(value).strip() for value in field(item, "direct_military_effects", []) if str(value).strip()
         ]
         frontier = str(field(item, "frontier_principle") or "").strip()
         discontinuity = str(field(item, "technology_discontinuity") or "").strip()
-        disruptive_difference = str(
-            field(item, "core_disruptive_difference") or ""
-        ).strip()
+        disruptive_difference = str(field(item, "core_disruptive_difference") or "").strip()
         disruptive_shift = str(field(item, "disruptive_shift") or "").strip()
-        changed_variable = str(
-            field(item, "changed_confrontation_variable") or ""
-        ).strip()
+        changed_variable = str(field(item, "changed_confrontation_variable") or "").strip()
         innovation_basis = "；".join(
             value
             for value in (
@@ -2468,15 +2180,12 @@ def _s5_portfolio_fallback_result(
             "development": 0.55,
         }
         weighted_score = round(
-            sum(
-                dimension_scores[name] * weight
-                for name, weight in S5_DIMENSION_WEIGHTS.items()
-            ),
+            sum(dimension_scores[name] * weight for name, weight in S5_DIMENSION_WEIGHTS.items()),
             4,
         )
-        innovation_basis = load_dynamic_winning_prompt(
-            "common", section="s5.score_basis"
-        ).format(**dimension_scores, basis=innovation_basis)
+        innovation_basis = load_dynamic_winning_prompt("common", section="s5.score_basis").format(
+            **dimension_scores, basis=innovation_basis
+        )
         if spine_count >= 4:
             disruption_tier = "new_quality_breakthrough"
         elif spine_count >= 2:
@@ -2491,13 +2200,9 @@ def _s5_portfolio_fallback_result(
                 "hypothesis_id": hypothesis_id,
                 "decision": "retain" if hypothesis_id in selected_ids else "reject",
                 "reason": (
-                    load_dynamic_winning_prompt(
-                        "common", section="s5.fallback.retained_reason"
-                    ).strip()
+                    load_dynamic_winning_prompt("common", section="s5.fallback.retained_reason").strip()
                     if hypothesis_id in selected_ids
-                    else load_dynamic_winning_prompt(
-                        "common", section="s5.fallback.rejected_reason"
-                    ).strip()
+                    else load_dynamic_winning_prompt("common", section="s5.fallback.rejected_reason").strip()
                 ),
                 "independence_basis": changed_variable,
                 "innovation_priority": round(
@@ -2511,13 +2216,9 @@ def _s5_portfolio_fallback_result(
                 # ``None`` means the fallback did not make a new semantic
                 # judgement.  Explicit false would incorrectly reject a
                 # candidate through the normal S5 contract gate.
-                "material_innovation_breakpoint_present": (
-                    True if spine_count >= 2 else None
-                ),
+                "material_innovation_breakpoint_present": (True if spine_count >= 2 else None),
                 "ordinary_upgrade_or_function_packaging": None,
-                "displaced_operational_mode": str(
-                    field(item, "original_paradigm") or ""
-                ).strip()[:500],
+                "displaced_operational_mode": str(field(item, "original_paradigm") or "").strip()[:500],
                 "new_operational_mode": disruptive_shift[:500],
                 "winning_relation_shift": changed_variable[:500],
                 "direct_equipment": True,
@@ -2535,9 +2236,7 @@ def _s5_portfolio_fallback_result(
                 "naming_new_quality": None,
                 "naming_semantic_alignment": None,
                 "naming_anchor": "",
-                "naming_reason": load_dynamic_winning_prompt(
-                    "common", section="s5.fallback.naming_reason"
-                ).strip(),
+                "naming_reason": load_dynamic_winning_prompt("common", section="s5.fallback.naming_reason").strip(),
                 "functional_splice_detected": False,
             }
         )
@@ -2568,9 +2267,7 @@ def _s5_portfolio_fallback_result(
                 "weighted_score": 0.0,
                 "disruption_tier": "incremental_upgrade",
                 "material_innovation_breakpoint_present": False,
-                "ordinary_upgrade_or_function_packaging": (
-                    exclusion_code == "explicit_upgrade_or_support_path"
-                ),
+                "ordinary_upgrade_or_function_packaging": (exclusion_code == "explicit_upgrade_or_support_path"),
                 "direct_equipment": False,
                 "weapon_object_specific": False,
                 "support_dependency_only": True,
@@ -2591,13 +2288,9 @@ def _s5_portfolio_fallback_result(
         )
     return {
         "decisions": decisions,
-        "portfolio_order": [
-            str(field(item, "hypothesis_id")) for item in selected_items
-        ],
+        "portfolio_order": [str(field(item, "hypothesis_id")) for item in selected_items],
         "portfolio_diversity_audit": portfolio_diversity_audit,
-        "portfolio_summary": load_dynamic_winning_prompt(
-            "common", section="s5.fallback.portfolio_summary"
-        ).strip(),
+        "portfolio_summary": load_dynamic_winning_prompt("common", section="s5.fallback.portfolio_summary").strip(),
         "stop_reason": "provider_capacity_fallback",
     }
 
@@ -2671,9 +2364,8 @@ def _compact_s6_authored_card_event(direction: Mapping[str, Any]) -> dict[str, A
 def _quality_cluster_candidate_instruction() -> str:
     """Keep quality-cluster breadth creative while preserving evidence discipline."""
 
-    return (
-        load_dynamic_winning_prompt("common", section="quality_swarm.breadth")
-        + load_dynamic_winning_prompt("common", section="naming_convention")
+    return load_dynamic_winning_prompt("common", section="quality_swarm.breadth") + load_dynamic_winning_prompt(
+        "common", section="naming_convention"
     )
 
 
@@ -2699,13 +2391,12 @@ def _dynamic_s6_module_instruction(
     labels = {key: label for key, label in CAPABILITY_PORTRAIT_MODULES}
     label = labels.get(module_key, module_key)
     guidance = module_guidance or _dynamic_s6_module_guidance(module_key)
-    return (
-        load_dynamic_winning_prompt("S6", section="module")
-        + load_dynamic_winning_prompt("S6", section="module_instruction_suffix").format(
-            guidance=guidance,
-            label=label,
-            module_key=module_key,
-        )
+    return load_dynamic_winning_prompt("S6", section="module") + load_dynamic_winning_prompt(
+        "S6", section="module_instruction_suffix"
+    ).format(
+        guidance=guidance,
+        label=label,
+        module_key=module_key,
     )
 
 
@@ -2745,9 +2436,7 @@ def _parallel_s6_short_module_repair_instruction(
 
     labels = {key: label for key, label in CAPABILITY_PORTRAIT_MODULES}
     short_labels = "、".join(labels.get(key, key) for key in short_module_keys)
-    return load_dynamic_winning_prompt("S6", section="short_module_repair").format(
-        short_labels=short_labels
-    )
+    return load_dynamic_winning_prompt("S6", section="short_module_repair").format(short_labels=short_labels)
 
 
 def _dynamic_s6_module_repair_instruction(module_key: str) -> str:
@@ -2770,9 +2459,7 @@ def _parallel_s6_quality_repair_instruction(quality_issues: Sequence[str]) -> st
     """
 
     issue_text = "；".join(str(item) for item in quality_issues[:8])
-    return load_dynamic_winning_prompt("S6", section="quality_repair").format(
-        issue_text=issue_text
-    )
+    return load_dynamic_winning_prompt("S6", section="quality_repair").format(issue_text=issue_text)
 
 
 def _extract_s6_direction(parsed: Mapping[str, Any] | object) -> dict[str, Any]:
@@ -2792,11 +2479,7 @@ def _extract_s6_direction(parsed: Mapping[str, Any] | object) -> dict[str, Any]:
             "semantic_consistency_check",
         )
     ):
-        return {
-            str(key): value
-            for key, value in parsed.items()
-            if key != "capability_image_draft"
-        }
+        return {str(key): value for key, value in parsed.items() if key != "capability_image_draft"}
     return {}
 
 
@@ -2876,9 +2559,7 @@ def _stabilize_s6_direction_structure(
 
     modules = stabilized.get("capability_portrait_modules")
     if not isinstance(modules, Mapping):
-        parsed_modules = parse_capability_portrait_modules(
-            stabilized.get("capability_portrait", "")
-        )
+        parsed_modules = parse_capability_portrait_modules(stabilized.get("capability_portrait", ""))
         if parsed_modules:
             stabilized["capability_portrait_modules"] = parsed_modules
 
@@ -2935,9 +2616,7 @@ def _bounded_s6_parallelism(runtime_budgets: Mapping[str, Any] | object) -> int:
 def _s6_hard_timeout_is_enabled() -> bool:
     """Whether S6 soft timeout thresholds should terminate the provider."""
 
-    configured = (
-        str(os.environ.get("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "0")).strip().lower()
-    )
+    configured = str(os.environ.get("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "0")).strip().lower()
     return configured in {
         "1",
         "true",
@@ -2961,11 +2640,7 @@ def _s6_card_attempt_limit() -> int:
 
 
 def _s6_card_timeout_threshold(*, resume: bool) -> int:
-    name = (
-        "EQUIPMENT_DR_S6_CARD_RESUME_TIMEOUT_SECONDS"
-        if resume
-        else "EQUIPMENT_DR_S6_CARD_TIMEOUT_SECONDS"
-    )
+    name = "EQUIPMENT_DR_S6_CARD_RESUME_TIMEOUT_SECONDS" if resume else "EQUIPMENT_DR_S6_CARD_TIMEOUT_SECONDS"
     default = 480 if resume else 420
     try:
         configured = int(os.environ.get(name, str(default)))
@@ -2978,9 +2653,7 @@ def _s6_repair_wall_timeout_seconds() -> float:
     """Return a safe finite wall-clock lease for optional card enhancement."""
 
     try:
-        configured = float(
-            os.environ.get("EQUIPMENT_DR_S6_CARD_REPAIR_WALL_SECONDS", "240")
-        )
+        configured = float(os.environ.get("EQUIPMENT_DR_S6_CARD_REPAIR_WALL_SECONDS", "240"))
     except (TypeError, ValueError):
         configured = 240.0
     return max(30.0, configured)
@@ -2990,9 +2663,7 @@ def _dynamic_role_contract_handoff(contract: Any, task: Any) -> dict[str, Any]:
     """Expose authority and handoff boundaries without replaying rule lists."""
 
     node = str(contract.mission_node)
-    resource = load_dynamic_winning_json(
-        "common", section="dynamic.role_contract_handoff"
-    )
+    resource = load_dynamic_winning_json("common", section="dynamic.role_contract_handoff")
     if not isinstance(resource, Mapping):
         raise ValueError("dynamic.role_contract_handoff must be a JSON object")
     authority_catalog = resource.get("authority")
@@ -3004,19 +2675,11 @@ def _dynamic_role_contract_handoff(contract: Any, task: Any) -> dict[str, Any]:
         raise ValueError("dynamic.role_contract_handoff.handoff must be an object")
     if not isinstance(prohibitions, list):
         raise ValueError("dynamic.role_contract_handoff.prohibitions must be a list")
-    authority = str(
-        authority_catalog.get(node, authority_catalog.get("default", "")) or ""
-    ).strip()
-    handoff = str(
-        handoff_catalog.get(node, handoff_catalog.get("default", "")) or ""
-    ).strip()
-    normalized_prohibitions = [
-        str(item).strip() for item in prohibitions if str(item).strip()
-    ]
+    authority = str(authority_catalog.get(node, authority_catalog.get("default", "")) or "").strip()
+    handoff = str(handoff_catalog.get(node, handoff_catalog.get("default", "")) or "").strip()
+    normalized_prohibitions = [str(item).strip() for item in prohibitions if str(item).strip()]
     if not authority or not handoff or not normalized_prohibitions:
-        raise ValueError(
-            "dynamic.role_contract_handoff is missing a node/default contract"
-        )
+        raise ValueError("dynamic.role_contract_handoff is missing a node/default contract")
     return {
         "contract_id": str(contract.role_contract_id),
         "role": str(task.display_name),

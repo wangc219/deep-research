@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { setImmediate } from 'node:timers'
 import { createPinia, setActivePinia } from 'pinia'
 import { createServer } from 'vite'
 
@@ -84,7 +85,10 @@ test('dashboardApi.getThreadStats 正确拼接时间范围与智能体过滤参�
     assert.equal(res2.summary.active_threads, 5)
 
     await dashboardApi.getThreadStats({ timeRange: '90days', includeSubagents: true })
-    assert.equal(requests[2], '/api/dashboard/stats/threads?time_range=90days&include_subagents=true')
+    assert.equal(
+      requests[2],
+      '/api/dashboard/stats/threads?time_range=90days&include_subagents=true'
+    )
   })
 })
 
@@ -114,7 +118,42 @@ test('dashboardApi.getAllStats 始终请求知识库统计', async () => {
 
     assert.deepEqual(requests, Object.keys(responses))
     assert.deepEqual(result.knowledge, responses['/api/dashboard/stats/knowledge'])
-    assert.deepEqual(result.modelUsage, responses['/api/dashboard/stats/model-usage?time_range=30days'])
+    assert.deepEqual(
+      result.modelUsage,
+      responses['/api/dashboard/stats/model-usage?time_range=30days']
+    )
+  })
+})
+
+test('慢统计不阻塞基础卡片，单项失败不丢弃其他统计', async () => {
+  await withServer(async (server) => {
+    storageValues.clear()
+    let finishSlow
+    globalThis.fetch = async (input) => {
+      const url = String(input)
+      if (url.includes('model-usage')) {
+        await new Promise((resolve) => {
+          finishSlow = resolve
+        })
+      }
+      if (url.endsWith('/tools')) return new Response('', { status: 503 })
+      return jsonResponse({ ready: true })
+    }
+    await prepareStores(server)
+    const { dashboardApi } = await server.ssrLoadModule('/src/apis/dashboard_api.js')
+    const sections = []
+    const pending = dashboardApi.getAllStats({
+      onSection: (name, value, error) => sections.push({ name, value, error })
+    })
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.ok(sections.some((section) => section.name === 'basic' && section.value.ready))
+    assert.ok(!sections.some((section) => section.name === 'modelUsage'))
+    finishSlow()
+    const result = await pending
+    assert.equal(result.basic.ready, true)
+    assert.equal(result.knowledge.ready, true)
+    assert.equal(result.modelUsage.ready, true)
+    assert.deepEqual(result.errors, ['tools'])
   })
 })
 
@@ -163,7 +202,10 @@ test('会话统计源码包含筛选请求代次和 loading 回写守卫', () =>
     new URL('../../src/components/dashboard/ThreadStatsComponent.vue', import.meta.url),
     'utf8'
   )
-  const statsLoader = source.slice(source.indexOf('const loadData'), source.indexOf('const toggleSubagents'))
+  const statsLoader = source.slice(
+    source.indexOf('const loadData'),
+    source.indexOf('const toggleSubagents')
+  )
   const conversationLoader = source.slice(
     source.indexOf('const loadConversations'),
     source.indexOf('const resetFilters')

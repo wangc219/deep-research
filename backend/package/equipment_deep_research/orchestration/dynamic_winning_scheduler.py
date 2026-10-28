@@ -60,6 +60,7 @@ async def _gather_fail_fast(
 
 class StepAction(str, Enum):
     """Actions that a reasoning node can trigger."""
+
     CONTINUE = "continue"
     PARALLEL = "parallel"
     BACKTRACK = "backtrack"
@@ -69,6 +70,7 @@ class StepAction(str, Enum):
 
 class ExecutionMode(str, Enum):
     """Execution intensity per branch blueprint."""
+
     SKIP = "skip"
     LIGHT = "light"
     STANDARD = "standard"
@@ -94,9 +96,7 @@ def plan_dependency_waves(
     waves: list[tuple[int, ...]] = []
     while pending:
         wave = tuple(
-            step
-            for step in pending
-            if all(int(dependency) in satisfied for dependency in dependency_map[step])
+            step for step in pending if all(int(dependency) in satisfied for dependency in dependency_map[step])
         )
         if not wave:
             # Preserve the historical recovery behavior for malformed or
@@ -175,10 +175,7 @@ async def execute_production_step_waves(
         return
 
     if dynamic_pipeline_enabled is None:
-        dynamic_pipeline_enabled = (
-            os.environ.get("EQUIPMENT_DR_USE_DYNAMIC_WINNING_SCHEDULER", "1").strip()
-            != "0"
-        )
+        dynamic_pipeline_enabled = os.environ.get("EQUIPMENT_DR_USE_DYNAMIC_WINNING_SCHEDULER", "1").strip() != "0"
 
     if not dynamic_pipeline_enabled:
         await _execute_compatibility_waves(
@@ -233,9 +230,7 @@ async def _execute_production_cohorts(
             unit
             for unit in pending_units
             if all(
-                dependency in satisfied or dependency in unit
-                for step in unit
-                for dependency in dependency_map[step]
+                dependency in satisfied or dependency in unit for step in unit for dependency in dependency_map[step]
             )
         ]
         if not ready_units:
@@ -264,9 +259,7 @@ async def _execute_production_cohorts(
                 )
             ]
 
-        batches = await _gather_fail_fast(
-            [execute_unit(unit) for unit in ready_units]
-        )
+        batches = await _gather_fail_fast([execute_unit(unit) for unit in ready_units])
         outcomes = [outcome for batch in batches for outcome in batch]
         for outcome in sorted(outcomes, key=_outcome_step):
             commit_step_fn(outcome)
@@ -287,12 +280,7 @@ async def _execute_compatibility_waves(
 ) -> None:
     for wave in plan_dependency_waves(selected, dependency_map=dependency_map):
         prior = dict(snapshot_state_fn())
-        outcomes = await _gather_fail_fast(
-            [
-                run_step_fn(step, middle_cycle, prior, middle_feedback)
-                for step in wave
-            ]
-        )
+        outcomes = await _gather_fail_fast([run_step_fn(step, middle_cycle, prior, middle_feedback) for step in wave])
         for outcome in sorted(outcomes, key=_outcome_step):
             commit_step_fn(outcome)
 
@@ -345,9 +333,7 @@ async def _execute_dependency_ready_pipeline(
                 await _cancel_tasks(running.values())
                 raise failures[0]
             ready = sorted(
-                step
-                for step in pending
-                if all(dependency in satisfied for dependency in dependency_map[step])
+                step for step in pending if all(dependency in satisfied for dependency in dependency_map[step])
             )
             # All work admitted in one dispatch tick must see the same
             # immutable state.  Apart from avoiding repeated serialization of
@@ -357,9 +343,7 @@ async def _execute_dependency_ready_pipeline(
             prior = dict(snapshot_state_fn()) if ready else None
             for step in ready:
                 pending.discard(step)
-                running[step] = asyncio.create_task(
-                    run_and_commit(step, prior_state=dict(prior or {}))
-                )
+                running[step] = asyncio.create_task(run_and_commit(step, prior_state=dict(prior or {})))
             if not running:
                 if not pending:
                     break
@@ -402,6 +386,7 @@ def _outcome_step(outcome: StepOutcome) -> int:
 @dataclass
 class StepNode:
     """Represents one S1-S6 step in the execution graph."""
+
     step: int
     agent_id: str
     mode: ExecutionMode
@@ -416,6 +401,7 @@ class StepNode:
 @dataclass
 class ExecutionPlan:
     """Dynamic execution plan for S1-S6, mutable during runtime."""
+
     nodes: dict[int, StepNode]
     completed_steps: set[int] = field(default_factory=set)
     skipped_steps: set[int] = field(default_factory=set)
@@ -447,11 +433,7 @@ class ExecutionPlan:
         """Get all steps whose dependencies are satisfied and not yet started."""
         ready = []
         for step, node in self.nodes.items():
-            if (
-                node.status == "pending"
-                and node.mode != ExecutionMode.SKIP
-                and self.is_satisfied(step)
-            ):
+            if node.status == "pending" and node.mode != ExecutionMode.SKIP and self.is_satisfied(step):
                 ready.append(step)
         return sorted(ready)
 
@@ -486,9 +468,7 @@ class ExecutionPlan:
         if affected_fields:
             # Fine-grained: only steps affected by modified fields
             for field in affected_fields:
-                affected_steps.update(
-                    field_impact_map.get((field, target_step), set())
-                )
+                affected_steps.update(field_impact_map.get((field, target_step), set()))
         else:
             # Coarse-grained: all downstream steps
             # S3←{S1,S2}, S4←{S3}, S5←{S4}, S6←{S4,S5}
@@ -516,13 +496,15 @@ class ExecutionPlan:
         self.completed_steps -= set(rerun_steps)
 
         # Record backtrack event
-        self.backtrack_history.append({
-            "target_step": target_step,
-            "reason": reason,
-            "affected_fields": affected_fields or [],
-            "rerun_steps": rerun_steps,
-            "middle_cycle": middle_cycle,
-        })
+        self.backtrack_history.append(
+            {
+                "target_step": target_step,
+                "reason": reason,
+                "affected_fields": affected_fields or [],
+                "rerun_steps": rerun_steps,
+                "middle_cycle": middle_cycle,
+            }
+        )
 
         return rerun_steps
 
@@ -569,9 +551,7 @@ class DynamicWinningScheduler:
         self.snapshot_state_fn = snapshot_state_fn or (lambda: {})
         if max_parallel is None:
             try:
-                configured_parallel = int(
-                    os.environ.get("EQUIPMENT_DR_DYNAMIC_MAX_PARALLEL", "8")
-                )
+                configured_parallel = int(os.environ.get("EQUIPMENT_DR_DYNAMIC_MAX_PARALLEL", "8"))
             except (TypeError, ValueError):
                 configured_parallel = 8
         else:
@@ -631,20 +611,19 @@ class DynamicWinningScheduler:
         # Emit skipped steps immediately
         for step in self.plan.skipped_steps:
             node = self.plan.nodes[step]
-            self.emit_progress_fn({
-                "step": step,
-                "agent_id": node.agent_id,
-                "middle_cycle": middle_cycle,
-                "execution_mode": "skip",
-                "status": "skipped_by_branch_blueprint",
-            })
+            self.emit_progress_fn(
+                {
+                    "step": step,
+                    "agent_id": node.agent_id,
+                    "middle_cycle": middle_cycle,
+                    "execution_mode": "skip",
+                    "status": "skipped_by_branch_blueprint",
+                }
+            )
 
         # Track running tasks
         running_tasks: dict[int, asyncio.Task] = {}
-        pending_steps = {
-            step for step, node in self.plan.nodes.items()
-            if node.status == "pending"
-        }
+        pending_steps = {step for step, node in self.plan.nodes.items() if node.status == "pending"}
 
         # Completion event to wake up scheduler
         completion_event = asyncio.Event()
@@ -713,15 +692,9 @@ class DynamicWinningScheduler:
                         in_flight=max(0, len(running_tasks) - 1),
                         max_parallel=self.max_parallel,
                         remaining_call_budget=parallel_budget_remaining,
-                        requested_slots=sum(
-                            1
-                            for extra in extra_steps
-                            if self.plan.nodes[extra].status == "skipped"
-                        ),
+                        requested_slots=sum(1 for extra in extra_steps if self.plan.nodes[extra].status == "skipped"),
                     )
-                    parallel_budget_remaining = max(
-                        0, parallel_budget_remaining - granted
-                    )
+                    parallel_budget_remaining = max(0, parallel_budget_remaining - granted)
                     # Pending nodes are already budgeted by the normal graph;
                     # only reactivating a skipped node consumes an exploration
                     # slot. Keep the requested ordering stable for the event
@@ -744,15 +717,17 @@ class DynamicWinningScheduler:
                         elif extra_node.status == "pending":
                             pending_steps.add(extra)
                             awakened.append(extra)
-                    self.emit_progress_fn({
-                        "step": step,
-                        "agent_id": node.agent_id,
-                        "middle_cycle": middle_cycle,
-                        "status": "parallel_exploration_reserved",
-                        "granted_slots": granted,
-                        "parallel_steps": awakened,
-                        "reason": str(node.next_action.get("reason", ""))[:240],
-                    })
+                    self.emit_progress_fn(
+                        {
+                            "step": step,
+                            "agent_id": node.agent_id,
+                            "middle_cycle": middle_cycle,
+                            "status": "parallel_exploration_reserved",
+                            "granted_slots": granted,
+                            "parallel_steps": awakened,
+                            "reason": str(node.next_action.get("reason", ""))[:240],
+                        }
+                    )
                 elif action == StepAction.STOP:
                     # Stop signal: mark all pending as skipped
                     for pending_step in pending_steps:
@@ -767,13 +742,15 @@ class DynamicWinningScheduler:
                 node = self.plan.nodes[step]
                 node.status = "failed"
                 failures.append(e)
-                self.emit_progress_fn({
-                    "step": step,
-                    "agent_id": node.agent_id,
-                    "middle_cycle": middle_cycle,
-                    "status": "failed",
-                    "error": str(e),
-                })
+                self.emit_progress_fn(
+                    {
+                        "step": step,
+                        "agent_id": node.agent_id,
+                        "middle_cycle": middle_cycle,
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
                 for other_step, other_task in list(running_tasks.items()):
                     if other_step != step and not other_task.done():
                         other_task.cancel()
@@ -793,34 +770,23 @@ class DynamicWinningScheduler:
                 # A STOP action converts pending nodes to skipped.  Keep the
                 # bookkeeping set in sync so a stopped run does not look
                 # like a malformed graph on the next scheduler tick.
-                pending_steps = {
-                    step
-                    for step in pending_steps
-                    if self.plan.nodes[step].status == "pending"
-                }
+                pending_steps = {step for step in pending_steps if self.plan.nodes[step].status == "pending"}
                 # Get ready steps
                 ready_steps = self.plan.get_ready_steps()
 
                 # Launch a bounded ready slice to protect providers under dynamic load.
                 capacity = max(0, self.max_parallel - len(running_tasks))
-                prior_state = (
-                    dict(self.snapshot_state_fn()) if ready_steps else {}
-                )
+                prior_state = dict(self.snapshot_state_fn()) if ready_steps else {}
                 for step in ready_steps[:capacity]:
                     if step not in running_tasks:
                         pending_steps.discard(step)
-                        running_tasks[step] = asyncio.create_task(
-                            run_step_wrapper(step, prior_state)
-                        )
+                        running_tasks[step] = asyncio.create_task(run_step_wrapper(step, prior_state))
 
                 # If nothing is running and nothing is ready, we're stuck or done
                 if not running_tasks:
                     if pending_steps:
                         unresolved = sorted(pending_steps)
-                        raise RuntimeError(
-                            "dynamic winning scheduler deadlocked; unresolved steps: "
-                            f"{unresolved}"
-                        )
+                        raise RuntimeError(f"dynamic winning scheduler deadlocked; unresolved steps: {unresolved}")
                     break
 
                 # Wait for at least one task to complete
@@ -864,12 +830,14 @@ class DynamicWinningScheduler:
         critic_result = await critic_fn(dict(accumulated_state))
 
         passed = critic_result.get("passed") is True
-        loop_trace = [{
-            "loop": "middle",
-            "cycle": 1,
-            "passed": passed,
-            "issues": [str(item) for item in critic_result.get("issues", [])][:6],
-        }]
+        loop_trace = [
+            {
+                "loop": "middle",
+                "cycle": 1,
+                "passed": passed,
+                "issues": [str(item) for item in critic_result.get("issues", [])][:6],
+            }
+        ]
 
         # If passed or no backtrack requested, done
         if passed:
@@ -913,13 +881,15 @@ class DynamicWinningScheduler:
         second_critic = await critic_fn(dict(accumulated_state))
         second_passed = second_critic.get("passed") is True
 
-        loop_trace.append({
-            "loop": "middle",
-            "cycle": 2,
-            "passed": second_passed,
-            "rerun_steps": rerun_steps,
-            "issues": [str(item) for item in second_critic.get("issues", [])][:6],
-        })
+        loop_trace.append(
+            {
+                "loop": "middle",
+                "cycle": 2,
+                "passed": second_passed,
+                "rerun_steps": rerun_steps,
+                "issues": [str(item) for item in second_critic.get("issues", [])][:6],
+            }
+        )
 
         return {
             "loop_trace": loop_trace,

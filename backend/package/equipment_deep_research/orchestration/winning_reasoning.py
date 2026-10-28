@@ -14,6 +14,7 @@ from equipment_deep_research.domain.models import (
     WinningReasoningNode,
 )
 
+
 @dataclass(frozen=True)
 class SixStepResult:
     defense_decomposition: WinningReasoningNode
@@ -24,7 +25,14 @@ class SixStepResult:
     image_drafts: list[WinningReasoningNode]
 
     def critical_nodes(self) -> list[WinningReasoningNode]:
-        return [self.defense_decomposition, self.winning_paths, self.effect_chain, self.capability_mapping, self.gap_matrix, *self.image_drafts]
+        return [
+            self.defense_decomposition,
+            self.winning_paths,
+            self.effect_chain,
+            self.capability_mapping,
+            self.gap_matrix,
+            *self.image_drafts,
+        ]
 
 
 class WinningResourceProjector:
@@ -39,14 +47,10 @@ class WinningResourceProjector:
         # Route resources by their explicit producer role.  Claim vocabulary
         # is evidence content for the model, not a local semantic classifier.
         case_ids = [
-            item.evidence_id
-            for item in evidence
-            if item.created_by in {"case_research", "operational_employment"}
+            item.evidence_id for item in evidence if item.created_by in {"case_research", "operational_employment"}
         ]
         frontier_ids = [
-            item.evidence_id
-            for item in evidence
-            if item.created_by in {"technology_radar", "weapon_equipment"}
+            item.evidence_id for item in evidence if item.created_by in {"technology_radar", "weapon_equipment"}
         ]
         if input_pack.research_route == "war_case_learning" and not case_ids:
             case_ids = evidence_ids
@@ -63,27 +67,61 @@ class WinningResourceProjector:
             projection_id=f"winning-resources-r{input_pack.attempt}",
             input_id=input_pack.input_id,
             theory_tools=[
-                {"name": "防御分层解析", "dimensions": ["感知", "决策", "拦截", "冗余"], "knowledge_pack_ids": ["public_evidence_index", "military_knowledge_base", "equipment_ontology", "doctrine_library", "case_library", "frontier_technology_library", "short_term_memory", "long_term_memory"]},
+                {
+                    "name": "防御分层解析",
+                    "dimensions": ["感知", "决策", "拦截", "冗余"],
+                    "knowledge_pack_ids": [
+                        "public_evidence_index",
+                        "military_knowledge_base",
+                        "equipment_ontology",
+                        "doctrine_library",
+                        "case_library",
+                        "frontier_technology_library",
+                        "short_term_memory",
+                        "long_term_memory",
+                    ],
+                },
                 {"name": "重心与击败机制识别", "dimensions": ["重心", "依赖", "时间窗口", "风险"]},
                 {"name": "效果链因果建模", "dimensions": ["行动", "直接效果", "间接效果", "最终效果"]},
                 {"name": "效果-功能-性能映射", "dimensions": ["效果", "功能", "性能"]},
                 {"name": "五档差距评估", "dimensions": ["空白", "关键差距", "部分差距", "满足", "超出"]},
             ],
             case_resources=[{"evidence_id": item, "use": "战例验证、经验教训与跨场景迁移"} for item in case_ids],
-            frontier_resources=[{"evidence_id": item, "use": "新概念、新技术、新手段与成熟度研判"} for item in frontier_ids],
-            question_chain=[{"order": index + 1, "question": question, "status": "open"} for index, question in enumerate(dict.fromkeys(questions))],
+            frontier_resources=[
+                {"evidence_id": item, "use": "新概念、新技术、新手段与成熟度研判"} for item in frontier_ids
+            ],
+            question_chain=[
+                {"order": index + 1, "question": question, "status": "open"}
+                for index, question in enumerate(dict.fromkeys(questions))
+            ],
             evidence_ids=evidence_ids,
         )
 
 
 class SixStepReasoner:
-    def run(self, *, topic: str, route: str, packets: list[BaselineFindingPacket], evidence: list[EvidenceCard], input_pack: WinningMechanismInput | None = None, resources: WinningKnowledgeProjection | None = None, model_analysis: dict[str, Any] | None = None) -> SixStepResult:
-        evidence_ids = [item.evidence_id for item in evidence] or [item for packet in packets for item in packet.evidence_ids]
+    def run(
+        self,
+        *,
+        topic: str,
+        route: str,
+        packets: list[BaselineFindingPacket],
+        evidence: list[EvidenceCard],
+        input_pack: WinningMechanismInput | None = None,
+        resources: WinningKnowledgeProjection | None = None,
+        model_analysis: dict[str, Any] | None = None,
+    ) -> SixStepResult:
+        evidence_ids = [item.evidence_id for item in evidence] or [
+            item for packet in packets for item in packet.evidence_ids
+        ]
         packet_ids = [packet.packet_id for packet in packets]
         valid_model_refs = set(evidence_ids) | set(packet_ids)
         confidence = round(sum(packet.confidence for packet in packets) / len(packets), 3) if packets else 0.0
         claim_ids = sorted({claim_id for packet in packets for claim_id in packet.claim_ids})
-        root_refs = [item for item in [input_pack.input_id if input_pack else None, resources.projection_id if resources else None] if item]
+        root_refs = [
+            item
+            for item in [input_pack.input_id if input_pack else None, resources.projection_id if resources else None]
+            if item
+        ]
         findings = [finding for packet in packets for finding in packet.findings]
         sections = {
             key: value
@@ -91,12 +129,9 @@ class SixStepReasoner:
             for key, value in packet.analysis_sections.items()
             if value not in (None, "", [], {})
         }
-        open_questions = list(
-            dict.fromkeys(question for packet in packets for question in packet.open_questions)
-        )
-        limitations = list(
-            dict.fromkeys(item for packet in packets for item in packet.limitations)
-        )
+        open_questions = list(dict.fromkeys(question for packet in packets for question in packet.open_questions))
+        limitations = list(dict.fromkeys(item for packet in packets for item in packet.limitations))
+
         def base(
             step: int,
             name: str,
@@ -108,11 +143,7 @@ class SixStepReasoner:
             raw_model_refs = model_node.get("evidence_refs", [])
             if not isinstance(raw_model_refs, list):
                 raw_model_refs = []
-            model_refs = [
-                str(item)
-                for item in raw_model_refs
-                if str(item) in valid_model_refs
-            ]
+            model_refs = [str(item) for item in raw_model_refs if str(item) in valid_model_refs]
             return WinningReasoningNode(
                 object_id=self._id(name, topic, input_pack.attempt if input_pack else 1),
                 step=step,
@@ -130,6 +161,7 @@ class SixStepReasoner:
                     model_analysis=model_analysis,
                 ),
             )
+
         defense = base(
             1,
             "防御解构",
@@ -139,29 +171,25 @@ class SixStepReasoner:
         paths = base(
             2,
             "制胜路径",
-            _model_summary(model_analysis, "winning_paths")
-            or self._path_summary(route, findings, sections),
+            _model_summary(model_analysis, "winning_paths") or self._path_summary(route, findings, sections),
             [defense.object_id],
         )
         effect = base(
             3,
             "效果链",
-            _model_summary(model_analysis, "effect_chain")
-            or self._effect_summary(sections, open_questions),
+            _model_summary(model_analysis, "effect_chain") or self._effect_summary(sections, open_questions),
             [paths.object_id],
         )
         mapping = base(
             4,
             "能力映射",
-            _model_summary(model_analysis, "capability_mapping")
-            or self._mapping_summary(sections),
+            _model_summary(model_analysis, "capability_mapping") or self._mapping_summary(sections),
             [effect.object_id],
         )
         gaps = base(
             5,
             "差距量化",
-            _model_summary(model_analysis, "gap_assessment")
-            or self._gap_summary(sections, limitations),
+            _model_summary(model_analysis, "gap_assessment") or self._gap_summary(sections, limitations),
             [mapping.object_id],
         )
         draft = base(
@@ -175,7 +203,8 @@ class SixStepReasoner:
 
     @staticmethod
     def _compact(values: list[object], *, limit: int = 3) -> str:
-        rendered = [str(value).strip() for value in values if str(value).strip()]
+        rendered = [_compact_value(value) for value in values]
+        rendered = [value for value in rendered if value]
         return "；".join(rendered[:limit]) or "当前结构化材料未给出具体内容"
 
     def _defense_summary(
@@ -186,16 +215,11 @@ class SixStepReasoner:
         limitations: list[str],
     ) -> str:
         pressure = [
-            sections[key]
-            for key in ("threat_assessment", "enemy_coa", "environment_constraints")
-            if key in sections
+            sections[key] for key in ("threat_assessment", "enemy_coa", "environment_constraints") if key in sections
         ]
         basis = self._compact(pressure or findings)
         caveat = self._compact(limitations, limit=2) if limitations else "无已登记冲突"
-        return (
-            f"围绕{topic}，按感知、决策、处置、冗余/恢复四层解构。"
-            f"主要压力依据：{basis}。证据边界：{caveat}。"
-        )
+        return f"围绕{topic}，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：{basis}。证据边界：{caveat}。"
 
     def _path_summary(
         self,
@@ -271,7 +295,10 @@ class SixStepReasoner:
 
     @staticmethod
     def _path(route: str) -> str:
-        return {"traditional_gap": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。", "war_case_learning": "从局部战争战例提取新能力、新打法与经验不足，研判可迁移方向。"}.get(route, "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。")
+        return {
+            "traditional_gap": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。",
+            "war_case_learning": "从局部战争战例提取新能力、新打法与经验不足，研判可迁移方向。",
+        }.get(route, "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。")
 
 
 def _model_summary(model_analysis: dict[str, Any] | None, key: str) -> str:
@@ -279,12 +306,30 @@ def _model_summary(model_analysis: dict[str, Any] | None, key: str) -> str:
         return ""
     value = model_analysis.get(key)
     if isinstance(value, list):
-        rendered = [
-            json_value if isinstance(json_value, str) else str(json_value)
-            for json_value in value[:6]
-        ]
+        rendered = [json_value if isinstance(json_value, str) else str(json_value) for json_value in value[:6]]
         return "；".join(item for item in rendered if item.strip())
     return str(value).strip() if value not in (None, "") else ""
+
+
+def _compact_value(value: object, *, depth: int = 0) -> str:
+    """Render structured findings without leaking Python/JSON type placeholders."""
+    if value is None or depth > 4:
+        return ""
+    if isinstance(value, str):
+        rendered = value.strip()
+        return "" if rendered.lower() in {"object", "[object object]", "array", "null", "none"} else rendered
+    if isinstance(value, dict):
+        preferred = ("summary", "finding", "text", "description", "detail", "value", "name", "title")
+        ordered = [value[key] for key in preferred if key in value]
+        if not ordered:
+            ordered = list(value.values())
+        parts = [_compact_value(item, depth=depth + 1) for item in ordered]
+        return "；".join(dict.fromkeys(part for part in parts if part))
+    if isinstance(value, (list, tuple, set)):
+        parts = [_compact_value(item, depth=depth + 1) for item in value]
+        return "；".join(dict.fromkeys(part for part in parts if part))
+    rendered = str(value).strip()
+    return "" if rendered.lower() in {"object", "[object object]", "array", "null", "none"} else rendered
 
 
 def _model_reasoning_node(
@@ -364,14 +409,8 @@ def _next_active_step(
                 item_step = int(item.get("step", 0))
             except (TypeError, ValueError):
                 continue
-            modes[item_step] = str(
-                item.get("execution_mode", item.get("mode", "standard"))
-            )
+            modes[item_step] = str(item.get("execution_mode", item.get("mode", "standard")))
     return next(
-        (
-            candidate
-            for candidate in range(step + 1, 7)
-            if modes.get(candidate, "standard") != "skip"
-        ),
+        (candidate for candidate in range(step + 1, 7) if modes.get(candidate, "standard") != "skip"),
         0,
     )

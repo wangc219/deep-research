@@ -5,7 +5,7 @@ from abc import abstractmethod
 from contextlib import aclosing, suppress
 from typing import Any
 
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import RemoveMessage, ToolMessage
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.stream.transformers import CustomTransformer
 from langgraph.types import Command
@@ -98,6 +98,75 @@ def _recursion_limit_from_context(context: BaseContext, default: int) -> int:
     return int(value) if isinstance(value, int) and value > 0 else default
 
 
+def _message_identity(message: Any) -> tuple[str | None, str, str]:
+    """读取 checkpoint 消息的稳定 ID、类型与文本。"""
+    if isinstance(message, dict):
+        message_id = message.get("id")
+        message_type = str(message.get("type") or message.get("role") or "")
+        content = message.get("content")
+    else:
+        message_id = getattr(message, "id", None)
+        message_type = str(getattr(message, "type", "") or "")
+        content = getattr(message, "content", "")
+    return (str(message_id) if message_id else None, message_type, str(content or ""))
+
+
+async def _replace_checkpoint_message_branch(
+    graph: CompiledStateGraph,
+    input_config: dict[str, Any],
+    graph_input: dict[str, Any],
+    replacement: dict[str, Any],
+) -> dict[str, Any]:
+    """从 checkpoint 删除被编辑问题及其后续消息，再追加新问题。"""
+    state = await graph.aget_state(input_config)
+    state_values = state.values if isinstance(getattr(state, "values", None), dict) else {}
+    existing_messages = list(state_values.get("messages") or [])
+    source_id = str(replacement.get("source_id") or "").strip()
+    original_content = str(replacement.get("content") or "")
+
+    target_index = next(
+        (
+            index
+            for index, message in enumerate(existing_messages)
+            if source_id and _message_identity(message)[0] == source_id
+        ),
+        None,
+    )
+    if target_index is None:
+        matching_humans = [
+            index
+            for index, message in enumerate(existing_messages)
+            if _message_identity(message)[1] in {"human", "user"}
+            and _message_identity(message)[2] == original_content
+        ]
+        target_index = matching_humans[-1] if matching_humans else None
+    if target_index is None:
+        raise ValueError("checkpoint 中找不到被编辑的用户消息")
+
+    later_humans = [
+        message
+        for message in existing_messages[target_index + 1 :]
+        if _message_identity(message)[1] in {"human", "user"}
+    ]
+    if later_humans:
+        raise ValueError("被编辑消息不是 checkpoint 中最新的用户消息")
+
+    removed_ids = [_message_identity(message)[0] for message in existing_messages[target_index:]]
+    if any(message_id is None for message_id in removed_ids):
+        raise ValueError("checkpoint 消息缺少稳定 ID，无法安全替换")
+
+    replacement_input = dict(graph_input)
+    replacement_input["messages"] = [
+        *(RemoveMessage(id=message_id) for message_id in removed_ids if message_id),
+        *list(graph_input.get("messages") or []),
+    ]
+    summary_event = state_values.get("_summarization_event")
+    cutoff_index = summary_event.get("cutoff_index") if isinstance(summary_event, dict) else None
+    if isinstance(cutoff_index, int) and target_index < cutoff_index:
+        replacement_input["_summarization_event"] = None
+    return replacement_input
+
+
 class BaseAgent:
     """
     定义一个基础 Agent 供 各类 graph 继承
@@ -186,6 +255,7 @@ class BaseAgent:
         tags=None,
         run_name=None,
         on_prepared=None,
+        message_replacement: dict[str, Any] | None = None,
     ):
         graph = await self.get_graph(context=context)
         logger.debug(f"stream_with_state: {context=}")
@@ -203,6 +273,14 @@ class BaseAgent:
             input_config["tags"] = list(tags)
         if run_name:
             input_config["run_name"] = run_name
+
+        if message_replacement:
+            graph_input = await _replace_checkpoint_message_branch(
+                graph,
+                input_config,
+                graph_input,
+                message_replacement,
+            )
 
         async with await graph.astream_events(
             graph_input,

@@ -76,7 +76,10 @@ def make_test_resource_id(label: str) -> str:
     """生成用于测试请求等资源的统一可检索标识。"""
 
     normalized = re.sub(r"[^A-Za-z0-9_-]+", "-", str(label)).strip("-_") or "resource"
-    return f"{TEST_RESOURCE_PREFIX}{normalized[:40]}_{uuid.uuid4().hex}"
+    # request_id、run_id 等持久标识共用 VARCHAR(64) 协议边界。
+    suffix = uuid.uuid4().hex
+    label_limit = 64 - len(TEST_RESOURCE_PREFIX) - 1 - len(suffix)
+    return f"{TEST_RESOURCE_PREFIX}{normalized[:label_limit]}_{suffix}"
 
 
 def make_test_conversation_metadata(test_name: str, *, e2e: bool = False, **extra: object) -> dict[str, object]:
@@ -706,7 +709,9 @@ async def cleanup_test_chat_resources(
         offset += non_pinned_count
 
     active_test_thread_ids = {
-        str(thread.get("id") or thread.get("thread_id") or "") for thread in threads if _is_test_thread(thread)
+        str(thread.get("id") or thread.get("thread_id") or "")
+        for thread in threads
+        if _is_test_thread(thread) and str(thread.get("uid") or owner_uid) == owner_uid
     }
     if "" in active_test_thread_ids:
         raise RuntimeError("Test conversation cleanup entry is missing thread id")
@@ -808,6 +813,8 @@ async def cleanup_e2e_chat_resources(
 async def cleanup_pytest_knowledge_resources(
     client: httpx.AsyncClient,
     headers: dict[str, str],
+    *,
+    owner_uid: str | None = None,
 ) -> None:
     """通过公开 API 删除 pytest 前缀的评估资源和知识库。"""
 
@@ -822,6 +829,8 @@ async def cleanup_pytest_knowledge_resources(
     databases = payload.get("databases")
     if not isinstance(databases, list):
         raise RuntimeError("Knowledge database cleanup response is missing a databases list")
+    if owner_uid is not None:
+        databases = [item for item in databases if str(item.get("created_by") or "") == owner_uid]
 
     failures: list[str] = []
     for database in databases:

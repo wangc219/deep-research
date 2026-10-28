@@ -18,14 +18,15 @@ from equipment_deep_research.agents.workflows.reporting_support import (
     _report_table_issues,
 )
 from equipment_deep_research.providers.responses import ProviderRequestError
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_narrative_instruction,
+)
 
 _REPORT_PROMPT_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
 
 def _read_parallel_fragment_prompt(filename: str, **values: str) -> str:
-    prompt = (_REPORT_PROMPT_DIR / "parallel" / filename).read_text(
-        encoding="utf-8"
-    )
+    prompt = (_REPORT_PROMPT_DIR / "parallel" / filename).read_text(encoding="utf-8")
     for key, value in values.items():
         prompt = prompt.replace("{{" + key + "}}", value)
     return prompt
@@ -123,9 +124,7 @@ def _parallel_column_navigation_preamble(*, project_mode: bool) -> str:
     )
 
 
-globals().update(
-    {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
-)
+globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
 def _provider_snapshot(provider: object) -> dict[str, object]:
@@ -172,14 +171,8 @@ def _is_unified_model_profile(profile_id: str) -> bool:
 def _deepseek_provider_env_ready() -> bool:
     """True when the DeepSeek provider can read API key and URL from env."""
 
-    key_env = (
-        os.environ.get("EQUIPMENT_DR_DEEPSEEK_API_KEY_ENV", "").strip()
-        or "DEEPSEEK_API_KEY"
-    )
-    return bool(
-        os.environ.get(key_env, "").strip()
-        and os.environ.get("EQUIPMENT_DR_DEEPSEEK_BASE_URL", "").strip()
-    )
+    key_env = os.environ.get("EQUIPMENT_DR_DEEPSEEK_API_KEY_ENV", "").strip() or "DEEPSEEK_API_KEY"
+    return bool(os.environ.get(key_env, "").strip() and os.environ.get("EQUIPMENT_DR_DEEPSEEK_BASE_URL", "").strip())
 
 
 def _resolve_reporter_provider(
@@ -208,9 +201,7 @@ def _resolve_reporter_provider(
     def create_model_profile(profile_id: str):
         if not profile_id or not callable(model_factory):
             return None
-        profile_isolation = (
-            f"{isolation_id}:{profile_id}" if isolation_id else f"reporter:{profile_id}"
-        )
+        profile_isolation = f"{isolation_id}:{profile_id}" if isolation_id else f"reporter:{profile_id}"
         try:
             return model_factory(profile_id, profile_isolation)
         except Exception:
@@ -219,15 +210,11 @@ def _resolve_reporter_provider(
     def create_provider(name: str):
         if not name or not callable(provider_factory):
             return None
-        provider_isolation = (
-            f"{isolation_id}:{name}" if isolation_id else f"reporter:{name}"
-        )
+        provider_isolation = f"{isolation_id}:{name}" if isolation_id else f"reporter:{name}"
         try:
             return provider_factory(name, provider_isolation)
         except Exception as exc:
-            raise ProviderRequestError(
-                f"DeepSeek fallback unavailable: {name} provider could not be created"
-            ) from exc
+            raise ProviderRequestError(f"DeepSeek fallback unavailable: {name} provider could not be created") from exc
 
     if requested:
         if _is_unified_model_profile(requested):
@@ -249,15 +236,8 @@ def _resolve_reporter_provider(
         return candidate, False
 
     snapshot = _provider_snapshot(provider)
-    provider_name = str(
-        snapshot.get("provider_id")
-        or snapshot.get("model")
-        or snapshot.get("type")
-        or "primary"
-    )
-    raise ProviderRequestError(
-        f"DeepSeek fallback unavailable after Reporter retries (primary={provider_name})"
-    )
+    provider_name = str(snapshot.get("provider_id") or snapshot.get("model") or snapshot.get("type") or "primary")
+    raise ProviderRequestError(f"DeepSeek fallback unavailable after Reporter retries (primary={provider_name})")
 
 
 _TITLE_REWRITE_MARKERS = (
@@ -369,10 +349,7 @@ def _reporter_handoff_is_substantive(handoff: object) -> bool:
         return []
     cues = handoff.get("capability_cues", [])
     if isinstance(cues, Sequence) and not isinstance(cues, (str, bytes)):
-        if any(
-            isinstance(item, Mapping) and _report_capability_cue_is_substantive(item)
-            for item in cues
-        ):
+        if any(isinstance(item, Mapping) and _report_capability_cue_is_substantive(item) for item in cues):
             return True
     for key in (
         "decisive_anchors",
@@ -388,9 +365,7 @@ def _reporter_handoff_is_substantive(handoff: object) -> bool:
             return True
     comparative = handoff.get("comparative_status")
     if isinstance(comparative, Mapping):
-        return any(
-            value not in (None, "", [], {}) for value in comparative.values()
-        )
+        return any(value not in (None, "", [], {}) for value in comparative.values())
     return bool(comparative)
 
 
@@ -403,11 +378,7 @@ def _portfolio_explicit_safety_blockers(portfolio_gate: object) -> list[str]:
     if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
         return []
     markers = ("unsafe", "safety", "安全", "致命", "危险", "不可交战")
-    return [
-        str(item)
-        for item in raw
-        if any(marker in str(item).lower() for marker in markers)
-    ]
+    return [str(item) for item in raw if any(marker in str(item).lower() for marker in markers)]
 
 
 def _reporter_calls_remaining(host) -> int | None:
@@ -452,13 +423,9 @@ def _reporter_column_timeout_seconds(wave: str, *, target_chars: int = 0) -> flo
     except (TypeError, ValueError):
         target = 0
     if 0 < target <= 700:
-        default = {"initial": 300.0, "retry": 180.0, "fallback": 240.0}.get(
-            wave, 180.0
-        )
+        default = {"initial": 300.0, "retry": 180.0, "fallback": 240.0}.get(wave, 180.0)
     elif 0 < target <= 1000:
-        default = {"initial": 480.0, "retry": 300.0, "fallback": 360.0}.get(
-            wave, 300.0
-        )
+        default = {"initial": 480.0, "retry": 300.0, "fallback": 360.0}.get(wave, 300.0)
     try:
         configured = max(0.0, float(os.environ.get(key, str(default))))
     except (TypeError, ValueError):
@@ -469,9 +436,7 @@ def _reporter_column_timeout_seconds(wave: str, *, target_chars: int = 0) -> flo
     return min(configured, default) if target > 0 else configured
 
 
-async def _await_reporter_column(
-    awaitable, *, wave: str, target_chars: int = 0
-) -> str:
+async def _await_reporter_column(awaitable, *, wave: str, target_chars: int = 0) -> str:
     """Await one isolated column without allowing a stalled stream to block all peers."""
 
     timeout = _reporter_column_timeout_seconds(wave, target_chars=target_chars)
@@ -590,6 +555,7 @@ def _rewrite_report_title(host, topic: str, *, run_id: str = "") -> str:
     except Exception:
         return fallback
 
+
 def draft_report(host, payload: dict[str, Any]) -> str:
     host._latest_report_title = _rewrite_report_title(
         host,
@@ -610,10 +576,7 @@ def draft_report(host, payload: dict[str, Any]) -> str:
     # publication-safety failures discovered after Reporter output exists.
     explicit_safety_blockers = _portfolio_explicit_safety_blockers(portfolio_gate)
     if explicit_safety_blockers:
-        raise ValueError(
-            "winning swarm safety gate blocked Reporter: "
-            + "; ".join(explicit_safety_blockers[:4])
-        )
+        raise ValueError("winning swarm safety gate blocked Reporter: " + "; ".join(explicit_safety_blockers[:4]))
     # Reporter normal mode is deliberately quality-first: xhigh, a real
     # 12k output ceiling, and a bounded but long-form main attempt. Reporter
     # is explicitly exempt from runtime reasoning/token downshift; upstream
@@ -641,11 +604,8 @@ def draft_report(host, payload: dict[str, Any]) -> str:
     reporter_input = _reporter_generation_payload(payload, reporter_agent)
     output_token_budget = _reporter_output_token_budget(payload, default=12000)
     strict_model_delivery = bool(
-        str(payload.get("execution_profile_id", ""))
-        in {"swarm_quality_v1", "winning_swarm_dynamic_v2"}
-        and _reporter_handoff_is_substantive(
-            reporter_input.get("research_handoff")
-        )
+        str(payload.get("execution_profile_id", "")) in {"swarm_quality_v1", "winning_swarm_dynamic_v2"}
+        and _reporter_handoff_is_substantive(reporter_input.get("research_handoff"))
     )
     # Reporter chapter fan-out is a delivery invariant whenever the handoff is
     # substantive, independent of which approved/challenger profile produced
@@ -668,12 +628,7 @@ def draft_report(host, payload: dict[str, Any]) -> str:
         and callable(getattr(host, "_draft_parallel_report", None))
         and (
             profile_requests_parallel
-            or (
-                native_research_handoff
-                and _reporter_handoff_is_substantive(
-                    reporter_input.get("research_handoff")
-                )
-            )
+            or (native_research_handoff and _reporter_handoff_is_substantive(reporter_input.get("research_handoff")))
         )
     )
     if parallel_reporter_enabled:
@@ -744,9 +699,7 @@ def draft_report(host, payload: dict[str, Any]) -> str:
             # after the primary retry, then fall back to the existing honest
             # limited-delivery path if the backup is absent or also fails.
             fallback_profile = _reporter_chapter_fallback_profile(host, payload)
-            if not fallback_profile or not _reporter_handoff_is_substantive(
-                reporter_input.get("research_handoff")
-            ):
+            if not fallback_profile or not _reporter_handoff_is_substantive(reporter_input.get("research_handoff")):
                 if strict_model_delivery:
                     raise ProviderRequestError(
                         "Reporter primary retry failed and DeepSeek fallback is unavailable"
@@ -798,6 +751,14 @@ def draft_parallel_report(
     # delivery-only resume to target only failed columns and is intentionally
     # cleared on a fully successful assembly.
     host._last_report_failed_columns = []
+    discovery_blueprint = payload.get("discovery_blueprint", {})
+    structured_query_brief = (
+        discovery_blueprint.get("structured_query_brief", {}) if isinstance(discovery_blueprint, Mapping) else {}
+    )
+    mission_narrative_instruction = query_domain_narrative_instruction(
+        str(payload.get("topic", "")),
+        structured_query_brief=(structured_query_brief if isinstance(structured_query_brief, Mapping) else {}),
+    )
 
     # Author one decision-bearing H3 per isolated Reporter call.  The former
     # three-layer/three-column split forced one model context to solve several
@@ -978,9 +939,7 @@ def draft_parallel_report(
     project_mode = _report_template_mode(payload) == "project_argument_v1"
     sections = project_sections if project_mode else legacy_sections
     try:
-        configured_section_slots = int(
-            os.environ.get("EQUIPMENT_DR_REPORTER_MODEL_CONCURRENCY", "12")
-        )
+        configured_section_slots = int(os.environ.get("EQUIPMENT_DR_REPORTER_MODEL_CONCURRENCY", "12"))
     except (TypeError, ValueError):
         configured_section_slots = 12
     report_section_slots = max(
@@ -988,9 +947,7 @@ def draft_parallel_report(
         min(len(sections), 32, configured_section_slots),
     )
     report_section_semaphore = asyncio.Semaphore(report_section_slots)
-    skip_mechanical_retries = bool(
-        payload.get("parallel_report_skip_mechanical_retries")
-    )
+    skip_mechanical_retries = bool(payload.get("parallel_report_skip_mechanical_retries"))
     # A delivery-only resume may provide the last assembled draft and a list
     # of failed columns.  Reuse every healthy column byte-for-byte and fan out
     # model calls only for the failed columns.  This is deliberately local to
@@ -999,16 +956,10 @@ def draft_parallel_report(
     existing_resume_report = ""
     resume_failed_layers: set[str] = set()
     if isinstance(delivery_resume, Mapping):
-        existing_resume_report = str(
-            delivery_resume.get("existing_report", "") or ""
-        ).strip()
+        existing_resume_report = str(delivery_resume.get("existing_report", "") or "").strip()
         raw_failed_layers = delivery_resume.get("failed_columns", [])
-        if isinstance(raw_failed_layers, Sequence) and not isinstance(
-            raw_failed_layers, (str, bytes)
-        ):
-            resume_failed_layers = {
-                str(item).strip() for item in raw_failed_layers if str(item).strip()
-            }
+        if isinstance(raw_failed_layers, Sequence) and not isinstance(raw_failed_layers, (str, bytes)):
+            resume_failed_layers = {str(item).strip() for item in raw_failed_layers if str(item).strip()}
 
     def extract_resume_fragment(
         report: str,
@@ -1037,6 +988,7 @@ def draft_parallel_report(
         # additional H2 in older drafts, so preserve it when present.
         parent = next((f"## {title}" for title in headings if f"## {title}" in report), f"## {h2}")
         return parent + "\n\n" + "\n\n".join(fragments)
+
     # Keep the chapter contract focused while exposing the complete compact
     # equipment handoff to every writer.  The model decides relevance; the
     # runtime must not turn relevance into a fixed field whitelist.
@@ -1055,13 +1007,12 @@ def draft_parallel_report(
         ),
         "（二）作战运用模式": ("1. 作战运用流程", "2. 链路闭环分析"),
     }
+
     # Keep the handoff compact, but do not use a chapter-specific field
     # whitelist.  The whitelist made the later chapters look like forms and
     # hid exactly the cross-field relationships needed for concrete weapon
     # architecture, technology maturity and Chinese industrial ownership.
-    def compact_parallel_handoff(
-        value: Mapping[str, Any], *, include_portrait: bool = True
-    ) -> dict[str, Any]:
+    def compact_parallel_handoff(value: Mapping[str, Any], *, include_portrait: bool = True) -> dict[str, Any]:
         """Compact list/table cues while preserving full S6 portrait substance."""
 
         preserve_cue_keys = {
@@ -1099,16 +1050,12 @@ def draft_parallel_report(
                     if key_text in preserve_cue_keys:
                         if isinstance(cue_value, Mapping):
                             row[key_text] = dict(cue_value)
-                        elif isinstance(cue_value, Sequence) and not isinstance(
-                            cue_value, (str, bytes)
-                        ):
+                        elif isinstance(cue_value, Sequence) and not isinstance(cue_value, (str, bytes)):
                             row[key_text] = list(cue_value)
                         elif cue_value not in (None, ""):
                             row[key_text] = str(cue_value)
                         continue
-                    if isinstance(cue_value, Sequence) and not isinstance(
-                        cue_value, (str, bytes)
-                    ):
+                    if isinstance(cue_value, Sequence) and not isinstance(cue_value, (str, bytes)):
                         row[key_text] = [str(part)[:180] for part in cue_value[:8]]
                     elif cue_value not in (None, ""):
                         row[key_text] = str(cue_value)[:420]
@@ -1184,19 +1131,13 @@ def draft_parallel_report(
         if len(raw_h4) != sum(1 for marks, _ in raw_headings if len(marks) == 4):
             issues.append("栏目输出含非模板四级标题")
         actual_h2 = [
-            title
-            for title in re.findall(r"^##\s+(.+?)\s*$", value, flags=re.MULTILINE)
-            if title in canonical_h2
+            title for title in re.findall(r"^##\s+(.+?)\s*$", value, flags=re.MULTILINE) if title in canonical_h2
         ]
         actual_h3 = [
-            title
-            for title in re.findall(r"^###\s+(.+?)\s*$", value, flags=re.MULTILINE)
-            if title in canonical_h3
+            title for title in re.findall(r"^###\s+(.+?)\s*$", value, flags=re.MULTILINE) if title in canonical_h3
         ]
         actual_h4 = [
-            title
-            for title in re.findall(r"^####\s+(.+?)\s*$", value, flags=re.MULTILINE)
-            if title in canonical_h4
+            title for title in re.findall(r"^####\s+(.+?)\s*$", value, flags=re.MULTILINE) if title in canonical_h4
         ]
         if actual_h2 != [h2] or actual_h3 != list(h3s):
             issues.append("规范化后仍未形成唯一指定二级/三级标题")
@@ -1244,9 +1185,7 @@ def draft_parallel_report(
             # finish every navigational H4 inside its assigned column.  This
             # closes a former gap where an incomplete multi-column chapter
             # could pass the fragment gate and be padded later.
-            if required_h4 and not all(
-                f"#### {heading}" in value for heading in required_h4
-            ):
+            if required_h4 and not all(f"#### {heading}" in value for heading in required_h4):
                 issues.append("指定四级标题未全部完成")
             h4_floor = max(40, repair_floor // max(2, len(required_h4) or 1))
             for heading in required_h4:
@@ -1262,10 +1201,7 @@ def draft_parallel_report(
                 if h4_chars < 8:
                     issues.append(f"四级栏目正文为空或过短：{heading}")
                 elif h4_chars < h4_floor and not skip_mechanical_retries:
-                    issues.append(
-                        f"四级栏目正文偏短：{heading}仅{h4_chars}字，"
-                        f"验收不得低于{h4_floor}字"
-                    )
+                    issues.append(f"四级栏目正文偏短：{heading}仅{h4_chars}字，验收不得低于{h4_floor}字")
         else:
             # Legacy three-layer/nine-item columns also need a substance floor.
             for heading in h3s:
@@ -1322,9 +1258,7 @@ def draft_parallel_report(
             if not header:
                 issues.append("装备图像概述缺少规定的四列表头")
             image_table_issues = [
-                issue
-                for issue in _report_table_issues(value, project_mode=True)
-                if issue.startswith("装备图像概述")
+                issue for issue in _report_table_issues(value, project_mode=True) if issue.startswith("装备图像概述")
             ]
             if image_table_issues:
                 issues.extend(image_table_issues)
@@ -1341,9 +1275,7 @@ def draft_parallel_report(
                 flags=re.MULTILINE | re.DOTALL,
             )
             image_body = image_section.group("body") if image_section else ""
-            table_directions = set(
-                _report_capability_image_table_directions(image_body)
-            )
+            table_directions = set(_report_capability_image_table_directions(image_body))
             if any(name not in table_directions for name in expected_names):
                 issues.append("装备图像四列表未逐件覆盖交接中的装备方向")
         return list(dict.fromkeys(str(issue).strip() for issue in issues if str(issue).strip()))
@@ -1370,11 +1302,7 @@ def draft_parallel_report(
     def section_required_h4(section: tuple) -> tuple[str, ...]:
         if not project_mode:
             return ()
-        return tuple(
-            heading
-            for heading in section[2]
-            for heading in project_h4_by_h3.get(heading, ())
-        )
+        return tuple(heading for heading in section[2] for heading in project_h4_by_h3.get(heading, ()))
 
     section_semantic_guidance = {
         "item_1_scenario": (
@@ -1382,16 +1310,13 @@ def draft_parallel_report(
             "不同装备若进入不同场景，不得用同一背景轮换名称。"
         ),
         "item_2_winning_mechanism": (
-            "只解释旧范式为何失效、装备动作改变了哪项制胜关系，以及对手反适应和成立边界；"
-            "不得复述场景或能力清单。"
+            "只解释旧范式为何失效、装备动作改变了哪项制胜关系，以及对手反适应和成立边界；不得复述场景或能力清单。"
         ),
         "item_3_capability_features": (
             "只从任务断点反推具体装备能力与有判别力的指标方向；不同装备不共用指标组，"
             "没有校准数据时保留变量和工况，不生成点值。"
         ),
-        "item_4_realization_path": (
-            "只判断沿用改进、集成创新或原理突破如何落到装备本体，并说明选择依据和工程边界。"
-        ),
+        "item_4_realization_path": ("只判断沿用改进、集成创新或原理突破如何落到装备本体，并说明选择依据和工程边界。"),
         "item_5_core_technologies": (
             "只选择决定成败的技术断点，逐项说明作用环节、物理或工程约束、成熟基础、瓶颈与优先级；"
             "不得按热门技术类别凑表。"
@@ -1404,8 +1329,7 @@ def draft_parallel_report(
             "不得增加抽象公共节点或统一占位列。"
         ),
         "item_8_effectiveness": (
-            "只评估每件装备对实际任务结果的贡献；比较轴随装备机理变化，不强制补链、强链或开链句式，"
-            "不得复制统一贡献句。"
+            "只评估每件装备对实际任务结果的贡献；比较轴随装备机理变化，不强制补链、强链或开链句式，不得复制统一贡献句。"
         ),
         "item_9_priority": (
             "重点说明各装备在解决态势威胁、改变交战关系和形成制胜效果中的优先级与近期抓手；"
@@ -1472,11 +1396,7 @@ def draft_parallel_report(
     # from an empty handoff.
     handoff_value = reporter_input.get("research_handoff")
     strict_section_repair = bool(
-        isinstance(handoff_value, Mapping)
-        and any(
-            value not in (None, "", [], {})
-            for value in handoff_value.values()
-        )
+        isinstance(handoff_value, Mapping) and any(value not in (None, "", [], {}) for value in handoff_value.values())
     )
 
     def bounded_repair_reasons(reasons: Sequence[str]) -> list[str]:
@@ -1511,15 +1431,10 @@ def draft_parallel_report(
             h2_h3_map[additional_h2s[0]] = list(h3s[1:])
         h2_contract = "、".join([h2, *additional_h2s])
         heading_contract = "；".join(
-            f"{section_h2}下依次写{','.join(section_h3s)}"
-            for section_h2, section_h3s in h2_h3_map.items()
+            f"{section_h2}下依次写{','.join(section_h3s)}" for section_h2, section_h3s in h2_h3_map.items()
         )
         if required_h4:
-            heading_contract += (
-                "；本分片四级标题仅按父级顺序使用："
-                + "、".join(required_h4)
-                + "；不新增其他四级标题"
-            )
+            heading_contract += "；本分片四级标题仅按父级顺序使用：" + "、".join(required_h4) + "；不新增其他四级标题"
         source_instruction = (
             "本分片末尾附加精简的核心公开来源索引。"
             if source_index == "append_after_layer"
@@ -1539,6 +1454,11 @@ def draft_parallel_report(
         repair_floor = _parallel_column_repair_floor(target_chars)
         common_contract = (
             f"本分片编号为 {layer_id}。只输出以下标题：{h2_contract}；{heading_contract}。"
+            "公开正文只保留对当前栏位研究问题有决策价值的内容；不得写研究题目复述、材料来源说明或生成过程，"
+            "不得出现Query、S6、direction、capability_cues、research_handoff、report_spine、selected_agent_ids、"
+            "snake_case角色名/字段名以及‘本次交接’‘前置交接’‘模型生成’‘质量门’。这些词只用于内部读取输入，"
+            "其承载的信息必须转化为自然中文研究内容。由Query、最终入选武器及其能力画像概述确定论证重心，"
+            "再按本栏小标准选取最有判别力的事实、机理、比较、方案、风险或证据；不得套用统一段落公式。"
             "report_spine是报告级只读事实脊柱，包含Query边界、装备身份、任务断点、动作—机理—战果、"
             "基线、证据与失效边界以及章节交接关系；优先用它保持跨栏事实一致。不得修改、扩展或重新发明"
             "spine中的装备主体、事实和证据边界；本栏只从spine选择与本栏职责直接相关的判断。"
@@ -1550,10 +1470,11 @@ def draft_parallel_report(
             "除非事实确实不足，正文不得明显短于目标；因果未闭合时可自然略多。"
             "应优先补充具体装备差异、作战动作、因果链、验证判据、反适应和建设取舍，"
             "不得用空泛套话凑字，也不得因过早收束而留下过短、信息密度不足的段落。"
-            "每段至少承担战场矛盾、具体装备事实、作战动作、制胜因果、直接战果、对手反适应中的一项；"
-            "验证边界和建设取舍仅在确有必要时简短补充。"
+            "不同栏目允许使用不同的论证方式：场景推演、事实比较、机理解释、方案分解或风险分析均可；"
+            "验证边界和建设取舍只在本栏判断确有需要时补充，不要求平均覆盖。"
             "相邻栏目不得使用相同的开头句、段落骨架或结尾句；输入字段只是事实线索，必须重新组织，不得连续照录长句。"
             "禁止连续照录其中的长句。"
+            "不得把‘判断—依据—影响—边界’固化为句序、字段数或每段检查表。"
             "不得通过删除事实、来源、反证或验证要求来制造篇幅合规。"
             "表格每行必须对应不同对象，每列必须承担不同判断功能；证据不足时减少行数并明确说明，不得用模板内容填充。"
             "逐装备落笔前按direction核对其场景、动作、目标、效果、技术和边界的归属；除明确论证装备间接口外，"
@@ -1578,14 +1499,12 @@ def draft_parallel_report(
                 target_chars=str(target_chars),
                 repair_floor_chars=str(repair_floor),
             )
+            + mission_narrative_instruction
         )
 
     def issues_are_thin_only(reasons: Sequence[str]) -> bool:
         cleaned = [str(item) for item in reasons if str(item).strip()]
-        return bool(cleaned) and all(
-            ("偏短" in item or "过短" in item) and "为空" not in item
-            for item in cleaned
-        )
+        return bool(cleaned) and all(("偏短" in item or "过短" in item) and "为空" not in item for item in cleaned)
 
     async def generate_layers() -> list[str]:
         async def run_section_call(
@@ -1616,9 +1535,7 @@ def draft_parallel_report(
         reused_results: list[str] = [""] * len(sections)
         for index, (layer_id, h2, h3s, target_chars, token_cap, additional_h2s) in enumerate(sections):
             if existing_resume_report and layer_id not in resume_failed_layers:
-                reused = extract_resume_fragment(
-                    existing_resume_report, h2, h3s, additional_h2s
-                )
+                reused = extract_resume_fragment(existing_resume_report, h2, h3s, additional_h2s)
                 if reused:
                     reused_results[index] = reused
                     continue
@@ -1653,15 +1570,7 @@ def draft_parallel_report(
             if additional_h2s:
                 h2_h3_map[h2] = list(h3s[:1])
                 h2_h3_map[additional_h2s[0]] = list(h3s[1:])
-            required_h4 = (
-                [
-                    heading
-                    for h3 in h3s
-                    for heading in project_h4_by_h3.get(h3, ())
-                ]
-                if project_mode
-                else []
-            )
+            required_h4 = [heading for h3 in h3s for heading in project_h4_by_h3.get(h3, ())] if project_mode else []
             layer_input["parallel_section_contract"] = {
                 "layer_id": layer_id,
                 "required_h2": h2,
@@ -1686,8 +1595,7 @@ def draft_parallel_report(
                 "output_token_budget_is_soft": True,
                 "source_index": (
                     "append_after_layer"
-                    if layer_id
-                    in {"item_9_priority", "chapter_5_technical_foundation"}
+                    if layer_id in {"item_9_priority", "chapter_5_technical_foundation"}
                     else "omit"
                 ),
             }
@@ -1698,9 +1606,7 @@ def draft_parallel_report(
                 target_chars=target_chars,
                 additional_h2s=additional_h2s,
                 required_h4=required_h4,
-                source_index=str(
-                    layer_input["parallel_section_contract"]["source_index"]
-                ),
+                source_index=str(layer_input["parallel_section_contract"]["source_index"]),
             )
             calls.append(
                 run_section_call(
@@ -1744,10 +1650,7 @@ def draft_parallel_report(
         # preserve the no-hard-timeout policy.
         fallback_profile = _reporter_chapter_fallback_profile(host, payload)
         handoff_material = reporter_input.get("research_handoff")
-        fallback_recovery_enabled = bool(
-            fallback_profile
-            and _reporter_handoff_is_substantive(handoff_material)
-        )
+        fallback_recovery_enabled = bool(fallback_profile and _reporter_handoff_is_substantive(handoff_material))
         for retry_round in range(2):
             retry_calls = []
             retry_indexes: list[int] = []
@@ -1934,9 +1837,7 @@ def draft_parallel_report(
                         target_chars=section[3],
                     )
                 elif isinstance(item, BaseException):
-                    failure_reasons[index] = [
-                        f"定向重试调用异常：{type(item).__name__}"
-                    ]
+                    failure_reasons[index] = [f"定向重试调用异常：{type(item).__name__}"]
                 else:
                     failure_reasons[index] = ["定向重试未返回栏目正文"]
 
@@ -1967,11 +1868,7 @@ def draft_parallel_report(
         # its useful repair opportunity.  Empty responses are different: one
         # fallback provider attempt is still worthwhile after the single
         # primary transport retry.
-        fallback_indexes = [
-            index
-            for index in fallback_indexes
-            if index not in stalled_repair_columns
-        ]
+        fallback_indexes = [index for index in fallback_indexes if index not in stalled_repair_columns]
         remaining_budget = _reporter_calls_remaining(host)
         if remaining_budget is not None:
             # A custom deployment may retain a smaller legacy lane budget.
@@ -2036,9 +1933,7 @@ def draft_parallel_report(
                         )
                     ),
                 }
-                fallback_reason_text = "；".join(
-                    fallback_input["parallel_section_contract"]["repair_reasons"]
-                )
+                fallback_reason_text = "；".join(fallback_input["parallel_section_contract"]["repair_reasons"])
                 thin_expansion = issues_are_thin_only(
                     fallback_input["parallel_section_contract"]["repair_reasons"]
                 ) and bool(str(results[index] or "").strip())
@@ -2074,9 +1969,7 @@ def draft_parallel_report(
                             min(output_token_budget, token_cap),
                             phase=f"report_generation_{layer_id}_deepseek_fallback",
                             run_id=str(payload.get("run_id", "")),
-                            isolation_id=(
-                                f"{payload.get('run_id', 'run')}:{layer_id}:deepseek-fallback"
-                            ),
+                            isolation_id=(f"{payload.get('run_id', 'run')}:{layer_id}:deepseek-fallback"),
                             force_fallback=True,
                             fallback_reason="report_chapter_retry_exhausted",
                             provider_profile=fallback_profile,
@@ -2091,15 +1984,19 @@ def draft_parallel_report(
             )
             for index, item in zip(fallback_indexes, fallback_results):
                 section = sections[index]
-                if isinstance(item, str) and item.strip() and assigned_output_is_reviewable(
+                if (
+                    isinstance(item, str)
+                    and item.strip()
+                    and assigned_output_is_reviewable(
                         item,
                         section[1],
                         section[2],
                         section_required_h4(section),
                         section[0],
                         target_chars=section[3],
-                    ):
-                        results[index] = item
+                    )
+                ):
+                    results[index] = item
         if strict_section_repair:
             # Never assemble a known structurally bad response after all local
             # model waves are exhausted. Thin-only drafts that still miss the
@@ -2132,9 +2029,7 @@ def draft_parallel_report(
             )
         ]
         host._last_report_repair_stalled_columns = [
-            sections[index][0]
-            for index in sorted(stalled_repair_columns)
-            if index < len(sections)
+            sections[index][0] for index in sorted(stalled_repair_columns) if index < len(sections)
         ]
         return results
 
@@ -2150,9 +2045,7 @@ def draft_parallel_report(
         previous_concurrency = int(snapshot.get("limit", snapshot.get("maximum", 1)))
         budgets = getattr(host, "_runtime_budgets", {})
         configured_reporter_concurrency = (
-            budgets.get("reporter_codex_concurrency", 12)
-            if isinstance(budgets, Mapping)
-            else 12
+            budgets.get("reporter_codex_concurrency", 12) if isinstance(budgets, Mapping) else 12
         )
         try:
             requested_concurrency = max(1, int(configured_reporter_concurrency))
@@ -2198,9 +2091,7 @@ def draft_parallel_report(
         for section, item in zip(sections, layer_texts):
             text = str(item or "").strip()
             if text:
-                assembled.append(
-                    _sanitize_reporter_output(_normalize_report_summary(item))
-                )
+                assembled.append(_sanitize_reporter_output(_normalize_report_summary(item)))
                 continue
             _layer_id, h2, h3s, _target_chars, _token_cap, _additional_h2s = section
             skeleton = [f"## {h2}"]
@@ -2221,14 +2112,10 @@ def draft_parallel_report(
     normalized = _enforce_report_hard_max(normalized, payload)
     host._latest_report_draft = normalized
     quality_issues = [
-        item
-        for item in _report_draft_quality_issues(normalized, payload)
-        if not _is_report_seed_copy_issue(item)
+        item for item in _report_draft_quality_issues(normalized, payload) if not _is_report_seed_copy_issue(item)
     ]
     for layer_id in getattr(host, "_last_report_repair_stalled_columns", []):
-        quality_issues.append(
-            f"栏目{layer_id}同一质量根因重试后未改善，已停止重复修复并保留审计记录"
-        )
+        quality_issues.append(f"栏目{layer_id}同一质量根因重试后未改善，已停止重复修复并保留审计记录")
     quality_issues.extend(_report_seed_copy_issues(model_normalized, payload))
     failed_columns = [
         sections[index][0]
@@ -2281,9 +2168,7 @@ def limited_report_delivery(
     candidate = _stabilize_report_delivery_contract(
         _normalize_report_structure_deterministically(
             _normalize_branch_report_labels(
-                _sanitize_reporter_output(
-                    _normalize_report_summary(host._latest_report_draft)
-                ),
+                _sanitize_reporter_output(_normalize_report_summary(host._latest_report_draft)),
                 payload,
             ),
             payload,
@@ -2328,9 +2213,9 @@ def limited_report_delivery(
         # Limited delivery is an evidence-preserving recovery artifact.
         # Record defects for the resumable publication gate, but do not
         # turn mechanical structure drift into a provider exception.
-        host._last_report_quality_issues = list(
-            dict.fromkeys([*host._last_report_quality_issues, *completed_issues])
-        )[:16]
+        host._last_report_quality_issues = list(dict.fromkeys([*host._last_report_quality_issues, *completed_issues]))[
+            :16
+        ]
     return completed
 
 
@@ -2379,16 +2264,13 @@ def draft_report_attempt(
     normalized = _enforce_report_hard_max(normalized, payload)
     host._latest_report_draft = normalized
     quality_issues = [
-        item
-        for item in _report_draft_quality_issues(normalized, payload)
-        if not _is_report_seed_copy_issue(item)
+        item for item in _report_draft_quality_issues(normalized, payload) if not _is_report_seed_copy_issue(item)
     ]
     quality_issues.extend(_report_seed_copy_issues(model_normalized, payload))
     if not quality_issues:
         return normalized
-    if (
-        _report_issues_are_deterministic_format_only(quality_issues)
-        and _minimum_viable_model_report(normalized, payload)
+    if _report_issues_are_deterministic_format_only(quality_issues) and _minimum_viable_model_report(
+        normalized, payload
     ):
         # Heading labels, depth and duplicate source-index headings are
         # deterministic presentation defects.  Never pay for another
@@ -2408,10 +2290,7 @@ def draft_report_attempt(
         return normalized
     if not allow_repair:
         host._last_report_quality_issues = list(quality_issues)
-        raise ValueError(
-            "fast finalize report is not reviewable: "
-            + "；".join(quality_issues[:8])
-        )
+        raise ValueError("fast finalize report is not reviewable: " + "；".join(quality_issues[:8]))
     repair_payload = _reporter_repair_payload(
         payload,
         draft=normalized,
@@ -2438,6 +2317,7 @@ def draft_report_attempt(
         if timeout_seconds > 0
         else 0.0
     )
+
     async def _repair() -> str:
         request = host._run_reporter_text(
             _report_repair_system_prompt(payload),
@@ -2446,7 +2326,11 @@ def draft_report_attempt(
             phase=f"{phase}_repair",
             run_id=str(payload.get("run_id", "")),
         )
-        return await asyncio.wait_for(request, timeout=repair_timeout_seconds) if repair_timeout_seconds > 0 else await request
+        return (
+            await asyncio.wait_for(request, timeout=repair_timeout_seconds)
+            if repair_timeout_seconds > 0
+            else await request
+        )
 
     repaired = asyncio.run(_repair())
     repaired_normalized = _stabilize_report_delivery_contract(
@@ -2471,9 +2355,7 @@ def draft_report_attempt(
     if remaining_issues:
         host._last_report_quality_issues = list(remaining_issues)
         if (
-            is_quality_execution_profile_id(
-                payload.get("execution_profile_id", "")
-            )
+            is_quality_execution_profile_id(payload.get("execution_profile_id", ""))
             and _branch_delivery_is_complete(payload)
             and _minimum_viable_model_report(repaired_normalized, payload)
             and not _report_delivery_blocking_issues(remaining_issues)
@@ -2489,13 +2371,15 @@ def draft_report_attempt(
             payload,
         ):
             return repaired_normalized
-        nonnegotiable = _report_nonnegotiable_delivery_issues(
-            remaining_issues
-        )
-        if not nonnegotiable and _minimum_viable_model_report(
-            repaired_normalized,
-            payload,
-        ) and not _report_delivery_blocking_issues(remaining_issues):
+        nonnegotiable = _report_nonnegotiable_delivery_issues(remaining_issues)
+        if (
+            not nonnegotiable
+            and _minimum_viable_model_report(
+                repaired_normalized,
+                payload,
+            )
+            and not _report_delivery_blocking_issues(remaining_issues)
+        ):
             # After the one allowed targeted repair, benchmark-detail
             # shortcomings become residuals. They must not trigger another
             # full Reporter call or fail a substantively complete report.
@@ -2505,10 +2389,7 @@ def draft_report_attempt(
             payload,
         ):
             return repaired_normalized
-        raise ValueError(
-            "report delivery gate failed after repair: "
-            + "；".join(remaining_issues[:8])
-        )
+        raise ValueError("report delivery gate failed after repair: " + "；".join(remaining_issues[:8]))
     return repaired_normalized
 
 
@@ -2554,10 +2435,13 @@ async def run_reporter_text(
             # quality.  Longer chapters retain high reasoning.
             short_parallel_section = 0 < target_chars <= 700
             if short_parallel_section:
-                configured_effort = os.environ.get(
-                    "EQUIPMENT_DR_REPORT_SHORT_SECTION_REASONING_EFFORT",
-                    "medium",
-                ).strip() or "medium"
+                configured_effort = (
+                    os.environ.get(
+                        "EQUIPMENT_DR_REPORT_SHORT_SECTION_REASONING_EFFORT",
+                        "medium",
+                    ).strip()
+                    or "medium"
+                )
     # Parallel callers provide a section-specific soft planning budget
     # (4k for short sections, 8k for the equipment portrait). Honor it at
     # the provider boundary without treating it as a truncation condition.
@@ -2575,9 +2459,7 @@ async def run_reporter_text(
         configured_max_tokens = 12000
     options = _apply_codex_performance_options(
         {
-            "reasoning_effort": _phase_reasoning_effort(
-                "reporter", phase, configured_effort
-            ),
+            "reasoning_effort": _phase_reasoning_effort("reporter", phase, configured_effort),
             "model_verbosity": "medium",
             "prompt_mode": "standalone",
             "max_output_tokens": configured_max_tokens,
@@ -2604,9 +2486,7 @@ async def run_reporter_text(
         # budget in hidden reasoning. Recovery chapters need a usable body,
         # so prefer visible output over another empty/truncated response.
         options["_disable_hidden_reasoning"] = True
-        options["_fallback_reason"] = (
-            str(fallback_reason).strip() or "report_chapter_retry_exhausted"
-        )
+        options["_fallback_reason"] = str(fallback_reason).strip() or "report_chapter_retry_exhausted"
         if chain_fallback:
             options["_force_fallback_provider"] = True
     if short_parallel_section and os.environ.get(
@@ -2630,8 +2510,7 @@ async def run_reporter_text(
                 if phase.endswith("_repair")
                 else (
                     "项目论证报告撰写"
-                    if _report_template_mode(payload)
-                    == "project_argument_v1"
+                    if _report_template_mode(payload) == "project_argument_v1"
                     else "三层九项报告撰写"
                 )
             ),

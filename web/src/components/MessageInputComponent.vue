@@ -1581,6 +1581,18 @@ defineExpose({
   .input-box {
     border-radius: 15px;
     padding: 0.625rem 0.875rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 6px;
+  }
+  .input-box .expand-options {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .input-box .expand-options :deep(.input-actions-left) {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 }
 

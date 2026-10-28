@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import json
 import re
@@ -87,8 +87,7 @@ class BrowserPageSnapshot:
 
 
 class BrowserSession(Protocol):
-    async def observe(self, url: str, timeout_ms: int) -> BrowserPageSnapshot:
-        ...
+    async def observe(self, url: str, timeout_ms: int) -> BrowserPageSnapshot: ...
 
     async def action(
         self,
@@ -97,8 +96,7 @@ class BrowserSession(Protocol):
         target: dict[str, object],
         value: str,
         timeout_ms: int,
-    ) -> BrowserPageSnapshot:
-        ...
+    ) -> BrowserPageSnapshot: ...
 
     async def execute_javascript(
         self,
@@ -108,8 +106,7 @@ class BrowserSession(Protocol):
         max_return_chars: int,
         allow_network_probe: bool,
         safety_policy: dict[str, object],
-    ) -> dict[str, object]:
-        ...
+    ) -> dict[str, object]: ...
 
 
 @dataclass
@@ -239,9 +236,7 @@ def create_browser_observe_tool(
                 is_error=True,
             )
         scan = _scan_page(snapshot.html, snapshot.url)
-        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(
-            snapshot.html
-        )
+        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(snapshot.html)
         artifact_ref = artifacts.put(
             artifact_html,
             kind="html",
@@ -290,10 +285,7 @@ def create_browser_observe_tool(
         return ToolResult(
             call.id,
             call.name,
-            (
-                f"{UNTRUSTED_NOTICE}\n"
-                f"browser observe captured {len(scan.targets)} controlled targets"
-            ),
+            (f"{UNTRUSTED_NOTICE}\nbrowser observe captured {len(scan.targets)} controlled targets"),
             details,
             domain_proposals=[],
             trace_proposals=[
@@ -426,9 +418,7 @@ def create_browser_action_tool(
             snapshot.html,
             snapshot.url,
         )
-        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(
-            snapshot.html
-        )
+        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(snapshot.html)
         artifact_ref = artifacts.put(
             artifact_html,
             kind="html",
@@ -555,9 +545,7 @@ def create_browser_execute_tool(
             policy_error = _validate_javascript_policy(
                 script=script,
                 expected_result=expected_result,
-                why_standard_actions_are_insufficient=(
-                    why_standard_actions_are_insufficient
-                ),
+                why_standard_actions_are_insufficient=(why_standard_actions_are_insufficient),
                 result_sink=result_sink,
                 fallback=fallback,
             )
@@ -601,9 +589,7 @@ def create_browser_execute_tool(
                 intent=intent,
                 script=script,
                 expected_result=expected_result,
-                why_standard_actions_are_insufficient=(
-                    why_standard_actions_are_insufficient
-                ),
+                why_standard_actions_are_insufficient=(why_standard_actions_are_insufficient),
                 result_sink=result_sink,
                 fallback=fallback,
                 allow_network_probe=allow_network_probe,
@@ -735,9 +721,7 @@ def create_browser_execute_tool(
             allowed_scopes=resolved_allowed_scopes,
         )
         scan = _scan_page(snapshot.html, snapshot.url)
-        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(
-            snapshot.html
-        )
+        artifact_html, artifact_sanitized = _sanitize_browser_html_for_artifact(snapshot.html)
         artifact_ref = artifacts.put(
             artifact_html,
             kind="html",
@@ -962,19 +946,13 @@ def _scan_page(html: str, page_url: str) -> BrowserPageScan:
         if _looks_like_article(str(target.get("url", "")), str(target.get("text", "")))
     ][:10]
     listing_candidates = _listing_candidates(soup, page_url, link_targets)[:10]
-    download_targets = [
-        target for target in link_targets if target.get("kind") == "download_link"
-    ][:10]
-    pagination_targets = [
-        target for target in link_targets if target.get("kind") == "next_page"
-    ][:10]
+    download_targets = [target for target in link_targets if target.get("kind") == "download_link"][:10]
+    pagination_targets = [target for target in link_targets if target.get("kind") == "next_page"][:10]
     forms = [target for target in form_targets if target.get("kind") == "form"][:10]
     buttons = _button_targets(soup, page_url)[:10]
     api_candidates = _network_api_candidates_from_html(soup, page_url)[:10]
     modes = ["target_action"]
-    if (api_candidates or _has_dynamic_script(soup)) and not _blocks_javascript(
-        risk_flags
-    ):
+    if (api_candidates or _has_dynamic_script(soup)) and not _blocks_javascript(risk_flags):
         modes.append("javascript")
     return BrowserPageScan(
         title=title,
@@ -1159,11 +1137,14 @@ async def _execute_javascript(
 
     status = str(raw.get("status", "success"))
     url_after = str(raw.get("url_after", observation.page_url) or observation.page_url)
-    if _browser_scope_for_url(
-        registry=registry,
-        url=url_after,
-        allowed_scopes=allowed_scopes,
-    ) is None:
+    if (
+        _browser_scope_for_url(
+            registry=registry,
+            url=url_after,
+            allowed_scopes=allowed_scopes,
+        )
+        is None
+    ):
         return ToolResult(
             call.id,
             call.name,
@@ -1282,9 +1263,7 @@ async def _execute_javascript(
                         "script_ref": script_ref,
                         "intent": intent,
                         "expected_result": expected_result,
-                        "why_standard_actions_are_insufficient": (
-                            why_standard_actions_are_insufficient
-                        ),
+                        "why_standard_actions_are_insufficient": (why_standard_actions_are_insufficient),
                         "result_sink": result_sink,
                         "fallback": fallback,
                         "error": details["error"],
@@ -1310,9 +1289,7 @@ async def _execute_javascript(
                     "script_ref": script_ref,
                     "intent": intent,
                     "expected_result": expected_result,
-                    "why_standard_actions_are_insufficient": (
-                        why_standard_actions_are_insufficient
-                    ),
+                    "why_standard_actions_are_insufficient": (why_standard_actions_are_insufficient),
                     "result_sink": result_sink,
                     "fallback": fallback,
                     "network_delta": network_delta,
@@ -1436,12 +1413,7 @@ def _listing_candidates(
             ]
         ).lower()
         links = tag.find_all("a")
-        if len(links) >= 2 and (
-            "list" in marker
-            or "result" in marker
-            or "search" in marker
-            or tag.name == "main"
-        ):
+        if len(links) >= 2 and ("list" in marker or "result" in marker or "search" in marker or tag.name == "main"):
             rows.append(
                 {
                     "candidate_type": "listing",
@@ -1496,9 +1468,7 @@ def _network_api_candidates_from_html(
         if parsed.hostname != page_host:
             continue
         context = script_text[match.start() : match.start() + 300]
-        query_keys = sorted(
-            set(_query_keys_from_url(parsed.query)) | set(_query_keys_from_url(context))
-        )
+        query_keys = sorted(set(_query_keys_from_url(parsed.query)) | set(_query_keys_from_url(context)))
         rows.append(
             {
                 "method": "GET",
@@ -1652,10 +1622,7 @@ def _form_targets(soup: BeautifulSoup, page_url: str) -> list[dict[str, object]]
         method = str(form.get("method", "get")).lower() or "get"
         inputs: list[dict[str, str]] = []
         form_risk_flags: list[str] = []
-        if any(
-            isinstance(tag, Tag) and _input_type(tag) in SENSITIVE_INPUT_TYPES
-            for tag in form.find_all("input")
-        ):
+        if any(isinstance(tag, Tag) and _input_type(tag) in SENSITIVE_INPUT_TYPES for tag in form.find_all("input")):
             form_risk_flags.append("sensitive_form_fields")
         if method != "get":
             form_risk_flags.append("non_get_form")
@@ -1682,11 +1649,7 @@ def _form_targets(soup: BeautifulSoup, page_url: str) -> list[dict[str, object]]
             rows.append(input_target)
             inputs.append({"name": name, "type": input_type, "label": label})
         button_text = _button_text(form) or "submit"
-        allowed_actions = (
-            ["submit_form"]
-            if method == "get" and "sensitive_form_fields" not in form_risk_flags
-            else []
-        )
+        allowed_actions = ["submit_form"] if method == "get" and "sensitive_form_fields" not in form_risk_flags else []
         rows.append(
             {
                 "target_id": _target_id(page_url, "form", form_index, 0, button_text),
@@ -1792,11 +1755,15 @@ def _first_outside_browser_scope(
     *urls: str,
 ) -> str:
     for url in urls:
-        if url and _browser_scope_for_url(
-            registry=registry,
-            url=url,
-            allowed_scopes=allowed_scopes,
-        ) is None:
+        if (
+            url
+            and _browser_scope_for_url(
+                registry=registry,
+                url=url,
+                allowed_scopes=allowed_scopes,
+            )
+            is None
+        ):
             return url
     return ""
 
@@ -1812,13 +1779,7 @@ def _target_action_scope_urls(
     if action == "submit_form":
         return [str(target.get("action_url", "") or observation.page_url).strip()]
     if action in {"fill_input", "activate_button"}:
-        return [
-            str(
-                target.get("url", "")
-                or target.get("action_url", "")
-                or observation.page_url
-            ).strip()
-        ]
+        return [str(target.get("url", "") or target.get("action_url", "") or observation.page_url).strip()]
     return [observation.page_url]
 
 
@@ -1837,11 +1798,14 @@ def _outside_browser_scope_from_js_delta(
         if not host:
             continue
         url = f"{scheme}://{host}{path}"
-        if _browser_scope_for_url(
-            registry=registry,
-            url=url,
-            allowed_scopes=allowed_scopes,
-        ) is None:
+        if (
+            _browser_scope_for_url(
+                registry=registry,
+                url=url,
+                allowed_scopes=allowed_scopes,
+            )
+            is None
+        ):
             return url
     return ""
 
@@ -1975,4 +1939,4 @@ def _hash(value: str) -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

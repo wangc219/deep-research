@@ -1,7 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { ArrowLeft, BookOpen, Check, FileSearch, LogOut, Moon, Plus, RefreshCw, Sun, Upload } from '@lucide/vue'
-import { useThemeStore } from '@/stores/theme'
+import { BookOpen, Check, FileSearch, LogOut, Plus, RefreshCw, Upload } from '@lucide/vue'
 import { createDocumentResearchApi, createDocumentTaskMonitor, createDocumentRetrievalPreview, runDocumentTaskOnce, DOCUMENT_TOKEN_KEY, documentTaskKey } from '@/apis/document_research_api'
 import EvidenceSources from './document-research/EvidenceSources.vue'
 import RetrievalStatus from './document-research/RetrievalStatus.vue'
@@ -11,7 +10,6 @@ import DeliveryPanel from './document-research/DeliveryPanel.vue'
 import EvidenceCoverage from './document-research/EvidenceCoverage.vue'
 import { createFollowupDraft } from './document-research/followupDraft'
 
-const theme = useThemeStore()
 const token = ref('')
 const user = ref('')
 const settingsOpen = ref(false)
@@ -157,7 +155,7 @@ async function action(label, callback) {
 }
 async function checkHealth() {
   healthError.value = ''
-  try { health.value = await api.health() } catch (cause) { health.value = null; healthError.value = cause.message }
+  try { health.value = await api.health() } catch { health.value = null; healthError.value = '文档研究服务暂不可用，请联系管理员启用或检查服务后重试。' }
 }
 async function loadLibraries() {
   libraries.value = (await api.libraries()).items
@@ -315,16 +313,14 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
 
 <template>
   <main class="document-research">
-    <header class="topbar">
-      <a href="/knowledge" class="return-link"><ArrowLeft :size="16" />返回原平台</a>
+    <header v-if="user" class="topbar">
       <div class="topbar-actions">
         <span v-if="user" class="muted">{{ user }}</span>
-        <button type="button" class="icon-button" :aria-label="theme.isDark ? '切换浅色' : '切换深色'" @click="theme.toggleTheme"><Sun v-if="theme.isDark" :size="18" /><Moon v-else :size="18" /></button>
         <button v-if="user" type="button" class="quiet" :disabled="!!busy" @click="disconnect"><LogOut :size="15" />断开访问</button>
       </div>
     </header>
     <div class="page-content">
-      <div class="intro"><div class="eyebrow"><FileSearch :size="17" />软件研发 / 文档解析</div><h1>让解析方案有据可依</h1><p>先检索资料、核对原文，再获取有来源的回答或制定可验证的研发方案。</p></div>
+      <div class="intro"><div class="eyebrow"><FileSearch :size="17" />资料库 / 智谱知识库</div><h1>智谱知识库</h1><p>借助智谱能力解析相关文档，完成内容分块与索引。</p><p class="muted small">依托智谱的文档理解与知识检索能力，组织文档内容、查找原文证据，为知识问答与研究提供支持。</p></div>
       <div v-if="healthError" class="notice error" role="alert">{{ healthError }} <button type="button" @click="checkHealth">重新检查</button></div>
       <div v-else-if="health && !health.model_configured" class="notice" role="status">模型尚未配置。资料管理和检索预览可以使用；生成回答或报告前，请管理员连接后打开“模型设置”，填写模型地址、模型名和密钥。<button type="button" @click="checkHealth">重新检查</button></div>
       <div v-if="error" class="notice error" role="alert">{{ error }}</div>
@@ -429,10 +425,9 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
 </template>
 
 <style scoped>
-.document-research { min-height: 100dvh; height: 100%; overflow-y: auto; background: var(--gray-25); color: var(--gray-900); font-size: 14px; line-height: 1.6; }
-.topbar { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 32px; border-bottom: 1px solid var(--gray-200); background: var(--gray-0); }
-.topbar-actions, .return-link, .eyebrow, .section-heading, h2, .inline, .workflow, .workflow span { display: flex; align-items: center; gap: 10px; }
-.return-link { color: var(--gray-700); text-decoration: none; } .return-link:hover { color: var(--main-color); }
+.document-research { min-height: 100%; background: var(--gray-25); color: var(--gray-900); font-size: 14px; line-height: 1.6; }
+.topbar { min-height: 48px; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 8px 24px; border-bottom: 1px solid var(--gray-200); background: var(--gray-0); }
+.topbar-actions, .eyebrow, .section-heading, h2, .inline, .workflow, .workflow span { display: flex; align-items: center; gap: 10px; }
 .page-content { max-width: 1320px; margin: 0 auto; padding: 32px; } .intro { margin-bottom: 26px; } .eyebrow { color: var(--main-color); font-size: 13px; font-weight: 600; letter-spacing: .04em; }
 h1 { font-size: clamp(25px, 3vw, 32px); margin: 7px 0; font-weight: 650; letter-spacing: -.025em; } h2 { font-size: 18px; font-weight: 600; margin: 0; } h3 { font-size: 15px; font-weight: 600; margin: 0 0 12px; } p { margin: 8px 0 14px; } .intro p { color: var(--gray-600); margin-bottom: 0; }
 .workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 24px; align-items: start; } .research-main { min-width: 0; } .panel { border: 1px solid var(--gray-200); background: var(--gray-0); border-radius: 14px; padding: 24px; box-shadow: 0 2px 4px var(--shadow-0); }

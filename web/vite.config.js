@@ -84,6 +84,8 @@ export default defineConfig(({ mode }) => {
   const pollingInterval = Number.parseInt(env.VITE_POLL_INTERVAL_MS || '1000', 10)
   return {
     plugins: [vue(), modelMetadataPlugin, pdfjsCmapsPlugin],
+    // SSR 单元测试不使用浏览器依赖预构建，避免反复扫描和遗留大型临时缓存。
+    optimizeDeps: { noDiscovery: Boolean(env.NODE_TEST_CONTEXT) },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

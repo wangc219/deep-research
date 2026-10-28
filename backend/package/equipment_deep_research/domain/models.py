@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, is_dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import re
 from typing import Any, Literal
 from uuid import uuid4
@@ -21,7 +21,7 @@ CapabilityImageType = Literal["new_capability", "upgrade"]
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def new_stable_id(prefix: str) -> str:
@@ -34,10 +34,7 @@ def to_plain(value: Any) -> Any:
         # pickle immutable provider containers such as MappingProxyType.
         # Reading fields directly keeps conversion deterministic without
         # copying opaque runtime container implementations.
-        return {
-            item.name: to_plain(getattr(value, item.name))
-            for item in fields(value)
-        }
+        return {item.name: to_plain(getattr(value, item.name)) for item in fields(value)}
     if isinstance(value, Mapping):
         return {str(key): to_plain(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -92,14 +89,8 @@ class ResearchProblem:
                 "rejected_template_anchors": [],
             }
 
-        clauses = [
-            item.strip(" ；;。")
-            for item in re.split(r"(?<=[？?。；;])\s*", supplement)
-            if item.strip(" ；;。")
-        ]
-        focus_questions = [
-            item for item in clauses if "？" in item or "?" in item
-        ][:6]
+        clauses = [item.strip(" ；;。") for item in re.split(r"(?<=[？?。；;])\s*", supplement) if item.strip(" ；;。")]
+        focus_questions = [item for item in clauses if "？" in item or "?" in item][:6]
         if not focus_questions:
             focus_questions = clauses[:4]
 
@@ -115,24 +106,15 @@ class ResearchProblem:
         # Keep the offline handoff useful before a model has designed a
         # query-specific blueprint.  These are transparent lexical signals in
         # the user's own supplement, not conclusions about the topic.
-        if any(
-            signal in supplement
-            for signal in ("成本", "效费", "交换比", "单发", "拦截弹")
-        ):
+        if any(signal in supplement for signal in ("成本", "效费", "交换比", "单发", "拦截弹")):
             expansion_dimensions.append("成本交换与效费比")
-        if any(
-            signal in supplement
-            for signal in ("量产", "万枚", "规模化", "弹药基数", "产能", "后勤")
-        ):
+        if any(signal in supplement for signal in ("量产", "万枚", "规模化", "弹药基数", "产能", "后勤")):
             expansion_dimensions.append("规模化生产与工业动员")
 
         constraints_and_assumptions = [
             item
             for item in clauses
-            if any(
-                signal in item
-                for signal in ("如果", "假设", "前提", "约束", "以下", "达到", "降至")
-            )
+            if any(signal in item for signal in ("如果", "假设", "前提", "约束", "以下", "达到", "降至"))
         ][:4]
         dimension_summary = "、".join(expansion_dimensions[:4])
         if len(expansion_dimensions) > 4:
@@ -267,13 +249,9 @@ class BaselineFindingPacket:
             raise ValueError(f"v2 packet has unsupported agent role: {self.agent_id}")
         payload_type, required_fields = expected
         if self.payload_type != payload_type:
-            raise ValueError(
-                f"v2 packet for {self.agent_id} requires payload_type={payload_type}"
-            )
+            raise ValueError(f"v2 packet for {self.agent_id} requires payload_type={payload_type}")
         missing = [
-            name
-            for name in required_fields
-            if name not in self.payload or self.payload[name] in (None, "", [], {})
+            name for name in required_fields if name not in self.payload or self.payload[name] in (None, "", [], {})
         ]
         if missing:
             raise ValueError(f"v2 packet payload missing required fields: {missing}")
@@ -462,13 +440,7 @@ class OperationalSynthesis:
 
 def typed_domain_object_from_packet(
     packet: BaselineFindingPacket,
-) -> (
-    StrategicAssessment
-    | ScenarioModel
-    | EquipmentObservation
-    | OperationalSynthesis
-    | None
-):
+) -> StrategicAssessment | ScenarioModel | EquipmentObservation | OperationalSynthesis | None:
     if not packet.schema_version.startswith("2"):
         return None
     packet.validate_for_submit()
@@ -477,41 +449,28 @@ def typed_domain_object_from_packet(
         return StrategicAssessment(
             assessment_id=f"strategic-{packet.packet_id}",
             **common,
-            **{
-                name: packet.payload[name]
-                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
-            },
+            **{name: packet.payload[name] for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]},
         )
     if packet.agent_id == "combat_scenario":
         return ScenarioModel(
             scenario_id=f"scenario-{packet.packet_id}",
             **common,
-            **{
-                name: packet.payload[name]
-                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
-            },
+            **{name: packet.payload[name] for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]},
         )
     if packet.agent_id == "weapon_equipment":
         return EquipmentObservation(
             observation_id=f"equipment-{packet.packet_id}",
             **common,
+            **{name: packet.payload[name] for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]},
             **{
-                name: packet.payload[name]
-                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
-            },
-            **{
-                name: packet.payload.get(name, [])
-                for name in BASELINE_OPTIONAL_PAYLOAD_FIELDS.get(packet.agent_id, ())
+                name: packet.payload.get(name, []) for name in BASELINE_OPTIONAL_PAYLOAD_FIELDS.get(packet.agent_id, ())
             },
         )
     if packet.agent_id == "operational_employment":
         return OperationalSynthesis(
             synthesis_id=f"operational-{packet.packet_id}",
             **common,
-            **{
-                name: packet.payload[name]
-                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
-            },
+            **{name: packet.payload[name] for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]},
         )
     return None
 
@@ -536,7 +495,7 @@ class WorkingCheckpoint:
         return to_plain(self)
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "WorkingCheckpoint":
+    def from_dict(cls, value: dict[str, Any]) -> WorkingCheckpoint:
         return cls(**value)
 
 

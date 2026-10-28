@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.domain.store import DomainStore
 from knowledgegraph.demand_discovery.harness.budget import RunBudget
@@ -46,9 +47,7 @@ class EventBus:
     """Synchronous publish/subscribe bus with filtering and redaction."""
 
     def __init__(self) -> None:
-        self._subscribers: list[
-            tuple[EventHandler, set[str] | None, str | None]
-        ] = []
+        self._subscribers: list[tuple[EventHandler, set[str] | None, str | None]] = []
         self._clock = 0
         self.listener_error_count = 0
 
@@ -164,11 +163,7 @@ class ProgressWriter:
         ]
         if worker_states:
             for state in worker_states:
-                lines.append(
-                    "- "
-                    f"{state.agent_run_id} | {state.role} | {state.status} | "
-                    f"{state.task_brief}"
-                )
+                lines.append(f"- {state.agent_run_id} | {state.role} | {state.status} | {state.task_brief}")
         else:
             lines.append("- none")
 
@@ -193,11 +188,7 @@ class ProgressWriter:
 
         lines.extend(["", "## Recent Events"])
         for event in recent_events or []:
-            lines.append(
-                "- "
-                f"{event.timestamp} | {event.category} | {event.event_type} | "
-                f"{event.agent_run_id}"
-            )
+            lines.append(f"- {event.timestamp} | {event.category} | {event.event_type} | {event.agent_run_id}")
         if not recent_events:
             lines.append("- none")
 

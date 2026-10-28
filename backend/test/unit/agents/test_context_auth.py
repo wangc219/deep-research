@@ -167,7 +167,7 @@ async def test_resolve_agent_resource_options_empty_fields_loads_nothing(monkeyp
 
 @pytest.mark.asyncio
 async def test_normalize_agent_context_config_expands_null_and_filters_explicit_lists(monkeypatch):
-    async def fake_get_databases_by_user(_user):
+    async def fake_get_databases_by_user(_user, *, db=None):
         return [_knowledge_summary("kb-a"), _knowledge_summary("kb-b")]
 
     async def fake_get_all_mcp_servers(_db):
@@ -297,7 +297,7 @@ async def test_prepare_agent_runtime_context_filters_resources_and_derives_runti
 
     monkeypatch.setattr(context_module, "_load_workspace_agent_context", lambda uid: "workspace policy")
 
-    async def fake_get_databases_by_user(_user):
+    async def fake_get_databases_by_user(_user, *, db=None):
         return [_knowledge_summary("kb-a"), _knowledge_summary("kb-b")]
 
     async def fake_get_all_mcp_servers(_db):
@@ -348,7 +348,7 @@ async def test_prepare_agent_runtime_context_filters_resources_and_derives_runti
 
     class FakeSessionContext:
         async def __aenter__(self):
-            return object()
+            return types.SimpleNamespace(commit=AsyncMock())
 
         async def __aexit__(self, exc_type, exc, tb):
             return None

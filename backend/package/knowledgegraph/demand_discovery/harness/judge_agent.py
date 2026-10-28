@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.domain.judgement import JudgementReport
 from knowledgegraph.demand_discovery.domain.store import DomainStore
@@ -53,11 +54,7 @@ async def run_judge_agent_for_round(
         if key not in before_ids and item.round_id == round_id
     ]
     if not candidates:
-        candidates = [
-            item
-            for item in domain_store.judgement_reports.values()
-            if item.round_id == round_id
-        ]
+        candidates = [item for item in domain_store.judgement_reports.values() if item.round_id == round_id]
     if not candidates:
         raise RuntimeError("judge agent did not write JudgementReport")
     return max(candidates, key=lambda item: item.created_at)
@@ -93,9 +90,7 @@ def _evidence_payload(
     worker_reports: list[WorkerReport],
 ) -> list[dict[str, Any]]:
     evidence_ids = _dedupe(
-        evidence_id
-        for report in worker_reports
-        for evidence_id in [*report.evidence_refs, *report.new_evidence_cards]
+        evidence_id for report in worker_reports for evidence_id in [*report.evidence_refs, *report.new_evidence_cards]
     )
     rows: list[dict[str, Any]] = []
     for evidence_id in evidence_ids:
@@ -128,28 +123,16 @@ def _source_payload(
 
 def _open_search_payload(domain_store: DomainStore) -> dict[str, Any]:
     return {
-        "plans": [
-            plan.to_dict()
-            for plan in domain_store.open_search_plans.values()
-        ],
-        "leads": [
-            lead.to_dict()
-            for lead in domain_store.open_source_leads.values()
-        ],
+        "plans": [plan.to_dict() for plan in domain_store.open_search_plans.values()],
+        "leads": [lead.to_dict() for lead in domain_store.open_source_leads.values()],
         "quality_assessments": [
-            assessment.to_dict()
-            for assessment in domain_store.source_quality_assessments.values()
+            assessment.to_dict() for assessment in domain_store.source_quality_assessments.values()
         ],
     }
 
 
 def _load_judge_prompt() -> str:
-    return (
-        Path(__file__).resolve().parents[1]
-        / "workers"
-        / "agents"
-        / "judge.md"
-    ).read_text(encoding="utf-8")
+    return (Path(__file__).resolve().parents[1] / "workers" / "agents" / "judge.md").read_text(encoding="utf-8")
 
 
 def _dedupe(values) -> list[str]:

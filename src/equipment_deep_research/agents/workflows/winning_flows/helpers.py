@@ -1855,11 +1855,11 @@ _S5_DISRUPTION_TIER_RANK = {
 # deliberately kept in one place so prompt language, deterministic ordering,
 # fallback behaviour and the UI all use the same rubric.
 S5_DIMENSION_WEIGHTS: dict[str, float] = {
-    "innovation": 0.30,
-    "demand": 0.30,
-    "feasibility": 0.20,
-    "effectiveness": 0.10,
-    "development": 0.10,
+    "innovation": 0.45,
+    "demand": 0.15,
+    "feasibility": 0.10,
+    "effectiveness": 0.25,
+    "development": 0.05,
 }
 
 S5_INNOVATION_COMPONENT_WEIGHTS: dict[str, float] = {
@@ -2132,7 +2132,7 @@ def _s5_dimension_scores(value: Mapping[str, Any]) -> tuple[dict[str, float], fl
         scores["innovation"] = naming_assessment["effective_innovation"]
     # The five model-authored dimensions are authoritative. Always recompute
     # the total locally so a rounding mistake or an inconsistent provider
-    # total cannot silently change the requested 30/30/20/10/10 ranking.
+    # total cannot silently change the requested 45/15/10/25/5 ranking.
     weighted = sum(
         scores[dimension] * weight for dimension, weight in S5_DIMENSION_WEIGHTS.items()
     )

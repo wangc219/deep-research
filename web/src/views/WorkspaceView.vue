@@ -62,9 +62,24 @@
           :current-uid="userStore.uid"
           :disabled="activeSourceKey !== 'personal' || isReadonlyWorkspacePath"
           :uploading="uploadingFile"
-          @select-personal="closeMobileLocations(); selectPersonalWorkspace()"
-          @select-database="(database) => { closeMobileLocations(); selectDatabase(database) }"
-          @select-path="(path) => { closeMobileLocations(); selectWorkspacePath(path) }"
+          @select-personal="
+            () => {
+              closeMobileLocations()
+              selectPersonalWorkspace()
+            }
+          "
+          @select-database="
+            (database) => {
+              closeMobileLocations()
+              selectDatabase(database)
+            }
+          "
+          @select-path="
+            (path) => {
+              closeMobileLocations()
+              selectWorkspacePath(path)
+            }
+          "
           @upload-file="openUploadFilePicker"
           @create-directory="openCreateDirectoryModal"
         />
@@ -104,6 +119,7 @@
             @update:selected-paths="selectedPaths = $event"
             @update:selection-mode="handleSelectionModeChange"
             @delete-selected="confirmDeleteEntries(selectedEntries)"
+            @import-selected="openKnowledgeImport"
             @delete-entry="(entry) => confirmDeleteEntries([entry])"
             @download-entry="downloadEntry"
             @page-change="handleKnowledgePageChange"
@@ -216,11 +232,55 @@
         @save="handleSavePreviewFile"
       />
     </a-modal>
+    <a-modal
+      v-model:open="knowledgeImportOpen"
+      title="将所选文件加入知识库"
+      :confirm-loading="knowledgeImporting"
+      :closable="!knowledgeImporting"
+      :mask-closable="!knowledgeImporting"
+      :keyboard="!knowledgeImporting"
+      :cancel-button-props="{ disabled: knowledgeImporting }"
+      :ok-button-props="{ disabled: !knowledgeImportKb || !knowledgeImportPaths.length }"
+      ok-text="提交入库"
+      cancel-text="关闭"
+      @ok="submitKnowledgeImport"
+    >
+      <p>
+        已选 {{ knowledgeImportPaths.length }} 个文件。提交后自动解析并建立索引，沙盒原文件保留。
+      </p>
+      <a-select
+        v-model:value="knowledgeImportKb"
+        placeholder="选择可管理的知识库"
+        aria-label="选择入库知识库"
+        :options="knowledgeImportOptions"
+        :disabled="knowledgeImporting"
+        style="width: 100%"
+      />
+      <a-empty
+        v-if="!knowledgeImportOptions.length"
+        description="暂无可管理的知识库，请先在资料库创建或申请权限"
+      />
+      <a-alert
+        v-if="knowledgeImportFailures.length"
+        type="warning"
+        message="部分文件未提交，重试只处理剩余文件"
+        show-icon
+      >
+        <template #description
+          ><ul>
+            <li v-for="item in knowledgeImportFailures" :key="item.path">
+              {{ item.path }}：{{ item.error }}
+            </li>
+          </ul></template
+        >
+      </a-alert>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { computed, onActivated, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import { useMediaQuery } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
@@ -230,7 +290,9 @@ import AgentFilePreview from '@/components/AgentFilePreview.vue'
 import WorkspaceFileList from '@/components/workspace/WorkspaceFileList.vue'
 import WorkspacePreviewPane from '@/components/workspace/WorkspacePreviewPane.vue'
 import WorkspaceSidebar from '@/components/workspace/WorkspaceSidebar.vue'
-import { databaseApi } from '@/apis/knowledge_api'
+import { databaseApi, fileApi, documentApi } from '@/apis/knowledge_api'
+import { useTaskerStore } from '@/stores/tasker'
+import { importWorkspaceSelection } from '@/utils/workspaceImport'
 import { useUserStore } from '@/stores/user'
 import {
   createWorkspaceDirectory,
@@ -251,6 +313,78 @@ import { parseDownloadFilename } from '@/utils/file_utils'
 import { downloadBlob } from '@/utils/download'
 
 const userStore = useUserStore()
+const taskerStore = useTaskerStore()
+const knowledgeImportOpen = ref(false)
+const knowledgeImporting = ref(false)
+const knowledgeImportKb = ref()
+const knowledgeImportPaths = ref([])
+const knowledgeImportFailures = ref([])
+const knowledgeImportDatabases = ref([])
+const knowledgeImportOptions = computed(() =>
+  knowledgeImportDatabases.value
+    .filter((db) => db.can_manage && db.supports_documents !== false)
+    .map((db) => ({ value: db.kb_id, label: db.name }))
+)
+const stagedImports = new Map()
+async function openKnowledgeImport() {
+  if (knowledgeImporting.value || activeSourceKey.value !== 'personal') return
+  const files = selectedEntries.value.filter((entry) => !entry.is_dir)
+  if (!files.length) {
+    message.info('请选择文件，文件夹暂不支持直接入库')
+    return
+  }
+  if (files.length > 100) {
+    message.warning('每批最多选择 100 个文件')
+    return
+  }
+  knowledgeImportPaths.value = files.map((entry) => entry.path)
+  knowledgeImportFailures.value = []
+  try {
+    const response = await databaseApi.getDatabases()
+    knowledgeImportDatabases.value = response.databases || []
+    if (!knowledgeImportOptions.value.some((db) => db.value === knowledgeImportKb.value))
+      knowledgeImportKb.value = undefined
+    knowledgeImportOpen.value = true
+    if (files.length !== selectedEntries.value.length)
+      message.info('已跳过文件夹，仅导入选中的文件')
+  } catch (error) {
+    message.error(error.message || '知识库列表加载失败')
+  }
+}
+async function submitKnowledgeImport() {
+  if (
+    knowledgeImporting.value ||
+    !knowledgeImportOptions.value.some((db) => db.value === knowledgeImportKb.value)
+  )
+    return
+  knowledgeImporting.value = true
+  const register = taskerStore.createTaskRegistration()
+  const kbId = knowledgeImportKb.value
+  try {
+    const result = await importWorkspaceSelection({
+      kbId,
+      paths: [...knowledgeImportPaths.value],
+      staged: stagedImports,
+      upload: fileApi.importWorkspaceFiles,
+      submit: documentApi.addDocuments,
+      onSubmitted: (task) =>
+        register({
+          ...task,
+          name: '沙盒文件入库',
+          task_type: 'knowledge_ingest',
+          payload: { kb_id: kbId }
+        })
+    })
+    selectedPaths.value = selectedPaths.value.filter((path) => !result.succeeded.includes(path))
+    knowledgeImportPaths.value = result.failed.map((item) => item.path)
+    knowledgeImportFailures.value = result.failed
+    if (result.succeeded.length)
+      message.success(`${result.succeeded.length} 个文件已提交入库，可在任务中心查看进度`)
+    if (!result.failed.length) knowledgeImportOpen.value = false
+  } finally {
+    knowledgeImporting.value = false
+  }
+}
 const route = useRoute()
 
 const activeSourceKey = ref('personal')
@@ -262,6 +396,10 @@ const searchWorkspace = (query) => searchWorkspaceFiles(query)
 // 搜索命中后切到文件所在目录并打开预览
 const handleFileSearchSelect = async (entry) => {
   if (!entry?.path) return
+  if (entry.is_dir) {
+    await selectWorkspacePath(entry.path)
+    return
+  }
   const parentPath = entry.path.replace(/\/[^/]+$/, '') || '/'
   await selectWorkspacePath(parentPath)
   const matched = entries.value.find((item) => item.path === entry.path)
@@ -271,10 +409,19 @@ const handleFileSearchSelect = async (entry) => {
 // 侧边栏全局搜索选中工作区文件后，通过 query 跳转打开对应文件
 const openFileByPath = async (path) => {
   if (!path) return
+  if (String(path).endsWith('/')) {
+    await selectWorkspacePath(String(path))
+    return
+  }
   const parentPath = String(path).replace(/\/[^/]+$/, '') || '/'
   await selectWorkspacePath(parentPath)
   const matched = entries.value.find((item) => item.path === String(path))
-  if (matched) await loadWorkspacePreview(matched)
+  if (!matched) return
+  if (matched.is_dir) {
+    await selectWorkspacePath(matched.path)
+    return
+  }
+  await loadWorkspacePreview(matched)
 }
 const knowledgeBreadcrumbItems = ref([])
 const workspaceBreadcrumbItems = ref(null)
@@ -305,13 +452,15 @@ const isMobile = useMediaQuery('(max-width: 768px)')
 const desktopSidebarCollapsed = ref(false)
 const mobileLocationsOpen = ref(false)
 const sidebarCollapsed = computed({
-  get: () => isMobile.value ? !mobileLocationsOpen.value : desktopSidebarCollapsed.value,
+  get: () => (isMobile.value ? !mobileLocationsOpen.value : desktopSidebarCollapsed.value),
   set: (collapsed) => {
     if (isMobile.value) mobileLocationsOpen.value = !collapsed
     else desktopSidebarCollapsed.value = collapsed
   }
 })
-const closeMobileLocations = () => { mobileLocationsOpen.value = false }
+const closeMobileLocations = () => {
+  mobileLocationsOpen.value = false
+}
 watch(isMobile, closeMobileLocations)
 const previewWidthPercent = ref(50)
 const isPreviewResizing = ref(false)
@@ -503,10 +652,13 @@ const handleSelectionModeChange = (enabled) => {
   }
 }
 
-const loadWorkspaceEntries = async (path = '/') => {
-  loadingTree.value = true
+let directoryRequestId = 0
+const loadWorkspaceEntries = async (path = '/', { silent = false } = {}) => {
+  const requestId = ++directoryRequestId
+  if (!silent) loadingTree.value = true
   try {
     const response = await getWorkspaceTree(path)
+    if (requestId !== directoryRequestId) return
     entries.value = response.entries || []
     currentPath.value = path
     knowledgeBreadcrumbItems.value = []
@@ -516,10 +668,11 @@ const loadWorkspaceEntries = async (path = '/') => {
       selectionMode.value = false
     }
   } catch (error) {
+    if (requestId !== directoryRequestId) return
     console.warn('加载个人空间目录失败:', error)
-    message.error('加载个人空间目录失败')
+    if (!silent) message.error('加载个人空间目录失败')
   } finally {
-    loadingTree.value = false
+    if (requestId === directoryRequestId) loadingTree.value = false
   }
 }
 
@@ -544,12 +697,14 @@ const loadKnowledgeEntries = async (
     pathPrefix = '',
     page = 1,
     pageSize = knowledgeFileBrowser.pageSize,
-    breadcrumbs = null
+    breadcrumbs = null,
+    silent = false
   } = {}
 ) => {
   if (!database?.kb_id) return
 
-  loadingTree.value = true
+  const requestId = ++directoryRequestId
+  if (!silent) loadingTree.value = true
   try {
     const response = await getWorkspaceKnowledgeTree(database.kb_id, {
       parentId,
@@ -557,6 +712,7 @@ const loadKnowledgeEntries = async (
       page,
       pageSize
     })
+    if (requestId !== directoryRequestId) return
     entries.value = response.entries || []
     knowledgeBreadcrumbItems.value = breadcrumbs || [
       {
@@ -581,11 +737,14 @@ const loadKnowledgeEntries = async (
       selectionMode.value = false
     }
   } catch (error) {
+    if (requestId !== directoryRequestId) return
     console.warn('加载知识库目录失败:', error)
-    entries.value = []
-    message.error(error?.message || '加载知识库目录失败')
+    if (!silent) {
+      entries.value = []
+      message.error(error?.message || '加载知识库目录失败')
+    }
   } finally {
-    loadingTree.value = false
+    if (requestId === directoryRequestId) loadingTree.value = false
   }
 }
 
@@ -929,6 +1088,29 @@ const startPreviewResize = (event) => {
 
 let workspaceResizeObserver = null
 let workspaceMounted = false
+useLiveRefresh(
+  async () => {
+    if (activeSourceKey.value === 'personal') {
+      await loadWorkspaceEntries(currentPath.value, { silent: true })
+    } else if (selectedDatabase.value) {
+      await loadKnowledgeEntries(selectedDatabase.value, {
+        ...knowledgeFileBrowser,
+        breadcrumbs: knowledgeBreadcrumbItems.value,
+        silent: true
+      })
+    }
+  },
+  {
+    enabled: () =>
+      workspaceMounted &&
+      !loadingTree.value &&
+      !savingPreviewFile.value &&
+      !creatingDirectory.value &&
+      !uploadingFile.value &&
+      !knowledgeImporting.value &&
+      !deletingPaths.value.length
+  }
+)
 
 onMounted(async () => {
   await Promise.all([loadWorkspaceEntries('/'), loadDatabases()])

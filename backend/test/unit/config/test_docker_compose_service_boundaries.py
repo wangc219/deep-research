@@ -164,13 +164,15 @@ def test_api_and_worker_use_role_specific_redis_connection_capacity(filename: st
 
 
 @pytest.mark.parametrize("filename", ["compose.yaml", "compose.prod.yaml"])
-def test_default_agent_capacity_supports_one_hundred_concurrent_runs(filename: str) -> None:
-    """单 worker 的默认执行槽与相关连接池必须作为一组维护。"""
+def test_agent_capacity_and_connection_pools_match_deployment_mode(filename: str) -> None:
+    """开发环境限制执行槽，生产基线保留百并发及对应连接池。"""
     services = _load_compose(filename)["services"]
 
     for service_name, expected_environment in EXPECTED_AGENT_CAPACITY.items():
         environment = services[service_name]["environment"]
         for key, expected in expected_environment.items():
+            if key == "ARQ_MAX_JOBS" and filename == "compose.yaml":
+                expected = "${ARQ_MAX_JOBS:-24}"
             assert environment[key] == expected
 
     provisioner_environment = services["sandbox-provisioner"]["environment"]
@@ -317,7 +319,7 @@ def test_storage_migration_script_recovers_stopped_production_deployment(
             "bash",
             str(_project_root() / "scripts" / "migrate-storage.sh"),
             "-f",
-            "docker-compose.prod.yml",
+            "compose.prod.yaml",
             "--env-file",
             ".env.prod",
         ],
@@ -331,7 +333,7 @@ def test_storage_migration_script_recovers_stopped_production_deployment(
 
     assert result.returncode == 0, result.stderr
     commands = command_log.read_text(encoding="utf-8").splitlines()
-    prefix = "compose -f docker-compose.prod.yml --env-file .env.prod "
+    prefix = "compose -f compose.prod.yaml --env-file .env.prod "
     assert commands
     assert all(command.startswith(prefix) for command in commands)
     assert any("up -d --no-deps --build --wait sandbox-provisioner" in command for command in commands)
@@ -427,3 +429,30 @@ def test_runtime_directory_guard_detects_shared_save_directory(service_name: str
 def test_cleanup_guard_detects_reintroduced_direct_docker_access(marker: str):
     """恢复 Docker socket 清理路径时，边界 guard 必须报告对应标记。"""
     assert _forbidden_direct_docker_access(f"cleanup command: {marker}") == {marker}
+
+
+@pytest.mark.parametrize("failure", ["quiesce", "writer"])
+def test_storage_migration_refuses_unproven_quiescence(tmp_path: Path, failure: str) -> None:
+    """控制器失败或写入者未停机时，绝不能创建迁移进程。"""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    log = tmp_path / "docker.log"
+    docker = fake_bin / "docker"
+    docker.write_text(
+        '#!/usr/bin/env bash\n'
+        "printf '%s\\n' \"$*\" >> \"$FAKE_DOCKER_LOG\"\n"
+        'if [[ " $* " == *" exec -T sandbox-provisioner python - "* ]]; then\n'
+        '  cat >/dev/null\n'
+        '  [[ "$FAILURE" != "quiesce" ]] || exit 1\n'
+        'fi\n'
+        'if [[ " $* " == *" ps --status running --services "* && "$FAILURE" == "writer" ]]; then echo worker; fi\n'
+    )
+    docker.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(_project_root() / "scripts/migrate-storage.sh"), "-f", "compose.prod.yaml"],
+        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}",
+             "FAKE_DOCKER_LOG": str(log), "FAILURE": failure},
+        capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert result.returncode != 0
+    assert "run --rm" not in log.read_text()

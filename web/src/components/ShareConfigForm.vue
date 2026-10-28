@@ -194,6 +194,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   disabledReason: { type: String, default: '' },
   requireReadScope: { type: Boolean, default: false },
+  showManageScope: { type: Boolean, default: true },
   allowedAccessLevels: {
     type: Array,
     default: () => ['global', 'tenant', 'department', 'user']
@@ -202,10 +203,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const scopeOptions = [
+const scopeOptions = computed(() => [
   { key: 'read_scope', title: '读取权限' },
-  { key: 'manage_scope', title: '共享管理权限（包含读取权限）' }
-]
+  ...(props.showManageScope ? [{ key: 'manage_scope', title: '共享管理权限（包含读取权限）' }] : [])
+])
 
 const baseShareModeOptions = [
   { value: 'tenant', title: '企业共享', description: '选中的企业成员可以访问', icon: Building2 },
@@ -321,6 +322,7 @@ const initConfig = () => {
 
 const emitConfig = () => {
   emit('update:modelValue', {
+    ...(props.modelValue?.allowed_roles ? { allowed_roles: [...props.modelValue.allowed_roles] } : {}),
     version: 2,
     read_scope: normalizeScope(scopes.read_scope),
     manage_scope: normalizeScope(scopes.manage_scope)

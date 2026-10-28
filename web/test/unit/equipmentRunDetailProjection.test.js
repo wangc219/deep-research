@@ -97,6 +97,50 @@ test('平台事件的多层 envelope 会被解包为 React 交互结构', () => 
   assert.equal(projection.counts.events, 4)
 })
 
+test('历史结构化占位符会转换为用户可理解的摘要提示', () => {
+  const [event] = normalizeRunEvents([
+    {
+      run_id: 'run-old-placeholder',
+      sequence: 1,
+      event_type: 'winning_reasoning_step_completed',
+      payload: {
+        event_type: 'winning_reasoning_step_completed',
+        summary: '主要压力依据：object；约束依据：[object Object]。',
+        payload: { step: 1 }
+      }
+    }
+  ])
+
+  assert.equal(
+    event.summary,
+    '主要压力依据：结构化材料未展开；约束依据：结构化材料未展开。'
+  )
+})
+
+test('历史工作流与制胜产物中的混合占位符也会被清洗', () => {
+  const fallback = buildInteractionProjection(platformRows, { run_id: 'run-new' })
+  const merged = mergeInteractionProjection(
+    {
+      events: [{ event_id: 'legacy', event_type: 'saved', summary: '已保存' }],
+      workflow: {
+        step_plan: [
+          { step: 1, result_summary: '有效结论；object；[object Object]；保留内容。' }
+        ]
+      }
+    },
+    fallback
+  )
+  const winning = buildWinningProjection({
+    reasoning_nodes: [{ step: 1, summary: '依据：object；结论有效。' }]
+  })
+
+  assert.equal(
+    merged.workflow.step_plan[0].result_summary,
+    '有效结论；结构化材料未展开；结构化材料未展开；保留内容。'
+  )
+  assert.equal(winning.reasoning_nodes[0].summary, '依据：结构化材料未展开；结论有效。')
+})
+
 test('旧版 interactions 优先，同时保留平台 fallback 的缺省字段', () => {
   const fallback = buildInteractionProjection(platformRows, { run_id: 'run-new' })
   const merged = mergeInteractionProjection(

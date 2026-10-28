@@ -949,3 +949,28 @@ def _async_get_file_download(content: bytes, filename: str):
         }
 
     return _impl
+
+
+@pytest.mark.parametrize("status", ["completed", "degraded"])
+def test_search_output_keeps_rerank_provenance_for_agent_sources(status):
+    """来源序列化保留真实重排状态与零分，并继续移除内部文件路径。"""
+    from platform_core.knowledge.base import KnowledgeBase
+
+    chunk = {
+        "content": "evidence",
+        "score": 0.0,
+        "rerank_status": status,
+        "metadata": {"file_id": "f1", "path": "/private/doc.txt"},
+    }
+    if status == "completed":
+        chunk["rerank_score"] = 0.0
+    else:
+        chunk["rerank_error_type"] = "TimeoutError"
+    result = KnowledgeBase.build_search_output("kb1", [chunk])
+    metadata = result["results"][0]["metadata"]
+    assert metadata["rerank_status"] == status and metadata["score"] == 0.0
+    assert "path" not in metadata
+    assert ("rerank_score" in metadata) == (status == "completed")
+    if status == "degraded":
+        assert metadata["rerank_error_type"] == "TimeoutError"
+    assert chunk["metadata"]["path"] == "/private/doc.txt"

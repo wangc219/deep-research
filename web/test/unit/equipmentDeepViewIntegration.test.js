@@ -2,8 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-const readSource = (relativePath) =>
-  readFileSync(new URL(relativePath, import.meta.url), 'utf8')
+const readSource = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), 'utf8')
 
 const deepView = readSource('../../src/views/equipment/EquipmentDeepThinkingView.vue')
 const nativeChat = readSource('../../src/components/AgentChatComponent.vue')
@@ -20,30 +19,60 @@ test('深研主页面按 agent runtime 与 thread_id 分流原生和旧版会话
   assert.match(deepView, /<EquipmentLegacyDeepSession[\s\S]*?@submit="submitLegacyMessage"/)
 })
 
-test('新用户首次进入深研时创建并选中武器装备深研默认项目', () => {
-  assert.match(deepView, /projectsStore\.ensureEquipmentProject\(\)/)
+test('深研默认保存到当前用户专属工作台，Query 可跨项目直接绑定', () => {
+  assert.doesNotMatch(deepView, /form\.value\.project_id|projectsStore|ownProjects/)
+  assert.match(deepView, /equipmentApi\.createDeepSession\(\{\s*title:/)
+  assert.match(deepView, /runs\.value\.map/)
+  assert.match(deepView, /输入框上方快速绑定 Query 与武器装备/)
+  assert.match(deepView, /class="conversation-launch-composer"/)
+  assert.match(deepView, /v-model:open="bindingTreeOpen"/)
+  assert.match(deepView, /class="conversation-binding-trigger"/)
+  assert.match(deepView, /v-for="run in filteredQueryRunOptions"/)
+  assert.match(deepView, /v-for="choice in equipmentChoices"/)
+  assert.match(deepView, /class="binding-equipment-panel"/)
+  assert.match(deepView, /class="binding-portrait-panel"/)
+  assert.match(deepView, /capabilityPortraitModules\(choice\.source\)/)
+  assert.match(deepView, /PORTRAIT_SECTION_ORDER\.map/)
+  assert.match(deepView, /const startPortraitSectionResearch = async \(section\) =>/)
+  assert.match(deepView, /portraitSectionPrompt\(section\.label, choice\.name, section\.text, overview\)/)
   assert.match(
     deepView,
-    /const ownProjects = loadedProjects\.filter\([\s\S]*?const defaultProject = ownProjects\[0\] \|\|[\s\S]*?ensureEquipmentProject\(\)/
+    /if \(expandedBindingRunId\.value === runId\) \{\s*expandedBindingRunId\.value = ''\s*return/
   )
-  assert.match(
-    deepView,
-    /if \(!form\.value\.project_id && defaultProject\?\.id\) form\.value\.project_id = defaultProject\.id/
-  )
+  assert.match(deepView, /selectEquipmentFromTree/)
+  assert.match(deepView, /userStore\.isAdmin \? '全局 Query' : '我的 Query'/)
+  assert.match(deepView, /用户 \{\{ run\.owner_uid \}\}/)
+  assert.match(deepView, /对话自动保存/)
+  assert.match(deepView, /:show-project-selector="false"/)
+  assert.match(nativeChat, /showProjectSelector: \{ type: Boolean, default: true \}/)
+  assert.doesNotMatch(deepView, /filteredRuns/)
+  assert.doesNotMatch(deepView, /v-model:value="form\.project_id"/)
+  assert.match(deepView, /v-model:value="form\.agent_slug"/)
+  assert.match(deepView, /<ModelSelectorComponent/)
+  assert.doesNotMatch(deepView, /suggestedEquipmentTopic|const nextTopic/)
 })
 
 test('深研新建仅按真实权限限制，历史来源本身可继续修改', () => {
   assert.match(deepView, /const selectedRunReadOnly = computed/)
   assert.match(deepView, /Boolean\(selectedRun\.value\?\.readonly\)/)
   assert.match(deepView, /const isReadOnlyRun = \(run\)/)
-  assert.match(deepView, /const createSession = async \(\) => \{[\s\S]*?selectedRunReadOnly\.value[\s\S]*?历史研究任务为只读数据/)
+  assert.match(
+    deepView,
+    /const createSession = async \(\) => \{[\s\S]*?selectedRunReadOnly\.value[\s\S]*?历史研究任务为只读数据/
+  )
   assert.match(deepView, /if \(isReadOnlyRun\(targetRun\)\)/)
   assert.match(deepView, /if \(isReadOnlyRun\(requestedRun\)\)/)
-  assert.match(deepView, /:disabled="selectedRunReadOnly"[\s\S]*?创建深研会话/)
+  assert.match(
+    deepView,
+    /:disabled="selectedRunReadOnly \|\| !form.topic.trim\(\)[^"]*"[\s\S]*?开始深研/
+  )
 })
 
 test('会话 Skill 选择通过 deepRunMeta 传入平台原生运行', () => {
-  assert.match(deepView, /<EquipmentDeepSkillPicker\s+v-model="activeSkillIds"/)
+  assert.match(
+    deepView,
+    /<EquipmentDeepSkillPicker\s+v-if="!conversationFocusMode"\s+v-model="activeSkillIds"/
+  )
   assert.match(
     deepView,
     /const deepRunMeta = computed\(\(\) => \(\{[\s\S]*?equipment_active_skill_ids: activeSkillIds\.value[\s\S]*?\}\)\)/

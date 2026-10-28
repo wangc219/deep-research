@@ -31,6 +31,7 @@
           </div>
           <p class="param-description">选择用于识别 PDF 和图片中文字的 OCR 引擎</p>
         </div>
+        <ParsePerformanceOptions v-model="parseParams" :disabled="parseConfigModalLoading" />
       </div>
     </a-modal>
 
@@ -475,6 +476,7 @@ import { ref, computed, h, watch } from 'vue'
 import { useDatabaseStore } from '@/stores/database'
 import { useConfigStore } from '@/stores/config'
 import OCRSelector from '@/components/OCRSelector.vue'
+import ParsePerformanceOptions from '@/components/knowledge/ParsePerformanceOptions.vue'
 import { message, Modal } from 'ant-design-vue'
 import { documentApi } from '@/apis/knowledge_api'
 import {
@@ -848,7 +850,9 @@ const resolveDefaultOcrEngine = () => {
 }
 
 const parseParams = ref({
-  ocr_engine: resolveDefaultOcrEngine()
+  ocr_engine: resolveDefaultOcrEngine(),
+  parse_concurrency: 2,
+  prefer_text_layer: true
 })
 
 const pendingParseTotalText = computed(() =>
@@ -864,9 +868,17 @@ const handleOcrOptionsLoaded = (data) => {
 
 const resetParseParams = (processingParams = null) => {
   if (processingParams?.ocr_engine) {
-    parseParams.value = { ocr_engine: processingParams.ocr_engine }
+    parseParams.value = {
+      ocr_engine: processingParams.ocr_engine,
+      parse_concurrency: processingParams.parse_concurrency ?? 2,
+      prefer_text_layer: processingParams.prefer_text_layer ?? true
+    }
   } else {
-    parseParams.value = { ocr_engine: resolveDefaultOcrEngine() }
+    parseParams.value = {
+      ocr_engine: resolveDefaultOcrEngine(),
+      parse_concurrency: 2,
+      prefer_text_layer: true
+    }
   }
 }
 
@@ -1210,7 +1222,7 @@ const handleParseFile = async (record) => {
 
 const handleParseConfigConfirm = async () => {
   try {
-    const params = { ocr_engine: parseParams.value.ocr_engine }
+    const params = { ...parseParams.value }
     const result = isPendingParseOperation.value
       ? await store.parsePendingFiles(params, pendingParseTotal.value)
       : await store.parseFiles(currentParseFileIds.value, params)

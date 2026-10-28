@@ -32,6 +32,30 @@ def test_serialize_knowledge_base_redacts_credentials_from_compatibility_fields(
     assert "dify_token" not in response["metadata"]
 
 
+def test_serialize_knowledge_base_keeps_indexed_and_failed_counts():
+    database = KnowledgeBaseSummary(
+        kb_id="kb-1",
+        name="知识库",
+        description=None,
+        kb_type="milvus",
+        embedding_model_spec="provider:embedding",
+        llm_model_spec=None,
+        query_params={},
+        additional_params={},
+        share_config={"version": 2, "read_scope": None, "manage_scope": None},
+        created_by=None,
+        created_at=None,
+        indexed_count=6,
+        failed_count=2,
+    )
+
+    response = serialize_knowledge_base(database)
+
+    assert response["stats"]["indexed_count"] == 6
+    assert response["stats"]["failed_count"] == 2
+    assert response["additional_params"]["stats"] == response["stats"]
+
+
 @pytest.mark.parametrize(
     ("uid", "role", "can_read", "can_manage"),
     [("admin-1", "admin", True, True), ("other-user", "user", True, False)],

@@ -79,3 +79,17 @@ outputs/model-call-outbox.db
 reference/Yuxi-main/
 reference/LibreChat-main/
 reference/nanobot-main/
+
+# 视频号模型缓存与桌面采集运行态
+outputs/video-models/
+outputs/video-collector/
+video-collector.json
+artifacts/wxchannels-migration-*/ssh-test-key*
+
+backend/video_collector/bin/
+
+# 公众号用户凭据、RSS token、下载与运行日志
+/outputs/wechat-mp/
+/backend/wechat_mp/data/
+
+/outputs/collection-artifacts/

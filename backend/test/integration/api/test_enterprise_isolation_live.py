@@ -19,6 +19,11 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
 
 async def test_enterprise_real_http_isolation():
+    async with httpx.AsyncClient(base_url=os.getenv("ENTERPRISE_TEST_API", "http://127.0.0.1:5050")) as probe:
+        schema = (await probe.get("/openapi.json")).json()
+        if "/api/v1/runs" not in schema["paths"]:
+            assert (await probe.get("/api/v1/runs")).status_code in {401, 404}
+            pytest.skip("独立 /api/v1 工作台已退役；当前隔离契约见 equipment_superadmin_management 与 knowledge_personal_isolation")
     pg_manager.initialize()
     suffix = uuid4().hex[:8]
     uids = [f"ent_{suffix}_{role}" for role in ("a", "b", "root")]

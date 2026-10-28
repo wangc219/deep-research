@@ -74,9 +74,9 @@ async def get_current_user(
         user, api_key_obj = await _verify_api_key(token, db)
         if user is not None and api_key_obj is not None:
             api_key_obj.last_used_at = utc_now_naive()
-            await db.commit()
             department = await db.get(Department, user.department_id)
             user.tenant_id = department.tenant_id if department else "default"
+            await db.commit()
         return user
 
     # JWT Token 认证
@@ -105,6 +105,9 @@ async def get_current_user(
 
     department = await db.get(Department, user.department_id)
     user.tenant_id = department.tenant_id if department else "default"
+    # 认证读取结束即归还连接，后续业务事务按需开始；Session 保留已加载的用户字段。
+    # 上传等接口还会通过 repository 读取元数据，不能一直持有认证连接等待另一个连接。
+    await db.commit()
     return user
 
 

@@ -1740,7 +1740,7 @@ def test_catalog_is_loaded_from_registry_and_invalid_selection_is_rejected() -> 
     ]
     assert [
         item["id"] for item in catalog["execution_profiles"] if item["recommended"]
-    ] == ["optimized_v2"]
+    ] == ["winning_swarm_dynamic_v2"]
     assert all(item["selectable"] for item in catalog["execution_profiles"])
     assert [item["id"] for item in catalog["discovery_branches"]] == list("ABCDEFGH")
     assert all(

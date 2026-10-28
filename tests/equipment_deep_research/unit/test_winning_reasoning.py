@@ -52,6 +52,18 @@ def test_six_steps_are_linked_and_evidence_backed() -> None:
     )
 
 
+def test_compact_summary_renders_structured_values_and_drops_type_placeholders() -> None:
+    assert SixStepReasoner._compact(
+        [
+            "object",
+            {"summary": "灾害现场通信基础设施失效", "metadata": {"type": "object"}},
+            ["[object Object]", {"text": "终端需支持断链恢复"}],
+        ]
+    ) == "灾害现场通信基础设施失效；终端需支持断链恢复"
+
+    assert SixStepReasoner._compact(["object", None, {}]) == "当前结构化材料未给出具体内容"
+
+
 def test_six_steps_project_model_reasoning_nodes_and_govern_next_actions() -> None:
     packet = BaselineFindingPacket(
         "packet-1",

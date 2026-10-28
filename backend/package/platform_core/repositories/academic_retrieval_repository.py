@@ -80,7 +80,7 @@ class AcademicRetrievalRepository:
         if root is None:
             raise ValueError("学术检索父运行不存在")
 
-        ttl = 3600 if endpoint in {"search", "title_search"} else 86400
+        ttl = 3600 if endpoint in {"search", "title_search", "semantic_search"} else 86400
         cached = await self.db.scalar(
             select(AcademicRetrievalCall)
             .where(
@@ -117,13 +117,16 @@ class AcademicRetrievalRepository:
         used = list(costs.all())
         _method, _path, cost, kind = ENDPOINTS[endpoint]
         spent = sum(int(row[2]) for row in used)
-        if spent + cost > config[f"{prefix}_budget_cents"]:
+        budget_cents = int(config[f"{prefix}_budget_cents"])
+        if budget_cents > 0 and spent + cost > budget_cents:
             return AcademicReservation(
                 None, {}, {"status": "budget_exhausted", "message": "本轮 AMiner 费用预算已用尽"}
             )
-        limit = (32 if prefix == "deep" else 12) if kind == "free" else config[f"{prefix}_{kind}_limit"]
+        # 0 表示不设置应用侧额度；供应商限流、重复查询保护和 Agent
+        # 总工具预算仍负责阻止失控请求。免费接口无需另设隐藏硬上限。
+        limit = 0 if kind == "free" else int(config[f"{prefix}_{kind}_limit"])
         count = sum(int(row[1]) for row in used if ENDPOINTS[row[0]][3] == kind)
-        if count >= limit:
+        if limit > 0 and count >= limit:
             return AcademicReservation(
                 None, {}, {"status": "limit_reached", "message": f"本轮 AMiner {kind} 调用次数已达上限"}
             )

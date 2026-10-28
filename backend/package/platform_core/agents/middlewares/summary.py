@@ -717,9 +717,34 @@ def _search_header(tool_name: str, parsed: dict[str, Any], result_count: int) ->
         "message",
         "relation",
         "paper_id",
+        "failed_endpoint",
+        "omitted_candidates",
+        "reference_count",
+        "omitted_references",
     ):
         if parsed.get(key) is not None:
             preview[key] = _bounded_search_scalar(parsed[key])
+    if tool_name in _ACADEMIC_SEARCH_TOOL_NAMES:
+        if isinstance(parsed.get("query_coverage"), list):
+            preview["query_coverage"] = [
+                {
+                    **{key: item.get(key) for key in ("status", "page", "next_page")},
+                    "query": _bounded_search_scalar(item.get("query", ""), 48),
+                }
+                for item in parsed["query_coverage"][:3]
+                if isinstance(item, dict)
+            ]
+        if isinstance(parsed.get("unsearched_queries"), list):
+            preview["unsearched_queries"] = [
+                _bounded_search_scalar(term, 48) for term in parsed["unsearched_queries"][:3]
+            ]
+        if isinstance(parsed.get("evidence_gaps"), dict):
+            preview["evidence_gap_counts"] = {
+                key: len(ids) for key, ids in parsed["evidence_gaps"].items() if isinstance(ids, list)
+            }
+        for key in ("missing_paper_ids", "missing_abstract_ids"):
+            if isinstance(parsed.get(key), list):
+                preview[f"{key}_count"] = len(parsed[key])
     return preview
 
 
@@ -733,7 +758,18 @@ def _search_result_record(tool_name: str, result: Any) -> tuple[dict[str, Any], 
         else ("title", "url", "site_name", "publish_time", "score")
     )
     if tool_name in _ACADEMIC_SEARCH_TOOL_NAMES:
-        keys = ("id", "doi", "title", "url", "authors", "year", "venue", "source", "content_level", "retrieved_at")
+        keys = (
+            "id",
+            "doi",
+            "title",
+            "url",
+            "authors",
+            "year",
+            "venue",
+            "source",
+            "content_level",
+            "retrieved_at",
+        )
     record = {key: _bounded_search_scalar(result[key]) for key in keys if result.get(key) is not None}
     if tool_name == "query_kb" and isinstance(result.get("metadata"), dict):
         metadata = result["metadata"]

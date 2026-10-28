@@ -15,6 +15,9 @@ x-api-worker-env: &api-worker-env
   JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env.prod}
   API_KEY_DERIVATION_SECRET: ${API_KEY_DERIVATION_SECRET:?Set API_KEY_DERIVATION_SECRET in .env.prod}
   RAPIDOCR_MODEL_DIR: /home/platform/.cache/rapidocr/models
+  WX_CHANNELS_MCP_URL: ${WX_CHANNELS_MCP_URL:-http://host.docker.internal:2022/mcp}
+  VIDEO_TRANSCRIBER_MODEL_CACHE: /app/outputs/video-models
+  VIDEO_TRANSCRIBER_DEVICE: ${VIDEO_TRANSCRIBER_DEVICE:-cpu}
   DEEP_RESEARCH_INSTANCE_ID: ${DEEP_RESEARCH_INSTANCE_ID:?Set DEEP_RESEARCH_INSTANCE_ID in .env.prod}
   POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}@postgres:5432/${POSTGRES_DB:-deep_research}}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
@@ -39,10 +42,13 @@ x-api-worker-env: &api-worker-env
   SANDBOX_EXEC_TIMEOUT_SECONDS: ${SANDBOX_EXEC_TIMEOUT_SECONDS:-180}
   SANDBOX_MAX_OUTPUT_BYTES: ${SANDBOX_MAX_OUTPUT_BYTES:-262144}
   TASKER_DEFAULT_TIMEOUT_SECONDS: ${TASKER_DEFAULT_TIMEOUT_SECONDS:-21600}
+  EQUIPMENT_TASK_LEASE_SECONDS: ${EQUIPMENT_TASK_LEASE_SECONDS:-600}
+  TASKBOOK_MODEL_TIMEOUT_SECONDS: ${TASKBOOK_MODEL_TIMEOUT_SECONDS:-1800}
   DEEP_RESEARCH_DATASET_PERSIST_BATCH_SIZE: ${DEEP_RESEARCH_DATASET_PERSIST_BATCH_SIZE:-1}
   DEEP_RESEARCH_SKILL_DATA_DIR: /app/skill-sources
   DEEP_RESEARCH_SKILL_PROJECTION_DIR: /app/skill-projections
   WEB_SEARCH_PROVIDER: ${WEB_SEARCH_PROVIDER:-open-websearch}
+  WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS: ${WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS:-300}
   OPEN_WEBSEARCH_URL: ${OPEN_WEBSEARCH_URL:-http://open-websearch:3210}
   OPEN_WEBSEARCH_ENGINES: ${OPEN_WEBSEARCH_ENGINES:-bing,duckduckgo}
   OPEN_WEBSEARCH_TIMEOUT_SECONDS: ${OPEN_WEBSEARCH_TIMEOUT_SECONDS:-15}
@@ -75,6 +81,7 @@ services:
       start_period: 20s
 
   api:
+    init: true
     ports:
       - "${DEEP_RESEARCH_API_PORT:-6050}:5050"
     build:
@@ -132,6 +139,7 @@ services:
         condition: service_completed_successfully
 
   worker:
+    init: true
     build:
       context: .
       dockerfile: docker/api.Dockerfile
@@ -164,7 +172,7 @@ services:
     command: python -m server.worker_main
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "arq", "--check", "server.worker_main.WorkerSettings"]
+      test: ["CMD", "python", "-m", "server.worker_health"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -184,6 +192,7 @@ services:
         condition: service_completed_successfully
 
   equipment-worker:
+    init: true
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-api:${DEEP_RESEARCH_VERSION:-0.7.3}
     working_dir: /app
     user: "1000:1000"
@@ -326,7 +335,15 @@ services:
       - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/neo4j/data:/data
       - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/neo4j/logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u \"$${NEO4J_AUTH%%/*}\" -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1;' >/dev/null || exit 1"]
+      test:
+        - CMD-SHELL
+        - >-
+          wget -qO- --timeout=5 --tries=1 --auth-no-challenge
+          --user="$${NEO4J_AUTH%%/*}" --password="$${NEO4J_AUTH#*/}"
+          --header='Content-Type: application/json'
+          --post-data='{"statements":[{"statement":"RETURN 1 AS ready"}]}'
+          http://127.0.0.1:7474/db/neo4j/tx/commit
+          | grep -q '"errors":[[:space:]]*\[\]'
       interval: 20s
       timeout: 10s
       retries: 5

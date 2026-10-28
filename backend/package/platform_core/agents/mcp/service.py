@@ -11,6 +11,7 @@ import asyncio
 import hashlib
 import json
 import re
+import time
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -90,6 +91,28 @@ def _to_runtime_mcp_config(server: MCPServer) -> dict[str, Any]:
     return config
 
 
+async def resolve_mcp_runtime_config(server: MCPServer, *, db: AsyncSession | None = None) -> dict[str, Any] | None:
+    """为官方 AMiner 连接注入当前凭证，不复制密钥到 MCP 配置表。"""
+    config = _to_runtime_mcp_config(server)
+    if server.slug != "aminer-official":
+        return config
+    if db is None:
+        from platform_core.storage.postgres.manager import pg_manager
+
+        async with pg_manager.get_async_session_context() as session:
+            return await resolve_mcp_runtime_config(server, db=session)
+    from platform_core.config.options import aminer_api_opts
+    from platform_core.services.aminer_client import aminer_authorization_token
+
+    credentials = await aminer_api_opts.get(db)
+    if not credentials.get("enabled") or not credentials.get("user_id") or not credentials.get("api_key"):
+        return None
+    # 原始 Key 每五分钟刷新一次，避免逐秒签名导致工具缓存持续失效；Token 至少剩余五分钟。
+    issued_at = int(time.time()) // 300 * 300
+    token = aminer_authorization_token(credentials, issued_at=issued_at)
+    return {**config, "headers": {"Authorization": f"Bearer {token}"}}
+
+
 # =============================================================================
 # === Core Logic (Moved from agents/common/mcp.py) ===
 # =============================================================================
@@ -142,6 +165,7 @@ async def ensure_builtin_mcp_servers_in_db() -> None:
                         sse_read_timeout=config.get("sse_read_timeout"),
                         tags=config.get("tags"),
                         icon=config.get("icon"),
+                        disabled_tools=config.get("disabled_tools"),
                         enabled=0,
                         created_by="system",
                         updated_by="system",
@@ -209,7 +233,12 @@ async def _load_enabled_mcp_server_configs(
             stmt = stmt.where(MCPServer.slug.in_(names))
         result = await db.execute(stmt)
         servers = result.scalars().all()
-        return {server.slug: _to_runtime_mcp_config(server) for server in servers}
+        configs = {}
+        for server in servers:
+            config = await resolve_mcp_runtime_config(server, db=db)
+            if config is not None:
+                configs[server.slug] = config
+        return configs
 
     from platform_core.storage.postgres.manager import pg_manager
 
@@ -669,7 +698,10 @@ async def inspect_mcp_server_tools(server: MCPServer) -> list:
     """管理端严格建连，包括停用服务；不吞异常、不修改状态或运行缓存。"""
     if requires_mcp_transport_migration(server):
         raise ValueError("不支持的 MCP transport（包括 stdio）须迁移为远程服务后再测试")
-    config = {key: value for key, value in _to_runtime_mcp_config(server).items() if key != "disabled_tools"}
+    runtime_config = await resolve_mcp_runtime_config(server)
+    if runtime_config is None:
+        raise ValueError("请先在模型设置中启用 AMiner 并配置用户 ID 和有效 Token")
+    config = {key: value for key, value in runtime_config.items() if key != "disabled_tools"}
     _validate_remote_transport(config)
     client = MultiServerMCPClient({server.slug: config})
     tools = await client.get_tools()

@@ -20,15 +20,6 @@
     ]"
   >
     <!-- 用户消息 -->
-    <div
-      v-if="message.type === 'human'"
-      class="message-copy-btn human-copy"
-      @click="copyToClipboard(message.content)"
-      :class="{ 'is-copied': isCopied }"
-    >
-      <Check v-if="isCopied" size="14" />
-      <Copy v-else size="14" />
-    </div>
     <p v-if="message.type === 'human'" class="message-text">
       <MentionTextRenderer :content="message.content" :display-labels="mentionDisplayLabels" />
     </p>
@@ -91,6 +82,21 @@
     <slot></slot>
   </div>
 
+  <div v-if="message.type === 'human'" class="human-message-actions" aria-label="消息操作">
+    <time v-if="humanMessageTime" :datetime="message.created_at">{{ humanMessageTime }}</time>
+    <button
+      type="button"
+      class="human-action-button"
+      :aria-label="isCopied ? '已复制消息' : '复制消息'"
+      :title="isCopied ? '已复制' : '复制消息'"
+      @click="copyToClipboard(message.content)"
+    >
+      <Check v-if="isCopied" :size="15" aria-hidden="true" />
+      <Copy v-else :size="15" aria-hidden="true" />
+    </button>
+    <slot name="human-actions"></slot>
+  </div>
+
   <div
     v-if="message.type === 'human' && messageAttachments.length"
     class="human-message-attachments"
@@ -128,6 +134,7 @@
 
 <script setup>
 import { computed, ref, onUnmounted } from 'vue'
+import dayjs from '@/utils/time'
 import RefsComponent from '@/components/RefsComponent.vue'
 import { Check, Copy, X } from '@lucide/vue'
 import ToolCallsGroupComponent from '@/components/ToolCallsGroupComponent.vue'
@@ -178,6 +185,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['retry', 'retryStoppedMessage', 'openRefs'])
+const humanMessageTime = computed(() => {
+  if (!props.message.created_at) return ''
+  const value = dayjs.utc(props.message.created_at).tz('Asia/Shanghai')
+  return value.isValid() ? value.format('MM月DD日 HH:mm') : ''
+})
 
 // 图片全屏预览
 const imagePreview = ref({ visible: false, src: '', alt: '' })
@@ -313,6 +325,40 @@ const parsedData = computed(() => {
 </script>
 
 <style lang="less" scoped>
+.human-message-actions {
+  display: flex;
+  align-self: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin: -8px 0 8px;
+  padding: 0 4px;
+  color: var(--gray-500);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.human-message-actions time { font-size: 12px; margin-right: 4px; }
+.human-action-button, .human-message-actions :deep(.edit-question-button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+.human-action-button:hover, .human-message-actions :deep(.edit-question-button:hover) { color: var(--main-color); background: var(--gray-100); }
+.message-box.human:hover + .human-message-actions,
+.human-message-actions:hover, .human-message-actions:focus-within { opacity: 1; }
+.human-action-button:focus-visible { outline: 2px solid var(--main-color); outline-offset: 2px; }
+@media (hover: none), (max-width: 768px) { .human-message-actions { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .human-message-actions { transition: none; } }
+
 .message-box {
   display: inline-block;
   border-radius: 1.5rem;
@@ -360,38 +406,6 @@ const parsedData = computed(() => {
   &.human.has-attachments,
   &.sent.has-attachments {
     margin-bottom: 0.375rem;
-  }
-
-  .message-copy-btn {
-    cursor: pointer;
-    color: var(--gray-400);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    flex-shrink: 0;
-
-    &:hover {
-      color: var(--main-color);
-    }
-
-    &.is-copied {
-      color: var(--color-success-500);
-      opacity: 1;
-    }
-
-    &.human-copy {
-      position: absolute;
-      left: -28px;
-      bottom: 8px;
-    }
-  }
-
-  &:hover {
-    .message-copy-btn {
-      opacity: 1;
-    }
   }
 
   .message-text-system {

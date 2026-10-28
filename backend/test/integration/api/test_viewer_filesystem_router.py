@@ -37,7 +37,7 @@ async def test_viewer_tree_requires_authentication(test_client):
 async def test_created_file_is_immediately_visible_to_tree_preview_and_artifact(
     test_client,
     standard_user,
-    admin_headers,
+    other_user,
 ):
     headers = standard_user["headers"]
     thread_id, _workdir_path = await _create_thread(test_client, headers)
@@ -81,7 +81,7 @@ async def test_created_file_is_immediately_visible_to_tree_preview_and_artifact(
     assert artifact.status_code == 200, artifact.text
     assert artifact.content == b"live bytes\n"
 
-    cross_user = await test_client.get(entry["artifact_url"], headers=admin_headers)
+    cross_user = await test_client.get(entry["artifact_url"], headers=other_user["headers"])
     assert cross_user.status_code == 404
 
     deleted = await test_client.delete(

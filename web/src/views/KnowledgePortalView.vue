@@ -1,11 +1,25 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
-import { ChevronRight, ClipboardList, FileSearch, FileText, LibraryBig, MessageCircle, MessageCirclePlus, Radar, SlidersHorizontal, Trash2 } from '@lucide/vue'
+import {
+  BrainCircuit,
+  ChevronRight,
+  ClipboardList,
+  FileSearch,
+  FileText,
+  LibraryBig,
+  MessageCircle,
+  MessageCirclePlus,
+  Radar,
+  SlidersHorizontal,
+  Trash2
+} from '@lucide/vue'
 import { equipmentApi } from '@/apis/equipment_api'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import { formatRelative } from '@/utils/time'
 
-const loading = ref(false)
+const loading = ref(true)
+const loadError = ref('')
 const deletingRunId = ref('')
 const portal = ref({ stats: {}, recent_runs: [], recent_queries: [], shortcuts: [] })
 
@@ -50,7 +64,7 @@ const shortcutHints = {
 }
 
 const shortcutItems = computed(() => {
-  const covered = new Set(stats.value.map((item) => item.path))
+  const covered = new Set([...stats.value.map((item) => item.path), '/agent'])
   return (portal.value.shortcuts || [])
     .filter((item) => item?.path && !covered.has(item.path))
     .map((item) => ({
@@ -60,15 +74,20 @@ const shortcutItems = computed(() => {
     }))
 })
 
-const load = async () => {
-  loading.value = true
+let loadingRequest = false
+const load = async ({ silent = false } = {}) => {
+  if (loadingRequest) return
+  loadingRequest = true
+  if (!silent) loading.value = true
+  loadError.value = ''
   try {
     const payload = await equipmentApi.getPortal()
     portal.value = payload?.stats ? payload : payload?.data || payload
   } catch (error) {
-    message.error(error.message || '知识门户加载失败')
+    loadError.value = error.message || '知识门户加载失败'
   } finally {
     loading.value = false
+    loadingRequest = false
   }
 }
 
@@ -98,21 +117,22 @@ const timeText = (value) => {
   return text && text !== '-' ? text : ''
 }
 
-const confirmDelete = (run) => new Promise((resolve) => {
-  Modal.confirm({
-    title: '永久删除研究草稿',
-    content: `确定删除“${run.topic}”吗？草稿数据删除后无法恢复。`,
-    okText: '永久删除',
-    cancelText: '取消',
-    okButtonProps: { danger: true },
-    onOk: () => resolve(true),
-    onCancel: () => resolve(false)
+const confirmDelete = (run) =>
+  new Promise((resolve) => {
+    Modal.confirm({
+      title: '永久删除研究草稿',
+      content: `确定删除“${run.topic}”吗？草稿数据删除后无法恢复。`,
+      okText: '永久删除',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: () => resolve(true),
+      onCancel: () => resolve(false)
+    })
   })
-})
 
 const deleteDraftRun = async (run) => {
   if (run.status !== 'draft' || deletingRunId.value) return
-  if (!await confirmDelete(run)) return
+  if (!(await confirmDelete(run))) return
   deletingRunId.value = run.run_id
   try {
     await equipmentApi.deleteRun(run.run_id)
@@ -126,6 +146,7 @@ const deleteDraftRun = async (run) => {
 }
 
 onMounted(load)
+useLiveRefresh(() => load({ silent: true }))
 </script>
 
 <template>
@@ -136,7 +157,23 @@ onMounted(load)
       <p class="kp-lead">当前身份可见的研究任务、需求 Query、能力画像与知识库入口。</p>
     </header>
 
-    <a-spin :spinning="loading">
+    <nav class="kp-conversation-entries" aria-label="开始对话">
+      <router-link to="/agent" class="kp-conversation-entry">
+        <span class="kp-stat-icon"><MessageCirclePlus :size="22" /></span>
+        <span><b>智能对话</b><small>快速问答、资料梳理与方案比较</small></span>
+        <ChevronRight :size="18" aria-hidden="true" />
+      </router-link>
+      <router-link to="/equipment/deep-thinking" class="kp-conversation-entry">
+        <span class="kp-stat-icon"><BrainCircuit :size="22" /></span>
+        <span><b>深研对话</b><small>多来源检索、证据核验与深入分析</small></span>
+        <ChevronRight :size="18" aria-hidden="true" />
+      </router-link>
+    </nav>
+    <div v-if="loadError" class="kp-load-error" role="alert">
+      <span>{{ loadError }}。仍可从上方开始对话。</span>
+      <a-button :loading="loading" @click="load">重试</a-button>
+    </div>
+    <a-spin v-else :spinning="loading">
       <section class="kp-stats" aria-label="研究资产概览">
         <router-link
           v-for="item in stats"
@@ -156,12 +193,7 @@ onMounted(load)
       </section>
 
       <nav v-if="shortcutItems.length" class="kp-actions" aria-label="其他入口">
-        <router-link
-          v-for="item in shortcutItems"
-          :key="item.path"
-          :to="item.path"
-          class="kp-stat"
-        >
+        <router-link v-for="item in shortcutItems" :key="item.path" :to="item.path" class="kp-stat">
           <span class="kp-stat-icon" aria-hidden="true">
             <component :is="item.icon" :size="18" />
           </span>
@@ -238,6 +270,63 @@ onMounted(load)
 </template>
 
 <style scoped>
+.kp-conversation-entries {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.kp-conversation-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--main-200);
+  border-radius: 16px;
+  background: var(--gray-0);
+  color: var(--gray-900);
+  text-decoration: none;
+}
+.kp-conversation-entry > span:nth-child(2) {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.kp-conversation-entry b {
+  font-size: 17px;
+}
+.kp-conversation-entry small {
+  color: var(--gray-600);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.kp-conversation-entry:hover {
+  background: var(--main-50);
+  border-color: var(--main-color);
+}
+.kp-conversation-entry:focus-visible {
+  outline: 2px solid var(--main-color);
+  outline-offset: 3px;
+}
+.kp-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  color: var(--gray-600);
+}
+@media (max-width: 560px) {
+  .kp-conversation-entries {
+    grid-template-columns: 1fr;
+  }
+  .kp-conversation-entry {
+    padding: 16px;
+  }
+}
+
 .knowledge-portal {
   display: flex;
   flex-direction: column;
@@ -245,7 +334,11 @@ onMounted(load)
   min-height: 100%;
   padding: 20px 16px 32px;
   background:
-    radial-gradient(1200px 280px at 12% -10%, color-mix(in srgb, var(--main-50) 80%, transparent), transparent 70%),
+    radial-gradient(
+      1200px 280px at 12% -10%,
+      color-mix(in srgb, var(--main-50) 80%, transparent),
+      transparent 70%
+    ),
     var(--gray-25);
 }
 

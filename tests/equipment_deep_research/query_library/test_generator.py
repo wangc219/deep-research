@@ -142,6 +142,25 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert "coverage_slot只是思考发生维度" in requirements
     assert "具体装备项目" in requirements
     assert "项目功能" in requirements
+    for request, contract_key in (
+        (grounding_request, "output_contract"),
+        (divergence_request, "requirements"),
+        (generation_request, "requirements"),
+    ):
+        contract = "".join(request[contract_key])
+        assert "安全态势、面临威胁和未来军事作战需要" in contract
+        assert "不主动生成极端灾害、民用应急救援" in contract
+        assert "仅当用户明确指定民用研究母题" in contract
+        assert "自然环境应作为军事任务的条件约束" in contract
+        assert "默认以中国为研究主体" in contract
+        assert "围绕母题和自动态势两种模式均适用" in contract
+        assert "具体武器装备类别" in contract
+        assert "战略制衡" in contract
+        assert "不预设某种装备能够制胜" in contract
+        assert "不提出针对现实对手的攻击方案或武器改进设计" in contract
+        assert "待研究的未决问题" in contract
+    assert "为何值得现在研究" in requirements
+    assert "公开证据缺口与验证路径" in requirements
 
 
 def test_generator_records_codex_situation_assessment_without_web_results() -> None:
@@ -200,6 +219,16 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
     assert "被态势直接牵引的武器装备需求" in requirements
     assert "direct_strike_priority_slots" not in generation_request
     assert "不写成时事摘要" in requirements
+    divergence_request = json.loads(provider.inputs[1][0][1].content)
+    for request, contract_key in (
+        (grounding_request, "output_contract"),
+        (divergence_request, "requirements"),
+        (generation_request, "requirements"),
+    ):
+        contract = "".join(request[contract_key])
+        assert "不主动生成极端灾害、民用应急救援" in contract
+        assert "不能把自然灾害本身替代为军事需求来源" in contract
+    assert "偏离军事任务的民用灾害命题必须替换" in requirements
     assert provider.inputs[2][2]["_provider_retry_attempts"] == 2
 
 

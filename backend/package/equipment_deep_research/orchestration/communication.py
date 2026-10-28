@@ -10,7 +10,14 @@ from typing import Any
 from equipment_deep_research.domain.models import now_iso
 
 
-_TYPES = {"task_assigned", "handoff_ready", "recall_requested", "recall_completed", "coverage_limited", "stage_completed"}
+_TYPES = {
+    "task_assigned",
+    "handoff_ready",
+    "recall_requested",
+    "recall_completed",
+    "coverage_limited",
+    "stage_completed",
+}
 _FORBIDDEN = {"raw_session", "raw_sessions", "raw_messages", "messages", "provider_headers", "authorization"}
 _STATUSES = {"ready", "completed", "failed", "limited", "timeout", "cancelled"}
 

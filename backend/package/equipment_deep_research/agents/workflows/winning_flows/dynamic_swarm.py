@@ -102,6 +102,40 @@ from equipment_deep_research.orchestration.winning_swarm import (
 from equipment_deep_research.contracts.runtime import SwarmRuntime
 
 
+def _dynamic_finalist_target(
+    policy: Mapping[str, Any],
+    accumulated: Mapping[str, Any],
+) -> tuple[int, dict[str, Any]]:
+    """Resolve the S5/S6 portfolio size without turning it into a hard gate.
+
+    Dynamic-v2 normally selects six finalists.  When the user explicitly asks
+    for a portfolio size, that contract must survive the Mission Graph rather
+    than being overwritten by the profile default.  A shortage remains a
+    limited, truthfully disclosed delivery; this function never fabricates or
+    duplicates candidates to satisfy the number.
+    """
+
+    default_target = min(
+        max(1, int(policy.get("finalist_minimum", 6))),
+        max(1, int(policy.get("finalist_maximum", 7))),
+    )
+    raw_contract = accumulated.get("candidate_count_contract", {})
+    contract = dict(raw_contract) if isinstance(raw_contract, Mapping) else {}
+    try:
+        requested_target = int(contract.get("target", 0) or 0)
+    except (TypeError, ValueError):
+        requested_target = 0
+    explicit = bool(contract.get("explicit")) and requested_target > 0
+    target = requested_target if explicit else default_target
+    return target, {
+        "explicit": explicit,
+        "minimum": int(contract.get("minimum", target) or target) if explicit else 0,
+        "target": target,
+        "maximum": int(contract.get("maximum", target) or target) if explicit else 0,
+        "source": str(contract.get("source", "none")) if explicit else "profile_default",
+    }
+
+
 def _dynamic_output_schema(section: str) -> dict[str, Any]:
     """Load a model-visible output schema from the reviewed Markdown catalog."""
 
@@ -3050,6 +3084,13 @@ async def execute_dynamic_mission_graph(
                     else {}
                 ),
             }
+        # 精简业务上下文后重新绑定运行身份，保证阶段策略、审计与进度不依赖候选字段。
+        common_input.update(
+            run_id=shared.get("run_id", ""),
+            agent_instance_id=instance.instance_id,
+            mission_node=instance.mission_node,
+            batch=batch_index,
+        )
         if instance.mission_node in {"S1", "S2"} and not instance.hypothesis_id:
             output_schema = _dynamic_output_schema("s1_s2.output_schema")
             instruction = load_dynamic_winning_prompt(instance.mission_node)
@@ -4362,7 +4403,7 @@ async def execute_dynamic_mission_graph(
         ):
             # Do not pre-merge or pre-trim the dynamic candidate pool. Each
             # paired S5 call owns only its producer's candidate scope; the
-            # final top-seven ordering is applied after all scores arrive.
+            # final five-to-six ordering is applied after all scores arrive.
             compact_candidate_ledger_for_review()
         s3_creator_ids = {
             item.instance_id
@@ -4372,7 +4413,13 @@ async def execute_dynamic_mission_graph(
         s3_terminal_ids = s3_creator_ids.intersection(
             completed_instances | failed_instances
         )
-        s4_boundary_ready = not s3_creator_ids or bool(s3_terminal_ids)
+        # S3 and S4 are equal creative pools.  Both become runnable as soon as
+        # the shared S1/S2 reasoning boundary is complete; S4 must not wait for
+        # an S3 answer, otherwise it is biased toward rephrasing the first
+        # published concept instead of independently exploring its assigned
+        # winning angle.  Cross-seat comparison remains the responsibility of
+        # the full-pool S5 reviewers.
+        s4_boundary_ready = True
         if (
             s4_boundary_ready
             and not s4_incremental_boundary_opened
@@ -4390,33 +4437,17 @@ async def execute_dynamic_mission_graph(
                 graph_id=graph.graph_id,
                 completed_s3_instance_ids=sorted(s3_terminal_ids),
                 remaining_s3_instance_ids=sorted(s3_creator_ids - s3_terminal_ids),
+                parallel_start=True,
                 rule=load_dynamic_winning_prompt(
                     "common", section="s3_s4.incremental_boundary_rule"
                 ),
             )
 
         def _creative_dispatch_priority(item: WinningAgentInstance) -> int:
-            """Prefer S4 once its incremental boundary has opened.
+            """Give S3 and S4 equal dispatch priority after shared reasoning."""
 
-            At the normal eight-lane ceiling all six creative seats can be
-            dispatched together, so this ordering is usually invisible.  It
-            matters for a deliberately constrained provider (one or two
-            lanes): after the first S3 branch publishes, keeping S3 ahead of
-            S4 would serialize the remaining S3 tail and defeat the
-            incremental boundary.  S4 still remains behind S3 before that
-            boundary is opened.
-            """
-
-            if s4_incremental_boundary_opened:
-                if item.mission_node == "S4" and not item.hypothesis_id:
-                    return 0
-                if item.mission_node == "S3" and not item.hypothesis_id:
-                    return 1
-            else:
-                if item.mission_node == "S3" and not item.hypothesis_id:
-                    return 0
-                if item.mission_node == "S4" and not item.hypothesis_id:
-                    return 1
+            if item.mission_node in {"S3", "S4"} and not item.hypothesis_id:
+                return 0
             return 2
 
         def _ready_dispatch_key(
@@ -4424,13 +4455,9 @@ async def execute_dynamic_mission_graph(
         ) -> tuple[int, int, int, float, str]:
             """Order ready work without letting a creative tail starve S5.
 
-            Before the incremental boundary opens, retain the graph's normal
-            wave ordering.  Once one S3 branch publishes, S4 creators remain
-            first, then a paired S5 reviewer whose producer already has a
-            live scope, and only then the remaining S3 tail.  The reviewer
-            scope check is read-only and prevents an empty creator from
-            consuming a model slot.  All non-creative work keeps its original
-            wave/quality ordering.
+            After shared reasoning, S3 and S4 have equal priority and can fill
+            the provider lanes together.  S5 remains downstream of the live
+            producer set and therefore cannot bias unfinished creative work.
             """
 
             if s4_incremental_boundary_opened and item.mission_node in {
@@ -4438,16 +4465,14 @@ async def execute_dynamic_mission_graph(
                 "S4",
                 "S5",
             }:
-                if item.mission_node == "S4" and not item.hypothesis_id:
+                if item.mission_node in {"S3", "S4"} and not item.hypothesis_id:
                     creative_rank = 0
                 elif is_dynamic_paired_reviewer(item) and bool(
                     effective_scope_for_instance(item, ledger)
                 ):
                     creative_rank = 1
-                elif item.mission_node == "S3" and not item.hypothesis_id:
-                    creative_rank = 2
                 else:
-                    creative_rank = 3
+                    creative_rank = 2
                 return (
                     0,
                     creative_rank,
@@ -4653,16 +4678,36 @@ async def execute_dynamic_mission_graph(
                             reason="provider_failure_with_empty_creator_scope",
                         )
                         continue
-                    fallback_result = _s5_portfolio_fallback_result(
-                        [
-                            item
-                            for item in ledger.hypotheses
-                            if item.hypothesis_id in fallback_scope
-                        ],
-                        maximum=min(
-                            7,
-                            int(swarm_controller.policy.get("finalist_maximum", 7)),
-                        ),
+                    is_cross_pool_reviewer = (
+                        str(swarm_controller.policy.get("policy_id"))
+                        == "winning_swarm_dynamic_v2"
+                        and len(instance.depends_on) > 1
+                    )
+                    fallback_result = (
+                        {
+                            "decisions": [],
+                            "portfolio_order": [],
+                            "portfolio_summary": (
+                                "S5模型不可用；本评审席位不投票，不以本地回退分补齐组合。"
+                            ),
+                            "_s5_transport_unavailable": True,
+                        }
+                        if is_cross_pool_reviewer
+                        else _s5_portfolio_fallback_result(
+                            [
+                                item
+                                for item in ledger.hypotheses
+                                if item.hypothesis_id in fallback_scope
+                            ],
+                            maximum=min(
+                                7,
+                                int(
+                                    swarm_controller.policy.get(
+                                        "finalist_maximum", 7
+                                    )
+                                ),
+                            ),
+                        )
                     )
                     emit_swarm_event(
                         "winning_s5_portfolio_fallback_activated",
@@ -4678,7 +4723,9 @@ async def execute_dynamic_mission_graph(
                             if isinstance(row, Mapping)
                         ),
                         reason=(
-                            "S5仅负责创新颠覆判断；模型不可用时按S3/S4既有候选语义保守排序，不补写武器属性。"
+                            "跨池S5模型不可用；该席位不投票，禁止用本地回退分补齐5—6项。"
+                            if is_cross_pool_reviewer
+                            else "S5仅负责创新颠覆判断；模型不可用时按S3/S4既有候选语义保守排序，不补写武器属性。"
                         ),
                     )
                     outcome = (
@@ -5171,7 +5218,7 @@ async def execute_dynamic_mission_graph(
                     # Retain bookkeeping for audit compatibility. The paired
                     # S5 reviewer is scheduled as soon as this creator scope
                     # is ready; the controller later merges all score slices
-                    # for the global top-seven decision.
+                    # for the global five-to-six decision.
                     pending_incremental_review_ids.update(
                         incremental_ids - reviewed_candidate_ids
                     )
@@ -5189,6 +5236,11 @@ async def execute_dynamic_mission_graph(
                         == "winning_swarm_dynamic_v2"
                         else set(candidate_scope) or set(known_ids)
                     )
+                    is_cross_pool_reviewer = (
+                        str(swarm_controller.policy.get("policy_id"))
+                        == "winning_swarm_dynamic_v2"
+                        and len(instance.depends_on) > 1
+                    )
                     if not raw_decisions and required_ids:
                         # DeepSeek/OpenLux can return a complete but empty S5
                         # decision envelope (``{"decisions": []}``) after hidden
@@ -5197,60 +5249,87 @@ async def execute_dynamic_mission_graph(
                         # Reuse the same conservative S3/S4-only fallback as a
                         # failed S5 provider so an otherwise authored candidate
                         # pool can still reach S6 card authoring.
-                        fallback_scope = (
-                            set(candidate_scope)
-                            if is_dynamic_paired_reviewer(instance)
-                            else candidate_scope
-                            or {item.hypothesis_id for item in ledger.hypotheses}
-                        )
-                        if not fallback_scope:
+                        if is_cross_pool_reviewer:
+                            # An unavailable or empty cross-pool reviewer is a
+                            # no-vote, never a source of synthetic retain
+                            # scores.  Surviving real S5 reviewers remain
+                            # authoritative; if none produce a positive
+                            # judgement, the portfolio is delivered as
+                            # limited instead of padding to the target.
+                            s5_fallback_activated = True
                             emit_swarm_event(
-                                "winning_s5_empty_scope_skipped",
+                                "winning_s5_portfolio_fallback_activated",
                                 actor=instance.instance_id,
                                 graph_id=graph.graph_id,
                                 mission_node="S5",
-                                candidate_scope=[],
-                                reason="empty_decision_with_empty_creator_scope",
+                                failure_type=(
+                                    "provider_unavailable"
+                                    if result.get("_s5_transport_unavailable")
+                                    else "empty_decision_envelope"
+                                ),
+                                error_message=(
+                                    "S5 reviewer supplied no model judgement for a non-empty candidate pool"
+                                ),
+                                retry_count=0,
+                                retained_candidate_count=0,
+                                reason=(
+                                    "跨池S5空结果按不投票处理；不以本地回退分补齐5—6项。"
+                                ),
                             )
-                            continue
-                        fallback_result = _s5_portfolio_fallback_result(
-                            [
-                                item
-                                for item in ledger.hypotheses
-                                if item.hypothesis_id in fallback_scope
-                            ],
-                            maximum=min(
-                                7,
-                                int(swarm_controller.policy.get("finalist_maximum", 7)),
-                            ),
-                        )
-                        raw_decisions = fallback_result.get("decisions", [])
-                        if not isinstance(raw_decisions, list):
-                            raw_decisions = []
-                        emit_swarm_event(
-                            "winning_s5_portfolio_fallback_activated",
-                            actor=instance.instance_id,
-                            graph_id=graph.graph_id,
-                            mission_node="S5",
-                            failure_type="empty_decision_envelope",
-                            error_message=(
-                                "S5 reviewer returned no decisions for a non-empty candidate pool"
-                            ),
-                            retry_count=0,
-                            retained_candidate_count=sum(
-                                str(row.get("decision", "")).lower() == "retain"
-                                for row in raw_decisions
-                                if isinstance(row, Mapping)
-                            ),
-                            reason=(
-                                "S5模型未返回任何决策；按S3/S4既有直接装备与语义脊柱保守排序，不补写武器属性。"
-                            ),
-                        )
-                    is_cross_pool_reviewer = (
-                        str(swarm_controller.policy.get("policy_id"))
-                        == "winning_swarm_dynamic_v2"
-                        and len(instance.depends_on) > 1
-                    )
+                        else:
+                            fallback_scope = (
+                                set(candidate_scope)
+                                if is_dynamic_paired_reviewer(instance)
+                                else candidate_scope
+                                or {item.hypothesis_id for item in ledger.hypotheses}
+                            )
+                            if not fallback_scope:
+                                emit_swarm_event(
+                                    "winning_s5_empty_scope_skipped",
+                                    actor=instance.instance_id,
+                                    graph_id=graph.graph_id,
+                                    mission_node="S5",
+                                    candidate_scope=[],
+                                    reason="empty_decision_with_empty_creator_scope",
+                                )
+                                continue
+                            fallback_result = _s5_portfolio_fallback_result(
+                                [
+                                    item
+                                    for item in ledger.hypotheses
+                                    if item.hypothesis_id in fallback_scope
+                                ],
+                                maximum=min(
+                                    7,
+                                    int(
+                                        swarm_controller.policy.get(
+                                            "finalist_maximum", 7
+                                        )
+                                    ),
+                                ),
+                            )
+                            raw_decisions = fallback_result.get("decisions", [])
+                            if not isinstance(raw_decisions, list):
+                                raw_decisions = []
+                            emit_swarm_event(
+                                "winning_s5_portfolio_fallback_activated",
+                                actor=instance.instance_id,
+                                graph_id=graph.graph_id,
+                                mission_node="S5",
+                                failure_type="empty_decision_envelope",
+                                error_message=(
+                                    "S5 reviewer returned no decisions for a non-empty candidate pool"
+                                ),
+                                retry_count=0,
+                                retained_candidate_count=sum(
+                                    str(row.get("decision", "")).lower() == "retain"
+                                    for row in raw_decisions
+                                    if isinstance(row, Mapping)
+                                ),
+                                reason=(
+                                    "S5模型未返回任何决策；按S3/S4既有直接装备与语义脊柱保守排序，不补写武器属性。"
+                                ),
+                            )
                     if is_cross_pool_reviewer:
                         # Keep immutable cross-pool opinions until every
                         # reviewer finishes; applying each result immediately
@@ -6174,11 +6253,13 @@ async def execute_dynamic_mission_graph(
                 scope_id="dynamic-v2-closeout",
                 changed_hypothesis_ids=None,
             )
-    # Freeze six finalists: distinct dimensions first, then the least
-    # overlapping admitted five-axis identities with S5 score as tie-break.
-    finalist_target = min(
-        max(1, int(swarm_controller.policy.get("finalist_minimum", 6))),
-        max(1, int(swarm_controller.policy.get("finalist_maximum", 7))),
+    # Freeze the requested number of finalists when the Query carries an
+    # explicit count contract; otherwise retain the dynamic-v2 six-card
+    # default. Distinct dimensions come first, then the least-overlapping
+    # admitted five-axis identities with S5 score as tie-break.
+    finalist_target, finalist_count_contract = _dynamic_finalist_target(
+        swarm_controller.policy,
+        accumulated,
     )
     maximum = finalist_target
     ordered_hypotheses, portfolio_diversity_audit = _s5_diverse_six_order(
@@ -6696,6 +6777,17 @@ async def execute_dynamic_mission_graph(
             "passed": portfolio_quality_gate_passed,
             "direction_count": len(equipment_portfolio),
             "target_direction_count": finalist_target,
+            "candidate_count_contract": {
+                **finalist_count_contract,
+                "actual": len(equipment_portfolio),
+                "met": (
+                    finalist_count_contract["minimum"]
+                    <= len(equipment_portfolio)
+                    <= finalist_count_contract["maximum"]
+                    if finalist_count_contract["explicit"]
+                    else len(equipment_portfolio) >= finalist_target
+                ),
+            },
             "quantity_gate_passed": len(equipment_portfolio) >= finalist_target,
             "quantity_shortfall": portfolio_quantity_shortfall,
             "direct_combat_equipment_count": direct_combat_count,

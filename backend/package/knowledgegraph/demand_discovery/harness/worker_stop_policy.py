@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -164,9 +164,7 @@ class WorkerStopPolicy:
                 "至少读取一篇文章正文或下载文档正文",
                 "strong finding 必须引用 evidence refs",
             ],
-            allowed_source_refs=(
-                [f"source:{self.config.source_id}"] if self.config.source_id else []
-            ),
+            allowed_source_refs=([f"source:{self.config.source_id}"] if self.config.source_id else []),
         )
         self.store.upsert_web_research_session(session)
         return session
@@ -174,14 +172,10 @@ class WorkerStopPolicy:
     def _compute_facts(self, session: WebResearchSession) -> dict[str, Any]:
         body_refs = self._body_artifact_refs(session)
         evidence_ids = {
-            str(item.get("id"))
-            for item in session.recent_refs
-            if item.get("type") == "EvidenceCard" and item.get("id")
+            str(item.get("id")) for item in session.recent_refs if item.get("type") == "EvidenceCard" and item.get("id")
         }
         evidence = [
-            self.store.evidence[evidence_id]
-            for evidence_id in evidence_ids
-            if evidence_id in self.store.evidence
+            self.store.evidence[evidence_id] for evidence_id in evidence_ids if evidence_id in self.store.evidence
         ]
         evidence = [
             card
@@ -200,8 +194,7 @@ class WorkerStopPolicy:
         listing_count = sum(
             1
             for route in session.attempted_routes
-            if str(route.get("outcome", "")).lower()
-            in {"listing_only", "search_only", "site_home_only"}
+            if str(route.get("outcome", "")).lower() in {"listing_only", "search_only", "site_home_only"}
         )
         if direct_count > 0:
             alignment = "direct"
@@ -224,16 +217,8 @@ class WorkerStopPolicy:
             "strong_finding_count": 1 if direct_count > 0 or distinct_partial_count >= 2 else 0,
             "strong_finding_evidence_ref_count": strong_ref_count,
             "source_diversity": len({card.source_id for card in evidence}),
-            "queries_used": [
-                str(route.get("query"))
-                for route in session.attempted_routes
-                if route.get("query")
-            ],
-            "routes_used": [
-                str(route.get("route"))
-                for route in session.attempted_routes
-                if route.get("route")
-            ],
+            "queries_used": [str(route.get("query")) for route in session.attempted_routes if route.get("query")],
+            "routes_used": [str(route.get("route")) for route in session.attempted_routes if route.get("route")],
             "input_refs": [
                 *body_refs,
                 *[card.evidence_id for card in evidence],
@@ -373,7 +358,7 @@ class WorkerStopPolicy:
                 prompt_id=None,
                 tool_refs=[],
                 runtime_event_id=None,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
         )
 

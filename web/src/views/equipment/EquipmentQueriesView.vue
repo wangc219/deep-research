@@ -1,7 +1,7 @@
 <script setup>
+import { sharedPolling } from '@/utils/sharedPolling'
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { Modal, message } from 'ant-design-vue'
 import {
   Archive,
@@ -31,16 +31,15 @@ import {
 } from '@lucide/vue'
 
 import { equipmentApi } from '@/apis/equipment_api'
+import { projectApi } from '@/apis/project_api'
 import { createIdempotencyKey } from '@/apis/base'
 import { databaseApi } from '@/apis/knowledge_api'
 import EquipmentQueryKnowledgeScope from '@/components/equipment/EquipmentQueryKnowledgeScope.vue'
 import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
 import { useEquipmentModelPrefill } from '@/composables/useEquipmentModelPrefill'
-import { useProjectsStore } from '@/stores/projects'
-import { useUserStore } from '@/stores/user'
-import { projectDisplayName } from '@/utils/projectSelection'
 import {
-  GENERATION_STAGE_LABELS,
+  generationProgressText,
+  generationErrorSummary,
   QUERY_SOURCE_LABELS,
   QUERY_STATUS_LABELS,
   buildDivergenceExamplePatch,
@@ -72,11 +71,11 @@ const DIVERGENCE_EXAMPLES = [
     technology: '分析海上无人装备与远海应用技术的发展现状和趋势，识别能够解决关键难点的装备技术组合。'
   },
   {
-    label: '社会化资源引战',
-    topic: '社会化资源引入作战与国防工业体系发展',
-    angle: '从现代战争形态变化出发，研究社会化力量和资源进入作战体系的新模式。',
-    demand: '总结现代战争对国防工业体系的冲击、社会化资源参战案例与价值，研判未来模式及其可解决的能力痛点。',
-    technology: '分析装备、信息科学、人工智能及其他工业技术如何赋能作战，并拓展认知与心理等非动能维度。'
+    label: '低空防护装备',
+    topic: '中国周边低空态势变化下的防护装备能力需求',
+    angle: '从公开安全态势变化出发，研究低空防护装备类别与能力发展方向。',
+    demand: '关联近期公开态势、未来防护任务与现有能力缺口，评估装备类别对战略制衡和防护韧性的潜在价值。',
+    technology: '比较公开装备能力、技术成熟度和发展趋势，说明证据缺口与研究边界。'
   }
 ]
 
@@ -84,9 +83,9 @@ const AUTONOMOUS_DISCOVERY_ANGLES = [
   '东海、台海与第一岛链海空态势',
   '南海岛礁、海上通道与远海保障态势',
   '西太平洋第二岛链与远程机动投送态势',
-  '中印边境、高原山地与极端环境任务态势',
+  '中印边境、高原山地与边境军事任务态势',
   '朝鲜半岛、东北亚防空反导与预警态势',
-  '中亚与西部边境反无人及非传统安全态势',
+  '中亚与西部边境安全威胁及低空防御态势',
   '周边低空无人集群与要地防护态势',
   '邻国远程火力、导弹防御与体系对抗态势',
   '海上封锁、岛链通道与分布式火力态势',
@@ -94,10 +93,6 @@ const AUTONOMOUS_DISCOVERY_ANGLES = [
 ]
 
 const router = useRouter()
-const projectsStore = useProjectsStore()
-const userStore = useUserStore()
-const { projects } = storeToRefs(projectsStore)
-const runProjectId = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -120,7 +115,9 @@ const taskSearch = ref('')
 const collapsedGenerationIds = ref(new Set())
 const busyGenerationIds = ref(new Set())
 const referenceOpen = ref(false)
+const advancedOpen = ref(false)
 const manualOpen = ref(false)
+const editingQuery = ref(null)
 const detailOpen = ref(false)
 const mutating = ref(false)
 const generating = ref(false)
@@ -205,9 +202,29 @@ const setGenerationMode = (mode) => {
 }
 
 const openManualForm = () => {
+  editingQuery.value = null
+  Object.assign(manualForm, { query: '', supplemental_information: '', generation_rationale: '' })
   manualForm.knowledge_enabled = generationForm.knowledge_enabled
   manualForm.knowledge_ids = [...generationForm.knowledge_ids]
   manualOpen.value = true
+}
+
+const openQueryEditor = async (item) => {
+  try {
+    const current = await equipmentApi.getQuery(item.query_id, { include_revisions: false })
+    editingQuery.value = { query_id: current.query_id, version: current.version }
+    Object.assign(manualForm, {
+      query: current.query, supplemental_information: current.supplemental_information || '',
+      generation_rationale: current.generation_rationale || '',
+      knowledge_enabled: current.knowledge_enabled !== false, knowledge_ids: [...(current.knowledge_ids || [])]
+    })
+    manualOpen.value = true
+    detailOpen.value = false
+    await nextTick()
+    document.querySelector('.manual-query-form')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  } catch (reason) {
+    setError(reason, '读取 Query 编辑版本失败')
+  }
 }
 
 const onQueryCardKeydown = (event, item) => {
@@ -250,9 +267,10 @@ const loadQueries = async ({ preserveSelection = true } = {}) => {
     if (!preserveSelection) selectedIds.value = []
     if (
       !queries.value.some((item) => item.query_id === selectedId.value)
-      && !generationQueryRows.value.some((item) => item.query_id === selectedId.value)
+      && (!preserveSelection || !generationQueryRows.value.some((item) => item.query_id === selectedId.value))
     ) {
       selectedId.value = queries.value[0]?.query_id || ''
+      detailOpen.value = false
     }
     error.value = ''
   } catch (reason) {
@@ -321,11 +339,11 @@ const pollGenerations = async () => {
 const startPolling = () => {
   if (pollTimer) return
   pollEnabled.value = true
-  pollTimer = setInterval(pollGenerations, 1800)
+  pollTimer = sharedPolling.subscribe(pollGenerations, 1800)
 }
 const stopPolling = () => {
   pollEnabled.value = false
-  if (pollTimer) clearInterval(pollTimer)
+  if (pollTimer) pollTimer()
   pollTimer = null
 }
 
@@ -337,7 +355,11 @@ const buildGenerationContext = (autonomousAngle = '') => {
       generationForm.supplemental_information.trim()
         ? `用户补充偏好：${generationForm.supplemental_information.trim()}`
         : '优先检索该视角下最新、权威的公开态势信号。',
-      '因果链：外部态势→任务压力→作战缺口→武器装备能力与发展需求。',
+      '默认研究主体为中国，用户明确指定其他主体时遵循用户范围。',
+      '因果链：中国当前安全态势与威胁变化→未来军事任务→能力缺口→具体武器装备类别的研究命题。',
+      '从公开资料评估战略制衡、防护与任务韧性的潜在价值及局限，保持战略与能力研究层次。',
+      '聚焦军事作战与装备发展，不主动生成极端灾害、民用应急救援等选题；自然环境仅作为军事任务约束。',
+      '每条命题说明研究价值、关键未决问题、证据缺口和验证路径。',
       '发散框架：同时覆盖需求牵引、技术驱动、体系实战、颠覆逻辑与规模建设。'
     ].filter(Boolean).join('\n')
   }
@@ -350,10 +372,6 @@ const buildGenerationContext = (autonomousAngle = '') => {
 }
 
 const submitGeneration = async () => {
-  if (!runProjectId.value) {
-    message.warning('请先选择 Query 所属项目')
-    return
-  }
   if (generationForm.mode === 'guided' && !generationForm.topic.trim()) {
     message.warning('请先输入希望发散的装备需求母题')
     return
@@ -370,7 +388,6 @@ const submitGeneration = async () => {
   try {
     const autonomousAngle = generationForm.mode === 'autonomous' ? selectAutonomousDiscoveryAngle() : ''
     const created = await equipmentApi.generateQueries({
-      project_id: runProjectId.value,
       topic: generationForm.mode === 'autonomous'
         ? `${autonomousAngle}：武器装备能力与发展需求研判`
         : generationForm.topic.trim(),
@@ -391,23 +408,23 @@ const submitGeneration = async () => {
 }
 
 const createManualQuery = async () => {
-  if (!runProjectId.value) {
-    message.warning('请先选择 Query 所属项目')
-    return
-  }
   if (!manualForm.query.trim()) {
     message.warning('请填写研究选题')
     return
   }
   mutating.value = true
   try {
-    const created = await equipmentApi.createQuery({
-      project_id: runProjectId.value,
+    const payload = {
       query: manualForm.query.trim(),
       supplemental_information: manualForm.supplemental_information.trim(),
       generation_rationale: manualForm.generation_rationale.trim(),
       ...createKnowledgeScope(manualForm.knowledge_enabled, manualForm.knowledge_ids)
-    })
+    }
+    const created = await (editingQuery.value
+      ? equipmentApi.updateQuery(editingQuery.value.query_id, { ...payload, expected_version: editingQuery.value.version })
+      : equipmentApi.createQuery(payload))
+    const wasEditing = Boolean(editingQuery.value)
+    editingQuery.value = null
     Object.assign(manualForm, {
       query: '', supplemental_information: '', generation_rationale: '',
       knowledge_enabled: generationForm.knowledge_enabled,
@@ -419,7 +436,7 @@ const createManualQuery = async () => {
     sourceType.value = 'all'
     await loadQueries({ preserveSelection: false })
     selectedId.value = created.query_id
-    message.success('Query 草稿已保存')
+    message.success(wasEditing ? 'Query 修改已保存' : 'Query 草稿已保存')
   } catch (reason) {
     setError(reason, 'Query 保存失败')
   } finally {
@@ -445,7 +462,7 @@ const mutateOne = async (action, item) => {
     }
     if (action === 'delete') {
       if (!await confirmAction('永久删除 Query', `确定删除“${item.query}”吗？已创建的研究任务不会被删除。`, '永久删除')) return
-      await equipmentApi.deleteQuery(item.query_id)
+      await equipmentApi.deleteQuery(item.query_id, item.version)
       selectedIds.value = selectedIds.value.filter((id) => id !== item.query_id)
       message.success('Query 已删除')
     }
@@ -484,7 +501,7 @@ const bulkDelete = async () => {
   if (!targets.length || !await confirmAction('批量永久删除 Query', `确定删除当前页选中的 ${targets.length} 条 Query 吗？`, '永久删除')) return
   mutating.value = true
   try {
-    const results = await Promise.allSettled(targets.map((item) => equipmentApi.deleteQuery(item.query_id)))
+    const results = await Promise.allSettled(targets.map((item) => equipmentApi.deleteQuery(item.query_id, item.version)))
     const failed = results.filter((item) => item.status === 'rejected').length
     selectedIds.value = []
     await Promise.all([loadQueries({ preserveSelection: false }), loadGenerations()])
@@ -498,13 +515,12 @@ const bulkDelete = async () => {
 }
 
 const createAndStartRun = async (query, batchId) => {
-  if (!runProjectId.value) throw new Error('请先选择研究任务所属项目')
   const current = query.status === 'draft' ? await publishOne(query, true) : query
   const modelSpec = queryLineageModelSpec(current, generations.value, generationForm.model_spec)
   const requestId = batchId || createIdempotencyKey('query-research')
   const created = await equipmentApi.createResearchRun(
     buildResearchRunPayload(current, modelSpec),
-    { idempotencyKey: `create:${requestId}:${current.query_id}`, projectId: runProjectId.value }
+    { idempotencyKey: `create:${requestId}:${current.query_id}` }
   )
   await equipmentApi.startResearchRun(created.run_id, {
     idempotencyKey: `start:${requestId}:${created.run_id}`
@@ -513,10 +529,6 @@ const createAndStartRun = async (query, batchId) => {
 }
 
 const directResearch = async (item) => {
-  if (!runProjectId.value) {
-    message.warning('请先选择研究任务所属项目')
-    return
-  }
   if (!await confirmAction('启动研究任务', `系统将${item.status === 'draft' ? '先发布该 Query，并' : ''}创建、启动研究任务。`, '创建并启动')) return
   mutating.value = true
   error.value = ''
@@ -536,9 +548,10 @@ const scheduleResearch = async (item) => {
     message.warning('请先审核发布该 Query，再设置定时研究')
     return
   }
-  const projectId = item.project_id || runProjectId.value
+  const project = await projectApi.ensureEquipmentProject()
+  const projectId = project.id
   if (!projectId) {
-    message.warning('请先选择研究任务所属项目')
+    message.warning('个人工作台准备失败，请重试')
     return
   }
   await router.push({
@@ -557,10 +570,6 @@ const scheduleResearch = async (item) => {
 
 const batchResearch = async () => {
   const targets = selectedRows.value.filter((item) => item.status !== 'archived')
-  if (targets.length && !runProjectId.value) {
-    message.warning('请先选择研究任务所属项目')
-    return
-  }
   if (!targets.length || !await confirmAction('批量启动研究', `将为当前页选中的 ${targets.length} 条 Query 分别创建并启动研究任务。`, '批量启动')) return
   mutating.value = true
   try {
@@ -678,8 +687,7 @@ watch(search, () => {
 })
 
 onMounted(async () => {
-  await Promise.allSettled([loadQueries(), loadGenerations(), loadKnowledgeBases(), projectsStore.loadProjects()])
-  if (!runProjectId.value) runProjectId.value = projects.value[0]?.id || ''
+  await Promise.allSettled([loadQueries(), loadGenerations(), loadKnowledgeBases()])
   Object.assign(manualForm, {
     knowledge_enabled: generationForm.knowledge_enabled,
     knowledge_ids: [...generationForm.knowledge_ids]
@@ -701,66 +709,116 @@ onUnmounted(() => {
       <button type="button" @click="router.push('/equipment/runs')">
         <ArrowLeft :size="15" />返回研究任务
       </button>
-      <span>可围绕母题深度发散，也可让 Agent 自主发现方向；审核后带入 Deep Research。</span>
-      <label class="query-project-picker">
-        <span>研究项目</span>
-        <select v-model="runProjectId" aria-label="研究任务所属项目">
-          <option disabled value="">请选择项目</option>
-          <option v-for="project in projects" :key="project.id" :value="project.id">
-            {{ projectDisplayName(project, userStore.isAdmin) }}
-          </option>
-        </select>
-      </label>
+
     </div>
 
     <section class="query-generator-hero">
       <span class="query-hero-orb"><WandSparkles :size="22" /></span>
       <span class="query-hero-eyebrow">DEMAND DISCOVERY AGENT</span>
-      <h1>多维发散思考，发现装备需求 Query</h1>
-      <p>可输入选题角度、场景描述或文档材料，也可由 Agent 结合公开态势自主发现方向；从需求牵引、技术驱动、体系实战和颠覆逻辑等维度形成简洁研究选题。</p>
+      <h1>从安全态势发现研究命题</h1>
+      <p>聚焦当前安全态势与未来军事需求，牵引关键技术方向与能力研究，评估战略制衡价值。</p>
       <div class="query-generation-mode-tabs" aria-label="Query 生成模式">
         <button type="button" :class="{ active: generationForm.mode === 'guided' }" @click="setGenerationMode('guided')">
           <Lightbulb :size="15" />
-          <span><b>围绕母题发散</b><small>输入一个方向，向多维度深挖</small></span>
+          <span><b>围绕母题</b><small>我已有研究方向</small></span>
+          <CheckCircle2 v-if="generationForm.mode === 'guided'" :size="15" />
         </button>
         <button type="button" :class="{ active: generationForm.mode === 'autonomous' }" @click="setGenerationMode('autonomous')">
           <Sparkles :size="15" />
-          <span><b>自动态势发散</b><small>无需母题，Agent 自主发现研究方向</small></span>
+          <span><b>自动态势</b><small>让 Agent 帮我找方向</small></span>
+          <CheckCircle2 v-if="generationForm.mode === 'autonomous'" :size="15" />
         </button>
       </div>
 
       <div class="query-generator-card">
         <template v-if="generationForm.mode === 'guided'">
-          <label for="query-generation-topic">需求母题 / 发散材料</label>
+          <div class="query-quick-heading">
+            <label for="query-generation-topic">输入你的研究母题</label>
+            <span>一句话即可</span>
+          </div>
           <textarea
             id="query-generation-topic"
             v-model="generationForm.topic"
             maxlength="500"
-            placeholder="例如：输入‘复杂电磁环境下精确打击装备能力需求’，Agent 将围绕场景、任务、技术、体系和颠覆方向发散生成多条短 Query。"
+            autofocus
+            placeholder="例如：中国周边低空态势变化下的防护装备能力需求"
           />
+          <div class="query-quick-examples" aria-label="母题示例">
+            <span>试试：</span>
+            <button
+              v-for="example in DIVERGENCE_EXAMPLES"
+              :key="example.label"
+              type="button"
+              @click="applyDivergenceExample(example)"
+            >
+              {{ example.label }}
+            </button>
+          </div>
         </template>
         <div v-else class="query-autonomous-context">
           <Sparkles :size="23" />
           <span>
-            <b>快速研判中国周边态势并发现装备发展方向</b>
-            <p>聚焦邻国、周边海域、岛链与边境任务环境，检索最新公开信号，再按“外部态势 → 任务压力 → 作战缺口 → 装备需求”快速转译为研究 Query。</p>
-            <em>无人、低空反制、颠覆性远打和精打武器是高关注方向，但不设封闭目录或固定配额；由模型根据本次态势因果链自主发现更多高价值武器装备需求。</em>
+            <b>从中国当前态势牵引具体装备研究</b>
+            <p>研判与中国相关的近期公开军事动态，关联未来任务、能力缺口与具体武器装备类别，形成有依据的研究命题。</p>
+            <em>评估战略制衡价值，说明关键问题、证据缺口与研究边界</em>
           </span>
         </div>
 
+        <textarea
+          v-if="generationForm.mode === 'autonomous'"
+          id="query-generation-context"
+          v-model="generationForm.supplemental_information"
+          class="query-generation-context autonomous"
+          maxlength="8000"
+          placeholder="可选：指定关注区域、威胁变化、未来军事任务或时间范围"
+        />
+
+        <div class="query-generator-footer">
+          <button
+            type="button"
+            class="query-advanced-toggle"
+            :class="{ active: advancedOpen }"
+            :aria-expanded="advancedOpen"
+            @click="advancedOpen = !advancedOpen"
+          >
+            高级设置
+            <span>{{ generationForm.count }} 条</span>
+            <ChevronDown :size="14" />
+          </button>
+          <div
+            class="query-model-picker"
+            :class="{ 'missing-default': !hasDefaultModel && !generationForm.model_spec }"
+            :title="hasDefaultModel || generationForm.model_spec ? '为本次 Query 生成选择模型' : '尚未配置系统默认模型，请为本次 Query 生成选择模型'"
+          >
+            <CircleAlert v-if="!hasDefaultModel && !generationForm.model_spec" :size="15" aria-hidden="true" />
+            <WandSparkles v-else :size="15" aria-hidden="true" />
+            <ModelSelectorComponent
+              upward
+              :model_spec="generationForm.model_spec"
+              size="nano"
+              display-name="mini"
+              :placeholder="hasDefaultModel ? '系统默认模型' : '选择生成模型'"
+              clearable
+              @select-model="(spec) => { generationForm.model_spec = spec || '' }"
+            />
+          </div>
+          <span>{{ generationForm.mode === 'autonomous' ? '无需输入，直接开始' : '一句话即可开始' }}</span>
+          <button
+            type="button"
+            class="query-generate-button"
+            :disabled="generating || (generationForm.mode === 'guided' && !generationForm.topic.trim())"
+            @click="submitGeneration"
+          >
+            <LoaderCircle v-if="generating" class="spin" :size="16" />
+            <Send v-else :size="16" />
+            {{ generationForm.mode === 'autonomous' ? '开始自动发现' : '生成 Query' }}
+          </button>
+        </div>
+
+        <div v-if="advancedOpen" class="query-advanced-panel">
         <div v-if="generationForm.mode === 'guided'" class="query-divergence-framework">
           <div class="query-framework-heading">
-            <span><Sparkles :size="15" /><b>多维发散框架</b><small>先明确研究意图，再由 Agent 深度发散，避免只做同义改写</small></span>
-            <div>
-              <button
-                v-for="example in DIVERGENCE_EXAMPLES"
-                :key="example.label"
-                type="button"
-                @click="applyDivergenceExample(example)"
-              >
-                {{ example.label }}
-              </button>
-            </div>
+            <span><Sparkles :size="15" /><b>补充发散框架</b><small>按需填写，留空也可直接生成</small></span>
           </div>
           <label>
             <span><b>预期角度</b><small>希望牵引什么发展</small></span>
@@ -779,14 +837,6 @@ onUnmounted(() => {
             <textarea id="query-generation-context" v-model="generationForm.supplemental_information" maxlength="8000" placeholder="可限定作战环境、时间范围，并指定体系韧性、颠覆逻辑、工业化或需要排除的角度。" />
           </label>
         </div>
-        <textarea
-          v-else
-          id="query-generation-context"
-          v-model="generationForm.supplemental_information"
-          class="query-generation-context autonomous"
-          maxlength="8000"
-          placeholder="自主发现偏好（可选）：希望重点关注的装备领域、区域态势、技术方向或时间范围。"
-        />
 
         <div class="query-agent-config">
           <div class="query-count-control">
@@ -813,7 +863,7 @@ onUnmounted(() => {
           :error="knowledgeError"
         />
 
-        <div class="query-generator-footer">
+        <div class="query-advanced-footer">
           <button
             type="button"
             class="query-context-toggle"
@@ -822,38 +872,12 @@ onUnmounted(() => {
           >
             <Link2 :size="14" />参考 URL<span v-if="parseReferenceUrls(generationForm.reference_text).length"> · {{ parseReferenceUrls(generationForm.reference_text).length }}</span>
           </button>
-          <div
-            class="query-model-picker"
-            :class="{ 'missing-default': !hasDefaultModel && !generationForm.model_spec }"
-            :title="hasDefaultModel || generationForm.model_spec ? '为本次 Query 生成选择模型' : '尚未配置系统默认模型，请为本次 Query 生成选择模型'"
-          >
-            <CircleAlert v-if="!hasDefaultModel && !generationForm.model_spec" :size="15" aria-hidden="true" />
-            <WandSparkles v-else :size="15" aria-hidden="true" />
-            <ModelSelectorComponent
-              upward
-              :model_spec="generationForm.model_spec"
-              size="nano"
-              display-name="mini"
-              :placeholder="hasDefaultModel ? '系统默认模型' : '选择生成模型'"
-              clearable
-              @select-model="(spec) => { generationForm.model_spec = spec || '' }"
-            />
-          </div>
-          <span>输出 {{ generationForm.count }} 条 18–25 字短 Query · 详细维度、理由与来源独立保存</span>
-          <button
-            type="button"
-            class="query-generate-button"
-            :disabled="generating || (generationForm.mode === 'guided' && !generationForm.topic.trim())"
-            @click="submitGeneration"
-          >
-            <LoaderCircle v-if="generating" class="spin" :size="16" />
-            <Send v-else :size="16" />
-            {{ generationForm.mode === 'autonomous' ? '自动发散生成 Query' : '发散生成 Query' }}
-          </button>
+          <span>生成 {{ generationForm.count }} 条短 Query · 详细维度、理由与来源独立保存</span>
+        </div>
         </div>
       </div>
 
-      <section v-if="referenceOpen" class="query-reference-url-panel">
+      <section v-if="advancedOpen && referenceOpen" class="query-reference-url-panel">
         <header>
           <div><Link2 :size="17" /><span><b>优先参考 URL</b><small>Agent 将先阅读这些公开网页，再结合联网检索补充军事信息线索</small></span></div>
           <em>{{ parseReferenceUrls(generationForm.reference_text).length }}/12</em>
@@ -864,12 +888,6 @@ onUnmounted(() => {
           <button v-if="generationForm.reference_text" type="button" @click="generationForm.reference_text = ''"><X :size="13" />清空</button>
         </footer>
       </section>
-
-      <div class="query-decomposition-guide">
-        <article><span>1</span><div><b>{{ generationForm.mode === 'guided' ? '输入母题' : '研判公开态势' }}</b><small>{{ generationForm.mode === 'guided' ? '可以是一句话，也可以是文档中的长段落' : '从安全环境、任务与技术信号中自主发现方向' }}</small></div></article>
-        <article><span>2</span><div><b>多维深度发散</b><small>从需求、技术、体系和颠覆角度寻找研究机会</small></div></article>
-        <article><span>3</span><div><b>形成短选题</b><small>标题保持简洁，详细研究维度单独保存</small></div></article>
-      </div>
 
       <section class="query-generation-task-slots" aria-live="polite">
         <header>
@@ -882,7 +900,7 @@ onUnmounted(() => {
             <div class="query-generation-task-body">
               <div class="query-generation-task-title"><b>正在生成 Query</b><span>{{ item.requested_count || item.count || 0 }} 条</span></div>
               <p :title="item.topic">{{ item.topic }}</p>
-              <small>{{ GENERATION_STAGE_LABELS[item.stage] || item.stage || '等待状态' }} · 后台持续执行中 · 创建于 {{ formatDateTime(item.created_at) }}</small>
+              <small>{{ generationProgressText(item) }} · 创建于 {{ formatDateTime(item.created_at) }}</small>
             </div>
           </article>
         </div>
@@ -939,7 +957,7 @@ onUnmounted(() => {
               <span><strong>{{ item.source_references?.length || 0 }}</strong> 来源</span>
             </div>
             <div class="query-generation-task-list-meta">
-              <span>{{ GENERATION_STAGE_LABELS[item.stage] || item.stage || '等待状态' }}</span>
+              <span>{{ generationProgressText(item) }}</span>
               <time :datetime="item.created_at">创建于 {{ formatDateTime(item.created_at) }}</time>
             </div>
             <footer @click.stop>
@@ -997,6 +1015,10 @@ onUnmounted(() => {
               <div v-else class="query-generation-task-results-state">
                 <Clock3 :size="15" />{{ ['queued', 'running'].includes(item.status) ? 'Query 正在生成，完成后可在这里查看。' : item.result_query_ids?.length ? '生成结果正在同步到 Query 库。' : '这个任务没有保存 Query 结果。' }}
               </div>
+              <div v-if="item.status === 'failed' && generationErrorSummary(item)" class="query-generation-task-error" role="alert">
+                <CircleAlert :size="15" />
+                <span><b>为什么失败</b>{{ generationErrorSummary(item) }}</span>
+              </div>
             </section>
           </article>
         </div>
@@ -1020,7 +1042,7 @@ onUnmounted(() => {
 
       <form v-if="manualOpen" class="manual-query-form" @submit.prevent="createManualQuery">
         <header>
-          <div><FilePlus2 :size="17" /><span><b>人工录入短 Query</b><small>详细研究范围请放在补充信息中</small></span></div>
+          <div><FilePlus2 :size="17" /><span><b>{{ editingQuery ? '编辑 Query' : '人工录入短 Query' }}</b><small>{{ editingQuery ? `正在编辑 v${editingQuery.version}；保存时检查版本` : '不选项目时默认归入个人研究工作台' }}</small></span></div>
           <button type="button" aria-label="关闭人工录入" @click="manualOpen = false"><X :size="15" /></button>
         </header>
         <label>
@@ -1041,7 +1063,7 @@ onUnmounted(() => {
         <footer>
           <button type="button" @click="manualOpen = false">取消</button>
           <button type="submit" class="primary" :disabled="mutating || !manualForm.query.trim()">
-            <LoaderCircle v-if="mutating" class="spin" :size="14" />{{ mutating ? '保存中' : '保存草稿' }}
+            <LoaderCircle v-if="mutating" class="spin" :size="14" />{{ mutating ? '保存中' : editingQuery ? '保存修改' : '保存草稿' }}
           </button>
         </footer>
       </form>
@@ -1067,7 +1089,7 @@ onUnmounted(() => {
               <span class="query-bulk-count">已选 {{ selectedRows.length }} 条</span>
               <button type="button" :disabled="mutating || !selectedRows.some((item) => item.status === 'draft')" @click="bulkStatus('published')"><BookOpenCheck :size="14" />批量审核发布</button>
               <button type="button" :disabled="mutating" @click="bulkStatus('archived')"><Archive :size="14" />批量归档</button>
-              <button type="button" class="primary" :disabled="mutating || !runProjectId || !selectedRows.some((item) => item.status !== 'archived')" @click="batchResearch"><Play :size="14" />批量启动研究</button>
+              <button type="button" class="primary" :disabled="mutating || !selectedRows.some((item) => item.status !== 'archived')" @click="batchResearch"><Play :size="14" />批量启动研究</button>
               <button type="button" class="danger" :disabled="mutating" @click="bulkDelete"><Trash2 :size="14" />批量删除</button>
               <button type="button" @click="selectedIds = []"><X :size="14" />清除</button>
             </template>
@@ -1134,13 +1156,14 @@ onUnmounted(() => {
               <em>{{ selected.source_disclaimer || 'Query 生成参考线索，不等同于后续研究结论的正式证据。' }}</em>
             </section>
             <div class="query-detail-actions">
+              <button v-if="selected.status !== 'archived'" type="button" :disabled="mutating" @click="openQueryEditor(selected)"><FilePlus2 :size="15" />编辑</button>
               <button v-if="selected.status !== 'archived'" type="button" :disabled="mutating" @click="mutateOne('archive', selected)"><Archive :size="15" />归档</button>
               <button type="button" class="danger" :disabled="mutating" @click="mutateOne('delete', selected)"><Trash2 :size="15" />删除</button>
               <button v-if="selected.status === 'draft'" type="button" :disabled="mutating" @click="mutateOne('publish', selected)"><BookOpenCheck :size="15" />审核发布</button>
-              <button v-if="selected.status === 'published'" type="button" :disabled="mutating || !runProjectId" @click="scheduleResearch(selected)">
+              <button v-if="selected.status === 'published'" type="button" :disabled="mutating" @click="scheduleResearch(selected)">
                 <CalendarClock :size="15" />设置定时研究
               </button>
-              <button v-if="selected.status !== 'archived'" type="button" class="primary" :disabled="mutating || !runProjectId" @click="directResearch(selected)">
+              <button v-if="selected.status !== 'archived'" type="button" class="primary" :disabled="mutating" @click="directResearch(selected)">
                 <LoaderCircle v-if="mutating" class="spin" :size="15" /><Play v-else :size="15" />{{ selected.status === 'draft' ? '发布并启动研究' : '用此 Query 启动研究' }}
               </button>
             </div>
@@ -1277,6 +1300,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .query-model-picker .model-select { max-width: 158px; color: #485276; }
 .query-model-picker .config-dropdown-trigger { max-width: 150px; font-size: 10px; font-weight: 700; }
 .query-generation-task-actions { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+.query-generation-task-error { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; padding: 10px 12px; border: 1px solid #f0c9cd; border-radius: 8px; background: #fff7f7; color: #a6424d; font-size: 12px; line-height: 1.55; }
+.query-generation-task-error svg { flex: 0 0 auto; margin-top: 2px; }
+.query-generation-task-error span { display: grid; gap: 2px; }
 .query-source-title { color: #5452c6; font-size: 10px; overflow-wrap: anywhere; }
 .query-pagination {
   display: flex;
@@ -1289,10 +1315,159 @@ h1, h2, h3, h4, p { margin: 0; }
 .query-pagination .ant-pagination-item,
 .query-pagination .ant-pagination-prev,
 .query-pagination .ant-pagination-next { font-size: 11px; }
-.query-project-picker { display: flex; align-items: center; gap: 6px; margin-left: auto; color: #748096; font-size: 10px; }
-.query-project-picker > span { white-space: nowrap; }
-.query-project-picker select { max-width: 220px; height: 32px; padding: 0 8px; border: 1px solid #dce2ec; border-radius: 8px; background: #fff; color: #536078; font-size: 10px; outline: none; }
-.query-project-picker select:focus { border-color: #8f8de7; box-shadow: 0 0 0 2px rgba(102, 91, 211, .08); }
+
+/* Fast-path generator: keep the two primary choices and the submit action above the fold. */
+.query-library-backbar {
+  min-height: 52px;
+  padding: 8px 10px;
+}
+.query-library-backbar > button {
+  border-color: transparent;
+  background: transparent;
+}
+.query-generator-hero {
+  padding: 22px;
+}
+.query-generator-hero > p {
+  max-width: none;
+  font-size: 13px;
+}
+.query-generation-mode-tabs {
+  max-width: 560px;
+  margin-top: 16px;
+  padding: 3px;
+  gap: 4px;
+  border: 1px solid #e3e7f0;
+  border-radius: 12px;
+  background: #f5f6fa;
+}
+.query-generation-mode-tabs button {
+  min-height: 54px;
+  border-color: transparent;
+  border-radius: 9px;
+  background: transparent;
+}
+.query-generation-mode-tabs button.active {
+  border-color: #d8d7f4;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(68, 67, 135, .08);
+}
+.query-generation-mode-tabs button > span {
+  flex: 1;
+}
+.query-generation-mode-tabs button > svg:last-child {
+  color: #5b58cf;
+}
+.query-generator-card {
+  margin-top: 14px;
+}
+.query-quick-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 17px 0;
+}
+.query-quick-heading label {
+  color: #48546c;
+  font-size: 12px;
+  font-weight: 750;
+}
+.query-quick-heading span {
+  color: #929bad;
+  font-size: 10px;
+}
+.query-generator-card > textarea:not(.query-generation-context) {
+  height: 86px;
+  min-height: 86px;
+  padding-top: 9px;
+  font-size: 15px;
+}
+.query-quick-examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 14px;
+}
+.query-quick-examples > span {
+  color: #929bad;
+  font-size: 10px;
+}
+.query-quick-examples button {
+  height: 26px;
+  padding: 0 9px;
+  border-color: #e3e6ef;
+  border-radius: 13px;
+  background: #f8f9fc;
+  color: #656f84;
+  font-size: 10px;
+}
+.query-autonomous-context {
+  min-height: 92px;
+  align-items: center;
+  padding: 17px;
+}
+.query-autonomous-context p {
+  font-size: 12px;
+}
+.query-generation-context.autonomous {
+  width: calc(100% - 32px);
+  height: 48px;
+  min-height: 48px;
+  margin: 0 16px 14px;
+}
+.query-generator-card > .query-generator-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid #edf0f5;
+  background: #fbfcfe;
+}
+.query-generator-card > .query-generator-footer > span {
+  margin-right: auto;
+  color: #8993a6;
+  font-size: 10px;
+}
+.query-advanced-toggle {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #68748a !important;
+}
+.query-advanced-toggle > span {
+  padding: 3px 6px;
+  border-radius: 9px;
+  background: #eceef5;
+  color: #667188;
+  font-size: 10px;
+}
+.query-advanced-toggle svg {
+  transition: transform 150ms ease;
+}
+.query-advanced-toggle.active svg {
+  transform: rotate(180deg);
+}
+.query-advanced-panel {
+  border-top: 1px solid #e7eaf2;
+  background: #f8f9fd;
+}
+.query-advanced-panel .query-divergence-framework {
+  border-top: 0;
+}
+.query-advanced-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid #edf0f5;
+  background: #fbfcfe;
+}
+.query-advanced-footer > span {
+  margin-left: auto;
+  color: #7d879b;
+  font-size: 10px;
+}
 
 html.dark .query-library-page { color: #d8deeb; }
 html.dark .query-library-backbar,
@@ -1325,11 +1500,11 @@ html.dark .query-decomposition-guide article,
 html.dark .query-library-toolbar label,
 html.dark .query-library-toolbar select,
 html.dark .query-task-list-toolbar label,
-html.dark .query-project-picker select,
 html.dark .query-model-picker,
 html.dark .query-knowledge-actions button { background: #1c2333; border-color: rgba(154, 166, 206, .24); color: #d8deeb; }
 html.dark .query-library-page :is(input, textarea, select) { color: #d8deeb; }
 html.dark .query-library-page :is(input, textarea)::placeholder { color: #737f94; }
+html.dark .query-generation-task-error { border-color: rgba(224, 116, 129, .42); background: rgba(107, 40, 49, .2); color: #f0aab2; }
 html.dark .query-generator-hero h1,
 html.dark .query-library-heading h2,
 html.dark .query-library-card p,
@@ -1340,6 +1515,14 @@ html.dark .query-autonomous-context b,
 html.dark .query-framework-heading b,
 html.dark .query-divergence-framework label b { color: #e3e8f2; }
 html.dark .query-library-page button:not(.primary):not(.query-generate-button):not(.active) { background-color: #1c2333; border-color: rgba(154, 166, 206, .24); color: #cbd3e2; }
+html.dark .query-generation-mode-tabs,
+html.dark .query-generator-card > .query-generator-footer,
+html.dark .query-advanced-footer,
+html.dark .query-advanced-panel { background: #111622; border-color: rgba(154, 166, 206, .18); }
+html.dark .query-generation-mode-tabs button.active,
+html.dark .query-quick-examples button { background: #1c2333; border-color: rgba(154, 166, 206, .24); }
+html.dark .query-quick-heading label { color: #e3e8f2; }
+html.dark .query-advanced-toggle > span { background: #242c3e; color: #c6cfdf; }
 
 @media (max-width: 1050px) {
   .query-agent-config { grid-template-columns: 1fr; }
@@ -1352,9 +1535,16 @@ html.dark .query-library-page button:not(.primary):not(.query-generate-button):n
   .query-model-picker { flex: 1; max-width: none; }
   .query-model-picker .model-select, .query-model-picker .config-dropdown-trigger { max-width: none; }
   .query-library-backbar { align-items: flex-start; flex-direction: column; }
-  .query-project-picker { width: 100%; margin-left: 0; }
-  .query-project-picker select { min-width: 0; max-width: none; flex: 1; }
   .query-generation-task-actions { margin-left: auto; }
+  .query-generator-hero { padding: 16px 13px; }
+  .query-generation-mode-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+  .query-generation-mode-tabs button { padding: 9px; }
+  .query-generation-mode-tabs small { display: none; }
+  .query-generator-card > .query-generator-footer { align-items: stretch; flex-wrap: wrap; }
+  .query-generator-card > .query-generator-footer > span { order: 4; width: 100%; }
+  .query-generator-card > .query-generator-footer .query-generate-button { flex: 1; }
+  .query-advanced-footer { align-items: stretch; }
+  .query-advanced-footer > span { margin-left: 0; }
 }
 @media (max-width: 535px) {
   .query-pagination .ant-pagination-options { display: none; }

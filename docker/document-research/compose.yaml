@@ -23,6 +23,8 @@ services:
     build:
       context: .
       dockerfile: docker/document-research/Dockerfile
+      args:
+        PIP_INDEX_URL: ${DOCUMENT_RESEARCH_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-document-research:local
     user: "1000:1000"
     environment:

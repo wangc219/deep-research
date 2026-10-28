@@ -24,7 +24,9 @@ def resolve_chat_model_spec(model_spec: str | None, *, fallback: str | None = No
     raise ValueError("model spec 不能为空")
 
 
-def load_chat_model(fully_specified_name: str | None, *, session_id: str | None = None, **kwargs) -> BaseChatModel:
+def load_chat_model(
+    fully_specified_name: str | None, *, session_id: str | None = None, own_http_clients: bool = False, **kwargs
+) -> BaseChatModel:
     """加载模型，为 OpenCode 请求绑定稳定会话路由。"""
     fully_specified_name = resolve_chat_model_spec(fully_specified_name)
 
@@ -99,6 +101,12 @@ def load_chat_model(fully_specified_name: str | None, *, session_id: str | None 
             **kwargs,
         )
 
+    if own_http_clients:
+        import httpx
+
+        # LangChain 的默认 HTTP 客户端可能跨模型共享；任务只关闭自己创建的连接。
+        kwargs["http_client"] = httpx.Client()
+        kwargs["http_async_client"] = httpx.AsyncClient()
     return ChatCompletionsAdapter(
         model=info.model_id,
         api_key=SecretStr(api_key),
@@ -117,7 +125,10 @@ def load_chat_model(fully_specified_name: str | None, *, session_id: str | None 
             "alibaba",
             "alibaba-cn",
         },
-        provider_compat=info.compat,
+        provider_compat={
+            **({"max_tokens_field": "max_tokens"} if info.provider_id in {"siliconflow", "siliconflow-cn"} else {}),
+            **info.compat,
+        },
         **kwargs,
     )
 
@@ -139,11 +150,44 @@ def normalize_tool_call_chunks(message: AIMessageChunk) -> None:
                 tool[key] = None
 
 
+def stream_usage_delta(snapshot: dict, previous: dict) -> dict:
+    """将供应商累计用量快照转成可相加增量，状态仅属于当前请求。"""
+    delta = {}
+    for key, value in snapshot.items():
+        if isinstance(value, dict):
+            delta[key] = stream_usage_delta(value, previous.setdefault(key, {}))
+        elif isinstance(value, int) and not isinstance(value, bool):
+            observed = previous.get(key, 0)
+            delta[key] = max(value - observed, 0)
+            previous[key] = max(value, observed)
+    return delta
+
+
 class ChatCompletionsAdapter(ChatOpenAI):
     """在解析边界保留扩展字段，HTTP、重试和工具绑定由上游负责。"""
 
     preserve_reasoning: bool = Field(default=False, exclude=True)
     provider_compat: dict = Field(default_factory=dict, exclude=True)
+
+    def _stream(self, *args, **kwargs):
+        """同步流仅累计新增用量，兼容只在末片上报的标准接口。"""
+        previous_usage = {}
+        for generation in super()._stream(*args, **kwargs):
+            if isinstance(generation.message, AIMessageChunk) and generation.message.usage_metadata:
+                generation.message.usage_metadata = stream_usage_delta(
+                    generation.message.usage_metadata, previous_usage
+                )
+            yield generation
+
+    async def _astream(self, *args, **kwargs):
+        """异步流为每次调用维护独立计数，避免并发请求互相影响。"""
+        previous_usage = {}
+        async for generation in super()._astream(*args, **kwargs):
+            if isinstance(generation.message, AIMessageChunk) and generation.message.usage_metadata:
+                generation.message.usage_metadata = stream_usage_delta(
+                    generation.message.usage_metadata, previous_usage
+                )
+            yield generation
 
     def _convert_chunk_to_generation_chunk(self, chunk, default_chunk_class, base_generation_info):
         """在上游丢弃扩展字段前读取推理，并归一化工具续片。"""
@@ -205,10 +249,18 @@ class ChatCompletionsAdapter(ChatOpenAI):
         if not compat:
             return
 
-        if compat.get("thinking_format") == "enable_thinking" and "enable_thinking" not in payload:
+        if compat.get("max_tokens_field") == "max_tokens" and "max_completion_tokens" in payload:
+            payload["max_tokens"] = payload.pop("max_completion_tokens")
+
+        if compat.get("thinking_format") == "enable_thinking":
+            extra_body = dict(payload.get("extra_body") or {})
             is_stream = bool(payload.get("stream") or call_kwargs.get("stream"))
-            if compat.get("thinking_always_send"):
-                payload["enable_thinking"] = not (compat.get("thinking_disable_on_non_stream") and not is_stream)
+            if "enable_thinking" in payload:
+                extra_body.setdefault("enable_thinking", payload.pop("enable_thinking"))
+            if "enable_thinking" not in extra_body and compat.get("thinking_always_send"):
+                extra_body["enable_thinking"] = not (compat.get("thinking_disable_on_non_stream") and not is_stream)
+            if extra_body:
+                payload["extra_body"] = extra_body
 
         effort_map = compat.get("reasoning_effort_map") or {}
         effort = payload.get("reasoning_effort")
@@ -221,8 +273,10 @@ class ChatCompletionsAdapter(ChatOpenAI):
 
 
 class GeneralResponse:
-    def __init__(self, content):
+    def __init__(self, content, *, finish_reason=None, usage=None):
         self.content = content
+        self.finish_reason = finish_reason
+        self.usage = usage or {}
         self.is_full = False
 
 
@@ -245,11 +299,27 @@ class LangChainChatAdapter:
             if stream:
                 return self._stream_response(messages)
             response = await self.model.ainvoke(messages)
-            return GeneralResponse(response.text)
+            return GeneralResponse(
+                response.text,
+                finish_reason=response.response_metadata.get("finish_reason")
+                or response.response_metadata.get("stop_reason"),
+                usage=response.usage_metadata,
+            )
         except Exception as e:
             err = f"Error calling model: {e}, URL: {self.base_url}, Model: {self.model_name}"
             logger.error(err)
-            raise Exception(err)
+            raise Exception(err) from e
+
+    async def aclose(self):
+        """释放当前适配器拥有的连接池。"""
+        if not self.info.get("owns_http_clients"):
+            return
+        async_client = getattr(self.model, "root_async_client", None)
+        if async_client is not None:
+            await async_client.close()
+        sync_client = getattr(self.model, "root_client", None)
+        if sync_client is not None:
+            sync_client.close()
 
     async def _stream_response(self, messages):
         async for chunk in self.model.astream(messages):
@@ -280,15 +350,21 @@ def select_model(model_spec: str, **kwargs) -> LangChainChatAdapter:
 
     logger.info(f"Selecting model: {model_spec} (provider_type={info.provider_type})")
 
+    own_http_clients = kwargs.pop("own_http_clients", False)
     model = load_chat_model(
         model_spec,
+        own_http_clients=own_http_clients,
         **_langchain_kwargs(info.provider_type, kwargs),
     )
     return LangChainChatAdapter(
         model,
         model_name=info.model_id,
         base_url=info.base_url,
-        info={"provider_type": info.provider_type, "provider_id": info.provider_id},
+        info={
+            "provider_type": info.provider_type,
+            "provider_id": info.provider_id,
+            "owns_http_clients": own_http_clients,
+        },
     )
 
 

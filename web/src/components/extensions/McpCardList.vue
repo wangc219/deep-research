@@ -147,6 +147,7 @@
 
         <div class="mcp-basic-info-footer">
           <a-button @click="closeBasicInfo">关闭</a-button>
+          <a-button @click="navigateToDetail(previewServer)">权限与配置</a-button>
           <a-button
             type="primary"
             class="lucide-icon-btn"

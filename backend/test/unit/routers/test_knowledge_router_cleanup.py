@@ -356,6 +356,63 @@ async def test_reconcile_graph_build_mutates_state_only_after_unique_task_is_cre
     assert context.result == task_result
 
 
+async def test_retry_failed_graph_build_enqueues_scoped_task(monkeypatch):
+    """失败项重跑只把 failed_only 范围交给持久任务执行。"""
+    captured = {}
+
+    class FakeGraphService:
+        async def get_status(self, kb_id: str):
+            return {
+                "locked": True,
+                "extraction_counts": {"pending": 2, "succeeded": 7, "failed": 3},
+            }
+
+        async def build_pending_chunks(self, kb_id: str, *, context, failed_only: bool = False):
+            captured["build"] = (kb_id, failed_only)
+            return {
+                "kb_id": kb_id,
+                "success": 2,
+                "extraction_failed": 1,
+            }
+
+    async def fake_has_running_graph_build_task(kb_id: str) -> bool:
+        return False
+
+    async def fake_get_database_info(kb_id: str) -> KnowledgeBaseDetail:
+        return _database_detail()
+
+    async def fake_enqueue_unique_by_payload(**kwargs):
+        captured["payload"] = kwargs["payload"]
+        captured["payload_match"] = kwargs["payload_match"]
+        return SimpleNamespace(id="task_retry_failed"), True
+
+    monkeypatch.setattr(knowledge_router, "_has_running_graph_build_task", fake_has_running_graph_build_task)
+    monkeypatch.setattr(knowledge_router.knowledge_base, "get_database_info", fake_get_database_info)
+    monkeypatch.setattr(knowledge_router, "MilvusGraphService", FakeGraphService)
+    monkeypatch.setattr(knowledge_task_service, "MilvusGraphService", FakeGraphService)
+    monkeypatch.setattr(knowledge_router.tasker, "enqueue_unique_by_payload", fake_enqueue_unique_by_payload)
+
+    result = await knowledge_router.retry_failed_graph_extraction(
+        "kb_1",
+        current_user=SimpleNamespace(uid="uid-user"),
+    )
+
+    assert result == {
+        "message": "已提交 3 个抽取失败 Chunk 重跑",
+        "status": "queued",
+        "task_id": "task_retry_failed",
+        "failed_count": 3,
+    }
+    assert captured["payload"] == {"kb_id": "kb_1", "action": "retry_failed", "operator_id": "uid-user"}
+    assert captured["payload_match"] == {"kb_id": "kb_1"}
+
+    context = FakeTaskContext(captured["payload"])
+    task_result = await knowledge_task_service.run_knowledge_graph(context)
+
+    assert captured["build"] == ("kb_1", True)
+    assert context.result == task_result
+
+
 async def test_index_pending_documents_uses_pending_statuses_and_params(monkeypatch):
     captured = {"list_calls": [], "updated": [], "indexed": []}
 
@@ -423,6 +480,55 @@ async def test_index_pending_documents_uses_pending_statuses_and_params(monkeypa
         {"kb_id": "kb_1", "file_id": "file_1", "operator_id": "uid-user", "params": params},
         {"kb_id": "kb_1", "file_id": "file_2", "operator_id": "uid-user", "params": params},
     ]
+
+
+async def test_rebuild_document_index_reindexes_all_indexed_files(monkeypatch):
+    captured = {"list_calls": [], "indexed": []}
+
+    async def fake_ensure_database_supports_documents(kb_id: str, operation: str) -> KnowledgeBaseDetail:
+        captured["ensure"] = (kb_id, operation)
+        return _database_detail(indexed_count=2)
+
+    async def fake_list_document_file_ids_by_statuses(kb_id: str, *, statuses, after_file_id, limit):
+        captured["list_calls"].append(statuses)
+        return ["file_1", "file_2"] if after_file_id is None else []
+
+    async def fake_index_file(kb_id: str, file_id: str, **_kwargs):
+        captured["indexed"].append((kb_id, file_id))
+        return {"file_id": file_id, "status": "indexed"}
+
+    async def fake_enqueue_unique_by_payload(**kwargs):
+        captured["payload"] = kwargs["payload"]
+        captured["payload_match"] = kwargs["payload_match"]
+        await knowledge_task_service.run_knowledge_index(FakeTaskContext(kwargs["payload"]))
+        return SimpleNamespace(id="task_rebuild_1"), True
+
+    monkeypatch.setattr(
+        knowledge_router,
+        "_ensure_database_supports_documents",
+        fake_ensure_database_supports_documents,
+    )
+    monkeypatch.setattr(
+        knowledge_router.knowledge_base,
+        "list_document_file_ids_by_statuses",
+        fake_list_document_file_ids_by_statuses,
+    )
+    monkeypatch.setattr(knowledge_router.knowledge_base, "index_file", fake_index_file)
+    monkeypatch.setattr(knowledge_router.tasker, "enqueue_unique_by_payload", fake_enqueue_unique_by_payload)
+
+    result = await knowledge_router.rebuild_document_index(
+        "kb_1",
+        payload=knowledge_router.PendingIndexDocumentsRequest(params={}),
+        current_user=SimpleNamespace(uid="uid-user"),
+    )
+
+    assert result["status"] == "queued"
+    assert result["queued_count"] == 2
+    assert captured["ensure"] == ("kb_1", "向量索引重建")
+    assert captured["payload_match"] == {"kb_id": "kb_1", "scope": "rebuild", "action": "index"}
+    assert captured["payload"]["statuses"] == knowledge_router.REBUILD_INDEX_STATUSES
+    assert captured["list_calls"] == [knowledge_router.REBUILD_INDEX_STATUSES, knowledge_router.REBUILD_INDEX_STATUSES]
+    assert captured["indexed"] == [("kb_1", "file_1"), ("kb_1", "file_2")]
 
 
 async def test_add_documents_auto_index_returns_one_final_result_per_item(monkeypatch):

@@ -89,11 +89,36 @@ class AgentRepository:
         agent = await self.get_by_slug(DEFAULT_AGENT_SLUG)
         if agent:
             needs_update = False
+            # The built-in default agent is product-owned.  Deployments must
+            # receive prompt/name/skill improvements even when the row already
+            # exists, while user-selected runtime resources (model, knowledge
+            # bases, MCPs and tools) remain intact.
+            if agent.backend_id != DEFAULT_AGENT_BACKEND_ID:
+                agent.backend_id = DEFAULT_AGENT_BACKEND_ID
+                needs_update = True
+            if agent.name != DEFAULT_AGENT_NAME:
+                agent.name = DEFAULT_AGENT_NAME
+                needs_update = True
+            if agent.description != DEFAULT_AGENT_DESCRIPTION:
+                agent.description = DEFAULT_AGENT_DESCRIPTION
+                needs_update = True
+            config_json = copy.deepcopy(agent.config_json or {})
+            context = config_json.get("context")
+            if not isinstance(context, dict):
+                context = {}
+            synchronized_context = {
+                **context,
+                **copy.deepcopy(DEFAULT_AGENT.context),
+            }
+            synchronized_config = {
+                **config_json,
+                "context": synchronized_context,
+            }
+            if synchronized_config != (agent.config_json or {}):
+                agent.config_json = synchronized_config
+                needs_update = True
             if agent.share_config != DEFAULT_SHARE_CONFIG:
                 agent.share_config = DEFAULT_SHARE_CONFIG.copy()
-                needs_update = True
-            if not agent.description:
-                agent.description = DEFAULT_AGENT_DESCRIPTION
                 needs_update = True
             if getattr(agent, "is_subagent", False):
                 agent.is_subagent = False
@@ -134,6 +159,38 @@ class AgentRepository:
             return await self.ensure_default_agent(created_by=created_by)
         agent = await self.get_by_slug(preset.slug)
         if agent:
+            if not preset.sync_existing:
+                return agent
+            needs_update = False
+            expected_is_subagent = resolve_agent_is_subagent(preset.backend_id)
+            for field_name, expected in (
+                ("backend_id", preset.backend_id),
+                ("name", preset.name),
+                ("description", preset.description),
+                ("is_subagent", expected_is_subagent),
+            ):
+                if getattr(agent, field_name) != expected:
+                    setattr(agent, field_name, expected)
+                    needs_update = True
+            config_json = copy.deepcopy(agent.config_json or {})
+            context = config_json.get("context")
+            if not isinstance(context, dict):
+                context = {}
+            synchronized_config = {
+                **config_json,
+                "context": {
+                    **context,
+                    **copy.deepcopy(preset.context),
+                },
+            }
+            if synchronized_config != (agent.config_json or {}):
+                agent.config_json = synchronized_config
+                needs_update = True
+            if needs_update:
+                agent.updated_by = created_by
+                agent.updated_at = utc_now_naive()
+                await self.db.commit()
+                await self.db.refresh(agent)
             return agent
 
         agent = Agent(

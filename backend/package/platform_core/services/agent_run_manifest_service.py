@@ -206,6 +206,8 @@ async def prepare_run_execution(
         )
     knowledge_enabled = await resolve_run_knowledge_opt_in(run, db)
     apply_knowledge_retrieval_policy(context, enabled=knowledge_enabled)
+    # 资源解析会使用独立 Session；先归还配置读取连接，避免并发准备互相等待。
+    await db.commit()
     context = await prepare_agent_runtime_context(context)
     if not getattr(context, "_runtime_prepared", False):
         raise ValueError("执行用户不存在，无法准备 Context")

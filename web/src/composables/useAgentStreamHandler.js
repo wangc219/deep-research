@@ -129,6 +129,7 @@ export function useAgentStreamHandler({
           }
           threadState.replyLoadingVisible = true
           threadState.contextCompressing = false
+          threadState.agentProgress = null
         }
         return false
 
@@ -180,6 +181,7 @@ export function useAgentStreamHandler({
           threadState.pendingRequestId = null
           threadState.pendingInterrupt = null
           threadState.contextCompressing = false
+          threadState.agentProgress = null
         }
         return true
 
@@ -226,6 +228,13 @@ export function useAgentStreamHandler({
         }
         return false
 
+      case 'agent_progress':
+        if (chunk.progress) {
+          threadState.agentProgress =
+            chunk.progress.status === 'completed' ? null : chunk.progress
+        }
+        return false
+
       case 'finished':
         streamSmoother?.flushThread(threadId)
         // 先标记流式结束，但保持消息显示直到历史记录加载完成
@@ -235,6 +244,7 @@ export function useAgentStreamHandler({
           threadState.pendingRequestId = null
           threadState.pendingInterrupt = null
           threadState.contextCompressing = false
+          threadState.agentProgress = null
           console.log(`${debugPrefix}[finished]`, {
             threadId,
             currentAgentId: unref(currentAgentId),
@@ -266,6 +276,7 @@ export function useAgentStreamHandler({
           threadState.replyLoadingVisible = false
           threadState.pendingRequestId = null
           threadState.contextCompressing = false
+          threadState.agentProgress = null
           const pendingInterrupt = extractPendingInterrupt(chunk, threadId)
           if (pendingInterrupt) {
             threadState.pendingInterrupt = pendingInterrupt

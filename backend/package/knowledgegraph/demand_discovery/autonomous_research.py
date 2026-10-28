@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from uuid import uuid4
 
 from knowledgegraph.demand_discovery.domain.audit_rubric import load_default_rubric
@@ -370,17 +371,10 @@ def _fixture_judge_payload_from_context(
     brief = _latest_judge_task_brief(context)
     data = _json_payload_from_judge_brief(brief)
     round_id = str(data.get("round_id") or "round-unknown")
-    worker_reports = [
-        report for report in data.get("worker_reports", []) if isinstance(report, dict)
-    ]
-    evidence_rows = [
-        row for row in data.get("evidence", []) if isinstance(row, dict)
-    ]
+    worker_reports = [report for report in data.get("worker_reports", []) if isinstance(report, dict)]
+    evidence_rows = [row for row in data.get("evidence", []) if isinstance(row, dict)]
     report_ids = _dedupe_refs(
-        [
-            str(report.get("report_id") or report.get("agent_run_id") or "")
-            for report in worker_reports
-        ]
+        [str(report.get("report_id") or report.get("agent_run_id") or "") for report in worker_reports]
     )
     evidence_ids = _dedupe_refs(
         [
@@ -393,11 +387,7 @@ def _fixture_judge_payload_from_context(
         ]
     )
     lead_ids = _dedupe_refs(
-        [
-            str(lead_id)
-            for report in worker_reports
-            for lead_id in list(report.get("lead_refs") or [])
-        ]
+        [str(lead_id) for report in worker_reports for lead_id in list(report.get("lead_refs") or [])]
     )
     evidence_strength_map = {
         str(row.get("evidence_id")): _fixture_evidence_strength(row)
@@ -406,10 +396,7 @@ def _fixture_judge_payload_from_context(
     }
     for evidence_id in evidence_ids:
         evidence_strength_map.setdefault(evidence_id, "unassessed")
-    has_strong_evidence = any(
-        strength in {"strong", "direct"}
-        for strength in evidence_strength_map.values()
-    )
+    has_strong_evidence = any(strength in {"strong", "direct"} for strength in evidence_strength_map.values())
     finding_reports = _finding_report_index(worker_reports)
     consensus_points = [
         {
@@ -514,11 +501,7 @@ def _fixture_continue_plan(
     lead_ids: list[str],
     blind_spots: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    question = (
-        str(blind_spots[0].get("text", "")).strip()
-        if blind_spots
-        else f"补充“{topic}”的独立公开正文交叉验证"
-    )
+    question = str(blind_spots[0].get("text", "")).strip() if blind_spots else f"补充“{topic}”的独立公开正文交叉验证"
     task_id = "task-open-1"
     query = _fixture_search_query(topic, question)
     return {
@@ -633,13 +616,7 @@ def _unique_report_values(
     worker_reports: list[dict[str, Any]],
     field: str,
 ) -> list[str]:
-    return _dedupe_refs(
-        [
-            str(item)
-            for report in worker_reports
-            for item in list(report.get(field) or [])
-        ]
-    )
+    return _dedupe_refs([str(item) for report in worker_reports for item in list(report.get(field) or [])])
 
 
 def _report_ids_for_open_question(
@@ -663,7 +640,7 @@ def _fixture_search_query(topic: str, question: str) -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _complete_fake_audit_and_report(
@@ -765,10 +742,7 @@ def _fixture_audit_scorecard(
     evidence_ids: list[str],
     audit_reason: str,
 ) -> dict[str, Any]:
-    scorecard = {
-        item_id: {"verdict": "pass", "reason": audit_reason}
-        for item_id in rubric_item_ids
-    }
+    scorecard = {item_id: {"verdict": "pass", "reason": audit_reason} for item_id in rubric_item_ids}
     scorecard["evidence_support"] = {
         "verdict": "pass",
         "reason": "fixture audit treats fake evidence as direct for offline gate exercise",
@@ -1001,9 +975,7 @@ async def _complete_autonomous_report_after_audit_async(
             audit_trace=audit_trace,
         )
     if reporter_provider is None or curator_provider is None or artifacts is None:
-        raise RuntimeError(
-            "real report generation requires curator_provider, reporter_provider, and artifacts"
-        )
+        raise RuntimeError("real report generation requires curator_provider, reporter_provider, and artifacts")
     draft = loop_result.get("candidate_synthesis")
     if not isinstance(draft, dict) or draft.get("status") != "synthesized":
         return None, None
@@ -1150,9 +1122,7 @@ async def _run_real_audit_worker(
             endpoint_path=endpoint_path,
             model=model,
         ),
-        tool_registry_factory=lambda _spec: [
-            run_audit_tool(store, rubric=load_default_rubric())
-        ],
+        tool_registry_factory=lambda _spec: [run_audit_tool(store, rubric=load_default_rubric())],
         domain_store=store,
         sessions_dir=run_dir / "audit_workers",
         max_concurrency=1,
@@ -1370,11 +1340,7 @@ def _build_fixture_report_context(
         CuratedReportItem(
             item_id=f"cur-{index}",
             material_ids=[material.material_id],
-            report_use=(
-                "core"
-                if "core" in material.allowed_report_uses
-                else material.allowed_report_uses[0]
-            ),
+            report_use=("core" if "core" in material.allowed_report_uses else material.allowed_report_uses[0]),
             claim_summary=material.summary or material.title,
             curation_reason="fixture deterministic curation",
         )
@@ -1439,11 +1405,7 @@ async def _build_verified_report_context(
             CuratedReportItem(
                 item_id=f"cur-{index}",
                 material_ids=[material.material_id],
-                report_use=(
-                    "core"
-                    if "core" in material.allowed_report_uses
-                    else material.allowed_report_uses[0]
-                ),
+                report_use=("core" if "core" in material.allowed_report_uses else material.allowed_report_uses[0]),
                 claim_summary=material.summary or material.title,
                 curation_reason="fixture deterministic curation",
             )
@@ -1494,11 +1456,7 @@ def _latest_audit_for_candidate(
     store: DomainStore,
     candidate_id: str,
 ) -> AuditReport | None:
-    audits = [
-        audit
-        for audit in store.audit_reports.values()
-        if audit.candidate_id == candidate_id
-    ]
+    audits = [audit for audit in store.audit_reports.values() if audit.candidate_id == candidate_id]
     if not audits:
         return None
     return max(audits, key=lambda item: item.created_at)
@@ -1542,11 +1500,7 @@ def _domain_trace_ids_for_report(
     *,
     required: list[str | None],
 ) -> list[str]:
-    domain_trace_ids = [
-        event.domain_trace_id
-        for event in store.trace_events
-        if event.domain_trace_id
-    ]
+    domain_trace_ids = [event.domain_trace_id for event in store.trace_events if event.domain_trace_id]
     for trace_id in required:
         if trace_id and trace_id not in domain_trace_ids:
             domain_trace_ids.append(trace_id)
@@ -1805,13 +1759,9 @@ async def _run_real_strategy_seed_research(
             if repair_result is None:
                 break
             loop_result["rounds"].append(repair_result["round"])
-            loop_result["network_worker_runs"].append(
-                repair_result["network_worker_run"]
-            )
+            loop_result["network_worker_runs"].append(repair_result["network_worker_run"])
             loop_result["candidate_synthesis"] = repair_result["candidate_synthesis"]
-            loop_result["open_search_plans"] = [
-                plan.to_dict() for plan in store.open_search_plans.values()
-            ]
+            loop_result["open_search_plans"] = [plan.to_dict() for plan in store.open_search_plans.values()]
             draft = loop_result.get("candidate_synthesis")
             if not isinstance(draft, dict) or draft.get("status") != "synthesized":
                 break
@@ -1873,9 +1823,7 @@ async def _run_real_strategy_seed_research(
         "open_search_plans": loop_result.get("open_search_plans", []),
         "trace_event_count": len(store.trace_events),
         "report_trace_event_count": (
-            len(report_summary.get("domain_trace_ids", []))
-            if isinstance(report_summary, dict)
-            else 0
+            len(report_summary.get("domain_trace_ids", [])) if isinstance(report_summary, dict) else 0
         ),
         "allow_browser": allow_browser,
     }
@@ -2024,10 +1972,7 @@ def _resolve_real_api_key(
 
 def _write_domain_trace_jsonl(path: Path, store: DomainStore) -> None:
     path.write_text(
-        "\n".join(
-            json.dumps(event.to_dict(), ensure_ascii=False, sort_keys=True)
-            for event in store.trace_events
-        )
+        "\n".join(json.dumps(event.to_dict(), ensure_ascii=False, sort_keys=True) for event in store.trace_events)
         + ("\n" if store.trace_events else ""),
         encoding="utf-8",
     )

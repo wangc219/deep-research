@@ -1,8 +1,118 @@
-# 腾讯云 4C/8G：在 compose.prod.yaml 上叠加，公网入口由宿主 Nginx/TLS 提供。
+# 腾讯云基础配置：在 compose.prod.yaml 上叠加，公网入口由宿主 Nginx/TLS 提供。
+# 4 核 / 8 GB 使用基础档位；扩容档位见 configs/cloud/ 与 docs/CLOUD_CAPACITY.md。
+x-cloud-task-env: &cloud-task-env
+  EQUIPMENT_RESEARCH_MAX_RUNNING: ${CLOUD_RESEARCH_MAX_RUNNING:-6}
+  EQUIPMENT_QUERY_MAX_RUNNING: ${CLOUD_QUERY_MAX_RUNNING:-4}
+  EQUIPMENT_DEEP_MAX_RUNNING: ${CLOUD_DEEP_MAX_RUNNING:-8}
+  DURABLE_TASK_MAX_RUNNING: ${CLOUD_DURABLE_MAX_RUNNING:-12}
+  TASKBOOK_BATCH_MAX_RUNNING: ${CLOUD_TASKBOOK_MAX_RUNNING:-4}
+  TASKBOOK_MODEL_ITEMS_PER_CALL: ${CLOUD_TASKBOOK_MODEL_ITEMS_PER_CALL:-8}
+  AGENT_RUN_SPLIT_QUEUES: ${CLOUD_SPLIT_AGENT_QUEUES:-false}
+  AGENT_USER_CHAT_MAX_RUNNING: ${CLOUD_USER_CHAT_MAX_RUNNING:-2}
+  AGENT_USER_DEEP_MAX_RUNNING: ${CLOUD_USER_DEEP_MAX_RUNNING:-1}
+  AGENT_USER_SUBAGENT_MAX_RUNNING: ${CLOUD_USER_SUBAGENT_MAX_RUNNING:-2}
+  RESOURCE_GOVERNOR_ENABLED: ${CLOUD_RESOURCE_GOVERNOR_ENABLED:-false}
+  RESOURCE_BUDGET_PATH: /app/outputs/runtime/resource-budget.json
+
 services:
   api:
+    cpu_shares: 1024
+    # 4 核云机以两个 API 进程服务并发页面，其余核心留给采集、识别与数据库。
+    command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m uvicorn server.main:app --host 0.0.0.0 --port 5050 --workers $${API_WEB_CONCURRENCY}"]
+    build:
+      args:
+        GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
+        VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+        WECHAT_MP_PIP_INDEX_URL: ${CLOUD_WECHAT_MP_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+        PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST:-https://npmmirror.com/mirrors/playwright}
+    environment:
+      <<: *cloud-task-env
+      API_WEB_CONCURRENCY: ${CLOUD_API_WORKERS:-2}
+      POSTGRES_POOL_SIZE: ${CLOUD_API_POSTGRES_POOL_SIZE:-8}
+      POSTGRES_MAX_OVERFLOW: ${CLOUD_API_POSTGRES_MAX_OVERFLOW:-4}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_API_LANGGRAPH_POOL_SIZE:-4}
+      REDIS_MAX_CONNECTIONS: ${CLOUD_API_REDIS_MAX_CONNECTIONS:-64}
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 65536
     ports: !override
       - "127.0.0.1:6050:5050"
+  worker:
+    cpu_shares: 512
+    command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
+    environment:
+      <<: *cloud-task-env
+      ARQ_MAX_JOBS: ${CLOUD_ARQ_MAX_JOBS:-16}
+      AGENT_WORKER_KIND: ${CLOUD_BACKGROUND_WORKER_KIND:-unified}
+      POSTGRES_POOL_SIZE: ${CLOUD_WORKER_POSTGRES_POOL_SIZE:-8}
+      POSTGRES_MAX_OVERFLOW: ${CLOUD_WORKER_POSTGRES_MAX_OVERFLOW:-4}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_WORKER_LANGGRAPH_POOL_SIZE:-8}
+      REDIS_MAX_CONNECTIONS: ${CLOUD_WORKER_REDIS_MAX_CONNECTIONS:-64}
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 65536
+  equipment-worker:
+    environment:
+      POSTGRES_POOL_SIZE: ${CLOUD_RESEARCH_POSTGRES_POOL_SIZE:-4}
+      POSTGRES_MAX_OVERFLOW: ${CLOUD_RESEARCH_POSTGRES_MAX_OVERFLOW:-2}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_RESEARCH_LANGGRAPH_POOL_SIZE:-4}
+      REDIS_MAX_CONNECTIONS: ${CLOUD_RESEARCH_REDIS_MAX_CONNECTIONS:-32}
+  chat-worker:
+    cpu_shares: 1024
+    extends:
+      file: compose.prod.yaml
+      service: worker
+    profiles: [agent-pools]
+    command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
+    environment:
+      <<: *cloud-task-env
+      AGENT_WORKER_KIND: chat
+      ARQ_MAX_JOBS: ${CLOUD_CHAT_MAX_JOBS:-16}
+      POSTGRES_POOL_SIZE: ${CLOUD_CHAT_POSTGRES_POOL_SIZE:-8}
+      POSTGRES_MAX_OVERFLOW: 4
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_CHAT_LANGGRAPH_POOL_SIZE:-4}
+      REDIS_MAX_CONNECTIONS: 64
+      DEEP_RESEARCH_RUNTIME_DIR: /app/runtime/chat-worker
+  deep-worker:
+    cpu_shares: 512
+    extends:
+      file: compose.prod.yaml
+      service: worker
+    profiles: [agent-pools]
+    command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
+    environment:
+      <<: *cloud-task-env
+      AGENT_WORKER_KIND: deep
+      ARQ_MAX_JOBS: ${CLOUD_DEEP_AGENT_MAX_JOBS:-2}
+      POSTGRES_POOL_SIZE: 4
+      POSTGRES_MAX_OVERFLOW: 2
+      LANGGRAPH_POSTGRES_POOL_SIZE: 4
+      REDIS_MAX_CONNECTIONS: 32
+      DEEP_RESEARCH_RUNTIME_DIR: /app/runtime/deep-worker
+  subagent-worker:
+    cpu_shares: 512
+    extends:
+      file: compose.prod.yaml
+      service: worker
+    profiles: [agent-pools]
+    command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
+    environment:
+      <<: *cloud-task-env
+      AGENT_WORKER_KIND: subagent
+      ARQ_MAX_JOBS: ${CLOUD_SUBAGENT_MAX_JOBS:-4}
+      POSTGRES_POOL_SIZE: 4
+      POSTGRES_MAX_OVERFLOW: 2
+      LANGGRAPH_POSTGRES_POOL_SIZE: 4
+      REDIS_MAX_CONNECTIONS: 32
+      DEEP_RESEARCH_RUNTIME_DIR: /app/runtime/subagent-worker
+  equipment-query-worker:
+    environment:
+      POSTGRES_POOL_SIZE: ${CLOUD_QUERY_POSTGRES_POOL_SIZE:-4}
+      POSTGRES_MAX_OVERFLOW: ${CLOUD_QUERY_POSTGRES_MAX_OVERFLOW:-2}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_QUERY_LANGGRAPH_POOL_SIZE:-4}
+      REDIS_MAX_CONNECTIONS: ${CLOUD_QUERY_REDIS_MAX_CONNECTIONS:-32}
   web:
     ports: !override
       - "127.0.0.1:8088:80"

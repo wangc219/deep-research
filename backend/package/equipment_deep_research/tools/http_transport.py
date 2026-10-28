@@ -5,7 +5,8 @@ import http.client
 import ipaddress
 import socket
 import ssl
-from typing import Mapping, Protocol
+from typing import Protocol
+from collections.abc import Mapping
 from urllib.parse import urlsplit
 
 
@@ -39,8 +40,7 @@ class HTTPTransport(Protocol):
         port: int,
         timeout_seconds: int,
         headers: Mapping[str, str],
-    ) -> PinnedHTTPResponse:
-        ...
+    ) -> PinnedHTTPResponse: ...
 
 
 class PinnedHTTPTransport:
@@ -85,9 +85,7 @@ class PinnedHTTPTransport:
             response = connection.getresponse()
             content = response.read(self.max_response_bytes + 1)
             if len(content) > self.max_response_bytes:
-                raise HTTPResponseTooLarge(
-                    f"response exceeded {self.max_response_bytes} bytes"
-                )
+                raise HTTPResponseTooLarge(f"response exceeded {self.max_response_bytes} bytes")
             return PinnedHTTPResponse(
                 content=content,
                 headers={name.lower(): value for name, value in response.getheaders()},

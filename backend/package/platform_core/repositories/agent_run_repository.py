@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy import and_, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from platform_core.storage.postgres.models_business import (
@@ -435,6 +435,7 @@ class AgentRunRepository:
         worker_id: str,
         lease_seconds: float,
         now: datetime | None = None,
+        max_user_running: int | None = None,
     ) -> tuple[AgentRun | None, bool]:
         """由一个 worker 原子取得或续接尚未过期的 Run ownership。"""
         if not worker_id.strip():
@@ -442,6 +443,30 @@ class AgentRunRepository:
         if lease_seconds <= 0:
             raise ValueError("lease_seconds 必须大于 0")
 
+        if max_user_running is not None:
+            from platform_core.services.run_scheduling import run_lane
+
+            # 同一用户的不同线程以事务锁串行领取；不把 Python 进程锁当跨容器配额。
+            candidate = await self.get_run(run_id)
+            if candidate is None:
+                return None, False
+            await self.db.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                {"scope": f"agent-user-capacity:{candidate.uid}"},
+            )
+            lane = run_lane(candidate)
+            active = (
+                await self.db.scalars(
+                    select(AgentRun).where(
+                        AgentRun.uid == candidate.uid,
+                        AgentRun.id != candidate.id,
+                        AgentRun.status.in_(LEASED_RUN_STATUSES),
+                        AgentRun.lease_expires_at > (now or utc_now_naive()),
+                    )
+                )
+            ).all()
+            if sum(run_lane(item) == lane for item in active) >= max_user_running:
+                return candidate, False
         run = await self._lock_run(run_id)
         if not run:
             return None, False

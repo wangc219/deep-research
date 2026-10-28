@@ -1,6 +1,7 @@
 """平台任务传入领域执行器的配置契约，避免适配过程丢失用户选择。"""
 
 import asyncio
+import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -21,7 +22,7 @@ async def test_platform_research_cancellation_reaps_processes_before_thread_rele
     thread_finished = threading.Event()
     cleanup_calls: list[tuple[str, float]] = []
 
-    def run_domain(_run, *, resume=False):
+    def run_domain(_run, *, resume=False, event_sink=None):
         assert resume is True
         started.set()
         assert released.wait(2)
@@ -42,9 +43,7 @@ async def test_platform_research_cancellation_reaps_processes_before_thread_rele
         "equipment_deep_research.runtime_process_registry.terminate_run_process_groups",
         terminate,
     )
-    execution = asyncio.create_task(
-        task._run_domain_cancellable(SimpleNamespace(id="run-cancel"), resume=True)
-    )
+    execution = asyncio.create_task(task._run_domain_cancellable(SimpleNamespace(id="run-cancel"), resume=True))
     assert await asyncio.to_thread(started.wait, 1)
     execution.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -60,6 +59,8 @@ def test_platform_research_runs_overlap_without_process_environment_lock(monkeyp
     active = 0
     max_active = 0
     observed: dict[str, str] = {}
+    credentials = {}
+    original_env = dict(os.environ)
     guard = threading.Lock()
     monkeypatch.setattr(task, "user_workdir_host_dir", lambda _uid, _workdir: tmp_path)
     monkeypatch.setattr(
@@ -73,6 +74,7 @@ def test_platform_research_runs_overlap_without_process_environment_lock(monkeyp
 
         def run(self, *, run_id, provider_model=None, **_kwargs):
             nonlocal active, max_active
+            credentials[run_id] = (_kwargs["provider_base_url"], _kwargs["provider_api_key"])
             with guard:
                 active += 1
                 max_active = max(max_active, active)
@@ -135,6 +137,11 @@ def test_platform_research_runs_overlap_without_process_environment_lock(monkeyp
 
     assert max_active == 2
     assert observed == {"run-a": "model-a", "run-b": "model-b"}
+    assert credentials == {
+        "run-a": ("https://model-a.example/v1", "secret-model-a"),
+        "run-b": ("https://model-b.example/v1", "secret-model-b"),
+    }
+    assert dict(os.environ) == original_env
     assert {item["model"] for item in results} == {"model-a", "model-b"}
 
 
@@ -384,3 +391,37 @@ def test_managed_research_workdir_rejects_symlink(monkeypatch, tmp_path):
                 },
             )
         )
+
+
+@pytest.mark.asyncio
+async def test_research_events_reach_database_before_domain_finishes_without_replay(monkeypatch):
+    """慢模型运行时仍按序提交事件，完成时不重复投递。"""
+    release = threading.Event()
+    persisted = asyncio.Event()
+    observed = []
+    events = [("run_started", {}), ("winning_swarm_started", {})]
+
+    def domain(_run, *, resume=False, event_sink=None):
+        for event_type, payload in events:
+            event_sink(event_type, payload)
+        assert release.wait(5)
+        event_sink("audit_completed", {})
+        return {"result": {"ok": True}, "events": [*events, ("audit_completed", {})]}
+
+    async def append(run_id, batch):
+        observed.extend((run_id, kind) for kind, _ in batch)
+        persisted.set()
+
+    monkeypatch.setattr(task, "_run_domain", domain)
+    monkeypatch.setattr(task, "_append_events", append)
+    execution = asyncio.create_task(task._run_domain_cancellable(SimpleNamespace(id="streamed-run"), resume=False))
+    try:
+        await asyncio.wait_for(persisted.wait(), timeout=3)
+        assert not execution.done()
+        assert observed == [("streamed-run", kind) for kind, _ in events]
+    finally:
+        release.set()
+    result = await execution
+    assert result["events"] == []
+    assert result["result"] == {"ok": True}
+    assert observed == [("streamed-run", kind) for kind in ("run_started", "winning_swarm_started", "audit_completed")]

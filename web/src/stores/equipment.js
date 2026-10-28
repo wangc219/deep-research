@@ -12,6 +12,8 @@ const RESOURCE_LOADERS = {
   deepSessions: () => equipmentApi.listDeepSessions()
 }
 
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'archived'])
+
 const emptyResources = () => ({
   runs: [],
   queries: [],
@@ -36,38 +38,49 @@ export const useEquipmentStore = defineStore('equipment', () => {
   const errors = ref({})
   let sessionVersion = 0
   const pending = new Map()
+  const latestRequests = new Map()
 
-  const loadResource = async (name, params = {}, { force = false } = {}) => {
+  const loadResource = async (name, params = {}) => {
     const loader = RESOURCE_LOADERS[name]
     if (!loader) throw new Error(`未知装备资源: ${name}`)
-    if (!force && pending.has(name)) return pending.get(name)
+    const requestKey = `${name}:${JSON.stringify(Object.entries(params).sort(([left], [right]) => left.localeCompare(right)))}`
+    // force 表示主动刷新，也应合并相同参数的在途请求。
+    if (pending.has(requestKey)) return pending.get(requestKey)
 
     const requestSession = sessionVersion
+    const requestId = Symbol(name)
+    latestRequests.set(name, requestId)
     loading.value = { ...loading.value, [name]: true }
     errors.value = { ...errors.value, [name]: '' }
     const request = Promise.resolve()
       .then(() => loader(params))
       .then((items) => {
-        if (requestSession !== sessionVersion) return resources.value[name]
-        const rows = Array.isArray(items) ? items : []
+        if (requestSession !== sessionVersion || latestRequests.get(name) !== requestId) return resources.value[name]
+        const rows = Array.isArray(items) ? items : (items?.items || [])
+        const previous = new Map(resources.value[name].map((item) => [item.run_id, item.status]))
+        if (name === 'runs' && rows.some((item) => (
+          previous.has(item.run_id) && previous.get(item.run_id) !== item.status && TERMINAL_STATUSES.has(item.status)
+        ))) {
+          void Promise.allSettled(['capabilities', 'reports', 'favorites', 'deepSessions'].map((resource) => loadResource(resource)))
+        }
         resources.value = { ...resources.value, [name]: rows }
         loaded.value = { ...loaded.value, [name]: true }
         return rows
       })
       .catch((error) => {
-        if (requestSession === sessionVersion) {
+        if (requestSession === sessionVersion && latestRequests.get(name) === requestId) {
           errors.value = { ...errors.value, [name]: error?.message || '加载失败' }
         }
         throw error
       })
       .finally(() => {
-        if (pending.get(name) === request) pending.delete(name)
-        if (requestSession === sessionVersion) {
+        if (pending.get(requestKey) === request) pending.delete(requestKey)
+        if (requestSession === sessionVersion && latestRequests.get(name) === requestId) {
           loading.value = { ...loading.value, [name]: false }
         }
       })
 
-    pending.set(name, request)
+    pending.set(requestKey, request)
     return request
   }
 
@@ -79,6 +92,7 @@ export const useEquipmentStore = defineStore('equipment', () => {
   const reset = () => {
     sessionVersion += 1
     pending.clear()
+    latestRequests.clear()
     resources.value = emptyResources()
     loading.value = {}
     loaded.value = {}

@@ -9,13 +9,15 @@ from fastapi import HTTPException
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from equipment_deep_research.domain.platform_identity import PlatformIdentity, platform_identity
 from platform_core.permissions import has_global_business_access
 from platform_core.services.enterprise_service import feature_access
 from platform_core.services.operation_log_service import log_operation
 from platform_core.storage.postgres.manager import pg_manager
+from platform_core.storage.postgres.models_business import Department, User
+from platform_core.repositories.video_collector_repository import VideoCollectorRepository
 from server.utils.auth_middleware import get_current_user, get_required_user
 
 logger = logging.getLogger(__name__)
@@ -62,13 +64,42 @@ class EnterpriseMiddleware:
         started = time.monotonic()
         try:
             async with pg_manager.get_async_session_context() as db:
-                user = await get_current_user(request.headers.get("authorization"), db)
+                device_paths = {
+                    "/api/knowledge/wxchannels/collector/heartbeat",
+                    "/api/knowledge/wxchannels/collector/event",
+                    "/api/knowledge/wxchannels/collector/audio",
+                }
+                device_request = path in device_paths and bool(request.headers.get("x-collector-device"))
+                if device_request:
+                    authorization = request.headers.get("authorization", "")
+                    scheme, _, credential = authorization.partition(" ")
+                    device = (
+                        await VideoCollectorRepository().authenticate(
+                            request.headers["x-collector-device"], credential
+                        )
+                        if scheme.lower() == "bearer"
+                        else None
+                    )
+                    if not device:
+                        raise HTTPException(401, "采集端凭据无效或已撤销")
+                    user = await db.scalar(select(User).where(User.uid == device.owner_uid, User.is_deleted == 0))
+                    if user and user.is_login_locked():
+                        raise HTTPException(423, "采集端所属账户已锁定")
+                    if user:
+                        department = await db.get(Department, user.department_id)
+                        user.tenant_id = department.tenant_id if department else "default"
+                else:
+                    user = await get_current_user(request.headers.get("authorization"), db)
                 user = await get_required_user(user)
                 access = await feature_access(db, user, feature)
                 write = scope["method"] not in {"GET", "HEAD"}
                 if feature == "knowledge" and path.endswith(("/query", "/query-test")):
                     write = False
-                identity = PlatformIdentity(user.uid, user.tenant_id, has_global_business_access(user))
+                identity = PlatformIdentity(
+                    user.uid,
+                    user.tenant_id,
+                    not device_request and has_global_business_access(user),
+                )
                 if identity.superadmin and write:
                     await log_operation(
                         db,

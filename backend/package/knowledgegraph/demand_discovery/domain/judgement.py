@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from knowledgegraph.demand_discovery.domain.models import SerializableDataclass
@@ -81,4 +81,4 @@ def _parse_datetime(value: Any) -> datetime:
         return value
     if isinstance(value, str) and value:
         return datetime.fromisoformat(value)
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

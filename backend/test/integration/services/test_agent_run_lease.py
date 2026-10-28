@@ -44,13 +44,16 @@ from platform_core.storage.postgres.models_business import (
 from platform_core.utils.datetime_utils import utc_now_naive
 
 from agent_run_test_helpers import create_agent_run
+from test.integration.services.test_schema_migration_version import _create_isolated_manager, _drop_isolated_schema
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
 
 @pytest_asyncio.fixture()
 async def lease_database():
-    engine = create_async_engine(os.environ["POSTGRES_URL"], pool_pre_ping=True)
+    """租约全局收敛只能作用于本测试 Schema，不能处理线上或其他用例的 Run。"""
+    schema, admin, engine, manager = await _create_isolated_manager("pytest_lease")
+    await manager.create_business_tables()
     async with engine.begin() as connection:
         for _ in range(2):
             for statement in (
@@ -64,7 +67,7 @@ async def lease_database():
     try:
         yield engine, session_factory
     finally:
-        await engine.dispose()
+        await _drop_isolated_schema(schema, admin, engine)
 
 
 @asynccontextmanager

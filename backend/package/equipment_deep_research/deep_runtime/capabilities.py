@@ -83,9 +83,7 @@ _DEFAULT_SKILLS_BY_TURN_TOOL: dict[str, tuple[str, ...]] = {
     "inspect_memory": ("codex_structured_handoff_shared",),
 }
 _DEEP_RECOMMENDED_SKILLS = frozenset(
-    skill_id
-    for skill_ids in _DEFAULT_SKILLS_BY_TURN_TOOL.values()
-    for skill_id in skill_ids
+    skill_id for skill_ids in _DEFAULT_SKILLS_BY_TURN_TOOL.values() for skill_id in skill_ids
 )
 
 
@@ -248,7 +246,7 @@ class DeepCapabilityRegistry:
                 if skill.available:
                     self.skills.setdefault(skill.skill_id, skill)
 
-    def with_workspace(self, workspace: Any) -> "DeepCapabilityRegistry":
+    def with_workspace(self, workspace: Any) -> DeepCapabilityRegistry:
         """Build an equipment-local snapshot without changing deployment state."""
 
         result = copy(self)
@@ -256,6 +254,7 @@ class DeepCapabilityRegistry:
         if workspace.plugins_dir.is_symlink():
             raise ValueError("workspace plugin root must not be a symlink")
         config_snapshot = self._package_snapshot(workspace.config_dir)
+
         def read_config(name: str) -> Mapping[str, Any]:
             try:
                 raw = json.loads((config_snapshot.files.get(name, b"{}") if config_snapshot else b"{}").decode("utf-8"))
@@ -274,7 +273,9 @@ class DeepCapabilityRegistry:
             plugin_state=saved if isinstance(saved, Mapping) else {},
         )
         global_ids = {plugin.plugin_id for plugin in self.plugins}
-        local_plugins = tuple(replace(plugin, source="workspace") for plugin in local.plugins if plugin.plugin_id not in global_ids)
+        local_plugins = tuple(
+            replace(plugin, source="workspace") for plugin in local.plugins if plugin.plugin_id not in global_ids
+        )
         result.plugins = (*self.plugins, *local_plugins)
         for plugin in local_plugins:
             if plugin.enabled:
@@ -315,7 +316,7 @@ class DeepCapabilityRegistry:
         return result
 
     @classmethod
-    def load_default(cls) -> "DeepCapabilityRegistry":
+    def load_default(cls) -> DeepCapabilityRegistry:
         root = _project_root()
         config_root = Path(
             os.environ.get(
@@ -347,11 +348,7 @@ class DeepCapabilityRegistry:
         catalog = HarnessCatalog.load(self.harness_path)
         skills: dict[str, ProceduralSkill] = {}
         for skill in catalog.skills.values():
-            description = (
-                f"按顺序执行：{'；'.join(skill.steps[:3])}"
-                if skill.steps
-                else skill.skill_id
-            )
+            description = f"按顺序执行：{'；'.join(skill.steps[:3])}" if skill.steps else skill.skill_id
             applies_to = tuple(
                 tool_name
                 for tool_name, skill_ids in _DEFAULT_SKILLS_BY_TURN_TOOL.items()
@@ -372,7 +369,9 @@ class DeepCapabilityRegistry:
 
     def _read_plugin_state(self) -> dict[str, dict[str, Any]]:
         try:
-            descriptor = os.open(self.state_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+            descriptor = os.open(
+                self.state_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+            )
             with os.fdopen(descriptor, "rb") as handle:
                 if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
                     return {}
@@ -387,11 +386,7 @@ class DeepCapabilityRegistry:
         plugins = raw.get("plugins", raw)
         if not isinstance(plugins, Mapping):
             return {}
-        return {
-            str(name): dict(value)
-            for name, value in plugins.items()
-            if isinstance(value, Mapping)
-        }
+        return {str(name): dict(value) for name, value in plugins.items() if isinstance(value, Mapping)}
 
     def _discover_plugins(self) -> tuple[DeepPlugin, ...]:
         try:
@@ -468,9 +463,7 @@ class DeepCapabilityRegistry:
             mcp_servers=servers,
         )
 
-    def _plugin_skills(
-        self, plugin_id: str, snapshot: _PackageSnapshot
-    ) -> tuple[ProceduralSkill, ...]:
+    def _plugin_skills(self, plugin_id: str, snapshot: _PackageSnapshot) -> tuple[ProceduralSkill, ...]:
         rows: list[Mapping[str, Any]] = []
         catalog = snapshot.files.get("skills.yaml")
         if catalog is not None:
@@ -595,9 +588,7 @@ class DeepCapabilityRegistry:
         return requires if isinstance(requires, Mapping) else {}
 
     @staticmethod
-    def _snapshot_directory(
-        value: str, snapshot: _PackageSnapshot
-    ) -> str | None:
+    def _snapshot_directory(value: str, snapshot: _PackageSnapshot) -> str | None:
         raw = value.replace("\\", "/")
         path = PurePosixPath(raw)
         if not raw or path.is_absolute() or ".." in path.parts:
@@ -609,9 +600,7 @@ class DeepCapabilityRegistry:
         relative = path.as_posix()
         return relative if relative in snapshot.directories else None
 
-    def _skill_resources(
-        self, skill_root: str, snapshot: _PackageSnapshot
-    ) -> tuple[str, ...]:
+    def _skill_resources(self, skill_root: str, snapshot: _PackageSnapshot) -> tuple[str, ...]:
         """Index package resources without exposing or executing their contents."""
 
         resources: list[str] = []
@@ -628,9 +617,7 @@ class DeepCapabilityRegistry:
                     return tuple(resources)
         return tuple(resources)
 
-    def _plugin_mcp(
-        self, plugin_id: str, snapshot: _PackageSnapshot
-    ) -> tuple[MCPDeclaration, ...]:
+    def _plugin_mcp(self, plugin_id: str, snapshot: _PackageSnapshot) -> tuple[MCPDeclaration, ...]:
         raw_payload = snapshot.files.get("mcp.json")
         if raw_payload is None:
             return ()
@@ -825,7 +812,9 @@ class DeepCapabilityRegistry:
             raise KeyError(plugin_id)
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         lock_path = self.state_path.with_suffix(f"{self.state_path.suffix}.lock")
-        lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0), 0o600)
+        lock_fd = os.open(
+            lock_path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0), 0o600
+        )
         with _PLUGIN_STATE_LOCK, os.fdopen(lock_fd, "a+", encoding="utf-8") as lock_handle:
             if not stat.S_ISREG(os.fstat(lock_handle.fileno()).st_mode):
                 raise ValueError("plugin state lock must be a regular file")
@@ -909,9 +898,7 @@ class DeepCapabilityRegistry:
             return not skill.applies_to or bool(set(skill.applies_to) & plan_tools)
 
         selected_ids = [
-            skill_id
-            for skill_id in self.requested_skill_ids(text, requested)
-            if compatible(self.skills[skill_id])
+            skill_id for skill_id in self.requested_skill_ids(text, requested) if compatible(self.skills[skill_id])
         ]
         lowered = str(text or "").casefold()
         for skill in self.skills.values():
@@ -947,22 +934,13 @@ class DeepCapabilityRegistry:
             sections.extend(
                 [
                     f"### {skill.skill_id}: {skill.description}",
-                    "Declared method tools (advisory): "
-                    + ("、".join(skill.allowed_tools) or "none"),
+                    "Declared method tools (advisory): " + ("、".join(skill.allowed_tools) or "none"),
                     "Steps: " + " -> ".join(skill.steps),
                     "Required artifacts: " + "、".join(skill.required_artifacts),
                     "Quality gates: " + "；".join(skill.quality_gates),
                     "Stop conditions: " + "；".join(skill.stop_conditions),
-                    *(
-                        ["Skill instructions:\n" + skill.instructions]
-                        if skill.instructions
-                        else []
-                    ),
-                    *(
-                        ["Packaged resources: " + "、".join(skill.resources)]
-                        if skill.resources
-                        else []
-                    ),
+                    *(["Skill instructions:\n" + skill.instructions] if skill.instructions else []),
+                    *(["Packaged resources: " + "、".join(skill.resources)] if skill.resources else []),
                 ]
             )
         sections.append("[/Active procedural skills]")
@@ -1144,17 +1122,12 @@ def validate_workspace_capability_resource(
         }
         missing = [field for field, values in fields.items() if not values]
         if missing:
-            raise ValueError(
-                "SKILL.md procedural contract is missing: " + ", ".join(missing)
-            )
+            raise ValueError("SKILL.md procedural contract is missing: " + ", ".join(missing))
         declared_tools = _string_list(row.get("allowed_tools"), limit=32, item_limit=120)
         unknown_tools = [tool for tool in declared_tools if tool not in ALLOWED_TOOLS]
         warnings = []
         if unknown_tools:
-            warnings.append(
-                "unknown tool declarations do not grant execution permission: "
-                + ", ".join(unknown_tools)
-            )
+            warnings.append("unknown tool declarations do not grant execution permission: " + ", ".join(unknown_tools))
         return {
             **result,
             "resource_type": "procedural_skill",

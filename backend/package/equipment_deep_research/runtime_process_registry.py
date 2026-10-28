@@ -10,7 +10,7 @@ import signal
 import subprocess
 from threading import RLock
 from time import monotonic, sleep
-from typing import Iterator
+from collections.abc import Iterator
 
 
 _current_run_id: ContextVar[str] = ContextVar(
@@ -129,10 +129,7 @@ def terminate_run_process_groups(
             process_group_id,
             str(durable_groups.get(process_group_id, {}).get("command_hint", "")),
         )
-        if (
-            process_group_id not in memory_groups
-            and not _durable_group_matches(process_group_id, command_hint)
-        ):
+        if process_group_id not in memory_groups and not _durable_group_matches(process_group_id, command_hint):
             _remove_registry_entry(owner, process_group_id)
             continue
         try:
@@ -150,11 +147,7 @@ def terminate_run_process_groups(
 
     deadline = monotonic() + max(0.0, float(grace_seconds))
     while live_groups and monotonic() < deadline:
-        finished = {
-            process_group_id
-            for process_group_id in live_groups
-            if not _process_group_exists(process_group_id)
-        }
+        finished = {process_group_id for process_group_id in live_groups if not _process_group_exists(process_group_id)}
         live_groups.difference_update(finished)
         if live_groups:
             sleep(0.03)
@@ -207,8 +200,7 @@ def _registry_root() -> Path | None:
 
 def _safe_run_component(run_id: str) -> str:
     return "".join(
-        character if character.isalnum() or character in {"-", "_"} else "-"
-        for character in str(run_id)
+        character if character.isalnum() or character in {"-", "_"} else "-" for character in str(run_id)
     ).strip("-")[:128]
 
 

@@ -272,3 +272,65 @@ def test_standard_blocks_encode_history_once(monkeypatch):
     assert wire["reasoning_content"] == REASONING
     assert len(wire["tool_calls"]) == 1
     assert wire["tool_calls"][0]["id"] == "call-test"
+
+
+@pytest.mark.parametrize("repeated_usage", [False, True])
+@pytest.mark.parametrize("asynchronous", [False, True])
+async def test_streamed_usage_snapshots_are_counted_once_per_request(repeated_usage, asynchronous):
+    """真实 SDK 流合并后等于末次计量，连续请求不复用累计状态。"""
+    from platform_core.models.chat import ChatCompletionsAdapter
+
+    def respond(request):
+        base = {"id": "usage-test", "object": "chat.completion.chunk", "created": 1, "model": "test"}
+        events = []
+        for index, text in enumerate(["收", "到", ""]):
+            event = {
+                **base,
+                "choices": [{"index": 0, "delta": {"content": text}, "finish_reason": "stop" if index == 2 else None}],
+            }
+            if repeated_usage:
+                event["usage"] = {
+                    "prompt_tokens": 11,
+                    "completion_tokens": min(index + 1, 2),
+                    "total_tokens": 11 + min(index + 1, 2),
+                    "prompt_tokens_details": {"cached_tokens": 3},
+                }
+            events.append(event)
+        events.append(
+            {
+                **base,
+                "choices": [],
+                "usage": {
+                    "prompt_tokens": 11,
+                    "completion_tokens": 2,
+                    "total_tokens": 13,
+                    "prompt_tokens_details": {"cached_tokens": 3},
+                },
+            }
+        )
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            text="".join(f"data: {json.dumps(e)}\n\n" for e in events) + "data: [DONE]\n\n",
+        )
+
+    transport = httpx.MockTransport(respond)
+    model = ChatCompletionsAdapter(
+        model="test",
+        api_key="test-key",
+        base_url="https://example.test/v1",
+        stream_usage=True,
+        max_retries=0,
+        http_client=httpx.Client(transport=transport),
+        http_async_client=httpx.AsyncClient(transport=transport),
+    )
+    for _ in range(2):
+        chunks = [chunk async for chunk in model.astream("验收")] if asynchronous else list(model.stream("验收"))
+        result = chunks[0]
+        for chunk in chunks[1:]:
+            result += chunk
+        assert result.text == "收到"
+        assert result.usage_metadata["input_tokens"] == 11
+        assert result.usage_metadata["output_tokens"] == 2
+        assert result.usage_metadata["total_tokens"] == 13
+        assert result.usage_metadata["input_token_details"]["cache_read"] == 3

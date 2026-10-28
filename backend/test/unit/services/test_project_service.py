@@ -140,12 +140,16 @@ async def test_implicit_project_uses_timestamped_managed_workdir(monkeypatch, tm
 
 
 async def test_ensure_equipment_project_returns_existing_project(monkeypatch):
-    payload = {"id": "existing-project", "uid": "user-1", "name": "已有项目"}
-    existing = SimpleNamespace(to_dict=lambda: payload)
+    payload = {"id": "existing-project", "uid": "user-1", "name": "装备深研工作台 · 测试用户"}
+    existing = SimpleNamespace(name=payload["name"], to_dict=lambda: payload)
 
     class _ProjectRepository:
         def __init__(self, _db):
             pass
+
+        async def get_by_idempotency_key(self, key, uid):
+            assert key == svc.DEFAULT_EQUIPMENT_PROJECT_KEY and uid == "user-1"
+            return None
 
         async def list_selectable_for_user(self, uid):
             assert uid == "user-1"
@@ -154,17 +158,17 @@ async def test_ensure_equipment_project_returns_existing_project(monkeypatch):
     monkeypatch.setattr(svc, "ProjectRepository", _ProjectRepository)
     db = _Db()
 
-    result = await svc.ensure_equipment_project_view(uid="user-1", db=db)
+    result = await svc.ensure_equipment_project_view(uid="user-1", username="测试用户", db=db)
 
     assert result == payload
-    assert db.commits == 0
+    assert db.commits == 1
 
 
 async def test_ensure_equipment_project_creates_managed_default_when_empty(monkeypatch):
     payload = {
         "id": "default-project",
         "uid": "user-1",
-        "name": "武器装备深研",
+        "name": "装备深研工作台 · 测试用户",
         "selection_status": "selectable",
         "directory_mode": "managed",
     }
@@ -173,6 +177,10 @@ async def test_ensure_equipment_project_creates_managed_default_when_empty(monke
     class _ProjectRepository:
         def __init__(self, _db):
             pass
+
+        async def get_by_idempotency_key(self, key, uid):
+            assert key == svc.DEFAULT_EQUIPMENT_PROJECT_KEY and uid == "user-1"
+            return None
 
         async def list_selectable_for_user(self, uid):
             assert uid == "user-1"
@@ -186,13 +194,39 @@ async def test_ensure_equipment_project_creates_managed_default_when_empty(monke
     monkeypatch.setattr(svc, "create_project_record", create_project_record)
     db = _Db()
 
-    result = await svc.ensure_equipment_project_view(uid="user-1", db=db)
+    result = await svc.ensure_equipment_project_view(uid="user-1", username="测试用户", db=db)
 
     assert result == payload
-    assert captured["name"] == "武器装备深研"
+    assert captured["name"] == "装备深研工作台 · 测试用户"
     assert captured["directory_mode"] == "managed"
     assert captured["selection_status"] == "selectable"
+    assert captured["idempotency_key"] == svc.DEFAULT_EQUIPMENT_PROJECT_KEY
     assert db.commits == 1
+
+
+async def test_ensure_equipment_project_renames_legacy_default_without_recreating(monkeypatch):
+    """移除提示词中的加号时沿用既有项目身份与文件目录。"""
+    project = SimpleNamespace(id="keep-id", name="装备深研工作台+测试用户", updated_at=None)
+    project.to_dict = lambda: {"id": project.id, "name": project.name}
+
+    class _ProjectRepository:
+        def __init__(self, _db):
+            pass
+
+        async def get_by_idempotency_key(self, key, uid):
+            assert key == svc.DEFAULT_EQUIPMENT_PROJECT_KEY and uid == "user-1"
+            return None
+
+        async def list_selectable_for_user(self, uid):
+            assert uid == "user-1"
+            return [SimpleNamespace(name="其他项目"), project]
+
+    monkeypatch.setattr(svc, "ProjectRepository", _ProjectRepository)
+    db = _Db()
+    result = await svc.ensure_equipment_project_view(uid="user-1", username="测试用户", db=db)
+    assert result == {"id": "keep-id", "name": "装备深研工作台 · 测试用户"}
+    assert db.commits == 1
+    assert not db.items
 
 
 @pytest.mark.parametrize(

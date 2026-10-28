@@ -117,6 +117,11 @@ class AgentRunCreate(BaseModel):
     )
     resume: Any | None = Field(None, description="可选，恢复时传给 LangGraph 的输入载荷，非布尔值")
     created_by_run_id: str | None = Field(None, description="可选，创建本 run 的父 run ID；resume 时为被恢复的 run ID")
+    replace_message_id: int | None = Field(
+        None,
+        gt=0,
+        description="可选，编辑并替换当前线程最新一条用户消息",
+    )
     queue_policy: str = Field(
         "enqueue",
         description="排队策略：enqueue（默认排队）、reject（运行中拒绝）或 steer（优先接替）",
@@ -383,6 +388,7 @@ async def create_agent_run(
             model_spec=payload.model_spec,
             tool_approval_mode=payload.tool_approval_mode,
             queue_policy=payload.queue_policy,
+            replace_message_id=payload.replace_message_id,
         ),
         current_user=current_user,
         db=db,

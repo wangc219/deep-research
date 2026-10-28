@@ -7,7 +7,8 @@ it must not become another full research or repeated expert-review loop.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -44,13 +45,10 @@ def decide_final_audit_review(
     portfolio_gate = summary.get("portfolio_quality_gate", {})
     if not isinstance(portfolio_gate, Mapping):
         portfolio_gate = {}
-    expert_status = str(
-        portfolio_gate.get("expert_judge_status", summary.get("expert_judge_status", ""))
-        or ""
-    ).strip().lower()
-    expert_count = portfolio_gate.get(
-        "expert_assessed_count", summary.get("expert_assessed_count", 0)
+    expert_status = (
+        str(portfolio_gate.get("expert_judge_status", summary.get("expert_judge_status", "")) or "").strip().lower()
     )
+    expert_count = portfolio_gate.get("expert_assessed_count", summary.get("expert_assessed_count", 0))
     expert_present = bool(
         summary.get("expert_judge_present")
         or portfolio_gate.get("expert_judge_present")
@@ -58,9 +56,7 @@ def decide_final_audit_review(
         or expert_count
         or summary.get("dynamic_s5_passed")
     )
-    raw_passed = portfolio_gate.get(
-        "expert_judge_passed", summary.get("expert_judge_passed", False)
-    )
+    raw_passed = portfolio_gate.get("expert_judge_passed", summary.get("expert_judge_passed", False))
     expert_passed = bool(raw_passed or summary.get("dynamic_s5_passed"))
     # A failed/unfinished status must not be upgraded merely because a stale
     # boolean was persisted alongside it.
@@ -72,11 +68,7 @@ def decide_final_audit_review(
             model_review_required=False,
             expert_judge_present=True,
             expert_judge_passed=expert_passed,
-            reason=(
-                "quality_expert_judge_completed"
-                if expert_passed
-                else "quality_expert_judge_blocked_release"
-            ),
+            reason=("quality_expert_judge_completed" if expert_passed else "quality_expert_judge_blocked_release"),
         )
 
     # Dynamic swarm runs can already contain an internal innovation audit.  A
@@ -104,8 +96,12 @@ def decide_final_audit_review(
     if execution_profile_id == "optimized_v2":
         return AuditReviewDecision(False, True, True, "upstream_s5_business_judgement")
     has_deterministic_gap = deterministic_status != "approved"
-    return AuditReviewDecision(True, expert_present, expert_passed,
-        "short_model_audit_after_diagnostics" if has_deterministic_gap else "short_model_audit")
+    return AuditReviewDecision(
+        True,
+        expert_present,
+        expert_passed,
+        "short_model_audit_after_diagnostics" if has_deterministic_gap else "short_model_audit",
+    )
 
 
 def _latest_swarm_summary(trace_events: Sequence[Any]) -> dict[str, Any]:

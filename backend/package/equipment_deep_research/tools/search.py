@@ -24,6 +24,7 @@ class SearchHit:
 
 class SearchProvider(Protocol):
     name: str
+
     async def search(self, query: str, limit: int) -> list[SearchHit]: ...
 
 
@@ -66,9 +67,7 @@ class SearchAggregator:
         existing = self._in_flight.get(key)
         if existing is not None:
             return list(await asyncio.shield(existing))
-        task = asyncio.create_task(
-            self._search_uncached(query=str(query).strip(), limit=normalized_limit)
-        )
+        task = asyncio.create_task(self._search_uncached(query=str(query).strip(), limit=normalized_limit))
         self._in_flight[key] = task
         task.add_done_callback(lambda completed: self._finish_in_flight(key, completed))
         # The task is shielded so cancellation of one caller does not cancel
@@ -120,8 +119,7 @@ class SearchAggregator:
         if not ordered:
             return {}
         semaphore = asyncio.Semaphore(
-            self.max_concurrency if max_concurrency is None
-            else max(1, min(64, int(max_concurrency)))
+            self.max_concurrency if max_concurrency is None else max(1, min(64, int(max_concurrency)))
         )
 
         async def run(item: tuple[str, str]) -> tuple[str, list[SearchHit]]:
@@ -159,8 +157,12 @@ class SearchAggregator:
             for row in rows:
                 key = normalize_url(row.url)
                 previous = merged.get(key)
-                provider_names = sorted(set((previous.provider_names if previous else []) + row.provider_names + [provider.name]))
-                merged[key] = replace(row, provider_names=provider_names, rank=max(row.rank, previous.rank if previous else 0))
+                provider_names = sorted(
+                    set((previous.provider_names if previous else []) + row.provider_names + [provider.name])
+                )
+                merged[key] = replace(
+                    row, provider_names=provider_names, rank=max(row.rank, previous.rank if previous else 0)
+                )
         return sorted(
             merged.values(),
             key=lambda row: (-row.rank, -len(row.provider_names), row.url),

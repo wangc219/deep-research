@@ -104,6 +104,7 @@ class FakeRepo:
     ):
         self.claim_calls.append(
             {
+                "lease_seconds": lease_seconds,
                 "max_running": max_running,
                 "type_filter": type_filter,
                 "exclude_type": exclude_type,
@@ -406,6 +407,7 @@ async def test_equipment_task_types_use_independent_exact_capacity_pools(monkeyp
 
     assert repo.claim_calls == [
         {
+            "lease_seconds": task_service.EQUIPMENT_TASK_LEASE_SECONDS,
             "max_running": capacity,
             "type_filter": task_type,
             "exclude_type": None,
@@ -422,6 +424,13 @@ async def test_research_capacity_is_read_from_live_system_options(monkeypatch):
 
     assert await task_service.resolve_task_capacity("equipment_research") == 7
     assert await task_service.resolve_task_capacity("equipment_query_generation") == task_service.EQUIPMENT_QUERY_MAX_RUNNING
+
+
+def test_equipment_tasks_get_long_model_call_lease_without_changing_short_tasks():
+    assert task_service.resolve_task_lease_seconds("equipment_research") == 600
+    assert task_service.resolve_task_lease_seconds("equipment_query_generation") == 600
+    assert task_service.resolve_task_lease_seconds("equipment_deep_turn") == 600
+    assert task_service.resolve_task_lease_seconds("knowledge_parse") == task_service.TASK_LEASE_SECONDS
 
 
 async def test_duplicate_delivery_cannot_execute_without_claim(monkeypatch):

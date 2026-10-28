@@ -25,17 +25,13 @@ from equipment_deep_research.harness.agent_loop import (
     TurnSnapshotInput,
 )
 
-globals().update(
-    {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
-)
+globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
 def _s6_hard_timeout_enabled() -> bool:
     """Keep S6 timeout thresholds observational unless explicitly enforced."""
 
-    configured = str(
-        os.environ.get("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "0")
-    ).strip().lower()
+    configured = str(os.environ.get("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "0")).strip().lower()
     return configured in {
         "1",
         "true",
@@ -107,9 +103,7 @@ def close(host) -> None:
 
 def configure_run_budget(host, budgets: Mapping[str, Any] | None) -> None:
     with host._budget_lock:
-        host._runtime_budgets = {
-            str(key): value for key, value in dict(budgets or {}).items()
-        }
+        host._runtime_budgets = {str(key): value for key, value in dict(budgets or {}).items()}
         host._run_started_at = monotonic()
         host._budget_started_calls = 0
         host._budget_started_delivery_calls = 0
@@ -146,9 +140,7 @@ def deadline_state(host, *, priority: str) -> dict[str, Any]:
                 "elapsed_seconds": 0.0,
                 "remaining_seconds": None,
             }
-        if not bool(
-            host._runtime_budgets.get("wall_clock_deadlines_enabled", True)
-        ):
+        if not bool(host._runtime_budgets.get("wall_clock_deadlines_enabled", True)):
             return {
                 "enabled": False,
                 "mode": "normal",
@@ -181,9 +173,7 @@ def deadline_state(host, *, priority: str) -> dict[str, Any]:
                 ),
             ),
         )
-        active_deadline = (
-            delivery_deadline if priority == "delivery" else hard_deadline
-        )
+        active_deadline = delivery_deadline if priority == "delivery" else hard_deadline
         if priority == "critical" and elapsed >= hard_deadline:
             active_deadline = critical_fast_deadline
         downshift_window = max(
@@ -226,9 +216,7 @@ def deadline_adjusted_options(
 
     result = dict(options)
     no_deadline_degrade = bool(result.pop("_no_deadline_degrade", False))
-    ignore_runtime_deadline = bool(
-        result.pop("_ignore_runtime_deadline", False)
-    )
+    ignore_runtime_deadline = bool(result.pop("_ignore_runtime_deadline", False))
     # This is an explicit escape hatch for maintenance callers only.  It is
     # deliberately separate from ``_ignore_runtime_deadline``: a long-running
     # quality turn may ignore the wall-clock cutoff while still consuming its
@@ -247,15 +235,11 @@ def deadline_adjusted_options(
     if mode == "normal":
         return result, state
 
-    configured_cap = int(
-        host._runtime_budgets.get("fast_finalize_output_token_cap", 4200)
-    )
+    configured_cap = int(host._runtime_budgets.get("fast_finalize_output_token_cap", 4200))
     remaining = float(state.get("remaining_seconds") or 0.0)
     if mode == "fast_finalize":
         result["reasoning_effort"] = "low"
-        token_cap = (
-            configured_cap if priority == "delivery" else min(configured_cap, 1800)
-        )
+        token_cap = configured_cap if priority == "delivery" else min(configured_cap, 1800)
         result["max_output_tokens"] = min(
             int(result.get("max_output_tokens", token_cap)),
             token_cap,
@@ -266,11 +250,7 @@ def deadline_adjusted_options(
             result["reasoning_effort"] = "low"
         elif current_effort in {"high", "xhigh"}:
             result["reasoning_effort"] = "medium"
-        approach_cap = (
-            min(configured_cap + 800, 5200)
-            if priority == "delivery"
-            else 2600
-        )
+        approach_cap = min(configured_cap + 800, 5200) if priority == "delivery" else 2600
         result["max_output_tokens"] = min(
             int(result.get("max_output_tokens", approach_cap)),
             approach_cap,
@@ -301,10 +281,8 @@ def optional_work_allowed(
     state = host._deadline_state(priority=priority)
     if not state.get("enabled"):
         return True
-    return (
-        state.get("mode") == "normal"
-        and float(state.get("remaining_seconds") or 0.0)
-        >= max(0.0, minimum_remaining_seconds)
+    return state.get("mode") == "normal" and float(state.get("remaining_seconds") or 0.0) >= max(
+        0.0, minimum_remaining_seconds
     )
 
 
@@ -320,21 +298,17 @@ def reserve_model_call(
         if not host._runtime_budgets:
             return None
         elapsed = monotonic() - host._run_started_at
-        wall_clock_deadlines_enabled = bool(
-            host._runtime_budgets.get("wall_clock_deadlines_enabled", True)
-        ) and not ignore_runtime_deadline
+        wall_clock_deadlines_enabled = (
+            bool(host._runtime_budgets.get("wall_clock_deadlines_enabled", True)) and not ignore_runtime_deadline
+        )
         hard_deadline = float(host._runtime_budgets.get("hard_deadline_seconds", 0))
         configured_absolute = float(host._runtime_budgets.get("absolute_deadline_seconds", 0))
         absolute_deadline = min(2400.0, configured_absolute) if configured_absolute > 0 else 0.0
         if wall_clock_deadlines_enabled and absolute_deadline > 0:
             hard_deadline = min(hard_deadline, absolute_deadline)
         soft_deadline = float(host._runtime_budgets.get("soft_deadline_seconds", 0))
-        hard_calls = int(
-            host._runtime_budgets.get("maximum_model_calls_with_residuals", 10)
-        )
-        soft_calls = int(
-            host._runtime_budgets.get("maximum_model_calls", 7)
-        )
+        hard_calls = int(host._runtime_budgets.get("maximum_model_calls_with_residuals", 10))
+        soft_calls = int(host._runtime_budgets.get("maximum_model_calls", 7))
         if priority == "s6":
             s6_calls = int(
                 host._runtime_budgets.get(
@@ -351,59 +325,27 @@ def reserve_model_call(
                 raise RuntimeError("Harness v2 S6 model-call budget exhausted")
             if count_toward_model_budget:
                 host._budget_started_s6_calls += 1
-            return (
-                max(0.1, hard_deadline - elapsed)
-                if wall_clock_deadlines_enabled
-                else None
-            )
+            return max(0.1, hard_deadline - elapsed) if wall_clock_deadlines_enabled else None
         if priority == "swarm":
-            swarm_calls = int(
-                host._runtime_budgets.get("maximum_swarm_model_calls", 16)
-            )
+            swarm_calls = int(host._runtime_budgets.get("maximum_swarm_model_calls", 16))
             if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
                 raise RuntimeError("Harness v2 swarm deadline reached")
-            if (
-                count_toward_model_budget
-                and host._budget_started_swarm_calls >= swarm_calls
-            ):
-                raise RuntimeError(
-                    "Harness v2 swarm model-call budget exhausted"
-                )
+            if count_toward_model_budget and host._budget_started_swarm_calls >= swarm_calls:
+                raise RuntimeError("Harness v2 swarm model-call budget exhausted")
             if count_toward_model_budget:
                 host._budget_started_swarm_calls += 1
-            return (
-                max(0.1, hard_deadline - elapsed)
-                if wall_clock_deadlines_enabled
-                else None
-            )
+            return max(0.1, hard_deadline - elapsed) if wall_clock_deadlines_enabled else None
         if priority == "quality_gate":
-            quality_calls = int(
-                host._runtime_budgets.get(
-                    "maximum_quality_judge_model_calls", 1
-                )
-            )
+            quality_calls = int(host._runtime_budgets.get("maximum_quality_judge_model_calls", 1))
             if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
-                raise RuntimeError(
-                    "Harness v2 quality-judge deadline reached"
-                )
-            if (
-                count_toward_model_budget
-                and host._budget_started_quality_judge_calls >= quality_calls
-            ):
-                raise RuntimeError(
-                    "Harness v2 quality-judge model-call budget exhausted"
-                )
+                raise RuntimeError("Harness v2 quality-judge deadline reached")
+            if count_toward_model_budget and host._budget_started_quality_judge_calls >= quality_calls:
+                raise RuntimeError("Harness v2 quality-judge model-call budget exhausted")
             if count_toward_model_budget:
                 host._budget_started_quality_judge_calls += 1
-            return (
-                max(0.1, hard_deadline - elapsed)
-                if wall_clock_deadlines_enabled
-                else None
-            )
+            return max(0.1, hard_deadline - elapsed) if wall_clock_deadlines_enabled else None
         if priority == "delivery":
-            delivery_grace = float(
-                host._runtime_budgets.get("delivery_grace_seconds", 300)
-            )
+            delivery_grace = float(host._runtime_budgets.get("delivery_grace_seconds", 300))
             delivery_deadline = min(
                 absolute_deadline,
                 hard_deadline + max(0.0, delivery_grace),
@@ -414,11 +356,7 @@ def reserve_model_call(
             # targeted retries while ordinary delivery calls (for
             # example a legacy serial repair) should retain their smaller
             # historical allowance.
-            delivery_budget_key = (
-                "maximum_reporter_model_calls"
-                if reporter_lane
-                else "maximum_delivery_model_calls"
-            )
+            delivery_budget_key = "maximum_reporter_model_calls" if reporter_lane else "maximum_delivery_model_calls"
             delivery_calls = int(
                 host._runtime_budgets.get(
                     delivery_budget_key,
@@ -426,14 +364,8 @@ def reserve_model_call(
                 )
             )
             if wall_clock_deadlines_enabled and elapsed >= delivery_deadline:
-                raise RuntimeError(
-                    "Harness v2 delivery deadline reached; report model call may not start"
-                )
-            budget_attr = (
-                "_budget_started_reporter_calls"
-                if reporter_lane
-                else "_budget_started_delivery_calls"
-            )
+                raise RuntimeError("Harness v2 delivery deadline reached; report model call may not start")
+            budget_attr = "_budget_started_reporter_calls" if reporter_lane else "_budget_started_delivery_calls"
             budget_used = int(getattr(host, budget_attr, 0))
             if count_toward_model_budget and budget_used >= delivery_calls:
                 raise RuntimeError(
@@ -456,18 +388,12 @@ def reserve_model_call(
                 ),
             )
             calls_remain = int(getattr(host, budget_attr, 0)) < delivery_calls
-            if (
-                elapsed >= hard_deadline
-                and calls_remain
-                and remaining > retry_reserve + 30.0
-            ):
+            if elapsed >= hard_deadline and calls_remain and remaining > retry_reserve + 30.0:
                 remaining -= retry_reserve
             return max(0.1, remaining)
         if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
             if priority != "critical":
-                raise RuntimeError(
-                    "Harness v2 hard deadline reached; no new model call may start"
-                )
+                raise RuntimeError("Harness v2 hard deadline reached; no new model call may start")
             critical_fast_deadline = min(
                 absolute_deadline,
                 hard_deadline
@@ -483,17 +409,16 @@ def reserve_model_call(
             )
             if elapsed >= critical_fast_deadline:
                 raise RuntimeError(
-                    "Harness v2 critical fast-finalize deadline reached; "
-                    "use the latest complete checkpoint"
+                    "Harness v2 critical fast-finalize deadline reached; use the latest complete checkpoint"
                 )
         if count_toward_model_budget and host._budget_started_calls >= hard_calls:
             raise RuntimeError("Harness v2 model-call hard budget exhausted")
-        if count_toward_model_budget and priority != "critical" and (
-            (
-                wall_clock_deadlines_enabled
-                and elapsed >= soft_deadline
+        if (
+            count_toward_model_budget
+            and priority != "critical"
+            and (
+                (wall_clock_deadlines_enabled and elapsed >= soft_deadline) or host._budget_started_calls >= soft_calls
             )
-            or host._budget_started_calls >= soft_calls
         ):
             raise RuntimeError("Harness v2 soft budget reached; optional model call skipped")
         if count_toward_model_budget:
@@ -501,9 +426,7 @@ def reserve_model_call(
         if not wall_clock_deadlines_enabled:
             return None
         active_deadline = (
-            critical_fast_deadline
-            if priority == "critical" and elapsed >= hard_deadline
-            else hard_deadline
+            critical_fast_deadline if priority == "critical" and elapsed >= hard_deadline else hard_deadline
         )
         return max(0.1, active_deadline - elapsed)
 
@@ -691,9 +614,7 @@ def _model_visible_payload(value: Any) -> Any:
 
     if isinstance(value, Mapping):
         return {
-            key: _model_visible_payload(item)
-            for key, item in value.items()
-            if str(key) not in _RUNTIME_METADATA_KEYS
+            key: _model_visible_payload(item) for key, item in value.items() if str(key) not in _RUNTIME_METADATA_KEYS
         }
     if isinstance(value, list):
         return [_model_visible_payload(item) for item in value]
@@ -741,9 +662,7 @@ def _tool_loop_output(
     result: Any,
 ) -> tuple[str, dict[str, Any]]:
     assistant_messages = [
-        message
-        for message in result.messages[original_message_count:]
-        if message.role == "assistant"
+        message for message in result.messages[original_message_count:] if message.role == "assistant"
     ]
     if not assistant_messages:
         raise RuntimeError("function-tool loop completed without an assistant message")
@@ -777,18 +696,12 @@ async def collect_stream(
     fragments: list[str] = []
     metadata: dict[str, Any] = {}
     no_deadline_degrade = bool(options.get("_no_deadline_degrade", False))
-    ignore_runtime_deadline = bool(
-        options.get("_ignore_runtime_deadline", False)
-    )
-    exclude_from_model_budget = bool(
-        options.get("_exclude_from_model_budget", False)
-    )
+    ignore_runtime_deadline = bool(options.get("_ignore_runtime_deadline", False))
+    exclude_from_model_budget = bool(options.get("_exclude_from_model_budget", False))
     # Only body/repair generation consumes the dedicated Reporter allowance.
     # The small title editor also uses agent_id=reporter, but belongs to the
     # ordinary delivery budget and must not take a column recovery slot.
-    reporter_lane = priority == "delivery" and str(
-        (progress or {}).get("phase", "")
-    ).startswith("report_generation")
+    reporter_lane = priority == "delivery" and str((progress or {}).get("phase", "")).startswith("report_generation")
     # Reporter fan-out has its own per-run ceiling.  Resolve the run-scoped
     # gate before leasing so concurrent users cannot race on the shared gate.
     run_key = options.get("_run_id") or (progress or {}).get("run_id")
@@ -796,9 +709,7 @@ async def collect_stream(
     if reporter_lane:
         budgets = getattr(host, "_runtime_budgets", {})
         configured_reporter_concurrency = (
-            budgets.get("reporter_codex_concurrency", 12)
-            if isinstance(budgets, Mapping)
-            else 12
+            budgets.get("reporter_codex_concurrency", 12) if isinstance(budgets, Mapping) else 12
         )
         try:
             run_gate.configure_concurrency(max(1, int(configured_reporter_concurrency)))
@@ -814,18 +725,12 @@ async def collect_stream(
                     **dict(progress),
                     "priority": priority,
                     **run_gate.snapshot(),
-                }
+                },
             )
-        lease = await asyncio.to_thread(
-            run_gate.acquire,
-            priority=priority,
-        )
+        lease = await run_gate.acquire_async(priority=priority)
     try:
         count_toward_model_budget = (
-            (
-                not isinstance(options.get("web_search"), Mapping)
-                or priority in {"swarm", "s6"}
-            )
+            (not isinstance(options.get("web_search"), Mapping) or priority in {"swarm", "s6"})
             # ``_ignore_runtime_deadline`` only disables the wall-clock
             # cancellation path.  It must not turn dynamic specialist or
             # S6 repair attempts into unmetered model calls.  Callers that
@@ -857,15 +762,16 @@ async def collect_stream(
         # reasoning for long evidence prompts, so use its supported
         # provider-neutral switch only for baseline discovery/analysis.  The
         # S3-S6 creative and synthesis phases keep their normal reasoning.
-        is_chat_completions = (
-            getattr(provider, "provider_type", "") == "chat_completions"
-        )
-        current_phase = str(progress.get("phase", "")) if progress else ""
+        is_chat_completions = getattr(provider, "provider_type", "") == "chat_completions"
+        current_phase = str(stream_options.get("phase") or (progress or {}).get("phase") or "")
+        if current_phase:
+            stream_options["phase"] = current_phase
         if is_chat_completions and (
             current_phase
             in {
                 "web_discovery_open",
                 "web_discovery_fast",
+                "source_anchor_reasoning",
                 "evidence_analysis",
                 # S5 is a compact, contract-bearing JSON judgement.  DeepSeek
                 # reasoning models can otherwise spend the entire max-token
@@ -887,9 +793,7 @@ async def collect_stream(
         ):
             stream_options["_disable_hidden_reasoning"] = True
         tool_definitions = tuple(tools)
-        use_function_tool_loop = bool(tool_definitions) and _supports_function_tools(
-            provider
-        )
+        use_function_tool_loop = bool(tool_definitions) and _supports_function_tools(provider)
         tool_permissions: Mapping[str, Any] = {}
         if use_function_tool_loop:
             # Function tools are always offered with the provider's default
@@ -911,24 +815,15 @@ async def collect_stream(
                 stream_options["_fairness_key"] = run_id
                 stream_options["_audit_run_id"] = run_id
                 stream_options["_audit_agent_id"] = str(
-                    audit_progress.get("agent_instance_id")
-                    or audit_progress.get("agent_id")
-                    or "unattributed-agent"
+                    audit_progress.get("agent_instance_id") or audit_progress.get("agent_id") or "unattributed-agent"
                 )
-                stream_options["_audit_phase"] = str(
-                    audit_progress.get("phase") or "model-turn"
-                )
+                stream_options["_audit_phase"] = str(audit_progress.get("phase") or "model-turn")
                 stream_options["_audit_call_purpose"] = str(
-                    audit_progress.get("current_step")
-                    or audit_progress.get("lane")
-                    or ""
+                    audit_progress.get("current_step") or audit_progress.get("lane") or ""
                 )
     except BaseException:
         run_gate.release(0.0, success=False)
         raise
-    if isinstance(options, dict):
-        options.clear()
-        options.update(stream_options)
     if progress:
         host._emit_model_progress(
             progress_family,
@@ -939,7 +834,7 @@ async def collect_stream(
                 "queue_wait_seconds": lease.queue_wait_seconds,
                 "concurrency_limit": lease.concurrency_limit,
                 "active_calls": lease.active_calls,
-            }
+            },
         )
     started_at = monotonic()
     success = False
@@ -974,7 +869,7 @@ async def collect_stream(
                             "elapsed_seconds": round(monotonic() - started_at, 1),
                             "concurrency_limit": lease.concurrency_limit,
                             "active_calls": run_gate.snapshot()["active"],
-                        }
+                        },
                     )
 
         heartbeat_task = asyncio.create_task(emit_heartbeat())
@@ -1014,10 +909,7 @@ async def collect_stream(
                         )
 
                     run_id = str(
-                        stream_options.get("_audit_run_id")
-                        or stream_options.get("_run_id")
-                        or run_key
-                        or "run"
+                        stream_options.get("_audit_run_id") or stream_options.get("_run_id") or run_key or "run"
                     )
                     agent_id = str(
                         stream_options.get("_audit_agent_id")
@@ -1039,20 +931,14 @@ async def collect_stream(
                         ),
                     )
                     if loop_result.status == "failed":
-                        raise RuntimeError(
-                            loop_result.error or "function-tool loop failed"
-                        )
+                        raise RuntimeError(loop_result.error or "function-tool loop failed")
                     text, metadata = _tool_loop_output(len(messages), loop_result)
                     fragments = [text]
                 else:
                     async for event in provider.stream(messages, [], stream_options):
                         if event.event_type == "text_delta":
                             fragments.append(event.delta)
-                        elif (
-                            event.event_type == "final"
-                            and event.final_turn
-                            and event.final_turn.text
-                        ):
+                        elif event.event_type == "final" and event.final_turn and event.final_turn.text:
                             metadata = dict(event.final_turn.metadata)
                             metadata["usage"] = dict(event.final_turn.usage)
                             metadata["finish_reason"] = event.final_turn.finish_reason
@@ -1064,11 +950,7 @@ async def collect_stream(
                             metadata["finish_reason"] = event.final_turn.finish_reason
         except TimeoutError:
             partial = _trim_deadline_partial_text("".join(fragments))
-            if (
-                no_deadline_degrade
-                or priority != "delivery"
-                or len(partial) < 1200
-            ):
+            if no_deadline_degrade or priority != "delivery" or len(partial) < 1200:
                 raise
             fragments = [partial]
             metadata["finish_reason"] = "deadline_partial"
@@ -1077,6 +959,10 @@ async def collect_stream(
         metadata.setdefault("concurrency_limit", lease.concurrency_limit)
         metadata.setdefault("active_calls_at_start", lease.active_calls)
         metadata.setdefault("priority", lease.priority)
+        # Report effective budget settings without mutating reusable caller
+        # options or copying private provider/audit fields into the result.
+        metadata["effective_reasoning_effort"] = str(stream_options.get("reasoning_effort", ""))
+        metadata["effective_max_output_tokens"] = int(stream_options.get("max_output_tokens", 0) or 0)
         metadata.setdefault("deadline_mode", deadline_state.get("mode", "normal"))
         metadata.setdefault(
             "deadline_remaining_seconds",
@@ -1087,14 +973,8 @@ async def collect_stream(
             if isinstance(usage, Mapping):
                 raw_total = usage.get("total_tokens")
                 if raw_total is None:
-                    raw_total = (
-                        usage.get("input_tokens", usage.get("prompt_tokens", 0))
-                        or 0
-                    ) + (
-                        usage.get(
-                            "output_tokens", usage.get("completion_tokens", 0)
-                        )
-                        or 0
+                    raw_total = (usage.get("input_tokens", usage.get("prompt_tokens", 0)) or 0) + (
+                        usage.get("output_tokens", usage.get("completion_tokens", 0)) or 0
                     )
                 try:
                     consumed_tokens = max(0, int(raw_total or 0))
@@ -1103,9 +983,7 @@ async def collect_stream(
                 if consumed_tokens:
                     with host._budget_lock:
                         token_counter = (
-                            "_budget_consumed_s6_tokens"
-                            if priority == "s6"
-                            else "_budget_consumed_swarm_tokens"
+                            "_budget_consumed_s6_tokens" if priority == "s6" else "_budget_consumed_swarm_tokens"
                         )
                         setattr(
                             host,
@@ -1131,7 +1009,7 @@ async def collect_stream(
                     "queue_wait_seconds": lease.queue_wait_seconds,
                     "elapsed_seconds": round(elapsed, 3),
                     "success": success,
-                }
+                },
             )
     if not isinstance(metadata.get("elapsed_seconds"), (int, float)):
         metadata["elapsed_seconds"] = round(elapsed, 3)
@@ -1159,8 +1037,7 @@ def provider_for(
     profile_id = str(provider_profile or "").strip() or swarm_profile_id(agent_id, payload)
     capabilities = getattr(base_provider, "capabilities", lambda: None)()
     supports_isolation = bool(
-        getattr(capabilities, "isolated_sessions", False)
-        or getattr(host, "supports_isolated_sessions", False)
+        getattr(capabilities, "isolated_sessions", False) or getattr(host, "supports_isolated_sessions", False)
     )
     if profile_id and callable(profile_factory) and scoped_id:
         cache_key = f"profile:{profile_id}:{agent_id}:{scoped_id}"
@@ -1226,7 +1103,7 @@ def _normalize_discovery_responses_url(value: str) -> str:
     if path.endswith("/responses"):
         normalized_path = path or "/responses"
     elif path.endswith("/chat/completions"):
-        normalized_path = f"{path[:-len('/chat/completions')]}/responses"
+        normalized_path = f"{path[: -len('/chat/completions')]}/responses"
         if not normalized_path.startswith("/"):
             normalized_path = f"/{normalized_path}"
     else:
@@ -1285,12 +1162,8 @@ def build_discovery_provider(host) -> ModelProvider | None:
         if not selected_model or str(env_value).strip() != selected_model:
             continue
         token = env_name[len("EQUIPMENT_DR_") : -len("_MODEL")]
-        candidate_base_url = os.environ.get(
-            f"EQUIPMENT_DR_{token}_BASE_URL", ""
-        ).strip()
-        candidate_key_env = os.environ.get(
-            f"EQUIPMENT_DR_{token}_API_KEY_ENV", f"{token}_API_KEY"
-        ).strip()
+        candidate_base_url = os.environ.get(f"EQUIPMENT_DR_{token}_BASE_URL", "").strip()
+        candidate_key_env = os.environ.get(f"EQUIPMENT_DR_{token}_API_KEY_ENV", f"{token}_API_KEY").strip()
         if candidate_base_url and candidate_key_env:
             matched_profiles.append((token, candidate_base_url, candidate_key_env))
     if matched_profiles:
@@ -1329,9 +1202,7 @@ def build_discovery_provider(host) -> ModelProvider | None:
             model=model,
             base_url=endpoint,
             api_key=api_key,
-            timeout_seconds=int(
-                os.environ.get("EQUIPMENT_DR_DISCOVERY_TIMEOUT_SECONDS", "300")
-            ),
+            timeout_seconds=int(os.environ.get("EQUIPMENT_DR_DISCOVERY_TIMEOUT_SECONDS", "300")),
         )
     except Exception:
         return None
@@ -1366,8 +1237,8 @@ def model_call_metric(
         "execution_backend": str(snapshot.get("execution_backend", "")),
         "process_isolation": str(snapshot.get("process_isolation", "")),
         "model": str(snapshot.get("model", "")),
-        "reasoning_effort": str(options.get("reasoning_effort", "")),
-        "max_output_tokens": int(options.get("max_output_tokens", 0) or 0),
+        "reasoning_effort": str(metadata.get("effective_reasoning_effort", options.get("reasoning_effort", ""))),
+        "max_output_tokens": int(metadata.get("effective_max_output_tokens", options.get("max_output_tokens", 0)) or 0),
         "elapsed_seconds": metadata.get("elapsed_seconds"),
         "latency_ms": metadata.get("latency_ms")
         if metadata.get("latency_ms") is not None
@@ -1391,22 +1262,16 @@ def model_call_metric(
             (usage.get("input_tokens", usage.get("prompt_tokens", 0)) or 0)
             + (usage.get("output_tokens", usage.get("completion_tokens", 0)) or 0)
         ),
-        "cost_usd": metadata.get(
-            "cost_usd", metadata.get("estimated_cost_usd")
-        ),
+        "cost_usd": metadata.get("cost_usd", metadata.get("estimated_cost_usd")),
         "finish_reason": metadata.get("finish_reason"),
         "fallback_activated": bool(metadata.get("fallback_activated")),
         "fallback_reason": str(metadata.get("fallback_reason", "")),
         "fallback_provider": dict(metadata.get("fallback_provider", {}) or {})
         if isinstance(metadata.get("fallback_provider"), Mapping)
         else {},
-        "codex_transcript_paths": list(
-            metadata.get("codex_transcript_paths", []) or []
-        ),
+        "codex_transcript_paths": list(metadata.get("codex_transcript_paths", []) or []),
         "deadline_mode": metadata.get("deadline_mode", "normal"),
-        "deadline_remaining_seconds": metadata.get(
-            "deadline_remaining_seconds"
-        ),
+        "deadline_remaining_seconds": metadata.get("deadline_remaining_seconds"),
         "deadline_partial": bool(metadata.get("deadline_partial")),
     }
 
@@ -1429,11 +1294,7 @@ async def run_core_json(
     provider_schema = None if phase == "blueprint_design" else output_schema
     return await host._run_core_text(
         agent_id,
-        system
-        + " "
-        + load_dynamic_winning_prompt(
-            "common", section="runtime.output_schema_suffix"
-        ),
+        system + " " + load_dynamic_winning_prompt("common", section="runtime.output_schema_suffix"),
         {"input": payload},
         max_output_tokens,
         phase=phase,
@@ -1453,15 +1314,9 @@ async def run_core_text(
 ) -> str:
     agent = host.agent_definitions.get(agent_id)
     configured_max_tokens = (
-        int(agent.model_profile.get("max_output_tokens", max_output_tokens))
-        if agent is not None
-        else max_output_tokens
+        int(agent.model_profile.get("max_output_tokens", max_output_tokens)) if agent is not None else max_output_tokens
     )
-    configured_effort = (
-        str(agent.model_profile.get("reasoning_effort", "high"))
-        if agent is not None
-        else "high"
-    )
+    configured_effort = str(agent.model_profile.get("reasoning_effort", "high")) if agent is not None else "high"
     options = {
         # Keep the phase in the internal provider envelope.  Prompt adapters
         # use it to apply column-specific retrieval guidance, while the
@@ -1511,14 +1366,10 @@ async def run_core_text(
         # max_output_tokens value while the final synthesizer can use the full
         # five-column allowance.
         try:
-            deep_timeout = int(
-                os.environ.get("EQUIPMENT_DR_DEEP_TIMEOUT_SECONDS", "300")
-            )
+            deep_timeout = int(os.environ.get("EQUIPMENT_DR_DEEP_TIMEOUT_SECONDS", "300"))
         except ValueError:
             deep_timeout = 300
-        deep_reasoning_effort = os.environ.get(
-            "EQUIPMENT_DR_DEEP_REASONING_EFFORT", "medium"
-        ).strip().lower()
+        deep_reasoning_effort = os.environ.get("EQUIPMENT_DR_DEEP_REASONING_EFFORT", "medium").strip().lower()
         if deep_reasoning_effort not in {"low", "medium", "high", "xhigh"}:
             deep_reasoning_effort = "medium"
         options.update(
@@ -1557,16 +1408,12 @@ async def run_core_text(
             )
             timeout_default = 600 if phase.endswith("_retry") else 900
             try:
-                synthesis_timeout = int(
-                    os.environ.get(timeout_env, str(timeout_default))
-                )
+                synthesis_timeout = int(os.environ.get(timeout_env, str(timeout_default)))
             except ValueError:
                 synthesis_timeout = timeout_default
             options.update(
                 {
-                    "_provider_timeout_seconds": max(
-                        120, min(3600, synthesis_timeout)
-                    ),
+                    "_provider_timeout_seconds": max(120, min(3600, synthesis_timeout)),
                     "_allow_extended_provider_timeout": True,
                     # S6 quality work must not be killed at the former
                     # council-wide 180-second wall.  The application streams
@@ -1610,9 +1457,7 @@ async def run_core_text(
                     technology_timeout = 180
                 options.update(
                     {
-                        "_provider_timeout_seconds": max(
-                            45, min(300, technology_timeout)
-                        ),
+                        "_provider_timeout_seconds": max(45, min(300, technology_timeout)),
                         "_disable_provider_timeout": False,
                     }
                 )
@@ -1621,10 +1466,7 @@ async def run_core_text(
                 # but they must not turn search availability into a hard
                 # publication gate or ask the model to expose a failure notice
                 # in prose.
-                if not any(
-                    phase.endswith(suffix)
-                    for suffix in ("_retry", "_model_recovery", "_offline_recovery")
-                ):
+                if not any(phase.endswith(suffix) for suffix in ("_retry", "_model_recovery", "_offline_recovery")):
                     options.update(
                         {
                             "web_search": {
@@ -1719,9 +1561,7 @@ async def run_core_text(
             if not isinstance(attempt_payload, Mapping):
                 break
             if "portrait_module_attempt" in attempt_payload:
-                portrait_module_attempt_value = attempt_payload.get(
-                    "portrait_module_attempt"
-                )
+                portrait_module_attempt_value = attempt_payload.get("portrait_module_attempt")
                 break
             nested_attempt_payload = attempt_payload.get("input")
             if not isinstance(nested_attempt_payload, Mapping):
@@ -1748,9 +1588,7 @@ async def run_core_text(
                 technology_timeout = 180
             options.update(
                 {
-                    "_provider_timeout_seconds": max(
-                        45, min(300, technology_timeout)
-                    ),
+                    "_provider_timeout_seconds": max(45, min(300, technology_timeout)),
                     "_disable_provider_timeout": False,
                 }
             )
@@ -1778,9 +1616,7 @@ async def run_core_text(
                     "require_web_search": False,
                 }
             )
-            research_knowledge_tools = tuple(
-                getattr(host, "research_knowledge_tools", ()) or ()
-            )
+            research_knowledge_tools = tuple(getattr(host, "research_knowledge_tools", ()) or ())
     elif phase.startswith("winning_s6_parallel_card") and phase.endswith("_spine"):
         options.update(
             {
@@ -1790,11 +1626,16 @@ async def run_core_text(
                 "reasoning_effort": os.environ.get(
                     "EQUIPMENT_DR_S6_SPINE_REASONING_EFFORT",
                     "medium",
-                ).strip().lower()
+                )
+                .strip()
+                .lower()
                 if os.environ.get(
                     "EQUIPMENT_DR_S6_SPINE_REASONING_EFFORT",
                     "medium",
-                ).strip().lower() in {"low", "medium", "high", "xhigh"}
+                )
+                .strip()
+                .lower()
+                in {"low", "medium", "high", "xhigh"}
                 else "medium",
                 "model_verbosity": "low",
                 "_provider_timeout_seconds": _s6_timeout_threshold(
@@ -1910,7 +1751,9 @@ async def run_core_text(
             {
                 "reasoning_effort": "low",
                 "model_verbosity": "low",
-                "_provider_timeout_seconds": max(120, int(os.environ.get("EQUIPMENT_DR_S6_BATCH_REPAIR_TIMEOUT_SECONDS", "240"))),
+                "_provider_timeout_seconds": max(
+                    120, int(os.environ.get("EQUIPMENT_DR_S6_BATCH_REPAIR_TIMEOUT_SECONDS", "240"))
+                ),
                 "_disable_provider_timeout": False,
                 "_provider_retry_attempts": 1,
                 "_no_deadline_degrade": True,
@@ -1920,11 +1763,7 @@ async def run_core_text(
     elif agent_id == "winning_s6_image" or phase.startswith("winning_s6"):
         # Regular S6 first drafts share the swarm call budget.  Only
         # repair/resume/image recovery may ignore the wall-clock deadline.
-        ignore_deadline = (
-            agent_id == "winning_s6_image"
-            or "repair" in phase
-            or "resume" in phase
-        )
+        ignore_deadline = agent_id == "winning_s6_image" or "repair" in phase or "resume" in phase
         options.update(
             {
                 "reasoning_effort": "xhigh",
@@ -1934,9 +1773,7 @@ async def run_core_text(
                 "_ignore_runtime_deadline": ignore_deadline,
             }
         )
-        if agent_id == "winning_s6_image" and phase.startswith(
-            "winning_s6_image"
-        ):
+        if agent_id == "winning_s6_image" and phase.startswith("winning_s6_image"):
             # Standard/non-parallel S6 writes all five card columns in one
             # turn, including the Markdown-owned technology-realization
             # column, so it needs the same governed frontier-tech retrieval.
@@ -2033,17 +1870,17 @@ async def run_core_text(
             }
         )
     elif phase.startswith("winning_swarm_dynamic_"):
-        # Dynamic specialists are redundant and quality-gated. Allow one
-        # provider-level retry so a transient relay/CLI failure does not
-        # invalidate an otherwise healthy swarm instance.
+        # Dynamic specialists are redundant and quality-gated. Keep every
+        # branch bounded so one stalled provider response cannot hold the
+        # whole mission graph indefinitely; the orchestration layer can
+        # continue from the remaining accepted branches.
         options.update(
             {
-                "_provider_timeout_seconds": max(120, int(os.environ.get("EQUIPMENT_DR_SWARM_CALL_TIMEOUT_SECONDS", "480"))),
-                "_disable_provider_timeout": True,
-                # A dynamic specialist is a resumable, isolated branch.
-                # The run-level wall-clock budget is an observability
-                # signal for this branch, never a reason to kill a live
-                # Codex turn or fail the whole mission graph.
+                "_provider_timeout_seconds": max(
+                    120,
+                    int(os.environ.get("EQUIPMENT_DR_SWARM_CALL_TIMEOUT_SECONDS", "480")),
+                ),
+                "_disable_provider_timeout": False,
                 "_ignore_runtime_deadline": True,
                 "_provider_retry_attempts": 2,
             }
@@ -2128,9 +1965,7 @@ async def run_core_text(
     )
     if not winning_steps and phase.startswith("winning_swarm_dynamic"):
         embedded_input = payload.get("input", payload)
-        embedded_input = (
-            embedded_input if isinstance(embedded_input, Mapping) else {}
-        )
+        embedded_input = embedded_input if isinstance(embedded_input, Mapping) else {}
         mission_node = str(embedded_input.get("mission_node", "")).upper()
         match = re.fullmatch(r"S([3-6])", mission_node)
         if match:
@@ -2146,18 +1981,14 @@ async def run_core_text(
         }
         step_label = "/".join(f"S{step}" for step in winning_steps)
         current_step = (
-            f"{step_label} 联合推理"
-            if len(winning_steps) > 1
-            else f"{step_label} {step_names[winning_steps[0]]}"
+            f"{step_label} 联合推理" if len(winning_steps) > 1 else f"{step_label} {step_names[winning_steps[0]]}"
         )
         if "repair" in phase:
             current_step += "修复"
         progress = {
             "run_id": str(embedded.get("run_id", "")),
             "agent_id": agent_id,
-            "agent_instance_id": str(
-                embedded.get("agent_instance_id", "")
-            ),
+            "agent_instance_id": str(embedded.get("agent_instance_id", "")),
             "mission_node": str(embedded.get("mission_node", "")),
             "batch": embedded.get("batch"),
             "phase": phase,
@@ -2174,15 +2005,9 @@ async def run_core_text(
     )
     if progress and provider_isolation_id:
         provider_snapshot = getattr(selected_provider, "snapshot", lambda: {})()
-        progress["context_isolation"] = str(
-            provider_snapshot.get("context_isolation") or provider_isolation_id
-        )
-        progress["execution_backend"] = str(
-            provider_snapshot.get("execution_backend") or "independent_codex_cli"
-        )
-        progress["process_isolation"] = str(
-            provider_snapshot.get("process_isolation") or "new_process_per_turn"
-        )
+        progress["context_isolation"] = str(provider_snapshot.get("context_isolation") or provider_isolation_id)
+        progress["execution_backend"] = str(provider_snapshot.get("execution_backend") or "independent_codex_cli")
+        progress["process_isolation"] = str(provider_snapshot.get("process_isolation") or "new_process_per_turn")
     provider_system = system
     if research_knowledge_tools:
         provider_system += (
@@ -2283,16 +2108,12 @@ def runtime_messages(
     dynamic_winning = is_dynamic_winning_payload(payload)
     codex_skill_rule = ""
     if host.provider_kind == "codex_cli":
-        codex_skill_rule = load_dynamic_winning_prompt(
-            "common", section="runtime.codex_skill_rule"
-        )
+        codex_skill_rule = load_dynamic_winning_prompt("common", section="runtime.codex_skill_rule")
         if agent_id.startswith("winning") or phase.startswith("winning"):
             codex_skill_rule += " " + load_dynamic_winning_prompt(
                 "common", section="runtime.codex_winning_skill_suffix"
             )
-    isolated_preamble = load_dynamic_winning_prompt(
-        "common", section="runtime.isolated_preamble"
-    )
+    isolated_preamble = load_dynamic_winning_prompt("common", section="runtime.isolated_preamble")
     # Blueprint design is a model routing decision, not a workspace task.
     # Codex skill instructions and process-isolation prose add tokens and can
     # trigger unnecessary tool/runtime planning before the model reads the
@@ -2306,9 +2127,7 @@ def runtime_messages(
             + isolated_preamble
             + system
             + " "
-            + load_dynamic_winning_prompt(
-                "common", section="runtime.dynamic_suffix"
-            )
+            + load_dynamic_winning_prompt("common", section="runtime.dynamic_suffix")
         )
     elif aggressive_compaction:
         system_message = (
@@ -2316,9 +2135,7 @@ def runtime_messages(
             + isolated_preamble
             + system
             + " "
-            + load_dynamic_winning_prompt(
-                "common", section="runtime.aggressive_suffix"
-            )
+            + load_dynamic_winning_prompt("common", section="runtime.aggressive_suffix")
         )
     else:
         system_message = (
@@ -2326,14 +2143,10 @@ def runtime_messages(
             + isolated_preamble
             + system
             + " "
-            + load_dynamic_winning_prompt(
-                "common", section="runtime.standard_suffix"
-            )
+            + load_dynamic_winning_prompt("common", section="runtime.standard_suffix")
         )
         if quality_profile:
-            system_message += " " + load_dynamic_winning_prompt(
-                "common", section="runtime.quality_suffix"
-            )
+            system_message += " " + load_dynamic_winning_prompt("common", section="runtime.quality_suffix")
     model_payload = _model_visible_payload(payload)
     return [
         ModelMessage(

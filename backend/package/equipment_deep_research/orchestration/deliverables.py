@@ -60,25 +60,49 @@ BRANCH_DELIVERABLE_PROFILES: dict[str, dict[str, Any]] = {
         "name": "对手动向牵引发现",
         "required_sections": ["对手变化规律", "威胁形成场景", "对冲能力与装备建议", "装备能力需求图像（需求卡片）"],
         "targets": {},
-        "product_keys": ["threat_patterns", "future_scenarios", "capability_domains", "equipment_forms", "demand_cards"],
+        "product_keys": [
+            "threat_patterns",
+            "future_scenarios",
+            "capability_domains",
+            "equipment_forms",
+            "demand_cards",
+        ],
     },
     "F": {
         "name": "体系对抗博弈发现",
         "required_sections": ["体系脆弱性规律", "级联失效场景", "补链强链能力组合", "装备能力需求图像（需求卡片）"],
         "targets": {},
-        "product_keys": ["system_vulnerabilities", "future_scenarios", "capability_domains", "equipment_forms", "demand_cards"],
+        "product_keys": [
+            "system_vulnerabilities",
+            "future_scenarios",
+            "capability_domains",
+            "equipment_forms",
+            "demand_cards",
+        ],
     },
     "G": {
         "name": "跨域融合发现",
         "required_sections": ["跨域缝隙图谱", "协同模式组合", "接口与装备形态建议", "装备能力需求图像（需求卡片）"],
         "targets": {},
-        "product_keys": ["cross_domain_gaps", "tactic_combinations", "capability_indicators", "equipment_forms", "demand_cards"],
+        "product_keys": [
+            "cross_domain_gaps",
+            "tactic_combinations",
+            "capability_indicators",
+            "equipment_forms",
+            "demand_cards",
+        ],
     },
     "H": {
         "name": "非传统安全牵引",
         "required_sections": ["新型威胁画像", "高置信场景", "韧性与非致命装备需求", "装备能力需求图像（需求卡片）"],
         "targets": {},
-        "product_keys": ["emerging_threat_profiles", "future_scenarios", "capability_domains", "equipment_forms", "demand_cards"],
+        "product_keys": [
+            "emerging_threat_profiles",
+            "future_scenarios",
+            "capability_domains",
+            "equipment_forms",
+            "demand_cards",
+        ],
     },
 }
 
@@ -421,16 +445,9 @@ def _supplement_a_branch_products(
     does not create extra equipment candidates or performance claims.
     """
 
-    merged = {
-        str(key): _text_items(value, limit=80)
-        for key, value in products.items()
-    }
+    merged = {str(key): _text_items(value, limit=80) for key, value in products.items()}
     accepted = [
-        image
-        for image in images
-        if image.evidence_ids
-        and image.name.strip()
-        and image.operational_mechanism.strip()
+        image for image in images if image.evidence_ids and image.name.strip() and image.operational_mechanism.strip()
     ]
     if not 5 <= len(accepted) <= 7:
         return merged
@@ -457,30 +474,18 @@ def _supplement_a_branch_products(
         if value
     )
     derived_domains = [
-        label
-        for label, markers in _A_CAPABILITY_DOMAIN_RULES
-        if any(marker in corpus for marker in markers)
+        label for label, markers in _A_CAPABILITY_DOMAIN_RULES if any(marker in corpus for marker in markers)
     ]
     if len(derived_domains) < 8:
-        derived_domains.extend(
-            image.equipment_category
-            for image in accepted
-            if image.equipment_category.strip()
-        )
+        derived_domains.extend(image.equipment_category for image in accepted if image.equipment_category.strip())
 
     supplements = {
         "tactic_concepts": [
-            f"{image.name}：{image.source_winning_logic}"
-            for image in accepted
-            if image.source_winning_logic.strip()
+            f"{image.name}：{image.source_winning_logic}" for image in accepted if image.source_winning_logic.strip()
         ][:3],
         "tactic_combinations": [
             f"{image.name}：{image.operational_mechanism}"
-            + (
-                f"；杀伤链贡献为{image.strike_chain_contribution}"
-                if image.strike_chain_contribution.strip()
-                else ""
-            )
+            + (f"；杀伤链贡献为{image.strike_chain_contribution}" if image.strike_chain_contribution.strip() else "")
             for image in accepted
         ][:5],
         "capability_domains": _unique(derived_domains)[:8],
@@ -496,24 +501,17 @@ def _supplement_a_branch_products(
                 "生存、抗扰与失效判据",
             )
         ][:30],
-        "equipment_forms": [
-            f"{image.name}：{image.equipment_form or image.equipment_category}"
-            for image in accepted
-        ],
+        "equipment_forms": [f"{image.name}：{image.equipment_form or image.equipment_category}" for image in accepted],
     }
     for key, rows in supplements.items():
         merged[key] = _unique([*merged.get(key, []), *rows])
     return merged
 
 
-def render_intermediate_agent_analysis(
-    *, topic: str, branch: str, store: DomainStore
-) -> str:
+def render_intermediate_agent_analysis(*, topic: str, branch: str, store: DomainStore) -> str:
     lines: list[str] = []
     packets = [
-        packet
-        for packet in store.baseline_packets.values()
-        if getattr(packet, "admission_status", "") != "rejected"
+        packet for packet in store.baseline_packets.values() if getattr(packet, "admission_status", "") != "rejected"
     ]
     if not packets:
         lines.extend(["当前没有可发布的专业研究结论。", ""])
@@ -586,11 +584,7 @@ def branch_report_lines(branch_output: Mapping[str, Any]) -> list[str]:
         lines.append(f"### {section}")
         lines.append("")
         keys = _section_keys(str(branch_output.get("branch", "A")), section)
-        values = [
-            item
-            for key in keys
-            for item in _reportable_product_items(key, products.get(key))
-        ]
+        values = [item for key in keys for item in _reportable_product_items(key, products.get(key))]
         if values:
             for index, value in enumerate(values, start=1):
                 lines.extend([f"**判断 {index}**　{value}", ""])
@@ -615,13 +609,8 @@ def _demand_card(image: CapabilityImageItem) -> dict[str, Any]:
         "capability_id": image.capability_id,
         "weapon_equipment": _weapon_equipment_card_name(image),
         "equipment_category": image.equipment_category,
-        "equipment_configuration": image.equipment_form
-        or image.equipment_category,
-        "development_mode": (
-            "现役武器装备升级"
-            if image.capability_type == "upgrade"
-            else "新研武器装备"
-        ),
+        "equipment_configuration": image.equipment_form or image.equipment_category,
+        "development_mode": ("现役武器装备升级" if image.capability_type == "upgrade" else "新研武器装备"),
         "priority": image.priority,
         "key_indicators": _demand_card_indicators(image),
         "supporting_scenarios": [image.related_scenario],
@@ -695,11 +684,7 @@ def _demand_card_indicators(image: CapabilityImageItem) -> list[str]:
     )
     indicators: list[str] = []
     for match in matches:
-        indicators.extend(
-            item.strip()
-            for item in re.split(r"[、，,]", match)
-            if item.strip()
-        )
+        indicators.extend(item.strip() for item in re.split(r"[、，,]", match) if item.strip())
     return _unique(indicators)[:6]
 
 
@@ -717,34 +702,18 @@ def _supplement_specialized_branch_products(
     new equipment direction, performance value, source, or conclusion.
     """
 
-    merged = {
-        str(key): _text_items(value, limit=80)
-        for key, value in products.items()
-    }
+    merged = {str(key): _text_items(value, limit=80) for key, value in products.items()}
 
     def existing_or(key: str, values: Iterable[Any], *, limit: int = 60) -> None:
         if merged.get(key):
             return
-        merged[key] = _unique(
-            text
-            for value in values
-            for text in _text_items(value, limit=limit)
-            if text
-        )[:limit]
+        merged[key] = _unique(text for value in values for text in _text_items(value, limit=limit) if text)[:limit]
 
     forms = [image.equipment_form or image.equipment_category for image in images]
-    scenarios = [
-        image.foresight
-        or next(iter(image.risk_boundaries), "")
-        or image.related_scenario
-        for image in images
-    ]
+    scenarios = [image.foresight or next(iter(image.risk_boundaries), "") or image.related_scenario for image in images]
     gaps = [image.capability_gap or image.problem_statement for image in images]
     capability_domains = [
-        image.mission_effect
-        or image.capability_outcome
-        or image.equipment_category
-        for image in images
+        image.mission_effect or image.capability_outcome or image.equipment_category for image in images
     ]
 
     existing_or("equipment_forms", forms)
@@ -777,11 +746,7 @@ def _supplement_specialized_branch_products(
         )
         existing_or(
             "capability_indicators",
-            (
-                indicator
-                for image in images
-                for indicator in _demand_card_indicators(image)
-            ),
+            (indicator for image in images for indicator in _demand_card_indicators(image)),
         )
     elif branch == "H":
         existing_or("emerging_threat_profiles", gaps)
@@ -884,10 +849,7 @@ def _branch_output(
     for key, value in structured_products.items():
         if key in profile["product_keys"]:
             products[key] = value
-    actual_counts = {
-        key: len(products.get(key, []))
-        for key in profile.get("targets", {})
-    }
+    actual_counts = {key: len(products.get(key, [])) for key in profile.get("targets", {})}
     completion = {
         key: {"target": target, "actual": actual_counts.get(key, 0), "met": actual_counts.get(key, 0) >= target}
         for key, target in profile.get("targets", {}).items()
@@ -933,11 +895,7 @@ def _explicit_convergence_items(
         payload = re.split(r"[：:]", text, maxsplit=1)
         if len(payload) != 2:
             continue
-        rows.extend(
-            item.strip(" 。；;、")
-            for item in re.split(r"[；;]", payload[1])
-            if item.strip(" 。；;、")
-        )
+        rows.extend(item.strip(" 。；;、") for item in re.split(r"[；;]", payload[1]) if item.strip(" 。；;、"))
     return _unique(rows)[:limit]
 
 
@@ -949,8 +907,7 @@ def _branch_products(
     candidates = [
         stage
         for stage in store.stage_outputs.values()
-        if stage.layer == "L3"
-        and isinstance(stage.outputs.get("branch_products"), Mapping)
+        if stage.layer == "L3" and isinstance(stage.outputs.get("branch_products"), Mapping)
     ]
     merged: dict[str, list[str]] = {}
     # The latest valid attempt owns keys it explicitly emits; keys omitted by a
@@ -1109,7 +1066,12 @@ def _substantive_implication(packet: Any) -> str:
     priority_keys = {
         "international_situation": ("threat_assessment", "warning_indicators", "scenario_drivers"),
         "combat_scenario": ("capability_pressure_points", "environment_constraints", "critical_timeline"),
-        "weapon_equipment": ("capability_gaps", "upgrade_requirements", "new_equipment_requirements", "system_dependencies"),
+        "weapon_equipment": (
+            "capability_gaps",
+            "upgrade_requirements",
+            "new_equipment_requirements",
+            "system_dependencies",
+        ),
         "operational_employment": ("equipment_function_requirements", "failure_modes", "force_coordination"),
         "case_research": ("case_patterns", "lessons", "transfer_boundaries"),
         "technology_radar": ("technology_opportunities", "technology_readiness", "disruptive_scenarios"),
@@ -1119,11 +1081,7 @@ def _substantive_implication(packet: Any) -> str:
         "nontraditional_security": ("resilience_requirements", "nonlethal_requirements", "legal_ethical_limits"),
     }.get(packet.agent_id, ())
     values = (
-        [
-            item
-            for key in priority_keys
-            for item in _text_items(sections.get(key), limit=4)
-        ]
+        [item for key in priority_keys for item in _text_items(sections.get(key), limit=4)]
         if isinstance(sections, Mapping)
         else []
     )
@@ -1138,9 +1096,7 @@ def _substantive_implication(packet: Any) -> str:
 def _substantive_items(value: Any, *, limit: int) -> list[str]:
     process_markers = ("Agent", "agent", "交接", "输出给下游", "仅消费", "结构化packet")
     return [
-        item
-        for item in _text_items(value, limit=limit * 2)
-        if not any(marker in item for marker in process_markers)
+        item for item in _text_items(value, limit=limit * 2) if not any(marker in item for marker in process_markers)
     ][:limit]
 
 
@@ -1214,7 +1170,9 @@ def _text_items(value: Any, *, limit: int) -> list[str]:
 
 def _compact_value(value: Any) -> str:
     if isinstance(value, Mapping):
-        return "；".join(f"{key}={_compact_value(item)}" for key, item in value.items() if item not in (None, "", [], {}))
+        return "；".join(
+            f"{key}={_compact_value(item)}" for key, item in value.items() if item not in (None, "", [], {})
+        )
     if isinstance(value, (list, tuple, set)):
         return "、".join(_compact_value(item) for item in value if _compact_value(item))
     return str(value).strip()

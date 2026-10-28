@@ -19,7 +19,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.harness.cancellation import (
     CancelToken,
@@ -159,9 +160,7 @@ class AgentLoop:
                 turn_open = True
                 emit("turn_start", {"turn": turn_index})
 
-                assistant = await self._stream_assistant(
-                    stream, provider, state, config, emit
-                )
+                assistant = await self._stream_assistant(stream, provider, state, config, emit)
                 state.messages.append(assistant)
                 emit("message_appended", {"message": assistant.to_dict()})
 
@@ -184,9 +183,7 @@ class AgentLoop:
                     turn_open = False
                     break
 
-                results = await self._execute_tool_calls(
-                    stream, registry, calls, exec_ctx, state, emit
-                )
+                results = await self._execute_tool_calls(stream, registry, calls, exec_ctx, state, emit)
 
                 # append tool result messages in original tool-call order
                 for call in calls:
@@ -248,9 +245,7 @@ class AgentLoop:
         try:
             options = {**dict(state.options), "cancel_token": config.cancel_token}
             provider_stream = provider.stream(context, state.tools, options)
-            async for _event in self._consume_provider_events(
-                provider_stream, config.cancel_token
-            ):
+            async for _event in self._consume_provider_events(provider_stream, config.cancel_token):
                 config.cancel_token.raise_if_cancelled()
                 # Only content deltas count as message updates; start/done/error
                 # are lifecycle markers, not incremental content.
@@ -378,9 +373,7 @@ class AgentLoop:
         if sequential:
             for call in calls:
                 exec_ctx.cancel_token.raise_if_cancelled()
-                exec_ctx.budget_state = str(
-                    state.options.get("budget_state", "normal")
-                )
+                exec_ctx.budget_state = str(state.options.get("budget_state", "normal"))
                 result = await registry.execute(call, exec_ctx)
                 exec_ctx.cancel_token.raise_if_cancelled()
                 results[call.id] = result

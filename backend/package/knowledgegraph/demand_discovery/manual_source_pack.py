@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
 import shutil
@@ -69,9 +69,7 @@ def load_manual_source_pack(path: str | Path) -> ManualSourcePack:
     if not isinstance(constraints, dict):
         raise ValueError("source pack missing run_constraints")
     allowed_tools = _required_str_list(constraints, "allowed_tools")
-    disallowed_tools = [
-        str(item) for item in constraints.get("disallowed_tools", []) if str(item)
-    ]
+    disallowed_tools = [str(item) for item in constraints.get("disallowed_tools", []) if str(item)]
     for index, source in enumerate(sources):
         if not isinstance(source, dict):
             raise ValueError(f"source at index {index} must be an object")
@@ -269,10 +267,7 @@ def _write_outputs(
     store.export_jsonl(run_dir / "domain.jsonl")
     _write_jsonl(
         run_dir / "trace.jsonl",
-        [
-            {"type": "DomainTraceEvent", "payload": event.to_dict()}
-            for event in trace_store.events()
-        ],
+        [{"type": "DomainTraceEvent", "payload": event.to_dict()} for event in trace_store.events()],
     )
     (run_dir / "report.md").write_text(
         _render_report_markdown(store, trace_store, report_id),
@@ -364,11 +359,7 @@ def _fake_responses(pack: ManualSourcePack) -> list[FakeResponse]:
     evidence_calls: list[dict[str, Any]] = []
     evidence_ids: list[str] = []
     for source in pack.sources:
-        source_payload = {
-            key: value
-            for key, value in source.items()
-            if key != "evidence_seed"
-        }
+        source_payload = {key: value for key, value in source.items() if key != "evidence_seed"}
         source_calls.append(
             {
                 "id": f"call-source-{source['source_id']}",
@@ -387,16 +378,12 @@ def _fake_responses(pack: ManualSourcePack) -> list[FakeResponse]:
                 "arguments": seed,
             }
         )
-    candidate_id = pack.suggested_ids.get(
-        "candidate_id", f"cand-{pack.pack_id}"
-    )
+    candidate_id = pack.suggested_ids.get("candidate_id", f"cand-{pack.pack_id}")
     audit_id = pack.suggested_ids.get("audit_id", f"audit-{pack.pack_id}")
     report_id = pack.suggested_ids.get("report_id", f"report-{pack.pack_id}")
     fake_expectations = dict(pack.raw.get("fake_run_expectations", {}))
     audit_conclusion = str(fake_expectations.get("audit_conclusion", "approved"))
-    required_rework = [
-        str(item) for item in fake_expectations.get("required_rework", [])
-    ]
+    required_rework = [str(item) for item in fake_expectations.get("required_rework", [])]
     audit_conclusion = str(fake_expectations.get("audit_conclusion", "approved"))
     scorecard_verdict = str(fake_expectations.get("scorecard_verdict", "pass"))
     rubric = load_default_rubric()
@@ -413,11 +400,7 @@ def _fake_responses(pack: ManualSourcePack) -> list[FakeResponse]:
         for item_id in rubric.item_ids
     }
     scorecard["evidence_support"] = {
-        "verdict": (
-            "pass"
-            if audit_conclusion.strip().lower() in {"approved", "pass", "通过"}
-            else "doubt"
-        ),
+        "verdict": ("pass" if audit_conclusion.strip().lower() in {"approved", "pass", "通过"} else "doubt"),
         "reason": "manual source pack fake fixture reviews every evidence seed",
         "evidence_reviews": {
             evidence_id: {
@@ -449,55 +432,53 @@ def _fake_responses(pack: ManualSourcePack) -> list[FakeResponse]:
         FakeResponse(
             tool_calls=[
                 {
-                "id": "call-candidate",
-                "name": "create_or_update_candidate",
-                "arguments": {
-                    "candidate_id": candidate_id,
-                    "title": str(
-                        fake_expectations.get(
-                            "candidate_title",
-                            "低空小型无人机探测预警与协同防护能力缺口",
-                        )
-                    ),
-                    "demand_statement": demand_statement,
-                    "evidence_ids": evidence_ids,
-                    "open_questions": list(
-                        pack.raw.get("audit_expectations", {}).get(
-                            "expected_open_questions", []
-                        )
-                    ),
-                    "solution_signals": list(
-                        fake_expectations.get(
-                            "solution_signals",
-                            [
-                                "多源探测",
-                                "分布式被动感知",
-                                "跨组织态势共享",
-                            ],
-                        )
-                    ),
-                },
+                    "id": "call-candidate",
+                    "name": "create_or_update_candidate",
+                    "arguments": {
+                        "candidate_id": candidate_id,
+                        "title": str(
+                            fake_expectations.get(
+                                "candidate_title",
+                                "低空小型无人机探测预警与协同防护能力缺口",
+                            )
+                        ),
+                        "demand_statement": demand_statement,
+                        "evidence_ids": evidence_ids,
+                        "open_questions": list(
+                            pack.raw.get("audit_expectations", {}).get("expected_open_questions", [])
+                        ),
+                        "solution_signals": list(
+                            fake_expectations.get(
+                                "solution_signals",
+                                [
+                                    "多源探测",
+                                    "分布式被动感知",
+                                    "跨组织态势共享",
+                                ],
+                            )
+                        ),
+                    },
                 }
             ]
         ),
         FakeResponse(
             tool_calls=[
                 {
-                "id": "call-audit",
-                "name": "run_audit",
-                "arguments": {
-                    "audit_id": audit_id,
-                    "candidate_id": candidate_id,
-                    "conclusion": audit_conclusion,
-                    "scorecard": scorecard,
-                    "comments": str(
-                        fake_expectations.get(
-                            "audit_comments",
-                            "manual source pack fake run; human review still required",
-                        )
-                    ),
-                    "required_rework": required_rework,
-                },
+                    "id": "call-audit",
+                    "name": "run_audit",
+                    "arguments": {
+                        "audit_id": audit_id,
+                        "candidate_id": candidate_id,
+                        "conclusion": audit_conclusion,
+                        "scorecard": scorecard,
+                        "comments": str(
+                            fake_expectations.get(
+                                "audit_comments",
+                                "manual source pack fake run; human review still required",
+                            )
+                        ),
+                        "required_rework": required_rework,
+                    },
                 }
             ]
         ),
@@ -507,44 +488,40 @@ def _fake_responses(pack: ManualSourcePack) -> list[FakeResponse]:
             FakeResponse(
                 tool_calls=[
                     {
-                    "id": "call-report",
-                    "name": "generate_demand_report",
-                    "arguments": {
-                        "report_id": report_id,
-                        "candidate_id": candidate_id,
-                        "title": str(
-                            fake_expectations.get(
-                                "report_title",
-                                "低空小型无人机探测预警与协同防护能力缺口调查报告",
-                            )
-                        ),
-                        "sections": _fake_report_sections(pack),
-                        "demand_type": str(
-                            pack.raw.get("candidate_guidance", {}).get(
-                                "demand_type", "inferred"
-                            )
-                        ),
-                        "related_technical_directions": list(
-                            fake_expectations.get(
-                                "related_technical_directions",
-                                [
-                                    "低空多源探测",
-                                    "早期预警与 cue 生成",
-                                    "跨站点态势共享",
-                                ],
-                            )
-                        ),
-                        "solution_clues": list(
-                            fake_expectations.get(
-                                "solution_clues",
-                                [
-                                    "分布式被动传感是线索之一，但不是唯一方案",
-                                ],
-                            )
-                        ),
-                        "evidence_ids": evidence_ids,
-                        "audit_id": audit_id,
-                    },
+                        "id": "call-report",
+                        "name": "generate_demand_report",
+                        "arguments": {
+                            "report_id": report_id,
+                            "candidate_id": candidate_id,
+                            "title": str(
+                                fake_expectations.get(
+                                    "report_title",
+                                    "低空小型无人机探测预警与协同防护能力缺口调查报告",
+                                )
+                            ),
+                            "sections": _fake_report_sections(pack),
+                            "demand_type": str(pack.raw.get("candidate_guidance", {}).get("demand_type", "inferred")),
+                            "related_technical_directions": list(
+                                fake_expectations.get(
+                                    "related_technical_directions",
+                                    [
+                                        "低空多源探测",
+                                        "早期预警与 cue 生成",
+                                        "跨站点态势共享",
+                                    ],
+                                )
+                            ),
+                            "solution_clues": list(
+                                fake_expectations.get(
+                                    "solution_clues",
+                                    [
+                                        "分布式被动传感是线索之一，但不是唯一方案",
+                                    ],
+                                )
+                            ),
+                            "evidence_ids": evidence_ids,
+                            "audit_id": audit_id,
+                        },
                     }
                 ]
             )
@@ -560,27 +537,19 @@ def _fake_scorecard_verdict(
     veto_ids: set[str],
 ) -> str:
     verdict = requested_verdict.strip().lower()
-    if (
-        verdict == "fail"
-        and item_id in veto_ids
-        and audit_conclusion.strip().lower() not in {"rejected", "不通过"}
-    ):
+    if verdict == "fail" and item_id in veto_ids and audit_conclusion.strip().lower() not in {"rejected", "不通过"}:
         return "doubt"
     return verdict
 
 
 def _fake_report_sections(pack: ManualSourcePack) -> dict[str, str]:
     guidance = pack.raw.get("candidate_guidance", {})
-    open_questions = pack.raw.get("audit_expectations", {}).get(
-        "expected_open_questions", []
-    )
+    open_questions = pack.raw.get("audit_expectations", {}).get("expected_open_questions", [])
     return {
         "core_conclusion": str(guidance.get("preferred_focus", pack.topic_brief)),
         "task_scenario": "要地、机场、设施和行动单元面对低空小型无人机活动时，需要形成可审计的探测和预警闭环。",
         "threat_or_environment": "公开资料显示，小型无人机活动增加，部署环境受低空遮蔽、复杂空域、法律与协同流程约束影响。",
-        "capability_gap": str(
-            guidance.get("possible_demand_statement_seed", pack.topic_brief)
-        ),
+        "capability_gap": str(guidance.get("possible_demand_statement_seed", pack.topic_brief)),
         "existing_solutions_and_residual_gaps": (
             "声学等分布式被动感知是方案线索，但报告主结论不绑定单一传感器；"
             "残余缺口在于多源告警、跨组织共享和真实部署约束下的验证。"
@@ -614,9 +583,9 @@ def _required_str_list(data: dict[str, Any], key: str) -> list[str]:
 
 
 def _default_run_id(pack_id: str) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"{pack_id}-{stamp}"
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()

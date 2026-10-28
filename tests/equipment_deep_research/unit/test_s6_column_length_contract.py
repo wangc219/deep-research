@@ -139,7 +139,7 @@ def test_s6_repair_root_fingerprint_accepts_cleared_root():
     assert not after
 
 
-def test_dynamic_quality_gate_detects_hollow_but_long_columns():
+def test_dynamic_quality_gate_does_not_hard_gate_technology_enrichment_axes():
     modules = {
         key: "这是装备能力的一般性描述，内容保持完整并且长度足够。" * 30
         for key, _ in CAPABILITY_PORTRAIT_MODULES
@@ -147,7 +147,10 @@ def test_dynamic_quality_gate_detects_hollow_but_long_columns():
 
     issues = _parallel_s6_semantic_quality_issues(modules)
 
-    assert "装备与技术实现未形成路线取舍和主攻链" in issues
+    assert "装备与技术实现未形成差异化技术原理路线与主攻取舍" not in issues
+    assert "装备与技术实现未识别支撑核心创新的新质技术" not in issues
+    assert "装备与技术实现未说明新质技术如何赋能具体装备" not in issues
+    assert "装备与技术实现未说明技术原理路线的研发卡点与突破方向" not in issues
     assert "关键作战流程未形成条件、动作、状态变化和转段闭环" in issues
     assert "形成能力与作战效果未区分新增任务、直接战果和敌方代价" in issues
     assert "制胜逻辑机理未闭合旧规则、交换关系、经济反制和新增代价" in issues
@@ -170,6 +173,8 @@ def test_dynamic_quality_gate_routes_short_columns_without_semantic_defects():
             "工程上先解决传感器与飞控接口，再验证热控和控制面联锁，避免只堆叠器件却无法形成闭环。"
             "只有处理链、导航源和控制面在同一时限内稳定协同，弹体才会把识别结果转化为可执行动作，"
             "否则备选路线应保留为受控降级，而不能把实验室精度直接等同于战场能力。"
+            "其中新质技术是资源受限多模态模型与可解释安全监控器，赋能位置为弹上任务计算功能单元。"
+            "现有方法的研发卡点是高动态目标与弹载资源双重约束，需突破资源受限推理、可解释安全联锁与接口时延闭合方法。"
         ),
         "operational_process": (
             "编组在授权且目标进入窗口后部署装备，先完成状态确认再释放；回传异常时拒打，"
@@ -200,8 +205,9 @@ def test_dynamic_quality_gate_routes_short_columns_without_semantic_defects():
     issues = _parallel_s6_semantic_quality_issues(modules)
     assert set(_s6_short_portrait_modules(modules)) == {
         key for key, _ in CAPABILITY_PORTRAIT_MODULES
+        if key != "technology_implementation"
     }
-    assert len(issues) == len(CAPABILITY_PORTRAIT_MODULES)
+    assert len(issues) == len(CAPABILITY_PORTRAIT_MODULES) - 1
     assert all("低于约360字软目标" in issue for issue in issues)
 
 
@@ -296,7 +302,7 @@ def test_dynamic_s6_cache_fingerprint_includes_quality_contract_version():
     )
     legacy_fingerprint = sha256(legacy_serialized.encode('utf-8')).hexdigest()
 
-    assert S6_PORTRAIT_QUALITY_CONTRACT_VERSION.startswith('s6-portrait-v6-')
+    assert S6_PORTRAIT_QUALITY_CONTRACT_VERSION.startswith('s6-portrait-v11-')
     assert f'target{CAPABILITY_PORTRAIT_REPAIR_TRIGGER_CHARS}' not in (
         S6_PORTRAIT_QUALITY_CONTRACT_VERSION
     )

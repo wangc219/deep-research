@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -1807,12 +1808,18 @@ async def test_get_agent_run_langfuse_link_hides_missing_run(monkeypatch: pytest
 
 
 @pytest.mark.asyncio
-async def test_await_agent_run_result_drains_stream_then_loads_result(monkeypatch: pytest.MonkeyPatch):
+async def test_await_agent_run_result_waits_only_for_new_events(monkeypatch: pytest.MonkeyPatch):
     drained: list[str] = []
+    authorized_run = AsyncMock(return_value=_run_state())
+
+    async def latest_cursor(run_id):
+        assert run_id == "run-1"
+        authorized_run.assert_awaited_once_with("run-1", "user-1")
+        return "9000-0"
 
     async def fake_stream(*, run_id: str, after_seq: str, current_uid: str, verbose: bool):
         assert run_id == "run-1"
-        assert after_seq == "0-0"
+        assert after_seq == "9000-0"
         assert current_uid == "user-1"
         assert verbose is False
         for chunk in ("event: messages\n\n", "event: end\n\n"):
@@ -1826,6 +1833,8 @@ async def test_await_agent_run_result_drains_stream_then_loads_result(monkeypatc
 
     monkeypatch.setattr(agent_run_service, "stream_agent_run_events", fake_stream)
     monkeypatch.setattr(agent_run_service, "load_agent_run_result", fake_load)
+    monkeypatch.setattr(agent_run_service, "_load_stream_run_for_user", authorized_run)
+    monkeypatch.setattr(agent_run_service, "get_last_run_stream_seq", latest_cursor)
 
     payload = await agent_run_service.await_agent_run_result(run_id="run-1", current_uid="user-1")
 
@@ -1849,11 +1858,50 @@ async def test_await_agent_run_result_raises_when_stream_ends_before_terminal(mo
 
     monkeypatch.setattr(agent_run_service, "stream_agent_run_events", fake_stream)
     monkeypatch.setattr(agent_run_service, "load_agent_run_result", fake_load)
+    monkeypatch.setattr(agent_run_service, "_load_stream_run_for_user", AsyncMock(return_value=_run_state()))
+    monkeypatch.setattr(agent_run_service, "get_last_run_stream_seq", AsyncMock(return_value="0-0"))
 
     with pytest.raises(agent_run_service.AgentRunWaitTimeout) as exc_info:
         await agent_run_service.await_agent_run_result(run_id="run-1", current_uid="user-1")
 
     assert exc_info.value.result == {"status": "running", "agent_run_id": "run-1", "output": ""}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("run", [None, _run_state("completed"), _run_state("failed")])
+async def test_await_finished_or_inaccessible_run_does_not_read_redis(monkeypatch, run):
+    load_result = AsyncMock(return_value={"status": "failed" if run is None else run.status})
+    read_cursor = AsyncMock(side_effect=AssertionError("不应读取 Redis"))
+    monkeypatch.setattr(agent_run_service, "_load_stream_run_for_user", AsyncMock(return_value=run))
+    monkeypatch.setattr(agent_run_service, "load_agent_run_result", load_result)
+    monkeypatch.setattr(agent_run_service, "get_last_run_stream_seq", read_cursor)
+
+    result = await agent_run_service.await_agent_run_result(run_id="run-1", current_uid="user-1")
+
+    assert result == load_result.return_value
+    read_cursor.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_await_terminal_run_still_waits_for_cleanup(monkeypatch):
+    drained = []
+
+    async def stream(**kwargs):
+        drained.append(kwargs["after_seq"])
+        yield "event: end\n\n"
+
+    monkeypatch.setattr(
+        agent_run_service,
+        "_load_stream_run_for_user",
+        AsyncMock(return_value=_run_state("completed", cleanup_pending=True)),
+    )
+    monkeypatch.setattr(agent_run_service, "get_last_run_stream_seq", AsyncMock(return_value="9001-0"))
+    monkeypatch.setattr(agent_run_service, "stream_agent_run_events", stream)
+    monkeypatch.setattr(agent_run_service, "load_agent_run_result", AsyncMock(return_value={"status": "completed"}))
+
+    await agent_run_service.await_agent_run_result(run_id="run-1", current_uid="user-1")
+
+    assert drained == ["9001-0"]
 
 
 @pytest.mark.asyncio

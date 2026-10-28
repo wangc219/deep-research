@@ -15,7 +15,7 @@ from langgraph.types import Command
 
 from platform_core.agents.backends.paths import VIRTUAL_PERSONAL_SKILLS_PATH, VIRTUAL_SKILLS_PATH
 from platform_core.agents.mcp.service import get_enabled_mcp_tools
-from platform_core.agents.skills.runtime import RuntimeSkill, build_dependency_bundle
+from platform_core.agents.skills.runtime import RuntimeSkill, build_dependency_bundle, resolve_skill_gated_tools
 from platform_core.agents.skills.service import is_valid_skill_slug, normalize_string_list
 from platform_core.agents.toolkits import get_all_tool_instances
 from platform_core.utils.logging_config import logger
@@ -116,7 +116,10 @@ class SkillsMiddleware(AgentMiddleware):
         if deps_bundle["mcps"]:
             active_mcp_tools = await self._get_mcp_tools_from_context(runtime_context, extra_mcps=deps_bundle["mcps"])
         active_mcp_tools_by_name = {}
+        local_dependency_names = {tool.name for tool in resolve_skill_gated_tools(runtime_context)}
         for tool in active_mcp_tools:
+            if tool.name in local_dependency_names:
+                raise RuntimeError(f"Skill MCP 工具名冲突：{tool.name} 与本地 Skill 工具同名")
             existing = active_mcp_tools_by_name.get(tool.name)
             if existing is not None and existing is not tool:
                 raise RuntimeError(f"Skill MCP 工具名冲突：{tool.name}")
@@ -162,7 +165,11 @@ class SkillsMiddleware(AgentMiddleware):
         import asyncio
 
         # 显式 MCP 已在 Graph 基础工具中注册，这里只加载 Skill 新增依赖。
-        configured_mcps = set(normalize_string_list(getattr(context, "mcps", None)))
+        configured_mcps = (
+            set()
+            if getattr(context, "mcp_tool_loading", "eager") == "on_demand"
+            else set(normalize_string_list(getattr(context, "mcps", None)))
+        )
         all_mcp_names: list[str] = []
         for server_name in extra_mcps or []:
             if isinstance(server_name, str) and server_name not in configured_mcps:

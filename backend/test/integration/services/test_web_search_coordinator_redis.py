@@ -4,6 +4,7 @@ import multiprocessing
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -130,3 +131,76 @@ def test_partial_engine_limit_keeps_healthy_engine_available(shared_search_state
         return {"results": [{"title": "next domain evidence"}]}
 
     assert coordinator.run("open-websearch", {"query": "two"}, backend)["results"]
+
+
+def test_antibot_is_not_retried_and_other_worker_fallback_shares_engine_cooldown(shared_search_state, monkeypatch):
+    """真实 Redis 保证 daemon 的挑战在另一 worker 的直连兜底中仍被跳过。"""
+    from platform_core.agents.toolkits.buildin import tools
+
+    client, prefix = shared_search_state
+    monkeypatch.setenv("OPEN_WEBSEARCH_URL", "http://search.test")
+    monkeypatch.setenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")
+    coordinator = SearchCoordinator(client, prefix=prefix, wait_seconds=1)
+    response = MagicMock(status_code=200)
+    response.json.return_value = {
+        "status": "ok",
+        "data": {
+            "engines": ["bing", "duckduckgo"],
+            "results": [],
+            "partialFailures": [
+                {"engine": "bing", "message": "CAPTCHA required"},
+                {"engine": "duckduckgo", "message": "bot challenge"},
+            ],
+        },
+    }
+    with patch("httpx.Client.post", return_value=response) as post:
+        result = coordinator.run(
+            "open-websearch",
+            {"query": "radar signal lookup"},
+            lambda: tools._open_websearch.func(query="radar signal lookup"),
+        )
+        assert result["status"] == "blocked"
+        assert post.call_count == 1
+        assert coordinator.engine_remaining("bing") > 290
+        assert coordinator.engine_remaining("duckduckgo") > 290
+
+        # 新实例模拟另一 worker；两个冷却引擎均不得经 daemon 再发请求。
+        other_worker = SearchCoordinator(client, prefix=prefix, wait_seconds=1)
+        result = other_worker.run(
+            "open-websearch",
+            {"query": "different query"},
+            lambda: tools._open_websearch.func(query="different query"),
+        )
+        assert not result["results"]
+        assert post.call_count == 1
+
+    # 直连 fallback 只允许尚未冷却的搜狗，不能绕过 daemon 的同引擎冷却。
+    empty = MagicMock(status_code=200, text="<html>No results</html>")
+    with patch("httpx.Client.get", return_value=empty) as get:
+        other_worker.run(
+            "public",
+            {"query": "radar signal lookup"},
+            lambda: tools._public_search.func(query="radar signal lookup"),
+        )
+    assert get.call_count == 1
+    assert get.call_args.args[0] == tools._SOGOU_SEARCH_URL
+
+
+def test_partial_challenge_cools_only_failed_engine_without_repeating_healthy_empty(shared_search_state):
+    client, prefix = shared_search_state
+    coordinator = SearchCoordinator(client, prefix=prefix, wait_seconds=1)
+    calls = []
+
+    def backend():
+        calls.append(True)
+        return {
+            "status": "empty",
+            "results": [],
+            "partial_failures": [{"engine": "bing", "message": "captcha required"}],
+        }
+
+    result = coordinator.run("open-websearch", {"query": "narrow topic"}, backend)
+    assert result["status"] == "empty"
+    assert len(calls) == 1
+    assert coordinator.engine_remaining("bing") > 290
+    assert coordinator.engine_remaining("duckduckgo") == 0

@@ -19,18 +19,58 @@ KNOWN_TOOLS = {
     "create_capability_image",
     "write_audit",
     "write_report",
-    "register_event_timeline", "compare_actor_positions", "register_warning_indicator", "test_competing_hypothesis",
-    "build_scenario_graph", "branch_scenario", "map_critical_window", "map_environment_constraint", "stress_test_scenario",
-    "extract_parameter_observation", "normalize_equipment_variant", "reconcile_parameter_conflict", "assess_technology_readiness", "compare_equipment_capability", "map_defensive_countermeasure", "formulate_equipment_requirement",
-    "map_task_capability", "build_coordination_dependency", "compare_coa", "assess_sustainment_resilience", "transfer_case_lesson",
-    "prepare_winning_input", "project_winning_resources", "write_reasoning_node",
-    "analyze_research_request", "classify_discovery_drivers", "build_discovery_blueprint", "plan_execution_waves", "evaluate_loop_transition",
-    "reconstruct_case_timeline", "build_causal_chain", "compare_case_patterns",
-    "assess_technology_potential", "construct_disruptive_scenario", "detect_baseline_change", "estimate_capability_formation",
-    "build_system_model", "identify_cascading_vulnerability", "build_cross_domain_matrix", "identify_interface_gap",
-    "scan_emerging_threat", "assess_legal_ethical_boundary", "cluster_demand_signals", "rank_capability_priorities",
-    "analyze_ooda_vulnerability", "generate_counterfactual_option", "apply_triz_contradiction", "map_dotmlpf_requirement",
-    "evaluate_reasoning_step", "evaluate_reasoning_round", "evaluate_release_readiness", "build_capability_demand_card",
+    "register_event_timeline",
+    "compare_actor_positions",
+    "register_warning_indicator",
+    "test_competing_hypothesis",
+    "build_scenario_graph",
+    "branch_scenario",
+    "map_critical_window",
+    "map_environment_constraint",
+    "stress_test_scenario",
+    "extract_parameter_observation",
+    "normalize_equipment_variant",
+    "reconcile_parameter_conflict",
+    "assess_technology_readiness",
+    "compare_equipment_capability",
+    "map_defensive_countermeasure",
+    "formulate_equipment_requirement",
+    "map_task_capability",
+    "build_coordination_dependency",
+    "compare_coa",
+    "assess_sustainment_resilience",
+    "transfer_case_lesson",
+    "prepare_winning_input",
+    "project_winning_resources",
+    "write_reasoning_node",
+    "analyze_research_request",
+    "classify_discovery_drivers",
+    "build_discovery_blueprint",
+    "plan_execution_waves",
+    "evaluate_loop_transition",
+    "reconstruct_case_timeline",
+    "build_causal_chain",
+    "compare_case_patterns",
+    "assess_technology_potential",
+    "construct_disruptive_scenario",
+    "detect_baseline_change",
+    "estimate_capability_formation",
+    "build_system_model",
+    "identify_cascading_vulnerability",
+    "build_cross_domain_matrix",
+    "identify_interface_gap",
+    "scan_emerging_threat",
+    "assess_legal_ethical_boundary",
+    "cluster_demand_signals",
+    "rank_capability_priorities",
+    "analyze_ooda_vulnerability",
+    "generate_counterfactual_option",
+    "apply_triz_contradiction",
+    "map_dotmlpf_requirement",
+    "evaluate_reasoning_step",
+    "evaluate_reasoning_round",
+    "evaluate_release_readiness",
+    "build_capability_demand_card",
 }
 
 
@@ -43,9 +83,7 @@ def effective_tool_names(
 ) -> tuple[str, ...]:
     """Return Agent ∩ Task ∩ Active Skills ∩ Phase in agent declaration order."""
     agent = tuple(dict.fromkeys(str(item) for item in agent_allowlist))
-    allowed = set(str(item) for item in task_allowlist) & set(
-        str(item) for item in phase_allowlist
-    )
+    allowed = set(str(item) for item in task_allowlist) & set(str(item) for item in phase_allowlist)
     skills = [set(str(item) for item in values) for values in skill_allowlists]
     if skills:
         allowed &= set.union(*skills)
@@ -69,13 +107,9 @@ DEFAULT_TOOL_SCOPE_REQUIREMENTS: dict[str, ToolScopeRequirement] = {
     "search_sources": ToolScopeRequirement(),
     "fetch_page": ToolScopeRequirement(),
     "create_evidence_card": ToolScopeRequirement(write_scopes=("EvidenceCard",)),
-    "write_stage_output": ToolScopeRequirement(
-        write_scopes=("WinningMechanismStageOutput",)
-    ),
+    "write_stage_output": ToolScopeRequirement(write_scopes=("WinningMechanismStageOutput",)),
     "create_recall_request": ToolScopeRequirement(write_scopes=("RecallRequest",)),
-    "create_capability_image": ToolScopeRequirement(
-        write_scopes=("CapabilityImageItem",)
-    ),
+    "create_capability_image": ToolScopeRequirement(write_scopes=("CapabilityImageItem",)),
     "write_audit": ToolScopeRequirement(write_scopes=("AuditResult",)),
     "write_report": ToolScopeRequirement(write_scopes=("ResearchReport",)),
 }
@@ -95,7 +129,7 @@ class ToolPermissionRegistry:
     known_tools: set[str]
 
     @classmethod
-    def default(cls) -> "ToolPermissionRegistry":
+    def default(cls) -> ToolPermissionRegistry:
         return cls(known_tools=set(KNOWN_TOOLS))
 
     def validate_agent_tools(self, agent: AgentSpec) -> None:
@@ -115,22 +149,15 @@ class ToolAuthorizationPolicy:
 
     def __init__(
         self,
-        scope_requirements: Mapping[
-            str, ToolScopeRequirement | Mapping[str, Any]
-        ] | None = None,
+        scope_requirements: Mapping[str, ToolScopeRequirement | Mapping[str, Any]] | None = None,
     ) -> None:
-        source: dict[str, ToolScopeRequirement | Mapping[str, Any]] = dict(
-            DEFAULT_TOOL_SCOPE_REQUIREMENTS
-        )
+        source: dict[str, ToolScopeRequirement | Mapping[str, Any]] = dict(DEFAULT_TOOL_SCOPE_REQUIREMENTS)
         if scope_requirements is not None:
             source.update(scope_requirements)
-        self.scope_requirements = {
-            str(name): _coerce_requirement(requirement)
-            for name, requirement in source.items()
-        }
+        self.scope_requirements = {str(name): _coerce_requirement(requirement) for name, requirement in source.items()}
 
     @classmethod
-    def default(cls) -> "ToolAuthorizationPolicy":
+    def default(cls) -> ToolAuthorizationPolicy:
         return cls()
 
     def authorize(
@@ -143,9 +170,7 @@ class ToolAuthorizationPolicy:
     ) -> None:
         active = frozenset(active_tool_names)
         if tool_name not in active:
-            raise PermissionError(
-                f"tool {tool_name} is not in the active tool allowlist"
-            )
+            raise PermissionError(f"tool {tool_name} is not in the active tool allowlist")
 
         requirement = self.scope_requirements.get(tool_name, ToolScopeRequirement())
         readable = frozenset(object_read_scopes)
@@ -184,14 +209,11 @@ class ToolAuthorizationPolicy:
             {
                 proposal.object_type
                 for proposal in result.domain_proposals
-                if proposal.object_type not in task_writable
-                or proposal.object_type not in tool_writable
+                if proposal.object_type not in task_writable or proposal.object_type not in tool_writable
             }
         )
         if denied:
-            raise PermissionError(
-                f"tool {tool_name} returned unauthorized object types: {denied}"
-            )
+            raise PermissionError(f"tool {tool_name} returned unauthorized object types: {denied}")
 
         controlled_traces = tuple(
             TraceProposal(

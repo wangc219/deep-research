@@ -11,10 +11,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import Mapping
+from collections.abc import Mapping
 from urllib.parse import urlsplit, urlunsplit
 
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if DEFAULT_PROJECT_ROOT.name == "backend" and (DEFAULT_PROJECT_ROOT.parent / "configs").is_dir():
+    DEFAULT_PROJECT_ROOT = DEFAULT_PROJECT_ROOT.parent
 
 
 def _text(env: Mapping[str, str], name: str, default: str = "") -> str:
@@ -45,11 +47,7 @@ def _int(
 
 
 def _root(env: Mapping[str, str], project_root: str | Path | None) -> Path:
-    selected = (
-        project_root
-        or _text(env, "EQUIPMENT_DR_PROJECT_ROOT")
-        or DEFAULT_PROJECT_ROOT
-    )
+    selected = project_root or _text(env, "EQUIPMENT_DR_PROJECT_ROOT") or DEFAULT_PROJECT_ROOT
     return Path(selected).expanduser().resolve()
 
 
@@ -73,12 +71,10 @@ class ProjectPaths:
         cls,
         env: Mapping[str, str] | None = None,
         project_root: str | Path | None = None,
-    ) -> "ProjectPaths":
+    ) -> ProjectPaths:
         values = os.environ if env is None else env
         root = _root(values, project_root)
-        output = Path(
-            _text(values, "EQUIPMENT_DR_OUTPUT_ROOT", str(root / "outputs"))
-        ).expanduser()
+        output = Path(_text(values, "EQUIPMENT_DR_OUTPUT_ROOT", str(root / "outputs"))).expanduser()
         if not output.is_absolute():
             output = root / output
         output = output.resolve()
@@ -114,7 +110,7 @@ class Settings:
         cls,
         env: Mapping[str, str] | None = None,
         project_root: str | Path | None = None,
-    ) -> "Settings":
+    ) -> Settings:
         values = os.environ if env is None else env
         paths = ProjectPaths.from_environment(values, project_root)
         return cls(

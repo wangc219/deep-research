@@ -16,49 +16,44 @@ export const CAPABILITY_PORTRAIT_AGENT_SLUG = 'equipment-capability-portrait'
 
 export const TECHNOLOGY_SOLUTION_CHAPTERS = [
   {
-    title: '能力目标',
-    question: '要形成什么能力',
-    scope: '作战对象、任务场景、能力边界、效能指标、约束条件与验收判据'
+    title: '项目概述与研发需求',
+    question: '为什么要研发？',
+    scope: '背景、任务需求、现有技术不足、目标能力'
   },
   {
-    title: '装备总体设计',
+    title: '总体技术方案',
     question: '装备总体怎么设计',
-    scope: '系统架构、总体构型、功能组成、模块划分、工作模式与接口关系'
+    scope: '总体构型、系统架构、功能组成、工作模式、模块划分'
   },
   {
-    title: '技术体系',
+    title: '核心技术体系',
     question: '主要依靠哪些技术',
-    scope: '核心技术、支撑技术、基础技术、关键部件技术及能力映射'
+    scope: '核心技术、支撑技术、基础技术、关键部件技术及相互关系'
   },
   {
-    title: '关键技术识别',
-    question: '哪些技术最关键',
-    scope: '关键度、牵引指标、依赖关系、成熟度、替代性与优先级'
+    title: '关键技术攻关',
+    question: '最难的问题是什么？如何解决？',
+    scope: '技术难点、瓶颈成因、失效因素、待验证假设、突破方向'
   },
   {
-    title: '突破难点',
-    question: '哪些地方最难突破',
-    scope: '瓶颈根因、理论或工程极限、耦合冲突、失效模式与突破判据'
+    title: '技术实现方案',
+    question: '具体如何实现？',
+    scope: '技术原理、实现机制、模块接口、实现步骤、备选路线'
   },
   {
-    title: '解决路径',
-    question: '有哪些解决路径',
-    scope: '候选路线、原理抓手、收益代价、前置依赖、风险与路线决策门'
+    title: '技术路线与研发计划',
+    question: '研发工作如何推进？',
+    scope: '阶段划分、任务依赖、阶段成果、风险与资源需求'
   },
   {
-    title: '具体实现',
-    question: '具体如何实现',
-    scope: '原理、算法、结构、材料、器件、控制、软件、工艺、集成、试验与阶段交付'
+    title: '预期成果与应用价值',
+    question: '最终能形成什么？',
+    scope: '预期形成的能力、适用场景、技术成熟度、成果交付'
   }
 ]
 
-const technologySolutionOutline = () =>
-  TECHNOLOGY_SOLUTION_CHAPTERS.map(
-    ({ title, question, scope }, index) => `${index + 1}.${title}（回答“${question}”：${scope}）`
-  ).join('；')
-
 const technologyImplementationPlanPrompt = () =>
-  `${TECHNOLOGY_SOLUTION_TRIGGER}，供一线研发人员直接拆任务、做样机和测指标。先逐字列出冻结的“解决思路”和“核心创新”，将其作为共享创新来源；七章不得提出替代创新或另起主题。纠偏结论只作简短设计输入，正文必须以${technologySolutionOutline()}为七个一级章节，每章开头说明本章支撑哪一条锚点、验证哪项成立条件，前一章结论必须成为后一章输入，形成“锚点—能力—设计—技术—关键项—难点—路径—实现—验证”追溯链。每章落实到分系统、输入输出接口、指标与预算、负责人专业、阶段交付物和验收判据；具体实现章还须覆盖原理、算法、结构、材料、器件、控制、软件、工艺、集成顺序、样机阶段、WBS、试验矩阵、TRL跃迁、里程碑与决策门、风险/FMEA/降级策略，以及30/60/90天启动包。事实、工程判断和待验证参数必须分开；无可靠依据的数值标注“工程假设/TBD”。导航、平台适配、保障等配套内容只有直接决定锚点可行性时才进入主线，不得重复写成长篇纠错报告。若已有攻关任务书，应另建“研发与技术实现方案”交付物，不得覆盖原文件。`
+  `${TECHNOLOGY_SOLUTION_TRIGGER}，交付面向装备研发的技术方案，而不是资料综述。报告题名固定为“武器装备研发技术方案报告”，副题为“面向研发人员 · 技术路线设计 · 关键问题攻关 · 工程实现”。先给出“报告主线”：需求牵引—明确任务背景、目标与能力缺口；总体设计—确定总体构型、功能组成与技术架构；核心技术与关键攻关—明确技术机理、实现路径、瓶颈与突破方向。随后先列出“章节—核心内容—主要回答的问题”导航表，再依次使用七个精确章名：${TECHNOLOGY_SOLUTION_CHAPTERS.map((item, index) => `${index + 1}. ${item.title}（${item.scope}；${item.question}）`).join('；')}。若证据表明后半段关键机理、构型或工程可行性存疑，先回溯到失效的技术假设和分系统，必要时重构新质武器装备的主装备形态、作用原理与总体架构，不对原报告做局部润色。方案闭合原理样机、分级试验、可量测判据、阶段决策门和备选路线；区分已核验证据、工程推断与待试验假设，不编造精确参数。`
 
 export const TECHNOLOGY_CABIN_ACTIONS = [
   {
@@ -93,8 +88,8 @@ export const TECHNOLOGY_CABIN_ACTIONS = [
   },
   {
     id: 'implementation_plan',
-    label: '具体实现',
-    hint: '形成可拆任务、做样机和测指标的完整方案',
+    label: '重构技术方案',
+    hint: '存疑时回溯重构，形成可拆任务、做样机和测指标的研发方案',
     primary: true
   }
 ]
@@ -131,15 +126,11 @@ const SECTION_ALIASES = new Map([
 ])
 
 const SECTION_ASKS = {
-  概述: '围绕装备定位继续发散补充：明确主要作战对象、典型场景、体系角色，以及技术实现、作战流程和制胜机理之间如何闭环。',
-  装备与技术实现:
-    '以武器研发为中心深挖：拆解分系统、关键技术卡点和工程痛点，分析卡点成因、指标耦合与依赖条件；为每个痛点提出可比较的攻关路线、关键试验、成熟度跃迁路径和取舍，不停留在技术名词罗列。',
-  关键作战流程:
-    '把作战流程推演为可执行链路：明确平台与人员角色、信息流和火力流、发现—决策—进入—作用—评估时序、协同接口、关键窗口和备选处置，并反推对技术实现的要求。',
-  形成能力与作战效果:
-    '从技术实现和作战流程推导能力形成过程：说明哪些关键技术组合产生何种能力、如何在任务链中兑现作战效果，以及可观察的效果指标和任务达成判据。',
-  制胜逻辑机理:
-    '围绕制胜逻辑做多路径深度发散：从作用链、信息优势、时空窗口、成本交换、体系增益和对手反适应等角度解释优势如何产生，并把每条机理反推到必要技术与作战动作。'
+  概述: '目标是澄清装备定位、核心问题与关键变化。',
+  装备与技术实现: '目标是理解技术如何实现、关键难点和可行路径。',
+  关键作战流程: '目标是理解任务如何执行，以及关键环节如何衔接。',
+  形成能力与作战效果: '目标是解释能力如何形成、能带来什么效果及其依据。',
+  制胜逻辑机理: '目标是解释优势为何成立，以及在哪些条件下会改变。'
 }
 
 const SECTION_HINTS = {
@@ -156,7 +147,7 @@ export const isTechnologyCabinSection = (label) =>
   portraitSectionLabel(label) === TECHNOLOGY_CABIN_SECTION
 
 const TECHNOLOGY_CABIN_TASKS = {
-  mission: `围绕研发该装备所必需的核心技术开展攻关。先核验和纠偏，但纠偏只作为方案设计输入；随后必须把结论转化为研发方案，主体逐步覆盖${technologySolutionOutline()}。给出下一步应深挖的问题、攻关顺序和可验收交付物。`,
+  mission: '研究该装备的技术实现，识别值得深入的问题，自主选择分析路径，给出有依据的判断。',
   capability_goal:
     '先回答要形成什么能力：锁定作战场景、目标对象、任务链位置、能力边界、核心效能指标与可测试的验收判据，区分期望效果和装备自身必须具备的能力。',
   overall_design:
@@ -185,16 +176,17 @@ const TECHNOLOGY_CABIN_TASKS = {
 }
 
 /** Specialized R&D prompt used by the technology breakthrough cabin. */
-export function technologyCabinPrompt(equipment = '', body = '', action = 'mission', overview = '') {
+export function technologyCabinPrompt(
+  equipment = '',
+  body = '',
+  action = 'mission',
+  overview = ''
+) {
   const target = text(equipment) ? `「${text(equipment)}」` : '当前装备'
   const task = TECHNOLOGY_CABIN_TASKS[action] || TECHNOLOGY_CABIN_TASKS.mission
-  const sourceRule = text(body)
-    ? '原卡中的相关技术仅作为研究线索，不视为完整或正确答案，应主动补充遗漏并纠正概念化表述。'
-    : '不要假定现有技术描述已经完整。'
-  const overviewRule = text(overview)
-    ? `以下概述是冻结的共享创新来源：${text(overview).slice(0, 760)}。只提取其中“解决思路”和“核心创新”作为研究主线，不得改写锚点或另起主题。`
-    : '先从已绑定能力画像中读取冻结的“解决思路”和“核心创新”；若缺失，先标记画像缺口，不得用技术栏自行发明替代主题。'
-  return `围绕${target}开展技术攻关，保持装备身份和任务定位不变。${overviewRule}${sourceRule}${task}所有路线、难点、判据和结论都必须逐项说明其支撑哪条解决思路或核心创新；无直接因果关系的后阶段配套问题不作为主线。避免空泛罗列和无依据的精确参数。`
+  const baseline = text(overview) ? `参考概述：${text(overview).slice(0, 760)}。` : ''
+  const source = text(body) ? `现有技术描述：${text(body).slice(0, 600)}。` : ''
+  return `围绕${target}的「装备与技术实现」开展研究。${task}${baseline}${source}需要新证据时实际联合检索 Open Web、已授权本地知识库和 AMiner：用公开网页核验标准、工程实现与供应链，用知识库复用已有装备材料，用 AMiner 挖掘科学原理、技术路线和论文证据。将有效发现闭合为“装备/分系统—作用原理—可实现技术—工程约束—验证判据”链路，不罗列脱离装备的泛技术名词。现有描述可核验与修正，某一通道不可用时明确证据缺口，不预设结论。`
 }
 
 const PARSEABLE_LABELS = [
@@ -277,7 +269,7 @@ export function portraitSectionPrompt(label, equipment = '', body = '', overview
   const ask = SECTION_ASKS[section] || `围绕「${section}」继续深挖，给出更具体、可核验的结论。`
   const target = text(equipment) ? `「${text(equipment)}」` : '当前装备'
   const current = text(body) ? `\n本栏现有内容：${text(body).slice(0, 600)}` : ''
-  return `仅针对${target}的「${section}」一栏继续深挖，保持装备身份不变，不要改成其他装备方向。${ask}${current}\n以技术攻关、作战流程推演和制胜逻辑深化为主，形成具体解决路径与本栏修订建议；证据缺口、失效边界和验证动作只在确实影响方案成立或研发决策时补充，不要求机械凑齐。`
+  return `继续研究${target}的「${section}」。${ask}${current}\n根据本栏目标自主选择研究路径和回答形式，现有描述可核验与修正。`
 }
 
 /**
@@ -287,21 +279,9 @@ export function portraitSectionPrompt(label, equipment = '', body = '', overview
  */
 export function capabilitySeedFocus(equipment, sections, { limit = 1560 } = {}) {
   const target = text(equipment) || '当前装备'
-  const header = `以已有能力画像卡「${target}」为研究主体，保持装备身份和核心任务定位不变，深化当前画像及其作用机理。`
-  const rules = [
-    '优先识别研发该武器的关键技术卡点、工程痛点、指标耦合和系统集成难题，并给出多条可比较的解决路径。',
-    '允许在本装备内部深度发散构型、材料、算法、接口、部署和保障方案，但不得自动改写成其他装备。',
-    '同步推演作战流程和制胜逻辑，说明关键技术如何转化为作战动作、体系能力与制胜优势。',
-    '输出具体修订建议；证据、失效边界和验证动作按决策需要补充，不机械凑项。只有显式切换到新质发散模式才生成新装备候选。'
-  ]
-    .map((item, index) => `${index + 1}. ${item}`)
-    .join('\n')
-  const frame = `${header}\n\n当前五栏：\n{digest}\n\n研究要求：\n${rules}`
-  const digest = portraitSectionDigest(sections, {
-    budget: limit - frame.length + '{digest}'.length
-  })
-  if (!digest) return `${header}\n\n研究要求：\n${rules}`.slice(0, limit)
-  return frame.replace('{digest}', digest).slice(0, limit)
+  const header = `围绕「${target}」的能力画像继续研究，结合用户当前问题自主判断值得深入的方向。`
+  const digest = portraitSectionDigest(sections, { budget: Math.max(0, limit - header.length - 8) })
+  return `${header}\n参考背景：\n${digest}`.slice(0, limit)
 }
 
 /** Explicit opt-in prompt that may leave the bound equipment identity. */
@@ -316,7 +296,7 @@ export function capabilityWelcomeSuggestions(equipment, sections, count = 4) {
   const rows = normalizePortraitSections(sections)
   if (!rows.length) return []
   const overview = rows.find((item) => item.label === '概述')?.text || ''
-  return rows.slice(0, count).map((item) =>
-    portraitSectionPrompt(item.label, equipment, item.text, overview)
-  )
+  return rows
+    .slice(0, count)
+    .map((item) => portraitSectionPrompt(item.label, equipment, item.text, overview))
 }

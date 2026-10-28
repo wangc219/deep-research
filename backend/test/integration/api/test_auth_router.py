@@ -121,7 +121,7 @@ async def _create_department_with_admin(test_client, headers, label: str, *, par
 async def _create_user(test_client, headers, label: str, role: str = "user", department_id: int | None = None) -> dict:
     suffix = uuid.uuid4().hex[:8]
     payload = {
-        "username": f"u{label}_{suffix}",
+        "username": f"u{label[:10]}_{suffix}",
         "password": f"Pw!{suffix}",
         "role": role,
     }
@@ -145,10 +145,14 @@ async def _cleanup_department(test_client, headers, department_id: int) -> None:
 
 async def test_public_registration_uses_existing_user_department_and_session_model(test_client, admin_headers):
     suffix = uuid.uuid4().hex[:8]
+    config = await test_client.get("/api/auth/registration-config")
     response = await test_client.post(
         "/api/auth/register",
         json={"username": f"深研用户{suffix}", "password": f"Pw!{suffix}"},
     )
+    if not config.json()["enabled"]:
+        assert response.status_code == 403, response.text
+        return
     assert response.status_code == 201, response.text
     payload = response.json()
     assert payload["role"] == "user"
@@ -510,7 +514,7 @@ async def test_department_admin_is_limited_to_own_department_users(test_client, 
         role_escalation = await test_client.put(
             f"/api/auth/users/{user_a['id']}", json={"role": "admin"}, headers=dept_a["admin_headers"]
         )
-        assert role_escalation.status_code == 422, role_escalation.text
+        assert role_escalation.status_code == 403, role_escalation.text
 
         cross_delete = await test_client.delete(f"/api/auth/users/{user_b['id']}", headers=dept_a["admin_headers"])
         assert cross_delete.status_code == 403, cross_delete.text

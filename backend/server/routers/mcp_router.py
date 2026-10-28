@@ -18,6 +18,7 @@ from platform_core.agents.mcp.service import (
     toggle_tool_enabled,
     update_mcp_server,
 )
+from platform_core.agents.mcp.permissions import normalize_mcp_access_policy, user_can_use_mcp
 from platform_core.storage.postgres.models_business import User
 from platform_core.utils import logger
 
@@ -58,6 +59,11 @@ class UpdateMcpServerRequest(BaseModel):
     sse_read_timeout: int | None = Field(None, description="SSE 读取超时（秒）")
     tags: list | None = Field(None, description="标签数组")
     icon: str | None = Field(None, description="图标（emoji）")
+
+
+class McpAccessPolicyRequest(BaseModel):
+    allowed_roles: list[str]
+    share_config: dict
 
 
 class UpdateMcpServerStatusRequest(BaseModel):
@@ -111,8 +117,11 @@ async def get_mcp_servers(
 
         data = []
         for s in servers:
+            if not user_can_use_mcp(current_user, s):
+                continue
             data.append(
                 {
+                    "slug": s.slug,
                     "name": getattr(s, "name", ""),
                     "description": getattr(s, "description", None),
                     "icon": getattr(s, "icon", None),
@@ -284,6 +293,25 @@ async def test_mcp_server(
     except Exception as e:
         logger.error(f"Failed to test MCP server: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@mcp.put("/{slug}/access-policy")
+async def update_mcp_access_policy_route(
+    slug: str,
+    request: McpAccessPolicyRequest,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """保存 MCP 使用权限；内置服务也遵循同一策略。"""
+    server = await get_server_or_404(db, slug)
+    try:
+        server.access_policy = normalize_mcp_access_policy(request.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    server.updated_by = current_user.uid
+    await db.commit()
+    await db.refresh(server)
+    return {"success": True, "data": serialize_mcp_server(server)}
 
 
 @mcp.put("/{slug}/status")

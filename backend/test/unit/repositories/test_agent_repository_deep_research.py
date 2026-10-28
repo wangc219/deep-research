@@ -60,6 +60,7 @@ async def test_discovered_presets_creates_orchestrator_and_subagents(monkeypatch
     context = orchestrator.config_json["context"]
     assert context["subagents"] == ["research-explorer", "fact-verifier"]
     assert context["skills"] == ["deep-research", "equipment-research"]
+    assert context["preload_skills"] == ["deep-research"]
     assert context["system_prompt"].strip()
 
     scheme = created["weapon-equipment-scheme"]
@@ -79,13 +80,24 @@ async def test_discovered_presets_creates_orchestrator_and_subagents(monkeypatch
 async def test_discovered_presets_is_idempotent(monkeypatch):
     db = CollectingDb()
     repo = AgentRepository(db)
+    presets = {preset.slug: preset for preset in discover_agent_presets()}
 
     async def get_by_slug(slug):
-        return SimpleNamespace(slug=slug)
+        preset = presets[slug]
+        return SimpleNamespace(
+            slug=slug,
+            backend_id=preset.backend_id,
+            name=preset.name,
+            description=preset.description,
+            is_subagent=preset.backend_id == SUB_AGENT_BACKEND_ID,
+            config_json={"context": preset.context},
+            updated_by=None,
+            updated_at=None,
+        )
 
     monkeypatch.setattr(repo, "get_by_slug", get_by_slug)
 
-    for preset in discover_agent_presets():
+    for preset in presets.values():
         if preset.slug != "default-chatbot":
             await repo.ensure_preset(preset)
 

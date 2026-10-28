@@ -7,6 +7,7 @@ import pytest
 
 from platform_core.agents.presets.subagents.general_purpose import PRESET as GENERAL_PURPOSE
 from platform_core.agents.presets.default_chatbot import PRESET as DEFAULT_AGENT_PRESET
+from platform_core.agents.presets.deep_research import PRESET as DEEP_RESEARCH_PRESET
 from platform_core.repositories.agent_repository import (
     AgentRepository,
     DEFAULT_AGENT_DESCRIPTION,
@@ -176,9 +177,19 @@ async def test_ensure_default_agent_backfills_missing_description(monkeypatch):
     db = FakeDb()
     repo = AgentRepository(db)
     agent = SimpleNamespace(
+        backend_id="ChatbotAgent",
+        name="装备研究助手",
         share_config=DEFAULT_SHARE_CONFIG.copy(),
         is_default=True,
         description=None,
+        config_json={
+            "context": {
+                "system_prompt": "旧提示词",
+                "skills": ["equipment-research"],
+                "model": "provider:model",
+                "knowledges": ["knowledge-1"],
+            }
+        },
         updated_by=None,
         updated_at=None,
     )
@@ -192,6 +203,14 @@ async def test_ensure_default_agent_backfills_missing_description(monkeypatch):
 
     assert result is agent
     assert agent.description == DEFAULT_AGENT_DESCRIPTION
+    assert agent.name == DEFAULT_AGENT_PRESET.name
+    assert agent.config_json["context"]["system_prompt"] == DEFAULT_AGENT_PRESET.context["system_prompt"]
+    assert agent.config_json["context"]["skills"] == DEFAULT_AGENT_PRESET.context["skills"]
+    assert "本轮没有成功调用网页或学术检索" in agent.config_json["context"]["system_prompt"]
+    assert "纯算法、软件层、数据平台" in agent.config_json["context"]["system_prompt"]
+    assert "量子纠缠可在没有经典信道时" in agent.config_json["context"]["system_prompt"]
+    assert agent.config_json["context"]["model"] == "provider:model"
+    assert agent.config_json["context"]["knowledges"] == ["knowledge-1"]
     assert agent.updated_by == "admin"
     db.commit.assert_awaited_once()
     db.refresh.assert_awaited_once_with(agent)
@@ -219,6 +238,46 @@ async def test_ensure_preset_creates_empty_config_subagent(monkeypatch):
     assert agent.share_config == DEFAULT_SHARE_CONFIG
     assert agent.created_by == "system"
     assert db.added is agent
+    db.commit.assert_awaited_once()
+    db.refresh.assert_awaited_once_with(agent)
+
+
+@pytest.mark.asyncio
+async def test_ensure_preset_syncs_versioned_builtin_and_preserves_runtime_resources(monkeypatch):
+    db = FakeDb()
+    repo = AgentRepository(db)
+    agent = SimpleNamespace(
+        backend_id="ChatbotAgent",
+        name="深度研究",
+        description="旧描述",
+        is_subagent=False,
+        config_json={
+            "context": {
+                "system_prompt": "旧提示词",
+                "skills": ["equipment-research"],
+                "model": "provider:model",
+                "knowledges": ["knowledge-1"],
+            }
+        },
+        updated_by=None,
+        updated_at=None,
+    )
+
+    async def get_by_slug(_slug):
+        return agent
+
+    monkeypatch.setattr(repo, "get_by_slug", get_by_slug)
+
+    result = await repo.ensure_preset(DEEP_RESEARCH_PRESET, created_by="system")
+
+    assert result is agent
+    assert agent.description == DEEP_RESEARCH_PRESET.description
+    assert agent.config_json["context"]["system_prompt"] == DEEP_RESEARCH_PRESET.context["system_prompt"]
+    assert agent.config_json["context"]["skills"] == DEEP_RESEARCH_PRESET.context["skills"]
+    assert agent.config_json["context"]["preload_skills"] == ["deep-research"]
+    assert agent.config_json["context"]["model"] == "provider:model"
+    assert agent.config_json["context"]["knowledges"] == ["knowledge-1"]
+    assert agent.updated_by == "system"
     db.commit.assert_awaited_once()
     db.refresh.assert_awaited_once_with(agent)
 

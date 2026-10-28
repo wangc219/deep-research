@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import json
 import re
@@ -166,9 +166,7 @@ def create_discover_articles_tool(
                 url=link["url"],
                 title=link["title"],
                 snippet=link["context"],
-                page_type="download_document"
-                if _download_kind(link["url"]) != "none"
-                else "article",
+                page_type="download_document" if _download_kind(link["url"]) != "none" else "article",
                 download_kind=_download_kind(link["url"]),
                 relevance_score=relevance_score,
                 importance_score=0.5,
@@ -201,21 +199,10 @@ def create_discover_articles_tool(
             created_at=_dt_now(),
             updated_at=_dt_now(),
         )
-        proposals = [
-            DomainWriteProposal("upsert", "ResearchLead", lead.to_dict())
-            for lead in leads
-        ]
+        proposals = [DomainWriteProposal("upsert", "ResearchLead", lead.to_dict()) for lead in leads]
         proposals.append(DomainWriteProposal("upsert", "ReadingQueue", queue.to_dict()))
-        selected_summaries = [
-            _lead_summary(lead)
-            for lead in leads
-            if lead.status == "selected"
-        ]
-        skipped_summaries = [
-            _lead_summary(lead)
-            for lead in leads
-            if lead.status == "skipped"
-        ]
+        selected_summaries = [_lead_summary(lead) for lead in leads if lead.status == "selected"]
+        skipped_summaries = [_lead_summary(lead) for lead in leads if lead.status == "skipped"]
         lead_lines = _lead_result_lines(selected_summaries, skipped_summaries)
         return ToolResult(
             call.id,
@@ -366,9 +353,7 @@ def create_download_document_tool(
                 artifact_refs=[*lead.artifact_refs, raw_ref, *([text_ref] if text_ref else [])],
                 updated_at=_dt_now(),
             )
-            domain_proposals.append(
-                DomainWriteProposal("upsert", "ResearchLead", updated.to_dict())
-            )
+            domain_proposals.append(DomainWriteProposal("upsert", "ResearchLead", updated.to_dict()))
         return ToolResult(
             call.id,
             call.name,
@@ -598,11 +583,7 @@ def _lead_result_lines(
     if skipped:
         rows.append("\nskipped_leads:")
         for lead in skipped[:limit]:
-            rows.append(
-                "- "
-                f"{lead['lead_id']} | {lead['title']} | {lead['url']} | "
-                f"reason={lead['reason']}"
-            )
+            rows.append(f"- {lead['lead_id']} | {lead['title']} | {lead['url']} | reason={lead['reason']}")
     return "\n" + "\n".join(rows) if rows else ""
 
 
@@ -656,9 +637,7 @@ def _extract_pdf_text(content: bytes) -> str:
     lines = [
         line.strip()
         for line in decoded.splitlines()
-        if line.strip()
-        and not line.startswith("%PDF")
-        and not line.startswith("%%EOF")
+        if line.strip() and not line.startswith("%PDF") and not line.startswith("%%EOF")
     ]
     return "\n\n".join(lines)
 
@@ -734,8 +713,8 @@ def _clean_text(text: Any) -> str:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _dt_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

@@ -13,7 +13,8 @@ from functools import wraps
 import hashlib
 import json
 import time
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RetryConfig:
     """重试配置"""
+
     max_attempts: int = 3
     initial_delay: float = 1.0
     max_delay: float = 10.0
@@ -50,22 +52,22 @@ class ParameterValidator:
         fixes = []
 
         # 处理必需参数
-        required = schema.get('required', [])
+        required = schema.get("required", [])
         for param in required:
             if param not in fixed or fixed[param] is None:
                 # 尝试使用默认值
-                if 'properties' in schema and param in schema['properties']:
-                    prop_schema = schema['properties'][param]
-                    if 'default' in prop_schema:
-                        fixed[param] = prop_schema['default']
+                if "properties" in schema and param in schema["properties"]:
+                    prop_schema = schema["properties"][param]
+                    if "default" in prop_schema:
+                        fixed[param] = prop_schema["default"]
                         fixes.append(f"Added missing required parameter '{param}' with default")
-                        self.fixes_applied['missing_required'] += 1
+                        self.fixes_applied["missing_required"] += 1
 
         # 类型修复
-        if 'properties' in schema:
+        if "properties" in schema:
             for param, value in list(fixed.items()):
-                if param in schema['properties']:
-                    prop_schema = schema['properties'][param]
+                if param in schema["properties"]:
+                    prop_schema = schema["properties"][param]
                     fixed_value, fix_desc = self._fix_type(param, value, prop_schema)
 
                     if fix_desc:
@@ -73,14 +75,14 @@ class ParameterValidator:
                         fixes.append(fix_desc)
 
         # 移除未定义的参数
-        if 'properties' in schema:
-            defined_params = set(schema['properties'].keys())
+        if "properties" in schema:
+            defined_params = set(schema["properties"].keys())
             extra_params = set(fixed.keys()) - defined_params
 
             for param in extra_params:
                 del fixed[param]
                 fixes.append(f"Removed undefined parameter '{param}'")
-                self.fixes_applied['undefined_param'] += 1
+                self.fixes_applied["undefined_param"] += 1
 
         return fixed, fixes
 
@@ -91,15 +93,15 @@ class ParameterValidator:
         schema: dict[str, Any],
     ) -> tuple[Any, str | None]:
         """修复参数类型"""
-        expected_type = schema.get('type')
+        expected_type = schema.get("type")
 
-        if expected_type == 'string' and not isinstance(value, str):
+        if expected_type == "string" and not isinstance(value, str):
             # 转换为字符串
             fixed_value = str(value)
-            self.fixes_applied['type_string'] += 1
+            self.fixes_applied["type_string"] += 1
             return fixed_value, f"Converted '{param}' to string"
 
-        elif expected_type == 'integer' and not isinstance(value, int):
+        elif expected_type == "integer" and not isinstance(value, int):
             # 转换为整数
             try:
                 if isinstance(value, str):
@@ -109,52 +111,52 @@ class ParameterValidator:
                 else:
                     fixed_value = int(value)
 
-                self.fixes_applied['type_integer'] += 1
+                self.fixes_applied["type_integer"] += 1
                 return fixed_value, f"Converted '{param}' to integer"
             except (ValueError, TypeError):
                 pass
 
-        elif expected_type == 'number' and not isinstance(value, (int, float)):
+        elif expected_type == "number" and not isinstance(value, (int, float)):
             # 转换为数字
             try:
                 fixed_value = float(value)
-                self.fixes_applied['type_number'] += 1
+                self.fixes_applied["type_number"] += 1
                 return fixed_value, f"Converted '{param}' to number"
             except (ValueError, TypeError):
                 pass
 
-        elif expected_type == 'boolean' and not isinstance(value, bool):
+        elif expected_type == "boolean" and not isinstance(value, bool):
             # 转换为布尔值
             if isinstance(value, str):
-                fixed_value = value.lower() in ('true', 'yes', '1', 'on')
-                self.fixes_applied['type_boolean'] += 1
+                fixed_value = value.lower() in ("true", "yes", "1", "on")
+                self.fixes_applied["type_boolean"] += 1
                 return fixed_value, f"Converted '{param}' to boolean"
 
-        elif expected_type == 'array' and not isinstance(value, list):
+        elif expected_type == "array" and not isinstance(value, list):
             # 转换为数组
             if isinstance(value, str):
                 # 尝试解析 JSON
                 try:
                     fixed_value = json.loads(value)
                     if isinstance(fixed_value, list):
-                        self.fixes_applied['type_array'] += 1
+                        self.fixes_applied["type_array"] += 1
                         return fixed_value, f"Parsed '{param}' as JSON array"
                 except json.JSONDecodeError:
                     pass
 
             # 包装为数组
             fixed_value = [value]
-            self.fixes_applied['type_array'] += 1
+            self.fixes_applied["type_array"] += 1
             return fixed_value, f"Wrapped '{param}' in array"
 
-        elif expected_type == 'object' and not isinstance(value, dict):
+        elif expected_type == "object" and not isinstance(value, dict):
             # 转换为对象
             if isinstance(value, str):
                 # 尝试解析 JSON
                 try:
                     fixed_value = json.loads(value)
                     if isinstance(fixed_value, dict):
-                        self.fixes_applied['type_object'] += 1
+                        self.fixes_applied["type_object"] += 1
                         return fixed_value, f"Parsed '{param}' as JSON object"
                 except json.JSONDecodeError:
                     pass
@@ -169,12 +171,7 @@ class ExponentialBackoff:
         self.config = config or RetryConfig()
         self.attempt_count = 0
 
-    async def execute(
-        self,
-        func: Callable,
-        *args,
-        **kwargs
-    ) -> Any:
+    async def execute(self, func: Callable, *args, **kwargs) -> Any:
         """
         带重试的执行
 
@@ -201,19 +198,16 @@ class ExponentialBackoff:
                     break
 
                 # 计算延迟
-                delay = min(
-                    self.config.initial_delay * (self.config.exponential_base ** attempt),
-                    self.config.max_delay
-                )
+                delay = min(self.config.initial_delay * (self.config.exponential_base**attempt), self.config.max_delay)
 
                 # 添加抖动
                 if self.config.jitter:
                     import random
-                    delay *= (0.5 + random.random() * 0.5)
+
+                    delay *= 0.5 + random.random() * 0.5
 
                 logger.warning(
-                    f"Attempt {attempt + 1}/{self.config.max_attempts} failed: {e}, "
-                    f"retrying in {delay:.2f}s"
+                    f"Attempt {attempt + 1}/{self.config.max_attempts} failed: {e}, retrying in {delay:.2f}s"
                 )
 
                 await asyncio.sleep(delay)
@@ -256,10 +250,7 @@ class ResultCache:
             oldest_key = min(self.cache.keys(), key=lambda k: self.cache[k].timestamp)
             del self.cache[oldest_key]
 
-        self.cache[key] = CacheEntry(
-            value=value,
-            timestamp=time.time()
-        )
+        self.cache[key] = CacheEntry(value=value, timestamp=time.time())
 
     def clear(self):
         """清空缓存"""
@@ -273,17 +264,18 @@ class ResultCache:
         hit_rate = self.hits / total if total > 0 else 0.0
 
         return {
-            'hits': self.hits,
-            'misses': self.misses,
-            'hit_rate': f"{hit_rate:.1%}",
-            'cache_size': len(self.cache),
-            'max_size': self.max_size,
+            "hits": self.hits,
+            "misses": self.misses,
+            "hit_rate": f"{hit_rate:.1%}",
+            "cache_size": len(self.cache),
+            "max_size": self.max_size,
         }
 
 
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     value: Any
     timestamp: float
 
@@ -366,9 +358,7 @@ class EnhancedToolExecutor:
 
             except Exception as e:
                 self.metrics.failed_calls += 1
-                logger.error(
-                    f"Tool '{tool_name}' failed after {backoff.attempt_count} attempts: {e}"
-                )
+                logger.error(f"Tool '{tool_name}' failed after {backoff.attempt_count} attempts: {e}")
                 raise
 
         finally:
@@ -378,7 +368,7 @@ class EnhancedToolExecutor:
     def _make_cache_key(self, tool_name: str, parameters: dict[str, Any]) -> str:
         """生成缓存键"""
         # 标准化参数
-        normalized = json.dumps(parameters, sort_keys=True, separators=(',', ':'))
+        normalized = json.dumps(parameters, sort_keys=True, separators=(",", ":"))
 
         # 计算哈希
         hash_obj = hashlib.sha256(f"{tool_name}:{normalized}".encode())
@@ -386,34 +376,27 @@ class EnhancedToolExecutor:
 
     def stats(self) -> dict[str, Any]:
         """统计信息"""
-        success_rate = (
-            self.metrics.successful_calls / self.metrics.total_calls
-            if self.metrics.total_calls > 0
-            else 0.0
-        )
+        success_rate = self.metrics.successful_calls / self.metrics.total_calls if self.metrics.total_calls > 0 else 0.0
 
-        avg_time = (
-            self.metrics.total_time / self.metrics.total_calls
-            if self.metrics.total_calls > 0
-            else 0.0
-        )
+        avg_time = self.metrics.total_time / self.metrics.total_calls if self.metrics.total_calls > 0 else 0.0
 
         return {
-            'total_calls': self.metrics.total_calls,
-            'successful_calls': self.metrics.successful_calls,
-            'failed_calls': self.metrics.failed_calls,
-            'success_rate': f"{success_rate:.1%}",
-            'params_fixed': self.metrics.params_fixed,
-            'cache_hits': self.metrics.cache_hits,
-            'avg_time_ms': avg_time * 1000,
-            'cache_stats': self.cache.stats(),
-            'validator_fixes': dict(self.validator.fixes_applied),
+            "total_calls": self.metrics.total_calls,
+            "successful_calls": self.metrics.successful_calls,
+            "failed_calls": self.metrics.failed_calls,
+            "success_rate": f"{success_rate:.1%}",
+            "params_fixed": self.metrics.params_fixed,
+            "cache_hits": self.metrics.cache_hits,
+            "avg_time_ms": avg_time * 1000,
+            "cache_stats": self.cache.stats(),
+            "validator_fixes": dict(self.validator.fixes_applied),
         }
 
 
 @dataclass
 class ExecutorMetrics:
     """执行器指标"""
+
     total_calls: int = 0
     successful_calls: int = 0
     failed_calls: int = 0
@@ -463,10 +446,10 @@ def enhanced_tool(
 
 
 __all__ = [
-    'EnhancedToolExecutor',
-    'ParameterValidator',
-    'ExponentialBackoff',
-    'ResultCache',
-    'RetryConfig',
-    'enhanced_tool',
+    "EnhancedToolExecutor",
+    "ParameterValidator",
+    "ExponentialBackoff",
+    "ResultCache",
+    "RetryConfig",
+    "enhanced_tool",
 ]

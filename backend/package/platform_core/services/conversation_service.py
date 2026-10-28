@@ -143,10 +143,11 @@ async def create_thread_view(
         )
         if project is None:
             raise HTTPException(status_code=404, detail="Project 不存在")
-        try:
-            Workdir.open_existing(str(current_uid), project.workdir_path)
-        except (FileNotFoundError, NotADirectoryError, PermissionError, OSError, ValueError) as exc:
-            raise HTTPException(status_code=409, detail="项目目录不可用") from exc
+        if project.directory_mode == "linked":
+            try:
+                Workdir.open_existing(str(current_uid), project.workdir_path)
+            except (FileNotFoundError, NotADirectoryError, PermissionError, OSError, ValueError) as exc:
+                raise HTTPException(status_code=409, detail="项目目录不可用") from exc
     else:
         try:
             project = await create_implicit_project(

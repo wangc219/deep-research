@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from platform_core.agents.context import resolve_agent_resource_options
+from platform_core.agents.presets import DEFAULT_RESEARCH_POLICY
 from platform_core.permissions import has_global_business_access
 from platform_core.repositories.agent_repository import AgentRepository
 from platform_core.repositories.conversation_repository import ConversationRepository
@@ -27,7 +28,7 @@ WEAPON_SCHEME_AGENT_SLUG = "weapon-equipment-scheme"
 CAPABILITY_PORTRAIT_AGENT_SLUG = "equipment-capability-portrait"
 DEEP_SESSION_SCHEMA_VERSION = "equipment-deep-native-v2"
 DEEP_SKILL_SLUG = "equipment-deep-conversation"
-_REQUIRED_SKILLS = (DEEP_SKILL_SLUG, "equipment-research", "deep-research")
+_REQUIRED_SKILLS = (DEEP_SKILL_SLUG, "equipment-research", "deep-research", "academic-evidence")
 _WORKSPACE_SKILLS = ("html-preview",)
 SECTION_DEEPEN_MODE = "section_deepen"
 NEW_WEAPON_DIVERGE_MODE = "new_weapon_diverge"
@@ -257,9 +258,20 @@ async def build_runtime_context_overrides(
         skills = [slug for slug in skills if slug != "knowledge-base"]
 
     configured_preloads = _unique_strings(agent_context.get("preload_skills"))
-    preload_skills = [slug for slug in configured_preloads if slug in skills]
-    for slug in (*_REQUIRED_SKILLS, "knowledge-base" if knowledge_enabled else ""):
-        if slug and slug in skills and slug not in preload_skills:
+    preload_skills = [DEEP_AGENT_SLUG] if DEEP_AGENT_SLUG in skills else []
+    technology_cabin = str(research_section or "").strip() == "装备与技术实现"
+    if technology_cabin:
+        for slug in ("academic-evidence", "knowledge-base"):
+            if slug in skills and slug not in preload_skills:
+                preload_skills.append(slug)
+    preload_skills.extend(
+        slug
+        for slug in configured_preloads
+        if slug in skills and slug not in (*_REQUIRED_SKILLS, "knowledge-base") and slug not in preload_skills
+    )
+    # 方法论保留在可发现目录中，只预载用户明确选用的技能。
+    for slug in _unique_strings(active_skill_ids):
+        if slug in skills and slug not in preload_skills:
             preload_skills.append(slug)
 
     context_patch: dict[str, Any] = {
@@ -299,123 +311,135 @@ async def build_system_context(
     research_section: str = "",
 ) -> str:
     """构建不进入用户可见消息的装备深研系统上下文。"""
-    context = await get_session_research_context(db=db, user=user, session=session)
+    context = await get_session_research_context(
+        db=db,
+        user=user,
+        session=session,
+        compact=True,
+    )
     payload = dict(session.payload or {})
     mode = normalize_deep_research_mode(research_mode)
     section = str(research_section or "").strip()[:64]
     rules = [
         "当前运行属于 equipment deep research 平台原生深研会话。",
-        "延续原武器装备深研的方法：区分事实、推断和未知项，围绕作战场景、制胜机理、技术路径与能力画像形成证据链。",
-        "本会话已启用公网检索能力。凡涉及公开论文、专利、标准、机构资料、技术现状、工程数据或时效性事实，"
-        "学术论文与科研技术问题在 academic_search 可用时优先使用 AMiner 发现论文，并获取拟引用论文摘要；"
-        "专利、标准、机构资料、工程数据和其他公开事实使用 web_search 补证，AMiner 不可用时也使用 web_search，"
-        "对关键结论使用至少两个独立来源交叉核验，并在答案中保留可点击的原始 URL；不得声称本次运行无公网检索能力。",
-        "公网检索结果只是外部证据候选：优先政府、军队、标准组织、科研机构、原始论文和专利，明确区分已证实事实、合理推断与仍待验证项。",
-        (
-            "web_search 已在工具层完成有界重试、后端切换和熔断；若返回 status=degraded，"
-            "当前 Agent 与 Subagent 必须停止对 web_search 的重试和同义改写；AMiner 可用时仍可补充论文证据，"
-            "也可调用一次 query_kbs 做跨库检索，"
-            "再基于已有来源完成回答并标注具体证据缺口。不得以‘继续尝试’开启无界工具循环。"
-        ),
-        "需要读取关联任务、能力版本或研究产物时，优先调用 equipment_deep_context 工具，不要猜测内部数据。",
-        "深研对话已启用沙盒文件工具与持久化工作区。用户要求研究文档、数据表、图表、HTML 页面或代码时，"
-        "必须实际生成文件，在当前 Project Workdir 的 outputs 下保存并核验，再由主智能体调用 present_artifacts 交付；"
-        "子智能体生成文件后返回真实路径与摘要，主智能体核验后统一交付。需要交互页面时读取 html-preview 技能。",
-        "普通文件交付独立于‘形成能力画像草案’开关；开关关闭时仍可生成、预览、编辑和下载研究文件。"
-        "用户只要求文件时不调用 save_equipment_capability_draft，也不要求先成卡；只有实际写入成功才能声明已生成文件。",
-        "形成能力画像草案时保持原版本不可变，只能通过 save_equipment_capability_draft 新增待核验版本。",
-        "用户可以输入深研命令：/diverge 表示重新开放发散正交假设，/challenge 表示对抗检验反例与失效边界，"
-        "/synthesize 表示综合归纳已有方向，/memory 表示只读查看当前决策记忆中的候选方向、裁决与待追问，"
-        "且不启动新的发散或议事，/card 表示使用已收敛方向形成五栏能力卡，/help 表示列出这些命令。",
+        "以用户当前问题为任务，以关联栏目为研究目标。自主判断问题、规划研究路径、选择工具并组织回答；"
+        "先前预设或历史焦点中的固定步骤、章节和检查清单仅作参考，不是本轮必经流程。"
+        "用户当前明确要求优先于历史焦点；问题可推进时直接研究，仅在关键歧义会改变结论时澄清。",
+        "研究深度随问题需要调整：简单追问直接回答，复杂问题可拆解、补证、比较、反思并调整方向。"
+        "不要求每轮写完整报告，不强制七级链、固定标题、路线数量或来源数量。"
+        "技能和待办按需使用；需要外部证据时默认委派调研探索员，单一问题不强制拆分或并行。",
+        "本会话已启用公网检索能力。需要核实公开事实、时效信息或取得新证据时按需检索；"
+        "论文问题在 academic_search 可用时优先使用 AMiner，其他公开事实使用 web_search。"
+        "技术机理、技术路线、研究进展和技术选型同样优先检索 AMiner 论文证据，"
+        "可用中英文术语和互补角度联合检索，筛选后补齐摘要，再判断工程适用性。"
+        "关键或有争议的结论按证据强度交叉核验，引用时保留可点击的原始 URL；"
+        "区分事实、推断、假设与未知，不编造来源、实验数据或工具结果。",
+        "web_search 返回 status=degraded 时停止重试和同义改写，使用其他可用来源继续，"
+        "说明影响结论的证据缺口；不得开启无界工具循环。",
+        "需要关联任务、能力版本或研究产物的详细信息时调用 equipment_deep_context；不猜测内部数据。",
+        "本会话具备沙盒文件工具与持久化工作区。用户要求文档、数据表、图表、HTML 或代码时，"
+        "实际生成文件，核验后调用 present_artifacts 交付。"
+        "文件交付独立于能力画像草案，开关关闭时仍可生成、预览、编辑和下载研究文件；"
+        "用户只要求文件时不调用 save_equipment_capability_draft。需要交互页面时按需读取 html-preview 技能。",
+        "普通研究按问题选择表达形式；只有用户要求成卡时才读取 equipment-deep-conversation 技能中的"
+        " S6 五栏合同，并通过 save_equipment_capability_draft 新增待核验版本，原始和正式版本不可覆盖。",
+        "用户可用 /diverge 开放新方向、/challenge 检验反例、/synthesize 综合、/card 成卡、/help 查看命令。"
+        "/memory 表示只读查看当前决策记忆中的候选方向、裁决与待追问，且不启动新的发散或议事。",
     ]
+    bound_name = str(payload.get("capability_name") or "").strip()
+    bound_sections = payload.get("capability_sections") if isinstance(payload.get("capability_sections"), list) else []
     if mode == SECTION_DEEPEN_MODE:
         target = f"「{section}」栏目" if section else "用户当前指定的画像栏目或研究问题"
-        rules.extend(
-            [
-                f"本轮研究模式为 section_deepen（深化当前装备），研究目标是{target}。",
-                "必须保持当前装备身份、装备名称和核心任务定位不变；可以深化、拆解或修正制胜机理，但不得擅自改写为另一种武器装备，也不得输出其他装备候选清单。",
-                "优先围绕研发该武器的关键技术卡点和工程痛点展开：分析卡点成因、指标耦合、系统集成难题，比较构型、材料、算法、接口、部署和保障等攻关路线及取舍。",
-                "同步推演作战流程和制胜逻辑，说明关键技术如何转化为作战动作、体系能力与制胜优势，并把机理要求反推到技术实现。",
-                "形成可直接修订画像栏目的具体结论；证据缺口、失效边界和验证动作仅在影响方案成立、路线选择或研发决策时补充，不得机械凑齐固定模板。",
-                "只有用户显式切换为 new_weapon_diverge、明确要求发散新质武器，或发送 /diverge，"
-                "才允许突破当前装备身份。",
-            ]
-        )
+        rules.append(f"本轮研究模式为 section_deepen（深化当前装备），研究目标是{target}。")
+        if bound_name:
+            rules.append(
+                f"当前研究对象为「{bound_name}」，不得擅自改写为另一种武器装备。"
+                "可以质疑原卡假设、纠正描述、探索替代实现；其他栏目是理解目标的背景，不要求逐栏展开。"
+                "用户明确改变研究对象或要求发散时遵循新要求。"
+            )
         if section == "装备与技术实现":
-            rules.extend(
-                [
-                    "当前栏目启用技术攻关舱通用工程化契约：前序核验、反驳和概念纠偏只作为方案设计输入，"
-                    "不得让最终成果再次退化为以纠错为主体的报告。",
-                    "研究必须遵循七级因果链，前一级结论成为后一级输入，并保持双向可追溯："
-                    "（1）能力目标——要形成什么能力，明确场景、对象、边界、指标与验收判据；"
-                    "（2）装备总体设计——装备总体怎么设计，明确构型、分系统、功能、模式和接口；"
-                    "（3）技术体系——主要依靠哪些技术，建立能力—分系统—核心/支撑/基础/部件技术映射；"
-                    "（4）关键技术识别——哪些技术最关键，按瓶颈性、不可替代性、依赖传播和成熟度排序；"
-                    "（5）突破难点——哪些地方最难突破，给出极限、冲突、根因、失效模式和突破判据；"
-                    "（6）解决路径——有哪些解决路径，对候选路线比较原理、收益、依赖、代价、风险和决策门；"
-                    "（7）具体实现——具体如何实现，落实原理、算法、结构、材料、器件、控制、软件、工艺、集成和试验。",
-                    "当用户要求形成、汇总、定稿或交付研究方案时，正文必须依次使用上述七个一级标题；"
-                    "不得跳过能力目标直接罗列技术，也不得把关键技术、突破难点和解决路径混写成一个术语清单。",
-                    "七个主体都要服务一线研发执行，落实到分系统、输入输出接口、指标与预算、阶段任务包、"
-                    "可验收交付物和通过判据；同时补齐信号/能量/控制链、样机阶段、WBS、试验矩阵、"
-                    "里程碑与决策门、风险/FMEA/降级策略和30/60/90天启动包。",
-                    "对缺少可靠依据的精确参数必须标注为‘工程假设/TBD’，给出预算或实测闭合方法；"
-                    "不得用术语清单、泛化建议或伪造精确数值代替工程实现。",
-                    "已有技术攻关任务书或纠偏报告时，最终研发方案应作为新的独立交付物保存，不得覆盖原交付物。",
-                ]
+            source_plan = (
+                "Open Web、已授权本地知识库与 AMiner 三源均可用"
+                if bool(payload.get("knowledge_enabled", True))
+                else "Open Web 与 AMiner 可用，本会话未启用本地知识库"
+            )
+            rules.append(
+                "当前为技术攻关舱。对需要新证据的原理、路线、器件、工艺、成熟度或可行性问题，"
+                f"实际执行联合检索：{source_plan}。Open Web 核验标准、原厂、工程实现和供应链；"
+                "本地知识库复用已有装备材料与内部研究；AMiner 挖掘科学原理、关键论文和技术进展。"
+                "将有效发现映射到具体装备/分系统、作用原理、可实现技术、工程约束和验证判据，"
+                "不停留在论文摘要、资料清单或泛技术名词。"
+            )
+            rules.append(
+                "若研究后半段暴露出关键机理、构型、接口或工程可行性存疑，"
+                "必须回溯失效假设，比较可替代原理和装备架构；必要时重新构建新质武器装备，"
+                "而不是继续修补原结论。用户要求形成方案时，最终交付装备研发技术方案，"
+                "凡技术方案在推演中形成、重构或替换武器装备，必须采用正式S3/S4同等的生成聚焦方式：先从战场矛盾和敌方任务链断点出发，"
+                "闭合具体装备本体、接敌关系、作用载体与机理、作用对象、可观察直接战果和敌方原有应对失配原因，收敛为能够改变交战关系的"
+                "具体作战制胜新质武器，再展开总体构型、分系统、关键技术和研发计划；不得先形成抽象技术方案再给算法、平台、节点或体系架构套上武器名称。"
+                "题名固定为《武器装备研发技术方案报告》，"
+                "副题为‘面向研发人员 · 技术路线设计 · 关键问题攻关 · 工程实现’。"
+                "先写需求牵引、总体设计、核心技术与关键攻关三条报告主线，再给出‘章节—核心内容—主要回答的问题’导航表。"
+                "正文依次使用七章：1.项目概述与研发需求；2.总体技术方案；3.核心技术体系；4.关键技术攻关；"
+                "5.技术实现方案；6.技术路线与研发计划；7.预期成果与应用价值。"
+                "闭合总体构型、作用原理、分系统与接口、关键材料/器件/算法/工艺、"
+                "原理样机、分级试验、量化判据、阶段决策门与备选路线；不以资料综述代替。"
             )
     else:
-        rules.extend(
-            [
-                "本轮研究模式为 new_weapon_diverge（发散新质武器）。",
-                "以关联 Query 场景及未来战争态势为核心问题空间，开放发散能够形成制胜优势、"
-                "制衡对手的新质创新颠覆武器装备。",
-                "现有装备目录、能力画像、参考武器和既有技术路线只是启发基线，不是候选边界；从任务链反转、作用机理、装备构型、交战窗口、成本交换和对手反适应等维度形成彼此正交的候选，再按作战价值、颠覆性与可行性收敛。",
-                "先给出候选与可见取舍；用户明确确认方向或要求成卡后，才将新装备身份保存为待核验草案。",
-            ]
+        rules.append(
+            "本轮研究模式为 new_weapon_diverge（发散新质武器），围绕关联场景和未来战争态势"
+            "探索具有制胜优势、制衡对手价值的新方向。现有装备目录、能力画像、参考武器和既有技术路线只是启发基线，"
+            "不是候选边界；发散维度、比较方法和收敛时机由问题与发现决定。先明确军事需求、任务链断点和"
+            "制胜矛盾，再把前沿原理或技术落到具体可研制装备本体。候选应在作用机理、装备构型、任务链位置或制胜关系上"
+            "真实不同，不得用换名、换载荷、泛化智能化、技术名词堆叠或小幅参数升级冒充新质方向。重点方向按问题需要说明"
+            "创新断点、关键技术、工程瓶颈、失效边界、最低成本反制和可证伪验证；公开事实、类比迁移、模型推断与待验证假设分开。"
+            "当用户要求形成武器装备时，采用正式S3/S4同等的生成聚焦方式而非末端检查表：候选从构想起点就是可单独指认、研制、部署和试验的物理武器实体，"
+            "能够直接打击、毁伤、压制、拦截或拒止具体作战对象。能力方向、算法、软件、数据平台、指挥节点、通信中继、保障设施、"
+            "网络或泛化体系架构只能作为装备分系统或支撑条件，不能单独作为候选。创造候选时始终围绕‘战场矛盾—敌方当前做法及断点—"
+            "具体装备本体—接敌关系—作用载体与机理—作用对象—可观察直接战果—敌方原有应对为何失配’，名称必须体现创新核心和"
+            "可识别的具体武器身份。用户未指定数量时，先在内部比较至少三种不同装备架构，最终只交付1至3个真正成立且彼此正交的候选，宁缺毋滥。"
+            "当用户明确要求经过调研形成、提出、设计或发散新质创新武器装备时，先完成强研究路径，把高价值发现提炼为"
+            "真正改变未来作战制衡与打赢判断的开放生成上下文，并以实现证据和不可跨越边界约束，"
+            "再直接生成聚焦候选；不得先自由堆概念后靠字段、"
+            "检查表或引用事后修补，也不得把论文摘要或网页摘录拼接成装备方案。"
+            "此类单轮强研究不创建或更新待办；多个正交制胜子问题就是执行计划。最终正文所在响应不得调用write_todos或其他工具；"
+            "若工具循环后再次输出，必须重述完整正文，不得只返回‘以上正文’或摘要尾声。"
         )
     if payload.get("knowledge_enabled", True):
-        rules.append("仅本轮用户显式 @知识库时可以检索本会话已授权知识库，并标明来源与证据缺口。")
+        if mode == SECTION_DEEPEN_MODE and section == "装备与技术实现":
+            rules.append("技术攻关舱允许为支撑技术落地主动检索本会话已授权知识库，无需用户额外 @知识库；必须标明来源。")
+        else:
+            rules.append("仅本轮用户显式 @知识库时可以检索本会话已授权知识库，并标明来源。")
     else:
         rules.append("本会话运行时已禁用知识库，不得声称检索了内部知识库。")
     if payload.get("subagents_enabled", True):
-        rules.append("适合并行拆解或交叉核验时可以调用平台 Subagent，并在汇总前等待必要结果。")
+        rules.append(DEFAULT_RESEARCH_POLICY)
+        if mode == NEW_WEAPON_DIVERGE_MODE:
+            rules.append(
+                "本轮可用 Subagent。若用户要求经过调研形成、提出、设计或发散新质装备，"
+                "围绕面向未来作战需求、形成制衡对手并赢得制胜优势的具体装备，默认一次并行委派3个正交、可由证据回答的制胜子问题："
+                "对手体系关键依赖、任务链断点与具体作用对象；重写作战方式的接敌关系、直接战果与成本交换；支撑新制胜机理的前沿原理、"
+                "作用载体、关键分系统、工程可行性与成熟度边界。复杂跨域任务若存在会改变装备身份或总体构型的独立高价值轴，再追加第4个"
+                "调研探索员，重点核查对手反制、反反制、环境适应或体系韧性；不得用同义问题凑数量。也可按当前Query替换为更有价值的正交"
+                "制胜入口，但不得按网页、论文、国内外等资料类型分工。每次委派写清待作出的装备生成判断、证据缺口和会改变装备身份、构型或"
+                "技术路线的发现；调研必须改变未来作战制衡与打赢判断或解决候选实现问题；"
+                "网页检索通常用1至2个required_terms锚定核心身份对象，避免把三个不同证据点强制同页共现；每个探索员至少争取2个直接相关的一手或高权威网页来源，"
+                "优先政府/军队、标准、论文出版页和原厂，已有原始来源时不用聚合媒体或转载页代替，同一论文转载只算一个来源。涉及技术实现的子问题必须使用AMiner并读取拟引用论文完整摘要。"
+                "每个探索员取得4至6条高价值发现即简洁交付，不写检索过程和重复背景；Websearch通常3至5次，AMiner通常1至2次互补主题发现、必要时1次标题校正，"
+                "只读取1至3篇强相关论文完整摘要。等待结果后由主智能体按‘高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界’"
+                "综合并提炼为生成上下文，再直接创造聚焦候选。"
+                "综合时以实际交付的论文题目、摘要层级和来源为准；单个分支为空不得覆盖其他分支已取得的论文证据。含DSML、XML、"
+                "tool_calls或invoke的可见协议文本不算有效交付。"
+                "若全部探索员未取得完整摘要且技术实现仍是候选成立的关键，主智能体在生成前直接补做一轮简短AMiner检索，"
+                "补证先做一次不带related_queries的简短topic检索；为空时用web_search查核心技术的论文/DOI并从权威出版页或DOI入口提取准确标题，"
+                "再用academic_search(mode=title)校正并对命中的1至3篇强相关论文集中读取完整摘要。完成标题桥接前不得宣称零命中。"
+            )
     else:
         rules.append("本会话运行时已禁用 Subagent，不得委派子任务。")
-    bound_name = str(payload.get("capability_name") or "").strip()
-    bound_sections = payload.get("capability_sections") if isinstance(payload.get("capability_sections"), list) else []
-    reference_weapons = payload.get("reference_weapons") if isinstance(payload.get("reference_weapons"), list) else []
     if bound_sections:
-        if mode == SECTION_DEEPEN_MODE:
-            rules.append(
-                f"当前已锁定能力画像卡「{bound_name or '当前装备'}」及其栏目；只深化该装备，"
-                "引用其他武器时只能用于证据对照，不得混淆或替换装备身份。"
-            )
-            rules.append("形成修订时明确列出本栏保留、补充、纠错和待核验内容；需要沉淀时以同一装备身份新增待核验版本。")
-        else:
-            rules.append(
-                f"当前已注入能力画像卡「{bound_name or '当前装备'}」及所绑定栏目；"
-                "它们是启发基线、待突破假设和对照坐标，不是新质装备候选边界。"
-            )
-    if reference_weapons:
-        reference_names = "、".join(
-            str(item.get("title") or item.get("primary_equipment_identity") or "").strip()
-            for item in reference_weapons[:8]
-            if isinstance(item, Mapping)
-        )
-        if mode == SECTION_DEEPEN_MODE:
-            rules.append(f"参考武器「{reference_names}」仅用于技术、证据与对抗边界对照；不得据此更换当前装备身份。")
-        elif bound_sections:
-            rules.append(
-                f"参考武器「{reference_names}」仅作为对照与启发基线；不得混淆装备身份，但可以从其边界反推正交的新质装备方向。"
-            )
-        else:
-            rules.append(
-                f"参考武器「{reference_names}」是本轮启发与对照基线，不是候选边界；"
-                "应从其能力缺口和对手反适应出发继续开放发散。"
-            )
+        rules.append("关联卡片与参考材料是可核验、可修正的研究背景，不是必须照抄的结论或冻结的推理路径。")
     if focus.strip():
-        rules.append(f"本轮研究焦点：{focus.strip()[:1600]}")
+        rules.append(f"会话初始焦点（当前问题有新要求时以当前问题为准）：{focus.strip()[:1600]}")
     if create_artifact:
         rules.extend(
             [
@@ -440,10 +464,8 @@ async def build_system_context(
         )
     else:
         rules.append(
-            "若本轮已经形成足以实质修改原能力卡的成熟结论，应在回答末尾用一句话询问用户是否"
-            "基于本轮结论形成新的待核验能力卡；在用户明确确认前不得调用保存工具。不要每轮机械询问，"
-            "只有结论足以更新至少一个 S6 栏目时才提出。若用户当前消息已经明确确认更新或成卡，"
-            "则直接按正式 S6 五栏合同完成逐栏起草、自检并调用保存工具，无需再次询问。"
+            "当前消息已经明确确认更新或成卡时直接按 S6 合同保存，无需再次询问；"
+            "否则不自动保存能力卡，不要每轮机械询问是否成卡。"
         )
 
     prefix = "\n".join([*rules, "", "<equipment_research_context>"])
@@ -467,6 +489,7 @@ async def get_session_research_context(
     db: AsyncSession,
     user: User,
     session: EquipmentDeepSession,
+    compact: bool = False,
 ) -> dict[str, Any]:
     """读取深研会话可见的任务、能力版本、产物与分支来源。"""
     if session.owner_uid != str(user.uid) and not has_global_business_access(user):
@@ -486,7 +509,7 @@ async def get_session_research_context(
     artifacts = []
     if run is not None:
         capabilities = [
-            _project_capability(item.to_dict())
+            _project_capability(item.to_dict(), compact=compact)
             for item in await repo.list_capability_versions_for_run(
                 owner_uid=str(run.owner_uid) if has_global_business_access(user) else str(user.uid),
                 run_id=run.id,
@@ -526,7 +549,7 @@ async def get_session_research_context(
             for item in (payload.get("reference_weapons") or [])[:8]
             if isinstance(item, Mapping) and str(item.get("hypothesis_id") or "").strip()
         ],
-        "run": _project_run(run) if run is not None else None,
+        "run": _project_run(run, compact=compact) if run is not None else None,
         "capability_versions": capabilities,
         "artifacts": artifacts,
         "branch_context": branch_context,
@@ -769,20 +792,34 @@ async def _branch_context(*, db: AsyncSession, user: User, payload: dict[str, An
     }
 
 
-def _project_run(run) -> dict[str, Any]:
+def _project_run(run, *, compact: bool = False) -> dict[str, Any]:
     payload = dict(run.payload or {})
+    payload_keys = (
+        "summary",
+        "research_focus",
+        "selected_agent_ids",
+        "discovery_branch",
+        "capability_count",
+    ) if compact else (
+        "summary",
+        "result",
+        "research_focus",
+        "selected_agent_ids",
+        "discovery_branch",
+        "capability_count",
+    )
     projected_payload = {
         key: _bounded_value(payload[key], depth=0)
-        for key in (
-            "summary",
-            "result",
-            "research_focus",
-            "selected_agent_ids",
-            "discovery_branch",
-            "capability_count",
-        )
+        for key in payload_keys
         if key in payload
     }
+    if compact and isinstance(payload.get("result"), Mapping):
+        result = payload["result"]
+        projected_payload["result"] = {
+            key: _bounded_value(result[key], depth=0)
+            for key in ("status", "route", "artifact_counts", "capability_count")
+            if key in result
+        }
     return {
         "run_id": run.id,
         "topic": run.topic,
@@ -793,22 +830,32 @@ def _project_run(run) -> dict[str, Any]:
     }
 
 
-def _project_capability(value: dict[str, Any]) -> dict[str, Any]:
+def _project_capability(value: dict[str, Any], *, compact: bool = False) -> dict[str, Any]:
     snapshot = value.get("snapshot") if isinstance(value.get("snapshot"), dict) else {}
+    snapshot_keys = (
+        "version_no",
+        "status",
+        "source",
+        "name",
+        "capability_name",
+        "evidence_refs",
+        "hypothesis_id",
+        "card_binding_id",
+    ) if compact else (
+        "version_no",
+        "status",
+        "source",
+        "name",
+        "capability_name",
+        "capability_image",
+        "rationale",
+        "evidence_refs",
+        "hypothesis_id",
+        "card_binding_id",
+    )
     projected = {
         key: _bounded_value(snapshot[key], depth=0)
-        for key in (
-            "version_no",
-            "status",
-            "source",
-            "name",
-            "capability_name",
-            "capability_image",
-            "rationale",
-            "evidence_refs",
-            "hypothesis_id",
-            "card_binding_id",
-        )
+        for key in snapshot_keys
         if key in snapshot
     }
     return {

@@ -136,6 +136,11 @@ def normalize_permission_config(
             "read_scope": read_scope,
             "manage_scope": manage_scope,
         }
+        if "allowed_roles" in config:
+            roles = config["allowed_roles"]
+            if not isinstance(roles, list) or any(role not in {"user", "admin", "superadmin"} for role in roles):
+                raise ValueError("使用角色必须是 user、admin 或 superadmin")
+            normalized["allowed_roles"] = sorted(set(roles))
         if allowed_access_levels is not None:
             for scope in (normalized["read_scope"], normalized["manage_scope"]):
                 if scope and scope["access_level"] not in allowed_access_levels:

@@ -1,5 +1,6 @@
 import { apiGet, apiPost, apiDelete, apiPut, apiRequest } from './base'
 import { useUserStore } from '@/stores/user'
+import { normalizeConversationTitle } from '@/utils/conversationTitle'
 
 /**
  * 智能体API模块
@@ -22,6 +23,20 @@ ${String(requestContent || '').slice(0, 2000)}
 
 只输出一个概括该请求主题的简短标题，最多 30 个字符；不要添加引号、句号、解释或 Markdown 标记。`
 
+export const buildAgentRunPayload = (data) => ({
+  query: data.query,
+  agent_slug: data.agent_slug,
+  thread_id: data.thread_id,
+  meta: data.meta || {},
+  image_content: data.image_content || null,
+  model_spec: data.model_spec || null,
+  tool_approval_mode: data.tool_approval_mode ?? null,
+  resume: data.resume ?? null,
+  created_by_run_id: data.created_by_run_id || null,
+  replace_message_id: data.replace_message_id || null,
+  queue_policy: data.queue_policy || 'enqueue'
+})
+
 export const agentApi = {
   /**
    * 简单聊天调用（非流式）
@@ -41,7 +56,7 @@ export const agentApi = {
       query: buildConversationTitlePrompt(query),
       meta: { model_spec: modelSpec }
     })
-    return response.response
+    return normalizeConversationTitle(response.response).slice(0, 30)
   },
 
   /**
@@ -124,18 +139,7 @@ export const agentApi = {
    * @returns {Promise<Object>}
    */
   createAgentRun: (data) =>
-    apiPost('/api/agent/runs', {
-      query: data.query,
-      agent_slug: data.agent_slug,
-      thread_id: data.thread_id,
-      meta: data.meta || {},
-      image_content: data.image_content || null,
-      model_spec: data.model_spec || null,
-      tool_approval_mode: data.tool_approval_mode ?? null,
-      resume: data.resume ?? null,
-      created_by_run_id: data.created_by_run_id || null,
-      queue_policy: data.queue_policy || 'enqueue'
-    }),
+    apiPost('/api/agent/runs', buildAgentRunPayload(data)),
 
   /**
    * 获取请求详情

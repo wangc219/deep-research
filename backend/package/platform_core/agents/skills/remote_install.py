@@ -132,6 +132,15 @@ def _normalize_source(source: str, allowed_hosts: list[str]) -> str:
         raise ValueError(INVALID_SOURCE_MESSAGE)
 
     path = parsed.path.rstrip("/") or "/"
+    if hostname == "skills.sh":
+        parts = path.strip("/").split("/")
+        if len(parts) not in (2, 3) or not GITHUB_REPO_PATTERN.fullmatch("/".join(parts[:2])):
+            raise ValueError("skills.sh 地址须为 /owner/repo 或 /owner/repo/skill")
+        if len(parts) == 3:
+            _normalize_skill_name(parts[2])
+        if GITHUB_HOST not in allowed_hosts:
+            raise ValueError(INVALID_SOURCE_MESSAGE)
+        return f"https://{GITHUB_HOST}/{'/'.join(parts[:2])}"
     if hostname == GITHUB_HOST:
         repo_path = path.strip("/")
         if repo_path.endswith(".git"):
@@ -217,6 +226,10 @@ async def list_remote_skills(source: str) -> list[dict[str, str]]:
         await sandbox.cleanup()
 
     skills = _parse_available_skills(output)
+    source_url = urlparse(source.strip())
+    parts = source_url.path.strip("/").split("/")
+    if source_url.hostname == "skills.sh" and len(parts) == 3:
+        skills = [item for item in skills if item["name"] == parts[2]]
     if not skills:
         raise ValueError("未发现可安装的 skills")
     return skills

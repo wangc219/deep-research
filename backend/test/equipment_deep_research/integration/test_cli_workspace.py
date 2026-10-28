@@ -166,6 +166,94 @@ def test_runner_model_fallback_selects_task_agents_and_executes_parallel_wave(
     assert provider.max_active >= 2
 
 
+def test_runner_persists_reconciled_mission_blueprint_before_execution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """非战斗 Query 必须让纠偏后的蓝图成为持久化与执行唯一真相。"""
+
+    original_builder = runner_module.build_discovery_blueprint
+
+    def build_legacy_combat_blueprint(*args: object, **kwargs: object) -> dict[str, Any]:
+        blueprint = original_builder(*args, **kwargs)
+        brief = dict(blueprint.get("structured_query_brief", {}))
+        brief.update(
+            {
+                "query_equipment_mode": "direct_combat",
+                "combat_problem_frame": "打击对手节点",
+                "enemy_target_profile": ["敌方通信节点"],
+                "required_direct_military_effects": ["毁伤"],
+            }
+        )
+        blueprint["structured_query_brief"] = brief
+        blueprint["required_outputs"] = [
+            "现有战法基线",
+            "战法概念集（3种新战法+5种战法组合）",
+            "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+        ]
+        return blueprint
+
+    monkeypatch.setattr(
+        runner_module,
+        "build_discovery_blueprint",
+        build_legacy_combat_blueprint,
+    )
+
+    result = _runner(tmp_path).run(
+        mode="fake",
+        topic=(
+            "山地灾害导致公网中断时恢复救援通信，形成正好3个装备候选；"
+            "不使用敌方、击落、摧毁或毁伤等作战叙事。"
+        ),
+        research_route="new_winning_mechanism",
+        run_id="mission-blueprint-persistence",
+        analyst_confirmed=True,
+    )
+
+    persisted = json.loads(
+        (Path(result["run_dir"]) / "discovery_blueprint.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    brief = persisted["structured_query_brief"]
+    assert brief["query_equipment_mode"] == "mission_equipment"
+    assert brief["enemy_target_profile"] == []
+    assert brief["required_direct_military_effects"] == []
+    assert persisted["query_domain_contract"]["mode"] == "mission_equipment"
+    assert "现有任务流程与系统基线" in persisted["required_outputs"]
+    assert all("战法" not in item for item in persisted["required_outputs"])
+    assert all("军事价值" not in item for item in persisted["required_outputs"])
+    forbidden_narrative = (
+        "敌方",
+        "我方",
+        "对手",
+        "击落",
+        "摧毁",
+        "毁伤",
+        "杀伤",
+        "弹药",
+        "战果",
+        "交战",
+        "作战反制",
+        "作战",
+        "军事",
+        "突防",
+        "火力",
+        "战场",
+        "战法",
+        "武器",
+    )
+    for artifact_name in (
+        "report.md",
+        "capability_images.json",
+        "branch_deliverables.json",
+    ):
+        artifact = (Path(result["run_dir"]) / artifact_name).read_text(
+            encoding="utf-8"
+        )
+        assert not any(term in artifact for term in forbidden_narrative)
+
+
 def test_runner_enforces_configured_baseline_wave_concurrency(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

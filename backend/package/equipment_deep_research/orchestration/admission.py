@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from hashlib import sha256
-from typing import Any, Literal, Mapping, Sequence
+from typing import Any, Literal
+from collections.abc import Mapping, Sequence
 
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard
 
@@ -74,9 +75,7 @@ class PacketAdmissionGate:
                 and card.source_url.startswith(("http://", "https://"))
             )
         )
-        evidence_ids = tuple(
-            evidence_id for evidence_id in packet.evidence_ids if evidence_id in evidence
-        )
+        evidence_ids = tuple(evidence_id for evidence_id in packet.evidence_ids if evidence_id in evidence)
         claims: list[ClaimBundleItem] = []
         for position, finding in enumerate(packet.findings):
             text = str(finding).strip()
@@ -144,23 +143,18 @@ class PacketAdmissionGate:
         normalized_topic = packet.topic_focus.lower()
         relevant_terms = [str(item).lower() for item in task_terms if str(item).strip()]
         relevance = (
-            sum(term in normalized_topic or any(term in claim.text.lower() for claim in bundle.claims) for term in relevant_terms)
+            sum(
+                term in normalized_topic or any(term in claim.text.lower() for claim in bundle.claims)
+                for term in relevant_terms
+            )
             / len(relevant_terms)
             if relevant_terms
             else (1.0 if bundle.claims else 0.0)
         )
-        evidence_rows = [
-            evidence[item]
-            for item in packet.evidence_ids
-            if item in evidence
-        ]
-        public_rows = [
-            item for item in evidence_rows if item.source_url.startswith(("http://", "https://"))
-        ]
+        evidence_rows = [evidence[item] for item in packet.evidence_ids if item in evidence]
+        public_rows = [item for item in evidence_rows if item.source_url.startswith(("http://", "https://"))]
         source_quality = (
-            sum(_source_quality(item.source_tier) for item in public_rows) / len(public_rows)
-            if public_rows
-            else 0.0
+            sum(_source_quality(item.source_tier) for item in public_rows) / len(public_rows) if public_rows else 0.0
         )
         claim_evidence_match = (
             sum(

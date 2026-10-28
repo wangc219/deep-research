@@ -10,6 +10,8 @@ import {
 const encodeId = (value) => encodeURIComponent(String(value || '').trim())
 
 export const equipmentApi = {
+  getResearchCatalog: () => apiGet('/api/equipment/catalog'),
+  previewResearchAgents: (payload) => apiPost('/api/equipment/agent-selection-preview', payload),
   getPortal: () => apiGet('/api/equipment/portal'),
   getResearchRuntime: () => apiGet('/api/equipment/runtime'),
   updateResearchCapacity: (capacity) =>
@@ -18,7 +20,7 @@ export const equipmentApi = {
       body: JSON.stringify({ capacity })
     }),
   listRuns: (params = {}) => {
-    const query = buildQuery(params)
+    const query = buildQuery({ compact: true, ...params })
     return apiGet(query ? `/api/equipment/runs?${query}` : '/api/equipment/runs')
   },
   createRun: (payload) => apiPost('/api/equipment/runs', payload),
@@ -63,7 +65,7 @@ export const equipmentApi = {
     apiPost(`/api/equipment/queries/${encodeId(queryId)}/archive`, {
       ...(expectedVersion ? { expected_version: expectedVersion } : {})
     }),
-  deleteQuery: (queryId) => apiDelete(`/api/equipment/queries/${encodeId(queryId)}`),
+  deleteQuery: (queryId, expectedVersion) => apiDelete(`/api/equipment/queries/${encodeId(queryId)}?${buildQuery({ expected_version: expectedVersion })}`),
   bulkSetQueryStatus: (payload) => apiPost('/api/equipment/queries/bulk-status', payload),
   getQueryModelOptions: () => apiGet('/api/equipment/query-model-options'),
   generateQueries: (payload, options = {}) =>
@@ -115,7 +117,7 @@ export const equipmentApi = {
       headers: idempotencyHeaders(options.idempotencyKey, 'research-start')
     }),
   getResearchReport: (runId) => apiGet(`/api/equipment/runs/${encodeId(runId)}/report`),
-  listCapabilities: () => apiGet('/api/equipment/capabilities'),
+  listCapabilities: () => apiGet('/api/equipment/capabilities?compact=true'),
   listCapabilityVersions: (runId) =>
     apiGet(`/api/equipment/runs/${encodeId(runId)}/capability-versions`),
   verifyCapabilityVersion: (runId, versionId, status = 'verified') =>
@@ -126,8 +128,8 @@ export const equipmentApi = {
     apiPost(`/api/equipment/runs/${encodeId(runId)}/capability-versions/${encodeId(versionId)}/restore`, {}),
   purgeCapabilityVersion: (runId, versionId) =>
     apiDelete(`/api/equipment/runs/${encodeId(runId)}/capability-versions/${encodeId(versionId)}/permanent`),
-  listExpertFeedback: (runId) =>
-    apiGet(`/api/equipment/runs/${encodeId(runId)}/expert-feedback`),
+  listExpertFeedback: (runId, { includeRolledBack = false } = {}) =>
+    apiGet(`/api/equipment/runs/${encodeId(runId)}/expert-feedback${includeRolledBack ? '?include_rolled_back=true' : ''}`),
   createExpertFeedback: (runId, payload) =>
     apiPost(`/api/equipment/runs/${encodeId(runId)}/expert-feedback`, payload),
   rollbackExpertFeedback: (runId, feedbackId, reason = '') =>

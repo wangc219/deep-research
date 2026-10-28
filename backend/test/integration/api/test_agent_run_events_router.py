@@ -233,7 +233,7 @@ async def test_run_events_verbose_false_returns_compact_payload(test_client, sta
 async def test_run_events_delivers_new_redis_event_without_one_second_poll_delay(
     test_client,
     standard_user,
-    admin_headers,
+    other_user,
 ):
     uid = str(standard_user["user"]["uid"])
     run_id = str(uuid.uuid4())
@@ -306,13 +306,10 @@ async def test_run_events_delivers_new_redis_event_without_one_second_poll_delay
             "GET",
             f"/api/agent/runs/{run_id}/events",
             params={"verbose": "false"},
-            headers=admin_headers,
+            headers=other_user["headers"],
         ) as response:
-            assert response.status_code == 200, response.text
-            unauthorized_payloads = await _collect_sse_payloads(response)
-
-        assert [event for event, _payload, _event_id in unauthorized_payloads] == ["error"]
-        assert unauthorized_payloads[0][1]["message"] == "运行任务不存在"
+            assert response.status_code == 404, await response.aread()
+            assert run_id not in (await response.aread()).decode()
     finally:
         if not publisher.done():
             publisher.cancel()

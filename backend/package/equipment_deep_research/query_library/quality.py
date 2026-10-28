@@ -96,9 +96,31 @@ DOMAIN_TERMS = (
     "投送",
     "防护",
     "保障",
+    "应急",
+    "救援",
+    "照明",
+    "供电",
+    "电源",
+    "终端",
 )
 RESEARCH_TERMS = ("研究", "分析", "研判", "评估", "论证", "挖掘", "识别", "推演")
-OUTCOME_TERMS = ("装备", "能力", "体系", "需求", "发展", "形态", "效能")
+OUTCOME_TERMS = (
+    "装备",
+    "能力",
+    "体系",
+    "需求",
+    "发展",
+    "形态",
+    "效能",
+    "终端",
+    "供电系统",
+    "传感器",
+    "载荷",
+    "电源",
+    "天线",
+    "处理器",
+    "模块",
+)
 ACTIONABLE_HARM_TERMS = (
     "具体目标坐标",
     "目标清单",
@@ -127,12 +149,17 @@ SENSITIVE_QUERY_KEYS = {
     "token",
 }
 
+DOMAIN_ANCHOR_GROUPS = (
+    ("供电", "电源", "补能", "能源"),
+    ("照明", "灯具", "光源"),
+    ("应急", "救援", "灾害"),
+    ("通信", "链路", "网络", "终端"),
+)
+
 
 def coverage_plan(count: int) -> tuple[str, ...]:
     if not 1 <= count <= len(DEFAULT_COVERAGE_SLOTS):
-        raise ValueError(
-            f"generation count must be between 1 and {len(DEFAULT_COVERAGE_SLOTS)}"
-        )
+        raise ValueError(f"generation count must be between 1 and {len(DEFAULT_COVERAGE_SLOTS)}")
     return DEFAULT_COVERAGE_SLOTS[:count]
 
 
@@ -170,9 +197,7 @@ def sanitize_source_reference(reference: SourceReference) -> SourceReference:
     except ValueError:
         address = None
     if address is not None and not address.is_global:
-        raise GenerationValidationError(
-            "private or non-global source URL is not allowed"
-        )
+        raise GenerationValidationError("private or non-global source URL is not allowed")
     filtered_query = [
         (key, value)
         for key, value in parse_qsl(parsed.query, keep_blank_values=True)
@@ -192,9 +217,7 @@ def sanitize_source_reference(reference: SourceReference) -> SourceReference:
     return replace(reference, title=title, url=clean_url, relevance_note=note)
 
 
-def dedupe_sources(
-    references: list[SourceReference], *, limit: int = 8
-) -> tuple[SourceReference, ...]:
+def dedupe_sources(references: list[SourceReference], *, limit: int = 8) -> tuple[SourceReference, ...]:
     result: list[SourceReference] = []
     seen: set[str] = set()
     for raw in references:
@@ -241,6 +264,7 @@ def validate_generated_candidate(
     existing_queries: list[str],
     accepted_queries: list[str],
     require_demand_chain: bool = True,
+    topic: str = "",
 ) -> list[str]:
     issues: list[str] = []
     query = " ".join(candidate.query.split())
@@ -255,28 +279,25 @@ def validate_generated_candidate(
     if not any(term in query for term in RESEARCH_TERMS):
         issues.append("query lacks an explicit research or analysis action")
     combined_scope = f"{query} {candidate.supplemental_information}"
+    topic_anchors = [term for term in DOMAIN_TERMS if term in topic]
+    if topic_anchors and not any(term in combined_scope for term in topic_anchors):
+        issues.append("query does not share a subject anchor with the requested topic")
     if not any(term in combined_scope for term in OUTCOME_TERMS):
         issues.append("query and supplemental information do not lead to an equipment capability demand")
     if any(term in query for term in ACTIONABLE_HARM_TERMS):
-        issues.append(
-            "query requests actionable targeting, attack, or weapon construction guidance"
-        )
+        issues.append("query requests actionable targeting, attack, or weapon construction guidance")
     if expected_slot in {
         "技术驱动-技术现状与趋势",
         "体系实战-全链条制胜机理",
     } and not any(term in combined_scope for term in INTELLIGENCE_TERMS):
         issues.append("required intelligent or autonomous capability lens is missing")
-    if expected_slot == "需求牵引-单装与体系能力缺口" and not any(
-        term in combined_scope for term in RED_OCEAN_TERMS
-    ):
+    if expected_slot == "需求牵引-单装与体系能力缺口" and not any(term in combined_scope for term in RED_OCEAN_TERMS):
         issues.append("traditional red-ocean cross-generation lens is missing")
     if expected_slot == "颠覆逻辑-时间毁伤体系或伦理博弈" and not any(
         term in combined_scope for term in BLUE_OCEAN_TERMS
     ):
         issues.append("new-quality blue-ocean lens is missing")
-    if expected_slot == "通用系列规模化-工业与装备族" and not any(
-        term in combined_scope for term in INDUSTRIAL_TERMS
-    ):
+    if expected_slot == "通用系列规模化-工业与装备族" and not any(term in combined_scope for term in INDUSTRIAL_TERMS):
         issues.append("industrialization or equipment-family lens is missing")
     if len(candidate.generation_rationale.strip()) < 10:
         issues.append("generation_rationale is too short")
@@ -317,4 +338,9 @@ def _shares_domain_anchor(query: str, weapon_requirement: str) -> bool:
         for term in (*DOMAIN_TERMS, "集群", "平台", "传感器", "指控", "补给", "维修")
         if term in query and term in weapon_requirement
     ]
-    return bool(shared_terms)
+    if shared_terms:
+        return True
+    return any(
+        any(term in query for term in group) and any(term in weapon_requirement for term in group)
+        for group in DOMAIN_ANCHOR_GROUPS
+    )

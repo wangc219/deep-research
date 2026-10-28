@@ -1,4 +1,5 @@
 <script setup>
+import { sharedPolling } from '@/utils/sharedPolling'
 import {
   computed,
   nextTick,
@@ -409,11 +410,11 @@ const poll = async () => {
 
 const startPolling = () => {
   if (pollTimer) return
-  pollTimer = window.setInterval(() => void poll(), 2500)
+  pollTimer = sharedPolling.subscribe(poll, 2500)
 }
 
 const stopPolling = () => {
-  if (pollTimer) window.clearInterval(pollTimer)
+  if (pollTimer) pollTimer()
   pollTimer = null
 }
 
@@ -571,7 +572,7 @@ onUnmounted(() => {
               :disabled="!selectedRun"
               @click="navigateArtifact('/equipment/capabilities')"
             >
-              <FlaskConical :size="15" />能力图像
+              <FlaskConical :size="15" />能力画像
             </button>
             <button
               type="button"

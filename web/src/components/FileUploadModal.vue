@@ -74,6 +74,12 @@
           </div>
         </div>
 
+        <ParsePerformanceOptions
+          v-if="uploadMode !== 'url'"
+          v-model="processingParams"
+          :disabled="chunkLoading"
+        />
+
         <!-- 第二行：自动入库配置 (仅在开启时显示) -->
         <div class="setting-row" v-if="autoIndex">
           <div class="col-item">
@@ -302,6 +308,7 @@ import {
 import { buildChunkParamsPayload } from '@/utils/chunkUtils'
 import ChunkParamsConfig from '@/components/ChunkParamsConfig.vue'
 import OCRSelector from '@/components/OCRSelector.vue'
+import ParsePerformanceOptions from '@/components/knowledge/ParsePerformanceOptions.vue'
 import WorkspacePathPicker from '@/components/WorkspacePathPicker.vue'
 
 const props = defineProps({
@@ -723,7 +730,9 @@ const ocrEngineTouched = ref(false)
 
 // 解析参数
 const processingParams = ref({
-  ocr_engine: DEFAULT_OCR_ENGINE
+  ocr_engine: DEFAULT_OCR_ENGINE,
+  parse_concurrency: 2,
+  prefer_text_layer: true
 })
 
 // 自动入库相关

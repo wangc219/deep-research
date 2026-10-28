@@ -23,10 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--provider",
         default=None,
-        help=(
-            "Configured execution provider id (for example codex, claude, "
-            "responses, or a custom external CLI)."
-        ),
+        help=("Configured execution provider id (for example codex, claude, responses, or a custom external CLI)."),
     )
     parser.add_argument("--topic", required=True)
     parser.add_argument(
@@ -87,9 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--execution-profile-id",
         choices=["legacy_v1", "optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"],
-        default=os.environ.get(
-            "EQUIPMENT_DR_EXECUTION_PROFILE_ID", "winning_swarm_dynamic_v2"
-        ).strip()
+        default=os.environ.get("EQUIPMENT_DR_EXECUTION_PROFILE_ID", "winning_swarm_dynamic_v2").strip()
         or "winning_swarm_dynamic_v2",
         help="Select the harness implementation. Dynamic swarm v2 is the default; legacy v1 remains available for compatibility and controlled comparisons.",
     )

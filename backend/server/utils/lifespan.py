@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -170,6 +171,12 @@ async def _startup(app: FastAPI) -> None:
         operation=init_sandbox_provider,
     )
 
+    from platform_core.services.wechat_mp_service import restore_subscriptions
+
+    from platform_core.services.collection_artifact_service import mirror_article_workspaces
+
+    app.state.wechat_mp_restore = asyncio.create_task(restore_subscriptions())
+    app.state.collection_artifact_mirror = asyncio.create_task(mirror_article_workspaces())
     app.state.startup_complete = True
     logger.info(f"""
 
@@ -215,6 +222,13 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         app.state.startup_complete = False
+        mp_restore = getattr(app.state, "wechat_mp_restore", None)
+        if mp_restore and not mp_restore.done():
+            mp_restore.cancel()
+        artifact_mirror = getattr(app.state, "collection_artifact_mirror", None)
+        if artifact_mirror:
+            artifact_mirror.cancel()
+            await asyncio.gather(artifact_mirror, return_exceptions=True)
         await _shutdown_component("sandbox_provider", shutdown_sandbox_provider)
         await _shutdown_component("queue_clients", close_queue_clients)
         await _shutdown_component("neo4j", _close_neo4j_connection)

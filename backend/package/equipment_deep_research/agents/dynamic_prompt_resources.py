@@ -5,15 +5,13 @@ from __future__ import annotations
 import json
 import re
 from copy import deepcopy
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
 _PROMPT_DIR = Path(__file__).resolve().parent / "prompts" / "dynamic_winning"
 
-_SECTION = re.compile(
-    r"^<!-- prompt: ([\w.]+) -->\n(.*?)\n<!-- /prompt -->$", re.MULTILINE | re.DOTALL
-)
+_SECTION = re.compile(r"^<!-- prompt: ([\w.]+) -->\n(.*?)\n<!-- /prompt -->$", re.MULTILINE | re.DOTALL)
 
 
 def _prompt_paths(key: str) -> tuple[Path, ...]:
@@ -26,11 +24,7 @@ def _prompt_paths(key: str) -> tuple[Path, ...]:
     """
 
     base = _PROMPT_DIR / f"{key}.md"
-    companions = (
-        tuple(sorted(_PROMPT_DIR.glob(f"{key}_[0-9].md")))
-        if key == "S6"
-        else ()
-    )
+    companions = tuple(sorted(_PROMPT_DIR.glob(f"{key}_[0-9].md"))) if key == "S6" else ()
     return (base, *companions)
 
 
@@ -45,7 +39,7 @@ def _normalise_stage(stage: str) -> str:
     return key
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_sections(key: str) -> dict[str, str]:
     sections: dict[str, str] = {}
     for path in _prompt_paths(key):
@@ -70,7 +64,7 @@ def load_dynamic_winning_prompt(stage: str, *, section: str = "system") -> str:
         raise ValueError(f"missing dynamic prompt section: {key}/{section}") from exc
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_json_section(key: str, section: str) -> Any:
     """Parse one reviewed JSON section once per worker generation."""
 
@@ -78,9 +72,7 @@ def _load_json_section(key: str, section: str) -> Any:
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"invalid JSON dynamic prompt section: {key}/{section}"
-        ) from exc
+        raise ValueError(f"invalid JSON dynamic prompt section: {key}/{section}") from exc
 
 
 def load_dynamic_winning_json(stage: str, *, section: str) -> Any:

@@ -39,7 +39,7 @@ async def test_native_deep_message_reaches_worker_transcript_and_usage():
         headers = {"Authorization": "Bearer " + AuthUtils.create_access_token({"sub": str(user.id)})}
         await db.commit()
 
-    async with httpx.AsyncClient(base_url="http://web", headers=headers, timeout=60) as client:
+    async with httpx.AsyncClient(base_url=os.getenv("TEST_BASE_URL", "http://web"), headers=headers, timeout=60) as client:
         try:
             directory_name = "native-deep-" + uuid4().hex[:12]
             response = await client.post(

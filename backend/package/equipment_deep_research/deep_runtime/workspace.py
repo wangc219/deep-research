@@ -31,7 +31,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import base64
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import difflib
 import hashlib
 import json
@@ -41,7 +41,8 @@ from pathlib import PurePosixPath
 import re
 import stat
 from threading import RLock
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 from uuid import uuid4
 
 from equipment_deep_research.domain.workspace import register_deep_workspace_factory
@@ -65,9 +66,7 @@ _MANAGED_MEMORY_START = "<!-- deep-research:managed-memory:start -->"
 _MANAGED_MEMORY_END = "<!-- deep-research:managed-memory:end -->"
 
 
-def _resource_line_changes(
-    base: Sequence[str], variant: Sequence[str]
-) -> list[tuple[int, int, tuple[str, ...]]]:
+def _resource_line_changes(base: Sequence[str], variant: Sequence[str]) -> list[tuple[int, int, tuple[str, ...]]]:
     matcher = difflib.SequenceMatcher(None, list(base), list(variant), autojunk=False)
     return [
         (start, end, tuple(variant[replacement_start:replacement_end]))
@@ -126,8 +125,8 @@ def _three_way_resource_merge(
     ours_changes = _resource_line_changes(base_lines, ours_lines)
     theirs_changes = _resource_line_changes(base_lines, theirs_lines)
     pending: list[tuple[str, tuple[int, int, tuple[str, ...]]]] = [
-        *(('ours', item) for item in ours_changes),
-        *(('theirs', item) for item in theirs_changes),
+        *(("ours", item) for item in ours_changes),
+        *(("theirs", item) for item in theirs_changes),
     ]
     merged: list[str] = []
     conflicts: list[dict[str, Any]] = []
@@ -158,12 +157,14 @@ def _three_way_resource_merge(
                 merged.extend(ours_rendered)
             else:
                 merged.extend(["<<<<<<< ours\n", *ours_rendered, "=======\n", *theirs_rendered, ">>>>>>> theirs\n"])
-                conflicts.append({
-                    "base_start_line": region_start + 1,
-                    "base_end_line": max(region_start + 1, region_end),
-                    "ours_lines": len(ours_rendered),
-                    "theirs_lines": len(theirs_rendered),
-                })
+                conflicts.append(
+                    {
+                        "base_start_line": region_start + 1,
+                        "base_end_line": max(region_start + 1, region_end),
+                        "ours_lines": len(ours_rendered),
+                        "theirs_lines": len(theirs_rendered),
+                    }
+                )
         else:
             selected = ours_group or theirs_group
             merged.extend(_render_resource_changes(base_lines, selected, region_start, region_end))
@@ -181,7 +182,7 @@ def _three_way_resource_merge(
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+    return datetime.now(UTC).isoformat(timespec="milliseconds")
 
 
 def _text(value: Any, limit: int = 1_200) -> str:
@@ -333,7 +334,7 @@ def _read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
     if not path.exists():
         return
     _assert_regular(path)
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         for line in handle:
             raw = line.strip()
             if not raw:
@@ -407,15 +408,14 @@ class WorkspaceManifest:
         }
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> "WorkspaceManifest":
+    def from_dict(cls, value: Mapping[str, Any]) -> WorkspaceManifest:
         identity = value.get("identity")
         identity = dict(identity) if isinstance(identity, Mapping) else {}
         fingerprint = _text(value.get("identity_fingerprint"), 64)
         if not fingerprint and identity:
             fingerprint = _fingerprint(identity)
         return cls(
-            schema_version=_text(value.get("schema_version"), 80)
-            or WORKSPACE_SCHEMA_VERSION,
+            schema_version=_text(value.get("schema_version"), 80) or WORKSPACE_SCHEMA_VERSION,
             workspace_id=_text(value.get("workspace_id"), 160),
             identity=identity,
             identity_fingerprint=fingerprint,
@@ -468,7 +468,7 @@ class _WorkspaceLock:
         self._descriptor: int | None = None
         self._fcntl: Any = None
 
-    def __enter__(self) -> "_WorkspaceLock":
+    def __enter__(self) -> _WorkspaceLock:
         self._thread.acquire()
         try:
             if self._depth == 0:
@@ -530,7 +530,7 @@ class DeepWorkspace:
         workspace_id: str = "",
         identity: Mapping[str, Any] | None = None,
         state_dir_name: str = ".deep_research",
-    ) -> "DeepWorkspace":
+    ) -> DeepWorkspace:
         requested_root = Path(root).expanduser()
         if requested_root.exists() and requested_root.is_symlink():
             raise ValueError("workspace root must not be a symlink")
@@ -574,10 +574,7 @@ class DeepWorkspace:
                 raise ValueError("workspace identity namespace mismatch")
             if requested_identity:
                 requested_fingerprint = _fingerprint(requested_identity)
-                if (
-                    manifest.identity_fingerprint
-                    and manifest.identity_fingerprint != requested_fingerprint
-                ):
+                if manifest.identity_fingerprint and manifest.identity_fingerprint != requested_fingerprint:
                     raise ValueError("workspace equipment identity mismatch")
                 if not manifest.identity:
                     manifest = WorkspaceManifest(
@@ -599,9 +596,7 @@ class DeepWorkspace:
                 schema_version=WORKSPACE_SCHEMA_VERSION,
                 workspace_id=final_id,
                 identity=requested_identity,
-                identity_fingerprint=(
-                    _fingerprint(requested_identity) if requested_identity else ""
-                ),
+                identity_fingerprint=(_fingerprint(requested_identity) if requested_identity else ""),
                 created_at=_now(),
                 updated_at=_now(),
             )
@@ -615,7 +610,7 @@ class DeepWorkspace:
         *,
         workspace_id: str,
         identity: Mapping[str, Any],
-    ) -> "DeepWorkspace":
+    ) -> DeepWorkspace:
         """Keep each canonical equipment's state separate inside one run."""
         if not identity:
             raise ValueError("equipment workspace requires an identity")
@@ -649,7 +644,7 @@ class DeepWorkspace:
         *,
         identity: Mapping[str, Any] | None = None,
         equipment_scoped: bool = False,
-    ) -> "DeepWorkspace":
+    ) -> DeepWorkspace:
         """Bind file state to an existing ``RunWorkspace`` without copying it."""
 
         # Resolve the path from the already bound descriptor.  ``run_dir`` is
@@ -884,15 +879,17 @@ class DeepWorkspace:
                 raw = _decode_object(path.read_text(encoding="utf-8"), {})
                 if not isinstance(raw, Mapping):
                     continue
-                result.append({
-                    "version_id": str(raw.get("version_id", "")),
-                    "kind": self._resource_kind(kind),
-                    "name": relative.as_posix(),
-                    "sha256": str(raw.get("sha256", "")),
-                    "bytes": int(raw.get("bytes", 0) or 0),
-                    "created_at": str(raw.get("created_at", "")),
-                    "deleted": bool(raw.get("deleted", False)),
-                })
+                result.append(
+                    {
+                        "version_id": str(raw.get("version_id", "")),
+                        "kind": self._resource_kind(kind),
+                        "name": relative.as_posix(),
+                        "sha256": str(raw.get("sha256", "")),
+                        "bytes": int(raw.get("bytes", 0) or 0),
+                        "created_at": str(raw.get("created_at", "")),
+                        "deleted": bool(raw.get("deleted", False)),
+                    }
+                )
         return result
 
     def read_resource_version(self, kind: str, name: str | Path, version_id: str) -> bytes:
@@ -968,11 +965,13 @@ class DeepWorkspace:
         if len(payload) > MAX_WORKSPACE_RESOURCE_BYTES:
             raise ValueError("workspace resource exceeds size limit")
         result = _three_way_resource_merge(base, current, payload)
-        result.update({
-            "kind": self._resource_kind(kind),
-            "name": relative.as_posix(),
-            "base_version_id": str(base_version_id),
-        })
+        result.update(
+            {
+                "kind": self._resource_kind(kind),
+                "name": relative.as_posix(),
+                "base_version_id": str(base_version_id),
+            }
+        )
         return result
 
     def merge_plugin_package(
@@ -1005,7 +1004,8 @@ class DeepWorkspace:
                 raise ValueError("plugin base version must remain under its plugin directory")
             normalized_base[relative.as_posix()] = _safe_component(version_id, label="version")
         current_names = {
-            name for name in self.list_resources("plugin")
+            name
+            for name in self.list_resources("plugin")
             if PurePosixPath(name).parts and PurePosixPath(name).parts[0] == package
         }
         names = sorted(current_names | set(normalized_incoming) | set(normalized_base))
@@ -1021,48 +1021,56 @@ class DeepWorkspace:
                 base_payload = self.read_resource_version("plugin", name, base_version)
                 current_payload = current_path.read_bytes() if current_exists else b""
                 if current_payload == base_payload:
-                    files.append({
-                        "name": name,
-                        "action": "delete",
-                        "content": "",
-                        "conflicted": False,
-                        "base_version_id": base_version,
-                        "current_sha256": hashlib.sha256(current_payload).hexdigest(),
-                    })
+                    files.append(
+                        {
+                            "name": name,
+                            "action": "delete",
+                            "content": "",
+                            "conflicted": False,
+                            "base_version_id": base_version,
+                            "current_sha256": hashlib.sha256(current_payload).hexdigest(),
+                        }
+                    )
                 else:
-                    files.append({
-                        "name": name,
-                        "action": "delete",
-                        "content": "",
-                        "conflicted": True,
-                        "conflicts": [{"reason": "server_changed_before_delete"}],
-                        "base_version_id": base_version,
-                        "current_sha256": hashlib.sha256(current_payload).hexdigest(),
-                    })
+                    files.append(
+                        {
+                            "name": name,
+                            "action": "delete",
+                            "content": "",
+                            "conflicted": True,
+                            "conflicts": [{"reason": "server_changed_before_delete"}],
+                            "base_version_id": base_version,
+                            "current_sha256": hashlib.sha256(current_payload).hexdigest(),
+                        }
+                    )
                 continue
             if base_version:
                 merged = self.merge_resource_version("plugin", name, base_version, incoming)
                 files.append({"name": name, "action": "upsert", **merged})
             elif current_exists:
-                files.append({
-                    "name": name,
-                    "action": "upsert",
-                    "content": incoming,
-                    "conflicted": True,
-                    "conflicts": [{"reason": "new_file_collides_with_server_file"}],
-                    "current_sha256": hashlib.sha256(current_path.read_bytes()).hexdigest(),
-                })
+                files.append(
+                    {
+                        "name": name,
+                        "action": "upsert",
+                        "content": incoming,
+                        "conflicted": True,
+                        "conflicts": [{"reason": "new_file_collides_with_server_file"}],
+                        "current_sha256": hashlib.sha256(current_path.read_bytes()).hexdigest(),
+                    }
+                )
             else:
                 payload = incoming.encode("utf-8")
-                files.append({
-                    "name": name,
-                    "action": "upsert",
-                    "content": incoming,
-                    "conflicted": False,
-                    "conflicts": [],
-                    "current_sha256": "",
-                    "incoming_sha256": hashlib.sha256(payload).hexdigest(),
-                })
+                files.append(
+                    {
+                        "name": name,
+                        "action": "upsert",
+                        "content": incoming,
+                        "conflicted": False,
+                        "conflicts": [],
+                        "current_sha256": "",
+                        "incoming_sha256": hashlib.sha256(payload).hexdigest(),
+                    }
+                )
         return {
             "plugin_id": package,
             "files": files,
@@ -1344,7 +1352,7 @@ class DeepMemoryStore:
 
     @staticmethod
     def dream_session_key() -> str:
-        return f"dream:{datetime.now(timezone.utc):%Y%m%d-%H%M%S}"
+        return f"dream:{datetime.now(UTC):%Y%m%d-%H%M%S}"
 
     def raw_archive(
         self,
@@ -1410,24 +1418,28 @@ class DeepMemoryStore:
         end = existing.rfind(_MANAGED_MEMORY_END)
         manual = existing if start < 0 else existing[:start]
         if start >= 0 and end >= start:
-            manual += existing[end + len(_MANAGED_MEMORY_END):]
+            manual += existing[end + len(_MANAGED_MEMORY_END) :]
         rows = [
             "[{}] {}".format(
-                "/".join(filter(None, (
-                    _text(row.get("kind"), 64),
-                    _text(row.get("stance"), 32),
-                    f"subject={_text(row.get('subject_key'), 120)}"
-                    if _text(row.get("subject_key"), 120)
-                    else "",
-                ))),
+                "/".join(
+                    filter(
+                        None,
+                        (
+                            _text(row.get("kind"), 64),
+                            _text(row.get("stance"), 32),
+                            f"subject={_text(row.get('subject_key'), 120)}"
+                            if _text(row.get("subject_key"), 120)
+                            else "",
+                        ),
+                    )
+                ),
                 row["text"],
             )
             for row in self._read_facts()
-            if row.get("session_id") == session_id
-            and (row.get("branch_id") or "main") == branch_id
+            if row.get("session_id") == session_id and (row.get("branch_id") or "main") == branch_id
         ]
         budget = max(0, min(int(max_chars), 12000))
-        manual = manual.strip()[:budget // 2] if rows else manual.strip()[:budget]
+        manual = manual.strip()[: budget // 2] if rows else manual.strip()[:budget]
         available = max(0, budget - len(manual) - 1)
         return (manual + "\n" + "\n".join(rows)[-available:] if available else manual).strip()[:budget]
 
@@ -1496,7 +1508,9 @@ class DeepMemoryStore:
                 add("fact", item, source="model")
         add("summary", summary)
         memory = working_memory if isinstance(working_memory, Mapping) else {}
-        for item in memory.get("candidate_directions", []) if isinstance(memory.get("candidate_directions"), list) else []:
+        for item in (
+            memory.get("candidate_directions", []) if isinstance(memory.get("candidate_directions"), list) else []
+        ):
             if isinstance(item, Mapping):
                 name = _text(item.get("name"), 180)
                 angle = _text(item.get("winning_angle") or item.get("innovation_thesis"), 600)
@@ -1535,19 +1549,12 @@ class DeepMemoryStore:
         existing = self.read_memory()
         start = existing.find(_MANAGED_MEMORY_START)
         end_marker_start = existing.rfind(_MANAGED_MEMORY_END)
-        has_complete_block = (
-            start >= 0
-            and end_marker_start >= start
-        )
+        has_complete_block = start >= 0 and end_marker_start >= start
         if start >= 0:
             # If a prior write was interrupted before its end marker, discard
             # the incomplete managed tail and rebuild it deterministically.
             prefix = existing[:start].rstrip()
-            suffix = (
-                existing[end_marker_start + len(_MANAGED_MEMORY_END) :].strip("\n")
-                if has_complete_block
-                else ""
-            )
+            suffix = existing[end_marker_start + len(_MANAGED_MEMORY_END) :].strip("\n") if has_complete_block else ""
         else:
             prefix = existing.rstrip()
             suffix = ""
@@ -1691,7 +1698,12 @@ class DeepMemoryStore:
                 if excerpt:
                     checkpoint_key = {"kind": "checkpoint", "text": excerpt.casefold()}
                     if batch.entries[-1].get("session_id"):
-                        checkpoint_key.update({"session_id": batch.entries[-1]["session_id"], "branch_id": batch.entries[-1].get("branch_id", "main")})
+                        checkpoint_key.update(
+                            {
+                                "session_id": batch.entries[-1]["session_id"],
+                                "branch_id": batch.entries[-1].get("branch_id", "main"),
+                            }
+                        )
                     row = {
                         "fact_id": _fingerprint(checkpoint_key),
                         "kind": "checkpoint",
@@ -1754,7 +1766,12 @@ class DeepSessionStore:
         return self.workspace.sessions_dir / f"{_safe_component(session_id, label='session id')}.jsonl"
 
     def _branch_path(self, session_id: str, branch_id: str) -> Path:
-        return self.workspace.memory_dir / "branches" / _safe_component(session_id, label="session id") / f"{_safe_component(branch_id, label='branch id')}.json"
+        return (
+            self.workspace.memory_dir
+            / "branches"
+            / _safe_component(session_id, label="session id")
+            / f"{_safe_component(branch_id, label='branch id')}.json"
+        )
 
     def create(self, session_id: str, *, metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
         path = self._path(session_id)
@@ -1861,7 +1878,9 @@ class DeepSessionStore:
         metadata = dict(rows[0])
         metadata["updated_at"] = _now()
         rest = rows[1:]
-        payload = "".join(_encode(metadata if index == 0 else item) + "\n" for index, item in enumerate([metadata, *rest]))
+        payload = "".join(
+            _encode(metadata if index == 0 else item) + "\n" for index, item in enumerate([metadata, *rest])
+        )
         _atomic_write(path, payload)
 
     def load(self, session_id: str) -> dict[str, Any] | None:
@@ -1938,9 +1957,7 @@ class DeepSessionStore:
         branch_messages = branch_message_path(
             messages,
             normalize_branch_id(branch_id),
-            session.get("checkpoints", [])
-            if isinstance(session.get("checkpoints", []), Sequence)
-            else [],
+            session.get("checkpoints", []) if isinstance(session.get("checkpoints", []), Sequence) else [],
         )
         living = living_transcript(branch_messages, turn_limit=turn_limit)
         projected = working_memory_prompt(memory)
@@ -1951,7 +1968,9 @@ class DeepSessionStore:
             budget=budget,
         )
         durable_limit = min(12_000, max(1, int(budget or 12_000)))
-        durable = self.workspace.memory.read_context(session_id=session_id, branch_id=branch_id, max_chars=durable_limit)
+        durable = self.workspace.memory.read_context(
+            session_id=session_id, branch_id=branch_id, max_chars=durable_limit
+        )
         return {
             "session_id": session_id,
             "branch_id": _text(branch_id, 160) or "main",
@@ -1960,9 +1979,7 @@ class DeepSessionStore:
             "long_term_memory": durable[:durable_limit],
             "long_term_memory_truncated": len(durable) > durable_limit,
             "context_usage": usage,
-            "transcript_count": (
-                len(branch_messages) if isinstance(branch_messages, list) else 0
-            ),
+            "transcript_count": (len(branch_messages) if isinstance(branch_messages, list) else 0),
         }
 
 

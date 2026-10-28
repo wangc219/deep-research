@@ -113,18 +113,22 @@ let retryTimer = null
 let hoveredSeriesName = null
 const retryCount = ref(0)
 const maxRetry = 20
+let latestRequest = 0
 
 const loadCallStats = async () => {
+  const requestId = ++latestRequest
   callStatsLoading.value = true
   try {
     const response = await dashboardApi.getCallTimeseries(callDataType.value, callTimeRange.value)
+    if (requestId !== latestRequest) return
     callStatsData.value = response
     await nextTick()
     renderCallStatsChart()
   } catch (error) {
+    if (requestId !== latestRequest) return
     console.error('加载调用统计数据失败:', error)
   } finally {
-    callStatsLoading.value = false
+    if (requestId === latestRequest) callStatsLoading.value = false
   }
 }
 
@@ -301,7 +305,7 @@ const cleanup = () => {
   }
 }
 
-defineExpose({ cleanup })
+defineExpose({ cleanup, refresh: () => !callStatsLoading.value && loadCallStats() })
 
 onMounted(() => {
   loadCallStats()

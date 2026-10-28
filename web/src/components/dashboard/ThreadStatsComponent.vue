@@ -758,7 +758,11 @@ const cleanup = () => {
 
 defineExpose({
   cleanup,
-  resizeCharts: handleResize
+  resizeCharts: handleResize,
+  refresh: async () => {
+    if (loading.value || tableLoading.value) return
+    await Promise.all([loadData(), loadFilterOptions(), loadConversations()])
+  }
 })
 
 onMounted(async () => {

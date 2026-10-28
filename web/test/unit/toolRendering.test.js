@@ -183,6 +183,15 @@ test('思考描述显示最后一行，展开后保留完整内容', async () =>
   }
 })
 
+test('纯思考过程的运行中摘要使用中文', async () => {
+  const html = await render(ToolCallsGroup, {
+    entries: [{ type: 'reasoning', key: 'reasoning-1', content: '正在检查资料。' }],
+    isActive: true
+  })
+  assert.match(html, /正在思考/)
+  assert.doesNotMatch(html, /Thinking\.\.\./)
+})
+
 test('子智能体运行失败在专用行和分组摘要中一致展示', async () => {
   for (const toolCall of [
     {

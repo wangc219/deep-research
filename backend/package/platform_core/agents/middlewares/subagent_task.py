@@ -54,27 +54,28 @@ SUBAGENT_SYSTEM_PROMPT = """## 子智能体
 - 新任务不填 thread_id；继续既有子线程时使用之前返回的 thread_id。
 - 同一 thread_id 不可并发写入；忙碌时返回 busy，不隐藏排队。
 - 父运行结束会取消仍活跃的子 Run，给出最终答复前应 await 所需结果或明确取消。
-- 简单问题或少量直接工具调用不要委派。
+- 无需外部证据的简单问题直接处理；研究检索遵循主智能体的默认检索策略，单一事实检索也可委派 research-explorer。
 - 不通过 shell、curl、HTTP API 或命令行间接调用子智能体。
 
-Available subagent slugs:
+可用子智能体 slug：
 
 {available_agents}"""
 
-SUBAGENT_START_DESCRIPTION = """Start a configured platform subagent asynchronously.
+SUBAGENT_START_DESCRIPTION = """异步启动一个已配置的平台子智能体。
 
-Returns a child thread ID for future continuation and a run ID for status/cancel/result checks.
-Use this for all subagent work; call subagent_await when the result is needed.
-If `thread_id` is provided, continue that thread when no active run is currently writing to it."""
+返回便于后续继续对话的子线程 ID，以及用于查询状态、取消和获取结果的运行 ID。
+所有子智能体任务都使用此工具；需要结果时调用 subagent_await。
+传入 `thread_id` 时，仅在该线程当前没有活跃运行写入的情况下继续它。
+"""
 
-SUBAGENT_STATUS_DESCRIPTION = """Check a subagent run status by run_id.
+SUBAGENT_STATUS_DESCRIPTION = """根据 run_id 查询子智能体运行状态。
 
-Returns the current run status, a compact progress summary with the latest 3 readable messages, and the final result
-when the run has reached a terminal status."""
+返回当前运行状态、包含最近 3 条可读消息的精简进度摘要；进入终态后同时返回最终结果。
+"""
 
-SUBAGENT_CANCEL_DESCRIPTION = """Cancel a running subagent run by run_id."""
+SUBAGENT_CANCEL_DESCRIPTION = """根据 run_id 取消正在运行的子智能体。"""
 
-SUBAGENT_AWAIT_DESCRIPTION = """Wait for a subagent run to finish and return its final result."""
+SUBAGENT_AWAIT_DESCRIPTION = """等待子智能体运行结束并返回最终结果。"""
 
 SUBAGENT_DESCRIPTION_ARG = "需要子智能体独立完成的任务描述，包含必要上下文和期望输出。"
 SUBAGENT_SLUG_ARG = "要调用的子智能体 slug，必须是工具描述中列出的可用项之一。"

@@ -8,7 +8,8 @@ call that still does internal multi-dimensional, multi-angle divergence.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Awaitable, Callable
+from typing import Any
+from collections.abc import Awaitable, Callable
 
 from equipment_deep_research.deep_runtime.commands import help_visible_summary
 from equipment_deep_research.deep_runtime.identity import IDENTITY_NAME
@@ -111,25 +112,15 @@ def _directions_from_memory(memory: Mapping[str, Any]) -> list[dict[str, Any]]:
         if not name:
             continue
         direction = {
-            key: (
-                bool(item.get(key))
-                if key == "stable"
-                else _text(item.get(key), 900)
-            )
+            key: (bool(item.get(key)) if key == "stable" else _text(item.get(key), 900))
             for key in (*_DIRECTION_FIELDS, "stable")
             if item.get(key) not in (None, "", [], {})
         }
         direction["name"] = name
-        direction["innovation_variant_name"] = _text(
-            item.get("innovation_variant_name") or name, 240
-        )
-        if not direction.get("innovation_equipment_form") and direction.get(
-            "equipment_form"
-        ):
+        direction["innovation_variant_name"] = _text(item.get("innovation_variant_name") or name, 240)
+        if not direction.get("innovation_equipment_form") and direction.get("equipment_form"):
             direction["innovation_equipment_form"] = direction["equipment_form"]
-        if not direction.get("direct_military_effects") and direction.get(
-            "military_value"
-        ):
+        if not direction.get("direct_military_effects") and direction.get("military_value"):
             direction["direct_military_effects"] = direction["military_value"]
         if not direction.get("disruptive_difference") and direction.get("novelty"):
             direction["disruptive_difference"] = direction["novelty"]
@@ -175,15 +166,10 @@ def _adjudication_from_memory(memory: Mapping[str, Any]) -> dict[str, Any]:
         if verdict != "reject":
             order.append(name)
     if not order:
-        order = [
-            _text(item.get("name"), 240)
-            for item in _directions_from_memory(memory)
-            if item.get("stable")
-        ][:3]
+        order = [_text(item.get("name"), 240) for item in _directions_from_memory(memory) if item.get("stable")][:3]
     return {
         "review_summary": _text(
-            memory.get("selection_rationale")
-            or "沿用上一轮对抗裁决，本轮不再重开议事。",
+            memory.get("selection_rationale") or "沿用上一轮对抗裁决，本轮不再重开议事。",
             1200,
         ),
         "mission_focus": _text(memory.get("current_objective"), 800),
@@ -214,9 +200,7 @@ def _research_action(state: TurnState) -> str:
     return "deepen"
 
 
-_RESEARCH_DIRECTION_ACTIONS = frozenset(
-    {"research_council", "diverge", "deepen", "challenge", "synthesize"}
-)
+_RESEARCH_DIRECTION_ACTIONS = frozenset({"research_council", "diverge", "deepen", "challenge", "synthesize"})
 
 
 def _latest_observed_directions(state: TurnState) -> list[dict[str, Any]]:
@@ -281,9 +265,7 @@ def _research_topology(action: str) -> str:
     }.get(action, "adaptive_research")
 
 
-def _add_research_signals(
-    result: dict[str, Any], state: TurnState, *, action: str | None = None
-) -> dict[str, Any]:
+def _add_research_signals(result: dict[str, Any], state: TurnState, *, action: str | None = None) -> dict[str, Any]:
     """Attach non-blocking research assessment while keeping legacy fields.
 
     The old ``quality_gate`` object remains for API compatibility. During
@@ -293,19 +275,13 @@ def _add_research_signals(
 
     resolved_action = action or _research_action(state)
     supplied_assessment = result.get("research_assessment")
-    supplied_assessment = (
-        supplied_assessment if isinstance(supplied_assessment, Mapping) else {}
-    )
+    supplied_assessment = supplied_assessment if isinstance(supplied_assessment, Mapping) else {}
     raw_directions = result.get("concept_directions")
     directions = raw_directions if isinstance(raw_directions, list) else []
     reviews: list[dict[str, Any]] = []
     existing_gaps = [
         _text(item, 500)
-        for item in (
-            result.get("research_gaps")
-            if isinstance(result.get("research_gaps"), list)
-            else []
-        )[:8]
+        for item in (result.get("research_gaps") if isinstance(result.get("research_gaps"), list) else [])[:8]
         if _text(item, 500)
     ]
     gaps: list[str] = list(existing_gaps)
@@ -336,14 +312,10 @@ def _add_research_signals(
         if core_ready:
             ready_count += 1
         completeness = round(
-            (len(_RESEARCH_DIMENSIONS) - len(missing))
-            / len(_RESEARCH_DIMENSIONS),
+            (len(_RESEARCH_DIMENSIONS) - len(missing)) / len(_RESEARCH_DIMENSIONS),
             3,
         )
-        missing_labels = [
-            _RESEARCH_DIMENSION_LABELS.get(dimension, dimension)
-            for dimension in missing
-        ]
+        missing_labels = [_RESEARCH_DIMENSION_LABELS.get(dimension, dimension) for dimension in missing]
         reviews.append(
             {
                 "candidate_name": name,
@@ -354,10 +326,7 @@ def _add_research_signals(
             }
         )
         if missing:
-            gaps.append(
-                f"{name}待补研究维度：{'、'.join(missing_labels)}。"
-                f"建议追问：{_GAP_QUESTIONS[missing[0]]}"
-            )
+            gaps.append(f"{name}待补研究维度：{'、'.join(missing_labels)}。建议追问：{_GAP_QUESTIONS[missing[0]]}")
         normalized.append(direction)
     result["concept_directions"] = normalized
 
@@ -374,19 +343,15 @@ def _add_research_signals(
         missing_s6 = [
             _text(item, 120)
             for item in (
-                legacy_gate.get("missing_s6_columns")
-                if isinstance(legacy_gate.get("missing_s6_columns"), list)
-                else []
+                legacy_gate.get("missing_s6_columns") if isinstance(legacy_gate.get("missing_s6_columns"), list) else []
             )
             if _text(item, 120)
         ]
         if missing_s6:
             gaps.append(f"S6 待补或待加强栏目：{'、'.join(missing_s6)}")
-        for item in (
-            legacy_gate.get("block_reasons")
-            if isinstance(legacy_gate.get("block_reasons"), list)
-            else []
-        )[:4]:
+        for item in (legacy_gate.get("block_reasons") if isinstance(legacy_gate.get("block_reasons"), list) else [])[
+            :4
+        ]:
             advisory = _text(item, 500)
             if advisory and advisory not in gaps:
                 gaps.append(f"S6 advisory：{advisory}")
@@ -436,21 +401,13 @@ def _add_research_signals(
         else 0.0
     )
     research_actions = {"research_council", "diverge", "deepen", "challenge", "synthesize"}
-    supplied_recommendation = _text(
-        supplied_assessment.get("recommended_action"), 40
-    ).lower()
-    supplied_scope = _text(
-        supplied_assessment.get("recommendation_scope"), 24
-    ).lower()
+    supplied_recommendation = _text(supplied_assessment.get("recommended_action"), 40).lower()
+    supplied_scope = _text(supplied_assessment.get("recommendation_scope"), 24).lower()
     if supplied_recommendation in research_actions:
         recommended_action = supplied_recommendation
         # Unscoped provider output is advisory. Only an explicit same-turn
         # assessment may extend the bounded tool loop automatically.
-        recommendation_scope = (
-            supplied_scope
-            if supplied_scope in {"same_turn", "next_turn"}
-            else "next_turn"
-        )
+        recommendation_scope = supplied_scope if supplied_scope in {"same_turn", "next_turn"} else "next_turn"
     else:
         recommended_action = ""
         if normalized:
@@ -461,11 +418,9 @@ def _add_research_signals(
         recommendation_scope = "next_turn" if recommended_action else ""
     result["research_assessment"] = {
         "non_blocking": True,
-        "research_complete": bool(normalized)
-        or resolved_action in {"help", "inspect_memory"},
+        "research_complete": bool(normalized) or resolved_action in {"help", "inspect_memory"},
         "completion_semantics": (
-            "本轮已形成可继续研究的候选或完成只读动作；"
-            "research_complete 不表示所有研究缺口已经关闭。"
+            "本轮已形成可继续研究的候选或完成只读动作；research_complete 不表示所有研究缺口已经关闭。"
         ),
         "candidate_count": len(normalized),
         "research_ready_count": ready_count,
@@ -474,9 +429,7 @@ def _add_research_signals(
         "candidate_reviews": reviews,
         "diversity": {
             "independent_directions": len(normalized),
-            "assessment": (
-                "broad" if len(normalized) >= 3 else "focused" if normalized else "empty"
-            ),
+            "assessment": ("broad" if len(normalized) >= 3 else "focused" if normalized else "empty"),
         },
         "unresolved_gap_count": len(gaps),
         "recommended_action": recommended_action,
@@ -509,9 +462,7 @@ def _add_research_signals(
             "challenge",
             "synthesize",
         }:
-            result["finalization_status"] = (
-                "awaiting_user_confirmation" if ready_count else "analysis_only"
-            )
+            result["finalization_status"] = "awaiting_user_confirmation" if ready_count else "analysis_only"
     return result
 
 
@@ -522,9 +473,7 @@ def _annotate_runtime(result: dict[str, Any], state: TurnState) -> dict[str, Any
         "identity": IDENTITY_NAME,
         "tools": list(state.completed_tools),
         "active_skill_ids": [
-            str(item.get("skill_id", ""))
-            for item in state.active_skills
-            if str(item.get("skill_id", "")).strip()
+            str(item.get("skill_id", "")) for item in state.active_skills if str(item.get("skill_id", "")).strip()
         ],
         "plugin_ids": list(state.capabilities.get("plugin_ids", [])),
         "mcp_servers": list(state.capabilities.get("mcp_servers", [])),
@@ -532,11 +481,7 @@ def _annotate_runtime(result: dict[str, Any], state: TurnState) -> dict[str, Any
         "plan": list(state.plan),
         "conductor": dict(state.conductor),
         "research_mode": _research_action(state),
-        "tool_registry": (
-            state.tool_registry.public_payload()
-            if state.tool_registry is not None
-            else {}
-        ),
+        "tool_registry": (state.tool_registry.public_payload() if state.tool_registry is not None else {}),
     }
     return result
 
@@ -557,8 +502,7 @@ def _direction_research_ready(direction: Mapping[str, Any]) -> bool:
 
     return bool(
         _text(
-            direction.get("equipment_form")
-            or direction.get("innovation_equipment_form"),
+            direction.get("equipment_form") or direction.get("innovation_equipment_form"),
             8,
         )
         and _text(direction.get("operational_mechanism"), 8)
@@ -608,8 +552,7 @@ async def tool_help(state: TurnState) -> dict[str, Any]:
             "concept_directions": directions,
             "capability_card_draft": {},
             "adjudication": _adjudication_from_memory(memory),
-            "open_questions": _questions_from_memory(memory)
-            or ["继续追问以深化已有方向，或使用 /card 成卡。"],
+            "open_questions": _questions_from_memory(memory) or ["继续追问以深化已有方向，或使用 /card 成卡。"],
             "finalization_status": status,
             "quality_gate": _empty_gate(
                 direction_ready=any(item.get("stable") for item in directions),
@@ -651,9 +594,7 @@ async def tool_inspect_memory(state: TurnState) -> dict[str, Any]:
 
     memory = _memory(state)
     directions = _directions_from_memory(memory)
-    summaries = _summaries_from_memory(memory) or [
-        "当前分支尚无已压缩的决策记忆；没有候选时才会启动隔离三席。"
-    ]
+    summaries = _summaries_from_memory(memory) or ["当前分支尚无已压缩的决策记忆；没有候选时才会启动隔离三席。"]
     # An optional file-backed workspace contributes long-term Dream memory to
     # the read-only inspection turn.  It is deliberately bounded and labelled
     # as archival context so it cannot silently replace the branch checkpoint.
@@ -666,7 +607,8 @@ async def tool_inspect_memory(state: TurnState) -> dict[str, Any]:
             branch_id = str(state.payload.get("branch_id") or parent.get("branch_id") or "main")
             durable = (
                 external_workspace.memory.read_context(session_id=session_id, branch_id=branch_id)
-                if session_id else external_workspace.memory.read_memory()
+                if session_id
+                else external_workspace.memory.read_memory()
             )
         except Exception:
             durable = ""
@@ -694,9 +636,7 @@ async def tool_inspect_memory(state: TurnState) -> dict[str, Any]:
     final = _govern_deep_dialogue_final(
         {
             "visible_summary": summaries,
-            "selection_rationale": _text(
-                memory.get("selection_rationale") or "；".join(summaries), 900
-            ),
+            "selection_rationale": _text(memory.get("selection_rationale") or "；".join(summaries), 900),
             "concept_directions": directions,
             "capability_card_draft": {},
             "open_questions": _questions_from_memory(memory),
@@ -748,9 +688,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         _write_deep_dialogue_s6_columns,
     )
 
-    if not (
-        state.inbound.card_intent and state.inbound.has_closed_stable_direction
-    ):
+    if not (state.inbound.card_intent and state.inbound.has_closed_stable_direction):
         return _annotate_runtime(
             {
                 "visible_summary": ["当前方向尚未闭合，不能进入五栏成卡。"],
@@ -777,12 +715,8 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     inspected = state.results.get("inspect_memory")
     inspected = inspected if isinstance(inspected, Mapping) else {}
     memory = _memory(state)
-    directions = _directions_from_memory(memory) or list(
-        inspected.get("concept_directions") or []
-    )
-    summaries = _summaries_from_memory(memory) or list(
-        inspected.get("visible_summary") or []
-    )
+    directions = _directions_from_memory(memory) or list(inspected.get("concept_directions") or [])
+    summaries = _summaries_from_memory(memory) or list(inspected.get("visible_summary") or [])
     rationale = _text(
         memory.get("selection_rationale")
         or inspected.get("selection_rationale")
@@ -793,25 +727,18 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         "visible_summary": summaries or ["沿已收敛方向写入五栏能力画像。"],
         "selection_rationale": rationale,
         "concept_directions": directions,
-        "adjudication": inspected.get("adjudication")
-        or _adjudication_from_memory(memory),
+        "adjudication": inspected.get("adjudication") or _adjudication_from_memory(memory),
     }
     seed_keys = _seed_identity_keys(state.payload)
-    preview = _govern_deep_dialogue_final(
-        dict(spine), seed_keys=seed_keys, require_s6=False
-    )
+    preview = _govern_deep_dialogue_final(dict(spine), seed_keys=seed_keys, require_s6=False)
     if not preview["quality_gate"]["direction_ready"] and any(
-        _direction_research_ready(item)
-        for item in directions
-        if isinstance(item, Mapping)
+        _direction_research_ready(item) for item in directions if isinstance(item, Mapping)
     ):
         # The former nine-field closure check is advisory during research.
         # Explicit /card confirmation may fix a coherent partial direction;
         # omitted dimensions remain visible in research_gaps.
         preview["concept_directions"] = [
-            {**dict(item), "stable": True}
-            for item in directions[:3]
-            if isinstance(item, Mapping)
+            {**dict(item), "stable": True} for item in directions[:3] if isinstance(item, Mapping)
         ]
         preview["finalization_status"] = "awaiting_user_confirmation"
         preview["quality_gate"] = {
@@ -824,14 +751,10 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
             "non_blocking": True,
         }
     if not preview["quality_gate"]["direction_ready"]:
-        preview["visible_summary"] = [
-            "当前稳定方向未通过成卡前的结构闭合检查，本轮没有重新发散。"
-        ]
+        preview["visible_summary"] = ["当前稳定方向未通过成卡前的结构闭合检查，本轮没有重新发散。"]
         preview["capability_card_draft"] = {}
         preview["finalization_status"] = "analysis_only"
-        preview["open_questions"] = [
-            "请先补齐装备构型、作用机理、直接毁伤和任务失能判据，再次确认成卡。"
-        ]
+        preview["open_questions"] = ["请先补齐装备构型、作用机理、直接毁伤和任务失能判据，再次确认成卡。"]
         preview["orchestration"] = {
             "pattern": "s6_authoring_blocked",
             "rounds": 1,
@@ -867,9 +790,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
             "summary_text": "已锁定工作记忆中的稳定方向，正在并行生成五栏能力画像；各栏完成后即时回传。",
         },
     )
-    synthesis_payload = _compact_deep_dialogue_seed_payload(
-        state.payload, include_naming=True
-    )
+    synthesis_payload = _compact_deep_dialogue_seed_payload(state.payload, include_naming=True)
     synthesis_payload["deep_skill_prompt"] = state.skill_prompt
     draft, failures = await _write_deep_dialogue_s6_columns(
         state.host,
@@ -877,11 +798,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         synthesis_spine=preview,
         provider_runtime=state.provider_runtime,
         checkpoint_callback=state.payload.get("checkpoint_callback"),
-        card_authoring_id=str(
-            state.payload.get("card_authoring_id")
-            or state.payload.get("job_id")
-            or ""
-        ),
+        card_authoring_id=str(state.payload.get("card_authoring_id") or state.payload.get("job_id") or ""),
         resume_checkpoint=(
             state.payload.get("s6_column_checkpoint")
             if isinstance(state.payload.get("s6_column_checkpoint"), Mapping)
@@ -897,16 +814,12 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     technology_text = _text(draft.get("technology_implementation"), 6000)
     if technology_text:
         draft = dict(draft)
-        draft["technology_implementation"] = _clean_technology_column_text(
-            technology_text, preview
-        )
+        draft["technology_implementation"] = _clean_technology_column_text(technology_text, preview)
     if not _text(draft.get("technology_implementation"), 8):
         draft = dict(draft)
         draft.pop("technology_implementation", None)
         technology_failure_present = any(
-            "technology_implementation" in str(item)
-            or "装备与技术实现" in str(item)
-            for item in failures
+            "technology_implementation" in str(item) or "装备与技术实现" in str(item) for item in failures
         )
         if not technology_failure_present:
             failures = [*failures, "第2栏“装备与技术实现”未完成"]
@@ -935,9 +848,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     if failures:
         preview["finalization_status"] = "analysis_only"
         preview["open_questions"] = [*failures, *_questions_from_memory(memory)][:5]
-    final = _govern_deep_dialogue_final(
-        preview, seed_keys=seed_keys, require_s6=True
-    )
+    final = _govern_deep_dialogue_final(preview, seed_keys=seed_keys, require_s6=True)
     # S6 publication is now a user-confirmed transition, not an evidence or
     # prose-quality gate. Keep the former gate findings as research advisories,
     # while requiring only that all five structural columns were returned.
@@ -946,9 +857,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     s6_advisories = [
         _text(item, 500)
         for item in (
-            governed_gate.get("block_reasons")
-            if isinstance(governed_gate.get("block_reasons"), list)
-            else []
+            governed_gate.get("block_reasons") if isinstance(governed_gate.get("block_reasons"), list) else []
         )[:6]
         if _text(item, 500)
     ]
@@ -959,15 +868,14 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         "capability_effects",
         "winning_logic",
     )
-    missing_columns = [
-        name for name in required_columns if not _text(draft.get(name), 8)
-    ]
+    missing_columns = [name for name in required_columns if not _text(draft.get(name), 8)]
     # Explicit user confirmation fixes the current direction as a draft only
     # after the shared five-column task has returned every required field.
-    structurally_complete = bool(final.get("concept_directions")) and bool(
-        draft
-    ) and not missing_columns and all(
-        _text(draft.get(name), 8) for name in required_columns
+    structurally_complete = (
+        bool(final.get("concept_directions"))
+        and bool(draft)
+        and not missing_columns
+        and all(_text(draft.get(name), 8) for name in required_columns)
     )
     if structurally_complete:
         final["finalization_status"] = "candidate_ready"
@@ -993,11 +901,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     final["quality_gate"] = governed_gate
     if s6_advisories or missing_columns:
         final["research_gaps"] = [
-            *(
-                [f"S6 待补栏目：{'、'.join(missing_columns)}"]
-                if missing_columns
-                else []
-            ),
+            *([f"S6 待补栏目：{'、'.join(missing_columns)}"] if missing_columns else []),
             *[f"S6 advisory：{item}" for item in s6_advisories],
         ][:8]
     final["adjudication"] = spine["adjudication"]
@@ -1111,11 +1015,7 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
         directions = _directions_from_memory(memory)
     if not directions:
         directions = _compact_direction_handoff(
-            [
-                item
-                for item in (inspected.get("concept_directions") or [])
-                if isinstance(item, Mapping)
-            ]
+            [item for item in (inspected.get("concept_directions") or []) if isinstance(item, Mapping)]
         )
     if not directions and mode != "diverge":
         return await tool_research_council(state)
@@ -1124,9 +1024,7 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
     payload["authoring_requested"] = False
     naming_assignments = _deep_dialogue_naming_assignments(payload)
     payload["deep_dialogue_naming_assignments"] = naming_assignments
-    payload["random_naming_style_assignment"] = naming_assignments[
-        "deep_thinking_dialogue"
-    ]
+    payload["random_naming_style_assignment"] = naming_assignments["deep_thinking_dialogue"]
     seed_payload = _compact_deep_dialogue_seed_payload(payload, include_naming=True)
     focus = payload.get("deep_research_focus")
     focus = focus if isinstance(focus, Mapping) else {}
@@ -1140,8 +1038,7 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
             "candidate_directions": directions,
             "open_questions": _questions_from_memory(memory),
         },
-        "adjudication": inspected.get("adjudication")
-        or _adjudication_from_memory(memory),
+        "adjudication": inspected.get("adjudication") or _adjudication_from_memory(memory),
         "expert_question": state.inbound.content,
         "deep_research_focus": {
             "candidate": _text(focus.get("candidate"), 120),
@@ -1157,9 +1054,7 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
         if isinstance(deepen_payload.get("random_naming_style_assignment"), Mapping)
         else None
     )
-    naming_common = load_dynamic_winning_prompt(
-        "common", section="naming_convention"
-    ).strip()
+    naming_common = load_dynamic_winning_prompt("common", section="naming_convention").strip()
     mode_contract = {
         "deepen": (
             "以已有候选为基线，先做多维度、多角度交叉发散，再围绕专家问题深化、分叉或有依据替换。"
@@ -1244,25 +1139,19 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
 
     if not isinstance(spine, Mapping) or not spine:
         spine = {
-            "visible_summary": [
-                f"本轮{role_name}未完整返回，已保留可恢复的已有方向；可换个问法继续。"
-            ],
+            "visible_summary": [f"本轮{role_name}未完整返回，已保留可恢复的已有方向；可换个问法继续。"],
             "selection_rationale": _text(
-                memory.get("selection_rationale")
-                or inspected.get("selection_rationale"),
+                memory.get("selection_rationale") or inspected.get("selection_rationale"),
                 900,
             )
             or "沿用上一轮已收敛方向。",
             "concept_directions": directions,
-            "open_questions": _questions_from_memory(memory)
-            or ["请指出要继续闭合的缺口，或明确说推翻当前方向。"],
+            "open_questions": _questions_from_memory(memory) or ["请指出要继续闭合的缺口，或明确说推翻当前方向。"],
         }
     spine["capability_card_draft"] = {}
     if not spine.get("adjudication"):
         spine["adjudication"] = deepen_payload["adjudication"]
-    final = _govern_deep_dialogue_final(
-        spine, seed_keys=seed_keys, require_s6=False
-    )
+    final = _govern_deep_dialogue_final(spine, seed_keys=seed_keys, require_s6=False)
     final["adjudication"] = spine.get("adjudication") or deepen_payload["adjudication"]
     final["capability_card_draft"] = {}
     out_names = [
@@ -1280,8 +1169,7 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
         axis = (
             DEEP_DIALOGUE_DIVERGENCE_AXES[index]
             if index < len(DEEP_DIALOGUE_DIVERGENCE_AXES)
-            else _text(step.get("title") or step.get("stage"), 80)
-            or f"内部角度{index + 1}"
+            else _text(step.get("title") or step.get("stage"), 80) or f"内部角度{index + 1}"
         )
         summary = _text(step.get("text") or step.get("title"), 1200)
         title = _text(step.get("title"), 80) or axis
@@ -1423,12 +1311,8 @@ async def tool_research_council(state: TurnState) -> dict[str, Any]:
     payload["deep_skill_prompt"] = state.skill_prompt
     naming_assignments = _deep_dialogue_naming_assignments(payload)
     payload["deep_dialogue_naming_assignments"] = naming_assignments
-    payload["random_naming_style_assignment"] = naming_assignments[
-        "deep_thinking_dialogue"
-    ]
-    naming_contract = load_dynamic_winning_prompt(
-        "common", section="naming_convention"
-    ).strip()
+    payload["random_naming_style_assignment"] = naming_assignments["deep_thinking_dialogue"]
+    naming_contract = load_dynamic_winning_prompt("common", section="naming_convention").strip()
     final = await _run_deep_dialogue_council(
         state.host,
         payload,

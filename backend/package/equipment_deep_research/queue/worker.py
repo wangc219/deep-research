@@ -6,7 +6,8 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 from threading import Event, Lock, Thread
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from sqlalchemy.exc import NoResultFound
 
@@ -96,8 +97,10 @@ class ResearchWorker:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return
-        rows = payload if isinstance(payload, list) else (
-            payload.get("capability_images", []) if isinstance(payload, dict) else []
+        rows = (
+            payload
+            if isinstance(payload, list)
+            else (payload.get("capability_images", []) if isinstance(payload, dict) else [])
         )
         if not isinstance(rows, list):
             return
@@ -108,10 +111,7 @@ class ResearchWorker:
             if row.get("is_deep_research") or "deep" in source or "reference_weapon" in source:
                 continue
             binding = str(
-                row.get("card_binding_id")
-                or row.get("capability_id")
-                or row.get("hypothesis_id")
-                or ""
+                row.get("card_binding_id") or row.get("capability_id") or row.get("hypothesis_id") or ""
             ).strip()
             if not binding:
                 continue
@@ -275,9 +275,7 @@ class ResearchWorker:
             # The task process scope is a Worker-level backstop above every
             # Runner and isolated Provider. It terminates any still-registered
             # Codex process group before completed/failed is persisted.
-            with self._heartbeat_during(run_id), task_process_scope(
-                run_id
-            ) as process_scope:
+            with self._heartbeat_during(run_id), task_process_scope(run_id) as process_scope:
                 result = self.execute(run_id) or {}
             self._publish_process_cleanup(
                 run_id,
@@ -307,11 +305,7 @@ class ResearchWorker:
             return WorkerOutcome(run_id, "completed")
         except (Exception, asyncio.CancelledError) as exc:
             error = str(exc).strip() or type(exc).__name__
-            cleanup = (
-                process_scope.cleanup
-                if "process_scope" in locals()
-                else terminate_run_process_groups(run_id)
-            )
+            cleanup = process_scope.cleanup if "process_scope" in locals() else terminate_run_process_groups(run_id)
             self._publish_process_cleanup(
                 run_id,
                 cleanup,

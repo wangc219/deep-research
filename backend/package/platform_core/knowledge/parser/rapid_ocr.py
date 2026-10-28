@@ -5,13 +5,11 @@ RapidOCR 解析器 - 纯OCR文字识别
 """
 
 import os
-import tempfile
 import time
+from contextlib import closing
 from pathlib import Path
 
-import numpy as np
 import pypdfium2 as pdfium
-from PIL import Image
 from rapidocr import EngineType, LangDet, LangRec, ModelType, OCRVersion, RapidOCR
 
 from platform_core.knowledge.parser.base import BaseDocumentProcessor, OCRException
@@ -58,6 +56,8 @@ class RapidOCRParser(BaseDocumentProcessor):
         model_dir = self._resolve_model_dir()
         return {
             "Global.model_root_dir": str(model_dir),
+            "EngineConfig.onnxruntime.intra_op_num_threads": 2,
+            "EngineConfig.onnxruntime.inter_op_num_threads": 1,
             "Det.engine_type": EngineType.ONNXRUNTIME,
             "Det.lang_type": LangDet.CH,
             "Det.model_type": ModelType.MOBILE,
@@ -113,64 +113,20 @@ class RapidOCRParser(BaseDocumentProcessor):
         self._load_model()
 
         try:
-            # 处理不同类型的输入
-            if isinstance(image, str):
-                image_path = image
-                cleanup_needed = False
-            else:
-                # 创建临时文件
-                image_path = self._create_temp_image_file(image)
-                cleanup_needed = True
-
-            try:
-                # 执行 OCR
-                start_time = time.time()
-                result = self.ocr(image_path)
-                processing_time = time.time() - start_time
-
-                # 提取文本
-                if result.txts:
-                    text = "\n".join(result.txts)
-                    logger.info(
-                        f"RapidOCR 成功: {os.path.basename(image_path) if isinstance(image, str) else 'temp_image'}"
-                        f" ({processing_time:.2f}s)"
-                    )
-                    return text
-                else:
-                    logger.warning(f"RapidOCR 未识别到文本: {image_path}")
-                    return ""
-
-            finally:
-                # 清理临时文件
-                if cleanup_needed and os.path.exists(image_path):
-                    try:
-                        os.remove(image_path)
-                    except Exception as e:
-                        logger.warning(f"临时文件清理失败: {image_path} - {e}")
+            # 原生支持 PIL/ndarray，保留其颜色空间转换并省去 PNG 往返。
+            started = time.monotonic()
+            result = self.ocr(image)
+            label = os.path.basename(image) if isinstance(image, str) else "内存图像"
+            if result.txts:
+                logger.info("RapidOCR 成功: {} ({:.2f}s)", label, time.monotonic() - started)
+                return "\n".join(result.txts)
+            logger.warning("RapidOCR 未识别到文本: {}", label)
+            return ""
 
         except Exception as e:
             error_msg = f"图像OCR处理失败: {str(e)}"
             logger.error(error_msg)
             raise OCRException(error_msg, self.get_service_name(), "processing_failed")
-
-    def _create_temp_image_file(self, image) -> str:
-        """将图像数据保存为临时文件"""
-        try:
-            # 使用系统临时目录
-            with tempfile.NamedTemporaryFile(mode="wb", suffix=".png", delete=False) as tmp_file:
-                temp_path = tmp_file.name
-
-                if isinstance(image, Image.Image):
-                    image.save(temp_path)
-                elif isinstance(image, np.ndarray):
-                    Image.fromarray(image).save(temp_path)
-                else:
-                    raise ValueError("不支持的图像类型,必须是 PIL.Image 或 numpy.ndarray")
-
-                return temp_path
-
-        except Exception as e:
-            raise OCRException(f"临时图像文件创建失败: {str(e)}", self.get_service_name(), "temp_file_error")
 
     def process_pdf(self, pdf_path: str, params: dict | None = None) -> str:
         """
@@ -189,32 +145,63 @@ class RapidOCRParser(BaseDocumentProcessor):
 
         params = params or {}
         zoom_x = params.get("zoom_x", 2)
+        prefer_text = params.get("prefer_text_layer", True)
+        if not isinstance(prefer_text, bool):
+            raise ValueError("prefer_text_layer 必须是布尔值")
+        started = time.monotonic()
 
         try:
             all_text = []
-            pdf_doc = pdfium.PdfDocument(pdf_path)
-            total_pages = len(pdf_doc)
+            text_pages = 0
+            with pdfium.PdfDocument(pdf_path) as pdf_doc:
+                total_pages = len(pdf_doc)
+                logger.info(f"开始处理 PDF: {os.path.basename(pdf_path)} ({total_pages} 页)")
+                for page_num in range(total_pages):
+                    with closing(pdf_doc[page_num]) as page:
+                        text = ""
+                        if prefer_text:
+                            with closing(page.get_textpage()) as text_page:
+                                candidate = text_page.get_text_bounded().strip()
+                            readable = sum(char.isalnum() for char in candidate)
+                            page_area = page.get_width() * page.get_height()
+                            image_dominates = False
+                            for image_object in page.get_objects(filter=[pdfium.raw.FPDF_PAGEOBJ_IMAGE]):
+                                left, bottom, right, top = image_object.get_bounds()
+                                if (right - left) * (top - bottom) >= page_area * 0.5:
+                                    image_dominates = True
+                                    break
+                            # 少量页眉、乱码或仅标题的扫描页仍需 OCR。
+                            if (
+                                readable >= 80
+                                and not image_dominates
+                                and candidate.count("\ufffd") <= len(candidate) * 0.02
+                            ):
+                                text = candidate
+                                text_pages += 1
+                        if not text:
+                            bitmap = page.render(scale=zoom_x)
+                            try:
+                                image = bitmap.to_pil()
+                                try:
+                                    text = self.process_image(image)
+                                finally:
+                                    image.close()
+                            finally:
+                                bitmap.close()
+                        all_text.append(text)
 
-            logger.info(f"开始处理 PDF: {os.path.basename(pdf_path)} ({total_pages} 页)")
-
-            # 流式处理每一页,避免一次性加载所有图片到内存
-            for page_num in range(total_pages):
-                page = pdf_doc[page_num]
-
-                # pypdfium2 仅支持统一缩放（原 zoom_x/zoom_y 默认均为 2）
-                img_pil = page.render(scale=zoom_x).to_pil()
-
-                # 立即处理,不保存到列表
-                text = self.process_image(img_pil)
-                all_text.append(text)
-
-                if (page_num + 1) % 10 == 0:
-                    logger.info(f"已处理 {page_num + 1}/{total_pages} 页")
-
-            pdf_doc.close()
+                    if (page_num + 1) % 10 == 0:
+                        logger.info(f"已处理 {page_num + 1}/{total_pages} 页")
 
             result_text = "\n\n".join(all_text)
-            logger.info(f"PDF OCR 完成: {os.path.basename(pdf_path)} - {len(result_text)} 字符")
+            logger.info(
+                "PDF OCR 完成: {} - {} 字符，文字层 {}/{} 页，耗时 {:.2f}s",
+                os.path.basename(pdf_path),
+                len(result_text),
+                text_pages,
+                total_pages,
+                time.monotonic() - started,
+            )
             return result_text
 
         except OCRException:

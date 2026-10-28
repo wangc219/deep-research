@@ -96,6 +96,7 @@ async def test_reasoning_stream_matches_persisted_history(e2e_client, e2e_header
         history = await client.get(f"/api/chat/thread/{thread_id}/history", headers=headers)
         assert history.status_code == 200
         messages = [m for m in history.json()["history"] if m["type"] == "ai" and m["run_id"] == run_id]
+        assert reasoning.strip(), {"reason": "推理流为空，不能记为通过", "messages": messages}
         assert len(messages) == 1
         assert messages[0]["reasoning_content"] == reasoning
         assert messages[0]["content"].strip()

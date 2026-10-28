@@ -1,0 +1,31 @@
+# 云服务器通过 SSH 反向隧道连接已登录微信的桌面采集端。
+# 仅暴露公钥认证的 SSH 端口；视频号 HTTP/MCP 端口只在容器网络内可见。
+services:
+  video-bridge:
+    build:
+      context: ./docker/video-bridge
+    profiles: [video-bridge]
+    ports:
+      - "${VIDEO_BRIDGE_SSH_BIND:-0.0.0.0}:${VIDEO_BRIDGE_SSH_PORT:-2222}:2222"
+    expose: ["2022"]
+    volumes:
+      - type: bind
+        source: ${VIDEO_BRIDGE_AUTHORIZED_KEYS_FILE:?Set VIDEO_BRIDGE_AUTHORIZED_KEYS_FILE to the collector SSH public key file}
+        target: /run/authorized_keys
+        read_only: true
+      - video-bridge-host-keys:/host-keys
+    networks: [app-network]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/sbin/sshd", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  api:
+    environment:
+      WX_CHANNELS_MCP_URL: http://video-bridge:2022/mcp
+  worker:
+    environment:
+      WX_CHANNELS_MCP_URL: http://video-bridge:2022/mcp
+volumes:
+  video-bridge-host-keys:

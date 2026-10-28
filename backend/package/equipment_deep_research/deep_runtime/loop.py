@@ -122,9 +122,7 @@ def _workspace_from_payload(payload: Mapping[str, Any]) -> DeepWorkspace | None:
     if not isinstance(identity, Mapping):
         identity = parent.get("canonical_identity")
     requested_identity = dict(identity) if isinstance(identity, Mapping) else {}
-    requested_workspace_id = str(
-        payload.get("workspace_id") or parent.get("workspace_id") or ""
-    ).strip()
+    requested_workspace_id = str(payload.get("workspace_id") or parent.get("workspace_id") or "").strip()
     existing = payload.get("deep_workspace")
     if isinstance(existing, DeepWorkspace):
         if requested_workspace_id and existing.workspace_id != requested_workspace_id:
@@ -132,11 +130,7 @@ def _workspace_from_payload(payload: Mapping[str, Any]) -> DeepWorkspace | None:
         if requested_identity:
             existing.assert_identity(requested_identity)
         return existing
-    raw_path = (
-        payload.get("workspace_path")
-        or payload.get("deep_workspace_path")
-        or parent.get("workspace_path")
-    )
+    raw_path = payload.get("workspace_path") or payload.get("deep_workspace_path") or parent.get("workspace_path")
     if not str(raw_path or "").strip():
         return None
     try:
@@ -182,7 +176,9 @@ def _record_workspace_turn(
     if not session_id:
         return
     branch_id = str(payload.get("branch_id") or "main").strip() or "main"
-    question = str(payload.get("workspace_user_content") or payload.get("question") or payload.get("topic") or "").strip()
+    question = str(
+        payload.get("workspace_user_content") or payload.get("question") or payload.get("topic") or ""
+    ).strip()
     if question:
         workspace.sessions.append_message(
             session_id,
@@ -202,7 +198,10 @@ def _record_workspace_turn(
             role="assistant",
             content=answer,
             branch_id=branch_id,
-            metadata={"runtime": result.get("runtime", {}), "research_result": sanitize_runtime_payload(result, max_string_length=12000)},
+            metadata={
+                "runtime": result.get("runtime", {}),
+                "research_result": sanitize_runtime_payload(result, max_string_length=12000),
+            },
         )
     previous = {}
     try:
@@ -322,9 +321,7 @@ def _assemble(state: TurnState) -> dict[str, Any]:
             "capability_effects",
             "winning_logic",
         ):
-            if not str(merged_draft.get(key, "") or "").strip() and str(
-                draft.get(key, "") or ""
-            ).strip():
+            if not str(merged_draft.get(key, "") or "").strip() and str(draft.get(key, "") or "").strip():
                 merged_draft[key] = draft[key]
     if merged_draft:
         result["capability_card_draft"] = merged_draft
@@ -333,9 +330,7 @@ def _assemble(state: TurnState) -> dict[str, Any]:
         "identity": IDENTITY_NAME,
         "tools": list(state.completed_tools),
         "active_skill_ids": [
-            str(item.get("skill_id", ""))
-            for item in state.active_skills
-            if str(item.get("skill_id", "")).strip()
+            str(item.get("skill_id", "")) for item in state.active_skills if str(item.get("skill_id", "")).strip()
         ],
         "plugin_ids": list(state.capabilities.get("plugin_ids", [])),
         "mcp_servers": list(state.capabilities.get("mcp_servers", [])),
@@ -350,23 +345,11 @@ def _assemble(state: TurnState) -> dict[str, Any]:
         "stop_reason": state.stop_reason,
         "observation_count": len(state.observations),
         "policy_trace": [dict(item) for item in state.policy_trace],
-        "tool_registry": (
-            state.tool_registry.public_payload()
-            if state.tool_registry is not None
-            else {}
-        ),
-        "provider": (
-            state.provider_runtime.snapshot()
-            if state.provider_runtime is not None
-            else {}
-        ),
+        "tool_registry": (state.tool_registry.public_payload() if state.tool_registry is not None else {}),
+        "provider": (state.provider_runtime.snapshot() if state.provider_runtime is not None else {}),
         "subagents": {
             "requested": len(state.subagent_results),
-            "completed": sum(
-                1
-                for item in state.subagent_results
-                if str(item.get("status", "")) == "completed"
-            ),
+            "completed": sum(1 for item in state.subagent_results if str(item.get("status", "")) == "completed"),
             "results": list(state.subagent_results)[:4],
             "parallel": True,
             "nesting": False,
@@ -394,9 +377,7 @@ def _runtime_limit(payload: Mapping[str, Any], key: str, default: int) -> int:
     return max(0, min(value, 12))
 
 
-async def _run_deep_research_turn(
-    host: Any, payload: Mapping[str, Any]
-) -> dict[str, Any]:
+async def _run_deep_research_turn(host: Any, payload: Mapping[str, Any]) -> dict[str, Any]:
     governed = dict(payload)
     workspace = _workspace_from_payload(governed)
     restored_context = {"restored": False}
@@ -487,9 +468,12 @@ async def _run_deep_research_turn(
                 **budget,
                 **(dict(host_budget) if isinstance(host_budget, Mapping) else {}),
             }
-            workspace_capabilities = {"loaded": True, "skill_ids": [
-                skill.skill_id for skill in capability_registry.skills.values() if skill.source == "workspace"
-            ]}
+            workspace_capabilities = {
+                "loaded": True,
+                "skill_ids": [
+                    skill.skill_id for skill in capability_registry.skills.values() if skill.source == "workspace"
+                ],
+            }
         except (OSError, ValueError):
             if governed.get("workspace_required"):
                 raise
@@ -569,31 +553,22 @@ async def _run_deep_research_turn(
                 for item in snapshot.get("servers", [])
                 if isinstance(item, Mapping) and str(item.get("server_id", "")).strip()
             ]
-    selected_mcp_ids = agent_spec.resolved_mcps(
-        tuple(dict.fromkeys([*hosted_mcp_ids, *host_mcp_ids]))
-    )
+    selected_mcp_ids = agent_spec.resolved_mcps(tuple(dict.fromkeys([*hosted_mcp_ids, *host_mcp_ids])))
     tool_registry = injected_tool_registry or build_tool_registry(capability_registry=capability_registry)
     if injected_tool_registry is not None:
         from equipment_deep_research.deep_runtime.tools import TOOL_HANDLERS
 
         tool_registry.register_builtin_handlers(TOOL_HANDLERS)
     provider_runtime = injected_provider_runtime or ProviderRuntime.from_host(host)
-    complex_turn = any(
-        name in plan for name in ("research_council", "diverge", "deepen", "challenge", "synthesize")
-    )
+    complex_turn = any(name in plan for name in ("research_council", "diverge", "deepen", "challenge", "synthesize"))
     spec_explicit = agent_spec.enable_subagents is True or (
         agent_spec.subagents is not None and len(agent_spec.subagents) > 0
     )
     spec_wants_subagents = (
-        spec_explicit
-        and agent_spec.subagents_enabled
-        and complex_turn
-        and not inbound.authoring_requested
+        spec_explicit and agent_spec.subagents_enabled and complex_turn and not inbound.authoring_requested
     )
     enable_subagents = bool(enable_subagents or spec_wants_subagents)
-    allowed_subagent_slugs = agent_spec.resolved_subagents(
-        [item.slug for item in BUILTIN_SUBAGENT_PRESETS]
-    )
+    allowed_subagent_slugs = agent_spec.resolved_subagents([item.slug for item in BUILTIN_SUBAGENT_PRESETS])
     subagent_runner = injected_subagent_runner
     if subagent_runner is None and (enable_subagents or requested_subagent_tasks is not None):
         subagent_runner = (
@@ -638,10 +613,12 @@ async def _run_deep_research_turn(
             "question": inbound.content,
             "candidate_names": [
                 str(item.get("name", ""))[:160]
-                for item in (inbound.working_memory.get("candidate_directions", [])
-                             if isinstance(inbound.working_memory, Mapping)
-                             and isinstance(inbound.working_memory.get("candidate_directions", []), list)
-                             else [])[:3]
+                for item in (
+                    inbound.working_memory.get("candidate_directions", [])
+                    if isinstance(inbound.working_memory, Mapping)
+                    and isinstance(inbound.working_memory.get("candidate_directions", []), list)
+                    else []
+                )[:3]
                 if isinstance(item, Mapping) and str(item.get("name", "")).strip()
             ],
             "focus": governed.get("deep_research_focus", {}),
@@ -672,35 +649,31 @@ async def _run_deep_research_turn(
             emit_progress = getattr(host, "_emit_deep_dialogue_progress", None)
             parallel_group = (
                 "lightweight_probes"
-                if inbound.command == "diverge" and all(
-                    task.task_id in {"configuration_probe", "countermeasure_probe"}
-                    for task in tasks
-                )
+                if inbound.command == "diverge"
+                and all(task.task_id in {"configuration_probe", "countermeasure_probe"} for task in tasks)
                 else "subagent_wave"
             )
-            probe_round = (
-                "lightweight_probe"
-                if parallel_group == "lightweight_probes"
-                else "subagent_wave"
-            )
+            probe_round = "lightweight_probe" if parallel_group == "lightweight_probes" else "subagent_wave"
             if callable(emit_progress):
                 for task in tasks:
                     try:
-                        emit_progress({
-                            "event_type": "deep_agent_started",
-                            "stage": "s3_divergence",
-                            "status": "running",
-                            "progress": 0.19,
-                            "kind": "summary",
-                            "round": probe_round,
-                            "role": task.role,
-                            "axis": task.task_id,
-                            "agent_id": f"deep_probe_{task.slug or task.task_id}",
-                            "parallel": True,
-                            "parallel_group": parallel_group,
-                            "parallelism": len(tasks),
-                            "summary_text": f"{task.role}正在异步并行执行有界子任务。",
-                        })
+                        emit_progress(
+                            {
+                                "event_type": "deep_agent_started",
+                                "stage": "s3_divergence",
+                                "status": "running",
+                                "progress": 0.19,
+                                "kind": "summary",
+                                "round": probe_round,
+                                "role": task.role,
+                                "axis": task.task_id,
+                                "agent_id": f"deep_probe_{task.slug or task.task_id}",
+                                "parallel": True,
+                                "parallel_group": parallel_group,
+                                "parallelism": len(tasks),
+                                "summary_text": f"{task.role}正在异步并行执行有界子任务。",
+                            }
+                        )
                     except Exception:
                         pass
             if subagent_pool is not None:
@@ -715,26 +688,26 @@ async def _run_deep_research_turn(
                         finding = finding.get("summary") or finding.get("finding") or ""
                     text = " ".join(str(finding or "").split())[:600]
                     try:
-                        emit_progress({
-                            "event_type": (
-                                "deep_agent_completed"
-                                if item.status == "completed"
-                                else "deep_agent_failed"
-                            ),
-                            "stage": "s3_divergence",
-                            "status": item.status,
-                            "progress": 0.20,
-                            "kind": "answer" if text else "summary",
-                            "round": probe_round,
-                            "role": item.role,
-                            "axis": item.task_id,
-                            "agent_id": f"deep_probe_{item.slug or item.task_id}",
-                            "parallel": True,
-                            "parallel_group": parallel_group,
-                            "parallelism": len(tasks),
-                            "text": text,
-                            "summary_text": text or f"{item.role}未形成可合并发现。",
-                        })
+                        emit_progress(
+                            {
+                                "event_type": (
+                                    "deep_agent_completed" if item.status == "completed" else "deep_agent_failed"
+                                ),
+                                "stage": "s3_divergence",
+                                "status": item.status,
+                                "progress": 0.20,
+                                "kind": "answer" if text else "summary",
+                                "round": probe_round,
+                                "role": item.role,
+                                "axis": item.task_id,
+                                "agent_id": f"deep_probe_{item.slug or item.task_id}",
+                                "parallel": True,
+                                "parallel_group": parallel_group,
+                                "parallelism": len(tasks),
+                                "text": text,
+                                "summary_text": text or f"{item.role}未形成可合并发现。",
+                            }
+                        )
                     except Exception:
                         pass
             governed["subagent_context"] = public_subagent_findings(subagent_results)
@@ -751,9 +724,7 @@ async def _run_deep_research_turn(
                 for item in subagent_results
             )
     mcp_lease_active = False
-    skip_mcp = agent_spec.mcps == () or (
-        agent_spec.mcps is not None and not selected_mcp_ids
-    )
+    skip_mcp = agent_spec.mcps == () or (agent_spec.mcps is not None and not selected_mcp_ids)
     if persistent_mcp_host is not None and not skip_mcp:
         mount_registry = getattr(persistent_mcp_host, "mount_registry", None)
         if not callable(mount_registry):
@@ -786,12 +757,14 @@ async def _run_deep_research_turn(
             # Research can continue when an optional external source is down.
             # Preserve the gap as an observation so synthesis cannot silently
             # treat the missing probe as successful evidence.
-            state.observations.append({
-                "kind": "mcp_host_unavailable",
-                "turn_index": 0,
-                "tool": "mcp_host",
-                "status": "advisory_gap",
-            })
+            state.observations.append(
+                {
+                    "kind": "mcp_host_unavailable",
+                    "turn_index": 0,
+                    "tool": "mcp_host",
+                    "status": "advisory_gap",
+                }
+            )
             state.capabilities["mcp_status"] = "unavailable"
             state.capabilities["tool_names"] = list(tool_registry.names)
             state.capabilities["tool_registry"] = tool_registry.public_payload()
@@ -813,9 +786,13 @@ async def _run_deep_research_turn(
                 result = _assemble(state)
                 result["finalization_status"] = "partial"
             dream = {"status": "skipped"}
-            if can_record and governed.get("workspace_record_turn") and any(
-                name in {"deepen", "diverge", "challenge", "synthesize", "research_council"}
-                for name in state.completed_tools
+            if (
+                can_record
+                and governed.get("workspace_record_turn")
+                and any(
+                    name in {"deepen", "diverge", "challenge", "synthesize", "research_council"}
+                    for name in state.completed_tools
+                )
             ):
                 dream = await consolidate_workspace_memory(state)
                 if await _stop_requested(state):
@@ -883,9 +860,7 @@ def run_deep_research_turn(host: Any, payload: Mapping[str, Any]) -> dict[str, A
     return asyncio.run(_run_deep_research_turn(host, payload))
 
 
-async def run_deep_research_turn_async(
-    host: Any, payload: Mapping[str, Any]
-) -> dict[str, Any]:
+async def run_deep_research_turn_async(host: Any, payload: Mapping[str, Any]) -> dict[str, Any]:
     """Async entrypoint for channel workers and WebSocket gateways."""
 
     return await _run_deep_research_turn(host, payload)
@@ -923,11 +898,7 @@ async def run_deep_research_message(
     # Adapter payloads only carry research hints.  Identity, persisted memory,
     # S6 authorization and in-process dependencies come from the trusted host,
     # including when the host deliberately omits an optional field.
-    request = {
-        key: message.payload[key]
-        for key in _CHANNEL_RESEARCH_HINT_FIELDS
-        if key in message.payload
-    }
+    request = {key: message.payload[key] for key in _CHANNEL_RESEARCH_HINT_FIELDS if key in message.payload}
     request.update(dict(payload or {}))
     request.update(
         {

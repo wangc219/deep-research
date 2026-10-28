@@ -21,7 +21,8 @@ stores).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.domain.store import DomainStore
 from knowledgegraph.demand_discovery.harness.agent_loop import (
@@ -74,9 +75,7 @@ from knowledgegraph.demand_discovery.workers.prompts import (
 
 Phase = str  # "idle" | "turn" | "compaction" | "branch_summary" | "retry"
 
-SavePointCallback = Callable[
-    [list[DomainWriteProposal], list[DomainTraceProposal]], None
-]
+SavePointCallback = Callable[[list[DomainWriteProposal], list[DomainTraceProposal]], None]
 EventHandler = Callable[[AgentEvent], None]
 
 COST_EXPANDING_TOOL_NAMES = {
@@ -119,10 +118,7 @@ class DiscoveryHarness:
         event_bus: EventBus | None = None,
         parent_event_id: str = "",
         before_tool_call: BeforeToolCall | None = None,
-        apparent_stop_follow_up_policy: Callable[
-            [ApparentStopContext], list[str]
-        ]
-        | None = None,
+        apparent_stop_follow_up_policy: Callable[[ApparentStopContext], list[str]] | None = None,
         model_options: dict[str, Any] | None = None,
     ) -> None:
         self._provider = provider
@@ -242,9 +238,7 @@ class DiscoveryHarness:
     def set_active_tools(self, names: list[str]) -> None:
         """Record the active tool subset for the next provider request."""
         self._active_tool_names = list(names)
-        self._append_session_entry(
-            "active_tools", {"active_tool_names": list(self._active_tool_names)}
-        )
+        self._append_session_entry("active_tools", {"active_tool_names": list(self._active_tool_names)})
 
     def abort(self) -> None:
         """Clear steer / follow-up queues, preserve next-turn, and cancel the run."""
@@ -278,11 +272,7 @@ class DiscoveryHarness:
         self._policy_follow_up_attempt_count = 0
         self._recent_policy_injection_keys.clear()
         self._last_policy_domain_counts = self._domain_counts()
-        self._recent_policy_trace_index = (
-            len(self._domain_store.trace_events)
-            if self._domain_store is not None
-            else 0
-        )
+        self._recent_policy_trace_index = len(self._domain_store.trace_events) if self._domain_store is not None else 0
         if self._cancel_token.cancelled:
             self._cancel_token = CancelToken()
 
@@ -441,9 +431,9 @@ class DiscoveryHarness:
             )
             policy_texts = self._apparent_stop_follow_up_policy(ctx)
             filtered: list[str] = []
-            body_delta = int(
-                ctx.recent_domain_delta.get("open_source_body_artifacts", 0) or 0
-            ) + int(ctx.recent_domain_delta.get("body_artifact_refs", 0) or 0)
+            body_delta = int(ctx.recent_domain_delta.get("open_source_body_artifacts", 0) or 0) + int(
+                ctx.recent_domain_delta.get("body_artifact_refs", 0) or 0
+            )
             for text in policy_texts:
                 key = _follow_up_text_key(text)
                 if key in self._recent_policy_injection_keys and body_delta <= 0:
@@ -471,9 +461,7 @@ class DiscoveryHarness:
             self._budget.charge_usage(usage)
             self._last_context_tokens = _input_tokens_from_usage(usage)
         if self._budget is None and event.type == "message_end":
-            self._last_context_tokens = _input_tokens_from_usage(
-                dict(event.payload.get("usage", {}) or {})
-            )
+            self._last_context_tokens = _input_tokens_from_usage(dict(event.payload.get("usage", {}) or {}))
         if self._budget is not None and event.type == "tool_execution_end":
             self._budget.charge_tool_call()
         if event.type == "message_appended":
@@ -491,15 +479,9 @@ class DiscoveryHarness:
                 return
             self._save_point()
 
-    def _before_tool_call(
-        self, call: ToolCall, ctx: ToolExecutionContext
-    ) -> ToolResult | None:
+    def _before_tool_call(self, call: ToolCall, ctx: ToolExecutionContext) -> ToolResult | None:
         ctx.budget_state = self._budget_state
-        if (
-            self._budget is None
-            or self._budget_state != "wrapping_up"
-            or call.name not in COST_EXPANDING_TOOL_NAMES
-        ):
+        if self._budget is None or self._budget_state != "wrapping_up" or call.name not in COST_EXPANDING_TOOL_NAMES:
             if self._external_before_tool_call is not None:
                 return self._external_before_tool_call(call, ctx)
             return None
@@ -612,9 +594,7 @@ class DiscoveryHarness:
             return self._last_loop_assistant_text
         if isinstance(message.content, str):
             return message.content
-        return "\n".join(
-            block.text for block in message.content if block.type == "text"
-        )
+        return "\n".join(block.text for block in message.content if block.type == "text")
 
     def _domain_counts(self) -> dict[str, int]:
         if self._domain_store is None:
@@ -628,21 +608,14 @@ class DiscoveryHarness:
         return {
             "sources": len(self._domain_store.sources),
             "evidence": len(self._domain_store.evidence),
-            "open_source_body_artifacts": len(
-                getattr(self._domain_store, "open_source_body_artifacts", {})
-            ),
-            "web_research_sessions": len(
-                getattr(self._domain_store, "web_research_sessions", {})
-            ),
+            "open_source_body_artifacts": len(getattr(self._domain_store, "open_source_body_artifacts", {})),
+            "web_research_sessions": len(getattr(self._domain_store, "web_research_sessions", {})),
             "body_artifact_refs": self._body_artifact_trace_count(),
         }
 
     def _recent_domain_delta(self) -> dict[str, int]:
         current = self._domain_counts()
-        return {
-            key: current.get(key, 0) - self._last_policy_domain_counts.get(key, 0)
-            for key in current
-        }
+        return {key: current.get(key, 0) - self._last_policy_domain_counts.get(key, 0) for key in current}
 
     def _body_artifact_trace_count(self) -> int:
         if self._domain_store is None:
@@ -786,9 +759,7 @@ class DiscoveryHarness:
         if self._domain_store is not None:
             run_state.update(self._domain_store.to_run_state())
         trace_events = (
-            [event.to_dict() for event in self._trace_store.events()]
-            if self._trace_store is not None
-            else []
+            [event.to_dict() for event in self._trace_store.events()] if self._trace_store is not None else []
         )
         existing_trace_events = list(run_state.get("trace_events", []))
         run_state.update(
@@ -818,9 +789,7 @@ class DiscoveryHarness:
             )
         self._domain_store.replace_from(staged)
         self._domain_store.append_accepted_proposals(domain)
-        self._domain_store.append_accepted_trace_events(
-            self._domain_store.trace_events[trace_count_before:]
-        )
+        self._domain_store.append_accepted_trace_events(self._domain_store.trace_events[trace_count_before:])
 
     def _validate_domain_trace_pairs(
         self,
@@ -836,11 +805,7 @@ class DiscoveryHarness:
             ):
                 existing = self._domain_store.candidates.get(target_id)
                 new_status = str(proposal.payload.get("status", "candidate_demand"))
-                if (
-                    existing is not None
-                    and existing.status == "demand_report"
-                    and new_status == "candidate_demand"
-                ):
+                if existing is not None and existing.status == "demand_report" and new_status == "candidate_demand":
                     allowed_events = {"candidate_status_rolled_back"}
             matched = any(
                 (
@@ -983,9 +948,7 @@ class DiscoveryHarness:
                 str(payload.get("instruction_id", "")),
                 {"worker_follow_up_planned"},
             )
-        raise ValueError(
-            f"unsupported domain proposal: {proposal.action} {proposal.object_type}"
-        )
+        raise ValueError(f"unsupported domain proposal: {proposal.action} {proposal.object_type}")
 
     @classmethod
     def from_session(
@@ -998,7 +961,7 @@ class DiscoveryHarness:
         trace_store: DomainTraceStore | None = None,
         context_builder: ContextPackBuilder | None = None,
         run_id: str | None = None,
-    ) -> "DiscoveryHarness":
+    ) -> DiscoveryHarness:
         from knowledgegraph.demand_discovery.harness.session_store import (
             JsonlSessionStore,
         )
@@ -1026,27 +989,19 @@ class DiscoveryHarness:
             if entry.type == "message":
                 harness._messages.append(_message_from_dict(entry.payload))
             elif entry.type == "active_tools":
-                harness._active_tool_names = list(
-                    entry.payload.get("active_tool_names", [])
-                )
+                harness._active_tool_names = list(entry.payload.get("active_tool_names", []))
             elif entry.type == "queue_update":
                 if entry.payload.get("queue") != "next_turn":
                     continue
                 if entry.payload.get("op") == "push":
                     harness._next_turn_queue.append(str(entry.payload.get("text", "")))
                 elif entry.payload.get("op") == "carry":
-                    harness._next_turn_carry = [
-                        str(item) for item in entry.payload.get("items", [])
-                    ]
+                    harness._next_turn_carry = [str(item) for item in entry.payload.get("items", [])]
                     harness._next_turn_queue.clear()
                 elif entry.payload.get("op") == "drain":
                     items = [str(item) for item in entry.payload.get("items", [])]
                     if items:
-                        harness._next_turn_carry = [
-                            item
-                            for item in harness._next_turn_carry
-                            if item not in items
-                        ]
+                        harness._next_turn_carry = [item for item in harness._next_turn_carry if item not in items]
                     else:
                         harness._next_turn_queue.clear()
                         harness._next_turn_carry.clear()
@@ -1058,9 +1013,7 @@ class DiscoveryHarness:
                 )
 
         if dropped_entries:
-            after_entry_id = (
-                entries[restore_index].entry_id if restore_index >= 0 else ""
-            )
+            after_entry_id = entries[restore_index].entry_id if restore_index >= 0 else ""
             session_store.append(
                 "recovered_from_crash",
                 {
@@ -1103,9 +1056,7 @@ def _assistant_payload_text(data: dict[str, Any]) -> str:
     if not isinstance(content, list):
         return ""
     return "\n".join(
-        str(block.get("text", ""))
-        for block in content
-        if isinstance(block, dict) and block.get("type") == "text"
+        str(block.get("text", "")) for block in content if isinstance(block, dict) and block.get("type") == "text"
     )
 
 

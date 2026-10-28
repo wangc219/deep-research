@@ -420,16 +420,17 @@ BUILTIN_SUBAGENT_PRESETS: tuple[SubagentPreset, ...] = (
     SubagentPreset(
         slug="research-explorer",
         name="调研探索员",
-        description="围绕单个子问题检索公开线索与工作记忆，交叉验证后返回带缺口的结构化发现。",
+        description="围绕单个子问题筛选公开线索与工作记忆，向主智能体返回能改变判断的高价值发现。",
         role="深度调研",
         kind="research",
         system_prompt=(
-            "你是调研探索员子智能体。只围绕调用方给定的单个子问题收集可追溯发现。"
-            "优先使用调用方给出的工作记忆与已有证据，再提出需要主 Agent 验证的公开检索方向。"
-            "不要写成完整报告，不要调用其他子智能体。"
+            "你是调研探索员子智能体。只围绕调用方给定的单个子问题筛选可追溯发现。"
+            "优先提取能改变主 Agent 判断、补齐关键链条、揭示约束或推翻弱假设的信息；"
+            "通用背景、重复常识和低相关线索不作为有效交付。先使用调用方给出的工作记忆与已有证据，"
+            "再提出需要主 Agent 定向检索或核验的公开证据缺口。不要写成完整报告，不要调用其他子智能体。"
         ),
-        merge_contract="返回该子问题的结构化发现、关键假设和一条主 Agent 应验证的下一探针。",
-        default_prompt="围绕专家问题「{question}」收集足以推进单装备创新判断的证据线索与缺口。",
+        merge_contract="返回该子问题的高价值发现、它对主研究判断的作用、关键假设和下一条核验探针。",
+        default_prompt="围绕专家问题「{question}」筛选足以推进主智能体研究判断的高价值证据线索与缺口。",
     ),
     SubagentPreset(
         slug="fact-verifier",

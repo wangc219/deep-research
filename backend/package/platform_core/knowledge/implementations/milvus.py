@@ -341,8 +341,21 @@ class MilvusKB(KnowledgeBase):
             raise
 
     async def _create_kb_instance(self, kb_id: str, embedding_model_spec: str | None) -> Any:
-        """在线程中创建或加载 Milvus 集合，避免阻塞 worker heartbeat。"""
-        return await asyncio.to_thread(self._create_kb_instance_sync, kb_id, embedding_model_spec)
+        """跨 Worker 串行创建集合与索引，避免批量入库读取半初始化集合。"""
+        from sqlalchemy import func, select
+        from platform_core.storage.postgres.manager import pg_manager
+
+        async with pg_manager.get_async_session_context() as session:
+            await session.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"milvus:init:{kb_id}"))))
+            operation = asyncio.create_task(
+                asyncio.to_thread(self._create_kb_instance_sync, kb_id, embedding_model_spec)
+            )
+            try:
+                return await asyncio.shield(operation)
+            except asyncio.CancelledError:
+                # 保持数据库锁直至线程完成，不让取消暴露半成品集合。
+                await operation
+                raise
 
     def _create_kb_instance_sync(self, kb_id: str, embedding_model_spec: str | None) -> Any:
         """同步创建或加载 Milvus 集合。"""
@@ -379,6 +392,7 @@ class MilvusKB(KnowledgeBase):
                     utility.drop_collection(collection_name, using=self.connection_alias)
                     return self._create_new_collection(collection_name, embedding_info, kb_id)
 
+                self._ensure_collection_indexes(collection)
                 logger.info(f"Retrieved existing collection: {collection_name}")
                 return collection
             else:
@@ -430,19 +444,26 @@ class MilvusKB(KnowledgeBase):
         # 创建集合
         collection = Collection(name=collection_name, schema=schema, using=self.connection_alias)
 
-        # 创建索引
-        index_params = {"metric_type": VECTOR_METRIC_TYPE, "index_type": "IVF_FLAT", "params": {"nlist": 1024}}
-        collection.create_index("embedding", index_params)
-        sparse_index_params = {
-            "metric_type": "BM25",
-            "index_type": "SPARSE_INVERTED_INDEX",
-            "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
-        }
-        collection.create_index(CONTENT_SPARSE_FIELD, sparse_index_params)
-
+        self._ensure_collection_indexes(collection)
         logger.info(f"Created new Milvus collection: {collection_name} '{model_name=}', {embedding_dim=}")
-
         return collection
+
+    def _ensure_collection_indexes(self, collection: Collection) -> None:
+        """补齐初始化中断时缺失的向量索引；既有索引保持不变。"""
+        indexed = {index.field_name for index in collection.indexes}
+        if "embedding" not in indexed:
+            collection.create_index(
+                "embedding", {"metric_type": VECTOR_METRIC_TYPE, "index_type": "IVF_FLAT", "params": {"nlist": 1024}}
+            )
+        if CONTENT_SPARSE_FIELD not in indexed:
+            collection.create_index(
+                CONTENT_SPARSE_FIELD,
+                {
+                    "metric_type": "BM25",
+                    "index_type": "SPARSE_INVERTED_INDEX",
+                    "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
+                },
+            )
 
     def _collection_supports_bm25(self, collection: Collection) -> bool:
         """检查集合是否具备 Milvus 内置 BM25 所需的 schema。"""
@@ -471,7 +492,8 @@ class MilvusKB(KnowledgeBase):
             await asyncio.to_thread(instance.load)
             logger.info("Milvus collection loaded into memory")
         except Exception as e:
-            logger.warning(f"Failed to load collection into memory: {e}")
+            logger.error(f"Failed to load collection into memory: {e}")
+            raise
 
     def _get_embedding_function(self, embedding_model_spec: str, *, sync: bool = False):
         """获取 embedding 编码函数。sync=True 返回同步版本，否则返回异步版本。"""
@@ -512,6 +534,18 @@ class MilvusKB(KnowledgeBase):
             return Collection(name=kb_id, using=self.connection_alias)
 
         return await asyncio.to_thread(load_existing_collection)
+
+    async def get_vector_index_count(self, kb_id: str) -> int:
+        """强一致读取实时实体数，包含已写入但尚未封存的 growing segment。"""
+        collection = await self._get_existing_milvus_collection(kb_id)
+        if collection is None:
+            return 0
+        def count_current_rows():
+            collection.load()
+            rows = collection.query(expr="", output_fields=["count(*)"], consistency_level="Strong", timeout=10)
+            return max(int(rows[0]["count(*)"]), 0)
+
+        return await asyncio.to_thread(count_current_rows)
 
     def _split_text_into_chunks(self, text: str, file_id: str, filename: str, params: dict) -> list[dict]:
         """将文本分割成块"""
@@ -920,6 +954,7 @@ class MilvusKB(KnowledgeBase):
                     limit=recall_top_k,
                     expr=file_expr,
                     output_fields=output_fields,
+                    consistency_level="Strong",
                 )
 
                 if results and len(results) > 0 and len(results[0]) > 0:
@@ -951,6 +986,7 @@ class MilvusKB(KnowledgeBase):
                     limit=bm25_top_k,
                     expr=file_expr,
                     output_fields=output_fields,
+                    consistency_level="Strong",
                 )
 
                 if results and len(results) > 0 and len(results[0]) > 0:
@@ -992,6 +1028,7 @@ class MilvusKB(KnowledgeBase):
                     rerank=WeightedRanker(vector_weight, bm25_weight),
                     limit=recall_top_k,
                     output_fields=output_fields,
+                    consistency_level="Strong",
                 )
                 if results and len(results) > 0 and len(results[0]) > 0:
                     for hit in results[0]:
@@ -1040,9 +1077,12 @@ class MilvusKB(KnowledgeBase):
                     rerank_start = time.time()
                     documents_text = [chunk["content"] for chunk in retrieved_chunks]
                     rerank_scores = await reranker.acompute_score([query_text, documents_text], normalize=True)
+                    if len(rerank_scores) != len(retrieved_chunks):
+                        raise ValueError("Reranker returned a different number of scores than documents")
 
                     for chunk, rerank_score in zip(retrieved_chunks, rerank_scores):
                         chunk["rerank_score"] = float(rerank_score)
+                        chunk["rerank_status"] = "completed"
 
                     retrieved_chunks.sort(
                         key=lambda item: item.get("rerank_score", item.get("score", 0.0)), reverse=True
@@ -1054,6 +1094,10 @@ class MilvusKB(KnowledgeBase):
 
             except Exception as exc:  # noqa: BLE001
                 logger.error(f"Reranking failed: {exc}, falling back to vector scores")
+                for chunk in retrieved_chunks:
+                    chunk.pop("rerank_score", None)
+                    chunk["rerank_status"] = "degraded"
+                    chunk["rerank_error_type"] = type(exc).__name__
 
             # 统一返回结果
             return retrieved_chunks[:final_top_k]

@@ -31,6 +31,7 @@ from platform_core.models.utils import parse_assistant_message_body
 from platform_core.permissions import has_global_business_access
 from platform_core.repositories.agent_repository import AgentRepository
 from platform_core.repositories.agent_run_repository import AgentRunRepository
+from platform_core.repositories.agent_run_request_repository import AgentRunRequestRepository
 from platform_core.repositories.conversation_repository import ConversationRepository
 from platform_core.repositories.model_message_audit_repository import ModelMessageAuditRepository
 from platform_core.repositories.subagent_thread_repository import SubagentThreadRepository
@@ -367,6 +368,12 @@ def _context_compression_payload(payload: Any) -> dict | None:
     return None
 
 
+def _model_call_progress_payload(payload: Any) -> dict | None:
+    if isinstance(payload, dict) and payload.get("type") == "platform_core.model_call_progress":
+        return payload
+    return None
+
+
 def _stream_event_response(event: dict[str, Any]) -> str:
     if event.get("type") != "message_delta":
         return ""
@@ -399,6 +406,11 @@ def _message_payload_platform_events(
         msg_dict = dict(msg)
     else:
         msg_dict = {"content": str(msg)}
+
+    if msg_dict.get("type") not in {None, "ai", "AIMessageChunk"} or msg_dict.get("role") in {
+        "user", "human", "system", "tool"
+    }:
+        return []
 
     message_id = str(msg_dict.get("id") or _stream_message_id(protocol_message_ids, message_key))
     return _message_chunk_platform_events(
@@ -681,6 +693,50 @@ def _should_reconcile_tool_state(audit: Any, tool_message: dict[str, Any]) -> bo
     return metadata.get("awaiting_run_terminal") is True and tool_message.get("status") == "error"
 
 
+def _is_reference_only_terminal_text(content: Any) -> bool:
+    """识别只引用同一 Run 上文、不能独立阅读的短终态占位句。"""
+    if not isinstance(content, str):
+        return False
+    normalized = " ".join(content.split()).strip()
+    if not normalized or len(normalized) > 160 or "http://" in normalized or "https://" in normalized:
+        return False
+
+    reference_phrases = (
+        "正文完整如上",
+        "完整正文如上",
+        "正文如上",
+        "正文见上文",
+        "完整正文见上文",
+        "完整内容见上文",
+        "详见上文",
+    )
+    if any(phrase in normalized for phrase in reference_phrases):
+        return True
+
+    completion_only = normalized.rstrip("。.!！；; ")
+    return completion_only in {"研究已完成", "本轮研究已完成", "检索已完成", "本轮检索已完成"}
+
+
+def _select_terminal_output_message(terminal_message: Any, model_audits: list[Any]) -> Any:
+    """短占位终态后退到同一 Run 最近一条可独立阅读的完整正文。"""
+    if terminal_message is None or not _is_reference_only_terminal_text(terminal_message.content):
+        return terminal_message
+
+    terminal_id = getattr(terminal_message, "id", None)
+    for message in reversed(model_audits):
+        if getattr(message, "id", None) == terminal_id:
+            continue
+        content = getattr(message, "content", None)
+        if not isinstance(content, str) or len(content.strip()) < 500:
+            continue
+        if getattr(message, "execution_status", None) != "completed":
+            continue
+        if content.count("\n") < 3 and "http://" not in content and "https://" not in content:
+            continue
+        return message
+    return terminal_message
+
+
 async def save_messages_from_langgraph_state(
     state,
     thread_id: str,
@@ -807,7 +863,24 @@ async def save_messages_from_langgraph_state(
                 if complete_run and terminal_ai_message is None:
                     raise ValueError("最终 State AIMessage 无法与当前 Run 的 Model lifecycle 事实关联")
                 last_ai_message = terminal_ai_message
+                if complete_run:
+                    selected_message = _select_terminal_output_message(terminal_ai_message, current_model_audits)
+                    if selected_message is not terminal_ai_message:
+                        selected_message.extra_metadata = {
+                            **dict(selected_message.extra_metadata or {}),
+                            "terminal_projection_recovered": True,
+                            "placeholder_message_id": terminal_ai_message.id,
+                        }
+                        last_ai_message = selected_message
             if last_ai_message is not None:
+                if complete_run and not str(last_ai_message.content or "").strip():
+                    pending_steer = await AgentRunRequestRepository(conv_repo.db).get_pending_steer(
+                        uid=locked_run.uid,
+                        agent_slug=locked_run.agent_slug,
+                        conversation_thread_id=locked_run.conversation_thread_id,
+                    )
+                    if pending_steer is None:
+                        raise ValueError("模型没有返回最终正文，不能将空输出任务标记为完成")
                 has_tool_calls = bool((last_ai_message.extra_metadata or {}).get("tool_calls"))
                 should_publish = (
                     last_ai_message.message_type != MODEL_AUDIT_MESSAGE_TYPE
@@ -1124,15 +1197,17 @@ async def stream_agent_chat(
         callbacks = list(langfuse_run.callbacks)
         if model_request_recorder is not None:
             callbacks.append(model_request_recorder)
-        stream_source = agent.stream_messages_with_state(
-            messages,
-            context=context,
-            callbacks=callbacks,
-            metadata=langfuse_run.metadata,
-            tags=langfuse_run.tags,
-            run_name=agent_item.name or agent_item.slug,
-            on_prepared=on_prepared,
-        )
+        stream_kwargs = {
+            "context": context,
+            "callbacks": callbacks,
+            "metadata": langfuse_run.metadata,
+            "tags": langfuse_run.tags,
+            "run_name": agent_item.name or agent_item.slug,
+            "on_prepared": on_prepared,
+        }
+        if isinstance(meta.get("message_replacement"), dict):
+            stream_kwargs["message_replacement"] = dict(meta["message_replacement"])
+        stream_source = agent.stream_messages_with_state(messages, **stream_kwargs)
         async with aclosing(stream_source):
             async for mode, payload in stream_source:
                 if mode == "checkpoint":
@@ -1153,6 +1228,10 @@ async def stream_agent_chat(
                     compression = _context_compression_payload(payload)
                     if compression is not None:
                         yield make_chunk(status="context_compression", compression=compression, meta=meta)
+                        continue
+                    model_progress = _model_call_progress_payload(payload)
+                    if model_progress is not None:
+                        yield make_chunk(status="agent_progress", progress=model_progress, meta=meta)
                     continue
 
                 if mode == "stream_event":
@@ -1411,6 +1490,10 @@ async def stream_agent_resume(
                     compression = _context_compression_payload(payload)
                     if compression is not None:
                         yield make_resume_chunk(status="context_compression", compression=compression, meta=meta)
+                        continue
+                    model_progress = _model_call_progress_payload(payload)
+                    if model_progress is not None:
+                        yield make_resume_chunk(status="agent_progress", progress=model_progress, meta=meta)
                     continue
 
                 if mode != "messages":

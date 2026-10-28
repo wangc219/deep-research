@@ -36,7 +36,7 @@ class SessionEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SessionEntry":
+    def from_dict(cls, data: dict[str, Any]) -> SessionEntry:
         return cls(
             entry_id=str(data["entry_id"]),
             parent_id=str(data.get("parent_id", "")),
@@ -134,9 +134,7 @@ class JsonlSessionStore(MemorySessionStore):
         if self.path.exists() and self.path.stat().st_size > 0:
             self._load_existing()
         else:
-            self._write_json(
-                {"type": "session_header", "version": 1, "run_id": run_id}
-            )
+            self._write_json({"type": "session_header", "version": 1, "run_id": run_id})
 
     def _append_entry(self, entry: SessionEntry) -> None:
         super()._append_entry(entry)

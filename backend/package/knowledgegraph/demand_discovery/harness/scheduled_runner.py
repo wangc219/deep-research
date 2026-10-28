@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, UTC
 import json
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
+from collections.abc import Awaitable, Callable
 
 from knowledgegraph.demand_discovery.domain.store import DomainStore
 
@@ -55,7 +56,7 @@ class ScheduledRunner:
         self.tasks_dir = Path(tasks_dir)
         self.done_dir = Path(done_dir)
         self.run_factory = run_factory
-        self.clock = clock or (lambda: datetime.now(timezone.utc))
+        self.clock = clock or (lambda: datetime.now(UTC))
         self.poll_interval_s = poll_interval_s
         self.single_flight = single_flight
         self.domain_store = domain_store
@@ -121,10 +122,7 @@ class ScheduledRunner:
     def _load_tasks(self) -> list[ScheduledTask]:
         if not self.tasks_dir.exists():
             return []
-        return [
-            load_scheduled_task(path)
-            for path in sorted(self.tasks_dir.glob("*.json"))
-        ]
+        return [load_scheduled_task(path) for path in sorted(self.tasks_dir.glob("*.json"))]
 
     def _is_due(self, task: ScheduledTask, now: datetime) -> bool:
         if not task.enabled:
@@ -155,7 +153,7 @@ class ScheduledRunner:
                 interval = timedelta(days=7)
             else:
                 return self._done_path(task, now).exists()
-        modified = datetime.fromtimestamp(latest.stat().st_mtime, timezone.utc)
+        modified = datetime.fromtimestamp(latest.stat().st_mtime, UTC)
         return now - modified < interval
 
     def _write_done(
@@ -232,9 +230,7 @@ def load_scheduled_task(path: str | Path) -> ScheduledTask:
         schedule=str(data.get("schedule", "00:00")),
         repeat=str(data.get("repeat", "daily")),
         enabled=bool(data.get("enabled", True)),
-        max_delay_hours=(
-            int(data["max_delay_hours"]) if data.get("max_delay_hours") is not None else None
-        ),
+        max_delay_hours=(int(data["max_delay_hours"]) if data.get("max_delay_hours") is not None else None),
         task_brief=str(data.get("task_brief", "")),
         budget=dict(data.get("budget", {})),
         source_filter=dict(data.get("source_filter", {})),
@@ -261,15 +257,13 @@ def _repeat_interval(repeat: str) -> timedelta | None:
 
 def _ensure_aware(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
     return value
 
 
 def _has_keyword_gate_hit(event_type: str, payload: dict[str, Any]) -> bool:
     lowered = event_type.lower()
-    if "keyword" in lowered and any(
-        marker in lowered for marker in ("gate", "hit", "match")
-    ):
+    if "keyword" in lowered and any(marker in lowered for marker in ("gate", "hit", "match")):
         return True
     score = payload.get("keyword_score")
     if isinstance(score, bool):

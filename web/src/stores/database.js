@@ -93,10 +93,13 @@ export const useDatabaseStore = defineStore('database', () => {
   // 完整列表接口本身会按当前用户过滤权限，同时返回卡片所需的文件统计、
   // 共享范围和管理权限。不要使用面向智能体选择器的精简 accessible 接口，
   // 否则普通用户会因缺少 row_count 等字段而把真实文件数显示为 0。
-  async function loadDatabases() {
-    state.listLoading = true
+  let listRequestId = 0
+  async function loadDatabases({ silent = false } = {}) {
+    const requestId = ++listRequestId
+    if (!silent) state.listLoading = true
     try {
       const data = await databaseApi.getDatabases()
+      if (requestId !== listRequestId) return
       const list = data?.databases || []
       databases.value = list.sort((a, b) => {
         const timeA = parseToShanghai(a.created_at)
@@ -113,7 +116,7 @@ export const useDatabaseStore = defineStore('database', () => {
       }
       throw error
     } finally {
-      state.listLoading = false
+      if (requestId === listRequestId) state.listLoading = false
     }
   }
 

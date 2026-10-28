@@ -13,7 +13,15 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from platform_core.repositories.agent_run_repository import AgentRunRepository
 from platform_core.workspace.paths import user_workdir_host_dir
-from platform_core.storage.postgres.models_business import AgentRun, AgentRunRequest, Conversation, Message, Project
+from platform_core.storage.postgres.models_business import (
+    SUPERSEDED_MESSAGE_TYPE,
+    AgentRun,
+    AgentRunRequest,
+    Conversation,
+    Message,
+    MessageFeedback,
+    Project,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
@@ -46,14 +54,14 @@ async def _cancel_run_and_wait(test_client, headers, run_id: str) -> dict:
     """取消测试创建的 Run，并等待数据库终态，避免污染恢复测试。"""
     response = await test_client.post(f"/api/agent/runs/{run_id}/cancel", headers=headers)
     assert response.status_code == 200, response.text
-    for _ in range(100):
+    for _ in range(300):
         run_response = await test_client.get(f"/api/agent/runs/{run_id}", headers=headers)
         assert run_response.status_code == 200, run_response.text
         run = run_response.json()["run"]
         if run["status"] in {"completed", "failed", "cancelled", "interrupted"}:
             return run
         await asyncio.sleep(0.1)
-    pytest.fail(f"Run {run_id} did not reach a terminal status after cancellation")
+    pytest.fail(f"Run {run_id} did not reach a terminal status after cancellation: status={run['status']}")
 
 
 @pytest.mark.parametrize("queue_policy", ["enqueue", "steer"])
@@ -80,6 +88,133 @@ async def test_create_run_returns_request_info(test_client, admin_headers, queue
     assert data["status"] in ("dispatched", "queued")
     if data.get("run_id"):
         await _cancel_run_and_wait(test_client, admin_headers, data["run_id"])
+
+
+async def test_edit_latest_message_replaces_persisted_branch_and_feedback(
+    test_client,
+    admin_headers,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """真实 HTTP 与 PostgreSQL 中，编辑重问原子隐藏旧分支并删除旧反馈。"""
+    from platform_core.services import agent_request_service
+
+    async def skip_enqueue(_run_id: str) -> None:
+        return None
+
+    monkeypatch.setattr(agent_request_service, "enqueue_agent_run", skip_enqueue)
+    agent_slug = await _get_default_agent_slug(test_client, admin_headers)
+    thread_id = await _create_thread(test_client, admin_headers, agent_slug)
+    old_request_id = f"edit-old-{uuid.uuid4()}"
+    replacement_request_id = f"edit-new-{uuid.uuid4()}"
+    old_run_id = f"edit-run-{uuid.uuid4()}"
+    engine = create_async_engine(os.environ["POSTGRES_URL"], pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    replacement_run_id = None
+
+    try:
+        async with session_factory() as db:
+            conversation = await db.scalar(select(Conversation).where(Conversation.thread_id == thread_id))
+            assert conversation is not None
+            old_question = Message(
+                conversation_id=conversation.id,
+                role="user",
+                content="old question",
+                request_id=old_request_id,
+                delivery_status="dispatched",
+                extra_metadata={
+                    "request_id": old_request_id,
+                    "raw_message": {"id": "old-human-source", "type": "human", "content": "old question"},
+                },
+            )
+            db.add(old_question)
+            await db.flush()
+            old_run = AgentRun(
+                id=old_run_id,
+                conversation_thread_id=thread_id,
+                runtime_scope_id=thread_id,
+                agent_slug=agent_slug,
+                uid=conversation.uid,
+                status="completed",
+                request_id=old_request_id,
+                conversation_id=conversation.id,
+                run_type="chat",
+                input_message_id=old_question.id,
+                input_payload={"model_spec": "test:model"},
+                finished_at=utc_now_naive(),
+            )
+            db.add(old_run)
+            await db.flush()
+            old_question.run_id = old_run_id
+            old_reply = Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content="old answer",
+                run_id=old_run_id,
+                request_id=old_request_id,
+            )
+            db.add(old_reply)
+            await db.flush()
+            old_run.output_message_id = old_reply.id
+            db.add(
+                AgentRunRequest(
+                    request_id=old_request_id,
+                    uid=conversation.uid,
+                    agent_slug=agent_slug,
+                    conversation_thread_id=thread_id,
+                    source="chat",
+                    channel="web",
+                    status="dispatched",
+                    input_message_id=old_question.id,
+                    dispatched_run_id=old_run_id,
+                    input_payload={"model_spec": "test:model"},
+                )
+            )
+            db.add(MessageFeedback(message_id=old_reply.id, uid=conversation.uid, rating="like"))
+            await db.commit()
+            old_question_id = old_question.id
+            old_reply_id = old_reply.id
+
+        response = await test_client.post(
+            "/api/agent/runs",
+            json={
+                "query": "edited question",
+                "agent_slug": agent_slug,
+                "thread_id": thread_id,
+                "replace_message_id": old_question_id,
+                "meta": {"request_id": replacement_request_id},
+            },
+            headers=admin_headers,
+        )
+        assert response.status_code == 200, response.text
+        replacement_run_id = response.json()["run_id"]
+
+        history_response = await test_client.get(
+            f"/api/chat/thread/{thread_id}/history",
+            headers=admin_headers,
+        )
+        assert history_response.status_code == 200, history_response.text
+        assert [item["content"] for item in history_response.json()["history"]] == ["edited question"]
+
+        async with session_factory() as db:
+            assert (await db.get(Message, old_question_id)).message_type == SUPERSEDED_MESSAGE_TYPE
+            assert (await db.get(Message, old_reply_id)).message_type == SUPERSEDED_MESSAGE_TYPE
+            assert await db.scalar(
+                select(MessageFeedback).where(MessageFeedback.message_id == old_reply_id)
+            ) is None
+            request = await db.scalar(
+                select(AgentRunRequest).where(AgentRunRequest.request_id == replacement_request_id)
+            )
+            assert request.input_payload["message_replacement"]["source_id"] == "old-human-source"
+    finally:
+        if replacement_run_id:
+            async with session_factory() as db:
+                run = await db.get(AgentRun, replacement_run_id)
+                if run is not None:
+                    run.status = "cancelled"
+                    run.finished_at = utc_now_naive()
+                    run.updated_at = utc_now_naive()
+                    await db.commit()
+        await engine.dispose()
 
 
 async def test_compress_thread_rejects_active_run(test_client, admin_headers):

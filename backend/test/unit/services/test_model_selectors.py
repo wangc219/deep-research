@@ -137,7 +137,7 @@ def test_select_model_wraps_langchain_model_and_expands_model_params(monkeypatch
     assert model.model_name == "namespace/chat-model"
     assert captured == {
         "spec": "test-provider:namespace/chat-model",
-        "kwargs": {"temperature": 0.2, "timeout": 60.0},
+        "kwargs": {"own_http_clients": False, "temperature": 0.2, "timeout": 60.0},
     }
 
 
@@ -159,7 +159,7 @@ def test_select_model_maps_anthropic_max_completion_tokens(monkeypatch):
 
     select_model("anthropic:mimo-v2.5", model_params={"max_completion_tokens": 123})
 
-    assert captured == {"spec": "anthropic:mimo-v2.5", "kwargs": {"max_tokens": 123}}
+    assert captured == {"spec": "anthropic:mimo-v2.5", "kwargs": {"own_http_clients": False, "max_tokens": 123}}
 
 
 def test_load_chat_model_uses_toolcall_chunk_fix_for_openai_compatible(monkeypatch):
@@ -351,8 +351,8 @@ def test_qwen_compat_disables_thinking_for_non_stream_and_enables_it_for_stream(
     non_stream_payload = model._get_request_payload("hello", stream=False)
     stream_payload = model._get_request_payload("hello", stream=True)
 
-    assert non_stream_payload["enable_thinking"] is False
-    assert stream_payload["enable_thinking"] is True
+    assert non_stream_payload["extra_body"]["enable_thinking"] is False
+    assert stream_payload["extra_body"]["enable_thinking"] is True
     assert "reasoning_effort" not in non_stream_payload
 
 

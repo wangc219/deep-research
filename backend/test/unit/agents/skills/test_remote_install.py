@@ -100,6 +100,14 @@ def test_normalize_source_rejects_all_sources_when_allowlist_is_empty() -> None:
         svc._normalize_source("anthropics/skills", [])
 
 
+def test_skills_sh_detail_url_resolves_to_allowlisted_repository():
+    """目录页可直接粘贴安装，但不能借跳转越过 GitHub 来源策略。"""
+    source = "https://skills.sh/anthropics/skills/pdf"
+    assert svc._normalize_source(source, ["skills.sh", "github.com"]) == "https://github.com/anthropics/skills"
+    with pytest.raises(ValueError):
+        svc._normalize_source(source, ["skills.sh"])
+
+
 def test_parse_available_skills_from_cli_output() -> None:
     output = """
     \x1b[38;5;250m███████╗\x1b[0m

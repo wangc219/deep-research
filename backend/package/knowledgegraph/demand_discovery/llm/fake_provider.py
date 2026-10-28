@@ -11,7 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import math
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.harness.event_stream import AsyncEventStream
 from knowledgegraph.demand_discovery.harness.types import AssistantContentBlock

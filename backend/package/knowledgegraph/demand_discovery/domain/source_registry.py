@@ -70,19 +70,13 @@ class SourceRegistry:
         self.version = version
 
     @classmethod
-    def load(cls, path: str | Path) -> "SourceRegistry":
+    def load(cls, path: str | Path) -> SourceRegistry:
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         version = int(data.get("version", 1))
         if version != 1:
             raise ValueError(f"unsupported source whitelist version: {version}")
-        sources = [
-            _entry_from_dict(item, index)
-            for index, item in enumerate(data.get("sources", []))
-        ]
-        excluded = [
-            _excluded_from_dict(item, index)
-            for index, item in enumerate(data.get("excluded", []))
-        ]
+        sources = [_entry_from_dict(item, index) for index, item in enumerate(data.get("sources", []))]
+        excluded = [_excluded_from_dict(item, index) for index, item in enumerate(data.get("excluded", []))]
         return cls(sources=sources, excluded=excluded, version=version)
 
     def match(self, url: str) -> WhitelistEntry | None:
@@ -134,10 +128,7 @@ class SourceRegistry:
             for entry in self.sources
             if entry.entry_urls
             and (normalized_tiers is None or entry.source_tier in normalized_tiers)
-            and (
-                normalized_transports is None
-                or entry.fetch_transport in normalized_transports
-            )
+            and (normalized_transports is None or entry.fetch_transport in normalized_transports)
         ]
         return sorted(
             entries,
@@ -162,11 +153,7 @@ class SourceRegistry:
         host: str,
         path: str,
     ) -> tuple[int, int, str]:
-        matched_prefix_lengths = [
-            len(prefix)
-            for prefix in entry.path_prefixes
-            if _path_matches(path, prefix)
-        ]
+        matched_prefix_lengths = [len(prefix) for prefix in entry.path_prefixes if _path_matches(path, prefix)]
         path_len = max(matched_prefix_lengths) if matched_prefix_lengths else 0
         host_len = max(
             (len(item) for item in entry.hosts if _host_matches(host, item)),
@@ -176,12 +163,7 @@ class SourceRegistry:
 
 
 def default_source_whitelist_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[4]
-        / "configs"
-        / "demand_discovery"
-        / "source_whitelist.yaml"
-    )
+    return Path(__file__).resolve().parents[4] / "configs" / "demand_discovery" / "source_whitelist.yaml"
 
 
 def _entry_from_dict(data: dict[str, Any], index: int) -> WhitelistEntry:
@@ -257,9 +239,7 @@ def _content_languages_from_dict(data: dict[str, Any], index: int) -> list[str]:
     languages = [item.lower() for item in raw]
     invalid = [item for item in languages if item not in VALID_CONTENT_LANGUAGES]
     if invalid:
-        raise ValueError(
-            f"sources[{index}].content_languages must contain zh/en values"
-        )
+        raise ValueError(f"sources[{index}].content_languages must contain zh/en values")
     return _dedupe_strings(languages)
 
 
@@ -355,8 +335,4 @@ def _topic_score(topic: str, tags: list[str]) -> int:
 
 
 def _split_topic_tokens(value: str) -> list[str]:
-    return [
-        token.strip().lower()
-        for token in value.replace(",", " ").replace("，", " ").split()
-        if token.strip()
-    ]
+    return [token.strip().lower() for token in value.replace(",", " ").replace("，", " ").split() if token.strip()]

@@ -268,7 +268,7 @@ async def test_v072_business_converges_current_schema_idempotently() -> None:
             "ix_scheduled_agent_runs_job_created",
             "ix_scheduled_agent_runs_dispatching",
         }.issubset(scheduled_indexes)
-        assert BUSINESS_SCHEMA_VERSION == 13
+        assert BUSINESS_SCHEMA_VERSION == 16
         async with scoped_engine.connect() as conn:
             columns = (
                 (
@@ -391,7 +391,7 @@ async def test_knowledge_v1_to_v2_adds_file_attempt_owner_idempotently() -> None
             "error_parsing",
             "service_interrupted: 旧执行实例中断，处理结果未知，请重试",
         )
-        assert KNOWLEDGE_SCHEMA_VERSION == 2
+        assert KNOWLEDGE_SCHEMA_VERSION == 6
     finally:
         await _drop_isolated_schema(schema, admin_engine, scoped_engine)
 
@@ -417,6 +417,86 @@ async def test_knowledge_timestamp_defaults_match_database_clock_in_non_utc_sess
 
         assert persisted_at.tzinfo is not None
         assert abs((persisted_at - database_now).total_seconds()) < 2
+    finally:
+        await _drop_isolated_schema(schema, admin_engine, scoped_engine)
+
+
+async def test_video_collector_migration_is_idempotent() -> None:
+    """视频号采集表可重复创建。"""
+    schema, admin_engine, scoped_engine, manager = await _create_isolated_manager("pytest_video_collector")
+    try:
+        await manager.create_knowledge_tables()
+        async with scoped_engine.begin() as connection:
+            await connection.execute(text("DROP TABLE wechat_collector_captures"))
+            await connection.execute(text("DROP TABLE wechat_collector_devices"))
+        await manager.upgrade_knowledge_schema_v3_to_v4()
+        await manager.upgrade_knowledge_schema_v3_to_v4()
+        async with scoped_engine.connect() as connection:
+            assert await connection.scalar(text("SELECT to_regclass('wechat_collector_devices')")) is not None
+            assert await connection.scalar(text("SELECT to_regclass('wechat_collector_captures')")) is not None
+    finally:
+        await _drop_isolated_schema(schema, admin_engine, scoped_engine)
+
+
+async def test_retired_article_cleanup_preserves_video_and_knowledge_data() -> None:
+    """旧文章表、任务和交接物被清理，视频配对及已入库文件保持完整。"""
+    schema, admin_engine, scoped_engine, manager = await _create_isolated_manager("pytest_article_removal")
+    try:
+        await manager.create_knowledge_tables()
+        async with scoped_engine.begin() as connection:
+            await connection.execute(text(LEGACY_TASK_TABLE_SQL))
+            await connection.execute(text("CREATE TABLE wechat_article_archives (article_id text PRIMARY KEY)"))
+            await connection.execute(
+                text(
+                    "CREATE TABLE wechat_article_destinations "
+                    "(article_id text REFERENCES wechat_article_archives(article_id))"
+                )
+            )
+            await connection.execute(text("CREATE TABLE wechat_subscriptions (subscription_id text PRIMARY KEY)"))
+            await connection.execute(text("INSERT INTO wechat_article_archives VALUES ('old')"))
+            await connection.execute(text("INSERT INTO wechat_article_destinations VALUES ('old')"))
+            await connection.execute(text("INSERT INTO wechat_subscriptions VALUES ('old')"))
+            await connection.execute(
+                text("INSERT INTO knowledge_bases (kb_id, name, kb_type) VALUES ('keep', 'keep', 'milvus')")
+            )
+            await connection.execute(
+                text("INSERT INTO knowledge_files (file_id, kb_id, filename) VALUES ('keep', 'keep', 'imported.docx')")
+            )
+            await connection.execute(
+                text(
+                    "INSERT INTO wechat_collector_devices "
+                    "(device_id, owner_uid, name, platform, token_digest, state, created_at) "
+                    "VALUES ('video-device', 'owner', 'pc', 'macos', 'digest', '{}', now())"
+                )
+            )
+            for task_id, task_type in [
+                ("old", "wechat_article_ingest"),
+                ("search", "wechat_account_discover"),
+                ("video", "wxchannels_transcribe"),
+                ("other", "knowledge_index"),
+            ]:
+                await connection.execute(
+                    text("INSERT INTO tasks (id, name, type, status) VALUES (:id, 'sample', :type, 'pending')"),
+                    {"id": task_id, "type": task_type},
+                )
+            for task_id in ("old", "video"):
+                await connection.execute(
+                    text(
+                        "INSERT INTO wechat_collector_captures "
+                        "(capture_id, task_id, execution_id, device_id, sequence, kind, detail, created_at) "
+                        "VALUES (:id, :id, 'lease', 'video-device', 1, 'complete', '{}', now())"
+                    ),
+                    {"id": task_id},
+                )
+        await manager.upgrade_knowledge_schema_v5_to_v6()
+        await manager.upgrade_knowledge_schema_v5_to_v6()
+        async with scoped_engine.connect() as connection:
+            for table in ("wechat_article_archives", "wechat_article_destinations", "wechat_subscriptions"):
+                assert await connection.scalar(text("SELECT to_regclass(:name)"), {"name": table}) is None
+            assert set(await connection.scalars(text("SELECT id FROM tasks"))) == {"video", "other"}
+            assert list(await connection.scalars(text("SELECT task_id FROM wechat_collector_captures"))) == ["video"]
+            assert await connection.scalar(text("SELECT count(*) FROM wechat_collector_devices")) == 1
+            assert await connection.scalar(text("SELECT count(*) FROM knowledge_files")) == 1
     finally:
         await _drop_isolated_schema(schema, admin_engine, scoped_engine)
 

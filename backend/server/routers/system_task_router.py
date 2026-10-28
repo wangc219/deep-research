@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from platform_core.storage.postgres.models_business import User
 from platform_core.services.task_service import tasker
-from server.utils.auth_middleware import get_admin_user
+from server.utils.auth_middleware import get_required_user
 
 tasks = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -11,24 +11,36 @@ tasks = APIRouter(prefix="/tasks", tags=["tasks"])
 async def list_tasks(
     status: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=100),
-    current_user: User = Depends(get_admin_user),
+    current_user: User = Depends(get_required_user),
 ):
     """List tasks, optionally filtered by status."""
-    return await tasker.list_tasks(status=status, limit=limit)
+    if current_user.role in {"admin", "superadmin"}:
+        return await tasker.list_tasks(status=status, limit=limit)
+    return await tasker.list_tasks(status=status, limit=limit, operator_id=current_user.uid)
+
+
+async def accessible_task(task_id: str, current_user: User) -> dict:
+    """普通用户仅能读取或操作自己提交的后台任务。"""
+    task = await tasker.get_task(task_id)
+    if not task or (
+        current_user.role not in {"admin", "superadmin"}
+        and (task.get("payload") or {}).get("operator_id") != current_user.uid
+    ):
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
 
 
 @tasks.get("/{task_id}")
-async def get_task(task_id: str, current_user: User = Depends(get_admin_user)):
+async def get_task(task_id: str, current_user: User = Depends(get_required_user)):
     """Retrieve a single task by id."""
-    task = await tasker.get_task(task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = await accessible_task(task_id, current_user)
     return {"task": task}
 
 
 @tasks.post("/{task_id}/cancel")
-async def cancel_task(task_id: str, current_user: User = Depends(get_admin_user)):
+async def cancel_task(task_id: str, current_user: User = Depends(get_required_user)):
     """Request cancellation of a task."""
+    await accessible_task(task_id, current_user)
     task = await tasker.cancel_task(task_id)
     if task is None:
         raise HTTPException(status_code=400, detail="Task cannot be cancelled")
@@ -40,8 +52,9 @@ async def cancel_task(task_id: str, current_user: User = Depends(get_admin_user)
 
 
 @tasks.delete("/{task_id}")
-async def delete_task(task_id: str, current_user: User = Depends(get_admin_user)):
+async def delete_task(task_id: str, current_user: User = Depends(get_required_user)):
     """Delete a task by id."""
+    await accessible_task(task_id, current_user)
     success = await tasker.delete_task(task_id)
     if not success:
         raise HTTPException(status_code=409, detail="Task must exist and be terminal before deletion")

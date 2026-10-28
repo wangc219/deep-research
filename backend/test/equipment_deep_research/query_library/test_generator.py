@@ -103,13 +103,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
                 )
             ],
             [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(DIVERGENCE, ensure_ascii=False)))],
-            [
-                ProviderStreamEvent.final(
-                    ProviderFinalTurn(
-                        text=json.dumps({"queries": rows}, ensure_ascii=False)
-                    )
-                )
-            ],
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps({"queries": rows}, ensure_ascii=False)))],
         ]
     )
 
@@ -119,6 +113,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
             supplemental_information="面向未来高端战争",
             reference_urls=("https://example.test/manual-reference",),
             count=12,
+            batch_size=20,
             existing_queries=[],
         )
     )
@@ -131,9 +126,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert provider.inputs[0][2]["require_web_search"] is False
     assert provider.inputs[0][2]["_provider_retry_attempts"] == 3
     grounding_request = json.loads(provider.inputs[0][0][1].content)
-    assert grounding_request["reference_urls"] == [
-        "https://example.test/manual-reference"
-    ]
+    assert grounding_request["reference_urls"] == ["https://example.test/manual-reference"]
     divergence_request = json.loads(provider.inputs[1][0][1].content)
     assert divergence_request["target_hypothesis_count"] == 24
     assert len(divergence_request["divergence_dimensions"]) >= 8
@@ -143,6 +136,25 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert "coverage_slot只是思考发生维度" in requirements
     assert "具体装备项目" in requirements
     assert "项目功能" in requirements
+    for request, contract_key in (
+        (grounding_request, "output_contract"),
+        (divergence_request, "requirements"),
+        (generation_request, "requirements"),
+    ):
+        contract = "".join(request[contract_key])
+        assert "安全态势、面临威胁和未来军事作战需要" in contract
+        assert "不主动生成极端灾害、民用应急救援" in contract
+        assert "仅当用户明确指定民用研究母题" in contract
+        assert "自然环境应作为军事任务的条件约束" in contract
+        assert "默认以中国为研究主体" in contract
+        assert "围绕母题和自动态势两种模式均适用" in contract
+        assert "具体武器装备类别" in contract
+        assert "战略制衡" in contract
+        assert "不预设某种装备能够制胜" in contract
+        assert "不提出针对现实对手的攻击方案或武器改进设计" in contract
+        assert "待研究的未决问题" in contract
+    assert "为何值得现在研究" in requirements
+    assert "公开证据缺口与验证路径" in requirements
 
 
 def test_generator_records_codex_situation_assessment_without_web_results() -> None:
@@ -156,8 +168,7 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
         "coverage_slot": coverage_plan(1)[0],
         "query": "未来无人精确打击装备任务需求研究",
         "supplemental_information": (
-            "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、"
-            "失效边界和可验证的发展方向。"
+            "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、失效边界和可验证的发展方向。"
         ),
         "generation_rationale": "将输入母题中的任务牵引转化为可独立论证的装备能力研究问题。",
         "sources": [],
@@ -204,6 +215,16 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
     assert "被态势直接牵引的武器装备需求" in requirements
     assert "direct_strike_priority_slots" not in generation_request
     assert "不写成时事摘要" in requirements
+    divergence_request = json.loads(provider.inputs[1][0][1].content)
+    for request, contract_key in (
+        (grounding_request, "output_contract"),
+        (divergence_request, "requirements"),
+        (generation_request, "requirements"),
+    ):
+        contract = "".join(request[contract_key])
+        assert "不主动生成极端灾害、民用应急救援" in contract
+        assert "不能把自然灾害本身替代为军事需求来源" in contract
+    assert "偏离军事任务的民用灾害命题必须替换" in requirements
     assert provider.inputs[2][2]["_provider_retry_attempts"] == 2
 
 
@@ -212,8 +233,7 @@ def test_generator_continues_when_optional_grounding_times_out() -> None:
         "coverage_slot": coverage_plan(1)[0],
         "query": "未来无人精确打击装备任务需求研究",
         "supplemental_information": (
-            "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、"
-            "失效边界和可验证的发展方向。"
+            "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、失效边界和可验证的发展方向。"
         ),
         "generation_rationale": "将输入母题中的任务牵引转化为可独立论证的装备能力研究问题。",
         "sources": [],
@@ -289,6 +309,39 @@ def test_quality_gate_rejects_title_without_auditable_demand_chain() -> None:
     assert "quality_review.verdict must pass after self-revision" in issues
 
 
+def test_quality_gate_accepts_civil_emergency_equipment_domain_terms() -> None:
+    candidate = GeneratedCandidate(
+        coverage_slot=coverage_plan(1)[0],
+        query="极端灾害应急照明供电装备韧性设计研究",
+        supplemental_information="面向公共避难场所断电场景，研究照明、电源和便携供电系统的可靠性与失效边界。",
+        generation_rationale="把灾害现场持续照明需求转化为可验证的应急装备研究问题。",
+        source_references=(SourceReference(title="模型分析", source_kind="document"),),
+        demand_chain={
+            "situation_signal": "极端灾害导致公共电网长时中断",
+            "future_mission": "持续保障避难场所基础照明",
+            "task_constraint": "便携部署且补能条件受限",
+            "capability_gap": "现有应急灯续航与状态诊断能力不足",
+            "weapon_requirement": "便携电源具备长续航和故障自检能力",
+            "disconfirmation_condition": "实测续航和切换可靠性没有改善",
+            "evidence_status": "inferred",
+        },
+        quality_review={
+            "verdict": "pass",
+            "causal_specificity": "pass",
+            "differentiation": "pass",
+            "researchability": "pass",
+        },
+    )
+
+    assert not validate_generated_candidate(
+        candidate,
+        expected_slot=coverage_plan(1)[0],
+        existing_queries=[],
+        accepted_queries=[],
+        topic="极端灾害场景下民用应急照明与便携供电设备的可靠性提升",
+    )
+
+
 def test_generation_profiles_bound_divergence_and_output_budgets() -> None:
     assert _generation_profile("生成策略：高效") == "efficient"
     assert _hypothesis_target(12, "efficient") == 18
@@ -297,3 +350,233 @@ def test_generation_profiles_bound_divergence_and_output_budgets() -> None:
     assert _generation_token_budget(8, autonomous_discovery=True, profile="efficient") < (
         _generation_token_budget(8, autonomous_discovery=True, profile="deep")
     )
+
+
+def test_malformed_model_json_fails_instead_of_creating_template_results() -> None:
+    import pytest
+    from equipment_deep_research.query_library.models import GenerationValidationError
+
+    responses = [
+        json.dumps({"summary": "通信终端任务", "sources": []}),
+        json.dumps(DIVERGENCE),
+        "not JSON",
+        "not JSON",
+        "not JSON",
+    ]
+    provider = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text=value))] for value in responses])
+    saved = []
+    with pytest.raises(GenerationValidationError, match="仅 0/1"):
+        asyncio.run(
+            ModelQueryGenerator(provider).generate(
+                topic="通信终端任务研究",
+                supplemental_information="",
+                count=1,
+                existing_queries=[],
+                on_candidate=saved.append,
+            )
+        )
+    assert saved == []
+    assert provider.remaining_steps == 0
+
+
+def test_efficient_query_uses_one_call_without_unavailable_web_search_or_serial_planner() -> None:
+    row = {
+        "coverage_slot": coverage_plan(1)[0],
+        "query": "复杂环境通信终端及配套供电系统研究",
+        "supplemental_information": "分析复杂环境下通信终端持续运行的供电约束、故障边界、验证方法与装备功能需求。",
+        "generation_rationale": "从持续通信任务约束识别终端与配套供电系统的研究需求。",
+        **_quality_fields("复杂环境通信终端及配套供电系统研究"),
+    }
+    provider = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps({"queries": [row]})))]]
+    )
+    stages, batches = [], []
+    result = asyncio.run(
+        ModelQueryGenerator(provider, default_profile="efficient").generate(
+            topic="通信终端可靠性研究",
+            supplemental_information="",
+            count=1,
+            existing_queries=[],
+            on_stage=stages.append,
+            on_batch=batches.append,
+        )
+    )
+    assert len(result.candidates) == 1
+    assert len(provider.inputs) == 1
+    assert stages == ["context_analysis", "query_generation"]
+    options = provider.inputs[0][2]
+    assert options["_disable_hidden_reasoning"] is True
+    assert options["_provider_structured_retry_attempts"] == 0
+    assert options["_query_stage_timeout_seconds"] == 60
+    assert options["phase"] == "query_generation"
+    assert options["max_output_tokens"] >= 4096
+    assert batches[0]["completed"] == batches[0]["total"] == 1
+
+
+def test_query_stage_deadline_cancels_slow_stream_even_if_provider_has_no_timeout():
+    import pytest
+    from equipment_deep_research.query_library.generator import _collect_stream
+
+    class SlowProvider:
+        cancelled = False
+
+        async def stream(self, *_args):
+            try:
+                await asyncio.sleep(2)
+                yield ProviderStreamEvent.final(ProviderFinalTurn(text="{}"))
+            finally:
+                self.cancelled = True
+
+    provider = SlowProvider()
+    with pytest.raises(ProviderRetryableError, match="阶段超时"):
+        asyncio.run(_collect_stream(provider, (), {"_query_stage_timeout_seconds": 0.01}))
+    assert provider.cancelled
+
+
+def test_batches_overlap_save_fast_results_and_repair_only_failed_slots():
+    import pytest
+    from equipment_deep_research.query_library.models import GenerationValidationError
+
+    class Generator(ModelQueryGenerator):
+        def __init__(self):
+            super().__init__(ScriptedFakeProvider([]), default_profile="efficient", provider_snapshot={"model": "a"})
+            self.calls = []
+            self.active = 0
+            self.peak = 0
+            self.first_saved = asyncio.Event()
+
+        async def _generate_candidates(self, **kwargs):
+            slots = kwargs["remaining_slots"]
+            self.calls.append(list(slots))
+            self.active += 1
+            self.peak = max(self.peak, self.active)
+            try:
+                if slots[0] == coverage_plan(4)[0]:
+                    await asyncio.wait_for(self.first_saved.wait(), 1)
+                    raise ProviderRetryableError("temporary failure")
+                await asyncio.sleep(0.01)
+                rows = []
+                names = [
+                    "复杂对抗远程火力任务需求研究",
+                    "低成本无人平台自主导航能力研究",
+                    "分布式通信终端配套供电系统研究",
+                    "深海探测传感器环境适应性能研究",
+                ]
+                for slot in slots:
+                    query = names[list(coverage_plan(4)).index(slot)]
+                    rows.append(
+                        {
+                            "coverage_slot": slot,
+                            "query": query,
+                            "supplemental_information": (
+                                "分析智能自主装备的任务场景、装备功能与能力约束，"
+                                "识别失效边界、验证方法和可审计的需求方向。"
+                            ),
+                            "generation_rationale": "从公开任务约束形成可验证的装备功能需求研究。",
+                            **_quality_fields(query),
+                        }
+                    )
+                return {"queries": rows}, {}
+            finally:
+                self.active -= 1
+
+    async def run():
+        generator = Generator()
+        saved, progress = [], []
+
+        def save(candidate):
+            saved.append(candidate)
+            generator.first_saved.set()
+
+        with pytest.raises(GenerationValidationError, match="仅 2/4"):
+            await generator.generate(
+                topic="装备研究",
+                supplemental_information="",
+                count=4,
+                existing_queries=[],
+                on_candidate=save,
+                on_batch=progress.append,
+            )
+        assert generator.peak == 2
+        assert len(saved) == 2
+        assert generator.calls == [list(coverage_plan(4))[:2], list(coverage_plan(4))[2:], list(coverage_plan(4))[:2]]
+        assert progress[-1]["request_batches"] == 3
+        assert progress[-1]["repair_batches"] == 1
+        assert progress[-1]["completed"] == 2
+        assert progress[-1]["rejected_count"] == 2
+
+    asyncio.run(run())
+
+
+def test_planning_cache_reuse_requires_same_model_input_and_one_hour_ttl():
+    from datetime import UTC, datetime, timedelta
+    import pytest
+    from equipment_deep_research.query_library.models import GenerationValidationError
+
+    class Generator(ModelQueryGenerator):
+        def __init__(self, model):
+            super().__init__(ScriptedFakeProvider([]), provider_snapshot={"model": model})
+            self.ground_calls = 0
+            self.planning_calls = 0
+
+        async def _ground(self, **kwargs):
+            self.ground_calls += 1
+            return {"summary": "test", "sources": []}, {}
+
+        async def _diverge_demand_hypotheses(self, **kwargs):
+            self.planning_calls += 1
+            return []
+
+        async def _generate_candidates(self, **kwargs):
+            return {"queries": []}, {}
+
+    async def run():
+        checkpoints = []
+        first = Generator("a")
+        kwargs = dict(topic="装备任务研究", supplemental_information="", count=1, existing_queries=[])
+        with pytest.raises(GenerationValidationError):
+            await first.generate(**kwargs, on_checkpoint=lambda value: checkpoints.append(dict(value)))
+        checkpoint = checkpoints[-1]
+        assert "identity" in checkpoint
+        same = Generator("a")
+        with pytest.raises(GenerationValidationError):
+            await same.generate(**kwargs, checkpoint=checkpoint)
+        assert (same.ground_calls, same.planning_calls) == (0, 0)
+        for model, saved, topic in [
+            ("b", checkpoint, kwargs["topic"]),
+            ("a", {**checkpoint, "cached_at": (datetime.now(UTC) - timedelta(hours=2)).isoformat()}, kwargs["topic"]),
+            ("a", {**checkpoint, "cached_at": "2026-10-15T00:00:00"}, kwargs["topic"]),
+            ("a", checkpoint, "另一项研究"),
+        ]:
+            other = Generator(model)
+            with pytest.raises(GenerationValidationError):
+                await other.generate(**{**kwargs, "topic": topic}, checkpoint=saved)
+            assert (other.ground_calls, other.planning_calls) == (1, 1)
+
+    asyncio.run(run())
+
+
+def test_all_saved_candidates_resume_without_model_calls_and_report_recovery():
+    provider = ScriptedFakeProvider([])
+    candidate = GeneratedCandidate(
+        coverage_slot=coverage_plan(1)[0],
+        query="复杂环境智能通信终端可靠性研究",
+        supplemental_information="已通过校验并保存",
+        generation_rationale="任务恢复",
+        source_references=(),
+    )
+    progress = []
+    result = asyncio.run(
+        ModelQueryGenerator(provider).generate(
+            topic="通信终端研究",
+            supplemental_information="",
+            count=1,
+            existing_queries=[],
+            accepted_candidates=[candidate],
+            on_batch=progress.append,
+        )
+    )
+    assert result.candidates == (candidate,)
+    assert provider.inputs == []
+    assert progress[0]["restored_count"] == 1
+    assert progress[0]["request_batches"] == 0

@@ -63,3 +63,48 @@ test('退出登录使装备缓存失效且迟到响应不能跨账号写回', as
     await server.close()
   }
 })
+
+test('主动刷新合并相同参数请求，不同参数的迟到结果不能覆盖新筛选', async () => {
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+  setActivePinia(createPinia())
+  try {
+    const { equipmentApi } = await server.ssrLoadModule('/src/apis/equipment_api.js')
+    const resolvers = []
+    equipmentApi.listRuns = () => new Promise((resolve) => { resolvers.push(resolve) })
+    const { useEquipmentStore } = await server.ssrLoadModule('/src/stores/equipment.js')
+    const store = useEquipmentStore()
+    const first = store.loadResource('runs', { status: 'draft' })
+    const duplicate = store.loadResource('runs', { status: 'draft' }, { force: true })
+    const second = store.loadResource('runs', { status: 'completed' })
+    await Promise.resolve()
+    assert.equal(resolvers.length, 2)
+    resolvers[1]([{ run_id: 'new', status: 'completed' }])
+    await second
+    resolvers[0]([{ run_id: 'old', status: 'draft' }])
+    await Promise.all([first, duplicate])
+    assert.equal(store.resources.runs[0].run_id, 'new')
+    assert.equal(store.loading.runs, false)
+  } finally {
+    await server.close()
+  }
+})
+
+test('任务转为终态后统一刷新报告、画像、收藏和深研会话', async () => {
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+  setActivePinia(createPinia())
+  try {
+    const { equipmentApi } = await server.ssrLoadModule('/src/apis/equipment_api.js')
+    const calls = []
+    for (const name of ['listCapabilities', 'listReports', 'listFavorites', 'listDeepSessions']) {
+      equipmentApi[name] = async () => { calls.push(name); return [] }
+    }
+    equipmentApi.listRuns = async () => [{ run_id: 'r', status: 'completed' }]
+    const { useEquipmentStore } = await server.ssrLoadModule('/src/stores/equipment.js')
+    const store = useEquipmentStore()
+    store.resources.runs = [{ run_id: 'r', status: 'researching' }]
+    await store.loadResource('runs')
+    assert.deepEqual(calls.sort(), ['listCapabilities', 'listDeepSessions', 'listFavorites', 'listReports'])
+  } finally {
+    await server.close()
+  }
+})

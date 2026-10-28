@@ -63,13 +63,9 @@ class BaseReranker(ABC):
 
         for batch_no, start in enumerate(range(0, len(documents), batch_size), start=1):
             batch = documents[start : start + batch_size]
-            try:
-                scores = await self._batch_rerank(query, batch, max_length=max_length)
-                all_scores.extend(scores)
-                logger.debug(f"Reranking batch {batch_no}/{total_batches} completed")
-            except Exception as exc:
-                logger.error(f"Reranking batch {batch_no} failed: {exc}")
-                all_scores.extend([0.5] * len(batch))
+            scores = await self._batch_rerank(query, batch, max_length=max_length)
+            all_scores.extend(scores)
+            logger.debug(f"Reranking batch {batch_no}/{total_batches} completed")
 
         if normalize:
             all_scores = [float(sigmoid(score)) for score in all_scores]

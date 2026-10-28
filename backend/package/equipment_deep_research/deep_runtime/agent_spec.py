@@ -16,7 +16,7 @@ SubAgents cannot spawn further children.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from equipment_deep_research.deep_runtime.planner import ALLOWED_TOOLS
@@ -83,7 +83,7 @@ class AgentSpec:
     enable_subagents: bool | None = None
 
     @classmethod
-    def from_mapping(cls, raw: Any) -> "AgentSpec":
+    def from_mapping(cls, raw: Any) -> AgentSpec:
         source = raw if isinstance(raw, Mapping) else {}
         tools = parse_resource_selection(source.get("tools"), limit=len(ALLOWED_TOOLS))
         if tools is not None:

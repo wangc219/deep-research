@@ -42,7 +42,7 @@ def test_s5_effective_innovation_is_recomputed_from_mechanism_and_name() -> None
     assert naming["status"] == "assessed"
     assert naming["effective_innovation"] == 0.89
     assert scores["innovation"] == 0.89
-    assert weighted == 0.757
+    assert weighted == 0.7655
 
 
 def test_s5_legacy_result_without_naming_fields_keeps_old_innovation_score() -> None:
@@ -61,7 +61,7 @@ def test_s5_legacy_result_without_naming_fields_keeps_old_innovation_score() -> 
 
     assert naming["status"] == "unassessed"
     assert scores["innovation"] == 0.90
-    assert weighted == 0.76
+    assert weighted == 0.77
 
 
 def test_s5_partial_naming_result_does_not_treat_effective_score_as_mechanism() -> None:
@@ -83,7 +83,7 @@ def test_s5_partial_naming_result_does_not_treat_effective_score_as_mechanism() 
     assert naming["status"] == "incomplete"
     assert naming["s5_innovation_mechanism_score"] is None
     assert scores["innovation"] == 0.40
-    assert weighted == 0.61
+    assert weighted == 0.545
 
 
 def test_s5_name_quality_cannot_rescue_ordinary_mechanism() -> None:

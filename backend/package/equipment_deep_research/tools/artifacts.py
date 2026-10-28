@@ -6,7 +6,8 @@ import json
 import os
 from pathlib import Path
 from threading import RLock
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from equipment_deep_research.domain.workspace import (
     RunWorkspace,
@@ -35,7 +36,7 @@ class SecureArtifactStore:
         self._write_lock = RLock()
 
     @classmethod
-    def for_workspace(cls, workspace: RunWorkspace) -> "SecureArtifactStore":
+    def for_workspace(cls, workspace: RunWorkspace) -> SecureArtifactStore:
         store = cls.__new__(cls)
         store.root = workspace.artifacts_dir
         store._root_fd = None
@@ -80,26 +81,16 @@ class SecureArtifactStore:
         with self._write_lock:
             if self._is_regular(meta_name):
                 try:
-                    existing_meta = json.loads(
-                        self._read_bytes(meta_name).decode("utf-8")
-                    )
+                    existing_meta = json.loads(self._read_bytes(meta_name).decode("utf-8"))
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     existing_meta = {}
                 evidence_ids = list(
                     dict.fromkeys(
                         [
                             *existing_meta.get("evidence_ids", []),
-                            *(
-                                [str(existing_meta.get("evidence_id"))]
-                                if existing_meta.get("evidence_id")
-                                else []
-                            ),
+                            *([str(existing_meta.get("evidence_id"))] if existing_meta.get("evidence_id") else []),
                             *stored_meta.get("evidence_ids", []),
-                            *(
-                                [str(stored_meta.get("evidence_id"))]
-                                if stored_meta.get("evidence_id")
-                                else []
-                            ),
+                            *([str(stored_meta.get("evidence_id"))] if stored_meta.get("evidence_id") else []),
                         ]
                     )
                 )

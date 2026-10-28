@@ -40,7 +40,7 @@
               >
                 <span class="project-option-icon"><FolderX :size="15" /></span>
                 <span class="project-option-body">
-                  <strong>不使用项目</strong>
+                  <strong>默认工作台</strong>
                 </span>
                 <Check
                   v-if="!modelValue || modelValue === AUTO_PROJECT_ID"
@@ -257,12 +257,12 @@ const currentProject = computed(() =>
 )
 const currentProjectLabel = computed(() =>
   isAutoOrEmpty.value
-    ? '选择项目'
+    ? '默认工作台'
     : projectDisplayName(currentProject.value, userStore.isAdmin)
 )
 const currentProjectHint = computed(() => {
   if (isAutoOrEmpty.value) {
-    return props.allowAuto ? '不使用项目（发送时创建独立目录）' : '请选择任务使用的项目'
+    return props.allowAuto ? '自动使用个人默认工作台' : '请选择任务使用的项目'
   }
   if (currentProject.value?.directory_mode === 'linked') return '个人空间已有目录'
   return '系统管理目录'

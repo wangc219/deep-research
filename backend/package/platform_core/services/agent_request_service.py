@@ -11,7 +11,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core.agents.buildin import AgentBackendNotFoundError, get_agent_backend
@@ -43,7 +43,13 @@ from platform_core.services.input_message_service import AgentRunInputMessage
 from platform_core.services.project_service import create_implicit_project
 from platform_core.services.personal_resource_audit_service import audit_superadmin_personal_resource_write
 from platform_core.services.workdir_service import WorkdirBinding, resolve_conversation_workdir_binding
-from platform_core.storage.postgres.models_business import AgentRunRequest, User
+from platform_core.storage.postgres.models_business import (
+    SUPERSEDED_MESSAGE_TYPE,
+    AgentRunRequest,
+    Message,
+    MessageFeedback,
+    User,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 from platform_core.workspace.paths import ensure_bound_user_workdir
 
@@ -75,6 +81,7 @@ class AgentRequestInput:
     create_conversation: bool = False
     conversation_title: str | None = None
     conversation_project_id: str | None = None
+    replace_message_id: int | None = None
 
 
 async def _restore_bound_conversation_context(
@@ -343,6 +350,8 @@ async def _persist_request(
     policy = validate_queue_policy(request_input.queue_policy)
     if policy == "steer" and source not in {"chat", "channel"}:
         raise HTTPException(status_code=422, detail="queue_policy 'steer' 仅支持主会话 Chat/Channel")
+    if request_input.replace_message_id is not None and (source != "chat" or policy != "enqueue"):
+        raise HTTPException(status_code=422, detail="编辑消息仅支持空闲主会话的普通提交")
     meta = meta or {}
     uid_str = str(uid)
     repo = AgentRunRequestRepository(db)
@@ -408,6 +417,8 @@ async def _persist_request(
         conversation_thread_id=thread_id,
     ):
         raise queue_conflict("steer_already_pending", "线程已有等待执行的引导请求")
+    if request_input.replace_message_id is not None and (active_run is not None or existing_head is not None):
+        raise queue_conflict("thread_not_idle", "线程运行中或仍有排队请求，暂不能编辑消息")
 
     # reject 表示“不能立即成为并派发 FIFO 队头就拒绝”。
     reject_without_immediate_dispatch = policy == "reject" and (active_run is not None or existing_head is not None)
@@ -433,8 +444,11 @@ async def _persist_request(
         if runtime_context_overrides:
             input_payload["runtime_context_overrides"] = runtime_context_overrides
 
-    run_input_message = input_message.with_metadata(
-        _build_message_metadata(request_id=request_id, source=source, input_message=input_message, meta=meta)
+    message_metadata = _build_message_metadata(
+        request_id=request_id,
+        source=source,
+        input_message=input_message,
+        meta=meta,
     )
     try:
         async with db.begin_nested():
@@ -452,6 +466,16 @@ async def _persist_request(
                         status_code=422,
                         detail=f"附件不存在、已被使用或已被删除: {', '.join(missing_ids)}",
                     )
+            if request_input.replace_message_id is not None:
+                replacement = await _supersede_latest_question(
+                    db=db,
+                    conversation_id=conversation.id,
+                    message_id=request_input.replace_message_id,
+                    replacement_request_id=request_id,
+                )
+                message_metadata["message_replacement"] = replacement
+                input_payload["message_replacement"] = replacement
+            run_input_message = input_message.with_metadata(message_metadata)
             persisted_message = await create_agent_run_input_message(
                 db=db,
                 conversation_id=conversation.id,
@@ -502,6 +526,71 @@ async def _persist_request(
             persisted_message.delivery_status = DELIVERY_STATUS_REJECTED
             await db.flush()
     return persisted_request, dispatched
+
+
+async def _supersede_latest_question(
+    *,
+    db: AsyncSession,
+    conversation_id: int,
+    message_id: int,
+    replacement_request_id: str,
+) -> dict[str, Any]:
+    """隐藏最新问题的既有分支并删除其反馈，保留 Run 审计事实。"""
+    target = await db.scalar(
+        select(Message)
+        .where(Message.id == message_id, Message.conversation_id == conversation_id)
+        .with_for_update()
+    )
+    if target is None or target.role != "user" or target.message_type == SUPERSEDED_MESSAGE_TYPE:
+        raise queue_conflict("replace_message_not_found", "只能编辑当前线程最新一条用户消息")
+
+    latest_question = await db.scalar(
+        select(Message)
+        .where(
+            Message.conversation_id == conversation_id,
+            Message.role == "user",
+            or_(Message.message_type.is_(None), Message.message_type != SUPERSEDED_MESSAGE_TYPE),
+            Message.delivery_status.notin_(("queued", "cancelled", "rejected")),
+        )
+        .order_by(Message.created_at.desc(), Message.id.desc())
+        .limit(1)
+        .with_for_update()
+    )
+    if latest_question is None or latest_question.id != target.id:
+        raise queue_conflict("replace_message_not_latest", "只能编辑当前线程最新一条用户消息")
+
+    branch_messages = list(
+        (
+            await db.scalars(
+                select(Message)
+                .where(
+                    Message.conversation_id == conversation_id,
+                    or_(
+                        Message.created_at > target.created_at,
+                        and_(Message.created_at == target.created_at, Message.id >= target.id),
+                    ),
+                )
+                .with_for_update()
+            )
+        ).all()
+    )
+    branch_ids = [message.id for message in branch_messages]
+    if branch_ids:
+        await db.execute(delete(MessageFeedback).where(MessageFeedback.message_id.in_(branch_ids)))
+    for message in branch_messages:
+        message.message_type = SUPERSEDED_MESSAGE_TYPE
+        message.extra_metadata = {
+            **dict(message.extra_metadata or {}),
+            "superseded_by_request_id": replacement_request_id,
+        }
+
+    raw_message = (target.extra_metadata or {}).get("raw_message")
+    source_id = raw_message.get("id") if isinstance(raw_message, dict) else None
+    return {
+        "message_id": target.id,
+        "source_id": str(source_id) if source_id else None,
+        "content": target.content,
+    }
 
 
 def _validate_request_scope(request: AgentRunRequest, *, request_input: AgentRequestInput, uid: str) -> None:

@@ -7,6 +7,9 @@ x-api-worker-env: &api-worker-env
   DEEP_RESEARCH_ENV: development
   API_KEY_DERIVATION_SECRET: ${API_KEY_DERIVATION_SECRET:?Set API_KEY_DERIVATION_SECRET in .env [v0.7.2+], or rerun `bash scripts/init.sh`.}
   RAPIDOCR_MODEL_DIR: /home/platform/.cache/rapidocr/models
+  WX_CHANNELS_MCP_URL: ${WX_CHANNELS_MCP_URL:-http://host.docker.internal:2022/mcp}
+  VIDEO_TRANSCRIBER_MODEL_CACHE: /app/outputs/video-models
+  VIDEO_TRANSCRIBER_DEVICE: ${VIDEO_TRANSCRIBER_DEVICE:-cpu}
   # DBs and other services
   POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-deep_research}}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
@@ -28,6 +31,7 @@ x-api-worker-env: &api-worker-env
   SANDBOX_EXEC_TIMEOUT_SECONDS: ${SANDBOX_EXEC_TIMEOUT_SECONDS:-180}
   SANDBOX_MAX_OUTPUT_BYTES: ${SANDBOX_MAX_OUTPUT_BYTES:-262144}
   TASKER_DEFAULT_TIMEOUT_SECONDS: ${TASKER_DEFAULT_TIMEOUT_SECONDS:-21600}
+  EQUIPMENT_TASK_LEASE_SECONDS: ${EQUIPMENT_TASK_LEASE_SECONDS:-600}
   EQUIPMENT_RESEARCH_MAX_RUNNING: ${EQUIPMENT_RESEARCH_MAX_RUNNING:-4}
   EQUIPMENT_QUERY_MAX_RUNNING: ${EQUIPMENT_QUERY_MAX_RUNNING:-4}
   EQUIPMENT_DEEP_MAX_RUNNING: ${EQUIPMENT_DEEP_MAX_RUNNING:-8}
@@ -59,6 +63,7 @@ x-api-worker-env: &api-worker-env
   OPEN_WEBSEARCH_TIMEOUT_SECONDS: ${OPEN_WEBSEARCH_TIMEOUT_SECONDS:-15}
   WEB_SEARCH_QUEUE_WAIT_SECONDS: ${WEB_SEARCH_QUEUE_WAIT_SECONDS:-60}
   WEB_SEARCH_MIN_INTERVAL_SECONDS: ${WEB_SEARCH_MIN_INTERVAL_SECONDS:-1.5}
+  WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS: ${WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS:-300}
   # 其他环境变量
   NO_PROXY: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
   no_proxy: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
@@ -89,6 +94,7 @@ services:
       start_period: 20s
 
   api:
+    init: true
     build:
       context: .
       dockerfile: docker/api.Dockerfile
@@ -98,6 +104,9 @@ services:
     volumes:
       - ./backend/server:/app/server
       - ./backend/package:/app/package
+      - ./backend/video_collector:/app/video_collector:ro
+      - ./backend/wechat_mp:/app/wechat_mp:ro
+      - ./vendor/wx_channels_download:/app/vendor/wx_channels_download:ro
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
       - type: bind
@@ -158,6 +167,7 @@ services:
         condition: service_completed_successfully
 
   worker:
+    init: true
     build:
       context: .
       dockerfile: docker/api.Dockerfile

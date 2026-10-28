@@ -217,6 +217,15 @@ class KnowledgeChunkRepository:
     async def count_graph_pending_by_kb_id(self, kb_id: str) -> int:
         return await self._count_by_kb_id(kb_id, KnowledgeChunk.graph_indexed.is_not(True))
 
+    async def count_graph_extraction_failed_by_kb_id(self, kb_id: str) -> int:
+        """统计尚未入图且抽取失败的 Chunk。"""
+        status = KnowledgeChunk.graph_extraction_details["status"].as_string()
+        return await self._count_by_kb_id(
+            kb_id,
+            KnowledgeChunk.graph_indexed.is_not(True),
+            status == "failed",
+        )
+
     async def _count_by_kb_id(self, kb_id: str, *conditions: Any) -> int:
         async with pg_manager.get_async_session_context() as session:
             result = await session.execute(
@@ -237,6 +246,29 @@ class KnowledgeChunkRepository:
                 .where(
                     KnowledgeChunk.kb_id == kb_id,
                     KnowledgeChunk.graph_indexed.is_not(True),
+                    KnowledgeChunk.id > after_id,
+                )
+                .order_by(KnowledgeChunk.id.asc())
+                .limit(max(limit, 1))
+            )
+            return list(result.scalars().all())
+
+    async def list_graph_extraction_failed_by_kb_id(
+        self,
+        kb_id: str,
+        limit: int,
+        *,
+        after_id: int = 0,
+    ) -> list[KnowledgeChunk]:
+        """分页返回尚未入图且抽取失败的 Chunk。"""
+        status = KnowledgeChunk.graph_extraction_details["status"].as_string()
+        async with pg_manager.get_async_session_context() as session:
+            result = await session.execute(
+                select(KnowledgeChunk)
+                .where(
+                    KnowledgeChunk.kb_id == kb_id,
+                    KnowledgeChunk.graph_indexed.is_not(True),
+                    status == "failed",
                     KnowledgeChunk.id > after_id,
                 )
                 .order_by(KnowledgeChunk.id.asc())

@@ -26,7 +26,8 @@ PRESET = AgentPreset(
     backend_id="SubAgentBackend",
     context={
         "system_prompt": SYSTEM_PROMPT,
-        "skills": ["knowledge-base"],
-        "preload_skills": ["knowledge-base"],
+        "skills": ["knowledge-base", "academic-evidence"],
+        "preload_skills": ["knowledge-base", "academic-evidence"],
     },
+    sync_existing=True,
 )

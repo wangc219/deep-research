@@ -12,6 +12,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_narrative_instruction,
+)
+
 
 _legacy = None
 _legacy_syncing = False
@@ -38,18 +42,10 @@ def _sync_legacy_globals() -> None:
         finally:
             _legacy_syncing = False
     if _legacy is not None:
-        globals().update(
-            {
-                name: value
-                for name, value in vars(_legacy).items()
-                if not name.startswith("__")
-            }
-        )
+        globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
-_VALID_REPORT_TEMPLATE_MODES = frozenset(
-    {"three_layer_nine_item", "project_argument_v1"}
-)
+_VALID_REPORT_TEMPLATE_MODES = frozenset({"three_layer_nine_item", "project_argument_v1"})
 
 
 def _coerce_report_template_mode(value: Any) -> str:
@@ -121,6 +117,7 @@ def _report_canonical_headings(
         )
     return _REPORT_CANONICAL_H2, _REPORT_CANONICAL_H3, ()
 
+
 _REPORT_H3_ALIAS_MARKERS = (
     ("典型作战场景", "作战场景", "场景构造"),
     ("新战法或新概念技术及制胜机理", "新战法", "新概念技术", "制胜机理"),
@@ -145,36 +142,40 @@ def _report_has_complete_canonical_structure(
     h2_values = _PROJECT_REPORT_CANONICAL_H2 if project_mode else _REPORT_CANONICAL_H2
     h3_values = _PROJECT_REPORT_CANONICAL_H3 if project_mode else _REPORT_CANONICAL_H3
     h4_values = _PROJECT_REPORT_CANONICAL_H4 if project_mode else ()
-    return all(
-        len(
-            re.findall(
-                rf"^##\s+{re.escape(title)}\s*$",
-                str(text or ""),
-                flags=re.MULTILINE,
+    return (
+        all(
+            len(
+                re.findall(
+                    rf"^##\s+{re.escape(title)}\s*$",
+                    str(text or ""),
+                    flags=re.MULTILINE,
+                )
             )
+            == 1
+            for title in h2_values
         )
-        == 1
-        for title in h2_values
-    ) and all(
-        len(
-            re.findall(
-                rf"^###\s+{re.escape(title)}\s*$",
-                str(text or ""),
-                flags=re.MULTILINE,
+        and all(
+            len(
+                re.findall(
+                    rf"^###\s+{re.escape(title)}\s*$",
+                    str(text or ""),
+                    flags=re.MULTILINE,
+                )
             )
+            == 1
+            for title in h3_values
         )
-        == 1
-        for title in h3_values
-    ) and all(
-        len(
-            re.findall(
-                rf"^####\s+{re.escape(title)}\s*$",
-                str(text or ""),
-                flags=re.MULTILINE,
+        and all(
+            len(
+                re.findall(
+                    rf"^####\s+{re.escape(title)}\s*$",
+                    str(text or ""),
+                    flags=re.MULTILINE,
+                )
             )
+            == 1
+            for title in h4_values
         )
-        == 1
-        for title in h4_values
     )
 
 
@@ -264,9 +265,7 @@ def _normalize_report_structure_deterministically(
     rewritten into ①–⑨ and a three-layer draft is never rewritten into 五章.
     """
 
-    template_mode = (
-        _report_template_mode(payload) if isinstance(payload, Mapping) else ""
-    )
+    template_mode = _report_template_mode(payload) if isinstance(payload, Mapping) else ""
     project_mode = template_mode == "project_argument_v1"
     three_layer_mode = template_mode == "three_layer_nine_item"
     text = re.sub(
@@ -293,12 +292,8 @@ def _normalize_report_structure_deterministically(
             continue
         canonical_h2 = _canonical_report_h2(title, template_mode)
         canonical_h3 = _canonical_report_h3(title, template_mode)
-        canonical_h4 = (
-            "" if three_layer_mode else _canonical_report_h4(title)
-        )
-        treat_as_h4 = canonical_h4 and (
-            level >= 4 or (project_mode and level >= 3)
-        )
+        canonical_h4 = "" if three_layer_mode else _canonical_report_h4(title)
+        treat_as_h4 = canonical_h4 and (level >= 4 or (project_mode and level >= 3))
         if treat_as_h4:
             parent_h3 = _PROJECT_REPORT_H4_PARENT.get(canonical_h4, "")
             if parent_h3 and parent_h3 not in seen_h3:
@@ -320,11 +315,7 @@ def _normalize_report_structure_deterministically(
             normalized_lines.append(f"## {canonical_h2}")
             continue
         if canonical_h3:
-            parent_h2 = (
-                _PROJECT_REPORT_H3_PARENT.get(canonical_h3, "")
-                if not three_layer_mode
-                else ""
-            )
+            parent_h2 = _PROJECT_REPORT_H3_PARENT.get(canonical_h3, "") if not three_layer_mode else ""
             if parent_h2 and parent_h2 not in seen_h2:
                 # Reporter occasionally emits a complete project chapter body
                 # while omitting only its H2 line (for example, the two
@@ -355,9 +346,7 @@ def _report_capability_cues(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
                 cleaned[str(key)] = text
             elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
                 cleaned[str(key)] = [
-                    _strip_report_internal_markers(nested).strip()
-                    if isinstance(nested, str)
-                    else nested
+                    _strip_report_internal_markers(nested).strip() if isinstance(nested, str) else nested
                     for nested in value
                 ]
             else:
@@ -372,9 +361,7 @@ def _report_capability_cues(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
             # substantive directions supplied by the handoff; downstream
             # quality checks decide whether a direction is actually useful,
             # instead of silently dropping the tail of a dynamic portfolio.
-            public_rows = [
-                public_cue(item) for item in rows if isinstance(item, Mapping)
-            ]
+            public_rows = [public_cue(item) for item in rows if isinstance(item, Mapping)]
             if public_rows:
                 return public_rows
     handoff = payload.get("research_handoff", {})
@@ -445,9 +432,7 @@ def _report_capability_cue_is_substantive(item: Mapping[str, Any]) -> bool:
     # the direction itself supplies the equipment identity when the upstream
     # record omits a repeated platform noun.  This keeps partial cards from
     # triggering invented flow, metric or verification prose.
-    return mission_anchor and operation_anchor and bool(
-        equipment_anchor or direction
-    )
+    return mission_anchor and operation_anchor and bool(equipment_anchor or direction)
 
 
 def _report_capability_portrait_markdown(item: Mapping[str, Any]) -> str:
@@ -477,9 +462,7 @@ def _remove_empty_report_clauses(line: str) -> str:
                 stripped,
             )
         )
-        nominal_stub = bool(
-            re.fullmatch(r".{1,100}的(?:概念|实现路径|耦合链条)[。.]", stripped)
-        )
+        nominal_stub = bool(re.fullmatch(r".{1,100}的(?:概念|实现路径|耦合链条)[。.]", stripped))
         dangling_conditional = False
         # ``当前`` is a normal table/header phrase, not a dangling
         # conditional beginning with ``当``.  Require the conditional form
@@ -492,9 +475,30 @@ def _remove_empty_report_clauses(line: str) -> str:
             dangling_conditional = not any(
                 marker in consequence
                 for marker in (
-                    "则", "就", "会", "将", "应", "需", "可", "可能", "难以",
-                    "无法", "导致", "造成", "触发", "退化", "失效", "下降", "上升",
-                    "增加", "降低", "转为", "停止", "中止", "返航", "成立",
+                    "则",
+                    "就",
+                    "会",
+                    "将",
+                    "应",
+                    "需",
+                    "可",
+                    "可能",
+                    "难以",
+                    "无法",
+                    "导致",
+                    "造成",
+                    "触发",
+                    "退化",
+                    "失效",
+                    "下降",
+                    "上升",
+                    "增加",
+                    "降低",
+                    "转为",
+                    "停止",
+                    "中止",
+                    "返航",
+                    "成立",
                 )
             )
         if not (empty_prompt or nominal_stub or dangling_conditional):
@@ -538,12 +542,7 @@ def _reflow_long_report_paragraphs(
     prepared: list[str] = []
     for raw_line in str(text).splitlines():
         stripped = raw_line.strip()
-        if (
-            stripped
-            and prepared
-            and prepared[-1].strip().startswith("#")
-            and not stripped.startswith("#")
-        ):
+        if stripped and prepared and prepared[-1].strip().startswith("#") and not stripped.startswith("#"):
             prepared.append("")
         if stripped.startswith(("- ", "* ")) and prepared and prepared[-1].strip():
             prepared.append("")
@@ -556,29 +555,18 @@ def _reflow_long_report_paragraphs(
             return [block.strip()]
         if len(compact) <= hard_chars:
             return [block.strip()]
-        sentences = [
-            item.strip()
-            for item in re.findall(r".+?(?:[。！？!?；;]|$)", compact)
-            if item.strip()
-        ]
+        sentences = [item.strip() for item in re.findall(r".+?(?:[。！？!?；;]|$)", compact) if item.strip()]
         units: list[str] = []
         for sentence in sentences:
             if len(sentence) <= hard_chars:
                 units.append(sentence)
                 continue
-            clauses = [
-                item
-                for item in re.findall(r".+?(?:[，,、：:]|$)", sentence)
-                if item
-            ]
+            clauses = [item for item in re.findall(r".+?(?:[，,、：:]|$)", sentence) if item]
             for clause in clauses:
                 if len(clause) <= hard_chars:
                     units.append(clause)
                 else:
-                    units.extend(
-                        clause[index : index + target_chars]
-                        for index in range(0, len(clause), target_chars)
-                    )
+                    units.extend(clause[index : index + target_chars] for index in range(0, len(clause), target_chars))
         paragraphs: list[str] = []
         current = ""
         for unit in units:
@@ -610,36 +598,19 @@ def _stabilize_report_delivery_contract(
     """
 
     project_mode = _report_template_mode(payload) == "project_argument_v1"
-    capability_start = (
-        r"^###\s*（一）装备图像概述\s*$"
-        if project_mode
-        else r"^###\s*⑦\s*装备能力图像\s*$"
-    )
-    capability_end = (
-        r"^###\s*（二）作战运用模式\s*$"
-        if project_mode
-        else r"^###\s*⑧\s*效能贡献评估\s*$"
-    )
+    capability_start = r"^###\s*（一）装备图像概述\s*$" if project_mode else r"^###\s*⑦\s*装备能力图像\s*$"
+    capability_end = r"^###\s*（二）作战运用模式\s*$" if project_mode else r"^###\s*⑧\s*效能贡献评估\s*$"
     # Only project cues that carry an equipment anchor and at least one
     # mission/operation/boundary fact.  A direction label by itself is not a
     # license for the delivery layer to invent a flow, metric or test matrix.
-    cues = [
-        item
-        for item in _report_capability_cues(payload)
-        if _report_capability_cue_is_substantive(item)
-    ]
+    cues = [item for item in _report_capability_cues(payload) if _report_capability_cue_is_substantive(item)]
     cue_by_name = {
-        str(item.get("direction", "")).strip(): dict(item)
-        for item in cues
-        if str(item.get("direction", "")).strip()
+        str(item.get("direction", "")).strip(): dict(item) for item in cues if str(item.get("direction", "")).strip()
     }
     indicator_by_name = {
-        str(item.get("direction", "")).strip(): str(
-            item.get("indicator_portrait", "")
-        ).strip()
+        str(item.get("direction", "")).strip(): str(item.get("indicator_portrait", "")).strip()
         for item in cues
-        if str(item.get("direction", "")).strip()
-        and str(item.get("indicator_portrait", "")).strip()
+        if str(item.get("direction", "")).strip() and str(item.get("indicator_portrait", "")).strip()
     }
     if project_mode and cues:
         flow_pattern = (
@@ -656,9 +627,7 @@ def _stabilize_report_delivery_contract(
                 value = item.get(key)
                 if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
                     joined = "、".join(
-                        _clean_reporter_clue_text(row, max_chars=80)
-                        for row in value
-                        if _clean_reporter_clue_text(row)
+                        _clean_reporter_clue_text(row, max_chars=80) for row in value if _clean_reporter_clue_text(row)
                     )
                     if joined:
                         return joined
@@ -708,9 +677,7 @@ def _stabilize_report_delivery_contract(
             if boundary or (action and effect):
                 mechanism = f"通过{action}形成{effect}" if action and effect else ""
                 limit = f"；失效或中止边界为{boundary}" if boundary else ""
-                closure_rows.append(
-                    f"- **{name}**：{mechanism}{limit}。".replace("：。", "：待补充装备专属闭环边界。")
-                )
+                closure_rows.append(f"- **{name}**：{mechanism}{limit}。".replace("：。", "：待补充装备专属闭环边界。"))
 
         visible_instructions = (
             "按任务准备与装订、平台部署与进入、目标发现确认、火力分配、交战毁伤、效果评估和再组织分阶段说明装备使用方式与指标口径",
@@ -750,13 +717,7 @@ def _stabilize_report_delivery_contract(
             if kept_body:
                 return current[: match.start("body")] + "\n" + kept_body + "\n\n" + current[match.end("body") :]
             replacement = "\n".join(rows).strip() or "本节暂缺足够的装备专属事实，待前置画像补齐后再形成判断。"
-            return (
-                current[: match.start("body")]
-                + "\n"
-                + replacement
-                + "\n\n"
-                + current[match.end("body") :]
-            )
+            return current[: match.start("body")] + "\n" + replacement + "\n\n" + current[match.end("body") :]
 
         text = replace_instruction_body(str(text or ""), flow_pattern, flow_rows)
         text = replace_instruction_body(text, closure_pattern, closure_rows)
@@ -786,16 +747,9 @@ def _stabilize_report_delivery_contract(
             note: str,
         ) -> str:
             match = re.search(pattern, current, flags=re.MULTILINE | re.DOTALL)
-            if not match or not any(
-                instruction in match.group("body")
-                for instruction in visible_instructions
-            ):
+            if not match or not any(instruction in match.group("body") for instruction in visible_instructions):
                 return current
-            return (
-                current[: match.start("body")]
-                + f"\n{note}\n\n"
-                + current[match.end("body") :]
-            )
+            return current[: match.start("body")] + f"\n{note}\n\n" + current[match.end("body") :]
 
         text = clear_unbacked_instruction(
             str(text or ""),
@@ -816,18 +770,10 @@ def _stabilize_report_delivery_contract(
             in_capability_section = True
         elif re.match(capability_end, stripped):
             in_capability_section = False
-        if (
-            not project_mode
-            and in_capability_section
-            and stripped.startswith("|")
-            and stripped.endswith("|")
-        ):
+        if not project_mode and in_capability_section and stripped.startswith("|") and stripped.endswith("|"):
             cells = [cell.strip() for cell in stripped.strip("|").split("|")]
             if len(cells) >= 5 and cells[0] in indicator_by_name:
-                generic = (
-                    cells[2] in {"待验证", "待证据校准"}
-                    or "射程/响应时间/自主等级/成本量级/规模量级" in cells[2]
-                )
+                generic = cells[2] in {"待验证", "待证据校准"} or "射程/响应时间/自主等级/成本量级/规模量级" in cells[2]
                 if generic:
                     cells[2] = indicator_by_name[cells[0]]
                     raw_line = "| " + " | ".join(cells) + " |"
@@ -839,9 +785,7 @@ def _stabilize_report_delivery_contract(
         name = str(item.get("direction", "")).strip()
         risk = str(item.get("coupling_risk", "")).strip()
         if name and risk:
-            coupling_rows.append(
-                (name, f"- **{name}**：{risk.rstrip('。；')}。")
-            )
+            coupling_rows.append((name, f"- **{name}**：{risk.rstrip('。；')}。"))
     # Project-mode chapters are intentionally model-led.  Do not append a
     # repeated per-equipment risk list when the model has already written the
     # technical section; the handoff is evidence for the model, not a form to
@@ -862,11 +806,7 @@ def _stabilize_report_delivery_contract(
             body = section_match.group("body").rstrip()
             missing_rows = [row for name, row in coupling_rows if name not in body]
             if missing_rows:
-                addition = (
-                    "\n\n逐项耦合校核如下（按装备专属风险补充）：\n"
-                    + "\n".join(missing_rows)
-                    + "\n\n"
-                )
+                addition = "\n\n逐项耦合校核如下（按装备专属风险补充）：\n" + "\n".join(missing_rows) + "\n\n"
                 result = result[: section_match.start("body")] + body + addition + result[section_match.end("body") :]
 
     final_lines = result.splitlines()
@@ -882,15 +822,10 @@ def _stabilize_report_delivery_contract(
         # list or table.  Preserve it across repeated stabilization passes;
         # otherwise the first pass closes ``如下：`` mechanically and the
         # second pass mistakes the resulting sentence for an empty clause.
-        introduces_structured_content = (
-            stripped.endswith(("如下。", "如下."))
-            and next_nonempty.startswith(("- ", "* ", "|"))
+        introduces_structured_content = stripped.endswith(("如下。", "如下.")) and next_nonempty.startswith(
+            ("- ", "* ", "|")
         )
-        cleaned_line = (
-            raw_line
-            if introduces_structured_content
-            else _remove_empty_report_clauses(raw_line)
-        )
+        cleaned_line = raw_line if introduces_structured_content else _remove_empty_report_clauses(raw_line)
         if cleaned_line != stripped:
             final_lines[index] = cleaned_line
             raw_line = cleaned_line
@@ -916,10 +851,7 @@ def _stabilize_report_delivery_contract(
     if not project_mode:
         result = re.sub(
             r"(?m)(^|[；：|]\s*)通过条件(?:为)?(?=\s*(?:[。；|]|$))",
-            lambda match: (
-                match.group(1)
-                + "通过条件需在对应试验场景、基线与统计口径下明确"
-            ),
+            lambda match: match.group(1) + "通过条件需在对应试验场景、基线与统计口径下明确",
             result,
         )
 
@@ -974,23 +906,14 @@ def _stabilize_report_delivery_contract(
         )
         for name, item in cue_by_name.items():
             capability_domain = str(
-                item.get("mission_effect")
-                or item.get("capability_gap")
-                or item.get("equipment_hint")
-                or "直接作战能力"
+                item.get("mission_effect") or item.get("capability_gap") or item.get("equipment_hint") or "直接作战能力"
             ).strip()
-            operation = str(
-                item.get("mechanism_hint")
-                or "按任务边界完成编组、待机、发射、突防与毁伤后再打击"
-            ).strip()
+            operation = str(item.get("mechanism_hint") or "按任务边界完成编组、待机、发射、突防与毁伤后再打击").strip()
             indicator = str(
-                item.get("indicator_portrait")
-                or "未提供该装备的专属指标画像，待结合任务与证据确定"
+                item.get("indicator_portrait") or "未提供该装备的专属指标画像，待结合任务与证据确定"
             ).strip()
             lineage = str(
-                item.get("development_path")
-                or item.get("public_equipment_baseline")
-                or "新研直接作战装备方向"
+                item.get("development_path") or item.get("public_equipment_baseline") or "新研直接作战装备方向"
             ).strip()
             technologies = item.get("enabling_technologies", [])
             technology_text = (
@@ -1039,11 +962,7 @@ def _stabilize_report_delivery_contract(
         if not project_mode:
             body_lines = ["能力图像如下。", "", *body_lines]
         rebuilt_body = "\n".join(body_lines).strip() + "\n\n"
-        result = (
-            result[: capability_match.start("body")]
-            + rebuilt_body
-            + result[capability_match.end("body") :]
-        )
+        result = result[: capability_match.start("body")] + rebuilt_body + result[capability_match.end("body") :]
 
     # A comparison table is useful for scanning but cannot replace a complete
     # equipment argument. Append the governed multi-module portrait for
@@ -1065,10 +984,7 @@ def _stabilize_report_delivery_contract(
         # the bold equipment titles survived a prior hard-limit pass).  The
         # governed portrait appendix is always the tail of section ⑦, so drop
         # the stale tail from its first exact portrait title and rebuild once.
-        orphan_indexes = [
-            capability_body.find(f"**{name}｜装备能力画像**")
-            for name in cue_by_name
-        ]
+        orphan_indexes = [capability_body.find(f"**{name}｜装备能力画像**") for name in cue_by_name]
         orphan_indexes = [index for index in orphan_indexes if index >= 0]
         if orphan_indexes:
             capability_body = capability_body[: min(orphan_indexes)].rstrip()
@@ -1087,9 +1003,7 @@ def _stabilize_report_delivery_contract(
         if detail_rows:
             detail_block = (
                 f"\n\n{detail_marker}；以下内容用于逐项说明装备形态、作战流程、形成能力、"
-                "直接效果、制胜机理与验证边界。\n\n"
-                + "\n\n".join(detail_rows)
-                + "\n\n"
+                "直接效果、制胜机理与验证边界。\n\n" + "\n\n".join(detail_rows) + "\n\n"
             )
             result = (
                 result[: capability_match.start("body")]
@@ -1120,9 +1034,7 @@ def _stabilize_report_delivery_contract(
     if effect_match and cue_by_name and not project_mode:
         effect_body = effect_match.group("body").rstrip()
         appendix_marker = (
-            "逐装备体系贡献、制胜机理与失效边界如下"
-            if project_mode
-            else "逐项效能、创新关系与失效边界如下"
+            "逐装备体系贡献、制胜机理与失效边界如下" if project_mode else "逐项效能、创新关系与失效边界如下"
         )
         marker_index = effect_body.find(appendix_marker)
         if marker_index >= 0:
@@ -1144,25 +1056,14 @@ def _stabilize_report_delivery_contract(
 
         for name, item in cue_by_name.items():
             chain_type = str(item.get("chain_type", "")).strip() or "强链"
-            effect = str(
-                item.get("mission_effect")
-                or "对杀伤链形成直接压制、毁伤或再打击贡献"
-            ).strip()
-            mechanism = str(
-                item.get("mechanism_hint")
-                or "在任务边界内完成编组、突防、交战与毁伤评估"
-            ).strip()
-            disruptive = str(
-                item.get("disruptive_relationship")
-                or "从持续联网依赖转向低信息条件下的任务闭环"
-            ).strip()
+            effect = str(item.get("mission_effect") or "对杀伤链形成直接压制、毁伤或再打击贡献").strip()
+            mechanism = str(item.get("mechanism_hint") or "在任务边界内完成编组、突防、交战与毁伤评估").strip()
+            disruptive = str(item.get("disruptive_relationship") or "从持续联网依赖转向低信息条件下的任务闭环").strip()
             boundary = str(
-                item.get("boundary")
-                or "对手采用诱饵、干扰与针对性拦截时收益下降，具体失效边界待代表性对抗试验验证"
+                item.get("boundary") or "对手采用诱饵、干扰与针对性拦截时收益下降，具体失效边界待代表性对抗试验验证"
             ).strip()
             indicator = _clean_reporter_clue_text(
-                item.get("indicator_portrait")
-                or "任务成功率、压制窗口、交换比和再打击周期",
+                item.get("indicator_portrait") or "任务成功率、压制窗口、交换比和再打击周期",
                 max_chars=180,
             ).rstrip("。；")
             rows.append(
@@ -1172,17 +1073,8 @@ def _stabilize_report_delivery_contract(
                 f"{name}的量化验证口径采用{inline_clause(indicator)}；"
                 "公开证据不足时不承诺未经校准的点值。"
             )
-        appendix = (
-            f"\n\n{appendix_marker}；证据不足处均作为待验证方向。\n"
-            + "\n\n".join(rows)
-            + "\n\n"
-        )
-        result = (
-            result[: effect_match.start("body")]
-            + effect_body
-            + appendix
-            + result[effect_match.end("body") :]
-        )
+        appendix = f"\n\n{appendix_marker}；证据不足处均作为待验证方向。\n" + "\n\n".join(rows) + "\n\n"
+        result = result[: effect_match.start("body")] + effect_body + appendix + result[effect_match.end("body") :]
 
     # Keep the expensive xhigh call focused on synthesis. Section ⑨ receives a
     # deterministic, evidence-bound verification matrix assembled only from
@@ -1206,19 +1098,13 @@ def _stabilize_report_delivery_contract(
     # same development/pass/fail boilerplate for every direction.
     if priority_match and cue_by_name and not project_mode:
         priority_body = priority_match.group("body").rstrip()
-        matrix_marker = (
-            "逐装备主要战技指标与验证矩阵如下"
-            if project_mode
-            else "逐装备演示验证矩阵如下"
-        )
+        matrix_marker = "逐装备主要战技指标与验证矩阵如下" if project_mode else "逐装备演示验证矩阵如下"
         marker_index = priority_body.find(matrix_marker)
         if marker_index >= 0:
             priority_body = priority_body[:marker_index].rstrip()
         matrix_rows: list[str] = []
         for name, item in cue_by_name.items():
-            priority = _clean_reporter_clue_text(
-                item.get("priority", "P1/P2待组合评审"), max_chars=32
-            )
+            priority = _clean_reporter_clue_text(item.get("priority", "P1/P2待组合评审"), max_chars=32)
             development = _clean_reporter_clue_text(
                 item.get("development_path")
                 or item.get("public_equipment_baseline")
@@ -1226,13 +1112,11 @@ def _stabilize_report_delivery_contract(
                 max_chars=150,
             ).rstrip("。；")
             indicator = _clean_reporter_clue_text(
-                item.get("indicator_portrait")
-                or "未提供该装备的专属指标画像，待结合任务与证据确定",
+                item.get("indicator_portrait") or "未提供该装备的专属指标画像，待结合任务与证据确定",
                 max_chars=180,
             ).rstrip("。；")
             mechanism = _clean_reporter_clue_text(
-                item.get("mechanism_hint")
-                or "在受扰任务边界内完成目标确认、火力交战和毁伤后续接",
+                item.get("mechanism_hint") or "在受扰任务边界内完成目标确认、火力交战和毁伤后续接",
                 max_chars=130,
             )
             verification_mechanism = _report_matrix_verification_mechanism(
@@ -1240,21 +1124,17 @@ def _stabilize_report_delivery_contract(
                 mechanism,
             )
             coupling = _clean_reporter_clue_text(
-                item.get("coupling_risk")
-                or "目标信息、末制导、载荷效应和任务授权任一失效都会拖垮闭环",
+                item.get("coupling_risk") or "目标信息、末制导、载荷效应和任务授权任一失效都会拖垮闭环",
                 max_chars=280,
             ).rstrip("。；")
             boundary = _clean_reporter_clue_text(
-                item.get("boundary")
-                or "在代表性干扰、诱饵和节点损耗条件下未形成直接毁伤或压制贡献",
+                item.get("boundary") or "在代表性干扰、诱饵和节点损耗条件下未形成直接毁伤或压制贡献",
                 max_chars=120,
             ).rstrip("。；")
             failure_boundary = boundary
-            if (
-                len(_normalized_report_reuse_text(boundary)) >= 30
-                and _normalized_report_reuse_text(boundary)
-                in _normalized_report_reuse_text(coupling)
-            ):
+            if len(_normalized_report_reuse_text(boundary)) >= 30 and _normalized_report_reuse_text(
+                boundary
+            ) in _normalized_report_reuse_text(coupling):
                 # Some S6 cards conservatively carry the same future/foresight
                 # boundary in both ``coupling_risk`` and ``boundary``.  The
                 # matrix already prints the complete coupling statement, so
@@ -1262,9 +1142,7 @@ def _stabilize_report_delivery_contract(
                 # creates a third verbatim copy once section ⑧ is considered.
                 # Keep the decision meaning and equipment binding while
                 # referring to the complete statement immediately above.
-                failure_boundary = (
-                    f"上述{name}适用场景或反适应边界被触发，且直接作战贡献未达到任务基线"
-                )
+                failure_boundary = f"上述{name}适用场景或反适应边界被触发，且直接作战贡献未达到任务基线"
             matrix_rows.append(
                 f"- **{name}**（{priority}）：演示项目沿“{development}”启动；"
                 f"作战验证要求为{verification_mechanism}；验收指标方向为{indicator}；"
@@ -1273,9 +1151,8 @@ def _stabilize_report_delivery_contract(
                 f"失败条件是{failure_boundary}。{name}的数值阈值由仿真、半实物联试、综合靶场和红队试验校准，"
                 "公开证据不足时不得提前承诺点值。"
             )
-        matrix = (
-            f"\n\n{matrix_marker}；该矩阵属于正文的一部分，只投影已通过S6门禁的方向和边界。\n"
-            + "\n\n".join(matrix_rows)
+        matrix = f"\n\n{matrix_marker}；该矩阵属于正文的一部分，只投影已通过S6门禁的方向和边界。\n" + "\n\n".join(
+            matrix_rows
         )
         result = (
             result[: priority_match.start("body")]
@@ -1303,10 +1180,7 @@ def _report_issues_are_deterministic_format_only(
         "不得把深度性、军事价值、前瞻性或新颖性写成独立标题",
     )
     rows = [str(item).strip() for item in issues if str(item).strip()]
-    return bool(rows) and all(
-        any(row.startswith(marker) for marker in format_markers)
-        for row in rows
-    )
+    return bool(rows) and all(any(row.startswith(marker) for marker in format_markers) for row in rows)
 
 
 def _project_argument_report_writer_system_prompt(
@@ -1373,7 +1247,7 @@ def _project_argument_report_writer_system_prompt(
     )
 
 
-def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
+def _base_report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
     if _report_template_mode(payload) == "project_argument_v1":
         return _project_argument_report_writer_system_prompt(payload)
     if not str(payload.get("ablation_scope", "")):
@@ -1505,16 +1379,35 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
     )
 
 
-def _report_repair_system_prompt(payload: Mapping[str, Any]) -> str:
-    template_label = (
-        "项目论证五章合同"
-        if _report_template_mode(payload) == "project_argument_v1"
-        else "三层九项合同"
+def _report_domain_narrative_instruction(payload: Mapping[str, Any]) -> str:
+    """Project the Query-owned prose boundary into every Reporter path."""
+
+    blueprint = payload.get("discovery_blueprint", {})
+    brief = blueprint.get("structured_query_brief", {}) if isinstance(blueprint, Mapping) else {}
+    return query_domain_narrative_instruction(
+        str(payload.get("topic", "") or payload.get("query", "")),
+        structured_query_brief=brief if isinstance(brief, Mapping) else {},
     )
+
+
+def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
+    base_prompt = _base_report_writer_system_prompt(payload)
+    domain_instruction = _report_domain_narrative_instruction(payload)
+    if not domain_instruction:
+        return base_prompt
+    return base_prompt + "\n" + domain_instruction
+
+
+def _report_repair_system_prompt(payload: Mapping[str, Any]) -> str:
+    template_label = "项目论证五章合同" if _report_template_mode(payload) == "project_argument_v1" else "三层九项合同"
     return (
         _report_writer_system_prompt(payload)
         + f"\n本次只做定向修订：根据Query、{template_label}、分支高价值信息、允许来源、原稿和少量修订要点，"
         "只修复缺项、逻辑断裂、映射断点、重复、残段和证据边界；保留有依据的深度判断与有效引用。"
+        "修订后的公开正文须继续服从Query、入选武器、能力画像概述与各栏自身职责；只修复实际缺陷，"
+        "保留原稿中已经成立的论证重心与组织方式，不得把全文改造成统一段落模板。不得说明结论来自哪个输入字段、"
+        "分析阶段、角色或生成步骤，不得出现Query、S6、capability_cues、research_handoff、report_spine、"
+        "selected_agent_ids、snake_case角色名、‘本次交接’、‘前置交接’、‘模型生成’、‘首稿’或‘质量门’。"
         "不得复述评测或研究流程，不得添加来源外URL、无依据数字、攻击步骤、坐标或可执行武器参数。"
         "只输出修订后的完整中文Markdown正文。"
     )
@@ -1591,9 +1484,7 @@ def _winning_title_has_concrete_equipment_identity(value: str) -> bool:
 def _prioritize_equipment_evidence_refs(values: Sequence[Any]) -> list[str]:
     """Keep stable evidence order while placing object-level weapon refs first."""
 
-    rows = list(
-        dict.fromkeys(str(value).strip() for value in values if str(value).strip())
-    )
+    rows = list(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
     order = {value: index for index, value in enumerate(rows)}
     return sorted(
         rows,
@@ -1605,11 +1496,7 @@ def _prioritize_equipment_evidence_refs(values: Sequence[Any]) -> list[str]:
 
 
 def _is_remote_precision_portfolio_direction(value: Mapping[str, Any]) -> bool:
-    classification = str(
-        value.get("portfolio_role")
-        or value.get("mission_classification")
-        or ""
-    ).strip()
+    classification = str(value.get("portfolio_role") or value.get("mission_classification") or "").strip()
     return classification == "remote_precision_strike"
 
 
@@ -1677,9 +1564,7 @@ def _clip_complete_report_phrase(text: str, maximum: int) -> str:
     # a full stop manufactured report fragments such as ``一旦触发，后方平台
     # 在链路受阻时。``. Only shorten at a sentence/independent-clause end;
     # otherwise look beyond the editorial target or preserve the full judgment.
-    boundary = max(
-        window.rfind(mark) for mark in ("。", "！", "？", "!", "?", "；")
-    )
+    boundary = max(window.rfind(mark) for mark in ("。", "！", "？", "!", "?", "；"))
     if boundary >= max(24, maximum // 3):
         window = window[: boundary + 1]
     else:
@@ -1687,10 +1572,7 @@ def _clip_complete_report_phrase(text: str, maximum: int) -> str:
         # If there is none, keep the full judgment rather than manufacturing a
         # semantically broken fragment merely to satisfy a prompt-size hint.
         extended = value[: min(len(value), maximum + 80)]
-        following = [
-            extended.find(mark, maximum - 1)
-            for mark in ("。", "！", "？", "!", "?", "；")
-        ]
+        following = [extended.find(mark, maximum - 1) for mark in ("。", "！", "？", "!", "?", "；")]
         following = [index for index in following if index >= 0]
         if following:
             window = extended[: min(following) + 1]
@@ -1714,9 +1596,7 @@ def _compact_report_table_row(line: str, maximum: int) -> str:
     first = cells[0]
     remaining = max(32, maximum - len(first) - (3 * len(cells)) - 2)
     per_cell = max(32, remaining // max(1, len(cells) - 1))
-    compacted = [first, *(
-        _clip_complete_report_phrase(item, per_cell) for item in cells[1:]
-    )]
+    compacted = [first, *(_clip_complete_report_phrase(item, per_cell) for item in cells[1:])]
     return "| " + " | ".join(compacted) + " |"
 
 
@@ -1760,11 +1640,7 @@ def _enforce_report_hard_max(
 
     hard_max = _report_hard_max_chars(payload)
     synthesis_seed = payload.get("synthesis_seed", {})
-    capability_cues = (
-        synthesis_seed.get("capability_cues", [])
-        if isinstance(synthesis_seed, Mapping)
-        else []
-    )
+    capability_cues = synthesis_seed.get("capability_cues", []) if isinstance(synthesis_seed, Mapping) else []
     protected_bullet_names = {
         str(item.get("direction", "")).strip()
         for item in capability_cues
@@ -1773,15 +1649,9 @@ def _enforce_report_hard_max(
 
     def has_protected_equipment_label(line: str) -> bool:
         stripped = line.strip()
-        return any(
-            stripped.startswith((f"- **{name}**", f"**{name}｜"))
-            for name in protected_bullet_names
-        )
+        return any(stripped.startswith((f"- **{name}**", f"**{name}｜")) for name in protected_bullet_names)
 
-    text = "\n".join(
-        _normalize_report_line_ending(line)
-        for line in str(report).strip().splitlines()
-    ).strip()
+    text = "\n".join(_normalize_report_line_ending(line) for line in str(report).strip().splitlines()).strip()
     if hard_max <= 0 or len(text) <= hard_max:
         return text
 
@@ -1799,13 +1669,9 @@ def _enforce_report_hard_max(
             elif len(line) > prose_cap:
                 prefix = "- " if stripped.startswith("- ") else ""
                 body = stripped[2:] if prefix else stripped
-                compacted.append(
-                    prefix + _clip_complete_report_phrase(body, prose_cap - len(prefix))
-                )
+                compacted.append(prefix + _clip_complete_report_phrase(body, prose_cap - len(prefix)))
             else:
-                compacted.append(
-                    re.sub(r"(?:\.{3,}|…+)$", "。", line.rstrip())
-                )
+                compacted.append(re.sub(r"(?:\.{3,}|…+)$", "。", line.rstrip()))
         text = "\n".join(compacted).strip()
         if len(text) <= hard_max:
             return text
@@ -1820,8 +1686,7 @@ def _enforce_report_hard_max(
             (
                 index
                 for index in range(len(lines) - 1, -1, -1)
-                if lines[index].lstrip().startswith("- http")
-                or lines[index].lstrip().startswith("- [")
+                if lines[index].lstrip().startswith("- http") or lines[index].lstrip().startswith("- [")
             ),
             None,
         )
@@ -1915,10 +1780,7 @@ def _enforce_report_hard_max(
             lines[index].strip()
             and not lines[index].lstrip().startswith("#")
             and not portrait_protected[index]
-            and not (
-                lines[index].strip().startswith("|")
-                and lines[index].strip().endswith("|")
-            )
+            and not (lines[index].strip().startswith("|") and lines[index].strip().endswith("|"))
             and not has_protected_equipment_label(lines[index])
         ):
             lines.pop(index)
@@ -1929,10 +1791,7 @@ def _enforce_report_hard_max(
 
 def _report_writer_max_chars(payload: Mapping[str, Any]) -> int:
     hard_max = _report_hard_max_chars(payload)
-    values = [
-        int(value)
-        for value in re.findall(r"\d+", _report_target_chars(payload))
-    ]
+    values = [int(value) for value in re.findall(r"\d+", _report_target_chars(payload))]
     if not values:
         return hard_max
     if hard_max <= 0:
@@ -1957,9 +1816,34 @@ def _reporter_output_token_budget(
 
 _REPORTER_HANDOFF_REWRITE_BOUNDARY = "〔改写断点：保留事实但不得照录〕"
 _REPORTER_CANDIDATE_PREFIX_RE = re.compile(r"^[A-Ha-h]\s*[.．、:：]\s*")
-_REPORTER_VISIBLE_CANDIDATE_PREFIX_RE = re.compile(
-    r"(?m)(^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*])"
+_REPORTER_VISIBLE_CANDIDATE_PREFIX_RE = re.compile(r"(?m)(^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*])")
+_REPORTER_INTERNAL_IDENTIFIER_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:"
+    r"selected_agent_ids|research_handoff|report_spine|capability_cues|query_analysis|"
+    r"solution_thesis|core_innovation_thesis|system_contribution_thesis|"
+    r"international_situation|weapon_equipment|operational_employment|combat_scenario|"
+    r"system_confrontation|nontraditional_security|technology_radar|opponent_monitoring|"
+    r"cross_domain_fusion|convergence_fusion|case_research|scenario_divergence|"
+    r"winning_[a-z0-9_]+|orchestrator|reporter|auditor"
+    r")(?![A-Za-z0-9_])",
+    flags=re.IGNORECASE,
 )
+_REPORTER_INTERNAL_DERIVATION_PREFIX_RE = re.compile(
+    r"^由\s*(?:(?:solution_thesis|core_innovation_thesis|system_contribution_thesis)\s*"
+    r"(?:与|和|、)?\s*)+(?:直接)?(?:推出|导出|得出)\s*[—–:：-]*\s*",
+    flags=re.IGNORECASE,
+)
+
+
+def _strip_report_internal_vocabulary(value: object) -> str:
+    """Remove runtime vocabulary before a clue can influence public prose."""
+
+    text = str(value or "")
+    text = _REPORTER_INTERNAL_DERIVATION_PREFIX_RE.sub("", text)
+    text = _REPORTER_INTERNAL_IDENTIFIER_RE.sub("", text)
+    text = re.sub(r"^[\s；;、，,：:—–-]+", "", text)
+    text = re.sub(r"[；;、，,]\s*(?=[；;、，,。])", "", text)
+    return text.strip()
 
 
 def _strip_report_internal_markers(value: object) -> str:
@@ -1979,12 +1863,10 @@ def _clean_reporter_clue_text(value: object, *, max_chars: int | None = None) ->
     # every item in the same sentence.  Flatten only at the final text boundary
     # and preserve the authored item order.
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-        value = "；".join(
-            str(item).strip()
-            for item in value
-            if str(item).strip()
-        )
-    text = " ".join(_strip_report_internal_markers(value).split())
+        value = "；".join(str(item).strip() for item in value if str(item).strip())
+    text = " ".join(
+        _strip_report_internal_vocabulary(_strip_report_internal_markers(value)).split()
+    )
     replacements = (
         (r"S1\s*[–—-]\s*S6", "六阶段制胜分析"),
         (r"(?<![A-Za-z0-9])S-?[1-6](?![A-Za-z0-9])", "对应分析阶段"),
@@ -2001,11 +1883,7 @@ def _clean_reporter_clue_text(value: object, *, max_chars: int | None = None) ->
     for pattern, replacement in replacements:
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
     text = re.sub(r"(?:相关公开证据[、，;；\s]*){2,}", "相关公开证据组", text)
-    return (
-        _clip_complete_report_phrase(text, max_chars)
-        if max_chars is not None and len(text) > max_chars
-        else text
-    )
+    return _clip_complete_report_phrase(text, max_chars) if max_chars is not None and len(text) > max_chars else text
 
 
 def _mark_reporter_handoff_rewrite_boundaries(value: Any) -> Any:
@@ -2219,9 +2097,7 @@ def _normalize_numbered_report_title_group(
     aliases: Sequence[str],
     count: int,
 ) -> str:
-    alias_pattern = "|".join(
-        re.escape(item) for item in sorted(set(aliases), key=len, reverse=True)
-    )
+    alias_pattern = "|".join(re.escape(item) for item in sorted(set(aliases), key=len, reverse=True))
     ordinal_pattern = r"(?:0*[1-9]\d*|[一二三四五六七八九十])"
     label_first = re.compile(
         rf"(?P<label>{alias_pattern})\s*(?:第\s*)?[（(]?"
@@ -2255,9 +2131,7 @@ def _normalize_numbered_report_title_group(
         if number is None or not 1 <= number <= count:
             normalized_lines.append(line)
             continue
-        normalized_lines.append(
-            line[: match.start()] + f"{canonical}{number}" + line[match.end() :]
-        )
+        normalized_lines.append(line[: match.start()] + f"{canonical}{number}" + line[match.end() :])
     return "\n".join(normalized_lines)
 
 
@@ -2271,11 +2145,7 @@ def _reporter_generation_payload(
     raw_query_brief = payload.get("structured_query_brief", {})
     if not isinstance(raw_query_brief, Mapping):
         blueprint = payload.get("discovery_blueprint", {})
-        raw_query_brief = (
-            blueprint.get("structured_query_brief", {})
-            if isinstance(blueprint, Mapping)
-            else {}
-        )
+        raw_query_brief = blueprint.get("structured_query_brief", {}) if isinstance(blueprint, Mapping) else {}
 
     def compact_query_analysis(value: Mapping[str, Any]) -> dict[str, Any]:
         """Pass the semantic query frame without turning it into a form."""
@@ -2355,14 +2225,10 @@ def _reporter_generation_payload(
     # into the project Reporter payload where it can revive mechanical filling.
     if isinstance(brief, Mapping) and not project_mode:
         required_sections = [
-            str(item).strip()[:120]
-            for item in brief.get("required_sections", [])[:12]
-            if str(item).strip()
+            str(item).strip()[:120] for item in brief.get("required_sections", [])[:12] if str(item).strip()
         ]
         mandatory_content = [
-            str(item).strip()[:160]
-            for item in brief.get("mandatory_content", [])[:12]
-            if str(item).strip()
+            str(item).strip()[:160] for item in brief.get("mandatory_content", [])[:12] if str(item).strip()
         ]
 
     seed = payload.get("synthesis_seed", {})
@@ -2396,9 +2262,7 @@ def _reporter_generation_payload(
                     if _clean_reporter_clue_text(item)
                 ]
         capability_cues = seed.get("capability_cues", [])
-        if isinstance(capability_cues, Sequence) and not isinstance(
-            capability_cues, (str, bytes)
-        ):
+        if isinstance(capability_cues, Sequence) and not isinstance(capability_cues, (str, bytes)):
             compact_cues = []
             for item in _limit_report_capability_cues(capability_cues):
                 if not isinstance(item, Mapping):
@@ -2480,9 +2344,7 @@ def _reporter_generation_payload(
                 max_string_chars=220,
                 max_list_items=8 if quality_profile else 5,
             )
-    research_handoff = _mark_reporter_handoff_rewrite_boundaries(
-        research_handoff
-    )
+    research_handoff = _mark_reporter_handoff_rewrite_boundaries(research_handoff)
 
     # The parallel Reporter needs one immutable, report-level decision spine.
     # Without it, every chapter re-interprets the same handoff independently;
@@ -2528,6 +2390,7 @@ def _reporter_generation_payload(
         report_spine_directions.append(row)
 
     query_frame = query_analysis if isinstance(query_analysis, Mapping) else {}
+
     def spine_list(key: str, limit: int = 6) -> list[str]:
         values = research_handoff.get(key, [])
         if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
@@ -2551,8 +2414,7 @@ def _reporter_generation_payload(
         "counterevidence_and_limits": spine_list("counterevidence_and_limits"),
         "directions": report_spine_directions,
         "evidence_policy": (
-            "事实、推断、目标方向和待验证边界分层；仅使用交接中的公开来源；"
-            "章节不得重新发散候选或把另一栏正文当作事实。"
+            "事实、推断、目标方向和待验证边界分层；仅使用交接中的公开来源；章节不得重新发散候选或把另一栏正文当作事实。"
         ),
         "chapter_handoffs": (
             {
@@ -2597,16 +2459,13 @@ def _reporter_generation_payload(
                 }
             )
 
-    evidence_closed = (
-        str(payload.get("ablation_scope", ""))
-        == "restricted_generic_baseline_evidence_closed"
-    )
+    evidence_closed = str(payload.get("ablation_scope", "")) == "restricted_generic_baseline_evidence_closed"
     pre_submission_checks = [
         "三个固定二级层和九个固定三级项齐全且顺序正确",
         "场景—战法/技术—能力特征—实现途径—核心技术—耦合风险—能力图像—效能贡献—发展抓手形成闭环",
         "分支规定成果已压缩融入九项，不另设平行模板",
         "相同判断不在能力特征、能力图像和效能贡献中重复展开",
-        "所有段落以完整句结束且无超过1100字的超长段落；每段至少提供具体装备/项目事实、战场矛盾、因果判断、证据边界、反适应、验证或建设取舍之一",
+        "所有段落以完整句结束且无超过1100字的超长段落；各段内容服务所在栏目的实际决策问题，论证方式随装备与材料变化",
         "建设优先序使用高/中/低或P0/P1/P2等显式等级并说明排序理由",
         "能力实现途径明确标注沿用改进/集成创新/原理突破",
         "核心技术按装备分别包含成熟度、瓶颈和攻关优先级，效能贡献只写能改变任务结果的关系",
@@ -2616,8 +2475,7 @@ def _reporter_generation_payload(
         "⑦以模型判断为主，交付层只做结构、证据边界和明显重复的确定性清理",
         "⑦表格仅在有助于比较时使用，列和行随装备差异决定，不为凑齐字段或方向新增主体装备",
         "⑦只选与该装备机理相关的指标方向或边界，不把同一组待校准词语复制到所有装备",
-        "最终论证优先自然体现与Query相关的多类关系变化，不展示维度方法论清单，"
-        "也不为凑数量改写已经成立的具体装备因果链",
+        "最终论证优先自然体现与Query相关的多类关系变化，不展示维度方法论清单，也不为凑数量改写已经成立的具体装备因果链",
         "前瞻判断覆盖3至10年演进窗口、触发条件和不确定性",
         "核心正文达到约9000字且九项闭环后立即收束；任何长度均不触发机械扩写、压缩、降级或失败",
     ]
@@ -2668,14 +2526,29 @@ def _reporter_generation_payload(
         if project_mode
         else {
             "①": ["decisive_anchors", "mission_chain_breaks", "capability_cues.capability_gap"],
-            "②": ["capability_cues.mechanism_hint", "capability_cues.future_trigger", "capability_cues.disruptive_relationship"],
+            "②": [
+                "capability_cues.mechanism_hint",
+                "capability_cues.future_trigger",
+                "capability_cues.disruptive_relationship",
+            ],
             "③": ["capability_cues.mission_effect", "capability_cues.equipment_hint"],
             "④": ["capability_cues.public_equipment_baseline", "capability_cues.development_path"],
             "⑤": ["capability_cues.equipment_hint", "public_sources.fact"],
             "⑥": ["capability_cues.coupling_risk", "capability_cues.boundary", "counterevidence_and_limits"],
-            "⑦": ["capability_cues.direction", "capability_cues.indicator_portrait", "capability_cues.equipment_hint", "capability_cues.public_equipment_baseline", "capability_cues.disruptive_relationship"],
+            "⑦": [
+                "capability_cues.direction",
+                "capability_cues.indicator_portrait",
+                "capability_cues.equipment_hint",
+                "capability_cues.public_equipment_baseline",
+                "capability_cues.disruptive_relationship",
+            ],
             "⑧": ["capability_cues.mission_effect", "capability_cues.mechanism_hint"],
-            "⑨": ["capability_cues.priority", "capability_cues.development_path", "capability_cues.boundary", "capability_cues.disruptive_relationship"],
+            "⑨": [
+                "capability_cues.priority",
+                "capability_cues.development_path",
+                "capability_cues.boundary",
+                "capability_cues.disruptive_relationship",
+            ],
         }
     )
 
@@ -2726,11 +2599,7 @@ def _reporter_generation_payload(
             "h3": list(canonical_h3),
             "h4": list(canonical_h4),
             "max_heading_depth": 4 if project_mode else 3,
-            "template": (
-                "固定项目论证五章模板"
-                if project_mode
-                else "固定三层九项，不新增平行旧模板"
-            ),
+            "template": ("固定项目论证五章模板" if project_mode else "固定三层九项，不新增平行旧模板"),
             "paragraph_policy": "一段一个中心判断，避免残句和超长段落",
             "table_policy": (
                 "三、总体方案/（二）子系统方案、四、关键技术/（一）关键技术清单与攻关途径、五、研制基础/（二）技术基础使用正式Markdown表格；每个已确认装备至少一行。列项与单元格内容由装备实际机理、工程关系和证据状态决定，不要求统一字段覆盖；禁止空列、统一占位句和跨装备复制。"
@@ -2804,10 +2673,7 @@ def _reporter_repair_payload(
     reporter_agent: AgentDef | None = None,
     generation_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    generation = dict(
-        generation_payload
-        or _reporter_generation_payload(payload, reporter_agent)
-    )
+    generation = dict(generation_payload or _reporter_generation_payload(payload, reporter_agent))
     return {
         "query": generation["query"],
         "query_analysis": generation.get("query_analysis", {}),
@@ -2873,12 +2739,8 @@ def _reporter_timeout_retry_payload(
                 continue
             evidence_highlights.append(
                 {
-                    "title": _clean_reporter_clue_text(
-                        item.get("title", "公开来源"), max_chars=70
-                    ),
-                    "evidence": _clean_reporter_clue_text(
-                        item.get("claim", ""), max_chars=100
-                    ),
+                    "title": _clean_reporter_clue_text(item.get("title", "公开来源"), max_chars=70),
+                    "evidence": _clean_reporter_clue_text(item.get("claim", ""), max_chars=100),
                     "url": url,
                 }
             )
@@ -2933,9 +2795,7 @@ def _reporter_agent_contract(agent: AgentDef | None) -> dict[str, Any]:
     output_fields: list[str] = []
     if isinstance(agent.output_contract, Mapping):
         output_fields = [
-            str(item)[:80]
-            for item in agent.output_contract.get("properties", [])[:10]
-            if str(item).strip()
+            str(item)[:80] for item in agent.output_contract.get("properties", [])[:10] if str(item).strip()
         ]
 
     def policy_rows(key: str, *, limit: int, max_chars: int) -> list[str]:
@@ -2954,22 +2814,12 @@ def _reporter_agent_contract(agent: AgentDef | None) -> dict[str, Any]:
             max_chars=240,
         ),
         "method": delivery_method,
-        "required_outputs": policy_rows(
-            "required_outputs", limit=8, max_chars=100
-        ),
-        "writing_priorities": policy_rows(
-            "writing_priorities", limit=10, max_chars=100
-        ),
-        "evidence_rules": policy_rows(
-            "evidence_policy", limit=6, max_chars=120
-        ),
-        "structure_rules": policy_rows(
-            "structure_policy", limit=6, max_chars=120
-        ),
+        "required_outputs": policy_rows("required_outputs", limit=8, max_chars=100),
+        "writing_priorities": policy_rows("writing_priorities", limit=10, max_chars=100),
+        "evidence_rules": policy_rows("evidence_policy", limit=6, max_chars=120),
+        "structure_rules": policy_rows("structure_policy", limit=6, max_chars=120),
         "quality_focus": quality_focus,
-        "stopping_conditions": policy_rows(
-            "stopping_conditions", limit=6, max_chars=120
-        ),
+        "stopping_conditions": policy_rows("stopping_conditions", limit=6, max_chars=120),
         "output_fields": output_fields,
     }
 
@@ -2980,24 +2830,33 @@ def _reporter_revision_notes(quality_issues: Sequence[str]) -> list[str]:
     if any(marker in joined for marker in ("最低", "长度", "过短", "硬上限")):
         notes.append("只补充缺失的实质内容；模板、证据和军事决策链闭环后立即收束，不为达到字数扩写或重复字段。")
     if any(marker in joined for marker in ("编号", "三层", "九项", "章节", "缺少")):
-        notes.append("严格补齐三层九项：场景、制胜机理、能力特征、实现途径、核心技术、耦合风险、能力图像、效能贡献、发展抓手。")
+        notes.append(
+            "严格补齐三层九项：场景、制胜机理、能力特征、实现途径、核心技术、耦合风险、能力图像、效能贡献、发展抓手。"
+        )
     if any(marker in joined for marker in ("URL", "引用", "来源", "证据", "事实")):
-        notes.append("正文仅保留1至2条最关键的[来源名](允许URL)作为定位，其余来源集中放入文末来源索引；关键判断明确区分事实、推断和待验证假设。")
+        notes.append(
+            "正文仅保留1至2条最关键的[来源名](允许URL)作为定位，其余来源集中放入文末来源索引；关键判断明确区分事实、推断和待验证假设。"
+        )
     if any(marker in joined for marker in ("因果", "任务链", "能力映射", "接口", "实现途径", "核心技术")):
-        notes.append("补强场景—战法—能力—技术—效能因果链；每项能力显式映射实现途径、核心技术、耦合风险、装备形态和工程边界。")
+        notes.append(
+            "补强场景—战法—能力—技术—效能因果链；每项能力显式映射实现途径、核心技术、耦合风险、装备形态和工程边界。"
+        )
     if any(marker in joined for marker in ("军事", "打击", "反制", "威慑", "抗毁")):
         notes.append("把军事价值落实到具体对象、阶段、条件及打击歼灭、反制拒止、威慑或抗毁效果。")
     if any(marker in joined for marker in ("重复", "残缺", "断句", "段落", "标题")):
         notes.append("删除重复和模板化标题，修复残段断句并突出关键判断。")
     if any(marker in joined for marker in ("前置研判", "原句复用", "拼接")):
         notes.append("丢弃前置线索原有措辞和顺序，回到Query重新组织因果链并形成新的综合判断。")
-    if any(marker in joined for marker in (
-        "颠覆关系",
-        "全部高军事价值武器装备方向",
-        "支撑层不得替换",
-        "第一列必须与输入",
-        "擅自新增",
-    )):
+    if any(
+        marker in joined
+        for marker in (
+            "颠覆关系",
+            "全部高军事价值武器装备方向",
+            "支撑层不得替换",
+            "第一列必须与输入",
+            "擅自新增",
+        )
+    ):
         notes.append(
             "在②⑦⑨自然写入与Query因果相关的关系变化，并逐项保留全部输入装备方向；"
             "关系类型数量只作表达增强，不得成为交付阻断条件；"
@@ -3168,9 +3027,7 @@ def _report_equipment_attribution_issues(
             continue
         foreign = [name for name in names if name != owner and any(name in cell for cell in cells[1:])]
         if foreign:
-            issues.append(
-                f"表格行“{owner}”混入其他装备材料（{foreign[0]}），需按direction归属重写"
-            )
+            issues.append(f"表格行“{owner}”混入其他装备材料（{foreign[0]}），需按direction归属重写")
         in_table = True
     return issues
 
@@ -3218,9 +3075,7 @@ def _report_fragment_quality_issues(text: str) -> list[str]:
             (item.strip() for item in lines[index + 1 :] if item.strip()),
             "",
         )
-        if line.endswith(("如下。", "如下.")) and next_nonempty.startswith(
-            ("- ", "* ", "|")
-        ):
+        if line.endswith(("如下。", "如下.")) and next_nonempty.startswith(("- ", "* ", "|")):
             continue
         if line.startswith("|") != line.endswith("|"):
             samples.append(line[:60])
@@ -3271,22 +3126,45 @@ def _report_fragment_quality_issues(text: str) -> list[str]:
                 and not any(
                     term in candidate
                     for term in (
-                        "形成", "实现", "完成", "提升", "降低", "打击", "压制",
-                        "猎歼", "支持", "支撑", "应对", "用于", "采用", "具备", "保持", "选择",
-                        "识别", "验证", "评估", "部署", "发射", "交战", "毁伤",
-                        "表明", "说明", "决定", "依赖", "位于", "贡献", "对应",
-                        "中断", "出现",
+                        "形成",
+                        "实现",
+                        "完成",
+                        "提升",
+                        "降低",
+                        "打击",
+                        "压制",
+                        "猎歼",
+                        "支持",
+                        "支撑",
+                        "应对",
+                        "用于",
+                        "采用",
+                        "具备",
+                        "保持",
+                        "选择",
+                        "识别",
+                        "验证",
+                        "评估",
+                        "部署",
+                        "发射",
+                        "交战",
+                        "毁伤",
+                        "表明",
+                        "说明",
+                        "决定",
+                        "依赖",
+                        "位于",
+                        "贡献",
+                        "对应",
+                        "中断",
+                        "出现",
                     )
                 )
             ):
                 samples.append(candidate[-60:])
     if not samples:
         return []
-    return [
-        "正文存在截断残句或未闭合表格单元格："
-        + "；".join(dict.fromkeys(samples[:4]))
-    ]
-
+    return ["正文存在截断残句或未闭合表格单元格：" + "；".join(dict.fromkeys(samples[:4]))]
 
 
 def _report_chapter_mechanical_issues(text: str, chapter: str) -> list[str]:
@@ -3330,13 +3208,10 @@ def _report_chapter_mechanical_issues(text: str, chapter: str) -> list[str]:
         next_markers = ("\n## 三、总体方案",)
     else:
         next_markers = ("\n## ",)
-    next_candidates = [
-        value.find(marker, pos + len(start))
-        for marker in next_markers
-    ]
+    next_candidates = [value.find(marker, pos + len(start)) for marker in next_markers]
     next_candidates = [candidate for candidate in next_candidates if candidate >= 0]
     next_pos = min(next_candidates) if next_candidates else -1
-    body = value[pos: next_pos if next_pos >= 0 else len(value)]
+    body = value[pos : next_pos if next_pos >= 0 else len(value)]
     # These phrases are valid once as a global boundary, but repeating them for
     # each row is a strong signal that the model copied a form instead of
     # reasoning about the equipment.
@@ -3383,46 +3258,44 @@ def _report_chapter_mechanical_issues(text: str, chapter: str) -> list[str]:
         if line.startswith("|"):
             raw_cells = [cell.strip() for cell in line.strip("|").split("|")]
             owner = raw_cells[0] if raw_cells else ""
-            if owner and not re.fullmatch(r":?-{3,}:?", owner) and owner not in {
-                "武器装备",
-                "装备方向",
-                "装备系统方向",
-                "具体装备方向",
-            }:
+            if (
+                owner
+                and not re.fullmatch(r":?-{3,}:?", owner)
+                and owner
+                not in {
+                    "武器装备",
+                    "装备方向",
+                    "装备系统方向",
+                    "具体装备方向",
+                }
+            ):
                 raw_cells = [
-                    ("<装备>" if index == 0 else cell.replace(owner, "<装备>"))
-                    for index, cell in enumerate(raw_cells)
+                    ("<装备>" if index == 0 else cell.replace(owner, "<装备>")) for index, cell in enumerate(raw_cells)
                 ]
-            cells = [
-                re.sub(r"[|：；，。、、\s]", "", cell)
-                for cell in raw_cells
-            ]
+            cells = [re.sub(r"[|：；，。、、\s]", "", cell) for cell in raw_cells]
             chunks.extend(c for c in cells if len(c) >= 28)
         elif line.startswith(("-", "*")) and len(line) >= 45:
             normalized_line = normalize_equipment_identity(line)
             chunks.append(re.sub(r"[：；，。、\s*]", "", normalized_line))
     for paragraph in re.split(r"\n\s*\n", body):
         stripped = paragraph.strip()
-        if (
-            not stripped
-            or stripped.startswith(("#", "|", "- ", "* "))
-            or "\n|" in stripped
-        ):
+        if not stripped or stripped.startswith(("#", "|", "- ", "* ")) or "\n|" in stripped:
             continue
         compact = re.sub(r"[：；，。、\s]", "", stripped)
         if len(compact) >= 60:
             chunks.append(compact)
     duplicates = 0
+
     def ngram_similarity(left: str, right: str, n: int = 3) -> float:
         if len(left) < n or len(right) < n:
             return 0.0
-        left_grams = {left[idx:idx+n] for idx in range(len(left)-n+1)}
-        right_grams = {right[idx:idx+n] for idx in range(len(right)-n+1)}
+        left_grams = {left[idx : idx + n] for idx in range(len(left) - n + 1)}
+        right_grams = {right[idx : idx + n] for idx in range(len(right) - n + 1)}
         union = left_grams | right_grams
         return len(left_grams & right_grams) / len(union) if union else 0.0
 
     for idx, left in enumerate(chunks):
-        for right in chunks[idx + 1:]:
+        for right in chunks[idx + 1 :]:
             if left == right:
                 duplicates += 1
             elif len(left) >= 45 and len(right) >= 45:
@@ -3441,20 +3314,34 @@ def _report_draft_quality_issues(
     text: str,
     payload: Mapping[str, Any],
 ) -> list[str]:
+    forbidden_publication_patterns = {
+        "内部字段名或角色标识": (
+            r"(?<![A-Za-z0-9_])(?:selected_agent_ids|research_handoff|report_spine|capability_cues|"
+            r"query_analysis|solution_thesis|core_innovation_thesis|system_contribution_thesis|"
+            r"international_situation|weapon_equipment|operational_employment|combat_scenario|"
+            r"system_confrontation|nontraditional_security|technology_radar|opponent_monitoring|"
+            r"cross_domain_fusion|convergence_fusion|case_research|scenario_divergence|"
+            r"winning_[a-z0-9_]+)(?![A-Za-z0-9_])"
+        ),
+        "生成或交接过程措辞": r"本次交接|前置交接|模型生成|模型首稿|修复提示|质量门|生成流程",
+    }
+    publication_issues = [
+        f"正文仍包含过程性或内部表达：{label}"
+        for label, pattern in forbidden_publication_patterns.items()
+        if re.search(pattern, text, flags=re.IGNORECASE)
+    ]
     brief = payload.get("branch_writer_brief", {})
     if not isinstance(brief, Mapping) or not brief:
-        return []
+        return publication_issues
     branch = str(brief.get("branch", "")).strip().upper()
     if not branch:
-        return []
-    issues: list[str] = []
+        return publication_issues
+    issues: list[str] = list(publication_issues)
     if "**深度能力画像。**" in text:
         issues.append("正文仍在逐项复述能力画像卡片，必须改为跨材料综合")
     project_mode = _report_template_mode(payload) == "project_argument_v1"
     issues.extend(
-        _report_project_argument_content_issues(text)
-        if project_mode
-        else _report_three_layer_content_issues(text)
+        _report_project_argument_content_issues(text) if project_mode else _report_three_layer_content_issues(text)
     )
     if project_mode:
         for chapter in (
@@ -3474,9 +3361,7 @@ def _report_draft_quality_issues(
     issues.extend(_report_domain_attribute_issues(text, payload))
 
     seed = payload.get("synthesis_seed", {})
-    capability_cues = (
-        seed.get("capability_cues", []) if isinstance(seed, Mapping) else []
-    )
+    capability_cues = seed.get("capability_cues", []) if isinstance(seed, Mapping) else []
     expected_direction_names = [
         str(item.get("direction", "")).strip()
         for item in capability_cues
@@ -3500,38 +3385,37 @@ def _report_draft_quality_issues(
             flags=re.MULTILINE | re.DOTALL,
         )
         section_text = section_match.group("body") if section_match else ""
-        represented = sum(
-            name in section_text for name in expected_direction_names
-        )
-        if project_mode and represented == 0 and not any(
-            marker in section_text
-            for marker in (
-                "导弹", "弹药", "无人机", "无人艇", "无人僚机", "巡飞弹",
-                "拦截弹", "发射车", "火炮", "武器站", "效应器",
+        represented = sum(name in section_text for name in expected_direction_names)
+        if (
+            project_mode
+            and represented == 0
+            and not any(
+                marker in section_text
+                for marker in (
+                    "导弹",
+                    "弹药",
+                    "无人机",
+                    "无人艇",
+                    "无人僚机",
+                    "巡飞弹",
+                    "拦截弹",
+                    "发射车",
+                    "火炮",
+                    "武器站",
+                    "效应器",
+                )
             )
         ):
-            issues.append(
-                "装备图像概述未关联具体武器装备主体；应由Query和证据选择装备，不以抽象能力或支撑节点代替"
-            )
+            issues.append("装备图像概述未关联具体武器装备主体；应由Query和证据选择装备，不以抽象能力或支撑节点代替")
         elif not project_mode and represented < len(expected_direction_names):
             issues.append(
                 f"装备能力图像仅明确覆盖{represented}/{len(expected_direction_names)}个输入方向，"
                 "需逐项保留全部高军事价值武器装备方向，支撑层不得替换或另造主体方向"
             )
-        table_direction_names = _report_capability_image_table_directions(
-            section_text
-        )
+        table_direction_names = _report_capability_image_table_directions(section_text)
         if table_direction_names and not project_mode:
-            missing_table_directions = [
-                name
-                for name in expected_direction_names
-                if name not in table_direction_names
-            ]
-            extra_table_directions = [
-                name
-                for name in table_direction_names
-                if name not in expected_direction_names
-            ]
+            missing_table_directions = [name for name in expected_direction_names if name not in table_direction_names]
+            extra_table_directions = [name for name in table_direction_names if name not in expected_direction_names]
             if (
                 missing_table_directions
                 or extra_table_directions
@@ -3539,21 +3423,13 @@ def _report_draft_quality_issues(
             ):
                 details = []
                 if missing_table_directions:
-                    details.append(
-                        "缺少" + "、".join(missing_table_directions[:4])
-                    )
+                    details.append("缺少" + "、".join(missing_table_directions[:4]))
                 if extra_table_directions:
-                    details.append(
-                        "擅自新增" + "、".join(extra_table_directions[:4])
-                    )
+                    details.append("擅自新增" + "、".join(extra_table_directions[:4]))
                 issues.append(
-                    "装备能力图像表第一列必须与输入的具体武器装备方向完全一致；"
-                    + "；".join(details or ["行数不一致"])
+                    "装备能力图像表第一列必须与输入的具体武器装备方向完全一致；" + "；".join(details or ["行数不一致"])
                 )
-    if (
-        is_quality_execution_profile_id(payload.get("execution_profile_id", ""))
-        and len(expected_direction_names) >= 5
-    ):
+    if is_quality_execution_profile_id(payload.get("execution_profile_id", "")) and len(expected_direction_names) >= 5:
         density_metrics = _report_military_information_metrics(
             text,
             {
@@ -3567,13 +3443,8 @@ def _report_draft_quality_issues(
             )
         if density_metrics["generic_filler_ratio"] > 0.25:
             issues.append("通用战略套话段比例过高，删除不改变装备选择、战法或验证决策的段落")
-        if (
-            density_metrics["repeated_long_unit_ratio"] > 0.08
-            or density_metrics["maximum_long_unit_reuse"] > 2
-        ):
-            issues.append(
-                "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%"
-            )
+        if density_metrics["repeated_long_unit_ratio"] > 0.08 or density_metrics["maximum_long_unit_reuse"] > 2:
+            issues.append("跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%")
         if density_metrics["missing_equipment_bundles"]:
             issues.append(
                 "以下装备未成套说明敌方目标/反制、我方作战动作、直接战果与验证判据："
@@ -3589,9 +3460,7 @@ def _report_draft_quality_issues(
         "内部对象编号": r"(?<![A-Za-z0-9_])(?:ev|packet|cap)-[A-Za-z0-9]",
         "内部附件名": r"(?:branch_deliverables|capability_images|demand_cards|reasoning_traceability)\.json",
         "Reporter改写断点": re.escape(_REPORTER_HANDOFF_REWRITE_BOUNDARY),
-        "候选分支前缀": (
-            r"(?m:(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*]))"
-        ),
+        "候选分支前缀": (r"(?m:(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*]))"),
         "委托方口吻": r"\u7532\u65b9",
     }
     for label, pattern in forbidden_patterns.items():
@@ -3603,14 +3472,9 @@ def _report_draft_quality_issues(
         for item in catalog
         if isinstance(item, Mapping) and str(item.get("url", "")).strip()
     }
-    cited_urls = {
-        item.rstrip("/)")
-        for item in re.findall(r"https://[^\s)]+", text)
-    }
+    cited_urls = {item.rstrip("/)") for item in re.findall(r"https://[^\s)]+", text)}
     if allowed_urls:
-        unknown_urls = sorted(
-            item for item in cited_urls if item.rstrip("/") not in allowed_urls
-        )
+        unknown_urls = sorted(item for item in cited_urls if item.rstrip("/") not in allowed_urls)
         if unknown_urls:
             issues.append("正文引用了来源目录之外的URL：" + ", ".join(unknown_urls[:4]))
     label_heading = re.search(
@@ -3623,21 +3487,17 @@ def _report_draft_quality_issues(
     heading_count = len(re.findall(r"^#{3,4}\s+", text, flags=re.MULTILINE))
     heading_limit = 24 if project_mode else 9
     if heading_count > heading_limit:
-        issues.append(
-            f"三级和四级标题共{heading_count}个，超过所选报告模板上限{heading_limit}个"
-        )
+        issues.append(f"三级和四级标题共{heading_count}个，超过所选报告模板上限{heading_limit}个")
     issues.extend(_report_markdown_structure_issues(text, payload))
     issues.extend(_report_seed_copy_issues(text, payload))
-    if (
-        is_quality_execution_profile_id(payload.get("execution_profile_id", ""))
-        and not project_mode
-    ):
+    if is_quality_execution_profile_id(payload.get("execution_profile_id", "")) and not project_mode:
         issues.extend(_report_v2_benchmark_issues(text))
     return issues
 
 
 def _report_project_argument_content_issues(text: str) -> list[str]:
     issues: list[str] = []
+
     def has_any(*markers: str, body: str = text) -> bool:
         return any(marker in body for marker in markers)
 
@@ -3652,14 +3512,17 @@ def _report_project_argument_content_issues(text: str) -> list[str]:
         issues.append("正式报告仍包含写作指令或模板占位句，必须改写为具体军事场景、装备动作、直接战果和失效边界")
     # Keep the background/problem/need/project closure, but accept natural
     # Chinese wording instead of forcing five literal tokens into one passage.
-    if group_count(
-        (
-            ("国际", "国内", "战略", "态势", "战场", "作战"),
-            ("问题", "断点", "矛盾", "威胁", "短板", "难点"),
-            ("需求", "需要", "建设", "应当", "亟需"),
-            ("项目", "装备", "方案", "系统", "构型"),
+    if (
+        group_count(
+            (
+                ("国际", "国内", "战略", "态势", "战场", "作战"),
+                ("问题", "断点", "矛盾", "威胁", "短板", "难点"),
+                ("需求", "需要", "建设", "应当", "亟需"),
+                ("项目", "装备", "方案", "系统", "构型"),
+            )
         )
-    ) < 3:
+        < 3
+    ):
         issues.append("项目论证模板的需求概述未形成背景—问题—需求—项目画像闭环")
     status_section = re.search(
         r"^###\s*（二）国内外现状\s*$\n(?P<body>.*?)(?=^###\s*（三）建设必要性分析\s*$)",
@@ -3706,16 +3569,19 @@ def _report_project_argument_content_issues(text: str) -> list[str]:
     # A project image is a causal chain, not a required sentence skeleton.
     # Accept equivalent terms for scene, problem, principle/technology, action,
     # capability and effect; require most groups, not every literal token.
-    if group_count(
-        (
-            ("面向", "针对场景", "作战场景", "威胁场景", "在……条件下"),
-            ("针对", "解决", "应对", "任务断点", "瓶颈", "难题"),
-            ("利用", "依靠", "基于", "原理", "采用", "技术", "构型"),
-            ("关键作战流程", "作战流程", "作战运用", "部署", "发射", "交战", "任务链"),
-            ("形成", "实现", "获得", "提升", "保持", "能力"),
-            ("制胜逻辑", "直接效果", "作战效果", "战果", "毁伤", "压制", "拒止"),
+    if (
+        group_count(
+            (
+                ("面向", "针对场景", "作战场景", "威胁场景", "在……条件下"),
+                ("针对", "解决", "应对", "任务断点", "瓶颈", "难题"),
+                ("利用", "依靠", "基于", "原理", "采用", "技术", "构型"),
+                ("关键作战流程", "作战流程", "作战运用", "部署", "发射", "交战", "任务链"),
+                ("形成", "实现", "获得", "提升", "保持", "能力"),
+                ("制胜逻辑", "直接效果", "作战效果", "战果", "毁伤", "压制", "拒止"),
+            )
         )
-    ) < 5:
+        < 5
+    ):
         issues.append("项目画像未按场景—问题—原理—技术—作战流程—能力—效果—制胜机理展开")
     if not (
         has_any("时间链", "精度链", "信息链", "火力链", "授权链", "任务链", "决策链", "评估链")
@@ -3734,15 +3600,18 @@ def _report_project_argument_content_issues(text: str) -> list[str]:
         )
     ):
         issues.append("作战运用模式缺少分阶段流程或链路闭环分析")
-    if group_count(
-        (
-            ("耗弹量", "单位成本", "成本交换", "产能", "补充"),
-            ("突防效能", "拦截效果", "毁伤", "压制", "拒止", "生存"),
-            ("任务成功率", "任务完成率", "命中", "有效作战"),
-            ("闭环时间", "响应时间", "决策周期", "反应时间"),
-            ("交换比", "持续波次", "覆盖", "规模", "驻留"),
+    if (
+        group_count(
+            (
+                ("耗弹量", "单位成本", "成本交换", "产能", "补充"),
+                ("突防效能", "拦截效果", "毁伤", "压制", "拒止", "生存"),
+                ("任务成功率", "任务完成率", "命中", "有效作战"),
+                ("闭环时间", "响应时间", "决策周期", "反应时间"),
+                ("交换比", "持续波次", "覆盖", "规模", "驻留"),
+            )
         )
-    ) < 2:
+        < 2
+    ):
         issues.append("体系贡献率分析缺少与具体装备和任务相称的可比较效能方向")
     # The architecture must reach an implementable boundary, but not every
     # weapon needs a seven-layer inventory.  A missile, a low-altitude
@@ -3776,16 +3645,15 @@ def _report_three_layer_content_issues(text: str) -> list[str]:
         ("时间窗", "时敏", "窗口", "响应时间", "短时暴露"),
         ("约束", "强干扰", "弱通信", "断链", "带宽", "环境限制"),
     )
-    missing_scenario = [
-        "/".join(group[:2])
-        for group in scenario_groups
-        if not any(marker in text for marker in group)
-    ]
+    missing_scenario = ["/".join(group[:2]) for group in scenario_groups if not any(marker in text for marker in group)]
     if len(missing_scenario) > 2:
         issues.append("三层九项中典型作战场景缺少足够的对手、环境、阶段或约束信息")
 
     if not (
-        any(marker in text for marker in ("现有范式", "现有模式", "现有战法", "现有技术", "传统方案", "现役基线", "原方案"))
+        any(
+            marker in text
+            for marker in ("现有范式", "现有模式", "现有战法", "现有技术", "传统方案", "现役基线", "原方案")
+        )
         and any(marker in text for marker in ("不足", "做不到", "难以", "失效", "受限", "断点", "瓶颈"))
         and any(marker in text for marker in ("制胜", "能赢", "优势", "取胜", "改善", "恢复", "直接效果"))
     ):
@@ -3806,8 +3674,17 @@ def _report_three_layer_content_issues(text: str) -> list[str]:
     if not any(
         marker in text
         for marker in (
-            "沿用改进", "集成创新", "原理突破", "升级改进", "系统集成", "组合创新",
-            "新机理", "新构型", "突破", "采用现有技术", "自主研制",
+            "沿用改进",
+            "集成创新",
+            "原理突破",
+            "升级改进",
+            "系统集成",
+            "组合创新",
+            "新机理",
+            "新构型",
+            "突破",
+            "采用现有技术",
+            "自主研制",
         )
     ):
         issues.append("三层九项中能力实现途径未标注沿用改进、集成创新或原理突破")
@@ -3815,7 +3692,10 @@ def _report_three_layer_content_issues(text: str) -> list[str]:
     missing_technology = [
         label
         for label, markers in (
-            ("具体技术点", ("制导律", "材料体系", "算法", "架构", "技术点", "技术清单", "传感器", "火控", "推进", "能源")),
+            (
+                "具体技术点",
+                ("制导律", "材料体系", "算法", "架构", "技术点", "技术清单", "传感器", "火控", "推进", "能源"),
+            ),
             ("成熟度", ("成熟度", "TRL", "工程化", "样机", "现役", "在研", "基础")),
             ("瓶颈", ("瓶颈", "卡脖子", "短板", "约束", "难点", "风险")),
             ("优先级", ("P0", "P1", "P2", "高优先级", "中优先级", "低优先级", "优先级")),
@@ -3846,14 +3726,42 @@ def _report_three_layer_content_issues(text: str) -> list[str]:
         issues.append("三层九项中效能贡献未明确补链、强链或开链")
     if not any(
         marker in text
-        for marker in ("突防率", "拦截率", "交换比", "决策周期", "闭环时间", "任务成功率", "压缩量级", "提升量级", "改善量级", "持续波次", "单位成本")
+        for marker in (
+            "突防率",
+            "拦截率",
+            "交换比",
+            "决策周期",
+            "闭环时间",
+            "任务成功率",
+            "压缩量级",
+            "提升量级",
+            "改善量级",
+            "持续波次",
+            "单位成本",
+        )
     ):
         issues.append("三层九项中效能贡献缺少可量化评估方向")
 
     if not (
         any(marker in text for marker in ("P0", "P1", "P2", "高优先级", "中优先级", "低优先级"))
-        and any(marker in text for marker in ("演示验证", "验证项目", "演示项目", "样机验证", "试验", "试制", "近期抓手", "工程推进"))
-        and any(marker in text for marker in ("通过条件", "失败条件", "判据", "验收指标", "失效边界", "适用边界", "判退", "待验证", "证据边界"))
+        and any(
+            marker in text
+            for marker in ("演示验证", "验证项目", "演示项目", "样机验证", "试验", "试制", "近期抓手", "工程推进")
+        )
+        and any(
+            marker in text
+            for marker in (
+                "通过条件",
+                "失败条件",
+                "判据",
+                "验收指标",
+                "失效边界",
+                "适用边界",
+                "判退",
+                "待验证",
+                "证据边界",
+            )
+        )
     ):
         issues.append("三层九项中发展优先级或近期演示验证抓手不完整")
     return issues
@@ -3871,19 +3779,11 @@ def _report_domain_attribute_issues(
         [
             str(payload.get("topic", "")),
             str(payload.get("supplemental_information", "")),
-            " ".join(
-                str(item.get("direction", ""))
-                for item in cues
-                if isinstance(item, Mapping)
-            ),
+            " ".join(str(item.get("direction", "")) for item in cues if isinstance(item, Mapping)),
         ]
     )
-    domain_required = (
-        any(term in context for term in ("无人", "巡飞弹", "蜂群", "无人僚机"))
-        and any(
-            term in context
-            for term in ("远程", "远域", "防区外", "精确打击", "精确制导", "火力")
-        )
+    domain_required = any(term in context for term in ("无人", "巡飞弹", "蜂群", "无人僚机")) and any(
+        term in context for term in ("远程", "远域", "防区外", "精确打击", "精确制导", "火力")
     )
     if not domain_required:
         return []
@@ -3911,17 +3811,29 @@ def _report_domain_attribute_issues(
     capability_directions = _report_capability_image_table_directions(capability_body)
     image_text = capability_body or text
     if not (
-        (len(capability_directions) >= 1 or any(term in image_text for term in ("无人", "巡飞弹", "无人平台", "导弹", "弹药")))
+        (
+            len(capability_directions) >= 1
+            or any(term in image_text for term in ("无人", "巡飞弹", "无人平台", "导弹", "弹药"))
+        )
         and any(
             term in image_text
             for term in (
-                "能力域", "形成能力", "指标画像", "指标特征", "指标谱", "作战效果", "毁伤", "压制", "突防",
+                "能力域",
+                "形成能力",
+                "指标画像",
+                "指标特征",
+                "指标谱",
+                "作战效果",
+                "毁伤",
+                "压制",
+                "突防",
             )
         )
         and sum(
             term in image_text
             for term in ("作战运用", "运用概念", "编组", "波次", "待机", "部署", "发射", "突防", "交战", "巡飞")
-        ) >= 1
+        )
+        >= 1
     ):
         issues.append("装备能力图像需包含至少一项具体武器装备，并同时给出能力域、指标画像和作战运用概念")
 
@@ -3929,7 +3841,9 @@ def _report_domain_attribute_issues(
     # query-specific comparison or effect change, not all three slogans.
     if not (
         any(term in text for term in ("现役效能跃升", "效能跃升", "战力跃升", "相对基线", "相较现役", "相对现有"))
-        and any(term in text for term in ("作战效果", "直接效果", "任务成功", "突防", "毁伤", "压制", "拒止", "成本交换"))
+        and any(
+            term in text for term in ("作战效果", "直接效果", "任务成功", "突防", "毁伤", "压制", "拒止", "成本交换")
+        )
     ):
         issues.append("制胜效能需说明相对现有基线改变了何种作战效果或交换关系")
 
@@ -3937,7 +3851,10 @@ def _report_domain_attribute_issues(
         any(term in text for term in ("创新", "新增机制", "新能力", "新研", "改进", "构型变化", "技术路线"))
         and any(term in text for term in ("相较", "相比", "相对基线", "传统", "从", "转向", "替代", "改变"))
         and any(term in text for term in ("颠覆", "重构", "突破", "改变", "新增机制", "关系变化", "效能变化"))
-        and any(term in text for term in ("对手反适应", "反适应", "失效边界", "失败条件", "适用边界", "工程边界", "证据边界"))
+        and any(
+            term in text
+            for term in ("对手反适应", "反适应", "失效边界", "失败条件", "适用边界", "工程边界", "证据边界")
+        )
     ):
         issues.append("创新性需说明相对基线改变的作战关系，并给出对手反适应或失效边界")
 
@@ -3945,7 +3862,21 @@ def _report_domain_attribute_issues(
         any(term in text for term in ("成熟度", "TRL", "工程化", "样机", "现役改装", "基础", "在研"))
         and any(term in text for term in ("瓶颈", "短板", "工程风险", "集成风险", "约束", "难点"))
         and any(term in text for term in ("公开证据", "证据不足", "待验证", "待核验", "事实", "推断", "假设", "来源"))
-        and any(term in text for term in ("试验验证", "演示验证", "验证指标", "通过条件", "失败条件", "失效边界", "适用边界", "判退", "证据边界", "反适应"))
+        and any(
+            term in text
+            for term in (
+                "试验验证",
+                "演示验证",
+                "验证指标",
+                "通过条件",
+                "失败条件",
+                "失效边界",
+                "适用边界",
+                "判退",
+                "证据边界",
+                "反适应",
+            )
+        )
     ):
         issues.append("可实现性论证需给出成熟度、瓶颈、证据边界和装备专属判退/适用边界，杜绝无证据结论")
     return issues
@@ -3969,10 +3900,7 @@ def _report_markdown_structure_issues(
     if any(level > maximum_depth for level, _ in headings):
         issues.append(f"报告格式标题层级超过{maximum_depth}级，需合并碎片化小节")
     raw_h2 = [title for level, title in headings if level == 2]
-    h2 = [
-        re.sub(r"^\d+(?:\.\d+)*[、.．]?\s*", "", title).strip()
-        for title in raw_h2
-    ]
+    h2 = [re.sub(r"^\d+(?:\.\d+)*[、.．]?\s*", "", title).strip() for title in raw_h2]
     if raw_h2 != h2:
         issues.append("报告格式固定二级标题不得添加数字序号")
     missing = [title for title in canonical_h2 if title not in h2]
@@ -3982,9 +3910,7 @@ def _report_markdown_structure_issues(
     if unexpected:
         issues.append("报告格式存在契约外二级标题：" + "、".join(unexpected))
     if len(h2) != len(canonical_h2):
-        issues.append(
-            f"报告格式二级标题应恰好{len(canonical_h2)}个，实际{len(h2)}个"
-        )
+        issues.append(f"报告格式二级标题应恰好{len(canonical_h2)}个，实际{len(h2)}个")
     positions = [h2.index(title) for title in canonical_h2 if title in h2]
     if positions != sorted(positions):
         issues.append("报告格式二级章节顺序混乱")
@@ -3999,9 +3925,7 @@ def _report_markdown_structure_issues(
     if unexpected_h3:
         issues.append("报告格式存在契约外三级标题：" + "、".join(unexpected_h3))
     if len(h3) != len(canonical_h3):
-        issues.append(
-            f"报告格式三级标题应恰好{len(canonical_h3)}个，实际{len(h3)}个"
-        )
+        issues.append(f"报告格式三级标题应恰好{len(canonical_h3)}个，实际{len(h3)}个")
     h3_order_ok = (
         h3 == list(canonical_h3)
         if project_mode
@@ -4010,13 +3934,7 @@ def _report_markdown_structure_issues(
     )
     if not h3_order_ok:
         issues.append("报告格式九个三级项顺序混乱")
-    duplicate_h3 = sorted(
-        {
-            title
-            for title in h3
-            if h3.count(title) > list(canonical_h3).count(title)
-        }
-    )
+    duplicate_h3 = sorted({title for title in h3 if h3.count(title) > list(canonical_h3).count(title)})
     if duplicate_h3:
         issues.append("报告格式存在重复三级标题：" + "、".join(duplicate_h3))
     h4 = [title for level, title in headings if level == 4]
@@ -4028,9 +3946,7 @@ def _report_markdown_structure_issues(
         if unexpected_h4:
             issues.append("报告格式存在契约外四级标题：" + "、".join(unexpected_h4))
         if len(h4) != len(canonical_h4):
-            issues.append(
-                f"报告格式四级标题应恰好{len(canonical_h4)}个，实际{len(h4)}个"
-            )
+            issues.append(f"报告格式四级标题应恰好{len(canonical_h4)}个，实际{len(h4)}个")
         h4_positions = [h4.index(title) for title in canonical_h4 if title in h4]
         if h4_positions != sorted(h4_positions):
             issues.append("报告格式固定四级项顺序混乱")
@@ -4041,43 +3957,29 @@ def _report_markdown_structure_issues(
             break
         previous_level = level
     if headings and headings[0] != (2, canonical_h2[0]):
-        issues.append(
-            f"报告格式正文必须从“## {canonical_h2[0]}”开始"
-        )
-    normalized_headings = [
-        (level, re.sub(r"\s+", "", title)) for level, title in headings
-    ]
+        issues.append(f"报告格式正文必须从“## {canonical_h2[0]}”开始")
+    normalized_headings = [(level, re.sub(r"\s+", "", title)) for level, title in headings]
     expected_heading_counts = {
-        (2, re.sub(r"\s+", "", title)): list(canonical_h2).count(title)
-        for title in canonical_h2
+        (2, re.sub(r"\s+", "", title)): list(canonical_h2).count(title) for title in canonical_h2
     }
     expected_heading_counts.update(
-        {
-            (3, re.sub(r"\s+", "", title)): list(canonical_h3).count(title)
-            for title in canonical_h3
-        }
+        {(3, re.sub(r"\s+", "", title)): list(canonical_h3).count(title) for title in canonical_h3}
     )
     expected_heading_counts.update(
-        {
-            (4, re.sub(r"\s+", "", title)): list(canonical_h4).count(title)
-            for title in canonical_h4
-        }
+        {(4, re.sub(r"\s+", "", title)): list(canonical_h4).count(title) for title in canonical_h4}
     )
     duplicate_headings = sorted(
         {
             title
             for level, title in normalized_headings
-            if normalized_headings.count((level, title))
-            > expected_heading_counts.get((level, title), 1)
+            if normalized_headings.count((level, title)) > expected_heading_counts.get((level, title), 1)
         }
     )
     if duplicate_headings:
         issues.append("报告格式存在重复标题：" + "、".join(duplicate_headings[:6]))
     h3_count = sum(level == 3 for level, _ in headings)
     if h3_count > len(canonical_h3):
-        issues.append(
-            f"报告格式三级标题共{h3_count}个，超过所选模板上限{len(canonical_h3)}个"
-        )
+        issues.append(f"报告格式三级标题共{h3_count}个，超过所选模板上限{len(canonical_h3)}个")
     if _unbalanced_report_markdown(text):
         issues.append("报告格式存在未闭合的强调符号、代码标记或链接")
     # The project contract keeps Markdown structurally safe but leaves the
@@ -4124,11 +4026,7 @@ def _report_table_issues(
         if not project_mode and widths and max(widths) > 6:
             issues.append(f"报告格式第{index}个表格超过6列")
         separator_valid = bool(
-            len(table) >= 2
-            and all(
-                re.fullmatch(r":?-{3,}:?", cell.strip())
-                for cell in table[1].strip("|").split("|")
-            )
+            len(table) >= 2 and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in table[1].strip("|").split("|"))
         )
         if not separator_valid:
             issues.append(f"报告格式第{index}个表格缺少合法Markdown分隔行")
@@ -4137,11 +4035,7 @@ def _report_table_issues(
         data_rows = max(0, len(table) - 2) if separator_valid else 0
         if not project_mode and data_rows > 12:
             issues.append(f"报告格式第{index}个表格超过12行数据")
-        cells = [
-            cell.strip()
-            for row in table
-            for cell in row.strip("|").split("|")
-        ]
+        cells = [cell.strip() for row in table for cell in row.strip("|").split("|")]
         if any(len(cell) > 220 for cell in cells):
             issues.append(f"报告格式第{index}个表格存在超过220字的单元格")
         if project_mode and table:
@@ -4166,9 +4060,7 @@ def _report_table_issues(
                         row_cells = [cell.strip() for cell in row.strip("|").split("|")]
                         for column, label in enumerate(column_labels):
                             if not row_cells[column]:
-                                issues.append(
-                                    f"装备图像概述第{row_number}件武器的{label}为空"
-                                )
+                                issues.append(f"装备图像概述第{row_number}件武器的{label}为空")
     return issues
 
 
@@ -4218,9 +4110,7 @@ def _report_seed_copy_issues(
             if len(fragment) == 64 and fragment in body:
                 matched_short_fragments.add(fragment)
                 if len(matched_short_fragments) >= 3:
-                    return [
-                        "报告多处复用前置研判原句，应回到Query重构论证而非拼接材料"
-                    ]
+                    return ["报告多处复用前置研判原句，应回到Query重构论证而非拼接材料"]
     return []
 
 
@@ -4270,9 +4160,7 @@ def _report_v2_benchmark_issues(text: str) -> list[str]:
         ),
     }
     missing_mapping = [
-        label
-        for label, markers in mapping_groups.items()
-        if not any(marker in text for marker in markers)
+        label for label, markers in mapping_groups.items() if not any(marker in text for marker in markers)
     ]
     if missing_mapping:
         issues.append("三层九项能力映射链缺项：" + "、".join(missing_mapping))
@@ -4309,10 +4197,7 @@ def _report_v2_benchmark_issues(text: str) -> list[str]:
             continue
         if len(row) >= 100:
             prose_rows.append(row)
-    normalized_rows = [
-        re.sub(r"\[([^\]]+)\]\(https?://[^)]+\)", r"\1", row)
-        for row in prose_rows
-    ]
+    normalized_rows = [re.sub(r"\[([^\]]+)\]\(https?://[^)]+\)", r"\1", row) for row in prose_rows]
     if len(set(normalized_rows)) < len(normalized_rows):
         issues.append("报告格式存在完整段落重复")
     if any(len(row) > 1100 for row in prose_rows):
@@ -4320,8 +4205,7 @@ def _report_v2_benchmark_issues(text: str) -> list[str]:
     incomplete = [
         row
         for row in prose_rows
-        if row[-1] in "，、（([【“‘："
-        or row.endswith(("包括", "如下", "例如", "即", "以及", "并且", "从而"))
+        if row[-1] in "，、（([【“‘：" or row.endswith(("包括", "如下", "例如", "即", "以及", "并且", "从而"))
     ]
     if incomplete:
         issues.append("报告格式发现疑似未完成段落或断句")
@@ -4367,8 +4251,7 @@ def _report_delivery_blocking_issues(issues: Sequence[str]) -> list[str]:
     return [
         str(issue).strip()
         for issue in issues
-        if str(issue).strip()
-        and not str(issue).strip().startswith(advisory_prefixes)
+        if str(issue).strip() and not str(issue).strip().startswith(advisory_prefixes)
     ]
 
 
@@ -4394,17 +4277,14 @@ def _report_nonnegotiable_delivery_issues(issues: Sequence[str]) -> list[str]:
     return [
         str(issue).strip()
         for issue in issues
-        if str(issue).strip()
-        and any(marker in str(issue) for marker in hard_markers)
+        if str(issue).strip() and any(marker in str(issue) for marker in hard_markers)
     ]
 
 
 def _branch_delivery_is_complete(payload: Mapping[str, Any]) -> bool:
     deliverables = payload.get("branch_deliverables", {})
     return (
-        isinstance(deliverables, Mapping)
-        and str(deliverables.get("delivery_status", "")).strip().lower()
-        == "complete"
+        isinstance(deliverables, Mapping) and str(deliverables.get("delivery_status", "")).strip().lower() == "complete"
     )
 
 
@@ -4487,11 +4367,7 @@ def _report_required_section_present(text: str, requirement: str) -> bool:
     if expected:
         required_hits = 1 if len(expected) == 1 else 2
         return sum(marker in text for marker in expected) >= required_hits
-    parts = [
-        item.strip()
-        for item in re.split(r"[、，,；;与及/（）()]", requirement)
-        if len(item.strip()) >= 3
-    ]
+    parts = [item.strip() for item in re.split(r"[、，,；;与及/（）()]", requirement) if len(item.strip()) >= 3]
     if not parts:
         return False
     required_hits = 1 if len(parts) == 1 else 2
@@ -4499,10 +4375,13 @@ def _report_required_section_present(text: str, requirement: str) -> bool:
 
 
 def _has_numbered_report_label(text: str, label: str, index: int) -> bool:
-    return re.search(
-        rf"{re.escape(label)}\s*[（(]?\s*0*{index}\s*[）)]?",
-        text,
-    ) is not None
+    return (
+        re.search(
+            rf"{re.escape(label)}\s*[（(]?\s*0*{index}\s*[）)]?",
+            text,
+        )
+        is not None
+    )
 
 
 def _report_evidence_ids(value: Any) -> list[str]:
@@ -4573,4 +4452,79 @@ def _limit_report_summary(text: str, *, max_chars: int = 16_000) -> str:
 # and when an embedding imports reporting_support directly.
 _sync_legacy_globals()
 
-__all__ = ['_report_template_mode', '_coerce_report_template_mode', '_report_canonical_headings', '_report_has_complete_canonical_structure', '_canonical_report_h2', '_canonical_report_h3', '_canonical_report_h4', '_normalize_report_structure_deterministically', '_report_capability_cues', '_report_capability_cue_is_substantive', '_report_capability_portrait_markdown', '_limit_report_capability_cues', '_remove_empty_report_clauses', '_normalized_report_reuse_text', '_report_matrix_verification_mechanism', '_reflow_long_report_paragraphs', '_stabilize_report_delivery_contract', '_report_issues_are_deterministic_format_only', '_project_argument_report_writer_system_prompt', '_report_writer_system_prompt', '_report_repair_system_prompt', '_clean_winning_hypothesis_title', '_winning_portfolio_title', '_winning_combat_scene', '_winning_primary_equipment_form', '_winning_title_has_concrete_equipment_identity', '_prioritize_equipment_evidence_refs', '_is_remote_precision_portfolio_direction', '_report_branch', '_report_target_chars', '_unbounded_quality_report', '_report_hard_max_chars', '_clip_complete_report_phrase', '_compact_report_table_row', '_normalize_report_line_ending', '_enforce_report_hard_max', '_report_writer_max_chars', '_reporter_output_token_budget', '_strip_report_internal_markers', '_clean_reporter_clue_text', '_mark_reporter_handoff_rewrite_boundaries', '_sanitize_reporter_output', '_normalize_branch_report_labels', '_normalize_numbered_report_title_group', '_reporter_generation_payload', '_compact_reporter_branch_products', '_reporter_repair_payload', '_reporter_timeout_retry_payload', '_reporter_agent_contract', '_reporter_revision_notes', '_report_issue_code', '_report_capability_image_table_directions', '_report_equipment_attribution_issues', '_report_fragment_quality_issues', '_report_draft_quality_issues', '_report_project_argument_content_issues', '_report_three_layer_content_issues', '_report_domain_attribute_issues', '_report_markdown_structure_issues', '_unbalanced_report_markdown', '_report_table_issues', '_is_report_seed_copy_issue', '_report_seed_copy_issues', '_report_v2_benchmark_issues', '_report_issues_require_fallback', '_report_delivery_blocking_issues', '_report_nonnegotiable_delivery_issues', '_branch_delivery_is_complete', '_c_branch_product_semantically_present', '_report_required_section_present', '_has_numbered_report_label', '_report_evidence_ids', '_normalize_report_summary', '_limit_report_summary']
+__all__ = [
+    "_report_template_mode",
+    "_coerce_report_template_mode",
+    "_report_canonical_headings",
+    "_report_has_complete_canonical_structure",
+    "_canonical_report_h2",
+    "_canonical_report_h3",
+    "_canonical_report_h4",
+    "_normalize_report_structure_deterministically",
+    "_report_capability_cues",
+    "_report_capability_cue_is_substantive",
+    "_report_capability_portrait_markdown",
+    "_limit_report_capability_cues",
+    "_remove_empty_report_clauses",
+    "_normalized_report_reuse_text",
+    "_report_matrix_verification_mechanism",
+    "_reflow_long_report_paragraphs",
+    "_stabilize_report_delivery_contract",
+    "_report_issues_are_deterministic_format_only",
+    "_project_argument_report_writer_system_prompt",
+    "_report_writer_system_prompt",
+    "_report_repair_system_prompt",
+    "_clean_winning_hypothesis_title",
+    "_winning_portfolio_title",
+    "_winning_combat_scene",
+    "_winning_primary_equipment_form",
+    "_winning_title_has_concrete_equipment_identity",
+    "_prioritize_equipment_evidence_refs",
+    "_is_remote_precision_portfolio_direction",
+    "_report_branch",
+    "_report_target_chars",
+    "_unbounded_quality_report",
+    "_report_hard_max_chars",
+    "_clip_complete_report_phrase",
+    "_compact_report_table_row",
+    "_normalize_report_line_ending",
+    "_enforce_report_hard_max",
+    "_report_writer_max_chars",
+    "_reporter_output_token_budget",
+    "_strip_report_internal_markers",
+    "_clean_reporter_clue_text",
+    "_mark_reporter_handoff_rewrite_boundaries",
+    "_sanitize_reporter_output",
+    "_normalize_branch_report_labels",
+    "_normalize_numbered_report_title_group",
+    "_reporter_generation_payload",
+    "_compact_reporter_branch_products",
+    "_reporter_repair_payload",
+    "_reporter_timeout_retry_payload",
+    "_reporter_agent_contract",
+    "_reporter_revision_notes",
+    "_report_issue_code",
+    "_report_capability_image_table_directions",
+    "_report_equipment_attribution_issues",
+    "_report_fragment_quality_issues",
+    "_report_draft_quality_issues",
+    "_report_project_argument_content_issues",
+    "_report_three_layer_content_issues",
+    "_report_domain_attribute_issues",
+    "_report_markdown_structure_issues",
+    "_unbalanced_report_markdown",
+    "_report_table_issues",
+    "_is_report_seed_copy_issue",
+    "_report_seed_copy_issues",
+    "_report_v2_benchmark_issues",
+    "_report_issues_require_fallback",
+    "_report_delivery_blocking_issues",
+    "_report_nonnegotiable_delivery_issues",
+    "_branch_delivery_is_complete",
+    "_c_branch_product_semantically_present",
+    "_report_required_section_present",
+    "_has_numbered_report_label",
+    "_report_evidence_ids",
+    "_normalize_report_summary",
+    "_limit_report_summary",
+]

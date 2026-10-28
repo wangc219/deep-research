@@ -177,10 +177,7 @@ class RunCheckpoint:
         pending = set(self.pending_task_ids)
         if completed & pending:
             raise ValueError("completed and pending task ids must not overlap")
-        if any(
-            status not in {"pending", "running", "completed"}
-            for status in self.task_statuses.values()
-        ):
+        if any(status not in {"pending", "running", "completed"} for status in self.task_statuses.values()):
             raise ValueError("invalid task status in run checkpoint")
         if len(self.selected_agent_ids) != len(set(self.selected_agent_ids)):
             raise ValueError("selected agent ids must be unique")
@@ -190,26 +187,17 @@ class RunCheckpoint:
         }
         if set(self.task_statuses) != expected_task_ids:
             raise ValueError("task statuses do not match selected agents")
-        status_completed = {
-            task_id
-            for task_id, status in self.task_statuses.items()
-            if status == "completed"
-        }
-        status_pending = {
-            task_id
-            for task_id, status in self.task_statuses.items()
-            if status == "pending"
-        }
+        status_completed = {task_id for task_id, status in self.task_statuses.items() if status == "completed"}
+        status_pending = {task_id for task_id, status in self.task_statuses.items() if status == "pending"}
         if completed != status_completed or pending != status_pending:
             raise ValueError("task status lists are inconsistent")
         if self.status == "completed" and (
-            self.pending_task_ids
-            or any(status != "completed" for status in self.task_statuses.values())
+            self.pending_task_ids or any(status != "completed" for status in self.task_statuses.values())
         ):
             raise ValueError("completed run checkpoint cannot contain unfinished tasks")
 
     @classmethod
-    def from_plain(cls, payload: Mapping[str, Any]) -> "RunCheckpoint":
+    def from_plain(cls, payload: Mapping[str, Any]) -> RunCheckpoint:
         checkpoint = cls(
             run_id=str(payload["run_id"]),
             checkpoint_id=str(payload["checkpoint_id"]),
@@ -217,30 +205,18 @@ class RunCheckpoint:
             pending_task_ids=[str(item) for item in payload["pending_task_ids"]],
             round_index=int(payload["round_index"]),
             budget_remaining={
-                str(key): int(value)
-                for key, value in cast(Mapping[str, Any], payload["budget_remaining"]).items()
+                str(key): int(value) for key, value in cast(Mapping[str, Any], payload["budget_remaining"]).items()
             },
             status=str(payload.get("status", "running")),
             task_statuses={
-                str(key): str(value)
-                for key, value in cast(
-                    Mapping[str, Any], payload.get("task_statuses", {})
-                ).items()
+                str(key): str(value) for key, value in cast(Mapping[str, Any], payload.get("task_statuses", {})).items()
             },
             topic=str(payload.get("topic", "")),
             research_route=str(payload.get("research_route", "")),
             resolved_route=str(payload.get("resolved_route", "")),
-            selected_agent_ids=[
-                str(item) for item in payload.get("selected_agent_ids", [])
-            ],
-            source_materials=[
-                dict(cast(Mapping[str, Any], item))
-                for item in payload.get("source_materials", [])
-            ],
-            worker_reports=[
-                dict(cast(Mapping[str, Any], item))
-                for item in payload.get("worker_reports", [])
-            ],
+            selected_agent_ids=[str(item) for item in payload.get("selected_agent_ids", [])],
+            source_materials=[dict(cast(Mapping[str, Any], item)) for item in payload.get("source_materials", [])],
+            worker_reports=[dict(cast(Mapping[str, Any], item)) for item in payload.get("worker_reports", [])],
             mode=str(payload.get("mode", "fake")),
             config_fingerprint=str(payload.get("config_fingerprint", "")),
             resume_count=int(payload.get("resume_count", 0)),

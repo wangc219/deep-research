@@ -99,7 +99,7 @@ test('所有主导航页面共用淡蓝装备背景，智能对话与研究任�
     /html\.dark \.app-navigation-page :where\([\s\S]*?\.favorite-modules button,[\s\S]*?\.reader,[\s\S]*?\.reader-nav[\s\S]*?background:\s*#171d2a !important/
   )
   assert.match(source, /<h1 class="research-theme-title">\{\{ randomGreeting \}\}<\/h1>/)
-  assert.match(source, /const randomGreeting = '智启新境 · 探索装备未来'/)
+  assert.match(source, /const randomGreeting = '智启新境 · 探索未来'/)
   assert.match(runsView, /<h1 class="research-theme-title">创新为帆 探索未至之境<\/h1>/)
   assert.match(
     mainStyles,

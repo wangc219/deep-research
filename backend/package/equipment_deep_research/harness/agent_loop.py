@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 import inspect
-from typing import Any, Literal, cast
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 from equipment_deep_research.domain.proposals import freeze_plain, thaw_plain
 from equipment_deep_research.providers.base import (
@@ -22,6 +22,7 @@ from equipment_deep_research.contracts.tools import (
     ToolExecutionContext,
     ToolResult,
 )
+from equipment_deep_research.harness.scoped_registry import ScopedRegistry
 
 
 AgentLoopStatus = Literal[
@@ -31,6 +32,14 @@ AgentLoopStatus = Literal[
     "budget_exhausted",
     "failed",
     "cancelled",
+]
+AgentLoopEventType = Literal[
+    "turn_started",
+    "assistant_message",
+    "tool_result",
+    "turn_end",
+    "loop_completed",
+    "loop_failed",
 ]
 
 TOOL_CANCELLATION_GRACE_SECONDS = 0.05
@@ -76,7 +85,7 @@ class TurnSnapshotInput:
 
 @dataclass(frozen=True)
 class AgentLoopEvent:
-    event_type: str
+    event_type: AgentLoopEventType
     run_id: str
     agent_id: str
     turn_index: int | None = None
@@ -140,6 +149,7 @@ class AgentLoopConfig:
     run_id: str = "run"
     agent_id: str = "agent"
     max_turns: int = 64
+    max_parallel_tools: int = 4
     options: Mapping[str, Any] = field(default_factory=dict)
     permissions: Mapping[str, Any] = field(default_factory=dict)
     prepare_turn: PrepareTurnCallback | None = None
@@ -150,6 +160,8 @@ class AgentLoopConfig:
     def __post_init__(self) -> None:
         if self.max_turns < 0:
             raise ValueError("max_turns must not be negative")
+        if self.max_parallel_tools < 1:
+            raise ValueError("max_parallel_tools must be positive")
         if not isinstance(self.options, Mapping):
             raise TypeError("options must be an object")
         if not isinstance(self.permissions, Mapping):
@@ -193,6 +205,19 @@ class AgentLoopResult:
             "error": self.error,
             "secondary_errors": list(self.secondary_errors),
         }
+
+
+@runtime_checkable
+class AgentLoopRunner(Protocol):
+    """可替换 Agent loop 的最小稳定接口。"""
+
+    async def run(
+        self,
+        messages: Sequence[ModelMessage],
+        provider: ModelProvider,
+        tools: Sequence[ToolDefinition],
+        config: AgentLoopConfig,
+    ) -> AgentLoopResult: ...
 
 
 class AgentLoop:
@@ -299,6 +324,7 @@ class AgentLoop:
                     snapshot.tools,
                     execution_context,
                     reserved_call_ids,
+                    max_parallel_tools=config.max_parallel_tools,
                 )
                 for call_index, (provider_call, result) in enumerate(
                     zip(calls, results, strict=True)
@@ -428,7 +454,7 @@ class AgentLoop:
     async def _emit(
         self,
         config: AgentLoopConfig,
-        event_type: str,
+        event_type: AgentLoopEventType,
         turn_index: int | None,
         payload: Mapping[str, Any],
         *,
@@ -455,7 +481,7 @@ class AgentLoop:
     async def _emit_terminal(
         self,
         config: AgentLoopConfig,
-        event_type: str,
+        event_type: AgentLoopEventType,
         turn_index: int | None,
         payload: Mapping[str, Any],
         *,
@@ -554,8 +580,13 @@ class AgentLoop:
         tools: Sequence[ToolDefinition],
         context: ToolExecutionContext,
         reserved_call_ids: set[str],
+        *,
+        max_parallel_tools: int,
     ) -> tuple[ToolResult, ...]:
-        registry = {tool.name: tool for tool in tools}
+        registry = ScopedRegistry(
+            f"{context.run_id}:{context.agent_id}:tools",
+            {tool.name: tool for tool in tools},
+        )
         duplicate_indexes: set[int] = set()
         for index, call in enumerate(calls):
             if call.call_id in reserved_call_ids:
@@ -563,37 +594,91 @@ class AgentLoop:
             else:
                 reserved_call_ids.add(call.call_id)
 
-        tasks = [
-            asyncio.create_task(
-                self._execute_one(
+        results: list[ToolResult | None] = [None] * len(calls)
+        index = 0
+        while index < len(calls):
+            call = calls[index]
+            tool = registry.get(call.name)
+            if tool is None or tool.concurrency == "exclusive":
+                results[index] = await self._execute_one(
                     call,
                     registry,
                     context,
                     duplicate=index in duplicate_indexes,
                 )
+                index += 1
+                continue
+
+            group_end = index + 1
+            while group_end < len(calls):
+                next_tool = registry.get(calls[group_end].name)
+                if next_tool is None or next_tool.concurrency == "exclusive":
+                    break
+                group_end += 1
+            group_results = await self._execute_parallel_group(
+                calls[index:group_end],
+                registry,
+                context,
+                duplicate_indexes={
+                    item - index
+                    for item in duplicate_indexes
+                    if index <= item < group_end
+                },
+                max_parallel_tools=max_parallel_tools,
             )
-            for index, call in enumerate(calls)
-        ]
-        pending = set(tasks)
+            results[index:group_end] = group_results
+            index = group_end
+
+        if any(result is None for result in results):
+            raise RuntimeError("tool execution plan did not settle every call")
+        return cast(tuple[ToolResult, ...], tuple(results))
+
+    async def _execute_parallel_group(
+        self,
+        calls: Sequence[ProviderToolCall],
+        registry: ScopedRegistry[ToolDefinition],
+        context: ToolExecutionContext,
+        *,
+        duplicate_indexes: set[int],
+        max_parallel_tools: int,
+    ) -> tuple[ToolResult, ...]:
+        """有界滚动执行并按模型调用顺序返回结果。"""
+
+        results: list[ToolResult | None] = [None] * len(calls)
+        active: dict[asyncio.Task[ToolResult], int] = {}
+        next_index = 0
         try:
-            while pending:
-                done, pending = await asyncio.wait(
-                    pending,
+            while next_index < len(calls) or active:
+                while next_index < len(calls) and len(active) < max_parallel_tools:
+                    task = asyncio.create_task(
+                        self._execute_one(
+                            calls[next_index],
+                            registry,
+                            context,
+                            duplicate=next_index in duplicate_indexes,
+                        )
+                    )
+                    active[task] = next_index
+                    next_index += 1
+                done, _pending = await asyncio.wait(
+                    active,
                     return_when=asyncio.FIRST_COMPLETED,
                 )
-                for task in tasks:
-                    if task not in done:
-                        continue
-                    task.result()
-            return tuple(task.result() for task in tasks)
+                for task in done:
+                    result_index = active.pop(task)
+                    results[result_index] = task.result()
         except BaseException as primary_error:
-            await _cancel_and_drain(tasks, primary_error)
+            await _cancel_and_drain(tuple(active), primary_error)
             raise
+
+        if any(result is None for result in results):
+            raise RuntimeError("parallel tool group did not settle every call")
+        return cast(tuple[ToolResult, ...], tuple(results))
 
     async def _execute_one(
         self,
         provider_call: ProviderToolCall,
-        registry: Mapping[str, ToolDefinition],
+        registry: ScopedRegistry[ToolDefinition],
         context: ToolExecutionContext,
         *,
         duplicate: bool,

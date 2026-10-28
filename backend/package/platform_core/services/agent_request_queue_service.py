@@ -202,12 +202,13 @@ async def dispatch_next_request(
     return None
 
 
-async def recover_pending_dispatches() -> None:
+async def recover_pending_dispatches(*, owner_uid: str | None = None) -> None:
     """恢复 pending 投递及 completed hook 留下的 ready 队列。"""
     async with pg_manager.get_async_session_context() as db:
         pending_result = await db.execute(
             select(AgentRun.uid, AgentRun.agent_slug, AgentRun.conversation_thread_id).where(
-                AgentRun.status == "pending"
+                AgentRun.status == "pending",
+                *([AgentRun.uid == owner_uid] if owner_uid else []),
             )
         )
         scopes_result = await db.execute(
@@ -216,7 +217,10 @@ async def recover_pending_dispatches() -> None:
                 AgentRunRequest.agent_slug,
                 AgentRunRequest.conversation_thread_id,
             )
-            .where(AgentRunRequest.status == REQUEST_STATUS_QUEUED)
+            .where(
+                AgentRunRequest.status == REQUEST_STATUS_QUEUED,
+                *([AgentRunRequest.uid == owner_uid] if owner_uid else []),
+            )
             .distinct()
         )
         scopes = {tuple(row) for row in pending_result.all()}

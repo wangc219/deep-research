@@ -30,6 +30,7 @@ from equipment_deep_research.harness.agent_loop import (
     AgentLoopConfig,
     AgentLoopEvent,
     AgentLoopResult,
+    AgentLoopRunner,
     TurnSnapshotInput,
 )
 from equipment_deep_research.harness.budget import Budget
@@ -113,7 +114,8 @@ class AgentHarness:
         store: Any,
         *,
         sessions_root: str | Path,
-        loop: AgentLoop | None = None,
+        loop: AgentLoopRunner | None = None,
+        max_parallel_tools: int = 4,
         model_name: str = "gpt-5.5",
         model_options: Mapping[str, Any] | None = None,
         authorization_policy: ToolAuthorizationPolicy | None = None,
@@ -126,6 +128,9 @@ class AgentHarness:
         self.store = store
         self.sessions_root = Path(sessions_root)
         self.loop = loop or AgentLoop()
+        if max_parallel_tools < 1:
+            raise ValueError("max_parallel_tools must be positive")
+        self.max_parallel_tools = max_parallel_tools
         self.model_name = str(model_name)
         self.model_options = cast(
             Mapping[str, Any], freeze_plain(model_options or {})
@@ -595,6 +600,7 @@ class AgentHarness:
                 run_id=task.run_id,
                 agent_id=task.target_agent_id,
                 max_turns=configured_max_turns,
+                max_parallel_tools=self.max_parallel_tools,
                 options=self.model_options,
                 permissions={
                     "allowed_tools": active_tool_names,

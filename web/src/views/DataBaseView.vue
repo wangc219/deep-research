@@ -1,5 +1,14 @@
 <template>
-  <div class="database-container layout-container">
+  <div v-if="zhipuActive" class="library-provider-workspace">
+    <div class="library-provider-toolbar">
+      <a-button class="lucide-icon-btn" @click="returnToLibraries"
+        ><ArrowLeft :size="16" />返回资料库</a-button
+      >
+      <span>资料库 / 智谱知识库</span>
+    </div>
+    <DocumentResearchView />
+  </div>
+  <div v-else class="database-container layout-container">
     <PageHeader
       v-if="!props.embedded"
       title="知识库"
@@ -25,12 +34,7 @@
         </a-select>
       </template>
       <template #actions>
-        <a-button
-          type="primary"
-          class="lucide-icon-btn"
-          :disabled="!kbTypes.length"
-          @click="state.openNewDatabaseModel = true"
-        >
+        <a-button type="primary" class="lucide-icon-btn" @click="state.openNewDatabaseModel = true">
           <Plus :size="16" /> 新建知识库
         </a-button>
       </template>
@@ -40,6 +44,7 @@
       v-model:open="state.openNewDatabaseModel"
       :supported-kb-types="supportedKbTypes"
       :personal-only="!userStore.isAdmin"
+      @connect-zhipu="openZhipu"
     />
 
     <!-- 加载状态 -->
@@ -60,7 +65,6 @@
           type="primary"
           size="large"
           class="lucide-icon-btn"
-          :disabled="!kbTypes.length"
           @click="state.openNewDatabaseModel = true"
         >
           <template #icon>
@@ -118,12 +122,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch, computed } from 'vue'
+import { ref, onMounted, reactive, watch, computed, defineAsyncComponent } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDatabaseStore } from '@/stores/database'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import { useUserStore } from '@/stores/user'
-import { Copy, Pencil, Plus, Trash2 } from '@lucide/vue'
+import { ArrowLeft, Copy, Pencil, Plus, Trash2 } from '@lucide/vue'
 import { message, Modal } from 'ant-design-vue'
 import { databaseApi, typeApi } from '@/apis/knowledge_api'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -140,6 +145,25 @@ const route = useRoute()
 const router = useRouter()
 const databaseStore = useDatabaseStore()
 const userStore = useUserStore()
+useLiveRefresh(() => databaseStore.loadDatabases({ silent: true }), {
+  enabled: () => !dbState.value.listLoading && !zhipuActive.value
+})
+const DocumentResearchView = defineAsyncComponent(() => import('@/views/DocumentResearchView.vue'))
+const zhipuActive = computed(
+  () => route.query.provider === 'zhipu' || route.query.tool === 'document-research'
+)
+const openZhipu = () => {
+  state.openNewDatabaseModel = false
+  const query = { ...route.query, provider: 'zhipu' }
+  delete query.tool
+  router.push({ path: '/extensions', query })
+}
+const returnToLibraries = () => {
+  const query = { ...route.query }
+  delete query.provider
+  delete query.tool
+  router.push({ path: '/extensions', query })
+}
 
 const props = defineProps({
   embedded: { type: Boolean, default: false }
@@ -360,6 +384,18 @@ defineExpose({
 </script>
 
 <style lang="less" scoped>
+.library-provider-workspace {
+  min-height: 100%;
+}
+.library-provider-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px var(--page-padding);
+  color: var(--gray-500);
+  font-size: 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
 .database-container {
   :deep(.info-card-icon) {
     background: var(--gray-0);

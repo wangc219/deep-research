@@ -63,6 +63,7 @@ async def test_thread_message_audits_return_persisted_facts_without_leaking_into
     test_client,
     standard_user,
     admin_headers,
+    other_user,
 ):
     standard_headers = standard_user["headers"]
     standard_thread_id = await _create_thread_for_user(test_client, standard_headers)
@@ -75,9 +76,9 @@ async def test_thread_message_audits_return_persisted_facts_without_leaking_into
 
     message_audit_cross_user = await test_client.get(
         f"/api/chat/thread/{standard_thread_id}/audits",
-        headers=admin_headers,
+        headers=other_user["headers"],
     )
-    assert message_audit_cross_user.status_code == 404, message_audit_cross_user.text
+    assert message_audit_cross_user.status_code == 403, message_audit_cross_user.text
 
     thread_id = await _create_thread_for_user(test_client, admin_headers)
     run_id = f"run-{uuid.uuid4()}"
@@ -513,8 +514,9 @@ async def test_thread_history_envelope_has_all_runs_and_keeps_viewed_explicit(
             """
             INSERT INTO agent_runs
                 (id, conversation_thread_id, runtime_scope_id, agent_slug, uid, status,
-                 request_id, conversation_id, run_type, input_payload, created_at, finished_at)
-            VALUES ($1, $2, $2, $3, $4, 'cancelled', $5, $6, 'chat',
+                 request_id, conversation_id, run_type, source, channel, origin_metadata, token_usage,
+                 input_payload, created_at, finished_at)
+            VALUES ($1, $2, $2, $3, $4, 'cancelled', $5, $6, 'chat', 'chat', 'web', '{}'::jsonb, '{}'::jsonb,
                     '{"private_input":"must-not-leak"}'::jsonb, $7, $8)
             """,
             [
@@ -633,11 +635,11 @@ async def test_mark_thread_viewed_returns_thread_status(test_client, admin_heade
     assert payload["thread_status"] in {"done", "ready", "loading"}
 
 
-async def test_mark_thread_viewed_requires_ownership(test_client, standard_user, admin_headers):
+async def test_mark_thread_viewed_requires_ownership(test_client, standard_user, other_user):
     headers = standard_user["headers"]
     thread_id = await _create_thread_for_user(test_client, headers)
 
-    response = await test_client.post(f"/api/chat/thread/{thread_id}/viewed", headers=admin_headers)
+    response = await test_client.post(f"/api/chat/thread/{thread_id}/viewed", headers=other_user["headers"])
     assert response.status_code == 404, response.text
 
 

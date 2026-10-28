@@ -23,9 +23,17 @@ class EvidenceAssessment:
 class EvidenceGovernor:
     def __init__(self, *, minimum_score: float = 0.62, weights: dict[str, float] | None = None) -> None:
         self.minimum_score = minimum_score
-        self.weights = weights or {"relevance": .30, "transparency": .15, "freshness": .15, "direct_support": .25, "extraction_quality": .15}
+        self.weights = weights or {
+            "relevance": 0.30,
+            "transparency": 0.15,
+            "freshness": 0.15,
+            "direct_support": 0.25,
+            "extraction_quality": 0.15,
+        }
 
-    def assess(self, evidence: EvidenceCard, dimensions: dict[str, float], *, existing: list[EvidenceCard] = ()) -> EvidenceAssessment:
+    def assess(
+        self, evidence: EvidenceCard, dimensions: dict[str, float], *, existing: list[EvidenceCard] = ()
+    ) -> EvidenceAssessment:
         score = round(sum(self.weights.get(key, 0) * max(0, min(1, value)) for key, value in dimensions.items()), 3)
         normalized = normalize_url(evidence.source_url)
         duplicate = next((item for item in existing if normalize_url(item.source_url) == normalized), None)
@@ -46,7 +54,9 @@ class EvidenceGovernor:
         keywords = set(_terms(evidence.claim))
         for item in existing:
             overlap = keywords & set(_terms(item.claim))
-            opposite = any(word in evidence.claim for word in ("不足", "失败", "受限", "不支持")) != any(word in item.claim for word in ("不足", "失败", "受限", "不支持"))
+            opposite = any(word in evidence.claim for word in ("不足", "失败", "受限", "不支持")) != any(
+                word in item.claim for word in ("不足", "失败", "受限", "不支持")
+            )
             shared = _shared_phrase(evidence.claim, item.claim)
             if (len(overlap) >= 2 or len(shared) >= 3) and opposite:
                 basis = "|".join(sorted(overlap)) or shared

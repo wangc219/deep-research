@@ -14,6 +14,7 @@ from platform_core.storage.postgres.models_business import (
     AGENT_RUN_TERMINAL_STATUSES,
     AUDIT_MESSAGE_TYPES,
     MODEL_AUDIT_MESSAGE_TYPE,
+    SUPERSEDED_MESSAGE_TYPE,
     TOOL_AUDIT_MESSAGE_TYPE,
     UNVIEWED_RUN_MARKER,
     AgentRun,
@@ -37,6 +38,7 @@ MESSAGE_SEARCH_EXCLUDED_TYPES = (
     "tool_result",
     MODEL_AUDIT_MESSAGE_TYPE,
     TOOL_AUDIT_MESSAGE_TYPE,
+    SUPERSEDED_MESSAGE_TYPE,
 )
 INVOCATION_CONVERSATION_SOURCES = ("agent_call", "agent_evaluation")
 

@@ -22,11 +22,7 @@ class BaselinePromptBuilder:
         context: dict[str, Any],
         compact_runtime: bool = False,
     ) -> dict[str, Any]:
-        contract = (
-            agent.output_contract
-            if isinstance(agent.output_contract, dict)
-            else {"name": agent.output_contract}
-        )
+        contract = agent.output_contract if isinstance(agent.output_contract, dict) else {"name": agent.output_contract}
         visible_context = dict(context)
         if compact_runtime:
             # Role, tools, skill, policy and output schema are compiled once in

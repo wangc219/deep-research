@@ -24,6 +24,24 @@ from equipment_deep_research.query_library.quality import (
 )
 
 
+RESEARCH_FOCUS_REQUIREMENTS = (
+    "默认以中国为研究主体，围绕中国当前安全态势及未来军事任务开展战略层面的装备能力研究；"
+    "围绕母题和自动态势两种模式均适用，用户明确指定其他主体或民用范围时遵循其范围。",
+    "每条命题须关联公开可核验的近期态势变化与具体武器装备类别，说明任务需求、能力缺口及研究价值；"
+    "国外装备动态仅作为公开能力比较、外部约束或技术参照，不误写为国外自身建设需求。",
+    "在战略层面评估装备类别对威慑、战略制衡、防护与任务韧性的潜在价值及局限，"
+    "比较公开能力信息、发展趋势与不确定性，不预设某种装备能够制胜，也不提出针对现实对手的攻击方案或武器改进设计。",
+    "选题以相关安全态势、面临威胁和未来军事作战需要为主线，从任务压力与现有能力缺口推导值得研究或深研的装备命题；"
+    "技术信号只有在能改变军事任务可行性或装备能力边界时才作为选题依据。",
+    "默认聚焦军事作战与装备发展，不主动生成极端灾害、民用应急救援或一般公共服务选题；"
+    "仅当用户明确指定民用研究母题时，才按其指定范围研究。",
+    "高原、极寒、强风浪等自然环境应作为军事任务的条件约束，说明其与军事任务、对抗威胁及装备能力缺口的关系，"
+    "不能把自然灾害本身替代为军事需求来源。",
+    "每个候选命题必须说明具体态势或威胁变化、未来任务、现有能力缺口和待研究的未决问题；"
+    "按任务重要性、缺口严重性、变化紧迫性、公开证据和可验证性择优，避免热点拼接与常识问答。",
+)
+
+
 GROUNDING_SCHEMA = {
     "summary": "string",
     "search_queries": ["string"],
@@ -278,7 +296,8 @@ class ModelQueryGenerator:
             )
         else:
             task = (
-                "围绕无人、低空、远程火力和精确打击装备进行轻量公开线索校验。"
+                f"当前日期为{current_date}。围绕用户母题及其相关安全态势、威胁变化和未来军事任务进行轻量公开线索校验。"
+                "默认从中国视角研判，优先核对当年及近两年与母题直接相关的公开资料，标明资料日期及其适用边界。"
                 "若联网检索可用，优先访问reference_urls并补充公开资料；无法访问、没有参考URL或未返回来源时，"
                 "如实返回空sources并继续基于用户母题梳理语义信号，绝不编造内容或URL。"
                 "最多返回8个实际访问过的HTTPS来源。搜索摘要只是生成线索，不是正式证据。"
@@ -295,6 +314,7 @@ class ModelQueryGenerator:
             "reference_urls": list(reference_urls),
             "task": task,
             "output_contract": [
+                *RESEARCH_FOCUS_REQUIREMENTS,
                 "situation_assessment按作战环境、变化驱动、未来任务、对手约束、现有能力缺口、技术机会和不确定性组织。",
                 "事实、合理推演和未知项分开表达；没有公开证据时不得把推演写成事实。",
                 "signals必须写成‘变化信号→任务压力→潜在缺口’而不是关键词列表。",
@@ -362,7 +382,7 @@ class ModelQueryGenerator:
         prompt = {
             "topic": topic,
             "supplemental_information": supplemental_information,
-            "strategic_subject": "中国" if autonomous_discovery else "用户指定主体",
+            "strategic_subject": "中国（默认；用户明确指定其他研究主体时遵循用户范围）",
             "grounding_summary": grounding.get("summary", ""),
             "situation_assessment": grounding.get("situation_assessment", {}),
             "grounding_signals": _string_list(grounding.get("signals", []))[:24],
@@ -378,6 +398,7 @@ class ModelQueryGenerator:
                 "新构型、新机理与非动能效应",
             ],
             "requirements": [
+                *RESEARCH_FOCUS_REQUIREMENTS,
                 *(
                     [
                         "自动发散的研究主体必须是中国：从中国面临的态势与未来作战需要反推装备需求；"
@@ -467,6 +488,7 @@ class ModelQueryGenerator:
             "previous_rejections": rejection_notes[-12:],
             "attempt": attempt + 1,
             "requirements": [
+                *RESEARCH_FOCUS_REQUIREMENTS,
                 *autonomous_requirements,
                 "先识别并保持用户给出的预期角度，再从需求牵引和技术驱动两个主轴发散，不能只是改写输入。",
                 "需求牵引至少考虑当前与未来任务场景、对手能力与威胁形式、现有应对手段、作战痛点、单装与体系能力缺口。",
@@ -476,7 +498,10 @@ class ModelQueryGenerator:
                 "优先从demand_hypotheses中选择任务价值高且彼此差异最大的牵引链；必要时可综合或提出新链，但不得跳过因果说明。",
                 "生成每条标题前至少比较两个候选方向，按因果具体性、任务价值、与已有Query差异度、可研究性择优，只输出胜出项。",
                 "demand_chain必须完整复述胜出项的六段因果链并标注evidence_status；不得用‘提升能力’等套话代替具体缺口。",
-                "完成标题后进行反向质检：若移除态势信号后标题仍完全成立，说明牵引不够具体，必须重写。quality_review仅在三项均通过后verdict=pass。",
+                "完成标题后进行反向质检：若移除态势信号后标题仍完全成立，说明牵引不够具体，必须重写。"
+                "默认军事范围内，偏离军事任务的民用灾害命题必须替换；quality_review仅在三项均通过后verdict=pass。",
+                "generation_rationale说明为何值得现在研究，关联态势或威胁、任务价值与能力缺口；"
+                "supplemental_information明确待深研的核心问题、公开证据缺口与验证路径。",
                 "每个coverage_slot只生成一条中文短Query，作为研究任务标题使用。",
                 "Query优先控制在18至25个汉字，语义确有需要时可在14至30个字符内浮动，采用‘对象+条件/能力+研究’形式。",
                 "不要把分析维度、预期输出和多项并列要求堆进Query；这些内容全部写入supplemental_information。",

@@ -7,7 +7,8 @@ import os
 from pathlib import Path
 import socket
 from threading import BoundedSemaphore, RLock
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from urllib.parse import urljoin, urlsplit
 
 from equipment_deep_research.domain.models import EvidenceCard
@@ -146,7 +147,7 @@ class EvidenceMaterializer:
     def close(self) -> None:
         self.artifacts.close()
 
-    def __enter__(self) -> "EvidenceMaterializer":
+    def __enter__(self) -> EvidenceMaterializer:
         return self
 
     def __exit__(self, *exc_info: object) -> None:
@@ -278,11 +279,7 @@ class EvidenceMaterializer:
             page, cache_hit = self._fetch_public_page(evidence.source_url)
             raw_ref = self.artifacts.put(
                 page.content,
-                kind=(
-                    "html"
-                    if "html" in page.content_type.lower()
-                    else "raw"
-                ),
+                kind=("html" if "html" in page.content_type.lower() else "raw"),
                 meta={
                     "url": evidence.source_url,
                     "content_type": page.content_type,
@@ -302,9 +299,7 @@ class EvidenceMaterializer:
             if "html" in page.content_type.lower():
                 simplified = simplify_html(page.content, self.artifacts)
                 simplified_ref = simplified.simplified_artifact_ref
-                paragraph_locations = [
-                    item.location for item in simplified.paragraphs
-                ]
+                paragraph_locations = [item.location for item in simplified.paragraphs]
                 if simplified.title and simplified.title != "未命名页面":
                     extracted_title = simplified.title
                 if simplified.paragraphs:
@@ -450,9 +445,7 @@ class EvidenceMaterializer:
         except BaseException as exc:
             if _is_hard_access_failure(exc):
                 with self._fetch_cache_lock:
-                    self._fetch_failure_cache[cache_key] = (
-                        f"{type(exc).__name__}: {exc}"
-                    )
+                    self._fetch_failure_cache[cache_key] = f"{type(exc).__name__}: {exc}"
             future.set_exception(exc)
             raise
         finally:
@@ -513,9 +506,7 @@ class EvidenceMaterializer:
             cached_reader_failure = self._reader_origin_failures.get(origin_host)
         if cached_reader_failure:
             with self._reader_failure_lock:
-                self._reader_failures[evidence.evidence_id] = (
-                    f"cached_reader_failure:{cached_reader_failure}"
-                )
+                self._reader_failures[evidence.evidence_id] = f"cached_reader_failure:{cached_reader_failure}"
             return None
         if self.public_reader_base_url.endswith(("http://", "https://")):
             reader_url = f"{self.public_reader_base_url}{source}"
@@ -561,9 +552,7 @@ class EvidenceMaterializer:
                         "evidence_id": evidence.evidence_id,
                         "mode": mode,
                         "reader_attempt": attempt,
-                        "direct_error": (
-                            f"{type(direct_error).__name__}: {direct_error}"
-                        ),
+                        "direct_error": (f"{type(direct_error).__name__}: {direct_error}"),
                     },
                 )
                 selected_paragraph = _best_reader_paragraph(
@@ -580,9 +569,7 @@ class EvidenceMaterializer:
                         "excerpt": excerpt,
                         "source_location": f"{ref}#p{paragraph_index}",
                         "artifact_refs": [*evidence.artifact_refs, ref],
-                        "quality_assessment": (
-                            f"{evidence.quality_assessment}; reader_fetched"
-                        ),
+                        "quality_assessment": (f"{evidence.quality_assessment}; reader_fetched"),
                     }
                 )
                 return MaterializedEvidence(
@@ -651,9 +638,7 @@ class EvidenceMaterializer:
                 **evidence.__dict__,
                 "source_location": f"{ref}#citation",
                 "artifact_refs": [*evidence.artifact_refs, ref],
-                "quality_assessment": (
-                    f"{evidence.quality_assessment}; hosted_search_citation"
-                ),
+                "quality_assessment": (f"{evidence.quality_assessment}; hosted_search_citation"),
             }
         )
         return MaterializedEvidence(
@@ -696,10 +681,7 @@ class EvidenceMaterializer:
                     addresses.append(address)
             if not addresses:
                 return None, "host_resolution_failed"
-            if any(
-                not self._is_allowed_resolved_address(address, scheme=parsed.scheme)
-                for address in addresses
-            ):
+            if any(not self._is_allowed_resolved_address(address, scheme=parsed.scheme) for address in addresses):
                 return None, "private_network_denied"
             connect_ip = str(addresses[0])
         else:
@@ -760,10 +742,7 @@ def _response_header(
 
 
 def _best_reader_paragraph(text: str, claim: str) -> tuple[str, int] | None:
-    paragraphs = [
-        " ".join(line.strip() for line in block.splitlines()).strip()
-        for block in text.split("\n\n")
-    ]
+    paragraphs = [" ".join(line.strip() for line in block.splitlines()).strip() for block in text.split("\n\n")]
     candidates = [
         (index, paragraph)
         for index, paragraph in enumerate(paragraphs, start=1)
@@ -871,11 +850,7 @@ def _normalize_hostname(hostname: str) -> str | None:
             return None
         without_root_dot = ascii_hostname[:-1] if ascii_hostname.endswith(".") else ascii_hostname
         labels = without_root_dot.split(".")
-        if (
-            not without_root_dot
-            or len(without_root_dot) > 253
-            or any(not label or len(label) > 63 for label in labels)
-        ):
+        if not without_root_dot or len(without_root_dot) > 253 or any(not label or len(label) > 63 for label in labels):
             return None
         return ascii_hostname
     return str(address).lower()

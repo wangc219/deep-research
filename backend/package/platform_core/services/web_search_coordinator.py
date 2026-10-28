@@ -105,6 +105,41 @@ def rate_limit_delay(result: dict) -> float:
         return 30.0
 
 
+def antibot_delay(result: dict) -> float:
+    """识别搜索入口的访问挑战，独立于短期限流执行较长冷却。"""
+    detail = " ".join(str(result.get(field) or "") for field in ("error", "message", "code")).casefold()
+    blocked = result.get("status_code") == 403 or result.get("status") == "blocked"
+    blocked = blocked or any(
+        marker in detail
+        for marker in (
+            "captcha",
+            "anti-bot",
+            "antibot",
+            "anti-spider",
+            "bot challenge",
+            "verify you are human",
+            "unusual traffic",
+            "access denied",
+            "反爬",
+            "验证码",
+            "人机验证",
+            "访问验证",
+        )
+    )
+    if not blocked:
+        return 0.0
+    try:
+        return min(
+            3600.0,
+            max(
+                30.0,
+                float(result.get("retry_after_seconds") or os.getenv("WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS", "300")),
+            ),
+        )
+    except (ValueError, TypeError):
+        return 300.0
+
+
 def coordinated_search(provider: str, arguments: dict, call: Callable[[], dict]) -> dict:
     """对供应商的一次原始调用执行跨进程排队、合并和有界限流恢复。"""
     config = RedisConfig.from_env(socket_timeout=3.0, socket_connect_timeout=3.0)
@@ -183,14 +218,16 @@ class SearchCoordinator:
                         result = call()
                     except Exception as exc:
                         result = search_failure(exc)
-                    partial_delays = []
                     for failure in result.get("partial_failures") or []:
-                        if isinstance(failure, dict) and failure.get("engine") and rate_limit_delay(failure):
-                            engine_delay = rate_limit_delay(failure)
-                            self.cool_engine(failure["engine"], engine_delay)
-                            partial_delays.append(engine_delay)
-                    if not result.get("results") and partial_delays:
-                        result = {**result, "status": "rate_limited", "retry_after_seconds": min(partial_delays)}
+                        if isinstance(failure, dict) and failure.get("engine"):
+                            engine_delay = antibot_delay(failure) or rate_limit_delay(failure)
+                            if engine_delay:
+                                self.cool_engine(failure["engine"], engine_delay)
+                    # 挑战页面不会靠同一次工具调用内的等待恢复；直接交给其他证据渠道。
+                    if not result.get("results") and (
+                        result.get("status") == "blocked" or result.get("engine_cooldown")
+                    ):
+                        return with_wait(result)
                     delay = rate_limit_delay(result) if not result.get("results") else 0.0
                     if delay:
                         self.redis.eval(_COOL_DOWN, 1, key, max(1, int(delay * 1000)))

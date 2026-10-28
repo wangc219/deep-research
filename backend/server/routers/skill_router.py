@@ -33,6 +33,9 @@ from platform_core.agents.skills.service import (
     prepare_remote_skill_install,
     prepare_skill_upload,
     read_personal_skill_file,
+    get_personal_skill_tree,
+    edit_personal_skill_node,
+    update_personal_skill_dependencies,
     read_skill_file,
     update_skill_dependencies,
     update_skill_enabled,
@@ -307,6 +310,90 @@ async def read_personal_skill_file_route(
     except Exception as e:
         logger.error(f"Failed to read personal Skill file '{slug}/{path}': {e}")
         raise HTTPException(status_code=500, detail="读取个人 Skill 文件失败")
+
+
+@user_skills.get("/personal/{slug}/tree")
+async def personal_skill_tree_route(
+    slug: str,
+    current_user: User = Depends(get_required_user),
+):
+    """按当前身份读取个人目录。"""
+    try:
+        return {"success": True, "data": await get_personal_skill_tree(str(current_user.uid), slug)}
+    except ValueError as exc:
+        _raise_from_value_error(exc)
+
+
+@user_skills.put("/personal/{slug}/file")
+async def personal_skill_update_route(
+    slug: str,
+    payload: SkillFileUpdateRequest,
+    current_user: User = Depends(get_required_user),
+):
+    """保存个人 Skill 文本文件。"""
+    try:
+        await edit_personal_skill_node(
+            str(current_user.uid), slug, payload.path, operation="update", content=payload.content
+        )
+        return {"success": True}
+    except ValueError as exc:
+        _raise_from_value_error(exc)
+
+
+@user_skills.post("/personal/{slug}/file")
+async def personal_skill_create_route(
+    slug: str,
+    payload: SkillNodeCreateRequest,
+    current_user: User = Depends(get_required_user),
+):
+    """创建个人 Skill 文件或目录。"""
+    try:
+        await edit_personal_skill_node(
+            str(current_user.uid),
+            slug,
+            payload.path,
+            operation="directory" if payload.is_dir else "create",
+            content=payload.content or "",
+        )
+        return {"success": True}
+    except ValueError as exc:
+        _raise_from_value_error(exc)
+
+
+@user_skills.delete("/personal/{slug}/file")
+async def personal_skill_delete_node_route(
+    slug: str,
+    path: str = Query(...),
+    current_user: User = Depends(get_required_user),
+):
+    """删除个人 Skill 中的文件或目录。"""
+    try:
+        await edit_personal_skill_node(str(current_user.uid), slug, path, operation="delete")
+        return {"success": True}
+    except ValueError as exc:
+        _raise_from_value_error(exc)
+
+
+@user_skills.put("/personal/{slug}/dependencies")
+async def personal_skill_dependencies_route(
+    slug: str,
+    payload: SkillDependenciesUpdateRequest,
+    current_user: User = Depends(get_required_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """更新个人 Skill 的可用依赖。"""
+    try:
+        item = await update_personal_skill_dependencies(
+            db,
+            current_user,
+            slug,
+            tools=payload.tool_dependencies,
+            mcps=payload.mcp_dependencies,
+            skills=payload.skill_dependencies,
+        )
+        return {"success": True, "data": item.to_dict()}
+    except ValueError as exc:
+        _raise_from_value_error(exc)
 
 
 @user_skills.delete("/personal/{slug}")

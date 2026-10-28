@@ -71,7 +71,14 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument(f"--{scope}-id", default="")
     args = parser.parse_args(argv)
     parsed_base = urlsplit(args.api_base)
-    if parsed_base.scheme not in {"http", "https"} or not parsed_base.netloc or parsed_base.username or parsed_base.password or parsed_base.query or parsed_base.fragment:
+    if (
+        parsed_base.scheme not in {"http", "https"}
+        or not parsed_base.netloc
+        or parsed_base.username
+        or parsed_base.password
+        or parsed_base.query
+        or parsed_base.fragment
+    ):
         parser.error("--api-base must be an HTTP(S) URL without credentials, query or fragment")
     if not 0 < args.wait_timeout <= 3600:
         parser.error("--wait-timeout must be between 0 and 3600 seconds")

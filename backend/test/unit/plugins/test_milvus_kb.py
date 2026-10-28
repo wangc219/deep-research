@@ -195,7 +195,9 @@ class FakeKnowledgeFileRepository:
 
 
 def patch_file_repository(monkeypatch, file_repo: FakeKnowledgeFileRepository) -> None:
-    monkeypatch.setattr("platform_core.repositories.knowledge_file_repository.KnowledgeFileRepository", lambda: file_repo)
+    monkeypatch.setattr(
+        "platform_core.repositories.knowledge_file_repository.KnowledgeFileRepository", lambda: file_repo
+    )
     monkeypatch.setattr("platform_core.knowledge.implementations.milvus.KnowledgeFileRepository", lambda: file_repo)
 
 
@@ -535,7 +537,8 @@ async def test_delete_file_keeps_metadata_when_external_deletion_fails(monkeypat
     file_repo = FakeKnowledgeFileRepository({"file-1": make_file_record(chunk_count=2, token_count=10)})
     patch_file_repository(monkeypatch, file_repo)
     monkeypatch.setattr(
-        "platform_core.knowledge.graphs.milvus_graph_service.MilvusGraphService.delete_file_graph", AsyncMock(side_effect=error)
+        "platform_core.knowledge.graphs.milvus_graph_service.MilvusGraphService.delete_file_graph",
+        AsyncMock(side_effect=error),
     )
     kb = make_kb(FakeCollection())
     kb._get_existing_milvus_collection = AsyncMock(return_value=FakeCollection())
@@ -575,6 +578,14 @@ async def test_database_cleanup_stops_when_collection_drop_fails(monkeypatch):
 
 
 async def test_collection_lifecycle_calls_are_offloaded_from_event_loop(monkeypatch):
+    from contextlib import asynccontextmanager
+    from platform_core.storage.postgres.manager import pg_manager
+
+    @asynccontextmanager
+    async def session():
+        yield types.SimpleNamespace(execute=AsyncMock())
+
+    monkeypatch.setattr(pg_manager, "get_async_session_context", session)
     kb = MilvusKB.__new__(MilvusKB)
     kb.collections = {}
     kb.connection_alias = "test-alias"
@@ -949,3 +960,38 @@ async def test_query_filters_orphaned_chunks_from_search_results(monkeypatch):
 
     assert len(chunks) == 1
     assert chunks[0]["content"] == "live content"
+
+
+async def test_collection_load_failure_is_not_cached_as_ready():
+    """集合未加载时必须终止初始化，后续入库才有机会重试。"""
+    kb = MilvusKB.__new__(MilvusKB)
+    collection = types.SimpleNamespace(load=Mock(side_effect=RuntimeError("index not ready")))
+    with pytest.raises(RuntimeError, match="index not ready"):
+        await kb._initialize_kb_instance(collection)
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("upstream unavailable"), None])
+async def test_reranker_fallback_is_visible_and_keeps_vector_results(monkeypatch, failure):
+    """重排失败仍交付原召回，显式标记降级且不伪造 rerank_score。"""
+    collection = FakeCollection()
+    kb = make_kb(collection)
+    client = types.SimpleNamespace(
+        acompute_score=AsyncMock(side_effect=failure, return_value=[0.91]), aclose=AsyncMock()
+    )
+    monkeypatch.setattr("platform_core.models.rerank.get_reranker", lambda _: client)
+    chunks = await kb.aquery(
+        "query",
+        "db",
+        config=make_query_config(),
+        search_mode="keyword",
+        use_reranker=True,
+        reranker_model="test:rerank",
+    )
+    assert chunks and chunks[0]["content"] == "BM25 result"
+    assert chunks[0]["rerank_status"] == ("degraded" if failure else "completed")
+    if failure:
+        assert "rerank_score" not in chunks[0]
+        assert chunks[0]["rerank_error_type"] == "RuntimeError"
+    else:
+        assert chunks[0]["rerank_score"] == 0.91
+    client.aclose.assert_awaited_once()

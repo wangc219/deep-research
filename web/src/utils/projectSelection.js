@@ -12,7 +12,9 @@ export const filterProjects = (projects, query = '') => {
 
 export const projectDisplayName = (project, showOwner = false) => {
   const name = project?.name || project?.id || '未命名项目'
-  return showOwner && project?.uid ? `${name} · ${project.uid}` : name
+  const owner = String(project?.uid || '')
+  const includesOwner = name === owner || name.endsWith(`+${owner}`) || name.endsWith(` · ${owner}`)
+  return showOwner && owner && !includesOwner ? `${name} · ${owner}` : name
 }
 
 export const formatRelativeTime = (value, now = Date.now()) => {

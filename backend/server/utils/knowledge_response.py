@@ -22,6 +22,8 @@ def _knowledge_base_stats(database: KnowledgeBaseSummary) -> dict[str, int]:
         "pending_parse_count": database.pending_parse_count,
         "pending_index_count": database.pending_index_count,
         "processing_count": database.processing_count,
+        "indexed_count": database.indexed_count,
+        "failed_count": database.failed_count,
     }
 
 

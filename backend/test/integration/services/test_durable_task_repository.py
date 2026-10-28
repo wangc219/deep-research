@@ -23,7 +23,12 @@ from platform_core.services.task_queue_service import finalize_task_failure
 from platform_core.services.task_service import TaskContext, Tasker
 from platform_core.storage.postgres.manager import PostgresManager
 from platform_core.storage.postgres.models_business import TaskRecord
-from platform_core.storage.postgres.models_knowledge import EvaluationDataset, EvaluationRun, KnowledgeBase, KnowledgeFile
+from platform_core.storage.postgres.models_knowledge import (
+    EvaluationDataset,
+    EvaluationRun,
+    KnowledgeBase,
+    KnowledgeFile,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
@@ -281,9 +286,10 @@ async def test_durable_capacity_reserves_worker_slots_for_agent_runs(durable_tas
     assert (await repo.get_by_id(task_ids[4])).status == "pending"
 
 
-async def test_research_capacity_is_atomic_across_concurrent_claims(durable_task_schema) -> None:
+@pytest.mark.parametrize("capacity", [4, 6])
+async def test_research_capacity_is_atomic_across_concurrent_claims(durable_task_schema, capacity) -> None:
     repo = TaskRepository()
-    task_ids = [uuid.uuid4().hex for _ in range(6)]
+    task_ids = [uuid.uuid4().hex for _ in range(capacity + 2)]
     for task_id in task_ids:
         await repo.create(task_id, {**_task_data(), "type": "equipment_research"})
 
@@ -293,7 +299,7 @@ async def test_research_capacity_is_atomic_across_concurrent_claims(durable_task
                 task_id,
                 worker_id=f"research-owner-{index}",
                 lease_seconds=30,
-                max_running=4,
+                max_running=capacity,
                 type_filter="equipment_research",
                 lock_scope="durable-task-capacity:equipment_research",
             )
@@ -301,9 +307,9 @@ async def test_research_capacity_is_atomic_across_concurrent_claims(durable_task
         )
     )
 
-    assert sum(claimed for _record, claimed in claims) == 4
+    assert sum(claimed for _record, claimed in claims) == capacity
     statuses = [(await repo.get_by_id(task_id)).status for task_id in task_ids]
-    assert statuses.count("running") == 4
+    assert statuses.count("running") == capacity
     assert statuses.count("pending") == 2
 
 
@@ -870,3 +876,30 @@ async def test_concurrent_dedupe_creates_one_active_task(durable_task_schema) ->
     reused = [(record.id, is_created) for record, is_created in results if not is_created]
     assert len(created) == 1
     assert reused == [(created[0][0], False)]
+
+
+@pytest.mark.parametrize("capacity", [12, 20, 24])
+async def test_generic_capacity_is_shared_and_atomic_for_mixed_types(durable_task_schema, capacity) -> None:
+    """混合通用任务同时竞争时共享上限，升级档位也不会超领执行槽。"""
+    repo = TaskRepository()
+    task_ids = [uuid.uuid4().hex for _ in range(capacity + 3)]
+    for index, task_id in enumerate(task_ids):
+        await repo.create(task_id, {**_task_data(), "type": "knowledge_parse" if index % 2 else "knowledge_index"})
+    scope = "qa-generic-capacity:" + uuid.uuid4().hex
+    claims = await asyncio.gather(
+        *(
+            repo.claim(
+                task_id,
+                worker_id=f"qa-capacity-{index}",
+                lease_seconds=60,
+                max_running=capacity,
+                exclude_type="equipment_",
+                lock_scope=scope,
+            )
+            for index, task_id in enumerate(task_ids)
+        )
+    )
+    assert sum(claimed for _, claimed in claims) == capacity
+    rows = [await repo.get_by_id(task_id) for task_id in task_ids]
+    assert sum(row.status == "running" for row in rows) == capacity
+    assert sum(row.status == "pending" for row in rows) == 3

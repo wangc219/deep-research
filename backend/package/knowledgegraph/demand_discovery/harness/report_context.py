@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -186,9 +186,7 @@ class ContextIndexer:
             ),
             source_location=evidence.source_location,
             allowed_report_uses=(
-                ["core", "support"]
-                if evidence.evidence_id in allowed_evidence_ids
-                else ["background", "limitation"]
+                ["core", "support"] if evidence.evidence_id in allowed_evidence_ids else ["background", "limitation"]
             ),
             risk_flags=[],
         )
@@ -210,20 +208,13 @@ class ContextVerifier:
                 if material is None:
                     errors.append(f"unknown material_id: {material_id}")
                     continue
-                if (
-                    curated.report_use != "exclude"
-                    and curated.report_use not in material.allowed_report_uses
-                ):
-                    errors.append(
-                        f"report_use {curated.report_use} is not allowed for {material_id}"
-                    )
+                if curated.report_use != "exclude" and curated.report_use not in material.allowed_report_uses:
+                    errors.append(f"report_use {curated.report_use} is not allowed for {material_id}")
                 if curated.report_use in {"core", "support"}:
                     evidence_ids = material.refs.get("evidence_ids", [])
                     for evidence_id in evidence_ids:
                         if evidence_id not in pool.allowed_evidence_ids:
-                            errors.append(
-                                f"evidence_id not allowed for core/support: {evidence_id}"
-                            )
+                            errors.append(f"evidence_id not allowed for core/support: {evidence_id}")
         if errors:
             return ContextVerificationResult(False, None, errors, warnings)
         bundle = ReportContextBundle(
@@ -242,7 +233,7 @@ class ContextVerifier:
             allowed_evidence_ids=list(pool.allowed_evidence_ids),
             blocked_claims=list(pool.blocked_claims),
             required_caveats=list(pool.required_caveats),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         return ContextVerificationResult(True, bundle, [], warnings)
 

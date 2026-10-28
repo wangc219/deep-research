@@ -96,7 +96,9 @@ const PORTRAIT_LABELS = [
   '概述',
   '装备与技术实现',
   '关键作战流程',
+  '关键任务流程',
   '形成能力与作战效果',
+  '形成能力与任务效果',
   '制胜逻辑机理与对抗边界',
   '制胜逻辑机理',
   '制胜逻辑',
@@ -110,6 +112,12 @@ const S6_PORTRAIT_LABEL_ORDER = [
   '形成能力与作战效果',
   '制胜逻辑机理'
 ]
+const S6_PORTRAIT_LABEL_ALIASES = {
+  '关键任务流程': '关键作战流程',
+  '形成能力与任务效果': '形成能力与作战效果',
+  '制胜逻辑机理与对抗边界': '制胜逻辑机理',
+  '制胜逻辑': '制胜逻辑机理'
+}
 
 const DIMENSION_LABELS = {
   damage: '毁伤维度',
@@ -262,12 +270,17 @@ export const capabilityPortraitModules = (item = {}) => {
   if (!parsed.length) return fallback
   const normalized = parsed.map((entry) => ({
     ...entry,
-    label: ['制胜逻辑机理与对抗边界', '制胜逻辑'].includes(entry.label)
-      ? '制胜逻辑机理'
-      : entry.label
+    label: S6_PORTRAIT_LABEL_ALIASES[entry.label] || entry.label
   }))
   const byLabel = new Map()
   normalized.forEach((entry) => {
+    if (!byLabel.has(entry.label)) byLabel.set(entry.label, entry.text)
+  })
+  // A public mission-equipment portrait can use mission-friendly headings,
+  // while the structured S6 payload keeps the stable five module keys. Merge
+  // both projections so a legacy or rewritten heading can never hide an
+  // otherwise complete structured column.
+  fallback.forEach((entry) => {
     if (!byLabel.has(entry.label)) byLabel.set(entry.label, entry.text)
   })
   const ordered = S6_PORTRAIT_LABEL_ORDER

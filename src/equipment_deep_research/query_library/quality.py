@@ -96,6 +96,12 @@ DOMAIN_TERMS = (
     "投送",
     "防护",
     "保障",
+    "应急",
+    "救援",
+    "照明",
+    "供电",
+    "电源",
+    "终端",
 )
 RESEARCH_TERMS = ("研究", "分析", "研判", "评估", "论证", "挖掘", "识别", "推演")
 OUTCOME_TERMS = ("装备", "能力", "体系", "需求", "发展", "形态", "效能")
@@ -126,6 +132,13 @@ SENSITIVE_QUERY_KEYS = {
     "sig",
     "token",
 }
+
+DOMAIN_ANCHOR_GROUPS = (
+    ("供电", "电源", "补能", "能源"),
+    ("照明", "灯具", "光源"),
+    ("应急", "救援", "灾害"),
+    ("通信", "链路", "网络", "终端"),
+)
 
 
 def coverage_plan(count: int) -> tuple[str, ...]:
@@ -317,4 +330,9 @@ def _shares_domain_anchor(query: str, weapon_requirement: str) -> bool:
         for term in (*DOMAIN_TERMS, "集群", "平台", "传感器", "指控", "补给", "维修")
         if term in query and term in weapon_requirement
     ]
-    return bool(shared_terms)
+    if shared_terms:
+        return True
+    return any(
+        any(term in query for term in group) and any(term in weapon_requirement for term in group)
+        for group in DOMAIN_ANCHOR_GROUPS
+    )

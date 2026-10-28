@@ -1,5 +1,12 @@
 <template>
   <div class="kb-result-grouped-list">
+    <a-alert
+      v-if="hasRerankDegradation"
+      type="warning"
+      show-icon
+      message="重排服务暂不可用，本次保留原检索排序。"
+      class="rerank-warning"
+    />
     <div v-if="showSummary" class="result-summary">
       找到 {{ normalizedChunks.length }} 个相关文档片段，来自 {{ fileGroupList.length }} 个文件
     </div>
@@ -102,6 +109,7 @@ const normalizedChunks = computed(() =>
         score: typeof item.score === 'number' ? item.score : metadata.score,
         rerank_score:
           typeof item.rerank_score === 'number' ? item.rerank_score : metadata.rerank_score,
+        rerank_status: item.rerank_status || metadata.rerank_status,
         metadata: {
           ...metadata,
           source,
@@ -114,6 +122,9 @@ const normalizedChunks = computed(() =>
 const fileGroupList = computed(() => {
   return groupKnowledgeChunks(normalizedChunks.value)
 })
+const hasRerankDegradation = computed(() =>
+  normalizedChunks.value.some((chunk) => chunk.rerank_status === 'degraded')
+)
 
 const openFileChunksModal = (fileGroup) => {
   selectedFileGroup.value = fileGroup
@@ -128,6 +139,10 @@ const openFileDetail = (fileGroup) => {
 </script>
 
 <style scoped lang="less">
+.rerank-warning {
+  margin-bottom: 12px;
+}
+
 .kb-result-grouped-list {
   padding: 4px;
   .result-summary {

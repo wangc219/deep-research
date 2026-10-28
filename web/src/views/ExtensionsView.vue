@@ -10,9 +10,36 @@
       aria-label="智能体扩展视图切换"
     />
 
+    <nav
+      v-if="!isDetailPage && activeTab === 'knowledge'"
+      class="knowledge-sections"
+      aria-label="知识库功能"
+    >
+      <RouterLink
+        to="/extensions"
+        :aria-current="!wxChannelsActive && !wechatArticlesActive ? 'page' : undefined"
+      >
+        <BookOpen :size="28" />资料库
+      </RouterLink>
+      <RouterLink
+        :to="{ path: '/extensions', query: { tool: 'wxchannels' } }"
+        :aria-current="wxChannelsActive ? 'page' : undefined"
+      >
+        <Film :size="28" />视频号转 DOCX
+      </RouterLink>
+      <RouterLink
+        :to="{ path: '/extensions', query: { tool: 'wechat-articles' } }"
+        :aria-current="wechatArticlesActive ? 'page' : undefined"
+      >
+        <Newspaper :size="28" />公众号文章
+      </RouterLink>
+    </nav>
+
     <div v-if="!isDetailPage" class="extensions-content">
       <div v-if="activeTab === 'knowledge'" class="tab-panel">
-        <DataBaseView ref="knowledgeRef" embedded />
+        <WxChannelsView v-if="wxChannelsActive" />
+        <WechatArticlesView v-else-if="wechatArticlesActive" />
+        <DataBaseView v-else ref="knowledgeRef" embedded />
       </div>
       <div v-if="userStore.isAdmin && activeTab === 'tools'" class="tab-panel">
         <ToolsCardList ref="toolsRef" />
@@ -30,15 +57,45 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import ToolsCardList from '@/components/extensions/ToolsCardList.vue'
-import McpCardList from '@/components/extensions/McpCardList.vue'
-import SkillCardList from '@/components/extensions/SkillCardList.vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { BookOpen, Film, Newspaper } from '@lucide/vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
-import DataBaseView from '@/views/DataBaseView.vue'
+import AsyncViewError from '@/components/shared/AsyncViewError.vue'
 import { useUserStore } from '@/stores/user'
 
+const ToolsCardList = defineAsyncComponent({
+  loader: () => import('@/components/extensions/ToolsCardList.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const McpCardList = defineAsyncComponent({
+  loader: () => import('@/components/extensions/McpCardList.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const SkillCardList = defineAsyncComponent({
+  loader: () => import('@/components/extensions/SkillCardList.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const DataBaseView = defineAsyncComponent({
+  loader: () => import('@/views/DataBaseView.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const WxChannelsView = defineAsyncComponent({
+  loader: () => import('@/views/WxChannelsView.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const WechatArticlesView = defineAsyncComponent({
+  loader: () => import('@/views/WechatArticlesView.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
+const wechatArticlesActive = computed(() => route.query.tool === 'wechat-articles')
+const wxChannelsActive = computed(() => route.query.tool === 'wxchannels')
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
@@ -54,7 +111,10 @@ const adminExtensionTabs = computed(() => [
   { key: 'tools', label: '工具' },
   { key: 'mcp', label: 'MCP' }
 ])
-const userExtensionTabs = [{ key: 'knowledge', label: '知识库' }, { key: 'skills', label: '技能' }]
+const userExtensionTabs = [
+  { key: 'knowledge', label: '知识库' },
+  { key: 'skills', label: '技能' }
+]
 const extensionTabs = computed(() =>
   userStore.isAdmin ? adminExtensionTabs.value : userExtensionTabs
 )
@@ -68,6 +128,10 @@ const normalizeTab = (tab) => {
 
 const replaceTabQuery = (tab) => {
   const query = { ...route.query }
+  if (tab !== 'knowledge') {
+    delete query.tool
+    delete query.kb
+  }
   if (tab === defaultTabKey.value) {
     delete query.tab
   } else {
@@ -119,6 +183,62 @@ watch(activeTab, (tab) => {
 
 <style scoped lang="less">
 @import '@/assets/css/extensions.less';
+
+.knowledge-sections {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px var(--page-padding);
+  border-bottom: 1px solid var(--gray-100);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 12px 18px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    color: var(--gray-700);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+
+    :deep(svg) {
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: var(--gray-50);
+    }
+    &[aria-current='page'] {
+      background: var(--main-50);
+      color: var(--main-800);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--main-color);
+      outline-offset: 2px;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .knowledge-sections {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+
+    a {
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 4px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+}
 
 .extensions-view {
   .extensions-content {

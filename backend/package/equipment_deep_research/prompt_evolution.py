@@ -10,13 +10,14 @@ as an auditable, reversible record.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from hashlib import sha256
 import json
 from pathlib import Path
 import re
 from threading import RLock
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 from uuid import uuid4
 
 from equipment_deep_research.agents.dynamic_prompt_resources import (
@@ -54,7 +55,7 @@ _SHA256_RE = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$", re.IGNORECASE)
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _path(root: Path) -> Path:
@@ -118,9 +119,7 @@ def _guard_effect_transition(
     if prior not in _IMMUTABLE_PROMPT_EFFECT_STATUSES:
         return False
     if prior != next_status:
-        raise ValueError(
-            f"cannot transition immutable prompt effect status: {prior} -> {next_status}"
-        )
+        raise ValueError(f"cannot transition immutable prompt effect status: {prior} -> {next_status}")
     previous_evaluation = str(prior_evaluation_id or "").strip()[:160]
     if previous_evaluation and previous_evaluation != next_evaluation_id:
         raise ValueError("immutable prompt effect status has different evidence")
@@ -240,8 +239,7 @@ def _section_policy(stage: str, section_id: str) -> tuple[bool, bool]:
     # Require challengers to patch a leaf section instead of bypassing those
     # immutable contracts through a broad parent marker.
     if section_id == "system" and any(
-        str(pattern).strip().startswith("system.")
-        for pattern in spec.get("protected_sections", [])
+        str(pattern).strip().startswith("system.") for pattern in spec.get("protected_sections", [])
     ):
         protected = True
     return mutable, protected
@@ -259,9 +257,12 @@ def _active_prompt_bundle_hash() -> str:
             if path.name == ".DS_Store" or path.suffix.lower() not in {".md", ".json"}:
                 continue
             files[path.relative_to(root).as_posix()] = sha256(path.read_bytes()).hexdigest()
-    return "sha256:" + sha256(
-        json.dumps(files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
+    return (
+        "sha256:"
+        + sha256(
+            json.dumps(files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+    )
 
 
 def _validate_patch_text(value: Any) -> str:
@@ -337,9 +338,7 @@ def _candidate_from_section_patches(
     for raw_patch in section_patches:
         if not isinstance(raw_patch, Mapping):
             raise ValueError("each section patch must be an object")
-        stage, section_id = _normalise_patch_section(
-            raw_patch.get("section_id") or raw_patch.get("id")
-        )
+        stage, section_id = _normalise_patch_section(raw_patch.get("section_id") or raw_patch.get("id"))
         if stage not in selected_set:
             raise ValueError(f"section patch stage is not selected: {stage}")
         mutable, protected = _section_policy(stage, section_id)
@@ -356,9 +355,7 @@ def _candidate_from_section_patches(
         if declared_old_hash and declared_old_hash != old_hash:
             raise ValueError(f"section compare-and-swap mismatch: {stage}:{section_id}")
         new_text = _validate_patch_text(
-            raw_patch.get("new_text")
-            or raw_patch.get("new_content")
-            or raw_patch.get("replacement")
+            raw_patch.get("new_text") or raw_patch.get("new_content") or raw_patch.get("replacement")
         )
         sections[stage][section_id] = new_text
         sources[stage] = _replace_prompt_section(sources[stage], section_id, new_text)
@@ -375,10 +372,7 @@ def _candidate_from_section_patches(
     # ``after`` is intentionally the complete system prose for compatibility;
     # non-system sections are published from ``materialized`` by the governed
     # bundle publisher below.
-    after = {
-        stage: sections[stage].get("system", "")
-        for stage in selected
-    }
+    after = {stage: sections[stage].get("system", "") for stage in selected}
     return after, materialized, sources
 
 
@@ -443,7 +437,9 @@ def validate_section_manifest(manifest_path: Path | None = None) -> dict[str, An
             companion_source = companion_target.read_text(encoding="utf-8")
             if not _PROMPT_SECTION_RE.search(companion_source):
                 errors.append(f"{stage}: companion prompt has no reviewable section: {companion_rel}")
-        headings = {line[3:].strip() for line in target.read_text(encoding="utf-8").splitlines() if line.startswith("## ")}
+        headings = {
+            line[3:].strip() for line in target.read_text(encoding="utf-8").splitlines() if line.startswith("## ")
+        }
         for section in [*spec.get("mutable_sections", []), *spec.get("protected_sections", [])]:
             section = str(section)
             if "*" not in section and section not in headings and not section.startswith("system."):
@@ -489,25 +485,23 @@ def _render_system_replacement(source: str, prompt: str) -> str:
 
 def _next_version(rows: Sequence[Mapping[str, Any]], stage: str) -> tuple[str, str]:
     existing = [row for row in rows if row.get("record_type") == "version" and row.get("stage") == stage]
-    number = max(
-        [
-            int(str(row.get("version", "v0000"))[1:])
-            for row in existing
-            if str(row.get("version", "v0000")).startswith("v")
-            and str(row.get("version", "v0000"))[1:].isdigit()
-        ]
-        or [0]
-    ) + 1
+    number = (
+        max(
+            [
+                int(str(row.get("version", "v0000"))[1:])
+                for row in existing
+                if str(row.get("version", "v0000")).startswith("v") and str(row.get("version", "v0000"))[1:].isdigit()
+            ]
+            or [0]
+        )
+        + 1
+    )
     return f"v{number:04d}", current_version_from_rows(rows, stage)
 
 
 def current_version_from_rows(rows: Sequence[Mapping[str, Any]], stage: str) -> str:
     matches = [
-        row
-        for row in rows
-        if row.get("record_type") == "version"
-        and row.get("stage") == stage
-        and row.get("active")
+        row for row in rows if row.get("record_type") == "version" and row.get("stage") == stage and row.get("active")
     ]
     return str(matches[-1].get("version", "v0000")) if matches else "v0000"
 
@@ -532,10 +526,7 @@ def _publish_sources_atomic(
     project-relative ledger paths.
     """
 
-    normalized_sources = {
-        _prompt_key(stage): str(content)
-        for stage, content in sources.items()
-    }
+    normalized_sources = {_prompt_key(stage): str(content) for stage, content in sources.items()}
     if not normalized_sources:
         raise ValueError("at least one prompt source is required")
     actual_hash = _active_prompt_bundle_hash()
@@ -564,9 +555,7 @@ def _publish_sources_atomic(
             version_file = version_dir / f"{version}.md"
             version_file.write_text(content, encoding="utf-8")
             snapshots.append(version_file)
-            candidate_sections = {
-                name: body for name, body in _PROMPT_SECTION_RE.findall(content)
-            }
+            candidate_sections = {name: body for name, body in _PROMPT_SECTION_RE.findall(content)}
             records.append(
                 {
                     "record_type": "version",
@@ -656,18 +645,18 @@ def create_proposal(
 ) -> dict[str, Any]:
     patch_mode = bool(section_patches)
     if patch_mode:
-        selected = list(dict.fromkeys(
-            [_prompt_key(stage) for stage in (stages or [])]
-            or sorted(
-                {
-                    _normalise_patch_section(
-                        patch.get("section_id") or patch.get("id")
-                    )[0]
-                    for patch in section_patches or []
-                    if isinstance(patch, Mapping)
-                }
+        selected = list(
+            dict.fromkeys(
+                [_prompt_key(stage) for stage in (stages or [])]
+                or sorted(
+                    {
+                        _normalise_patch_section(patch.get("section_id") or patch.get("id"))[0]
+                        for patch in section_patches or []
+                        if isinstance(patch, Mapping)
+                    }
+                )
             )
-        ))
+        )
         if not selected:
             raise ValueError("section patch proposal requires at least one stage")
         after, patches, after_sources = _candidate_from_section_patches(
@@ -681,10 +670,7 @@ def create_proposal(
         normalized = dict(after)
         candidate_hashes = {s: _text_hash(after_sources[s]) for s in selected}
     else:
-        normalized = {
-            str(s).upper().strip(): _validate(str(s), p)
-            for s, p in dict(proposed_prompts or {}).items()
-        }
+        normalized = {str(s).upper().strip(): _validate(str(s), p) for s, p in dict(proposed_prompts or {}).items()}
         selected = [str(s).upper().strip() for s in (stages or [])] or list(normalized)
         if not normalized or any(s not in normalized for s in selected):
             raise ValueError("proposal must include a prompt for every selected stage")
@@ -728,12 +714,8 @@ def create_proposal(
         "updated_at": _now(),
         "agent": agent,
         "hypothesis": str(hypothesis or feedback.get("hypothesis", ""))[:2000],
-        "change_units": _bounded_strings(
-            change_units or [f"{stage}:system" for stage in selected], limit=3
-        ),
-        "target_metrics": _bounded_strings(
-            target_metrics or feedback.get("target_metrics", []), limit=16
-        ),
+        "change_units": _bounded_strings(change_units or [f"{stage}:system" for stage in selected], limit=3),
+        "target_metrics": _bounded_strings(target_metrics or feedback.get("target_metrics", []), limit=16),
         "counterexamples": _bounded_strings(counterexamples, limit=8),
         "acceptance_tests": _bounded_strings(acceptance_tests, limit=12),
         "expected_tradeoffs": dict(expected_tradeoffs or {}),
@@ -742,9 +724,7 @@ def create_proposal(
         "feedback": dict(feedback),
         "before": current,
         "after": {s: normalized[s] for s in selected},
-        "before_sources": {
-            stage: _read_prompt_sections(stage)[2] for stage in selected
-        },
+        "before_sources": {stage: _read_prompt_sections(stage)[2] for stage in selected},
         "after_sources": after_sources,
         "base_versions": versions,
         "parent_prompt_hashes": parent_hashes,
@@ -804,10 +784,7 @@ def create_section_patch_proposal(
     reaches the reviewer as an apparently valid full-file replacement.
     """
 
-    selected = [
-        _prompt_key(stage)
-        for stage in (stages or [])
-    ]
+    selected = [_prompt_key(stage) for stage in (stages or [])]
     if not selected:
         selected = sorted(
             {
@@ -823,21 +800,12 @@ def create_section_patch_proposal(
         selected=selected,
         section_patches=section_patches,
     )
-    before_sources = {
-        stage: _read_prompt_sections(stage)[2]
-        for stage in selected
-    }
+    before_sources = {stage: _read_prompt_sections(stage)[2] for stage in selected}
     # Stage hashes cover the complete source (not only the ``system`` leaf),
     # so a replay can prove that a patch touching ``creative`` or another
     # mutable section actually exercised the intended candidate Prompt.
-    parent_prompt_hashes = {
-        stage: _text_hash(before_sources[stage])
-        for stage in selected
-    }
-    candidate_prompt_hashes = {
-        stage: _text_hash(sources[stage])
-        for stage in selected
-    }
+    parent_prompt_hashes = {stage: _text_hash(before_sources[stage]) for stage in selected}
+    candidate_prompt_hashes = {stage: _text_hash(sources[stage]) for stage in selected}
     if any(stage in {"S3", "S4"} for stage in selected):
         # S3/S4 jointly define creative novelty and technical realization. A
         # challenger may touch one file, but its replay scope must include both
@@ -867,12 +835,8 @@ def create_section_patch_proposal(
         "updated_at": _now(),
         "agent": str(agent or "codex_prompt_evolution")[:160],
         "hypothesis": str(hypothesis or feedback.get("hypothesis", ""))[:2000],
-        "change_units": _bounded_strings(
-            change_units or [patch["section_id"] for patch in patches], limit=3
-        ),
-        "target_metrics": _bounded_strings(
-            target_metrics or feedback.get("target_metrics", []), limit=16
-        ),
+        "change_units": _bounded_strings(change_units or [patch["section_id"] for patch in patches], limit=3),
+        "target_metrics": _bounded_strings(target_metrics or feedback.get("target_metrics", []), limit=16),
         "counterexamples": _bounded_strings(counterexamples, limit=8),
         "acceptance_tests": _bounded_strings(acceptance_tests, limit=12),
         "expected_tradeoffs": dict(expected_tradeoffs or {}),
@@ -954,7 +918,21 @@ def _publish_version(
     for row in rows:
         if row.get("record_type") == "version" and row.get("stage") == stage:
             row["active"] = False
-    record = {"record_type": "version", "stage": stage, "version": version, "parent_version": prior, "active": True, "created_at": _now(), "reason": reason, "source": source, "source_proposal_id": str(source_proposal_id or "")[:200], "scope": dict(scope or {}), "rollback_from": str(rollback_from or "")[:32], "file": _relative_project_path(version_file), "file_hash": _text_hash(prompt)}
+    record = {
+        "record_type": "version",
+        "stage": stage,
+        "version": version,
+        "parent_version": prior,
+        "active": True,
+        "created_at": _now(),
+        "reason": reason,
+        "source": source,
+        "source_proposal_id": str(source_proposal_id or "")[:200],
+        "scope": dict(scope or {}),
+        "rollback_from": str(rollback_from or "")[:32],
+        "file": _relative_project_path(version_file),
+        "file_hash": _text_hash(prompt),
+    }
     rows.append(record)
     _write(output_root, rows)
     invalidate_dynamic_winning_prompt_cache()
@@ -979,25 +957,13 @@ def rollback_version(
     # Version rows normally point back to the proposal that produced them.
     # Resolve that source before touching the live Prompt so a scoped
     # candidate cannot be reintroduced through the rollback endpoint either.
-    source_id = str(
-        found.get("source_proposal_id") or found.get("source", "")
-    ).strip()
+    source_id = str(found.get("source_proposal_id") or found.get("source", "")).strip()
     source = next(
-        (
-            item
-            for item in _read(Path(output_root))
-            if item.get("proposal_id") == source_id
-        ),
+        (item for item in _read(Path(output_root)) if item.get("proposal_id") == source_id),
         None,
     )
-    scoped_source = (
-        proposal_scope_requires_global_publish(found)
-        or proposal_scope_requires_global_publish(source)
-    )
-    scoped_publish_authorized = (
-        str(reviewer or "").strip().lower() == "admin"
-        and bool(allow_scoped_publish)
-    )
+    scoped_source = proposal_scope_requires_global_publish(found) or proposal_scope_requires_global_publish(source)
+    scoped_publish_authorized = str(reviewer or "").strip().lower() == "admin" and bool(allow_scoped_publish)
     if scoped_source and not scoped_publish_authorized:
         raise ValueError(
             "scoped prompt version cannot publish shared active prompt; "
@@ -1016,9 +982,7 @@ def rollback_version(
             reason=f"rollback to {version}: {comment}"[:2000],
             source=f"rollback:{reviewer}",
             scope=found.get("scope") if isinstance(found.get("scope"), Mapping) else {},
-            source_proposal_id=str(
-                found.get("source_proposal_id") or found.get("source", "")
-            )[:200],
+            source_proposal_id=str(found.get("source_proposal_id") or found.get("source", ""))[:200],
             rollback_from=version,
         )
         record = records[-1]
@@ -1030,9 +994,7 @@ def rollback_version(
             reason=f"rollback to {version}: {comment}"[:2000],
             source=f"rollback:{reviewer}",
             scope=found.get("scope") if isinstance(found.get("scope"), Mapping) else {},
-            source_proposal_id=str(
-                found.get("source_proposal_id") or found.get("source", "")
-            )[:200],
+            source_proposal_id=str(found.get("source_proposal_id") or found.get("source", ""))[:200],
             rollback_from=version,
         )
     return record
@@ -1065,9 +1027,7 @@ def _replay_gate_passed(row: Mapping[str, Any]) -> bool:
     summary = row.get("replay_summary")
     if not isinstance(summary, Mapping):
         return False
-    evaluation_id = str(
-        row.get("evaluation_id") or summary.get("eval_id") or ""
-    ).strip()
+    evaluation_id = str(row.get("evaluation_id") or summary.get("eval_id") or "").strip()
     if not evaluation_id:
         return False
     try:
@@ -1085,10 +1045,7 @@ def _replay_gate_passed(row: Mapping[str, Any]) -> bool:
     summary_gate = summary.get("gate")
     if not isinstance(summary_gate, Mapping):
         return False
-    return (
-        summary_gate.get("passed") is True
-        and str(summary_gate.get("verdict", "")).strip().lower() == "pass"
-    )
+    return summary_gate.get("passed") is True and str(summary_gate.get("verdict", "")).strip().lower() == "pass"
 
 
 def _hash_text(value: Any, *, field: str) -> str:
@@ -1242,9 +1199,7 @@ def _proposal_replay_identity(
     # Legacy full-file records are intentionally kept compatible.  Governed
     # section-patch records, on the other hand, must prove that replay ran
     # against this exact parent Bundle and candidate Prompt content.
-    strict = bool(proposal.get("patch_only")) and not bool(
-        proposal.get("legacy_compatibility", False)
-    )
+    strict = bool(proposal.get("patch_only")) and not bool(proposal.get("legacy_compatibility", False))
     if not strict:
         return False, "", {}
     raw_parent = proposal.get("parent_bundle_hash")
@@ -1365,20 +1320,19 @@ def _validate_replay_evidence(
     if manifest_hash != fixture_hash:
         raise ValueError("replay manifest fixture hash does not match fixture metadata")
     dataset_snapshot = manifest.get("dataset_snapshot")
-    if dataset_snapshot not in (None, "") and _hash_text(dataset_snapshot, field="manifest.dataset_snapshot") != fixture_hash:
+    if (
+        dataset_snapshot not in (None, "")
+        and _hash_text(dataset_snapshot, field="manifest.dataset_snapshot") != fixture_hash
+    ):
         raise ValueError("replay manifest dataset snapshot does not match fixture hash")
     manifest_ids = manifest.get("query_ids")
     if manifest_ids is not None and [str(item).strip() for item in manifest_ids] != query_ids:
         raise ValueError("replay manifest query_ids do not match fixture")
     if manifest.get("query_count") not in (None, fixture_count):
         raise ValueError("replay manifest query_count does not match fixture")
-    manifest_arms = _replay_arm_list(
-        manifest.get("arms"), field="manifest.arms"
-    )
+    manifest_arms = _replay_arm_list(manifest.get("arms"), field="manifest.arms")
     if not _REPLAY_REQUIRED_ARMS.issubset(manifest_arms):
-        raise ValueError(
-            "replay manifest arms must include prompt_only, memory_only and both"
-        )
+        raise ValueError("replay manifest arms must include prompt_only, memory_only and both")
     if not set(expected_arms).issubset(manifest_arms):
         raise ValueError("replay manifest arms do not cover summary expected_arms")
 
@@ -1414,20 +1368,14 @@ def _validate_replay_evidence(
         parent_identity = summary_parent or manifest_parent
         if expected_parent:
             if not parent_identity:
-                raise ValueError(
-                    "replay manifest parent_bundle_hash is required for patch proposal"
-                )
+                raise ValueError("replay manifest parent_bundle_hash is required for patch proposal")
             if parent_identity != expected_parent:
-                raise ValueError(
-                    "replay manifest bundle identity does not match proposal parent_bundle_hash"
-                )
+                raise ValueError("replay manifest bundle identity does not match proposal parent_bundle_hash")
             # If both envelopes carry an identity, they must agree as well;
             # otherwise a caller could splice a valid manifest onto a summary
             # generated from a different Bundle.
             if summary_parent and manifest_parent and summary_parent != manifest_parent:
-                raise ValueError(
-                    "replay summary/manifest bundle identities do not match"
-                )
+                raise ValueError("replay summary/manifest bundle identities do not match")
         expected_candidates = _normalise_replay_hash_map(
             expected_candidate_prompt_hashes,
             field="proposal.candidate_prompt_hashes",
@@ -1437,9 +1385,7 @@ def _validate_replay_evidence(
             for stage, digest in candidate_map.items():
                 prior = observed_candidates.get(stage)
                 if prior is not None and prior != digest:
-                    raise ValueError(
-                        "replay summary/manifest candidate prompt hashes do not match"
-                    )
+                    raise ValueError("replay summary/manifest candidate prompt hashes do not match")
                 observed_candidates[stage] = digest
         if expected_candidates and observed_candidates:
             # Candidate hashes are optional evidence because older replay
@@ -1453,10 +1399,7 @@ def _validate_replay_evidence(
                 if observed_candidates.get(stage) != expected_candidates[stage]
             )
             if mismatched:
-                raise ValueError(
-                    "replay candidate prompt hash mismatch: "
-                    + ", ".join(mismatched)
-                )
+                raise ValueError("replay candidate prompt hash mismatch: " + ", ".join(mismatched))
         # Candidate Prompt hashes are an additive field.  Some evaluators can
         # only report the parent Bundle identity (for example, when the
         # candidate is materialized in an isolated worker); in that case the
@@ -1467,10 +1410,17 @@ def _validate_replay_evidence(
     gate = summary.get("gate")
     if not isinstance(gate, Mapping):
         raise ValueError("replay gate is required")
-    passed = gate.get("passed") is True or str(gate.get("passed", "")).strip().lower() in {"true", "pass", "passed", "ok"}
+    passed = gate.get("passed") is True or str(gate.get("passed", "")).strip().lower() in {
+        "true",
+        "pass",
+        "passed",
+        "ok",
+    }
     verdict = str(gate.get("verdict", summary.get("verdict", ""))).strip().lower()
     reasons = gate.get("reasons", [])
-    if reasons not in (None, "") and (not isinstance(reasons, (list, tuple, set, frozenset)) or any(str(item).strip() for item in reasons)):
+    if reasons not in (None, "") and (
+        not isinstance(reasons, (list, tuple, set, frozenset)) or any(str(item).strip() for item in reasons)
+    ):
         raise ValueError("replay gate contains failure reasons")
     if require_pass and (not passed or verdict != "pass"):
         raise ValueError("replay gate has not passed")
@@ -1577,9 +1527,7 @@ def review_proposal(
     # API boundary.  Require the domain reviewer identity to be ``admin`` as
     # a second line of defence for direct library/CLI callers that might pass
     # the boolean accidentally or from an untrusted integration.
-    scoped_publish_authorized = bool(
-        allow_scoped_publish and str(reviewer or "").strip().lower() == "admin"
-    )
+    scoped_publish_authorized = bool(allow_scoped_publish and str(reviewer or "").strip().lower() == "admin")
     with _lock:
         rows = _read(output_root)
         for row in rows:
@@ -1587,21 +1535,15 @@ def review_proposal(
                 continue
             if (
                 decision == "approved"
-                and str(row.get("effect_status", "")).strip().lower()
-                in _IMMUTABLE_PROMPT_EFFECT_STATUSES
+                and str(row.get("effect_status", "")).strip().lower() in _IMMUTABLE_PROMPT_EFFECT_STATUSES
             ):
-                raise ValueError(
-                    "superseded or withdrawn proposal cannot be approved or published"
-                )
+                raise ValueError("superseded or withdrawn proposal cannot be approved or published")
             # A tenant-scoped candidate may be reviewed and approved for its
             # own audit trail, but it cannot mutate the deployment-wide
             # dynamic-winner files.  Keep that approval retryable: a platform
             # administrator can later re-submit the same proposal with an
             # explicit cross-scope authorization and publish it deliberately.
-            deferred_scoped = (
-                row.get("status") == "approved"
-                and row.get("publish_status") == "deferred_scoped"
-            )
+            deferred_scoped = row.get("status") == "approved" and row.get("publish_status") == "deferred_scoped"
             if row.get("status") != "pending_review" and not (
                 deferred_scoped and decision == "approved" and scoped_publish_authorized
             ):
@@ -1612,10 +1554,7 @@ def review_proposal(
                     require_replay=require_replay,
                 )
                 if require_replay and not validation["ok"]:
-                    raise ValueError(
-                        "replay-first review gate failed: "
-                        + ", ".join(validation["errors"])
-                    )
+                    raise ValueError("replay-first review gate failed: " + ", ".join(validation["errors"]))
                 scoped = proposal_scope_requires_global_publish(row)
                 can_publish = (not scoped) or scoped_publish_authorized
                 if can_publish:
@@ -1628,9 +1567,7 @@ def review_proposal(
                             scope=row.get("scope") if isinstance(row.get("scope"), Mapping) else {},
                             source_proposal_id=str(row["proposal_id"]),
                             expected_parent_bundle_hash=(
-                                str(row.get("parent_bundle_hash", "")).strip()
-                                if require_replay
-                                else ""
+                                str(row.get("parent_bundle_hash", "")).strip() if require_replay else ""
                             ),
                         )
                     else:
@@ -1648,16 +1585,10 @@ def review_proposal(
                 # after publishing so the final proposal update cannot
                 # overwrite those records with the stale pre-publish list.
                 rows = _read(output_root)
-                row = next(
-                    item
-                    for item in rows
-                    if item.get("proposal_id") == proposal_id
-                )
+                row = next(item for item in rows if item.get("proposal_id") == proposal_id)
                 row["status"] = "approved"
                 row["effect_status"] = "pending_validation"
-                row["publish_status"] = (
-                    "published" if can_publish else "deferred_scoped"
-                )
+                row["publish_status"] = "published" if can_publish else "deferred_scoped"
                 if not can_publish:
                     row["publish_deferred_reason"] = (
                         "scoped proposal requires global admin with "
@@ -1668,7 +1599,14 @@ def review_proposal(
             else:
                 row["status"] = "rejected"
                 row["publish_status"] = "not_published"
-            row.update({"reviewer": str(reviewer), "review_comment": str(comment)[:2000], "reviewed_at": _now(), "updated_at": _now()})
+            row.update(
+                {
+                    "reviewer": str(reviewer),
+                    "review_comment": str(comment)[:2000],
+                    "reviewed_at": _now(),
+                    "updated_at": _now(),
+                }
+            )
             _write(output_root, rows)
             return row
     raise KeyError("proposal not found")
@@ -1731,7 +1669,9 @@ def attach_replay_evidence(
         target["replay_summary"] = dict(replay_summary)
         target["evaluation_status"] = "completed"
         target["evaluation_id"] = evaluation_key
-        target["evaluation_metrics"] = dict(replay_summary.get("metrics", {})) if isinstance(replay_summary.get("metrics", {}), Mapping) else {}
+        target["evaluation_metrics"] = (
+            dict(replay_summary.get("metrics", {})) if isinstance(replay_summary.get("metrics", {}), Mapping) else {}
+        )
         target["replay_evaluator_id"] = str(evaluator_id or "")[:160]
         if artifact_path:
             target["replay_artifact"] = _relative_project_path(Path(artifact_path))
@@ -1771,20 +1711,14 @@ def update_proposal_effect_status(
             raise KeyError("proposal not found")
         if target.get("status") != "approved":
             raise ValueError("only approved proposals can be evaluated")
-        prior_status = str(
-            target.get("effect_status") or "pending_validation"
-        ).strip().lower()
+        prior_status = str(target.get("effect_status") or "pending_validation").strip().lower()
         # Check lifecycle eligibility before requiring evaluator metadata.  A
         # pending proposal should retain the stable "only approved" error;
         # approved transitions remain fail-closed without explicit evidence.
         evaluator, evaluation = _require_effect_evidence(evaluator_id, evaluation_id)
         prior_evaluator = str(target.get("effect_evaluator_id") or "").strip()[:160]
         prior_evaluation = str(target.get("effect_evaluation_id") or "").strip()[:160]
-        same_evidence_retry = (
-            prior_status == status
-            and prior_evaluator == evaluator
-            and prior_evaluation == evaluation
-        )
+        same_evidence_retry = prior_status == status and prior_evaluator == evaluator and prior_evaluation == evaluation
         # Never let a delayed/replayed callback revive a candidate that was
         # explicitly superseded or withdrawn.  The exact same terminal write
         # is idempotent, which is important for at-least-once evaluator jobs.
@@ -1849,11 +1783,12 @@ async def propose_with_codex(
     until it is migrated to ``section_patches``.
     """
 
-    selected = [
-        str(stage).upper().strip()
-        for stage in stages
-        if str(stage).upper().strip() in STAGES
-    ] or ["S3", "S4", "S5", "S6"]
+    selected = [str(stage).upper().strip() for stage in stages if str(stage).upper().strip() in STAGES] or [
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+    ]
 
     # Give the challenger the current mutable leaves and their hashes rather
     # than a full production Prompt bundle.  This reduces prompt injection
@@ -1895,9 +1830,7 @@ async def propose_with_codex(
                 ],
                 "hypothesis": "一个可证伪假设",
             },
-            "legacy_compatibility": {
-                "prompts": {"S4": "完整 Prompt 正文，仅供旧客户端回退"}
-            },
+            "legacy_compatibility": {"prompts": {"S4": "完整 Prompt 正文，仅供旧客户端回退"}},
         },
     }
     messages = [
@@ -1908,9 +1841,7 @@ async def propose_with_codex(
                 "优先使用 section_patches，禁止输出 Markdown 代码围栏。"
             ),
         ),
-        ModelMessage(
-            role="user", content=json.dumps(request, ensure_ascii=False)
-        ),
+        ModelMessage(role="user", content=json.dumps(request, ensure_ascii=False)),
     ]
     output_schema = {
         "type": "object",
@@ -1954,9 +1885,7 @@ async def propose_with_codex(
             raise ValueError("section_patches must be a non-empty array")
         patch_stages = list(
             dict.fromkeys(
-                _normalise_patch_section(
-                    patch.get("section_id") or patch.get("id")
-                )[0]
+                _normalise_patch_section(patch.get("section_id") or patch.get("id"))[0]
                 for patch in raw_patches
                 if isinstance(patch, Mapping)
             )

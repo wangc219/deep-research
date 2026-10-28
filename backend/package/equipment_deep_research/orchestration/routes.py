@@ -29,7 +29,7 @@ class RoutePolicyRegistry:
         self.policies = dict(policies)
 
     @classmethod
-    def load(cls, path: str | Path) -> "RoutePolicyRegistry":
+    def load(cls, path: str | Path) -> RoutePolicyRegistry:
         source = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         routes = source.get("routes", {}) if isinstance(source, Mapping) else {}
         if not isinstance(routes, Mapping) or not routes:
@@ -44,9 +44,7 @@ class RoutePolicyRegistry:
             for row in raw.get("waves", []):
                 if not isinstance(row, Mapping):
                     raise ValueError(f"route {route_id} wave must be an object")
-                phase_id = validate_internal_identifier(
-                    str(row["phase_id"]), field_name="phase_id"
-                )
+                phase_id = validate_internal_identifier(str(row["phase_id"]), field_name="phase_id")
                 if phase_id in seen_phases:
                     raise ValueError(f"route {route_id} has duplicate phase: {phase_id}")
                 seen_phases.add(phase_id)
@@ -57,9 +55,7 @@ class RoutePolicyRegistry:
                 waves.append(RouteWave(phase_id, tags, system_ids))
             policies[str(route_id)] = RoutePolicy(
                 route_id=str(route_id),
-                optional_pre_wave_tags=tuple(
-                    str(item) for item in raw.get("optional_pre_wave_tags", [])
-                ),
+                optional_pre_wave_tags=tuple(str(item) for item in raw.get("optional_pre_wave_tags", [])),
                 waves=tuple(waves),
             )
         return cls(policies)
@@ -74,22 +70,14 @@ class RoutePolicyRegistry:
         policy = self.policies[route_id]
         remaining = list(selected)
         result: list[list[AgentSpec]] = []
-        optional = [
-            agent
-            for agent in remaining
-            if set(agent.capability_tags) & set(policy.optional_pre_wave_tags)
-        ]
+        optional = [agent for agent in remaining if set(agent.capability_tags) & set(policy.optional_pre_wave_tags)]
         if optional:
             result.append(optional)
             remaining = [agent for agent in remaining if agent not in optional]
         for wave in policy.waves:
             if wave.system_agent_ids:
                 continue
-            members = [
-                agent
-                for agent in remaining
-                if set(agent.capability_tags) & set(wave.capability_tags)
-            ]
+            members = [agent for agent in remaining if set(agent.capability_tags) & set(wave.capability_tags)]
             if members:
                 result.append(members)
                 remaining = [agent for agent in remaining if agent not in members]
@@ -112,7 +100,7 @@ class RouteRegistry:
         self.routes = dict(routes)
 
     @classmethod
-    def load(cls, path: str | Path) -> "RouteRegistry":
+    def load(cls, path: str | Path) -> RouteRegistry:
         source = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         raw_routes = source.get("routes", {}) if isinstance(source, Mapping) else {}
         routes = {

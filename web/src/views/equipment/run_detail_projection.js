@@ -5,6 +5,11 @@ export const arrayValue = (value) => (Array.isArray(value) ? value : [])
 
 const textValue = (value) => String(value ?? '').trim()
 
+const readableSummary = (value) =>
+  textValue(value)
+    .replace(/\[object Object\]/gi, '结构化材料未展开')
+    .replace(/(^|[：；，、\s])object(?=$|[；，。\s])/gi, '$1结构化材料未展开')
+
 const unique = (values) => [...new Set(values.filter(Boolean))]
 
 export const S_AGENT_ARCHITECTURE = [
@@ -48,7 +53,7 @@ export const S_AGENT_ARCHITECTURE = [
     step: 5,
     agent_id: 'winning_s5_gap',
     name: '创新颠覆候选组合评审 Agent',
-    task: '在同一制胜维度内择优，再跨维度覆盖互异关系；最多保留 7 个。',
+    task: '在同一制胜维度内择优，再跨维度覆盖互异关系；优先保留 5—6 个，最多 6 个。',
     skills: ['gap_quantification', 'equipment_system_gap_assessment'],
     harness: 'winning_step_v1',
     semantics: ['同维度择优', '跨维度覆盖', '名称冻结']
@@ -56,7 +61,7 @@ export const S_AGENT_ARCHITECTURE = [
   {
     step: 6,
     agent_id: 'winning_s6_image',
-    name: '能力图像综合 Agent',
+    name: '能力画像综合 Agent',
     task: '融合差距与前序认识，排序形成装备能力需求图像。',
     skills: ['capability_image_generation', 'capability_portfolio_synthesis'],
     harness: 'winning_step_v1',
@@ -145,7 +150,7 @@ export const normalizeRunEvent = (row, index = 0) => {
   const actor = textValue(
     candidate.actor || details.actor || details.agent_id || details.agent_instance_id || row?.payload?.actor
   )
-  const summary = textValue(
+  const summary = readableSummary(
     candidate.summary ||
       details.summary ||
       details.message ||
@@ -524,8 +529,14 @@ export const buildWinningProjection = (payload, events = [], run = {}, interacti
   }
   const legacyInputs = rowsFromPayload(source.inputs, ['items'])
   const legacyResources = rowsFromPayload(source.resources, ['items'])
-  const reasoningNodes = rowsFromPayload(source.reasoning_nodes, ['items'])
-  const stages = rowsFromPayload(source.stages, ['items'])
+  const reasoningNodes = rowsFromPayload(source.reasoning_nodes, ['items']).map((item) => ({
+    ...item,
+    summary: readableSummary(item.summary)
+  }))
+  const stages = rowsFromPayload(source.stages, ['items']).map((item) => ({
+    ...item,
+    summary: readableSummary(item.summary)
+  }))
   const recalls = rowsFromPayload(source.recalls, ['items'])
   return {
     ...source,
@@ -575,6 +586,17 @@ export const mergeInteractionProjection = (legacyPayload, fallback) => {
   const events = [...eventsById.values()].sort((left, right) =>
     left.sequence - right.sequence || String(left.created_at).localeCompare(String(right.created_at))
   )
+  const workflow = { ...fallback.workflow, ...objectValue(legacy.workflow) }
+  workflow.step_plan = arrayValue(workflow.step_plan).map((item) => ({
+    ...item,
+    result_summary: readableSummary(item.result_summary)
+  }))
+  workflow.loops = Object.fromEntries(
+    Object.entries(objectValue(workflow.loops)).map(([key, item]) => [
+      key,
+      { ...objectValue(item), latest: readableSummary(item?.latest) }
+    ])
+  )
   return {
     ...fallback,
     ...legacy,
@@ -586,7 +608,7 @@ export const mergeInteractionProjection = (legacyPayload, fallback) => {
       events: Math.max(events.length, Number(legacy.counts?.events) || 0),
       visible_events: events.length
     },
-    workflow: { ...fallback.workflow, ...objectValue(legacy.workflow) }
+    workflow
   }
 }
 

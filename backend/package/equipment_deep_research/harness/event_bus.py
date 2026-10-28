@@ -6,7 +6,8 @@ from dataclasses import dataclass, field, replace
 import re
 from threading import Event as CompletionEvent
 from threading import Lock, get_ident
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from equipment_deep_research.harness.events import RuntimeEvent
@@ -59,13 +60,9 @@ _PEM_PRIVATE_KEY_PATTERN = re.compile(
     r"-----END [A-Z0-9 ]*PRIVATE KEY-----",
     re.DOTALL,
 )
-_HIDDEN_REASONING_PATTERN = re.compile(
-    r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>"
-)
+_HIDDEN_REASONING_PATTERN = re.compile(r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>")
 _BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
-_COOKIE_HEADER_PATTERN = re.compile(
-    r"(?i)\b(?:cookie|set-cookie)\s*:\s*[^\r\n]+"
-)
+_COOKIE_HEADER_PATTERN = re.compile(r"(?i)\b(?:cookie|set-cookie)\s*:\s*[^\r\n]+")
 _CREDENTIAL_ASSIGNMENT_PATTERN = re.compile(
     r"(?i)\b(?:access[_-]?token|refresh[_-]?token|api[_-]?key|token|password|"
     r"secret|cookie|authorization)\b\s*[:=]\s*"
@@ -167,27 +164,16 @@ class EventBus:
                 sequence = self._sequences.get(event.run_id, 0) + 1
             else:
                 sequence = allocator()
-                if (
-                    isinstance(sequence, bool)
-                    or not isinstance(sequence, int)
-                    or sequence < 1
-                ):
-                    raise ValueError(
-                        "sequence allocator must return a positive integer"
-                    )
+                if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
+                    raise ValueError("sequence allocator must return a positive integer")
                 if sequence <= self._sequences.get(event.run_id, 0):
-                    raise RuntimeError(
-                        "sequence allocator did not advance the run high-water"
-                    )
+                    raise RuntimeError("sequence allocator did not advance the run high-water")
             self._sequences[event.run_id] = sequence
             safe_event = replace(event, payload=safe_payload, sequence=sequence)
             delivery = _Delivery(safe_event, list(self._subscribers))
             run_queue = self._run_queues.setdefault(event.run_id, _RunQueue())
             run_queue.deliveries.append(delivery)
-            is_reentrant = (
-                run_queue.draining
-                and run_queue.drainer_thread_id == current_thread_id
-            )
+            is_reentrant = run_queue.draining and run_queue.drainer_thread_id == current_thread_id
             should_drain = not run_queue.draining
             if should_drain:
                 run_queue.draining = True
@@ -251,10 +237,7 @@ def sanitize_runtime_payload(value: Any, *, max_string_length: int = 1000) -> An
             for key, item in value.items()
         }
     if isinstance(value, (list, tuple)):
-        return [
-            sanitize_runtime_payload(item, max_string_length=max_string_length)
-            for item in value
-        ]
+        return [sanitize_runtime_payload(item, max_string_length=max_string_length) for item in value]
     if isinstance(value, str):
         safe = _sanitize_string(value)
         if len(safe) > max_string_length:

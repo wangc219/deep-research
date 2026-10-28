@@ -52,13 +52,9 @@ class JsonlSessionStore:
     ) -> None:
         _require_secure_platform()
         self._lock_key: str | None = None
-        roots_provided = sum(
-            value is not None for value in (root_dir, anchor_dir, root_fd)
-        )
+        roots_provided = sum(value is not None for value in (root_dir, anchor_dir, root_fd))
         if roots_provided != 1:
-            raise ValueError(
-                "provide exactly one of root_dir, anchor_dir, or root_fd"
-            )
+            raise ValueError("provide exactly one of root_dir, anchor_dir, or root_fd")
         if root_fd is not None:
             try:
                 self._root_fd = os.dup(root_fd)
@@ -127,7 +123,7 @@ class JsonlSessionStore:
                         if entry.owners == 0:
                             _PATH_LOCKS.pop(lock_key, None)
 
-    def __enter__(self) -> "JsonlSessionStore":
+    def __enter__(self) -> JsonlSessionStore:
         self._require_root_fd()
         return self
 
@@ -220,11 +216,7 @@ class JsonlSessionStore:
                 _require_regular_file(existing, self.path)
             descriptor = _open_at(
                 self.relative_path.name,
-                os.O_APPEND
-                | os.O_CREAT
-                | os.O_WRONLY
-                | _close_on_exec()
-                | _no_follow(),
+                os.O_APPEND | os.O_CREAT | os.O_WRONLY | _close_on_exec() | _no_follow(),
                 0o600,
                 dir_fd=parent_fd,
             )
@@ -280,10 +272,7 @@ class JsonlSessionStore:
                 _require_directory(component_stat, self.path.parent)
                 next_fd = _open_at(
                     component,
-                    os.O_RDONLY
-                    | _directory_only()
-                    | _close_on_exec()
-                    | _no_follow(),
+                    os.O_RDONLY | _directory_only() | _close_on_exec() | _no_follow(),
                     dir_fd=current_fd,
                 )
                 opened_stat = os.fstat(next_fd)
@@ -311,9 +300,7 @@ class JsonlSessionStore:
 
 def _relative_handle_path(path: str | Path) -> Path:
     candidate = Path(path)
-    if candidate.is_absolute() or any(
-        part in {"", ".", ".."} for part in candidate.parts
-    ):
+    if candidate.is_absolute() or any(part in {"", ".", ".."} for part in candidate.parts):
         raise ValueError("session path must stay within root_fd")
     if not candidate.parts:
         raise ValueError("session path must name a file within root_fd")
@@ -369,9 +356,7 @@ def _require_secure_platform() -> None:
         if function not in supports_dir_fd:
             missing.append(name)
     if missing:
-        raise UnsupportedPlatformError(
-            "secure session path operations require " + ", ".join(missing)
-        )
+        raise UnsupportedPlatformError("secure session path operations require " + ", ".join(missing))
 
 
 def _open_at(

@@ -10,8 +10,20 @@ from equipment_deep_research.orchestration.coverage import PresetPolicy
 
 _TOPIC_CAPABILITY_HINTS: dict[str, tuple[str, ...]] = {
     "situation": (
-        "国际形势", "战略格局", "联盟", "地缘", "对手动向", "态势",
-        "国外", "外军", "西太", "亚太", "印太", "台海", "南海", "地区安全",
+        "国际形势",
+        "战略格局",
+        "联盟",
+        "地缘",
+        "对手动向",
+        "态势",
+        "国外",
+        "外军",
+        "西太",
+        "亚太",
+        "印太",
+        "台海",
+        "南海",
+        "地区安全",
     ),
     "threat": ("威胁", "风险预警", "敌情"),
     "scenario": ("场景", "战场环境", "环境约束", "任务阶段", "时间窗口", "战区", "coa"),
@@ -33,9 +45,28 @@ class ResearchPlanner:
         # faithfully represent that audited decision, including any model-chosen
         # specialist beyond the mandatory minimum.
         selected = list(selected_agents)
-        map_nodes = [ResearchPlanNode(f"map:{agent.agent_id}", "baseline_map", [], "pending", agent.agent_id, list(agent.capability_tags)) for agent in selected]
-        reduce_node = ResearchPlanNode("reduce:baseline", "baseline_reduce", [node.node_id for node in map_nodes], "pending", "winning_mechanism", [])
-        winning = ResearchPlanNode("winning:L1-L3", "winning_mechanism", [reduce_node.node_id], "pending", "winning_mechanism", ["winning_mechanism"])
+        map_nodes = [
+            ResearchPlanNode(
+                f"map:{agent.agent_id}", "baseline_map", [], "pending", agent.agent_id, list(agent.capability_tags)
+            )
+            for agent in selected
+        ]
+        reduce_node = ResearchPlanNode(
+            "reduce:baseline",
+            "baseline_reduce",
+            [node.node_id for node in map_nodes],
+            "pending",
+            "winning_mechanism",
+            [],
+        )
+        winning = ResearchPlanNode(
+            "winning:L1-L3",
+            "winning_mechanism",
+            [reduce_node.node_id],
+            "pending",
+            "winning_mechanism",
+            ["winning_mechanism"],
+        )
         audit = ResearchPlanNode("audit:five-criteria", "audit", [winning.node_id], "pending", "auditor", ["audit"])
         report = ResearchPlanNode("report:final", "report", [audit.node_id], "pending", "reporter", ["report"])
         return ResearchPlanGraph([*map_nodes, reduce_node, winning, audit, report])
@@ -48,15 +79,9 @@ class ResearchPlanner:
         additional_required_tags: set[str] | None = None,
     ) -> list[AgentSpec]:
         """Reconcile a model preference with mandatory capability coverage."""
-        required = self.required_tags_for_problem(problem) | set(
-            additional_required_tags or set()
-        )
+        required = self.required_tags_for_problem(problem) | set(additional_required_tags or set())
         by_id = {agent.agent_id: agent for agent in candidates}
-        preferred = [
-            by_id[agent_id]
-            for agent_id in preferred_agent_ids or []
-            if agent_id in by_id
-        ]
+        preferred = [by_id[agent_id] for agent_id in preferred_agent_ids or [] if agent_id in by_id]
         if preferred:
             # A model may recommend useful reference roles, but the baseline is
             # intentionally the minimum sufficient research set.  Retain only

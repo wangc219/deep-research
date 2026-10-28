@@ -17,11 +17,50 @@ export const QUERY_SOURCE_LABELS = {
 export const GENERATION_STAGE_LABELS = {
   queued: '等待生成 Worker',
   web_validation: '联网校验公开线索',
+  context_analysis: '整理输入与研究范围',
+  demand_divergence: '梳理候选研究方向',
   query_generation: '多维发散生成需求选题',
-  persisting: '质量门控与原子入库',
+  persisting: '保存合格结果',
   completed: '生成完成',
   failed: '生成失败',
   cancelled: '已终止'
+}
+
+export function generationProgressText(item = {}) {
+  const label = GENERATION_STAGE_LABELS[item.stage] || item.stage || '等待状态'
+  const total = Number(item.requested_count || item.count || 0)
+  const ids = item.result_query_ids || item.query_ids || []
+  const progress = item.batch_progress || item.payload?.batch_progress
+  const parts = [total > 0 ? `${label} · 已保存 ${ids.length}/${total}` : label]
+  if (progress) {
+    parts.push(`耗时 ${Math.round(progress.elapsed_seconds || 0)} 秒`)
+    parts.push(`请求 ${progress.request_batches || 0} 批 / 修复 ${progress.repair_batches || 0} 批`)
+    if (progress.restored_count) parts.push(`恢复 ${progress.restored_count} 条`)
+  }
+  return parts.join(' · ')
+}
+
+const GENERATION_ERROR_HINTS = [
+  ['outside the supported weapon-equipment capability domain', '选题缺少可识别的装备领域关键词'],
+  ['query is not anchored to its weapon requirement', '短 Query 与详细装备需求没有共享核心对象'],
+  ['query is too short to be a clear research title', '短 Query 信息不足'],
+  ['query should stay close to the preferred 18-25 character range', '短 Query 超出建议长度'],
+  ['query lacks an explicit research or analysis action', '短 Query 缺少“研究、评估、分析”等研究动作'],
+  ['generation_rationale is too short', '模型没有充分说明选题理由'],
+  ['quality_review.verdict must pass after self-revision', '模型自检未通过'],
+  ['ProviderRetryableError', '远端模型请求暂时失败'],
+  ['at least one source reference is required', '没有取得可追溯来源'],
+  ['query is an exact or near duplicate', '生成内容与已有 Query 重复']
+]
+
+export function generationErrorSummary(item = {}) {
+  const raw = cleanText(item.error || item.payload?.error)
+  if (!raw) return ''
+  const hints = GENERATION_ERROR_HINTS
+    .filter(([needle]) => raw.includes(needle))
+    .map(([, hint]) => hint)
+  if (!hints.length) return raw
+  return `质量校验未通过：${[...new Set(hints)].join('；')}。可调整母题后重试，已保存的合格结果不会丢失。`
 }
 
 export function normalizePagedResult(payload, fallbackLimit = 20) {

@@ -59,17 +59,22 @@ def build_request_payload(
     if isinstance(web_search, Mapping):
         web_search_payload = thaw_plain(web_search)
         if isinstance(web_search_payload, dict):
-            search_context_mode = os.environ.get(
-                "EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send"
-            ).strip().lower()
+            search_context_mode = os.environ.get("EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send").strip().lower()
             if search_context_mode in {"omit", "none", "disabled"}:
                 web_search_payload.pop("search_context_size", None)
         declared_tools.append({"type": "web_search", **web_search_payload})
     if tools:
-        declared_tools.extend([
-            {"type": "function", "name": tool.name, "description": tool.description, "parameters": thaw_plain(tool.input_schema)}
-            for tool in tools
-        ])
+        declared_tools.extend(
+            [
+                {
+                    "type": "function",
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": thaw_plain(tool.input_schema),
+                }
+                for tool in tools
+            ]
+        )
     if declared_tools:
         payload["tools"] = declared_tools
     if options.get("include_web_sources"):
@@ -113,9 +118,7 @@ def _without_optional_web_search(payload: Mapping[str, Any]) -> dict[str, Any]:
     declared_tools = payload.get("tools")
     if isinstance(declared_tools, list):
         remaining_tools = [
-            item
-            for item in declared_tools
-            if not (isinstance(item, Mapping) and item.get("type") == "web_search")
+            item for item in declared_tools if not (isinstance(item, Mapping) and item.get("type") == "web_search")
         ]
         if remaining_tools:
             downgraded["tools"] = remaining_tools
@@ -123,11 +126,7 @@ def _without_optional_web_search(payload: Mapping[str, Any]) -> dict[str, Any]:
             downgraded.pop("tools", None)
     include = payload.get("include")
     if isinstance(include, list):
-        remaining_include = [
-            item
-            for item in include
-            if str(item) != "web_search_call.action.sources"
-        ]
+        remaining_include = [item for item in include if str(item) != "web_search_call.action.sources"]
         if remaining_include:
             downgraded["include"] = remaining_include
         else:
@@ -161,10 +160,7 @@ def _can_downgrade_optional_web_search(
 
 def _compact_contract_to_json_schema(value: object) -> dict[str, Any]:
     if isinstance(value, Mapping):
-        properties = {
-            str(key): _compact_contract_to_json_schema(item)
-            for key, item in value.items()
-        }
+        properties = {str(key): _compact_contract_to_json_schema(item) for key, item in value.items()}
         return {
             "type": "object",
             "properties": properties,
@@ -185,10 +181,7 @@ def _compact_contract_to_json_schema(value: object) -> dict[str, Any]:
         return {"type": "integer", "minimum": 1, "maximum": 6}
     if descriptor in {"1..6 or 0", "0..6"}:
         return {"type": "integer", "minimum": 0, "maximum": 6}
-    if "|" in descriptor and all(
-        token.strip() and " " not in token.strip()
-        for token in descriptor.split("|")
-    ):
+    if "|" in descriptor and all(token.strip() and " " not in token.strip() for token in descriptor.split("|")):
         return {"type": "string", "enum": [item.strip() for item in descriptor.split("|")]}
     return {"type": "string"}
 
@@ -379,10 +372,7 @@ class ResponsesProvider:
             retry_attempts = 3
         requested_timeout = options.get("_provider_timeout_seconds")
         call_timeout: float | None = None
-        if (
-            not bool(options.get("_disable_provider_timeout", False))
-            and requested_timeout is not None
-        ):
+        if not bool(options.get("_disable_provider_timeout", False)) and requested_timeout is not None:
             try:
                 call_timeout = max(1.0, float(requested_timeout))
             except (TypeError, ValueError):
@@ -403,14 +393,12 @@ class ResponsesProvider:
                     # provider-call budget at the async boundary as well.
                     lines = await asyncio.wait_for(post_call, timeout=call_timeout)
                 break
-            except asyncio.TimeoutError as exc:
-                raise ProviderRetryableError(
-                    f"Responses request timed out after {call_timeout:g} seconds"
-                ) from exc
+            except TimeoutError as exc:
+                raise ProviderRetryableError(f"Responses request timed out after {call_timeout:g} seconds") from exc
             except ProviderRetryableError:
                 if attempt + 1 >= retry_attempts:
                     raise
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
         assert lines is not None
         events: list[tuple[str, Mapping[str, Any]]] = []
         for frame in iter_sse_frames(lines):
@@ -425,9 +413,7 @@ class ResponsesProvider:
                 yield ProviderStreamEvent.reasoning_delta(str(event.get("delta", "")))
         yield ProviderStreamEvent.final(assistant_from_events(events))
 
-    def _post_for_options(
-        self, payload: Mapping[str, Any], options: Mapping[str, Any]
-    ) -> list[str]:
+    def _post_for_options(self, payload: Mapping[str, Any], options: Mapping[str, Any]) -> list[str]:
         """Apply workflow-level timeout policy without changing direct callers.
 
         Reporter delivery explicitly opts out of a wall-clock cutoff. Other
@@ -481,16 +467,16 @@ class ResponsesProvider:
         request = Request(
             self.base_url,
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Accept": "text/event-stream", "Authorization": f"Bearer {self._api_key}"},
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream",
+                "Authorization": f"Bearer {self._api_key}",
+            },
             method="POST",
         )
         try:
             request_timeout = (
-                None
-                if disable_timeout
-                else self.timeout_seconds
-                if timeout_seconds is None
-                else timeout_seconds
+                None if disable_timeout else self.timeout_seconds if timeout_seconds is None else timeout_seconds
             )
             with urlopen(request, timeout=request_timeout) as response:  # nosec B310: HTTPS validated at construction
                 lines: list[str] = []
@@ -548,7 +534,14 @@ def _message_to_response_input(message: ModelMessage) -> dict[str, Any]:
 
 
 __all__ = [
-    "ProviderAuthenticationError", "ProviderRequestError", "ProviderCapacityError", "ProviderRetryableError",
-    "ResponsesProvider", "assistant_from_events", "build_request_payload",
-    "iter_sse_frames", "parse_sse_event", "parse_sse_frame",
+    "ProviderAuthenticationError",
+    "ProviderRequestError",
+    "ProviderCapacityError",
+    "ProviderRetryableError",
+    "ResponsesProvider",
+    "assistant_from_events",
+    "build_request_payload",
+    "iter_sse_frames",
+    "parse_sse_event",
+    "parse_sse_frame",
 ]

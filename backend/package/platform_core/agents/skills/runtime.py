@@ -93,6 +93,13 @@ async def resolve_runtime_skills_for_context(
     """从已授权 Skill 派生当前 Agent Run 的运行时 scope 与预加载快照。"""
     skill_items = [item for item in await list_accessible_skills(db, user) if item.slug]
     runtime_skills = build_runtime_skills(skill_items)
+    from platform_core.agents.mcp.permissions import user_can_use_mcp
+    from platform_core.agents.mcp.service import get_all_mcp_servers
+
+    servers = await get_all_mcp_servers(db) if any(skill["mcps"] for skill in runtime_skills.values()) else []
+    allowed_mcps = {server.slug for server in servers if server.enabled and user_can_use_mcp(user, server)}
+    for skill in runtime_skills.values():
+        skill["mcps"] = [slug for slug in skill["mcps"] if slug in allowed_mcps]
     available = set(runtime_skills)
     selected = normalize_string_list(getattr(context, "skills", None))
     context_skills = [slug for slug in selected if slug in available]
@@ -161,13 +168,13 @@ def build_dependency_bundle(
     activated_skills: list[str],
     runtime_skills: dict[str, RuntimeSkill],
 ) -> dict[str, list[str]]:
-    """汇总直接激活 Skill 的本地工具和 MCP 依赖。"""
+    """汇总已激活 Skill 及其传递依赖的本地工具和 MCP。"""
     tools: list[str] = []
     mcps: list[str] = []
     seen_tools: set[str] = set()
     seen_mcps: set[str] = set()
 
-    for slug in activated_skills:
+    for slug in expand_skill_closure(activated_skills, runtime_skills):
         dependency = runtime_skills.get(slug, {})
         for tool_name in dependency.get("tools", []):
             if tool_name in seen_tools:

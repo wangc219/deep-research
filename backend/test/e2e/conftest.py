@@ -81,7 +81,7 @@ def cleanup_e2e_test_resources(e2e_base_url: str):
                 raise RuntimeError("E2E cleanup current user payload is missing uid")
 
             await cleanup_test_chat_resources(client, headers, owner_uid=cleanup_uid)
-            await cleanup_pytest_knowledge_resources(client, headers)
+            await cleanup_pytest_knowledge_resources(client, headers, owner_uid=cleanup_uid)
 
     anyio.run(run_cleanup)
     yield
@@ -92,6 +92,17 @@ def cleanup_e2e_test_resources(e2e_base_url: str):
 async def e2e_client(e2e_base_url: str) -> AsyncGenerator[httpx.AsyncClient, None]:
     async with httpx.AsyncClient(base_url=e2e_base_url, timeout=E2E_TIMEOUT, follow_redirects=True) as client:
         yield client
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def isolate_e2e_runtime_client_loops():
+    """关闭本用例创建的连接池，允许 E2E 与 integration 同进程执行。"""
+    yield
+    from platform_core.storage.postgres.manager import pg_manager
+    from platform_core.storage.redis import close_async_redis_client
+
+    await close_async_redis_client()
+    await pg_manager.close()
 
 
 @pytest_asyncio.fixture(scope="function")

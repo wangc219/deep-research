@@ -6,7 +6,8 @@ import asyncio
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import Awaitable, Callable, Any, Mapping
+from typing import Any
+from collections.abc import Awaitable, Callable, Mapping
 from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 
 from bs4 import BeautifulSoup
@@ -17,9 +18,7 @@ from knowledgegraph.demand_discovery.tools.search import OpenSearchHit, OpenSear
 
 
 FetchText = Callable[[str], Awaitable[str]]
-JsonTransport = Callable[
-    [str, dict[str, str], dict[str, object]], Awaitable[dict[str, object]]
-]
+JsonTransport = Callable[[str, dict[str, str], dict[str, object]], Awaitable[dict[str, object]]]
 
 
 @dataclass(frozen=True)
@@ -38,11 +37,7 @@ class HtmlUrlTemplateOpenSearchAdapter:
         )
         html = await self.fetch_text(url)
         soup = BeautifulSoup(html or "", "html.parser")
-        anchors = (
-            soup.select(self.result_selector)
-            if self.result_selector
-            else soup.find_all("a", href=True)
-        )
+        anchors = soup.select(self.result_selector) if self.result_selector else soup.find_all("a", href=True)
         hits: list[OpenSearchHit] = []
         for anchor in anchors:
             href = str(anchor.get("href", "")).strip()
@@ -146,12 +141,8 @@ def load_open_search_adapters(
             adapters.append(
                 TavilyOpenSearchAdapter(
                     name=str(item.get("name", f"adapter-{index}")),
-                    search_provider=str(
-                        item.get("search_provider", item.get("name", "tavily"))
-                    ),
-                    endpoint_url=str(
-                        item.get("endpoint_url", "https://api.tavily.com/search")
-                    ),
+                    search_provider=str(item.get("search_provider", item.get("name", "tavily"))),
+                    endpoint_url=str(item.get("endpoint_url", "https://api.tavily.com/search")),
                     api_key=api_key,
                     max_results=int(item.get("max_results", 5)),
                     search_depth=str(item.get("search_depth", "basic")),
@@ -160,10 +151,7 @@ def load_open_search_adapters(
             )
             continue
         if adapter_type != "html_url_template":
-            raise ValueError(
-                f"unsupported open search adapter type at adapters[{index}]: "
-                f"{adapter_type}"
-            )
+            raise ValueError(f"unsupported open search adapter type at adapters[{index}]: {adapter_type}")
         template = str(item.get("template", "")).strip()
         if not template:
             raise ValueError(f"open search adapters[{index}].template is required")
@@ -180,12 +168,7 @@ def load_open_search_adapters(
 
 
 def default_open_search_adapters_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[4]
-        / "configs"
-        / "demand_discovery"
-        / "open_search_adapters.yaml"
-    )
+    return Path(__file__).resolve().parents[4] / "configs" / "demand_discovery" / "open_search_adapters.yaml"
 
 
 async def _default_fetch_text(url: str) -> str:

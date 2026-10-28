@@ -268,6 +268,22 @@
       </div>
     </template>
 
+    <template #panel-access>
+      <div class="extension-detail-view">
+        <h3>MCP 使用权限</h3>
+        <p>角色与使用范围同时生效，覆盖主智能体、子智能体和 Skill 的间接依赖。管理连接配置仍需管理员权限。</p>
+        <a-form layout="vertical">
+          <a-form-item label="允许使用的角色">
+            <a-select v-model:value="accessPolicy.allowed_roles" mode="multiple" :options="[
+              { value: 'user', label: '普通用户' }, { value: 'admin', label: '管理员' }, { value: 'superadmin', label: '超级管理员' }
+            ]" />
+          </a-form-item>
+          <ShareConfigForm ref="accessFormRef" v-model="accessPolicy.share_config" :show-manage-scope="false" />
+          <a-button type="primary" :loading="savingAccess" @click="saveAccessPolicy">保存使用权限</a-button>
+        </a-form>
+      </div>
+    </template>
+
     <template #panel-tools>
       <div class="extension-detail-view extension-detail-gray-switches tools-tab">
         <div class="tools-toolbar">
@@ -378,6 +394,7 @@ import {
   X
 } from '@lucide/vue'
 import ExtensionDetailLayout from '@/components/shared/ExtensionDetailLayout.vue'
+import ShareConfigForm from '@/components/ShareConfigForm.vue'
 import { mcpApi } from '@/apis/mcp_api'
 import { formatFullDateTime } from '@/utils/time'
 
@@ -388,6 +405,25 @@ const slug = computed(() => decodeURIComponent(route.params.slug ?? route.params
 const loading = ref(false)
 const server = ref(null)
 const detailTab = ref('general')
+const accessPolicy = ref({ allowed_roles: ['user', 'admin', 'superadmin'], share_config: {
+  version: 2, read_scope: { access_level: 'global', department_ids: [], user_uids: [] }, manage_scope: null
+} })
+const savingAccess = ref(false)
+const accessFormRef = ref(null)
+const saveAccessPolicy = async () => {
+  const validation = accessFormRef.value?.validate?.()
+  if (validation && !validation.valid) return message.warning(validation.message)
+  savingAccess.value = true
+  try {
+    await mcpApi.updateMcpAccessPolicy(server.value.slug, accessPolicy.value)
+    message.success('MCP 使用权限已保存')
+    await fetchServer()
+  } catch (error) {
+    message.error(error.message || '保存 MCP 使用权限失败')
+  } finally {
+    savingAccess.value = false
+  }
+}
 const testLoading = ref(null)
 
 const tools = ref([])
@@ -397,7 +433,7 @@ const toolSearchText = ref('')
 const toggleToolLoading = ref(null)
 
 const mcpDetailTabs = computed(() => {
-  const tabs = [{ key: 'general', label: '信息', icon: Settings2 }]
+  const tabs = [{ key: 'general', label: '信息', icon: Settings2 }, { key: 'access', label: '使用权限', icon: Settings2 }]
   if (!server.value?.requires_migration) {
     tabs.push({ key: 'tools', label: `工具 (${tools.value.length})`, icon: Wrench })
   }
@@ -541,13 +577,8 @@ const fetchServer = async () => {
     loading.value = true
     const result = await mcpApi.getMcpServer(slug.value)
     if (result.success) {
-      if (result.data?.enabled === false && !result.data?.requires_migration) {
-        server.value = null
-        message.info('请先添加 MCP 后再查看详情')
-        router.replace({ path: '/extensions', query: { tab: 'mcp' } })
-        return
-      }
       server.value = result.data
+      if (result.data.access_policy) accessPolicy.value = structuredClone(result.data.access_policy)
     } else {
       message.error(result.message || '获取 MCP 详情失败')
     }

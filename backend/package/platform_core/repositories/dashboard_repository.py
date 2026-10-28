@@ -296,80 +296,61 @@ class DashboardRepository:
         }
 
     async def get_tool_call_stats(self, *, now: datetime | None = None) -> dict[str, Any]:
-        """统计有效用户与非删除会话中的工具调用。"""
+        """两次 SQL 聚合工具分布与滚动七日计数，避免逐日扫描同一批调用。"""
         query_now = (now or utc_now()).replace(tzinfo=None)
         valid_filters = [Conversation.status.notin_(("deleted", "subagent")), User.is_deleted == 0]
-        total_result = await self.db_session.execute(
-            select(func.count(ToolCall.id))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters)
-        )
-        successful_result = await self.db_session.execute(
-            select(func.count(ToolCall.id))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters, ToolCall.status == "success")
-        )
-        total_calls = total_result.scalar() or 0
-        successful_calls = successful_result.scalar() or 0
-
-        most_used_result = await self.db_session.execute(
-            select(ToolCall.tool_name, func.count(ToolCall.id).label("count"))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters)
-            .group_by(ToolCall.tool_name)
-            .order_by(func.count(ToolCall.id).desc())
-            .limit(10)
-        )
-        error_result = await self.db_session.execute(
-            select(ToolCall.tool_name, func.count(ToolCall.id).label("error_count"))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters, ToolCall.status == "error")
-            .group_by(ToolCall.tool_name)
-        )
-
-        daily_tool_calls = []
-        for day_offset in range(7):
-            day_start = query_now - timedelta(days=day_offset + 1)
-            day_end = query_now - timedelta(days=day_offset)
-            daily_result = await self.db_session.execute(
-                select(func.count(ToolCall.id))
+        tools = (
+            await self.db_session.execute(
+                select(
+                    ToolCall.tool_name,
+                    func.count(ToolCall.id).label("count"),
+                    func.sum(case((ToolCall.status == "success", 1), else_=0)).label("successful"),
+                    func.sum(case((ToolCall.status == "error", 1), else_=0)).label("errors"),
+                )
                 .join(Message, ToolCall.message_id == Message.id)
                 .join(Conversation, Message.conversation_id == Conversation.id)
                 .join(User, Conversation.uid == User.uid)
                 .join(Agent, Conversation.agent_id == Agent.slug)
-                .where(
-                    *valid_filters,
-                    ToolCall.created_at >= day_start,
-                    ToolCall.created_at < day_end,
-                )
+                .where(*valid_filters)
+                .group_by(ToolCall.tool_name)
+                .order_by(func.count(ToolCall.id).desc())
             )
-            daily_tool_calls.append({"date": day_start.strftime("%Y-%m-%d"), "call_count": daily_result.scalar() or 0})
-
+        ).all()
+        windows = [(query_now - timedelta(days=day + 1), query_now - timedelta(days=day)) for day in range(7)]
+        daily_counts = (
+            await self.db_session.execute(
+                select(
+                    *[
+                        func.sum(case(((ToolCall.created_at >= start) & (ToolCall.created_at < end), 1), else_=0))
+                        for start, end in windows
+                    ]
+                )
+                .select_from(ToolCall)
+                .join(Message, ToolCall.message_id == Message.id)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .join(User, Conversation.uid == User.uid)
+                .join(Agent, Conversation.agent_id == Agent.slug)
+                .where(*valid_filters, ToolCall.created_at >= windows[-1][0], ToolCall.created_at < query_now)
+            )
+        ).one()
+        total_calls = sum(row.count for row in tools)
+        successful_calls = sum(int(row.successful or 0) for row in tools)
         return {
             "total_calls": total_calls,
             "successful_calls": successful_calls,
             "failed_calls": total_calls - successful_calls,
             "success_rate": round(successful_calls / total_calls * 100, 2) if total_calls else 0,
-            "most_used_tools": [{"tool_name": name, "count": count} for name, count in most_used_result.all()],
-            "tool_error_distribution": {name: count for name, count in error_result.all()},
-            "daily_tool_calls": list(reversed(daily_tool_calls)),
+            "most_used_tools": [{"tool_name": row.tool_name, "count": row.count} for row in tools[:10]],
+            "tool_error_distribution": {row.tool_name: int(row.errors) for row in tools if row.errors},
+            "daily_tool_calls": [
+                {"date": start.strftime("%Y-%m-%d"), "call_count": int(count or 0)}
+                for (start, _), count in reversed(list(zip(windows, daily_counts, strict=True)))
+            ],
         }
 
     async def get_agent_analytics(self) -> dict[str, Any]:
         """汇总配置 Agent、原生运行与装备研究专用 Agent 的统一使用情况。"""
-        agents = list((await self.db_session.execute(select(Agent).order_by(Agent.name.asc()))).scalars().all())
+        agents = (await self.db_session.execute(select(Agent.slug, Agent.name).order_by(Agent.name.asc()))).all()
         valid_filters = [Conversation.status.notin_(("deleted", "subagent")), User.is_deleted == 0]
 
         conversation_rows = (
@@ -666,40 +647,105 @@ class DashboardRepository:
         query_now = (now or utc_now()).replace(tzinfo=None)
         days = {"7days": 7, "30days": 30, "90days": 90}.get(time_range, 30)
         start_time = query_now - timedelta(days=days)
-        agent_runs = list(
-            (
-                await self.db_session.execute(
-                    select(AgentRun).where(AgentRun.created_at >= start_time).order_by(AgentRun.created_at.desc())
+        ledger_key = func.coalesce(func.nullif(PlatformModelCall.run_id, ""), PlatformModelCall.id)
+        # 已有逐次调用账本的运行不再读取历史 JSON 用量，避免重复统计和大字段传输。
+        agent_runs = (
+            await self.db_session.execute(
+                select(
+                    AgentRun.id,
+                    AgentRun.source,
+                    AgentRun.run_type,
+                    AgentRun.status,
+                    AgentRun.token_usage,
+                    AgentRun.input_payload["model_spec"].as_string().label("model_spec"),
+                ).where(
+                    AgentRun.created_at >= start_time,
+                    ~select(PlatformModelCall.id)
+                    .where(
+                        PlatformModelCall.created_at >= start_time,
+                        ledger_key == AgentRun.id,
+                    )
+                    .exists(),
                 )
             )
-            .scalars()
-            .all()
-        )
-        research_runs = list(
-            (
-                await self.db_session.execute(
-                    select(EquipmentResearchRun)
-                    .where(EquipmentResearchRun.created_at >= start_time)
-                    .order_by(EquipmentResearchRun.created_at.desc())
+        ).all()
+        research_runs = (
+            await self.db_session.execute(
+                select(
+                    EquipmentResearchRun.id,
+                    EquipmentResearchRun.status,
+                    EquipmentResearchRun.payload["model_usage"].label("model_usage"),
+                    EquipmentResearchRun.payload["model_spec"].as_string().label("model_spec"),
+                ).where(
+                    EquipmentResearchRun.created_at >= start_time,
+                    ~select(PlatformModelCall.id)
+                    .where(
+                        PlatformModelCall.created_at >= start_time,
+                        ledger_key == EquipmentResearchRun.id,
+                    )
+                    .exists(),
                 )
             )
-            .scalars()
+        ).all()
+        # PostgreSQL 汇总逐次调用，只返回业务入口和模型分布，避免 API 反复构建万条用量字典。
+        ledger_cte = """
+            WITH run_models AS (
+                SELECT surface, COALESCE(NULLIF(run_id, ''), id) AS run_key, model_spec,
+                       COUNT(*) AS calls, COUNT(total_tokens) AS reported_calls,
+                       COALESCE(SUM(input_tokens), 0) AS input_tokens,
+                       COALESCE(SUM(output_tokens), 0) AS output_tokens,
+                       COALESCE(SUM(total_tokens), 0) AS total_tokens,
+                       COUNT(*) FILTER (WHERE status IN ('failed', 'cancelled')) AS failed_calls,
+                       COALESCE(SUM(duration_ms), 0) AS duration_ms
+                FROM platform_model_calls WHERE created_at >= :start_time
+                GROUP BY surface, run_key, model_spec
+            ), ledger_runs AS (
+                SELECT surface, run_key, SUM(calls) AS calls, SUM(reported_calls) AS reported_calls,
+                       SUM(input_tokens) AS input_tokens, SUM(output_tokens) AS output_tokens,
+                       CASE WHEN SUM(total_tokens) = 0 THEN SUM(input_tokens) + SUM(output_tokens)
+                            ELSE SUM(total_tokens) END AS total_tokens,
+                       SUM(failed_calls) AS failed_calls, SUM(duration_ms) AS duration_ms
+                FROM run_models GROUP BY surface, run_key
+            )
+        """
+        ledger_surfaces = (
+            (
+                await self.db_session.execute(
+                    text(
+                        ledger_cte
+                        + """
+            SELECT surface, COUNT(*) AS run_count, SUM(calls) AS call_count,
+                   SUM(reported_calls) AS usage_reported_call_count,
+                   SUM(CASE WHEN total_tokens != 0 OR reported_calls > 0 THEN 1 ELSE 0 END) AS reported_run_count,
+                   SUM(input_tokens) AS input_tokens, SUM(output_tokens) AS output_tokens,
+                   SUM(total_tokens) AS total_tokens,
+                   SUM(CASE WHEN failed_calls > 0 THEN 1 ELSE 0 END) AS failed_count,
+                   SUM(failed_calls) AS failed_call_count, SUM(duration_ms) AS recorded_duration_ms
+            FROM ledger_runs GROUP BY surface
+        """
+                    ),
+                    {"start_time": start_time},
+                )
+            )
+            .mappings()
             .all()
         )
-
-        call_rows = (await self.db_session.execute(text("""
-            SELECT surface, COALESCE(NULLIF(run_id, ''), id) AS run_key,
-                   model_spec, COUNT(*) AS calls,
-                   COUNT(total_tokens) AS reported_calls,
-                   COALESCE(SUM(input_tokens), 0) AS input_tokens,
-                   COALESCE(SUM(output_tokens), 0) AS output_tokens,
-                   COALESCE(SUM(total_tokens), 0) AS total_tokens,
-                   COUNT(*) FILTER (WHERE status IN ('failed', 'cancelled')) AS failed_calls,
-                   COALESCE(SUM(duration_ms), 0) AS duration_ms
-            FROM platform_model_calls WHERE created_at >= :start_time
-            GROUP BY surface, run_key, model_spec
-        """), {"start_time": start_time})).mappings().all()
-        ledger_run_ids = {row["run_key"] for row in call_rows}
+        ledger_models = (
+            (
+                await self.db_session.execute(
+                    text(
+                        ledger_cte
+                        + """
+            SELECT model_spec, COUNT(*) AS run_count, SUM(calls) AS call_count, SUM(total_tokens) AS total_tokens
+            FROM run_models GROUP BY model_spec
+        """
+                    ),
+                    {"start_time": start_time},
+                )
+            )
+            .mappings()
+            .all()
+        )
 
         by_model: dict[str, dict[str, Any]] = {}
         by_surface: dict[str, dict[str, Any]] = {}
@@ -773,62 +819,74 @@ class DashboardRepository:
                 model_row["total_tokens"] += int(bucket_usage.get("total_tokens", 0) or 0)
 
         for run in agent_runs:
-            if run.id in ledger_run_ids:
-                continue
-            input_payload = dict(run.input_payload or {})
             if run.source == "equipment_deep_research":
                 surface = "深研对话"
             elif run.run_type == "subagent":
                 surface = "Subagent"
             else:
                 surface = "智能对话"
-            add_usage(surface, dict(run.token_usage or {}), str(input_payload.get("model_spec") or ""), run.status)
+            add_usage(surface, dict(run.token_usage or {}), str(run.model_spec or ""), run.status)
         for run in research_runs:
-            if run.id in ledger_run_ids:
-                continue
-            payload = dict(run.payload or {})
             add_usage(
                 "研究任务",
-                dict(payload.get("model_usage") or {}),
-                str(payload.get("model_spec") or ""),
+                dict(run.model_usage or {}),
+                str(run.model_spec or ""),
                 run.status,
             )
 
-        ledger_runs: dict[tuple[str, str], dict[str, Any]] = {}
-        for row in call_rows:
-            key = (row["surface"], row["run_key"])
-            usage = ledger_runs.setdefault(key, {
-                "total": {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
-                "models": {}, "model_call_count": 0, "usage_reported_call_count": 0, "failed_calls": 0,
-            })
-            for token_key in ("input_tokens", "output_tokens", "total_tokens"):
-                usage["total"][token_key] += int(row[token_key])
-            usage["model_call_count"] += int(row["calls"])
-            usage["usage_reported_call_count"] += int(row["reported_calls"])
-            usage["failed_calls"] += int(row["failed_calls"])
-            usage["models"][row["model_spec"]] = {
-                "call_count": int(row["calls"]), "total_tokens": int(row["total_tokens"]),
-            }
-            summary["failed_call_count"] += int(row["failed_calls"])
-            summary["recorded_duration_ms"] += float(row["duration_ms"])
-            summary["recorded_call_count"] += int(row["calls"])
-        for (surface, _), usage in ledger_runs.items():
-            add_usage(surface, usage, "", "failed" if usage["failed_calls"] else "completed")
-            by_surface[surface]["failed_call_count"] = (
-                by_surface[surface].get("failed_call_count", 0) + usage["failed_calls"]
+        for row in ledger_surfaces:
+            for key in (
+                "run_count",
+                "call_count",
+                "input_tokens",
+                "output_tokens",
+                "total_tokens",
+                "reported_run_count",
+                "usage_reported_call_count",
+                "failed_call_count",
+            ):
+                summary[key] += int(row[key] or 0)
+            summary["recorded_duration_ms"] += float(row["recorded_duration_ms"] or 0)
+            summary["recorded_call_count"] += int(row["call_count"] or 0)
+            surface = row["surface"]
+            bucket = by_surface.setdefault(
+                surface,
+                {
+                    "surface": surface,
+                    "run_count": 0,
+                    "call_count": 0,
+                    "total_tokens": 0,
+                    "failed_count": 0,
+                },
             )
+            for key in ("run_count", "call_count", "total_tokens", "failed_count", "failed_call_count"):
+                bucket[key] = bucket.get(key, 0) + int(row[key] or 0)
+        for row in ledger_models:
+            model = str(row["model_spec"] or "unknown")
+            bucket = by_model.setdefault(
+                model, {"model_spec": model, "run_count": 0, "call_count": 0, "total_tokens": 0}
+            )
+            for key in ("run_count", "call_count", "total_tokens"):
+                bucket[key] += int(row[key] or 0)
         summary["average_call_duration_ms"] = (
             round(summary["recorded_duration_ms"] / summary["recorded_call_count"], 1)
-            if summary["recorded_call_count"] else None
+            if summary["recorded_call_count"]
+            else None
         )
-        summary["usage_call_coverage_rate"] = round(
-            summary["usage_reported_call_count"] / summary["call_count"] * 100, 1
-        ) if summary["call_count"] else 100.0
+        summary["usage_call_coverage_rate"] = (
+            round(summary["usage_reported_call_count"] / summary["call_count"] * 100, 1)
+            if summary["call_count"]
+            else 100.0
+        )
 
-        summary["coverage_rate"] = round(
-            summary["reported_run_count"] / summary["run_count"] * 100,
-            1,
-        ) if summary["run_count"] else 100.0
+        summary["coverage_rate"] = (
+            round(
+                summary["reported_run_count"] / summary["run_count"] * 100,
+                1,
+            )
+            if summary["run_count"]
+            else 100.0
+        )
         return {
             "time_range": time_range,
             "summary": summary,
@@ -992,19 +1050,27 @@ class DashboardRepository:
         if metric_type in {"models", "tokens"}:
             call_group = self._time_group_format(PlatformModelCall.created_at, time_range)
             if metric_type == "models":
-                result = await self.db_session.execute(select(
-                    call_group.label("date"), func.count(PlatformModelCall.id).label("count"),
-                    PlatformModelCall.model_spec.label("category"),
-                ).where(PlatformModelCall.created_at >= query_start_time)
-                  .group_by(call_group, PlatformModelCall.model_spec))
+                result = await self.db_session.execute(
+                    select(
+                        call_group.label("date"),
+                        func.count(PlatformModelCall.id).label("count"),
+                        PlatformModelCall.model_spec.label("category"),
+                    )
+                    .where(PlatformModelCall.created_at >= query_start_time)
+                    .group_by(call_group, PlatformModelCall.model_spec)
+                )
                 rows.extend(result.all())
             else:
                 for token_name in ("input_tokens", "output_tokens"):
-                    result = await self.db_session.execute(select(
-                        call_group.label("date"),
-                        func.coalesce(func.sum(getattr(PlatformModelCall, token_name)), 0).label("count"),
-                        literal(token_name).label("category"),
-                    ).where(PlatformModelCall.created_at >= query_start_time).group_by(call_group))
+                    result = await self.db_session.execute(
+                        select(
+                            call_group.label("date"),
+                            func.coalesce(func.sum(getattr(PlatformModelCall, token_name)), 0).label("count"),
+                            literal(token_name).label("category"),
+                        )
+                        .where(PlatformModelCall.created_at >= query_start_time)
+                        .group_by(call_group)
+                    )
                     rows.extend(result.all())
 
         categories = sorted({row.category for row in rows if row.category})

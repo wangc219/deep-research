@@ -69,9 +69,7 @@ _PRIVATE_KEY_RE = re.compile(
     r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----",
     re.DOTALL,
 )
-_HIDDEN_BLOCK_RE = re.compile(
-    r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>"
-)
+_HIDDEN_BLOCK_RE = re.compile(r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>")
 _SAFE_SNAPSHOT_KEYS = frozenset(
     {
         "type",
@@ -160,11 +158,15 @@ def _bounded(
         result: dict[str, Any] = {}
         for key, item in list(value.items())[:48]:
             name = str(key)[:120]
-            result[name] = "<redacted>" if _is_sensitive_key(name) else _bounded(
-                item,
-                depth=depth + 1,
-                max_depth=max_depth,
-                max_string_length=max_string_length,
+            result[name] = (
+                "<redacted>"
+                if _is_sensitive_key(name)
+                else _bounded(
+                    item,
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                    max_string_length=max_string_length,
+                )
             )
         return result
     if isinstance(value, (list, tuple)):
@@ -185,9 +187,7 @@ def _model_visible_payload(value: Any) -> Any:
 
     if isinstance(value, Mapping):
         return {
-            key: _model_visible_payload(item)
-            for key, item in value.items()
-            if str(key) not in _RUNTIME_METADATA_KEYS
+            key: _model_visible_payload(item) for key, item in value.items() if str(key) not in _RUNTIME_METADATA_KEYS
         }
     if isinstance(value, list):
         return [_model_visible_payload(item) for item in value]
@@ -357,7 +357,9 @@ class ProviderResult:
             None if self.finish_reason is None else _text(self.finish_reason, 120),
         )
         object.__setattr__(self, "usage", _bounded(dict(self.usage)) if isinstance(self.usage, Mapping) else {})
-        object.__setattr__(self, "metadata", _bounded(dict(self.metadata)) if isinstance(self.metadata, Mapping) else {})
+        object.__setattr__(
+            self, "metadata", _bounded(dict(self.metadata)) if isinstance(self.metadata, Mapping) else {}
+        )
         object.__setattr__(self, "provider_id", _text(self.provider_id, 120))
         object.__setattr__(self, "model", _text(self.model, 160))
 
@@ -398,15 +400,14 @@ class ProviderRuntime:
             raise TypeError("provider must expose an async stream method")
         self.provider = provider
         self.provider_id = _text(provider_id, 120) or _text(
-            self._provider_snapshot().get("type", "")
-            or getattr(provider, "provider_type", ""),
+            self._provider_snapshot().get("type", "") or getattr(provider, "provider_type", ""),
             120,
         )
         self.model = _text(model, 160) or _text(getattr(provider, "model", ""), 160)
         self._json_callback = json_callback
 
     @classmethod
-    def from_host(cls, host: Any) -> "ProviderRuntime | None":
+    def from_host(cls, host: Any) -> ProviderRuntime | None:
         """Capture the provider surface of an existing workflow host."""
 
         existing = getattr(host, "deep_provider_runtime", None)
@@ -586,26 +587,17 @@ class ProviderRuntime:
             # here so Responses and other adapters cannot wait indefinitely
             # or issue the same live search on the recovery attempt.
             try:
-                technology_timeout = int(
-                    os.environ.get(
-                        "EQUIPMENT_DR_DEEP_TECHNOLOGY_TIMEOUT_SECONDS", "180"
-                    )
-                )
+                technology_timeout = int(os.environ.get("EQUIPMENT_DR_DEEP_TECHNOLOGY_TIMEOUT_SECONDS", "180"))
             except (TypeError, ValueError):
                 technology_timeout = 180
             request_options.update(
                 {
-                    "_provider_timeout_seconds": max(
-                        45, min(300, technology_timeout)
-                    ),
+                    "_provider_timeout_seconds": max(45, min(300, technology_timeout)),
                     "_disable_provider_timeout": False,
                     "_provider_retry_attempts": 1,
                 }
             )
-            if not any(
-                phase.endswith(suffix)
-                for suffix in ("_retry", "_model_recovery", "_offline_recovery")
-            ):
+            if not any(phase.endswith(suffix) for suffix in ("_retry", "_model_recovery", "_offline_recovery")):
                 request_options.update(
                     {
                         "web_search": {

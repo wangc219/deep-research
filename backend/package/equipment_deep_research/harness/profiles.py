@@ -51,9 +51,7 @@ class HarnessProfile:
         validate_internal_identifier(self.profile_id, field_name="profile_id")
         unknown_budget = sorted(set(self.budget) - PROFILE_BUDGET_KEYS)
         if unknown_budget:
-            raise ValueError(
-                f"profile {self.profile_id} declares unknown budget keys: {unknown_budget}"
-            )
+            raise ValueError(f"profile {self.profile_id} declares unknown budget keys: {unknown_budget}")
         for key, value in self.budget.items():
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
                 raise ValueError(f"profile {self.profile_id} budget {key} must be non-negative")
@@ -69,18 +67,14 @@ class HarnessProfile:
         }
         for key, maximum in bounded_limits.items():
             if key in self.budget and float(self.budget[key]) > maximum:
-                raise ValueError(
-                    f"profile {self.profile_id} budget {key} may not exceed {maximum}"
-                )
+                raise ValueError(f"profile {self.profile_id} budget {key} may not exceed {maximum}")
         if not self.stop_conditions:
             raise ValueError(f"profile {self.profile_id} requires stop_conditions")
         for phase_id, tools in self.phase_tools.items():
             validate_internal_identifier(str(phase_id), field_name="phase_id")
             unknown_tools = sorted(set(tools) - TOOL_CATALOG)
             if unknown_tools:
-                raise ValueError(
-                    f"profile {self.profile_id} phase {phase_id} declares unknown tools: {unknown_tools}"
-                )
+                raise ValueError(f"profile {self.profile_id} phase {phase_id} declares unknown tools: {unknown_tools}")
 
     def task_budget(self) -> dict[str, int]:
         return {
@@ -111,18 +105,12 @@ class SkillDefinition:
             raise ValueError(f"skill {self.skill_id} declares unknown tools: {unknown_tools}")
         unknown_scopes = sorted(set(self.object_write_scopes) - OBJECT_SCOPE_CATALOG)
         if unknown_scopes:
-            raise ValueError(
-                f"skill {self.skill_id} declares unknown object scopes: {unknown_scopes}"
-            )
+            raise ValueError(f"skill {self.skill_id} declares unknown object scopes: {unknown_scopes}")
         unknown_budget = sorted(set(self.budget_override) - PROFILE_BUDGET_KEYS)
         if unknown_budget:
-            raise ValueError(
-                f"skill {self.skill_id} declares unknown budget keys: {unknown_budget}"
-            )
+            raise ValueError(f"skill {self.skill_id} declares unknown budget keys: {unknown_budget}")
         if not self.steps or not self.required_artifacts or not self.quality_gates:
-            raise ValueError(
-                f"skill {self.skill_id} requires steps, required_artifacts and quality_gates"
-            )
+            raise ValueError(f"skill {self.skill_id} requires steps, required_artifacts and quality_gates")
 
     def to_agent_skill(self) -> dict[str, Any]:
         return {
@@ -155,13 +143,9 @@ class KnowledgePackDefinition:
             field_name="knowledge_pack_id",
         )
         if not self.description.strip():
-            raise ValueError(
-                f"knowledge pack {self.knowledge_pack_id} requires a description"
-            )
+            raise ValueError(f"knowledge pack {self.knowledge_pack_id} requires a description")
         if not self.source_types or not self.quality_gates:
-            raise ValueError(
-                f"knowledge pack {self.knowledge_pack_id} requires source_types and quality_gates"
-            )
+            raise ValueError(f"knowledge pack {self.knowledge_pack_id} requires source_types and quality_gates")
 
     def to_runtime(self) -> dict[str, Any]:
         return {
@@ -181,11 +165,11 @@ class HarnessCatalog:
     knowledge_packs: dict[str, KnowledgePackDefinition] = field(default_factory=dict)
 
     @classmethod
-    def empty(cls) -> "HarnessCatalog":
+    def empty(cls) -> HarnessCatalog:
         return cls({}, {}, {})
 
     @classmethod
-    def load(cls, path: str | Path) -> "HarnessCatalog":
+    def load(cls, path: str | Path) -> HarnessCatalog:
         source = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         if not isinstance(source, Mapping):
             raise ValueError("harness configuration must be an object")
@@ -202,8 +186,7 @@ class HarnessCatalog:
                 stop_conditions=[str(item) for item in raw.get("stop_conditions", [])],
                 recovery_policy=dict(raw.get("recovery_policy", {})),
                 phase_tools={
-                    str(key): [str(item) for item in value]
-                    for key, value in dict(raw.get("phase_tools", {})).items()
+                    str(key): [str(item) for item in value] for key, value in dict(raw.get("phase_tools", {})).items()
                 },
             )
             if profile.profile_id in profiles:
@@ -223,9 +206,7 @@ class HarnessCatalog:
                 shared=bool(raw.get("shared", False)),
             )
             if knowledge_pack.knowledge_pack_id in knowledge_packs:
-                raise ValueError(
-                    f"duplicate knowledge pack: {knowledge_pack.knowledge_pack_id}"
-                )
+                raise ValueError(f"duplicate knowledge pack: {knowledge_pack.knowledge_pack_id}")
             knowledge_pack.validate()
             knowledge_packs[knowledge_pack.knowledge_pack_id] = knowledge_pack
         skills: dict[str, SkillDefinition] = {}
@@ -243,20 +224,14 @@ class HarnessCatalog:
                 object_write_scopes=[str(item) for item in raw.get("object_write_scopes", [])],
                 budget_override=dict(raw.get("budget_override", {})),
                 shared=bool(raw.get("shared", False)),
-                knowledge_pack_ids=[
-                    str(item) for item in raw.get("knowledge_pack_ids", [])
-                ],
+                knowledge_pack_ids=[str(item) for item in raw.get("knowledge_pack_ids", [])],
             )
             if skill.skill_id in skills:
                 raise ValueError(f"duplicate skill definition: {skill.skill_id}")
             skill.validate()
-            unknown_packs = sorted(
-                set(skill.knowledge_pack_ids) - set(knowledge_packs)
-            )
+            unknown_packs = sorted(set(skill.knowledge_pack_ids) - set(knowledge_packs))
             if unknown_packs:
-                raise ValueError(
-                    f"skill {skill.skill_id} references unknown knowledge packs: {unknown_packs}"
-                )
+                raise ValueError(f"skill {skill.skill_id} references unknown knowledge packs: {unknown_packs}")
             skills[skill.skill_id] = skill
         return cls(profiles, skills, knowledge_packs)
 

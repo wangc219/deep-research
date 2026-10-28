@@ -34,65 +34,37 @@ test('装备与技术实现使用技术攻关舱入口，其他栏目继续使�
   assert.match(portraitCard, /<Wrench v-if="isTechnologyCabinSection\(entry\.label\)"/)
 })
 
-test('技术攻关舱提示词覆盖七级研究方案链、验证与成熟度风险', () => {
-  const overview =
-    '当前背景：既有方式存在断点。解决思路：用受约束自治恢复任务窗口。达到效果：保持连续作用。核心创新：把任务成立前提从全程在线改为本地证据门控。'
-  const prompt = portraitSectionPrompt('装备与技术实现', '测试装备', '现有技术描述', overview)
-  assert.ok(prompt.length < 1200, '初始预填应足够明确且避免冗长')
-  assert.match(prompt, /保持装备身份/)
-  assert.match(prompt, /原卡中的相关技术仅作为研究线索/)
-  assert.match(prompt, /纠偏只作为方案设计输入/)
-  assert.match(prompt, /共享创新来源/)
-  assert.match(prompt, /解决思路/)
-  assert.match(prompt, /核心创新/)
-  assert.match(prompt, /不得改写锚点或另起主题/)
-  assert.match(prompt, /用受约束自治恢复任务窗口/)
-  const workflow = TECHNOLOGY_CABIN_ACTIONS.map((item) =>
-    technologyCabinPrompt('测试装备', '', item.id)
-  ).join('\n')
-  for (const keyword of [
-    '能力',
-    '总体',
-    '技术体系',
-    '关键',
-    '难突破',
-    '解决路径',
-    '材料',
-    '接口',
-    '试验'
-  ]) {
-    assert.match(workflow, new RegExp(keyword))
-  }
+test('技术栏目默认只提供目标和背景，完整方案仅在明确选用时生成', () => {
+  const prompt = portraitSectionPrompt('装备与技术实现', '测试装备', '现有技术描述', '原始概述')
+  assert.match(prompt, /测试装备/)
+  assert.match(prompt, /装备与技术实现/)
+  assert.match(prompt, /原始概述/)
+  assert.match(prompt, /现有技术描述/)
+  assert.match(prompt, /现有描述可核验与修正/)
+  assert.doesNotMatch(prompt, /七章|七级|必须|冻结|WBS|30\/60\/90/)
+  assert.ok(prompt.length < 400)
   assert.equal(TECHNOLOGY_CABIN_ACTIONS.length, 7)
-  assert.deepEqual(
-    TECHNOLOGY_SOLUTION_CHAPTERS.map((item) => item.title),
-    ['能力目标', '装备总体设计', '技术体系', '关键技术识别', '突破难点', '解决路径', '具体实现']
-  )
+  assert.equal(TECHNOLOGY_SOLUTION_CHAPTERS.length, 7)
   const solution = technologyCabinPrompt('测试装备', '', 'implementation_plan')
-  assert.match(solution, /一线研发人员/)
-  assert.match(solution, /能力—设计—技术—关键项—难点—路径—实现/)
-  assert.match(solution, /共享创新来源/)
-  assert.match(solution, /每章开头说明本章支撑哪一条锚点/)
-  assert.match(solution, /不得提出替代创新或另起主题/)
-  for (const chapter of TECHNOLOGY_SOLUTION_CHAPTERS) {
-    assert.match(solution, new RegExp(chapter.title))
-  }
-  for (const keyword of [
-    '输入输出接口',
-    '预算',
-    'WBS',
-    '试验矩阵',
-    '决策门',
-    '30/60/90天',
-    '工程假设/TBD'
+  assert.match(solution, /请形成一份可交付的技术实现方案/)
+  assert.match(solution, /武器装备研发技术方案报告/)
+  assert.match(solution, /面向研发人员 · 技术路线设计 · 关键问题攻关 · 工程实现/)
+  for (const chapter of [
+    '项目概述与研发需求',
+    '总体技术方案',
+    '核心技术体系',
+    '关键技术攻关',
+    '技术实现方案',
+    '技术路线与研发计划',
+    '预期成果与应用价值'
   ]) {
-    assert.match(solution, new RegExp(keyword))
+    assert.match(solution, new RegExp(chapter))
   }
-  assert.match(solution, /不得重复写成长篇纠错报告/)
-  assert.match(solution, /不得覆盖原文件/)
+  assert.match(solution, /必要时重构新质武器装备/)
+  assert.match(solution, /而不是资料综述/)
 })
 
-test('深研页呈现七级技术攻关链并默认调用武器装备研究方案智能体', () => {
+test('技术研究角度按需展开，默认使用自主研究智能体', () => {
   assert.equal(WEAPON_SCHEME_AGENT_SLUG, 'weapon-equipment-scheme')
   assert.match(deepView, /const technologyCabinMode = computed/)
   assert.match(deepView, /`技术攻关舱 · \$\{name\}`/)
@@ -101,11 +73,15 @@ test('深研页呈现七级技术攻关链并默认调用武器装备研究方�
     /payload\?\.research_section \|\| ''\)\.trim\(\) === requestedSection\.value/
   )
   assert.match(deepView, /class="technology-cabin-panel"/)
+  assert.match(deepView, /class="technology-cabin-sources"/)
+  assert.match(deepView, /Open Web/)
+  assert.match(deepView, /本地知识库/)
+  assert.match(deepView, /AMiner/)
   assert.match(deepView, /v-for="\(item, index\) in TECHNOLOGY_CABIN_ACTIONS"/)
-  assert.match(deepView, /装备身份锁定/)
-  assert.match(deepView, /WEAPON_SCHEME_AGENT_SLUG/)
-  assert.match(deepView, /weaponSchemeAgentAvailable/)
-  assert.match(deepView, /session\.payload\?\.agent_name \|\| '武器装备研究方案'/)
+  assert.match(deepView, /聚焦当前装备/)
+  assert.match(deepView, /const recommendedAgentSlug = \(\) => 'deep-research'/)
+  assert.match(deepView, /technologyCabinMode && usesNativeAgent && !conversationFocusMode/)
+  assert.match(deepView, /session\.payload\?\.agent_name \|\| '深度研究'/)
   assert.match(deepView, /technologyCabinPrompt\(target, sectionBody, actionId, overviewBody\)/)
   assert.match(
     deepView,
@@ -120,6 +96,33 @@ test('深研页呈现七级技术攻关链并默认调用武器装备研究方�
     /prefillRequestedSection[\s\S]*?submitPrompt\(prompt, \{ send: false, onlyIfEmpty: true \}\)/
   )
   assert.match(deepView, /draft-scope="equipment-deep"/)
+  assert.match(deepView, /class="conversation-launch-composer"/)
+  assert.match(deepView, /class="conversation-context-bar"/)
+  assert.match(deepView, /v-model:open="bindingTreeOpen"/)
+  assert.match(deepView, /filteredQueryRunOptions/)
+  assert.match(deepView, /class="binding-query-node"/)
+  assert.match(deepView, /class="binding-equipment-node"/)
+  assert.match(deepView, /class="binding-equipment-panel"/)
+  assert.match(deepView, /class="binding-portrait-panel"/)
+  assert.match(deepView, /能力画像五栏/)
+  assert.match(deepView, /按模板生成技术方案/)
+  assert.match(
+    deepView,
+    /technologyCabinPrompt\(choice\.name, section\.text, 'implementation_plan', overview\)/
+  )
+  assert.match(deepView, /class="conversation-tool-button"/)
+  assert.match(deepView, /更多设置/)
+  assert.match(deepView, /v-model:value="form\.agent_slug"/)
+  assert.match(deepView, /<ModelSelectorComponent/)
+  assert.doesNotMatch(deepView, /launchPrompts/)
+  assert.match(deepView, /queryRunOptions/)
+  assert.match(deepView, /runs\.value\.map/)
+  assert.doesNotMatch(deepView, /v-model:value="form\.project_id"/)
+  assert.match(deepView, /equipmentChoices/)
+  assert.match(deepView, /selectEquipmentFromTree/)
+  assert.match(deepView, /selectQuickCapability/)
+  assert.match(deepView, /selectQuickReference/)
+  assert.match(deepView, /参考武器/)
 })
 
 test('形成新版能力卡在生成阶段执行正式 S6 五栏逐栏自检', () => {
@@ -144,13 +147,7 @@ test('形成新版能力卡在生成阶段执行正式 S6 五栏逐栏自检', (
   assert.match(prompt, /capability_portrait_modules/)
   assert.match(prompt, /capability_card_draft/)
   assert.match(deepView, /s6CapabilityCardPrompt/)
-  assert.match(deepView, /capabilityPortraitAgentAvailable/)
-  assert.match(deepView, /CAPABILITY_PORTRAIT_AGENT_SLUG/)
-  assert.match(
-    deepView,
-    /mode === 'new_weapon_diverge'[\s\S]*?CAPABILITY_PORTRAIT_AGENT_SLUG/
-  )
-  assert.match(deepView, /能力画像智能体择优生成五栏卡/)
+  assert.match(deepView, /const recommendedAgentSlug = \(\) => 'deep-research'/)
 })
 
 test('最终技术方案从定稿动作后的回答提取，并融合到对应原卡技术栏目', () => {
@@ -169,7 +166,10 @@ test('最终技术方案从定稿动作后的回答提取，并融合到对应�
     technologySolutionFromSession(session)?.content,
     '研发目标与指标\n形成具体技术实现方案'
   )
-  assert.match(capabilitiesView, /<CapabilityPortraitCard[\s\S]*?<template #technology-solution>[\s\S]*?<EquipmentTechnologySolutionCard[\s\S]*?<\/CapabilityPortraitCard>/)
+  assert.match(
+    capabilitiesView,
+    /<CapabilityPortraitCard[\s\S]*?<template #technology-solution>[\s\S]*?<EquipmentTechnologySolutionCard[\s\S]*?<\/CapabilityPortraitCard>/
+  )
   assert.match(capabilitiesView, /v-if="technologySessionFor\(item\)"/)
   assert.match(capabilitiesView, /loadTechnologySessions\(\)/)
   assert.match(solutionCard, /原能力画像配套研发成果/)

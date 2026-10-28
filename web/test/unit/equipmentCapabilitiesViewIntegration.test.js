@@ -22,9 +22,8 @@ test('能力画像页使用与原工作台一致的画布留白和浅色背景',
   assert.ok(/background\s*:\s*radial-gradient\(/.test(pageRule), '画布应保留浅色径向背景')
 })
 
-test('能力画像页显示最新三条反馈，并将任务状态和研究路线本地化', () => {
+test('能力画像页将任务状态和研究路线本地化', () => {
   const presentationImport = view.match(/import\s*\{([^}]*)\}\s*from\s*['"]\.\/reportPresentation\.js['"]/)?.[1] || ''
-  assert.ok(/feedbackItems\.slice\(-3\)\.reverse\(\)/.test(view), '反馈历史应显示最新三条')
   assert.ok(/\brunStatusLabel\b/.test(presentationImport), '应导入状态中文标签')
   assert.ok(/\brouteLabel\b/.test(presentationImport), '应导入路线中文标签')
   assert.ok(/runStatusLabel\(item\.status\)/.test(view), '任务列表应显示中文状态')
@@ -49,6 +48,17 @@ test('专家反馈显示真实 S5 分数、评分原则并允许提交细则修�
   assert.match(view, /feedbackRubricSuggestions\[dimension\.key\]/)
   assert.match(view, /rubric_feedback:\s*rubricFeedback/)
   assert.doesNotMatch(view, /mission_effectiveness|technical_feasibility|innovation_value|cost_effectiveness/)
+})
+
+test('专家反馈使用默认收起的摘要卡，内容、评分和回滚操作按需展开', () => {
+  assert.match(view, /<details class="expert-feedback-card">/)
+  assert.match(view, /class="feedback-card-heading"/)
+  assert.match(view, /class="expert-feedback-card-body"/)
+  assert.match(view, /class="feedback-score-details"/)
+  assert.match(view, /class="feedback-empty-state"/)
+  assert.doesNotMatch(view, /class="expert-feedback-card"\s+open/)
+  assert.match(liveStyles, /\.expert-feedback-card\s*>\s*summary\s*\{/)
+  assert.match(liveStyles, /\.expert-feedback-card-body\s*\{/)
 })
 
 test('正式原卡接收同谱系深研版本并保留独立深研卡片区', () => {

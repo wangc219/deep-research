@@ -175,7 +175,8 @@ class SixStepReasoner:
 
     @staticmethod
     def _compact(values: list[object], *, limit: int = 3) -> str:
-        rendered = [str(value).strip() for value in values if str(value).strip()]
+        rendered = [_compact_value(value) for value in values]
+        rendered = [value for value in rendered if value]
         return "；".join(rendered[:limit]) or "当前结构化材料未给出具体内容"
 
     def _defense_summary(
@@ -285,6 +286,27 @@ def _model_summary(model_analysis: dict[str, Any] | None, key: str) -> str:
         ]
         return "；".join(item for item in rendered if item.strip())
     return str(value).strip() if value not in (None, "") else ""
+
+
+def _compact_value(value: object, *, depth: int = 0) -> str:
+    """Render structured findings without leaking Python/JSON type placeholders."""
+    if value is None or depth > 4:
+        return ""
+    if isinstance(value, str):
+        rendered = value.strip()
+        return "" if rendered.lower() in {"object", "[object object]", "array", "null", "none"} else rendered
+    if isinstance(value, dict):
+        preferred = ("summary", "finding", "text", "description", "detail", "value", "name", "title")
+        ordered = [value[key] for key in preferred if key in value]
+        if not ordered:
+            ordered = list(value.values())
+        parts = [_compact_value(item, depth=depth + 1) for item in ordered]
+        return "；".join(dict.fromkeys(part for part in parts if part))
+    if isinstance(value, (list, tuple, set)):
+        parts = [_compact_value(item, depth=depth + 1) for item in value]
+        return "；".join(dict.fromkeys(part for part in parts if part))
+    rendered = str(value).strip()
+    return "" if rendered.lower() in {"object", "[object object]", "array", "null", "none"} else rendered
 
 
 def _model_reasoning_node(

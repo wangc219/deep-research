@@ -47,9 +47,7 @@ def normalize_chat_completions_url(value: str) -> str:
     parsed = urlsplit(raw)
     path = parsed.path.rstrip("/")
     if path.endswith("/chat/completions"):
-        return urlunsplit(
-            (parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment)
-        )
+        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
     if path.endswith("/responses"):
         path = path[: -len("/responses")]
     if not path.endswith("/v1"):
@@ -68,7 +66,17 @@ def normalize_chat_completions_url(value: str) -> str:
 class OpenAICompatibleProvider:
     provider_type = "chat_completions"
 
-    def __init__(self, *, provider_id: str, model: str, base_url: str, api_key: str, timeout_seconds: int = 120, structured_mode: str = "json_schema", observer=None) -> None:
+    def __init__(
+        self,
+        *,
+        provider_id: str,
+        model: str,
+        base_url: str,
+        api_key: str,
+        timeout_seconds: int = 120,
+        structured_mode: str = "json_schema",
+        observer=None,
+    ) -> None:
         if not model.strip():
             raise ValueError("Chat Completions model is required")
         if not api_key:
@@ -86,15 +94,26 @@ class OpenAICompatibleProvider:
         self.provider_id, self.model, self.base_url = provider_id, model.strip(), normalized
         self._api_key, self.timeout_seconds = api_key, timeout_seconds
         self._observer = observer
-        self.structured_mode = structured_mode if structured_mode in {"json_schema", "json_object", "none"} else "json_schema"
+        self.structured_mode = (
+            structured_mode if structured_mode in {"json_schema", "json_object", "none"} else "json_schema"
+        )
 
     def capabilities(self) -> ProviderCapabilities:
-        return ProviderCapabilities(streaming=True, structured_output=self.structured_mode != "none", function_tools=True, cancellation=True)
+        return ProviderCapabilities(
+            streaming=True, structured_output=self.structured_mode != "none", function_tools=True, cancellation=True
+        )
 
     def snapshot(self) -> dict[str, str]:
-        return {"type": self.provider_type, "provider_id": self.provider_id, "model": self.model, "base_url_host": urlsplit(self.base_url).hostname or ""}
+        return {
+            "type": self.provider_type,
+            "provider_id": self.provider_id,
+            "model": self.model,
+            "base_url_host": urlsplit(self.base_url).hostname or "",
+        }
 
-    async def stream(self, messages: Sequence[ModelMessage], tools: Sequence[ToolDefinition], options: Mapping[str, Any]) -> AsyncIterator[ProviderStreamEvent]:
+    async def stream(
+        self, messages: Sequence[ModelMessage], tools: Sequence[ToolDefinition], options: Mapping[str, Any]
+    ) -> AsyncIterator[ProviderStreamEvent]:
         payload = build_chat_payload(self.model, messages, tools, options, structured_mode=self.structured_mode)
         active_payload = payload
         structured_output_fallback = False
@@ -134,23 +153,17 @@ class OpenAICompatibleProvider:
         retry_tokens_used: list[int] = []
         retry_cap = max(
             4096,
-            int(
-                os.environ.get(
-                    "EQUIPMENT_DR_CHAT_COMPLETIONS_RETRY_MAX_TOKENS", "32768"
-                )
-            ),
+            int(os.environ.get("EQUIPMENT_DR_CHAT_COMPLETIONS_RETRY_MAX_TOKENS", "32768")),
         )
         max_retries = max(
             1,
             min(
                 3,
-                int(
-                    os.environ.get(
-                        "EQUIPMENT_DR_CHAT_COMPLETIONS_MAX_RETRIES", "2"
-                    )
-                ),
+                int(os.environ.get("EQUIPMENT_DR_CHAT_COMPLETIONS_MAX_RETRIES", "2")),
             ),
         )
+        if "_provider_structured_retry_attempts" in options:
+            max_retries = max(0, min(3, int(options["_provider_structured_retry_attempts"])))
         while retry_attempts < max_retries and _needs_structured_retry(
             events, has_schema=isinstance(active_payload.get("response_format"), Mapping)
         ):
@@ -190,9 +203,7 @@ class OpenAICompatibleProvider:
                 retry_events = list(iter_chat_sse(retry_lines))
                 if _visible_text(retry_events) or not _needs_structured_retry(
                     retry_events,
-                    has_schema=isinstance(
-                        retry_payload.get("response_format"), Mapping
-                    ),
+                    has_schema=isinstance(retry_payload.get("response_format"), Mapping),
                 ):
                     events = retry_events
                 active_payload = retry_payload
@@ -213,17 +224,25 @@ class OpenAICompatibleProvider:
                 if isinstance(delta, Mapping):
                     content = delta.get("content")
                     if isinstance(content, str) and content:
-                        text.append(content); yield ProviderStreamEvent.text_delta(content)
+                        text.append(content)
+                        yield ProviderStreamEvent.text_delta(content)
                     for call in delta.get("tool_calls", []) if isinstance(delta.get("tool_calls", []), list) else []:
-                        if not isinstance(call, Mapping): continue
-                        idx = str(call.get("index", len(calls))); current = calls.setdefault(idx, {"id": call.get("id", idx), "name": "", "arguments": ""})
-                        fn = call.get("function", {}); fn = fn if isinstance(fn, Mapping) else {}
-                        current["name"] = str(fn.get("name") or current["name"]); current["arguments"] += str(fn.get("arguments") or "")
-            if isinstance(event.get("usage"), Mapping): usage = event["usage"]
+                        if not isinstance(call, Mapping):
+                            continue
+                        idx = str(call.get("index", len(calls)))
+                        current = calls.setdefault(idx, {"id": call.get("id", idx), "name": "", "arguments": ""})
+                        fn = call.get("function", {})
+                        fn = fn if isinstance(fn, Mapping) else {}
+                        current["name"] = str(fn.get("name") or current["name"])
+                        current["arguments"] += str(fn.get("arguments") or "")
+            if isinstance(event.get("usage"), Mapping):
+                usage = event["usage"]
         tool_calls = []
         for call in calls.values():
-            try: args = json.loads(call["arguments"] or "{}")
-            except json.JSONDecodeError as exc: raise ProviderRequestError("Chat Completions tool arguments are invalid JSON") from exc
+            try:
+                args = json.loads(call["arguments"] or "{}")
+            except json.JSONDecodeError as exc:
+                raise ProviderRequestError("Chat Completions tool arguments are invalid JSON") from exc
             tool_calls.append(ProviderToolCall(str(call["id"]), str(call["name"]), args))
         final_metadata: dict[str, Any] = {
             "provider": self.provider_id,
@@ -242,13 +261,19 @@ class OpenAICompatibleProvider:
                 {
                     "empty_answer_retry": True,
                     "retry_attempts": retry_attempts,
-                    "retry_max_tokens": retry_tokens_used[-1]
-                    if retry_tokens_used
-                    else None,
+                    "retry_max_tokens": retry_tokens_used[-1] if retry_tokens_used else None,
                     "retry_max_tokens_history": retry_tokens_used,
                 }
             )
-        yield ProviderStreamEvent.final(ProviderFinalTurn(text="".join(text) or None, tool_calls=tool_calls or None, finish_reason=finish, usage=usage, metadata=final_metadata))
+        yield ProviderStreamEvent.final(
+            ProviderFinalTurn(
+                text="".join(text) or None,
+                tool_calls=tool_calls or None,
+                finish_reason=finish,
+                usage=usage,
+                metadata=final_metadata,
+            )
+        )
 
     async def _post_with_transient_retry(
         self, payload: Mapping[str, Any], *, options: Mapping[str, Any] | None = None
@@ -273,7 +298,7 @@ class OpenAICompatibleProvider:
         for attempt in range(attempts):
             try:
                 return await self._observed_post(payload, post_kwargs, call_timeout, options)
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 # 总时限耗尽后交给上层恢复，避免同一慢请求在此再次排队。
                 raise ProviderRetryableError(
                     f"{self.provider_id} request timed out after {call_timeout:g} seconds"
@@ -281,14 +306,16 @@ class OpenAICompatibleProvider:
             except ProviderRetryableError:
                 if attempt + 1 >= attempts:
                     raise
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
         raise AssertionError("unreachable retry state")
 
     async def _observed_post(self, payload, post_kwargs, call_timeout, options):
         """每次真实请求独立计量，包含协议降级、重试、失败和取消。"""
         started = perf_counter()
         event = {
-            "id": str(uuid4()), "status": "completed", "usage": {},
+            "id": str(uuid4()),
+            "status": "completed",
+            "usage": {},
             "phase": str(options.get("phase") or ""),
             "run_id": str(options.get("_run_id") or options.get("_fairness_key") or ""),
         }
@@ -298,20 +325,13 @@ class OpenAICompatibleProvider:
             # urllib worker thread blocked behind an abandoned asyncio task.
             # Keep the synchronous seam for tests and custom embedders that
             # replace ``_post`` on the instance or subclass.
-            custom_post = (
-                "_post" in self.__dict__
-                or type(self)._post is not OpenAICompatibleProvider._post
-            )
+            custom_post = "_post" in self.__dict__ or type(self)._post is not OpenAICompatibleProvider._post
             pending = (
                 asyncio.to_thread(self._post, payload, **post_kwargs)
                 if custom_post
                 else self._post_async(payload, **post_kwargs)
             )
-            lines = (
-                await pending
-                if call_timeout is None
-                else await asyncio.wait_for(pending, timeout=call_timeout)
-            )
+            lines = await pending if call_timeout is None else await asyncio.wait_for(pending, timeout=call_timeout)
             for frame in iter_chat_sse(lines):
                 if isinstance(frame.get("usage"), Mapping):
                     event["usage"] = dict(frame["usage"])
@@ -337,8 +357,10 @@ class OpenAICompatibleProvider:
     ) -> list[str]:
         """执行可取消的 SSE 请求；取消会关闭响应流与连接。"""
 
-        timeout = None if disable_timeout else httpx.Timeout(
-            timeout_seconds if timeout_seconds is not None else self.timeout_seconds
+        timeout = (
+            None
+            if disable_timeout
+            else httpx.Timeout(timeout_seconds if timeout_seconds is not None else self.timeout_seconds)
         )
         headers = {
             "Content-Type": "application/json",
@@ -354,14 +376,17 @@ class OpenAICompatibleProvider:
                     headers=headers,
                 ) as response:
                     if response.status_code >= 400:
-                        detail = (await response.aread())[:800].decode(
-                            "utf-8",
-                            errors="replace",
-                        ).strip()
+                        detail = (
+                            (await response.aread())[:800]
+                            .decode(
+                                "utf-8",
+                                errors="replace",
+                            )
+                            .strip()
+                        )
                         suffix = f" detail={detail[:500]}" if detail else ""
                         message = (
-                            f"{self.provider_id} Chat Completions request failed: "
-                            f"status={response.status_code}{suffix}"
+                            f"{self.provider_id} Chat Completions request failed: status={response.status_code}{suffix}"
                         )
                         if response.status_code == 401:
                             raise ProviderAuthenticationError(message)
@@ -378,22 +403,29 @@ class OpenAICompatibleProvider:
         except asyncio.CancelledError:
             raise
         except httpx.TimeoutException as exc:
-            raise ProviderRetryableError(
-                f"{self.provider_id} network request timed out"
-            ) from exc
+            raise ProviderRetryableError(f"{self.provider_id} network request timed out") from exc
         except httpx.HTTPError as exc:
-            raise ProviderRetryableError(
-                f"{self.provider_id} network request failed"
-            ) from exc
+            raise ProviderRetryableError(f"{self.provider_id} network request failed") from exc
 
     def _post(
         self, payload: Mapping[str, Any], *, disable_timeout: bool = False, timeout_seconds: float | None = None
     ) -> list[str]:
-        request = Request(self.base_url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Accept": "text/event-stream", "Authorization": f"Bearer {self._api_key}"}, method="POST")
+        request = Request(
+            self.base_url,
+            data=json.dumps(payload).encode(),
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream",
+                "Authorization": f"Bearer {self._api_key}",
+            },
+            method="POST",
+        )
         try:
             with urlopen(
                 request,
-                timeout=None if disable_timeout else (timeout_seconds if timeout_seconds is not None else self.timeout_seconds),
+                timeout=None
+                if disable_timeout
+                else (timeout_seconds if timeout_seconds is not None else self.timeout_seconds),
             ) as response:
                 lines = []
                 for raw_line in response:
@@ -413,31 +445,63 @@ class OpenAICompatibleProvider:
             # combination).  Preserve only a short, credential-free excerpt.
             suffix = f" detail={detail[:500]}" if detail else ""
             message = f"{self.provider_id} Chat Completions request failed: status={exc.code}{suffix}"
-            if exc.code == 401: raise ProviderAuthenticationError(message) from exc
-            if exc.code == 429 or exc.code >= 500: raise ProviderRetryableError(message) from exc
+            if exc.code == 401:
+                raise ProviderAuthenticationError(message) from exc
+            if exc.code == 429 or exc.code >= 500:
+                raise ProviderRetryableError(message) from exc
             raise ProviderRequestError(message) from exc
         except (URLError, TimeoutError) as exc:
             raise ProviderRetryableError(f"{self.provider_id} network request failed") from exc
 
 
-def build_chat_payload(model: str, messages: Sequence[ModelMessage], tools: Sequence[ToolDefinition], options: Mapping[str, Any], *, structured_mode: str = "json_schema") -> dict[str, Any]:
+def build_chat_payload(
+    model: str,
+    messages: Sequence[ModelMessage],
+    tools: Sequence[ToolDefinition],
+    options: Mapping[str, Any],
+    *,
+    structured_mode: str = "json_schema",
+) -> dict[str, Any]:
     message_payloads = [_message(m) for m in messages]
-    payload: dict[str, Any] = {"model": model, "messages": message_payloads, "stream": True, "stream_options": {"include_usage": True}}
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": message_payloads,
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
     if tools:
-        payload["tools"] = [{"type": "function", "function": {"name": t.name, "description": t.description, "parameters": thaw_plain(t.input_schema)}} for t in tools]
+        payload["tools"] = [
+            {
+                "type": "function",
+                "function": {"name": t.name, "description": t.description, "parameters": thaw_plain(t.input_schema)},
+            }
+            for t in tools
+        ]
     schema = options.get("output_schema")
     if isinstance(schema, Mapping) and structured_mode != "none":
         if structured_mode == "json_object":
             # JSON Object 只约束语法，必须显式传递原研究阶段的字段合同。
             # 否则模型虽返回合法 JSON，深研/S1–S6 解析器仍会得到空结果。
-            message_payloads.insert(0, {
-                "role": "system",
-                "content": "Return the final answer as valid JSON conforming to this JSON Schema: "
-                + json.dumps(_compact_contract_to_json_schema(schema), ensure_ascii=False),
-            })
+            message_payloads.insert(
+                0,
+                {
+                    "role": "system",
+                    "content": "Return the final answer as valid JSON conforming to this JSON Schema: "
+                    + json.dumps(_compact_contract_to_json_schema(schema), ensure_ascii=False),
+                },
+            )
             payload["response_format"] = {"type": "json_object"}
-        else: payload["response_format"] = {"type": "json_schema", "json_schema": {"name": "equipment_research_output", "strict": True, "schema": _compact_contract_to_json_schema(schema)}}
-    if options.get("max_output_tokens") is not None: payload["max_tokens"] = int(options["max_output_tokens"])
+        else:
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "equipment_research_output",
+                    "strict": True,
+                    "schema": _compact_contract_to_json_schema(schema),
+                },
+            }
+    if options.get("max_output_tokens") is not None:
+        payload["max_tokens"] = int(options["max_output_tokens"])
     if options.get("_disable_hidden_reasoning") or options.get("disable_thinking"):
         # OpenLux accepts the DeepSeek-compatible thinking switch.  This is
         # used only by the baseline/recovery paths where a visible structured
@@ -448,7 +512,8 @@ def build_chat_payload(model: str, messages: Sequence[ModelMessage], tools: Sequ
 
 
 def _message(message: ModelMessage) -> dict[str, Any]:
-    content = thaw_plain(message.content); content = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
+    content = thaw_plain(message.content)
+    content = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
     value: dict[str, Any] = {"role": message.role, "content": content}
     if message.tool_call_id:
         value["tool_call_id"] = message.tool_call_id
@@ -461,9 +526,7 @@ def _message(message: ModelMessage) -> dict[str, Any]:
                 "type": "function",
                 "function": {
                     "name": call.name,
-                    "arguments": json.dumps(
-                        thaw_plain(call.arguments), ensure_ascii=False, separators=(",", ":")
-                    ),
+                    "arguments": json.dumps(thaw_plain(call.arguments), ensure_ascii=False, separators=(",", ":")),
                 },
             }
             for call in message.tool_calls
@@ -474,10 +537,14 @@ def _message(message: ModelMessage) -> dict[str, Any]:
 def iter_chat_sse(lines: Iterable[str]) -> Iterable[dict[str, Any]]:
     for line in lines:
         value = line[5:].strip() if line.startswith("data:") else ""
-        if not value or value == "[DONE]": continue
-        try: payload = json.loads(value)
-        except json.JSONDecodeError as exc: raise ProviderRequestError("Chat Completions SSE contained invalid JSON") from exc
-        if isinstance(payload, Mapping): yield dict(payload)
+        if not value or value == "[DONE]":
+            continue
+        try:
+            payload = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ProviderRequestError("Chat Completions SSE contained invalid JSON") from exc
+        if isinstance(payload, Mapping):
+            yield dict(payload)
 
 
 def _empty_answer_turn(events: Sequence[Mapping[str, Any]]) -> bool:
@@ -577,9 +644,7 @@ def _finish_reason(events: Sequence[Mapping[str, Any]]) -> str:
     return finish
 
 
-def _needs_structured_retry(
-    events: Sequence[Mapping[str, Any]], *, has_schema: bool
-) -> bool:
+def _needs_structured_retry(events: Sequence[Mapping[str, Any]], *, has_schema: bool) -> bool:
     """Identify an incomplete Chat Completions turn worth retrying.
 
     ``reasoning_content`` is intentionally ignored: it is not an answer and
@@ -611,17 +676,14 @@ def _is_response_format_rejection(detail: str) -> bool:
     """Return whether a gateway rejected only the structured-output option."""
 
     normalized = str(detail or "").lower()
-    return (
-        "response_format" in normalized
-        and any(
-            marker in normalized
-            for marker in (
-                "unavailable",
-                "unsupported",
-                "not support",
-                "invalid",
-                "unknown",
-            )
+    return "response_format" in normalized and any(
+        marker in normalized
+        for marker in (
+            "unavailable",
+            "unsupported",
+            "not support",
+            "invalid",
+            "unknown",
         )
     )
 

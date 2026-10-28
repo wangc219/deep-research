@@ -17,7 +17,7 @@ import inspect
 import re
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any, Protocol
 from uuid import uuid4
 
@@ -31,7 +31,7 @@ class MessageBusClosed(RuntimeError):
 class DurableMessageBus(Protocol):
     """Host-owned durable broker contract for optional cross-process buses."""
 
-    def publish_inbound(self, message: "InboundMessage") -> str:
+    def publish_inbound(self, message: InboundMessage) -> str:
         """Persist an inbound message and return its delivery id."""
 
     def claim_inbound(self, consumer_id: str) -> Mapping[str, Any] | None:
@@ -40,7 +40,7 @@ class DurableMessageBus(Protocol):
     def ack_inbound(self, delivery_id: str, consumer_id: str) -> None:
         """Acknowledge one claimed inbound message."""
 
-    def publish_outbound(self, message: "OutboundMessage") -> str:
+    def publish_outbound(self, message: OutboundMessage) -> str:
         """Persist an outbound message and return its delivery id."""
 
     def claim_outbound(self, consumer_id: str) -> Mapping[str, Any] | None:
@@ -89,9 +89,7 @@ _PRIVATE_KEY_RE = re.compile(
     r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----",
     re.DOTALL,
 )
-_HIDDEN_BLOCK_RE = re.compile(
-    r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>"
-)
+_HIDDEN_BLOCK_RE = re.compile(r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>")
 
 
 def _text(value: Any, limit: int = 4000) -> str:
@@ -119,7 +117,9 @@ def _sanitize_string(value: str) -> str:
     value = _HIDDEN_BLOCK_RE.sub("<redacted>", value)
     value = _PRIVATE_KEY_RE.sub("<redacted>", value)
     value = _BEARER_RE.sub("Bearer <redacted>", value)
-    return _SECRET_ASSIGNMENT_RE.sub(lambda match: f"{match.group(0).split('=', 1)[0].split(':', 1)[0]}=<redacted>", value)
+    return _SECRET_ASSIGNMENT_RE.sub(
+        lambda match: f"{match.group(0).split('=', 1)[0].split(':', 1)[0]}=<redacted>", value
+    )
 
 
 def _bounded_public(value: Any, *, depth: int = 0) -> Any:
@@ -161,7 +161,7 @@ class InboundMessage:
     target_id: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
     payload: Mapping[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         channel = _text(self.channel, 80)
@@ -184,9 +184,9 @@ class InboundMessage:
         if not isinstance(timestamp, datetime):
             raise TypeError("inbound timestamp must be a datetime")
         if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
+            timestamp = timestamp.replace(tzinfo=UTC)
         else:
-            timestamp = timestamp.astimezone(timezone.utc)
+            timestamp = timestamp.astimezone(UTC)
         object.__setattr__(self, "channel", channel)
         object.__setattr__(self, "sender_id", sender)
         object.__setattr__(self, "chat_id", chat)
@@ -268,7 +268,7 @@ def _inbound_from_plain(value: Mapping[str, Any]) -> InboundMessage:
     """Rebuild a bounded inbound message from a durable public projection."""
 
     raw_timestamp = value.get("timestamp")
-    timestamp = datetime.now(timezone.utc)
+    timestamp = datetime.now(UTC)
     if isinstance(raw_timestamp, str):
         try:
             timestamp = datetime.fromisoformat(raw_timestamp)
@@ -308,7 +308,9 @@ def _outbound_from_plain(value: Mapping[str, Any]) -> OutboundMessage:
     )
 
 
-Handler = Callable[[InboundMessage], Mapping[str, Any] | OutboundMessage | Awaitable[Mapping[str, Any] | OutboundMessage]]
+Handler = Callable[
+    [InboundMessage], Mapping[str, Any] | OutboundMessage | Awaitable[Mapping[str, Any] | OutboundMessage]
+]
 OutboundHandler = Callable[[OutboundMessage], Any]
 
 
@@ -320,11 +322,7 @@ def _result_content(value: Any) -> str:
         return direct
     summaries = value.get("visible_summary")
     if isinstance(summaries, (list, tuple)):
-        return "\n".join(
-            str(item).strip()
-            for item in summaries[:3]
-            if str(item).strip()
-        )
+        return "\n".join(str(item).strip() for item in summaries[:3] if str(item).strip())
     return ""
 
 
@@ -398,7 +396,7 @@ class MessageBus:
                 raise MessageBusClosed("message bus is closed")
             try:
                 message = await asyncio.wait_for(self.inbound.get(), timeout=0.25)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             self.inbound.task_done()
             if message is None:
@@ -489,7 +487,7 @@ class MessageBus:
                 raise MessageBusClosed("message bus is closed")
             try:
                 message = await asyncio.wait_for(self.outbound.get(), timeout=0.25)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             self.outbound.task_done()
             if message is None:
@@ -641,14 +639,16 @@ async def dispatch_channel_call_async(
         # The gateway owns final delivery. Do not ask a nested runtime to
         # enqueue another final response on this bounded queue.
         request.pop("message_bus", None)
-        request.update({
-            "question": inbound.content,
-            "channel": inbound.channel,
-            "sender_id": inbound.sender_id,
-            "chat_id": inbound.chat_id,
-            "session_key": inbound.session_key,
-            "inbound_message": inbound,
-        })
+        request.update(
+            {
+                "question": inbound.content,
+                "channel": inbound.channel,
+                "sender_id": inbound.sender_id,
+                "chat_id": inbound.chat_id,
+                "session_key": inbound.session_key,
+                "inbound_message": inbound,
+            }
+        )
         # Synchronous providers often own asyncio.run internally. Keep them
         # outside this event loop while preserving contextvars with to_thread.
         result = await asyncio.to_thread(execute, request)
@@ -687,9 +687,14 @@ def dispatch_channel_call(
 ) -> Any:
     """Synchronous gateway for existing HTTP and CLI workers."""
 
-    return asyncio.run(dispatch_channel_call_async(
-        execute, message, host_payload=host_payload, observer=observer,
-    ))
+    return asyncio.run(
+        dispatch_channel_call_async(
+            execute,
+            message,
+            host_payload=host_payload,
+            observer=observer,
+        )
+    )
 
 
 # Readable aliases for callers migrating from nanobot's bus contract.

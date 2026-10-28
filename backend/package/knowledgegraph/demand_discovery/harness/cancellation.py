@@ -14,17 +14,13 @@ class CancelToken:
 
     def __init__(
         self,
-        parent: "CancelToken | None" = None,
+        parent: CancelToken | None = None,
         timeout_ms: int | None = None,
     ) -> None:
         self._parent = parent
         self._cancelled = False
         self._reason = ""
-        self._deadline = (
-            time.monotonic() + max(timeout_ms, 0) / 1000
-            if timeout_ms is not None
-            else None
-        )
+        self._deadline = time.monotonic() + max(timeout_ms, 0) / 1000 if timeout_ms is not None else None
 
     def cancel(self, reason: str = "") -> None:
         if self._cancelled:
@@ -51,5 +47,5 @@ class CancelToken:
         if reason:
             raise RunCancelled(reason)
 
-    def derive(self, timeout_ms: int | None = None) -> "CancelToken":
+    def derive(self, timeout_ms: int | None = None) -> CancelToken:
         return CancelToken(parent=self, timeout_ms=timeout_ms)

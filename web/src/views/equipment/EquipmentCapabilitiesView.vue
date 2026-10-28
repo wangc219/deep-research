@@ -1,9 +1,9 @@
 <script setup>
-import { computed, nextTick, onActivated, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
 import '@/assets/css/equipment-workbench-live.css'
 import '@/assets/css/equipment-workbench-theme.css'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import {
   Activity,
@@ -32,6 +32,8 @@ import {
 import CapabilityPortraitCard from '@/components/equipment/CapabilityPortraitCard.vue'
 import EquipmentTechnologySolutionCard from '@/components/equipment/EquipmentTechnologySolutionCard.vue'
 import { equipmentApi } from '@/apis/equipment_api'
+import { sharedPolling } from '@/utils/sharedPolling'
+import { feedbackLearningLabel, feedbackMatchesCapability, feedbackScore, feedbackScoreDelta, sortFeedbackHistory } from '@/utils/equipmentFeedback'
 import { useEquipmentStore } from '@/stores/equipment'
 import {
   capabilityCardKey,
@@ -76,6 +78,13 @@ const versionBusy = ref('')
 const sidecarError = ref('')
 const referenceWeapons = ref([])
 const feedbackItems = ref([])
+const feedbackLoading = ref(false)
+const feedbackError = ref('')
+const feedbackHistoryExpanded = ref(false)
+const feedbackHistoryTarget = ref(null)
+let feedbackRequest = 0
+let sidecarRequest = 0
+let stopFeedbackPolling = null
 const feedbackOpen = ref(false)
 const feedbackTarget = ref(null)
 const feedbackComment = ref('')
@@ -195,6 +204,8 @@ const favoriteAliases = (item = {}) => {
     item.capability_id,
     item.id,
     item.display_name,
+    item.name,
+    item.equipment_name,
     snapshot.card_key,
     snapshot.card_binding_id,
     snapshot.capability_id,
@@ -209,10 +220,34 @@ const favoriteFor = (item) => {
   const runId = String(item.run_id || selectedRunId.value)
   return favorites.value.find((favorite) => String(favorite.run_id || '') === runId && favoriteAliases(favorite).some((value) => aliases.has(value))) || null
 }
-const feedbackFor = (item) => feedbackItems.value.filter((feedback) => (
-  feedback.capability_id && feedback.capability_id === item.capability_id ||
-  feedback.capability_name && feedback.capability_name === capabilityTitle(item)
-))
+const feedbackFor = (item) => feedbackItems.value.filter((feedback) => feedbackMatchesCapability(feedback, item))
+const matchingFeedback = computed(() => sortFeedbackHistory(feedbackFor(feedbackHistoryTarget.value)))
+const visibleFeedback = computed(() => feedbackHistoryExpanded.value ? matchingFeedback.value : matchingFeedback.value.slice(0, 3))
+const feedbackVerdicts = { approved: '认可画像', needs_revision: '建议修订', rejected: '建议淘汰' }
+
+const showFeedbackHistory = async (item = null) => {
+  feedbackHistoryTarget.value = item
+  feedbackHistoryExpanded.value = true
+  await nextTick()
+  document.getElementById('expert-feedback-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const loadFeedback = async ({ silent = false } = {}) => {
+  const runId = selectedRunId.value
+  const request = ++feedbackRequest
+  if (!runId) return
+  if (!silent) feedbackLoading.value = true
+  try {
+    const result = await equipmentApi.listExpertFeedback(runId, { includeRolledBack: true })
+    if (request !== feedbackRequest || runId !== selectedRunId.value) return
+    feedbackItems.value = sortFeedbackHistory(Array.isArray(result) ? result : result?.items || [])
+    feedbackError.value = ''
+  } catch (error) {
+    if (request === feedbackRequest && runId === selectedRunId.value) feedbackError.value = error.message || '反馈记录读取失败'
+  } finally {
+    if (request === feedbackRequest) feedbackLoading.value = false
+  }
+}
 const isFavoriteBusy = (item) => favoriteBusy.value.has(capabilityCardKey(item))
 
 const referenceTitle = (item = {}) => String(item.title || item.primary_equipment_identity || item.name || (Array.isArray(item.equipment_forms) ? item.equipment_forms[0] : item.equipment_form) || '').trim()
@@ -246,25 +281,29 @@ const exportCapabilities = async () => {
 }
 
 const loadCapabilitySidecars = async () => {
+  const request = ++sidecarRequest
+  const runId = selectedRunId.value
   if (!selectedRunId.value) {
     versionLedger.value = []
     feedbackItems.value = []
+    ++feedbackRequest
+    feedbackLoading.value = false
+    feedbackError.value = ''
     referenceWeapons.value = []
     technologySessions.value = []
     sidecarError.value = ''
     return
   }
-  const [versionsResult, feedbackResult, contextResult, technologyResult] = await Promise.allSettled([
-    equipmentApi.listCapabilityVersions(selectedRunId.value),
-    equipmentApi.listExpertFeedback(selectedRunId.value),
-    equipmentApi.getDeepContextOptions(selectedRunId.value),
+  const [versionsResult, , contextResult, technologyResult] = await Promise.allSettled([
+    equipmentApi.listCapabilityVersions(runId),
+    loadFeedback(),
+    equipmentApi.getDeepContextOptions(runId),
     loadTechnologySessions()
   ])
+  if (request !== sidecarRequest || runId !== selectedRunId.value) return
   const errors = []
   if (versionsResult.status === 'fulfilled') versionLedger.value = versionsResult.value?.versions || []
   else errors.push(versionsResult.reason?.message || '版本链读取失败')
-  if (feedbackResult.status === 'fulfilled') feedbackItems.value = Array.isArray(feedbackResult.value) ? feedbackResult.value : feedbackResult.value?.items || []
-  else errors.push(feedbackResult.reason?.message || '专家反馈读取失败')
   if (contextResult.status === 'fulfilled') referenceWeapons.value = contextResult.value?.reference_weapons || []
   else errors.push(contextResult.reason?.message || '参考武器读取失败')
   if (technologyResult.status === 'rejected') errors.push(technologyResult.reason?.message || '技术方案读取失败')
@@ -349,6 +388,7 @@ const submitFeedback = async (launchDeep = false) => {
   if (!feedbackComment.value.trim()) return message.warning('请填写反馈意见')
   if (feedbackTarget.value && feedbackWeighted.value === null) return message.warning('请完整填写五个维度的 0–100 分')
   feedbackSaving.value = true
+  const runId = selectedRunId.value
   try {
     const item = feedbackTarget.value
     const scores = item ? Object.fromEntries(scoreDimensions.map(({ key }) => [key, Number(feedbackScores.value[key]) / 100])) : {}
@@ -357,8 +397,9 @@ const submitFeedback = async (launchDeep = false) => {
         .map(({ key }) => [key, String(feedbackRubricSuggestions.value[key] || '').trim()])
         .filter(([, value]) => value)
     ) : {}
-    const saved = await equipmentApi.createExpertFeedback(selectedRunId.value, {
+    const saved = await equipmentApi.createExpertFeedback(runId, {
       capability_id: item?.capability_id || '',
+      capability_version_id: item?.version_id || item?.id || '',
       hypothesis_id: item?.hypothesis_id || '',
       capability_name: item ? capabilityTitle(item) : '本任务整体能力画像',
       comment: feedbackComment.value.trim(),
@@ -376,8 +417,13 @@ const submitFeedback = async (launchDeep = false) => {
       rubric_version: S5_SCORE_SCHEMA,
       reviewer_role: 'expert'
     })
+    if (runId !== selectedRunId.value) return message.success('原任务的反馈已保存')
+    ++feedbackRequest
+    feedbackLoading.value = false
+    if (saved?.feedback) feedbackItems.value = sortFeedbackHistory([saved.feedback, ...feedbackItems.value.filter((row) => row.feedback_id !== saved.feedback.feedback_id)])
     feedbackOpen.value = false
-    await loadCapabilitySidecars()
+    await showFeedbackHistory(item)
+    await loadFeedback({ silent: true })
     if (launchDeep && item) {
       message.success('专家反馈已保存，正在进入定向深研')
       openDeep(item, null, saved?.feedback)
@@ -391,19 +437,32 @@ const submitFeedback = async (launchDeep = false) => {
   }
 }
 
-const rollbackFeedback = async (item) => {
+const rollbackFeedback = (item) => {
   if (selectedRunReadOnly.value) return message.warning('历史研究任务为只读数据')
-  if (!window.confirm('确定回滚这条专家反馈吗？\n\n反馈会停止作为后续 Agent 的记忆输入，但审计记录仍保留。')) return
-  feedbackRollbackBusy.value = item.feedback_id
-  try {
-    await equipmentApi.rollbackExpertFeedback(selectedRunId.value, item.feedback_id, '审核者从能力画像页回滚')
-    await loadCapabilitySidecars()
-    message.success('反馈已回滚')
-  } catch (error) {
-    message.error(error.message || '反馈回滚失败')
-  } finally {
-    feedbackRollbackBusy.value = ''
-  }
+  const runId = selectedRunId.value
+  Modal.confirm({
+    title: '确认回滚这条专家反馈？',
+    content: '回滚后停止使用这条反馈记忆候选，评分、意见与审计记录仍然保留。',
+    okText: '确认回滚',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    onOk: async () => {
+      if (runId !== selectedRunId.value) return message.warning('当前任务已切换，请在原任务重新确认回滚')
+      feedbackRollbackBusy.value = item.feedback_id
+      try {
+        const saved = await equipmentApi.rollbackExpertFeedback(runId, item.feedback_id, '审核者从能力画像页回滚')
+        if (runId !== selectedRunId.value) return
+        ++feedbackRequest
+        if (saved?.feedback) feedbackItems.value = feedbackItems.value.map((row) => row.feedback_id === item.feedback_id ? saved.feedback : row)
+        await loadFeedback({ silent: true })
+        message.success('反馈已回滚')
+      } catch (error) {
+        message.error(error.message || '反馈回滚失败')
+      } finally {
+        feedbackRollbackBusy.value = ''
+      }
+    }
+  })
 }
 
 const toggleFavorite = async (item, desired) => {
@@ -512,25 +571,45 @@ const load = async () => {
   }
 }
 
+watch(selectedRunId, () => {
+  ++feedbackRequest
+  feedbackLoading.value = false
+  feedbackError.value = ''
+  feedbackOpen.value = false
+  feedbackHistoryTarget.value = null
+  feedbackHistoryExpanded.value = false
+  feedbackItems.value = []
+}, { flush: 'sync' })
 watch(() => route.query.run, async (value) => {
   selectedRunId.value = String(value || '')
   await loadCapabilitySidecars()
   await focusRouteCard()
 })
 watch(() => route.query.cap, focusRouteCard)
-onMounted(load)
-onActivated(() => { if (versions.value.length) load() })
+const startFeedbackPolling = () => {
+  if (!stopFeedbackPolling) stopFeedbackPolling = sharedPolling.subscribe(() => selectedRunId.value && loadFeedback({ silent: true }), 5000)
+}
+const stopPolling = () => {
+  stopFeedbackPolling?.()
+  stopFeedbackPolling = null
+  ++feedbackRequest
+  ++sidecarRequest
+}
+onMounted(() => { load(); startFeedbackPolling() })
+onActivated(() => { if (versions.value.length) load(); startFeedbackPolling() })
+onDeactivated(stopPolling)
+onUnmounted(stopPolling)
 </script>
 
 <template>
   <div class="capability-page">
-    <section class="page-title"><div><span>交互中心</span><h1>能力图像</h1><p>直接选择研究任务，连续查看交互、证据、S Agent、能力画像、深研对话和研究报告。</p></div></section>
+    <section class="page-title"><div><span>交互中心</span><h1>能力画像</h1><p>直接选择研究任务，连续查看交互、证据、S Agent、能力画像、深研对话和研究报告。</p></div></section>
 
     <nav class="workspace-stage-nav" aria-label="当前任务产物导航">
       <div class="workspace-stage-nav-inner">
         <button type="button" @click="router.push('/equipment/runs')"><Archive :size="15" />研究任务</button>
         <section class="workspace-artifact-card" aria-label="当前任务产物导航"><span>当前任务产物</span><div>
-          <button type="button" class="active" aria-current="page" :disabled="!selectedRun"><FlaskConical :size="15" />能力图像</button>
+          <button type="button" class="active" aria-current="page" :disabled="!selectedRun"><FlaskConical :size="15" />能力画像</button>
           <button type="button" :disabled="!selectedRun" @click="router.push(`/equipment/deep-thinking?run=${encodeURIComponent(selectedRunId)}`)"><MessageSquare :size="15" />深研对话</button>
           <button type="button" :disabled="!selectedRun" @click="router.push(`/equipment/reports?run=${encodeURIComponent(selectedRunId)}`)"><FileCheck2 :size="15" />研究报告</button>
         </div></section>
@@ -582,16 +661,69 @@ onActivated(() => { if (versions.value.length) load() })
             <section v-if="visibleReferenceWeapons.length" class="capability-reference-print-block" :class="{ 'page-break-before': printPageClass === 'page-a3' }"><h2>参考装备</h2><table><thead><tr><th>参考装备</th><th>概述</th></tr></thead><tbody><tr v-for="item in visibleReferenceWeapons" :key="item.hypothesis_id || referenceTitle(item)"><td>{{ referenceTitle(item) }}</td><td>{{ referenceOverview(item) || '—' }}</td></tr></tbody></table></section>
           </div>
 
-          <section class="expert-feedback-panel">
-            <header><div><span class="expert-feedback-icon"><MessageSquare :size="17" /></span><span><b>专家审核反馈</b><small>{{ selectedRunReadOnly ? '历史研究任务为只读数据，反馈记录仅供查看。' : '画像卡反馈统一记录五维评分与意见；任务整体反馈保留为文字意见。' }}</small></span></div><div class="expert-feedback-head-actions"><em>{{ feedbackItems.length ? `已记录 ${feedbackItems.length} 条` : '尚未反馈' }}</em><button type="button" class="primary" :disabled="selectedRunReadOnly" :title="selectedRunReadOnly ? '历史研究任务为只读数据' : ''" @click="openFeedback()"><MessageSquare :size="14" />提交反馈</button></div></header>
-            <div class="expert-feedback-learning"><Sparkles :size="15" /><span><b>记忆处理 Agent 已接入</b><small>自动去重、压缩、相关性评分，并限制每个后续 Agent 读取的记忆数量，避免多卡反馈造成上下文噪声。</small></span></div>
+          <section id="expert-feedback-history" class="expert-feedback-panel" aria-label="专家反馈记录">
+            <header>
+              <div><span class="expert-feedback-icon"><MessageSquare :size="17" /></span><span><b>专家反馈记录</b><small>自动同步最新记录，保留评分、意见与回滚轨迹。</small></span></div>
+              <div class="expert-feedback-head-actions">
+                <em>{{ feedbackItems.length ? `已记录 ${feedbackItems.length} 条` : '尚未反馈' }}</em>
+                <button type="button" :disabled="feedbackLoading" @click="loadFeedback()"><RefreshCw :size="14" :class="{ spin: feedbackLoading }" />刷新记录</button>
+                <button type="button" class="primary" :disabled="selectedRunReadOnly" @click="openFeedback()"><MessageSquare :size="14" />提交反馈</button>
+              </div>
+            </header>
+            <details class="expert-feedback-learning">
+              <summary><Sparkles :size="15" /><span><b>反馈如何参与自进化</b><small>仅提炼为待验证候选，不会直接改写生产评分。</small></span><ChevronDown :size="15" /></summary>
+              <p>保存时提炼专家评分差异、细则建议与相关阶段；只有经过回放或专家裁决验证后，才能用于后续评分口径校准。</p>
+            </details>
             <p v-if="sidecarError" class="form-error"><CircleAlert :size="14" />{{ sidecarError }}</p>
-            <div v-if="feedbackItems.length" class="expert-feedback-history"><article v-for="feedback in feedbackItems.slice(-3).reverse()" :key="feedback.feedback_id"><header><span class="feedback-verdict processed">已处理</span><b>{{ feedback.capability_name || '本任务整体' }}</b><span v-if="Number.isFinite(Number(feedback.expert_weighted_score))" class="feedback-score-chip">专家综合 {{ Math.round(Number(feedback.expert_weighted_score) * 100) }}</span><span v-if="rubricFeedbackCount(feedback)" class="feedback-rubric-chip">细则建议 {{ rubricFeedbackCount(feedback) }} 项</span><small>{{ feedback.created_at ? new Date(feedback.created_at).toLocaleString('zh-CN', { hour12: false }) : '' }}</small></header><p>{{ feedback.comment || '未填写反馈意见。' }}</p><div v-if="feedback.learning_signal"><Sparkles :size="13" /><span><b>已提炼高价值记忆 · {{ Array.isArray(feedback.target_agent_ids) ? feedback.target_agent_ids.join('、') : '自动路由' }}</b>{{ feedback.learning_signal }}</span></div><footer class="expert-feedback-item-actions"><small>回滚后保留审计记录，但不再进入后续记忆。</small><button type="button" class="feedback-rollback-button" :disabled="selectedRunReadOnly || feedbackRollbackBusy === feedback.feedback_id" :title="selectedRunReadOnly ? '历史研究任务为只读数据' : ''" @click="rollbackFeedback(feedback)"><RefreshCw v-if="feedbackRollbackBusy === feedback.feedback_id" :size="13" class="spin" /><Undo2 v-else :size="13" />{{ feedbackRollbackBusy === feedback.feedback_id ? '回滚中…' : '回滚反馈' }}</button></footer></article></div>
+            <p v-if="feedbackError" class="form-error" role="alert"><CircleAlert :size="14" />{{ feedbackError }}，可刷新重试。</p>
+            <div class="feedback-history-controls">
+              <span>{{ feedbackHistoryTarget ? `本卡记录：${capabilityTitle(feedbackHistoryTarget)}` : '当前任务的反馈记录' }} · {{ matchingFeedback.length }} 条</span>
+              <button v-if="feedbackHistoryTarget" type="button" @click="showFeedbackHistory()">查看全部画像</button>
+              <button v-if="matchingFeedback.length > 3" type="button" @click="feedbackHistoryExpanded = !feedbackHistoryExpanded">{{ feedbackHistoryExpanded ? '收起记录' : `展开记录（${matchingFeedback.length}）` }}</button>
+            </div>
+            <div v-if="feedbackLoading && !feedbackItems.length" class="feedback-empty-state" role="status"><RefreshCw :size="18" class="spin" /><span><b>正在读取反馈记录</b><small>已保存的专家意见会显示在这里。</small></span></div>
+            <div v-else-if="!matchingFeedback.length && !feedbackError" class="feedback-empty-state"><MessageSquare :size="18" /><span><b>{{ feedbackHistoryTarget ? '此画像尚无反馈' : '当前任务尚无反馈' }}</b><small>{{ feedbackHistoryTarget ? '使用“针对本卡反馈”记录评分与修订建议。' : '可从任务整体或单张能力画像开始提交。' }}</small></span></div>
+            <div v-else class="expert-feedback-history" aria-live="polite">
+              <article v-for="feedback in visibleFeedback" :key="feedback.feedback_id" :class="{ 'is-rolled-back': feedback.status === 'rolled_back' }">
+                <details class="expert-feedback-card">
+                  <summary>
+                    <span class="feedback-card-chevron"><ChevronDown :size="16" /></span>
+                    <span class="feedback-card-heading">
+                      <span class="feedback-card-title-line"><span class="feedback-verdict" :class="feedback.verdict">{{ feedbackVerdicts[feedback.verdict] || '反馈' }}</span><b>{{ feedback.capability_name || '本任务整体' }}</b><span v-if="feedback.capability_version_no" class="feedback-version-chip">v{{ feedback.capability_version_no }}</span></span>
+                      <small>{{ feedback.reviewer_name || feedback.reviewer_uid || '历史反馈' }} · {{ feedback.created_at ? new Date(feedback.created_at).toLocaleString('zh-CN', { hour12: false }) : '' }}</small>
+                    </span>
+                    <span class="feedback-card-metrics">
+                      <span v-if="feedbackScore(feedback.expert_weighted_score) !== null" class="feedback-score-chip">专家综合 {{ feedbackScore(feedback.expert_weighted_score) }}</span>
+                      <span v-if="rubricFeedbackCount(feedback)" class="feedback-rubric-chip">细则 {{ rubricFeedbackCount(feedback) }} 项</span>
+                      <em :class="{ rolled: feedback.status === 'rolled_back' }">{{ feedback.status === 'rolled_back' ? '已回滚' : '点击展开' }}</em>
+                    </span>
+                  </summary>
+                  <div class="expert-feedback-card-body">
+                    <section class="feedback-comment-block"><small>反馈意见</small><p>{{ feedback.comment || '未填写反馈意见。' }}</p></section>
+                    <details v-if="scoreDimensions.some(({ key }) => feedbackScore(feedback.expert_dimension_scores?.[key]) !== null)" class="feedback-score-details">
+                      <summary>查看五维评分与校准差异<ChevronDown :size="14" /></summary>
+                      <dl class="feedback-score-grid">
+                        <div v-for="dimension in scoreDimensions" :key="dimension.key">
+                          <dt>{{ dimension.label }}</dt>
+                          <dd>模型 {{ feedbackScore(feedback.model_dimension_scores?.[dimension.key]) ?? '—' }} · 专家 {{ feedbackScore(feedback.expert_dimension_scores?.[dimension.key]) ?? '—' }}<span v-if="feedbackScoreDelta(feedback, dimension.key) !== null"> · 差值 {{ feedbackScoreDelta(feedback, dimension.key) >= 0 ? '+' : '' }}{{ feedbackScoreDelta(feedback, dimension.key) }}</span></dd>
+                          <dd v-if="feedback.rubric_feedback?.[dimension.key]">细则建议：{{ feedback.rubric_feedback[dimension.key] }}</dd>
+                        </div>
+                      </dl>
+                    </details>
+                    <div v-if="feedback.learning_signal" class="feedback-learning-signal"><Sparkles :size="13" /><span><b>{{ feedbackLearningLabel(feedback) }} · {{ feedback.target_agent_ids?.join('、') || '待确定阶段' }}</b>{{ feedback.learning_signal }}</span></div>
+                    <footer class="expert-feedback-item-actions">
+                      <small>{{ feedbackLearningLabel(feedback) }}{{ feedback.rollback_reason ? ` · ${feedback.rollback_reason}` : ' · 提炼不代表已验证有效' }}</small>
+                      <button v-if="feedback.status !== 'rolled_back'" type="button" class="feedback-rollback-button" :disabled="selectedRunReadOnly || feedbackRollbackBusy === feedback.feedback_id" @click="rollbackFeedback(feedback)"><RefreshCw v-if="feedbackRollbackBusy === feedback.feedback_id" :size="13" class="spin" /><Undo2 v-else :size="13" />{{ feedbackRollbackBusy === feedback.feedback_id ? '回滚中…' : '回滚反馈' }}</button>
+                    </footer>
+                  </div>
+                </details>
+              </article>
+            </div>
           </section>
 
           <div v-if="feedbackOpen" class="expert-feedback-modal-backdrop" @mousedown.self="feedbackOpen = false">
             <form class="expert-feedback-form portfolio-score-feedback-form" role="dialog" aria-modal="true" aria-label="提交专家审核意见" @submit.prevent="submitFeedback(false)" @mousedown.stop>
-              <header><div><b>{{ feedbackTarget ? '针对本卡反馈' : '提交专家审核意见' }}</b><small>{{ feedbackTarget ? `${capabilityTitle(feedbackTarget)} · 五维评分与 S5 保持同一口径` : '任务整体反馈将自动处理后路由给相关 S1–S6 Agent。' }}</small></div><button type="button" class="icon-button" aria-label="关闭反馈表单" @click="feedbackOpen = false"><X :size="16" /></button></header>
+              <header><div><b>{{ feedbackTarget ? '针对本卡反馈' : '提交专家审核意见' }}</b><small>{{ feedbackTarget ? `${capabilityTitle(feedbackTarget)} · 五维评分与 S5 保持同一口径` : '任务整体反馈会记录为相关 S1–S6 阶段的记忆候选。' }}</small></div><button type="button" class="icon-button" aria-label="关闭反馈表单" @click="feedbackOpen = false"><X :size="16" /></button></header>
               <label class="expert-feedback-target"><span>反馈对象</span><select :value="feedbackTarget ? capabilityCardKey(feedbackTarget) : ''" @change="openFeedback(selectedCapabilities.find((item) => capabilityCardKey(item) === $event.target.value) || null)"><option value="">本任务整体能力画像</option><option v-for="item in selectedCapabilities" :key="capabilityCardKey(item)" :value="capabilityCardKey(item)">{{ capabilityTitle(item) }}</option></select></label>
               <template v-if="feedbackTarget">
                 <section class="portfolio-score-comparison" aria-label="S5 模型评分、评分原则与专家评分对照">
@@ -609,7 +741,7 @@ onActivated(() => { if (versions.value.length) load() })
               </template>
               <label><span>反馈意见</span><textarea v-model="feedbackComment" maxlength="4000" :placeholder="feedbackTarget ? '说明评分差异、关键依据或需要修订的判断……' : '指出整体画像中最有价值、最不准确或需要补强的地方……'" required /></label>
               <div v-if="feedbackTarget" class="portfolio-calibration-note"><Sparkles :size="14" /><span><b>评分校准样本</b><small>当前 S5 原分、专家分、差值和细则修改建议一并保存；经回放或专家裁决验证后，才用于后续评分口径迭代。</small></span></div>
-              <footer><small>{{ feedbackTarget ? '严格按 S5 的创新性/需求性/科学可行性/效能性/发展性及 30/30/20/10/10 权重计算' : '保存后自动提炼、去重并路由到相关 Agent' }}</small><button v-if="feedbackTarget" type="button" :disabled="selectedRunReadOnly || feedbackSaving" @click="submitFeedback(true)"><BrainCircuit :size="14" />保存并定向深研</button><button type="submit" class="primary" :disabled="selectedRunReadOnly || feedbackSaving">{{ feedbackSaving ? '保存中…' : feedbackTarget ? '提交评分反馈' : '提交反馈' }}<Send :size="14" /></button></footer>
+              <footer><small>{{ feedbackTarget ? '严格按 S5 的创新性/需求性/科学可行性/制胜效能性/发展性及 45/15/10/25/5 权重计算；证据完备度不计入主评分' : '保存后提炼为候选，验证后再用于后续研究' }}</small><button v-if="feedbackTarget" type="button" :disabled="selectedRunReadOnly || feedbackSaving" @click="submitFeedback(true)"><BrainCircuit :size="14" />保存并定向深研</button><button type="submit" class="primary" :disabled="selectedRunReadOnly || feedbackSaving">{{ feedbackSaving ? '保存中…' : feedbackTarget ? '提交评分反馈' : '提交反馈' }}<Send :size="14" /></button></footer>
             </form>
           </div>
 
@@ -627,6 +759,7 @@ onActivated(() => { if (versions.value.length) load() })
               :version-busy="versionBusy === (item.version_id || item.id)"
               :read-only="selectedRunReadOnly"
               @feedback="openFeedback"
+              @view-feedback="showFeedbackHistory"
               @deep="openDeep"
               @favorite="toggleFavorite"
               @jump="focusCapabilityCard"
@@ -645,7 +778,7 @@ onActivated(() => { if (versions.value.length) load() })
             </CapabilityPortraitCard>
           </section>
 
-          <section v-if="deepCards.length" id="deep-research-cards" class="capability-deep-research-panel"><header><div><span class="deep-research-panel-icon"><GitCompare :size="17" /></span><span><b>深研卡片</b><small>来自深研对话的独立能力画像，不覆盖正式原卡；选择卡片可定位原卡或查看差异。</small></span></div><em>{{ deepCards.length }} 张</em></header><div class="capability-deep-research-list"><CapabilityPortraitCard v-for="entry in deepCards" :key="capabilityCardKey(entry.item)" :item="entry.item" :formal-item="entry.formalItem" :feedback-count="feedbackFor(entry.item).length" :version-busy="versionBusy === (entry.item.version_id || entry.item.id)" :read-only="selectedRunReadOnly" @feedback="openFeedback" @deep="openDeep" @jump="focusCapabilityCard" @delete-version="(row) => mutateVersion(row, 'delete')" /></div></section>
+          <section v-if="deepCards.length" id="deep-research-cards" class="capability-deep-research-panel"><header><div><span class="deep-research-panel-icon"><GitCompare :size="17" /></span><span><b>深研卡片</b><small>来自深研对话的独立能力画像，不覆盖正式原卡；选择卡片可定位原卡或查看差异。</small></span></div><em>{{ deepCards.length }} 张</em></header><div class="capability-deep-research-list"><CapabilityPortraitCard v-for="entry in deepCards" :key="capabilityCardKey(entry.item)" :item="entry.item" :formal-item="entry.formalItem" :feedback-count="feedbackFor(entry.item).length" :version-busy="versionBusy === (entry.item.version_id || entry.item.id)" :read-only="selectedRunReadOnly" @feedback="openFeedback" @view-feedback="showFeedbackHistory" @deep="openDeep" @jump="focusCapabilityCard" @delete-version="(row) => mutateVersion(row, 'delete')" /></div></section>
 
           <section v-if="visibleReferenceWeapons.length" class="capability-reference-library"><header><div><b>参考武器</b><small>仅展示具备明确装备名称或形态、但未进入本轮 S6 详细画像的候选；深度研究锁定单个装备，在当前 Query 下对话式发散，不重新执行完整 S1–S6</small></div><em>{{ visibleReferenceWeapons.length }} 条</em></header><div class="capability-reference-grid"><article v-for="item in visibleReferenceWeapons" :key="item.hypothesis_id || referenceTitle(item)" class="capability-reference-card"><header><span class="capability-reference-badge">参考</span><span><b>{{ referenceTitle(item) || referenceForm(item) }}</b><small v-if="referenceForm(item) && referenceForm(item) !== referenceTitle(item)">{{ referenceForm(item) }}</small></span></header><p>{{ referenceOverview(item) || '暂无参考概述。' }}</p><footer class="capability-reference-actions"><span class="reference-research-status">创新候选 · 可继续深挖</span><div><button type="button" class="reference-research-button" :disabled="selectedRunReadOnly" :title="selectedRunReadOnly ? '历史研究任务为只读数据' : ''" @click="openReferenceDeep(item)">定向深研 / 追问<BrainCircuit :size="13" /></button></div></footer></article></div></section>
         </div>
@@ -741,4 +874,11 @@ onActivated(() => { if (versions.value.length) load() })
   color: #dfe4ed;
 }
 @keyframes capability-spin { to { transform: rotate(360deg); } }
+.feedback-history-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; font-size: 12px; }
+.feedback-history-controls button { cursor: pointer; padding: 5px 9px; border: 1px solid currentColor; border-radius: 6px; background: transparent; color: inherit; }
+.feedback-score-grid { display: grid; gap: 10px; margin: 12px 0; }
+.feedback-score-grid dt { font-weight: 600; }
+.feedback-score-grid dd { margin: 4px 0; white-space: pre-wrap; }
+.expert-feedback-history article.is-rolled-back { border-style: dashed; box-shadow: none; }
+#expert-feedback-history { scroll-margin-top: 28px; }
 </style>

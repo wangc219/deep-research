@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import re
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 
 from equipment_deep_research.agents.orchestrator_prompt import (
     ORCHESTRATOR_PROMPT_VERSION,
@@ -431,9 +432,7 @@ def topic_agent_recommendations(topic: str) -> list[dict[str, Any]]:
     normalized = str(topic).lower()
     recommendations: list[dict[str, Any]] = []
     for agent_id, rule in TOPIC_AGENT_SIGNALS.items():
-        matched = [
-            signal for signal in rule["signals"] if str(signal).lower() in normalized
-        ]
+        matched = [signal for signal in rule["signals"] if str(signal).lower() in normalized]
         if not matched:
             continue
         recommendations.append(
@@ -559,22 +558,14 @@ def build_discovery_blueprint(
         if problem.discovery_branch != "auto"
         else str(model_blueprint.get("primary_branch") or resolved["primary"])
     )
-    code = (
-        requested_code
-        if requested_code in BRANCH_BLUEPRINTS
-        else str(resolved["primary"])
-    )
+    code = requested_code if requested_code in BRANCH_BLUEPRINTS else str(resolved["primary"])
     spec = BRANCH_BLUEPRINTS[code]
     secondary_source = (
         []
         if problem.interaction_mode == "expert" and problem.discovery_branch != "auto"
         else model_blueprint.get("secondary_branches", resolved.get("secondary", []))
     )
-    secondary = [
-        str(item)
-        for item in secondary_source
-        if str(item) in BRANCH_BLUEPRINTS and str(item) != code
-    ][:2]
+    secondary = [str(item) for item in secondary_source if str(item) in BRANCH_BLUEPRINTS and str(item) != code][:2]
     unmatched_driver = str(model_blueprint.get("unmatched_driver", "")).strip()[:1000]
     available_capabilities = {
         str(agent_id): tuple(str(tag) for tag in tags)
@@ -655,26 +646,16 @@ def build_discovery_blueprint(
         "primary_branch": code,
         "branch_name": spec.name,
         "secondary_branches": secondary,
-        "runtime_route": (
-            spec.route if problem.research_route == "auto" else problem.research_route
-        ),
+        "runtime_route": (spec.route if problem.research_route == "auto" else problem.research_route),
         "emphasis": list(spec.emphasis),
         "specialist_agent_ids": specialists,
         "baseline_agent_plan": baseline_agent_plan,
         "semantic_agent_signals": semantic_agent_signals,
         "initial_baseline_agent_ids": [
-            item["agent_id"]
-            for item in baseline_agent_plan
-            if item["mode"] in {"required", "reference"}
+            item["agent_id"] for item in baseline_agent_plan if item["mode"] in {"required", "reference"}
         ],
-        "callback_agent_ids": [
-            item["agent_id"]
-            for item in baseline_agent_plan
-            if item["mode"] == "callback"
-        ],
-        "required_capability_tags": list(
-            dict.fromkeys([*spec.required_capability_tags, *extra_tags])
-        ),
+        "callback_agent_ids": [item["agent_id"] for item in baseline_agent_plan if item["mode"] == "callback"],
+        "required_capability_tags": list(dict.fromkeys([*spec.required_capability_tags, *extra_tags])),
         "required_outputs": list(
             dict.fromkeys(
                 [
@@ -703,20 +684,12 @@ def build_discovery_blueprint(
                     "出现跨分支高价值线索",
                     "当前分支无法覆盖关键能力标签",
                     "案例/技术/对手变化反向触发其他发现路径",
-                    *(
-                        ["A-H运行基座无法解释OTHER驱动源，需动态组合蓝图"]
-                        if unmatched_driver
-                        else []
-                    ),
-                    *_bounded_text_list(
-                        model_blueprint.get("meta_triggers", []), limit=8
-                    ),
+                    *(["A-H运行基座无法解释OTHER驱动源，需动态组合蓝图"] if unmatched_driver else []),
+                    *_bounded_text_list(model_blueprint.get("meta_triggers", []), limit=8),
                 ]
             )
         ),
-        "generated_by": "codex_orchestrator"
-        if model_blueprint
-        else "deterministic_architecture_policy",
+        "generated_by": "codex_orchestrator" if model_blueprint else "deterministic_architecture_policy",
         "prompt_version": ORCHESTRATOR_PROMPT_VERSION,
         "blueprint_mode": (
             "meta_composed"
@@ -729,20 +702,12 @@ def build_discovery_blueprint(
         "unmatched_driver": unmatched_driver,
         "structured_query_brief": structured_query_brief,
         "reference_focus": branch_reference_focus(code),
-        "focus_questions": _bounded_text_list(
-            model_blueprint.get("focus_questions", []), limit=8
-        ),
-        "assumptions": _bounded_text_list(
-            model_blueprint.get("assumptions", []), limit=8
-        ),
-        "hard_constraints": _bounded_text_list(
-            model_blueprint.get("hard_constraints", []), limit=8
-        ),
+        "focus_questions": _bounded_text_list(model_blueprint.get("focus_questions", []), limit=8),
+        "assumptions": _bounded_text_list(model_blueprint.get("assumptions", []), limit=8),
+        "hard_constraints": _bounded_text_list(model_blueprint.get("hard_constraints", []), limit=8),
         "adaptive_winning_step_modes": custom_blueprint["s1_s6_modes"],
         "confidence": confidence,
-        "rationale": str(
-            model_blueprint.get("rationale") or resolved.get("rationale", "")
-        )[:1500],
+        "rationale": str(model_blueprint.get("rationale") or resolved.get("rationale", ""))[:1500],
     }
 
 
@@ -754,9 +719,7 @@ def _normalize_structured_query_brief(
     raw = dict(value) if isinstance(value, Mapping) else {}
     base = dict(fallback)
     core_query = str(raw.get("core_query") or base.get("core_query", ""))[:500]
-    supplement_summary = str(
-        raw.get("supplement_summary") or base.get("supplement_summary", "")
-    )[:1200]
+    supplement_summary = str(raw.get("supplement_summary") or base.get("supplement_summary", ""))[:1200]
     focus_questions = _bounded_text_list(
         raw.get("focus_questions") or base.get("focus_questions", []),
         limit=6,
@@ -766,40 +729,32 @@ def _normalize_structured_query_brief(
         limit=8,
     )
     constraints_and_assumptions = _bounded_text_list(
-        raw.get("constraints_and_assumptions")
-        or base.get("constraints_and_assumptions", []),
+        raw.get("constraints_and_assumptions") or base.get("constraints_and_assumptions", []),
         limit=6,
     )
-    combat_problem_frame = str(
-        raw.get("combat_problem_frame") or base.get("combat_problem_frame", "")
-    )[:900]
+    combat_problem_frame = str(raw.get("combat_problem_frame") or base.get("combat_problem_frame", ""))[:900]
     enemy_target_profile = _bounded_text_list(
         raw.get("enemy_target_profile") or base.get("enemy_target_profile", []),
         limit=6,
     )
     battle_phase_and_constraints = _bounded_text_list(
-        raw.get("battle_phase_and_constraints")
-        or base.get("battle_phase_and_constraints", []),
+        raw.get("battle_phase_and_constraints") or base.get("battle_phase_and_constraints", []),
         limit=8,
     )
     required_direct_military_effects = _bounded_text_list(
-        raw.get("required_direct_military_effects")
-        or base.get("required_direct_military_effects", []),
+        raw.get("required_direct_military_effects") or base.get("required_direct_military_effects", []),
         limit=6,
     )
     equipment_semantic_boundary = str(
-        raw.get("equipment_semantic_boundary")
-        or base.get("equipment_semantic_boundary", "")
+        raw.get("equipment_semantic_boundary") or base.get("equipment_semantic_boundary", "")
     ).strip()[:700]
-    query_equipment_mode = str(
-        raw.get("query_equipment_mode")
-        or base.get("query_equipment_mode", "direct_combat")
-    ).strip().lower()
+    query_equipment_mode = (
+        str(raw.get("query_equipment_mode") or base.get("query_equipment_mode", "direct_combat")).strip().lower()
+    )
     if query_equipment_mode not in {"direct_combat", "mission_equipment"}:
         query_equipment_mode = "direct_combat"
     winning_problem_propositions = _normalize_winning_problem_propositions(
-        raw.get("winning_problem_propositions")
-        or base.get("winning_problem_propositions", []),
+        raw.get("winning_problem_propositions") or base.get("winning_problem_propositions", []),
         limit=6,
     )
     weapon_design_variables = _bounded_text_list(
@@ -807,30 +762,24 @@ def _normalize_structured_query_brief(
         limit=8,
     )
     query_specific_weapon_architectures = _bounded_text_list(
-        raw.get("query_specific_weapon_architectures")
-        or base.get("query_specific_weapon_architectures", []),
+        raw.get("query_specific_weapon_architectures") or base.get("query_specific_weapon_architectures", []),
         limit=6,
     )
     frontier_technology_hypotheses = _normalize_frontier_technology_hypotheses(
-        raw.get("frontier_technology_hypotheses")
-        or base.get("frontier_technology_hypotheses", []),
+        raw.get("frontier_technology_hypotheses") or base.get("frontier_technology_hypotheses", []),
         limit=6,
     )
     equipment_project_hypotheses = _normalize_equipment_project_hypotheses(
-        raw.get("equipment_project_hypotheses")
-        or base.get("equipment_project_hypotheses", []),
+        raw.get("equipment_project_hypotheses") or base.get("equipment_project_hypotheses", []),
         limit=6,
     )
     rejected_template_anchors = _bounded_text_list(
-        raw.get("rejected_template_anchors")
-        or base.get("rejected_template_anchors", []),
+        raw.get("rejected_template_anchors") or base.get("rejected_template_anchors", []),
         limit=6,
     )
     return {
         "core_query": core_query,
-        "supplement_present": bool(
-            raw.get("supplement_present", base.get("supplement_present", False))
-        ),
+        "supplement_present": bool(raw.get("supplement_present", base.get("supplement_present", False))),
         "supplement_summary": supplement_summary,
         "focus_questions": focus_questions,
         "expansion_dimensions": expansion_dimensions,
@@ -882,11 +831,7 @@ def _normalize_winning_problem_propositions(
                 "exclusion_and_falsification_boundary",
             )
         }
-        if (
-            row["task_breakpoint"]
-            and row["changeable_variable"]
-            and row["direct_military_result"]
-        ):
+        if row["task_breakpoint"] and row["changeable_variable"] and row["direct_military_result"]:
             rows.append(row)
     return rows
 
@@ -905,24 +850,14 @@ def _normalize_frontier_technology_hypotheses(
         row = {
             "enabling_principle": str(item.get("enabling_principle", "")).strip()[:320],
             "innovation_mode": str(item.get("innovation_mode", "")).strip()[:120],
-            "equipment_implication": str(item.get("equipment_implication", "")).strip()[
-                :360
-            ],
+            "equipment_implication": str(item.get("equipment_implication", "")).strip()[:360],
             "query_causal_link": str(item.get("query_causal_link", "")).strip()[:420],
-            "direct_military_effect": str(
-                item.get("direct_military_effect", "")
-            ).strip()[:360],
+            "direct_military_effect": str(item.get("direct_military_effect", "")).strip()[:360],
             "disruptive_delta": str(item.get("disruptive_delta", "")).strip()[:420],
-            "conventional_absorption_limit": str(
-                item.get("conventional_absorption_limit", "")
-            ).strip()[:420],
+            "conventional_absorption_limit": str(item.get("conventional_absorption_limit", "")).strip()[:420],
             "technology_horizon": str(item.get("technology_horizon", "")).strip()[:120],
-            "engineering_bottleneck": str(
-                item.get("engineering_bottleneck", "")
-            ).strip()[:360],
-            "disconfirming_condition": str(
-                item.get("disconfirming_condition", "")
-            ).strip()[:360],
+            "engineering_bottleneck": str(item.get("engineering_bottleneck", "")).strip()[:360],
+            "disconfirming_condition": str(item.get("disconfirming_condition", "")).strip()[:360],
         }
         if (
             row["enabling_principle"]
@@ -951,21 +886,11 @@ def _normalize_equipment_project_hypotheses(
             "project_function": str(item.get("project_function", "")).strip()[:420],
             "query_causal_link": str(item.get("query_causal_link", "")).strip()[:420],
             "target_and_phase": str(item.get("target_and_phase", "")).strip()[:360],
-            "direct_military_effect": str(
-                item.get("direct_military_effect", "")
-            ).strip()[:360],
-            "design_variables": _bounded_text_list(
-                item.get("design_variables", []), limit=8
-            ),
-            "innovation_logic": _bounded_text_list(
-                item.get("innovation_logic", []), limit=6
-            ),
-            "evidence_questions": _bounded_text_list(
-                item.get("evidence_questions", []), limit=6
-            ),
-            "rejection_condition": str(item.get("rejection_condition", "")).strip()[
-                :360
-            ],
+            "direct_military_effect": str(item.get("direct_military_effect", "")).strip()[:360],
+            "design_variables": _bounded_text_list(item.get("design_variables", []), limit=8),
+            "innovation_logic": _bounded_text_list(item.get("innovation_logic", []), limit=6),
+            "evidence_questions": _bounded_text_list(item.get("evidence_questions", []), limit=6),
+            "rejection_condition": str(item.get("rejection_condition", "")).strip()[:360],
         }
         if row["project_name"] and row["equipment_form"] and row["project_function"]:
             rows.append(row)
@@ -980,15 +905,9 @@ def _normalize_baseline_agent_plan(
     specialist_agent_ids: Sequence[str],
 ) -> list[dict[str, str]]:
     known_ids = available_agent_ids or {
-        agent_id
-        for rows in BRANCH_BASELINE_AGENT_PLANS.values()
-        for agent_id, _ in rows
+        agent_id for rows in BRANCH_BASELINE_AGENT_PLANS.values() for agent_id, _ in rows
     }
-    raw_rows = (
-        list(value)
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-        else []
-    )
+    raw_rows = list(value) if isinstance(value, Sequence) and not isinstance(value, (str, bytes)) else []
     result: list[dict[str, str]] = []
     seen: set[str] = set()
     for item in raw_rows:
@@ -1050,8 +969,7 @@ def _bound_model_agent_plan(
             if active_count > maximum_active:
                 row["mode"] = "callback"
                 row["reason"] = (
-                    f"{row.get('reason', '')}；超过首轮{maximum_active}个Agent上限，"
-                    "转为缺口触发回调。"
+                    f"{row.get('reason', '')}；超过首轮{maximum_active}个Agent上限，转为缺口触发回调。"
                 ).strip("；")
         result.append(row)
     return result
@@ -1130,11 +1048,7 @@ def _apply_topic_agent_policy(
             # before the scenario Agent consumes it.
             scores[agent_id] = 130
 
-    active_ids = [
-        agent_id
-        for agent_id, row in rows.items()
-        if row.get("mode") in {"required", "reference"}
-    ]
+    active_ids = [agent_id for agent_id, row in rows.items() if row.get("mode") in {"required", "reference"}]
     ranked_active = sorted(
         active_ids,
         key=lambda agent_id: (-scores.get(agent_id, 0), agent_id),
@@ -1146,8 +1060,7 @@ def _apply_topic_agent_policy(
     mandatory_ids = [
         str(item["agent_id"])
         for item in semantic
-        if str(item.get("mode", "")) == "required"
-        and str(item["agent_id"]) in ranked_active
+        if str(item.get("mode", "")) == "required" and str(item["agent_id"]) in ranked_active
     ]
     keep = set(mandatory_ids[:maximum_active])
     for agent_id in ranked_active:
@@ -1155,9 +1068,7 @@ def _apply_topic_agent_policy(
             break
         keep.add(agent_id)
     if len(keep) < minimum_active:
-        callback_ids = [
-            agent_id for agent_id, row in rows.items() if row.get("mode") == "callback"
-        ]
+        callback_ids = [agent_id for agent_id, row in rows.items() if row.get("mode") == "callback"]
         for agent_id in callback_ids:
             keep.add(agent_id)
             if len(keep) >= minimum_active:
@@ -1195,11 +1106,7 @@ def _normalize_dynamic_subagents(
     available_skills: Mapping[str, Mapping[str, Any]],
     available_knowledge_pack_ids: Sequence[str],
 ) -> list[dict[str, Any]]:
-    raw_rows = (
-        list(value)
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-        else []
-    )
+    raw_rows = list(value) if isinstance(value, Sequence) and not isinstance(value, (str, bytes)) else []
     known_skills = set(str(item) for item in available_skills)
     known_packs = set(str(item) for item in available_knowledge_pack_ids)
     result: list[dict[str, Any]] = []
@@ -1209,18 +1116,10 @@ def _normalize_dynamic_subagents(
         purpose = str(item.get("purpose", "")).strip()[:800]
         trigger_gap = str(item.get("trigger_gap", "")).strip()[:500]
         merge_target = str(item.get("merge_target", ""))
-        if (
-            not purpose
-            or not trigger_gap
-            or merge_target not in {"S1", "S2", "S3", "S4", "S5", "S6", "convergence"}
-        ):
+        if not purpose or not trigger_gap or merge_target not in {"S1", "S2", "S3", "S4", "S5", "S6", "convergence"}:
             continue
         skill_ids = list(
-            dict.fromkeys(
-                str(skill_id)
-                for skill_id in item.get("skill_ids", [])
-                if str(skill_id) in known_skills
-            )
+            dict.fromkeys(str(skill_id) for skill_id in item.get("skill_ids", []) if str(skill_id) in known_skills)
         )
         pack_ids = list(
             dict.fromkeys(
@@ -1228,53 +1127,35 @@ def _normalize_dynamic_subagents(
                     *(
                         str(pack_id)
                         for skill_id in skill_ids
-                        for pack_id in available_skills[skill_id].get(
-                            "knowledge_pack_ids", []
-                        )
+                        for pack_id in available_skills[skill_id].get("knowledge_pack_ids", [])
                         if str(pack_id) in known_packs
                     ),
-                    *(
-                        str(pack_id)
-                        for pack_id in item.get("knowledge_pack_ids", [])
-                        if str(pack_id) in known_packs
-                    ),
+                    *(str(pack_id) for pack_id in item.get("knowledge_pack_ids", []) if str(pack_id) in known_packs),
                 ]
             )
         )
         allowed_tools = list(
             dict.fromkeys(
-                str(tool)
-                for skill_id in skill_ids
-                for tool in available_skills[skill_id].get("allowed_tools", [])
+                str(tool) for skill_id in skill_ids for tool in available_skills[skill_id].get("allowed_tools", [])
             )
         )
         display_name = str(item.get("display_name", "动态专用Agent")).strip()[:120]
         slug = re.sub(r"[^a-z0-9]+", "-", display_name.lower()).strip("-")
-        digest = sha256(
-            f"{display_name}:{purpose}:{merge_target}:{index}".encode("utf-8")
-        ).hexdigest()[:8]
+        digest = sha256(f"{display_name}:{purpose}:{merge_target}:{index}".encode()).hexdigest()[:8]
         result.append(
             {
                 "agent_instance_id": f"dynamic-{slug or 'specialist'}-{digest}",
-                "hypothesis_id": str(
-                    item.get("hypothesis_id") or f"hypothesis-dynamic-{digest}"
-                )[:160],
+                "hypothesis_id": str(item.get("hypothesis_id") or f"hypothesis-dynamic-{digest}")[:160],
                 "display_name": display_name,
                 "purpose": purpose,
                 "trigger_gap": trigger_gap,
-                "required_capability_tags": _bounded_text_list(
-                    item.get("required_capability_tags", []), limit=8
-                ),
+                "required_capability_tags": _bounded_text_list(item.get("required_capability_tags", []), limit=8),
                 "skill_ids": skill_ids,
                 "knowledge_pack_ids": pack_ids,
                 "allowed_tools": allowed_tools,
                 "methodology": _bounded_text_list(item.get("methodology", []), limit=8),
-                "quality_gates": _bounded_text_list(
-                    item.get("quality_gates", []), limit=8
-                ),
-                "output_fields": _bounded_text_list(
-                    item.get("output_fields", []), limit=12
-                ),
+                "quality_gates": _bounded_text_list(item.get("quality_gates", []), limit=8),
+                "output_fields": _bounded_text_list(item.get("output_fields", []), limit=12),
                 "merge_target": merge_target,
                 "contribution_to_steps": [
                     int(step)
@@ -1282,9 +1163,7 @@ def _normalize_dynamic_subagents(
                     if str(step).isdigit() and 1 <= int(step) <= 6
                 ][:6],
                 "allow_child_spawn": False,
-                "stop_conditions": _bounded_text_list(
-                    item.get("stop_conditions", []), limit=8
-                ),
+                "stop_conditions": _bounded_text_list(item.get("stop_conditions", []), limit=8),
                 "max_output_tokens": _bounded_int(
                     item.get("max_output_tokens"),
                     minimum=800,
@@ -1309,11 +1188,7 @@ def normalize_dynamic_subagents(
     available_knowledge_pack_ids: Sequence[str],
 ) -> list[dict[str, Any]]:
     """Validate bounded runtime specialists without inventing a fallback role."""
-    shared_skills = {
-        skill_id: skill
-        for skill_id, skill in available_skills.items()
-        if bool(skill.get("shared"))
-    }
+    shared_skills = {skill_id: skill for skill_id, skill in available_skills.items() if bool(skill.get("shared"))}
     return _normalize_dynamic_subagents(
         value,
         unmatched_driver="",
@@ -1366,35 +1241,21 @@ def _normalize_custom_blueprint(
 ) -> dict[str, Any]:
     raw = dict(value) if isinstance(value, Mapping) else {}
     available_ids = set(available_capabilities)
-    preferred = [
-        str(item)
-        for item in raw.get("preferred_agent_ids", [])
-        if str(item) in available_ids
-    ]
+    preferred = [str(item) for item in raw.get("preferred_agent_ids", []) if str(item) in available_ids]
     preferred = list(dict.fromkeys(preferred))
     valid_tags = {str(tag) for tags in available_capabilities.values() for tag in tags}
-    required_tags = [
-        str(item)
-        for item in raw.get("required_capability_tags", [])
-        if str(item) in valid_tags
-    ]
+    required_tags = [str(item) for item in raw.get("required_capability_tags", []) if str(item) in valid_tags]
     required_tags = list(dict.fromkeys(required_tags))
     raw_waves = raw.get("waves", [])
     dependencies: list[dict[str, str]] = []
     raw_dependencies = raw.get("dependencies", [])
-    if isinstance(raw_dependencies, Sequence) and not isinstance(
-        raw_dependencies, (str, bytes)
-    ):
+    if isinstance(raw_dependencies, Sequence) and not isinstance(raw_dependencies, (str, bytes)):
         for item in raw_dependencies:
             if not isinstance(item, Mapping):
                 continue
             upstream = str(item.get("upstream", ""))
             downstream = str(item.get("downstream", ""))
-            if (
-                upstream in preferred
-                and downstream in preferred
-                and upstream != downstream
-            ):
+            if upstream in preferred and downstream in preferred and upstream != downstream:
                 dependencies.append(
                     {
                         "upstream": upstream,
@@ -1426,9 +1287,7 @@ def _normalize_custom_blueprint(
         "dependencies": dependencies,
         "dependency_cycle_rejected": dependency_cycle_rejected,
         "s1_s6_modes": modes,
-        "required_outputs": _bounded_text_list(
-            raw.get("required_outputs", []), limit=12
-        ),
+        "required_outputs": _bounded_text_list(raw.get("required_outputs", []), limit=12),
         "stop_conditions": _bounded_text_list(raw.get("stop_conditions", []), limit=8),
         "rationale": str(raw.get("rationale", ""))[:1000],
     }
@@ -1458,11 +1317,7 @@ def _schedule_custom_waves(
     completed: set[str] = set()
     waves: list[list[str]] = []
     while pending:
-        ready = [
-            agent_id
-            for agent_id in preferred_ids
-            if agent_id in pending and incoming[agent_id] <= completed
-        ]
+        ready = [agent_id for agent_id in preferred_ids if agent_id in pending and incoming[agent_id] <= completed]
         if not ready:
             return [], True
         next_rank = min(proposed_rank[agent_id] for agent_id in ready)
@@ -1493,11 +1348,7 @@ def execution_waves_from_blueprint(
     *,
     maximize_parallelism: bool = False,
 ) -> list[list[AgentSpec]]:
-    if (
-        maximize_parallelism
-        and blueprint.get("baseline_execution_mode")
-        == "query_dominant_isolated_parallel"
-    ):
+    if maximize_parallelism and blueprint.get("baseline_execution_mode") == "query_dominant_isolated_parallel":
         # optimized_v2 baseline Agents independently consume the Query and
         # public evidence.  Cross-Agent synthesis happens after this wave, so
         # business-role handoff declarations must not serialize isolated CLI
@@ -1515,14 +1366,8 @@ def execution_waves_from_blueprint(
     fallback_rank = len(raw_waves)
     selected_ids = set(by_id)
     hard_dependencies = {
-        str(agent_id): {
-            str(dependency)
-            for dependency in dependencies
-            if str(dependency) in selected_ids
-        }
-        for agent_id, dependencies in dict(
-            blueprint.get("hard_dependencies", {}) or {}
-        ).items()
+        str(agent_id): {str(dependency) for dependency in dependencies if str(dependency) in selected_ids}
+        for agent_id, dependencies in dict(blueprint.get("hard_dependencies", {}) or {}).items()
         if str(agent_id) in selected_ids
         and isinstance(dependencies, Sequence)
         and not isinstance(dependencies, (str, bytes))
@@ -1548,20 +1393,12 @@ def execution_waves_from_blueprint(
             )
         ]
         if not ready:
-            raise ValueError(
-                "selected discovery agents contain a handoff dependency cycle"
-            )
+            raise ValueError("selected discovery agents contain a handoff dependency cycle")
         if maximize_parallelism:
             wave = ready
         else:
-            next_rank = min(
-                preferred_rank.get(agent.agent_id, fallback_rank) for agent in ready
-            )
-            wave = [
-                agent
-                for agent in ready
-                if preferred_rank.get(agent.agent_id, fallback_rank) == next_rank
-            ]
+            next_rank = min(preferred_rank.get(agent.agent_id, fallback_rank) for agent in ready)
+            wave = [agent for agent in ready if preferred_rank.get(agent.agent_id, fallback_rank) == next_rank]
         wave.sort(key=lambda agent: list(by_id).index(agent.agent_id))
         result.append(wave)
         for agent in wave:

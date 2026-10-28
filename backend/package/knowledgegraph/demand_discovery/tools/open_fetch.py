@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import time
 from urllib.parse import urlparse
@@ -53,7 +53,11 @@ def create_fetch_open_source_page_tool(
         if lead is None:
             return _error(call, f"unknown open_source_lead_id: {lead_id}", {"open_source_lead_id": lead_id})
         if lead.plan_id != plan_id:
-            return _error(call, "OpenSourceLead does not belong to OpenSearchPlan", {"open_search_plan_id": plan_id, "open_source_lead_id": lead_id})
+            return _error(
+                call,
+                "OpenSourceLead does not belong to OpenSearchPlan",
+                {"open_search_plan_id": plan_id, "open_source_lead_id": lead_id},
+            )
         if url != lead.url:
             return _error(call, "url does not match OpenSourceLead", {"url": url, "lead_url": lead.url})
         started = time.perf_counter()
@@ -62,10 +66,16 @@ def create_fetch_open_source_page_tool(
         except Exception as exc:
             return _error(call, f"fetch failed: {exc}", {"url": url})
         if response.status_code >= 400:
-            return _error(call, f"fetch failed with HTTP {response.status_code}", {"url": url, "status_code": response.status_code})
+            return _error(
+                call,
+                f"fetch failed with HTTP {response.status_code}",
+                {"url": url, "status_code": response.status_code},
+            )
         final_host = (urlparse(response.url).hostname or "").lower()
         if final_host and lead.domain and final_host != lead.domain.lower():
-            return _error(call, "redirect target differs from OpenSourceLead domain", {"url": url, "final_url": response.url})
+            return _error(
+                call, "redirect target differs from OpenSourceLead domain", {"url": url, "final_url": response.url}
+            )
         content_type = _header(response.headers, "content-type")
         if not _is_html_or_text(content_type):
             return _error(
@@ -85,7 +95,7 @@ def create_fetch_open_source_page_tool(
                 "open_source_lead_id": lead_id,
                 "status_code": response.status_code,
                 "headers_used": sorted(DEFAULT_HTTP_HEADERS),
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "fetched_at": datetime.now(UTC).isoformat(),
             },
         )
         page = simplify(text, artifacts)
@@ -100,7 +110,7 @@ def create_fetch_open_source_page_tool(
             simplified_ref=page.text_ref,
             body_location_prefix=f"{page.text_ref}#",
             fetched_by=ctx.worker_id,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         details = {
             "open_search_plan_id": plan_id,
@@ -118,9 +128,7 @@ def create_fetch_open_source_page_tool(
             call.name,
             f"{UNTRUSTED_NOTICE}\nFetched OpenSourceLead {lead_id}; use read_document artifact_ref={page.text_ref}",
             details,
-            domain_proposals=[
-                DomainWriteProposal("upsert", "OpenSourceBodyArtifact", body.to_dict())
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "OpenSourceBodyArtifact", body.to_dict())],
             trace_proposals=[
                 DomainTraceProposal(
                     event_type="open_source_body_fetched",
@@ -209,7 +217,5 @@ def _artifact_kind(content_type: str) -> str:
 
 
 def _body_id(plan_id: str, lead_id: str, simplified_ref: str) -> str:
-    digest = hashlib.sha256(
-        f"{plan_id}:{lead_id}:{simplified_ref}".encode("utf-8")
-    ).hexdigest()[:12]
+    digest = hashlib.sha256(f"{plan_id}:{lead_id}:{simplified_ref}".encode()).hexdigest()[:12]
     return f"osb-{digest}"

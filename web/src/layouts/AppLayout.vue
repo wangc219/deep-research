@@ -39,6 +39,7 @@ import TaskCenterDrawer from '@/components/TaskCenterDrawer.vue'
 import SettingsModal from '@/components/SettingsModal.vue'
 import ConversationNavSection from '@/components/ConversationNavSection.vue'
 import GlobalSearchModal from '@/components/GlobalSearchModal.vue'
+import EquipmentWorkflowNav from '@/components/equipment/EquipmentWorkflowNav.vue'
 import { searchWorkspaceFiles } from '@/apis/workspace_api'
 import { projectApi } from '@/apis/project_api'
 
@@ -105,8 +106,9 @@ const handleSidebarKeydown = (event) => {
     closeMobileNav()
   }
   if (event.key !== 'Tab') return
-  const focusable = [...sidebarEl.value.querySelectorAll('a[href], button, input, [tabindex="0"]')]
-    .filter((element) => !element.disabled && element.getClientRects().length)
+  const focusable = [
+    ...sidebarEl.value.querySelectorAll('a[href], button, input, [tabindex="0"]')
+  ].filter((element) => !element.disabled && element.getClientRects().length)
   const first = focusable[0]
   const last = focusable.at(-1)
   if (event.shiftKey && document.activeElement === first) {
@@ -160,8 +162,8 @@ onMounted(() => {
   void getRemoteDatabase()
   void initAgentNavigation()
   void getRemoteConfig()
-  // 仅管理员加载任务中心数据
-  if (userStore.isAdmin) {
+  // 服务端按当前身份返回可见任务。
+  if (userStore.isLoggedIn) {
     taskerStore.loadTasks()
   }
   startThreadStatusSync()
@@ -229,6 +231,7 @@ const activeConversationThreadId = computed(() => {
 const organizationName = computed(() => {
   return infoStore.organization.name || infoStore.branding.name || 'equipment deep research'
 })
+const isEquipmentRoute = computed(() => route.path.startsWith('/equipment/'))
 
 // 下面是导航菜单部分，添加智能体项
 const mainList = computed(() => {
@@ -250,6 +253,13 @@ const mainList = computed(() => {
       exactActive: true
     },
     {
+      name: '需求 Query',
+      path: '/equipment/queries',
+      icon: FileSearch,
+      activeIcon: FileSearch,
+      preload: preloadEquipmentQueries
+    },
+    {
       name: '研究任务',
       path: '/equipment/runs',
       activePaths: ['/equipment/runs'],
@@ -258,11 +268,11 @@ const mainList = computed(() => {
       preload: preloadEquipmentRuns
     },
     {
-      name: '需求 Query',
-      path: '/equipment/queries',
-      icon: FileSearch,
-      activeIcon: FileSearch,
-      preload: preloadEquipmentQueries
+      name: '能力画像',
+      path: '/equipment/capabilities',
+      icon: ClipboardList,
+      activeIcon: ClipboardList,
+      preload: preloadEquipmentCapabilities
     },
     {
       name: '深研对话',
@@ -271,13 +281,6 @@ const mainList = computed(() => {
       icon: MessageCircle,
       activeIcon: MessageCircle,
       preload: preloadEquipmentDeepThinking
-    },
-    {
-      name: '能力画像',
-      path: '/equipment/capabilities',
-      icon: ClipboardList,
-      activeIcon: ClipboardList,
-      preload: preloadEquipmentCapabilities
     },
     {
       name: '研究报告',
@@ -301,13 +304,6 @@ const mainList = computed(() => {
     icon: HardDrive,
     activeIcon: HardDrive,
     preload: preloadWorkspace
-  })
-
-  items.push({
-    name: '文档解析研发',
-    path: '/document-research',
-    icon: FileSearch,
-    activeIcon: FileSearch
   })
 
   items.push({
@@ -501,6 +497,9 @@ const handleDeleteProject = async (projectId) => {
     await projectApi.deleteProject(projectId)
     const removedThreadIds = chatThreadsStore.removeThreadsByProject(projectId)
     projectsStore.removeProject(projectId)
+    await projectsStore
+      .loadProjects()
+      .catch(() => message.warning('项目列表暂未刷新，重新进入后会自动恢复默认工作台'))
     if (removedThreadIds.includes(route.params.thread_id)) {
       await router.replace({ name: 'AgentComp' })
     }
@@ -539,7 +538,9 @@ provide('settingsModal', {
         aria-controls="app-sidebar"
         :aria-expanded="mobileNavOpen"
         @click="mobileNavOpen = true"
-      ><PanelLeftOpen size="20" /></button>
+      >
+        <PanelLeftOpen size="20" />
+      </button>
       <span>{{ organizationName }}</span>
     </div>
     <div v-if="isMobile && mobileNavOpen" class="mobile-nav-backdrop" @click="closeMobileNav" />
@@ -553,7 +554,11 @@ provide('settingsModal', {
       aria-label="主导航"
       :inert="isMobile && !mobileNavOpen"
       @keydown="handleSidebarKeydown"
-      @click="(event) => { if (event.target.closest('a[href]')) closeMobileNav() }"
+      @click="
+        (event) => {
+          if (event.target.closest('a[href]')) closeMobileNav()
+        }
+      "
     >
       <div class="sidebar-brand" @click.stop>
         <router-link v-if="!sidebarCollapsed" to="/knowledge" class="brand-link">
@@ -590,101 +595,108 @@ provide('settingsModal', {
           </button>
         </div>
       </div>
-      <div class="nav">
-        <RouterLink
-          v-if="primaryNavItem"
-          :to="primaryNavItem.path"
-          class="nav-item"
-          :class="{ active: isNavItemActive(primaryNavItem) }"
-          :active-class="primaryNavItem.action ? '' : 'active'"
-          @pointerenter="preloadNavItem(primaryNavItem)"
-          @focus="preloadNavItem(primaryNavItem)"
-          @click.stop
-        >
-          <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
-            <template #title>{{ primaryNavItem.name }}</template>
-            <component
-              class="icon"
-              :is="
-                isNavItemActive(primaryNavItem) ? primaryNavItem.activeIcon : primaryNavItem.icon
-              "
-              size="18"
-            />
-          </a-tooltip>
-          <span class="nav-text">{{ primaryNavItem.name }}</span>
-        </RouterLink>
+      <div class="sidebar-scroll" tabindex="0" aria-label="导航、项目与对话历史">
+        <div class="nav">
+          <RouterLink
+            v-if="primaryNavItem"
+            :to="primaryNavItem.path"
+            class="nav-item"
+            :class="{ active: isNavItemActive(primaryNavItem) }"
+            :active-class="primaryNavItem.action ? '' : 'active'"
+            @pointerenter="preloadNavItem(primaryNavItem)"
+            @focus="preloadNavItem(primaryNavItem)"
+            @click.stop
+          >
+            <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
+              <template #title>{{ primaryNavItem.name }}</template>
+              <component
+                class="icon"
+                :is="
+                  isNavItemActive(primaryNavItem) ? primaryNavItem.activeIcon : primaryNavItem.icon
+                "
+                size="18"
+              />
+            </a-tooltip>
+            <span class="nav-text">{{ primaryNavItem.name }}</span>
+          </RouterLink>
 
-        <button
-          v-if="sidebarCollapsed"
-          type="button"
-          class="nav-item"
-          :class="{ active: conversationSearchOpen }"
-          aria-label="搜索"
-          @click.stop="openConversationSearch"
-        >
-          <a-tooltip placement="right" title="搜索">
-            <Search class="icon" size="18" />
-          </a-tooltip>
-        </button>
+          <button
+            v-if="sidebarCollapsed"
+            type="button"
+            class="nav-item"
+            :class="{ active: conversationSearchOpen }"
+            aria-label="搜索"
+            @click.stop="openConversationSearch"
+          >
+            <a-tooltip placement="right" title="搜索">
+              <Search class="icon" size="18" />
+            </a-tooltip>
+          </button>
 
-        <RouterLink
-          v-for="(item, index) in secondaryNavItems"
-          :key="index"
-          :to="item.path"
-          v-show="!item.hidden"
-          class="nav-item"
-          :class="{ active: isNavItemActive(item) }"
-          :active-class="item.action ? '' : 'active'"
-          @pointerenter="preloadNavItem(item)"
-          @focus="preloadNavItem(item)"
-        >
-          <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
-            <template #title>{{ item.name }}</template>
-            <component
-              class="icon"
-              :is="isNavItemActive(item) ? item.activeIcon : item.icon"
-              size="18"
-            />
-          </a-tooltip>
-          <span class="nav-text">{{ item.name }}</span>
-        </RouterLink>
-      </div>
-      <div class="fill">
-        <ConversationNavSection
-          v-if="!sidebarCollapsed"
-          class="sidebar-conversations"
-          :current-chat-id="activeConversationThreadId"
-          :chats-list="threads"
-          :projects="projects"
-          :projects-loading="projectsLoading && !projectsStore.hasLoaded"
-          :projects-error="projectsStore.hasLoaded ? '' : projectsError"
-          :project-pending-id="projectPendingId"
-          :has-more-chats="hasMoreThreads"
-          :is-loading-more="isLoadingMoreThreads"
-          @select-chat="handleSelectChat"
-          @delete-chat="handleDeleteChat"
-          @rename-chat="handleRenameChat"
-          @toggle-pin="handleTogglePinChat"
-          @rename-project="handleRenameProject"
-          @delete-project="handleDeleteProject"
-          @create-project="closeMobileNav"
-          @create-project-chat="handleCreateProjectChat"
-          @retry-projects="loadProjects"
-          @load-more-chats="() => chatThreadsStore.loadMoreThreads()"
-        />
+          <RouterLink
+            v-for="(item, index) in secondaryNavItems"
+            :key="index"
+            :to="item.path"
+            v-show="!item.hidden"
+            class="nav-item"
+            :class="{ active: isNavItemActive(item) }"
+            :active-class="item.action ? '' : 'active'"
+            @pointerenter="preloadNavItem(item)"
+            @focus="preloadNavItem(item)"
+          >
+            <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
+              <template #title>{{ item.name }}</template>
+              <component
+                class="icon"
+                :is="isNavItemActive(item) ? item.activeIcon : item.icon"
+                size="18"
+              />
+            </a-tooltip>
+            <span class="nav-text">{{ item.name }}</span>
+          </RouterLink>
+        </div>
+        <div class="fill">
+          <ConversationNavSection
+            v-if="!sidebarCollapsed"
+            class="sidebar-conversations"
+            :current-chat-id="activeConversationThreadId"
+            :chats-list="threads"
+            :projects="projects"
+            :projects-loading="projectsLoading && !projectsStore.hasLoaded"
+            :projects-error="projectsStore.hasLoaded ? '' : projectsError"
+            :project-pending-id="projectPendingId"
+            :has-more-chats="hasMoreThreads"
+            :is-loading-more="isLoadingMoreThreads"
+            @select-chat="handleSelectChat"
+            @delete-chat="handleDeleteChat"
+            @rename-chat="handleRenameChat"
+            @toggle-pin="handleTogglePinChat"
+            @rename-project="handleRenameProject"
+            @delete-project="handleDeleteProject"
+            @create-project="closeMobileNav"
+            @create-project-chat="handleCreateProjectChat"
+            @retry-projects="loadProjects"
+            @load-more-chats="() => chatThreadsStore.loadMoreThreads()"
+          />
+        </div>
       </div>
       <div class="foo">
         <!-- 用户信息组件 -->
         <div class="nav-item user-info" @click.stop>
           <UserInfoComponent :show-role="!sidebarCollapsed">
-            <template v-if="userStore.isAdmin" #actions>
+            <template v-if="userStore.isLoggedIn" #actions>
               <a-tooltip placement="top" title="任务中心">
                 <button
                   class="user-task-center"
                   :class="{ active: isDrawerOpen }"
                   type="button"
                   aria-label="任务中心"
-                  @click.stop="closeMobileNav(); taskerStore.openDrawer()"
+                  @click.stop="
+                    () => {
+                      closeMobileNav()
+                      taskerStore.openDrawer()
+                    }
+                  "
                 >
                   <a-badge
                     :count="activeTaskCount"
@@ -702,24 +714,27 @@ provide('settingsModal', {
       </div>
     </div>
     <div id="app-router-view" :inert="isMobile && mobileNavOpen">
-      <router-view v-slot="{ Component, route }">
-        <!-- Keep the cache boundary itself alive. A conditional KeepAlive is
-             destroyed when visiting an uncached admin page, which used to
-             discard the chat/workbench state along with it. -->
-        <keep-alive>
+      <EquipmentWorkflowNav v-if="isEquipmentRoute" />
+      <div class="app-route-stage">
+        <router-view v-slot="{ Component, route }">
+          <!-- Keep the cache boundary itself alive. A conditional KeepAlive is
+               destroyed when visiting an uncached admin page, which used to
+               discard the chat/workbench state along with it. -->
+          <keep-alive>
+            <component
+              :is="route.meta.keepAlive !== false ? Component : null"
+              class="app-navigation-page"
+              :key="routeViewKey(route)"
+            />
+          </keep-alive>
           <component
-            :is="route.meta.keepAlive !== false ? Component : null"
+            :is="Component"
+            v-if="route.meta.keepAlive === false"
             class="app-navigation-page"
             :key="routeViewKey(route)"
           />
-        </keep-alive>
-        <component
-          :is="Component"
-          v-if="route.meta.keepAlive === false"
-          class="app-navigation-page"
-          :key="routeViewKey(route)"
-        />
-      </router-view>
+        </router-view>
+      </div>
     </div>
 
     <GlobalSearchModal
@@ -728,14 +743,14 @@ provide('settingsModal', {
       default-mode="conversation"
       :recent-threads="threads"
       :file-search="searchWorkspace"
-      file-placeholder="搜索个人空间文件..."
+      file-placeholder="搜索个人空间文件或文件夹..."
       @select-thread="handleSearchSelectThread"
       @create-thread="handleCreateConversationFromSearch"
       @thread-found="handleSearchThreadFound"
       @select-file="handleSearchSelectFile"
     />
 
-    <TaskCenterDrawer v-if="userStore.isAdmin" />
+    <TaskCenterDrawer v-if="userStore.isLoggedIn" />
     <SettingsModal
       v-model:visible="showSettingsModal"
       :initial-tab="settingsInitialTab"
@@ -785,13 +800,32 @@ div.header,
 }
 
 #app-router-view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(242, 248, 255, 0.86), rgba(242, 248, 255, 0.86)),
+    url('/equipment-login-hero.png') center / cover no-repeat;
+}
+
+.app-route-stage {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  background:
-    linear-gradient(rgba(242, 248, 255, 0.86), rgba(242, 248, 255, 0.86)),
-    url('/equipment-login-hero.png') center / cover no-repeat;
+  overscroll-behavior: contain;
+}
+
+.app-route-stage > .app-navigation-page {
+  min-width: 0;
+}
+
+:global(body.equipment-report-printing) .app-route-stage {
+  height: auto !important;
+  overflow: visible !important;
 }
 
 .header {
@@ -812,6 +846,19 @@ div.header,
     width 0.18s ease,
     flex-basis 0.18s ease;
 
+  .sidebar-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+
+    &:focus-visible {
+      outline: 2px solid var(--main-300);
+      outline-offset: -2px;
+    }
+  }
+
   .nav {
     display: flex;
     flex: 0 0 auto;
@@ -824,19 +871,15 @@ div.header,
   }
 
   .sidebar-conversations {
-    height: 100%;
     min-height: 0;
-    overflow: hidden;
   }
 
   .sidebar-brand,
-  :deep(.conversation-nav-section:not(.sidebar-conversations)),
   .user-info {
     flex-shrink: 0;
   }
 
   .fill {
-    flex: 1 1 0;
     min-height: 0;
   }
 
@@ -1242,12 +1285,6 @@ div.header,
     .sidebar-header-action,
     .nav-item {
       min-height: 44px;
-    }
-
-    .nav {
-      flex-shrink: 1;
-      min-height: 0;
-      overflow-y: auto;
     }
   }
 }

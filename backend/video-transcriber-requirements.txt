@@ -1,0 +1,16 @@
+# 独立 Python 3.12 环境，避免与平台的 transformers 5.x 产生冲突。
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu; sys_platform == "linux" and platform_machine == "x86_64"
+torchaudio==2.5.1+cpu; sys_platform == "linux" and platform_machine == "x86_64"
+torch==2.5.1; sys_platform != "linux" or platform_machine != "x86_64"
+torchaudio==2.5.1; sys_platform != "linux" or platform_machine != "x86_64"
+funasr==1.4.15
+modelscope==1.40.1
+numpy==1.26.4
+transformers==4.44.2
+huggingface-hub==0.26.5
+librosa==0.11.0
+loguru==0.7.2
+pydantic==2.5.2
+python-dotenv==1.1.1
+setuptools==80.10.2

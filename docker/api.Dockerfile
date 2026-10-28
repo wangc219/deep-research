@@ -1,3 +1,14 @@
+# 在构建期准备桌面采集程序，网页用户无需安装 Go 或手动编译。
+FROM golang:1.27-bookworm AS video-collectors
+ARG GOPROXY=https://proxy.golang.org,direct
+ENV GOPROXY=${GOPROXY}
+WORKDIR /source
+COPY vendor/wx_channels_download /source/vendor/wx_channels_download
+COPY scripts/build-video-collectors.sh /source/scripts/build-video-collectors.sh
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    VIDEO_COLLECTOR_BIN_DIR=/collectors bash /source/scripts/build-video-collectors.sh
+
 # 使用轻量级Python基础镜像
 FROM python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:0.12.6 /uv /uvx /bin/
@@ -58,8 +69,43 @@ COPY backend/package /app/package
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --group test --no-dev --frozen
 
+# 视频号识别引擎使用独立的 Python 3.12，避免污染平台模型依赖。
+ARG INSTALL_VIDEO_TRANSCRIBER=true
+ARG VIDEO_PIP_INDEX_URL=https://pypi.org/simple
+ARG VIDEO_TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+COPY backend/video-transcriber-requirements.txt /app/video-transcriber-requirements.txt
+ENV UV_PYTHON_INSTALL_DIR=/opt/video-python
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$INSTALL_VIDEO_TRANSCRIBER" = "true" ]; then \
+      uv venv --python 3.12 /opt/video-asr \
+      && if [ "$(uname -m)" = "x86_64" ]; then \
+        uv --no-config pip install --index-url "$VIDEO_TORCH_INDEX_URL" --no-deps \
+          --python /opt/video-asr/bin/python 'torch==2.5.1+cpu' 'torchaudio==2.5.1+cpu'; \
+      fi \
+      && sed '/^--extra-index-url /d' /app/video-transcriber-requirements.txt > /tmp/video-transcriber-runtime.txt \
+      && uv --no-config pip install --index-url "$VIDEO_PIP_INDEX_URL" \
+          --python /opt/video-asr/bin/python -r /tmp/video-transcriber-runtime.txt \
+      && rm /tmp/video-transcriber-runtime.txt; \
+    fi
+
+# 公众号原版应用使用独立依赖环境，并安装 PDF 所需 Chromium。
+ARG WECHAT_MP_PIP_INDEX_URL=https://pypi.org/simple
+ARG PLAYWRIGHT_DOWNLOAD_HOST
+COPY backend/wechat_mp/requirements-mp.txt /app/wechat-mp-requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv venv --python /usr/local/bin/python /opt/wechat-mp \
+    && uv --no-config pip install --index-url "$WECHAT_MP_PIP_INDEX_URL" \
+        --python /opt/wechat-mp/bin/python -r /app/wechat-mp-requirements.txt \
+    && PLAYWRIGHT_DOWNLOAD_HOST="$PLAYWRIGHT_DOWNLOAD_HOST" \
+        PLAYWRIGHT_BROWSERS_PATH=/opt/wechat-mp-browsers /opt/wechat-mp/bin/playwright install --with-deps chromium
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/wechat-mp-browsers
+COPY backend/wechat_mp /app/wechat_mp
+
 # 复制 server 代码
 COPY backend/server /app/server
+COPY backend/video_collector /app/video_collector
+COPY --from=video-collectors /collectors /app/video_collector/bin
+COPY vendor/wx_channels_download /app/vendor/wx_channels_download
 COPY docker/api-entrypoint.sh /usr/local/bin/deep-research-entrypoint
 
 RUN groupadd --gid 1000 platform \

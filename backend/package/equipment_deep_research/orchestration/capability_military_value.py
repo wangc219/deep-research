@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from equipment_deep_research.domain.capability_portrait import (
     build_capability_portrait,
@@ -68,9 +69,7 @@ def rewrite_capability_for_military_value(
 
     profile = military_capability_profile(topic, route)
     upgrade = str(result.get("capability_type", "")) == "upgrade"
-    name = str(result.get("name", "")).strip() or str(
-        profile["upgrade_name" if upgrade else "new_name"]
-    )
+    name = str(result.get("name", "")).strip() or str(profile["upgrade_name" if upgrade else "new_name"])
     equipment_form = str(
         result.get("equipment_form")
         or result.get("equipment_category")
@@ -92,24 +91,12 @@ def rewrite_capability_for_military_value(
     target_scenario = str(result.get("target_scenario", "")).strip() or topic
     problem_statement = str(result.get("problem_statement", "")).strip() or gap
     novelty = str(result.get("novelty", "")).strip()
-    scientific_principle = str(result.get("scientific_principle", "")).strip() or (
-        novelty or mechanism
-    )
-    enabling_technologies = _string_list(result.get("enabling_technologies")) or [
-        "待智能体依据证据确认"
-    ]
-    operational_concept = (
-        str(result.get("operational_concept", "")).strip() or mechanism
-    )
-    operational_process = _string_list(result.get("operational_process")) or [
-        "待智能体依据任务链确认"
-    ]
-    capability_outcome = (
-        str(result.get("capability_outcome", "")).strip() or mission_effect
-    )
-    winning_mechanism = (
-        str(result.get("winning_mechanism", "")).strip() or novelty or mechanism
-    )
+    scientific_principle = str(result.get("scientific_principle", "")).strip() or (novelty or mechanism)
+    enabling_technologies = _string_list(result.get("enabling_technologies")) or ["待智能体依据证据确认"]
+    operational_concept = str(result.get("operational_concept", "")).strip() or mechanism
+    operational_process = _string_list(result.get("operational_process")) or ["待智能体依据任务链确认"]
+    capability_outcome = str(result.get("capability_outcome", "")).strip() or mission_effect
+    winning_mechanism = str(result.get("winning_mechanism", "")).strip() or novelty or mechanism
     development_path = str(result.get("development_path", "")).strip() or (
         "由智能体依据装备基线、工程约束、成熟度证据和验证结果确定。"
     )
@@ -119,17 +106,12 @@ def rewrite_capability_for_military_value(
             "name": name,
             "equipment_category": equipment_form,
             "equipment_form": equipment_form,
-            "source_winning_logic": str(
-                result.get("source_winning_logic", "")
-            ).strip()
+            "source_winning_logic": str(result.get("source_winning_logic", "")).strip()
             or "由智能体依据Query、证据和制胜机理生成",
             "capability_gap": gap,
             "mission_effect": mission_effect,
             "military_utility": mission_effect,
-            "strike_countermeasure_value": str(
-                result.get("strike_countermeasure_value", "")
-            ).strip()
-            or mechanism,
+            "strike_countermeasure_value": str(result.get("strike_countermeasure_value", "")).strip() or mechanism,
             "operational_mechanism": mechanism,
             "target_scenario": target_scenario,
             "problem_statement": problem_statement,
@@ -158,27 +140,17 @@ def rewrite_capability_for_military_value(
         equipment_form=equipment_form,
         baseline=result.get("baseline_system") or equipment_form,
         development_path=development_path,
-        failure_boundary=result.get("risk_boundaries")
-        or result.get("operational_constraints"),
-        verification_plan=result.get("verification")
-        or result.get("verification_plan"),
+        failure_boundary=result.get("risk_boundaries") or result.get("operational_constraints"),
+        verification_plan=result.get("verification") or result.get("verification_plan"),
     )
     result["capability_image"] = portrait
     result["deep_capability_portrait"] = portrait
 
     if upgrade:
-        result["baseline_system"] = (
-            str(result.get("baseline_system", "")).strip() or profile["baseline"]
-        )
-        result["upgrade_package"] = _string_list(result.get("upgrade_package")) or list(
-            profile["packages"]
-        )
-        result["combat_effect_uplift"] = (
-            str(result.get("combat_effect_uplift", "")).strip() or mission_effect
-        )
-        result["strike_chain_contribution"] = (
-            str(result.get("strike_chain_contribution", "")).strip() or mechanism
-        )
+        result["baseline_system"] = str(result.get("baseline_system", "")).strip() or profile["baseline"]
+        result["upgrade_package"] = _string_list(result.get("upgrade_package")) or list(profile["packages"])
+        result["combat_effect_uplift"] = str(result.get("combat_effect_uplift", "")).strip() or mission_effect
+        result["strike_chain_contribution"] = str(result.get("strike_chain_contribution", "")).strip() or mechanism
         result["upgrade_boundary"] = (
             str(result.get("upgrade_boundary", "")).strip()
             or "升级边界待智能体依据现役平台余量、接口、任务闭环和试验证据确认。"

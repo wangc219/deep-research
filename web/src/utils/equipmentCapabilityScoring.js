@@ -4,31 +4,31 @@ export const S5_SCORE_DIMENSIONS = [
   {
     key: 'innovation',
     label: '创新性',
-    weight: 30,
+    weight: 45,
     principle: '判断是否形成新的作用机理、装备构型或制胜关系，而非对常规方案换名或小幅升级；其中机理/装备创新占创新性评分的 75%，命名新质度占 15%，名称与本体一致性占 10%。'
   },
   {
     key: 'demand',
     label: '需求性',
-    weight: 30,
+    weight: 15,
     principle: '判断是否直接回应当前 Query 的作战对象、关键阶段和任务断点，补齐后能否改变实际作战后果，避免泛化需求或脱离任务场景。'
   },
   {
     key: 'feasibility',
     label: '科学可行性',
-    weight: 20,
+    weight: 10,
     principle: '判断物理原理、作用链和系统集成关系是否自洽，关键假设是否可验证；该项不等同于已具备成熟度，也不以公开证据不足直接否定前瞻方案。'
   },
   {
     key: 'effectiveness',
-    label: '效能性',
-    weight: 10,
-    principle: '判断装备动作能否闭合到明确直接战果，并实际改变发现、火力、突防、拦截、毁伤、压制、拒止或威慑等任务效果。'
+    label: '制胜效能性',
+    weight: 25,
+    principle: '判断装备动作能否闭合到明确直接战果，并真正改变发现、火力、突防、拦截、毁伤、压制、拒止、威慑或成本交换等未来作战制胜关系。'
   },
   {
     key: 'development',
     label: '发展性',
-    weight: 10,
+    weight: 5,
     principle: '判断方案面对对手反适应和场景演化时是否仍有持续增量，是否具备清晰的迭代空间、体系扩展价值和可形成后续装备谱系的潜力。'
   }
 ]

@@ -100,21 +100,18 @@ async def test_query_update_uses_optimistic_version_and_revision(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_historical_query_rejects_every_mutation(monkeypatch):
-    row = _query(legacy_source_id="legacy-query-1", import_batch_id="legacy-batch")
-    repository = SimpleNamespace(lock_query=AsyncMock(return_value=row))
+async def test_shared_history_query_can_be_changed_without_transferring_owner(monkeypatch):
+    row = _query(owner_uid="legacy-owner", legacy_source_id="legacy-query-1", import_batch_id="workbench-sync")
+    repository = SimpleNamespace(lock_query=AsyncMock(return_value=row), add_query_revision=AsyncMock())
+    db = SimpleNamespace(commit=AsyncMock(), add=lambda _row: None, flush=AsyncMock())
     monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
-
-    with pytest.raises(HTTPException) as error:
-        await service.publish_query(
-            db=object(),
-            user=_user(),
-            query_id=row.id,
-            expected_version=1,
-        )
-
-    assert error.value.status_code == 409
-    assert "只读" in str(error.value.detail)
+    monkeypatch.setattr(service, "audit_superadmin_personal_resource_write", AsyncMock())
+    user = SimpleNamespace(uid="other-user", id=1, role="user")
+    result = await service.publish_query(db=db, user=user, query_id=row.id, expected_version=1)
+    assert result["version"] == 2
+    assert result["owner_uid"] == "legacy-owner"
+    assert result["payload"]["original_snapshot"]["status"] == "draft"
+    assert result["last_modified_by"] == "other-user"
 
 
 @pytest.mark.asyncio
@@ -130,7 +127,7 @@ async def test_historical_query_is_readable_by_other_users_but_future_query_is_n
         include_revisions=False,
     )
     assert visible["query_id"] == historical.id
-    assert visible["readonly"] is True
+    assert visible["readonly"] is False
 
     future = _query(owner_uid="another-user")
     repository.get_query.return_value = future

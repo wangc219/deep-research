@@ -4726,16 +4726,36 @@ async def _execute_dynamic_mission_graph(
                             reason="provider_failure_with_empty_creator_scope",
                         )
                         continue
-                    fallback_result = _s5_portfolio_fallback_result(
-                        [
-                            item
-                            for item in ledger.hypotheses
-                            if item.hypothesis_id in fallback_scope
-                        ],
-                        maximum=min(
-                            7,
-                            int(swarm_controller.policy.get("finalist_maximum", 7)),
-                        ),
+                    is_cross_pool_reviewer = (
+                        str(swarm_controller.policy.get("policy_id"))
+                        == "winning_swarm_dynamic_v2"
+                        and len(instance.depends_on) > 1
+                    )
+                    fallback_result = (
+                        {
+                            "decisions": [],
+                            "portfolio_order": [],
+                            "portfolio_summary": (
+                                "S5模型不可用；本评审席位不投票，不以本地回退分补齐组合。"
+                            ),
+                            "_s5_transport_unavailable": True,
+                        }
+                        if is_cross_pool_reviewer
+                        else _s5_portfolio_fallback_result(
+                            [
+                                item
+                                for item in ledger.hypotheses
+                                if item.hypothesis_id in fallback_scope
+                            ],
+                            maximum=min(
+                                7,
+                                int(
+                                    swarm_controller.policy.get(
+                                        "finalist_maximum", 7
+                                    )
+                                ),
+                            ),
+                        )
                     )
                     emit_swarm_event(
                         "winning_s5_portfolio_fallback_activated",
@@ -4751,8 +4771,9 @@ async def _execute_dynamic_mission_graph(
                             if isinstance(row, Mapping)
                         ),
                         reason=(
-                            "S5仅负责创新颠覆判断；模型不可用时按S3/S4既有候选语义"
-                            "保守排序，不补写武器属性。"
+                            "跨池S5模型不可用；该席位不投票，禁止用本地回退分补齐5—6项。"
+                            if is_cross_pool_reviewer
+                            else "S5仅负责创新颠覆判断；模型不可用时按S3/S4既有候选语义保守排序，不补写武器属性。"
                         ),
                     )
                     outcome = (
@@ -5263,70 +5284,91 @@ async def _execute_dynamic_mission_graph(
                         == "winning_swarm_dynamic_v2"
                         else set(candidate_scope) or set(known_ids)
                     )
-                    if not raw_decisions and required_ids:
-                        # DeepSeek/OpenLux can return a complete but empty S5
-                        # decision envelope (``{"decisions": []}``) after hidden
-                        # reasoning consumed the visible answer budget. That is a
-                        # transport/contract failure, not an innovation verdict.
-                        # Reuse the same conservative S3/S4-only fallback as a
-                        # failed S5 provider so an otherwise authored candidate
-                        # pool can still reach S6 card authoring.
-                        fallback_scope = (
-                            set(candidate_scope)
-                            if is_dynamic_paired_reviewer(instance)
-                            else candidate_scope
-                            or {item.hypothesis_id for item in ledger.hypotheses}
-                        )
-                        if not fallback_scope:
-                            emit_swarm_event(
-                                "winning_s5_empty_scope_skipped",
-                                actor=instance.instance_id,
-                                graph_id=graph.graph_id,
-                                mission_node="S5",
-                                candidate_scope=[],
-                                reason="empty_decision_with_empty_creator_scope",
-                            )
-                            continue
-                        fallback_result = _s5_portfolio_fallback_result(
-                            [
-                                item
-                                for item in ledger.hypotheses
-                                if item.hypothesis_id in fallback_scope
-                            ],
-                            maximum=min(
-                                7,
-                                int(swarm_controller.policy.get("finalist_maximum", 7)),
-                            ),
-                        )
-                        raw_decisions = fallback_result.get("decisions", [])
-                        if not isinstance(raw_decisions, list):
-                            raw_decisions = []
-                        emit_swarm_event(
-                            "winning_s5_portfolio_fallback_activated",
-                            actor=instance.instance_id,
-                            graph_id=graph.graph_id,
-                            mission_node="S5",
-                            failure_type="empty_decision_envelope",
-                            error_message=(
-                                "S5 reviewer returned no decisions for a non-empty "
-                                "candidate pool"
-                            ),
-                            retry_count=0,
-                            retained_candidate_count=sum(
-                                str(row.get("decision", "")).lower() == "retain"
-                                for row in raw_decisions
-                                if isinstance(row, Mapping)
-                            ),
-                            reason=(
-                                "S5模型未返回任何决策；按S3/S4既有直接装备与语义脊柱"
-                                "保守排序，不补写武器属性。"
-                            ),
-                        )
+                    # DeepSeek/OpenLux can return a complete but empty S5
+                    # decision envelope after hidden reasoning consumed the
+                    # visible answer budget. That is a transport/contract
+                    # failure, not an innovation verdict.
                     is_cross_pool_reviewer = (
                         str(swarm_controller.policy.get("policy_id"))
                         == "winning_swarm_dynamic_v2"
                         and len(instance.depends_on) > 1
                     )
+                    if not raw_decisions and required_ids:
+                        if is_cross_pool_reviewer:
+                            s5_fallback_activated = True
+                            emit_swarm_event(
+                                "winning_s5_portfolio_fallback_activated",
+                                actor=instance.instance_id,
+                                graph_id=graph.graph_id,
+                                mission_node="S5",
+                                failure_type=(
+                                    "provider_unavailable"
+                                    if result.get("_s5_transport_unavailable")
+                                    else "empty_decision_envelope"
+                                ),
+                                error_message=(
+                                    "S5 reviewer supplied no model judgement for a non-empty candidate pool"
+                                ),
+                                retry_count=0,
+                                retained_candidate_count=0,
+                                reason=(
+                                    "跨池S5空结果按不投票处理；不以本地回退分补齐5—6项。"
+                                ),
+                            )
+                        else:
+                            fallback_scope = (
+                                set(candidate_scope)
+                                if is_dynamic_paired_reviewer(instance)
+                                else candidate_scope
+                                or {item.hypothesis_id for item in ledger.hypotheses}
+                            )
+                            if not fallback_scope:
+                                emit_swarm_event(
+                                    "winning_s5_empty_scope_skipped",
+                                    actor=instance.instance_id,
+                                    graph_id=graph.graph_id,
+                                    mission_node="S5",
+                                    candidate_scope=[],
+                                    reason="empty_decision_with_empty_creator_scope",
+                                )
+                                continue
+                            fallback_result = _s5_portfolio_fallback_result(
+                                [
+                                    item
+                                    for item in ledger.hypotheses
+                                    if item.hypothesis_id in fallback_scope
+                                ],
+                                maximum=min(
+                                    7,
+                                    int(
+                                        swarm_controller.policy.get(
+                                            "finalist_maximum", 7
+                                        )
+                                    ),
+                                ),
+                            )
+                            raw_decisions = fallback_result.get("decisions", [])
+                            if not isinstance(raw_decisions, list):
+                                raw_decisions = []
+                            emit_swarm_event(
+                                "winning_s5_portfolio_fallback_activated",
+                                actor=instance.instance_id,
+                                graph_id=graph.graph_id,
+                                mission_node="S5",
+                                failure_type="empty_decision_envelope",
+                                error_message=(
+                                    "S5 reviewer returned no decisions for a non-empty candidate pool"
+                                ),
+                                retry_count=0,
+                                retained_candidate_count=sum(
+                                    str(row.get("decision", "")).lower() == "retain"
+                                    for row in raw_decisions
+                                    if isinstance(row, Mapping)
+                                ),
+                                reason=(
+                                    "S5模型未返回任何决策；按S3/S4既有直接装备与语义脊柱保守排序，不补写武器属性。"
+                                ),
+                            )
                     if is_cross_pool_reviewer:
                         # Every cross-pool reviewer was dispatched against an
                         # immutable full-ledger snapshot.  Keep each response

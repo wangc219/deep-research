@@ -8,25 +8,26 @@ relevant S1-S6 stages.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from hashlib import sha256
 import json
 from pathlib import Path
 import re
 from threading import Lock
 from uuid import uuid4
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 
 RUN_FEEDBACK_FILENAME = "expert_feedback.json"
 KNOWLEDGE_FEEDBACK_FILENAME = "expert-review-feedback.json"
 ALL_AGENT_IDS = ("S1", "S2", "S3", "S4", "S5", "S6")
 S5_SCORE_WEIGHTS = {
-    "innovation": 0.30,
-    "demand": 0.30,
-    "feasibility": 0.20,
-    "effectiveness": 0.10,
-    "development": 0.10,
+    "innovation": 0.45,
+    "demand": 0.15,
+    "feasibility": 0.10,
+    "effectiveness": 0.25,
+    "development": 0.05,
 }
 MEMORY_PROCESSOR_AGENT_ID = "expert_feedback_memory"
 MAX_MEMORY_ITEMS = 8
@@ -99,7 +100,7 @@ _TRUSTED_FEEDBACK_STATUS_TOKEN = _FeedbackStatusCapability()
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _clean_text(value: Any, limit: int) -> str:
@@ -108,7 +109,9 @@ def _clean_text(value: Any, limit: int) -> str:
 
 def _clean_list(value: Any, *, limit: int, item_limit: int = 120) -> list[str]:
     values = value if isinstance(value, (list, tuple)) else [value]
-    return list(dict.fromkeys(_clean_text(item, item_limit) for item in values if _clean_text(item, item_limit)))[:limit]
+    return list(dict.fromkeys(_clean_text(item, item_limit) for item in values if _clean_text(item, item_limit)))[
+        :limit
+    ]
 
 
 def _normalize_agent_ids(value: Any) -> list[str]:
@@ -122,9 +125,7 @@ def _normalize_agent_ids(value: Any) -> list[str]:
     flattened: list[str] = []
     for raw in raw_values:
         flattened.extend(re.split(r"[,;\s]+", str(raw or "").strip()))
-    for raw_agent_id in _clean_list(
-        flattened, limit=len(ALL_AGENT_IDS), item_limit=32
-    ):
+    for raw_agent_id in _clean_list(flattened, limit=len(ALL_AGENT_IDS), item_limit=32):
         agent_id = raw_agent_id.upper().strip()
         if agent_id in ALL_AGENT_IDS and agent_id not in normalized:
             normalized.append(agent_id)
@@ -233,9 +234,7 @@ def _guard_effect_transition(
     if prior not in _IMMUTABLE_EFFECT_STATUSES:
         return False
     if prior != next_status:
-        raise ValueError(
-            f"cannot transition immutable feedback effect status: {prior} -> {next_status}"
-        )
+        raise ValueError(f"cannot transition immutable feedback effect status: {prior} -> {next_status}")
     # An identical, retried write is safe only when it points at the same
     # evaluation.  Legacy rows may have no evaluation id; allowing one
     # evidence-bearing repair keeps migration possible without allowing a
@@ -280,9 +279,9 @@ def _is_expired(item: Mapping[str, Any], *, now: datetime | None = None) -> bool
     except ValueError:
         return False
     if created.tzinfo is None:
-        created = created.replace(tzinfo=timezone.utc)
+        created = created.replace(tzinfo=UTC)
     ttl_days = max(1, _safe_int(item.get("ttl_days"), DEFAULT_MEMORY_TTL_DAYS))
-    reference = now or datetime.now(timezone.utc)
+    reference = now or datetime.now(UTC)
     return reference >= created + timedelta(days=ttl_days)
 
 
@@ -309,9 +308,7 @@ def _feedback_dedupe_key(signal: Any, row: Mapping[str, Any] | None = None) -> s
         key: " ".join(str(item.get(key, "") or "").split()).strip().lower()
         for key in ("tenant_id", "workspace_id", "project_id", "profile_id", "route")
     }
-    scope["stage_scope"] = ",".join(
-        sorted(_normalize_agent_ids(item.get("stage_scope")))
-    )
+    scope["stage_scope"] = ",".join(sorted(_normalize_agent_ids(item.get("stage_scope"))))
     canonical = json.dumps(
         {"scope": scope, "signal": _signal_dedupe_key(signal)},
         ensure_ascii=False,
@@ -333,29 +330,16 @@ def _curate_learning_signal(comment: Any, capability_name: Any = "") -> str:
     text = _clean_text(comment, 4000)
     if not text:
         return ""
-    parts = [
-        _clean_text(part, 360)
-        for part in re.split(r"(?<=[。！？!?；;])\s*|\n+", text)
-        if _clean_text(part, 360)
-    ]
+    parts = [_clean_text(part, 360) for part in re.split(r"(?<=[。！？!?；;])\s*|\n+", text) if _clean_text(part, 360)]
     if not parts:
         return text[:900]
-    marked = [
-        (index, part)
-        for index, part in enumerate(parts)
-        if any(term in part for term in _HIGH_SIGNAL_TERMS)
-    ]
+    marked = [(index, part) for index, part in enumerate(parts) if any(term in part for term in _HIGH_SIGNAL_TERMS)]
     selected = [part for _, part in marked] or parts[:3]
     selected = list(dict.fromkeys(selected))
     signal = "；".join(selected)
     signal = _clean_text(signal, 900)
     name = _clean_text(capability_name, 160)
-    if (
-        name
-        and name != "本任务整体能力画像"
-        and not signal.startswith(name)
-        and not signal.startswith(f"针对{name}：")
-    ):
+    if name and name != "本任务整体能力画像" and not signal.startswith(name) and not signal.startswith(f"针对{name}："):
         signal = f"针对{name}：{signal}"
     return signal
 
@@ -364,10 +348,7 @@ def _route_learning_signal(signal: str, capability_name: Any = "") -> tuple[list
     """Route one compact signal to a small set of relevant S-agent stages."""
 
     text = f"{_clean_text(capability_name, 160)} {signal}".lower()
-    scores = {
-        agent_id: sum(text.count(term) for term in terms)
-        for agent_id, terms in _AGENT_FOCUS_TERMS.items()
-    }
+    scores = {agent_id: sum(text.count(term) for term in terms) for agent_id, terms in _AGENT_FOCUS_TERMS.items()}
     ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
     positive = [(agent_id, score) for agent_id, score in ranked if score > 0]
     if not positive:
@@ -377,11 +358,7 @@ def _route_learning_signal(signal: str, capability_name: Any = "") -> tuple[list
         reason = "通用画像反馈，优先交给 S6 成稿与 S4 能力映射"
     else:
         top_score = positive[0][1]
-        selected = [
-            agent_id
-            for agent_id, score in positive
-            if score >= max(1, int(top_score * 0.55))
-        ][:3]
+        selected = [agent_id for agent_id, score in positive if score >= max(1, int(top_score * 0.55))][:3]
         reason = "、".join(selected) + " 命中反馈中的对应主题词"
     return selected, {agent_id: score for agent_id, score in ranked}, reason
 
@@ -405,13 +382,9 @@ class ExpertFeedbackMemoryAgent:
     ) -> dict[str, Any]:
         row = dict(feedback)
         raw_comment = _clean_text(row.get("comment"), 4000)
-        raw_important_information = _clean_text(
-            row.get("important_information"), 2400
-        )
+        raw_important_information = _clean_text(row.get("important_information"), 2400)
         signal = _curate_learning_signal(
-            row.get("learning_signal")
-            or row.get("important_information")
-            or row.get("comment"),
+            row.get("learning_signal") or row.get("important_information") or row.get("comment"),
             row.get("capability_name"),
         )
         requested = _normalize_agent_ids(row.get("target_agent_ids"))
@@ -421,9 +394,7 @@ class ExpertFeedbackMemoryAgent:
             # explicitly requested target list, but never expand it beyond
             # the stages authorized by the feedback/run context.
             requested = (
-                [agent_id for agent_id in requested if agent_id in scoped_stages]
-                if requested
-                else list(scoped_stages)
+                [agent_id for agent_id in requested if agent_id in scoped_stages] if requested else list(scoped_stages)
             )
         if requested and set(requested) != set(ALL_AGENT_IDS):
             targets = [agent_id for agent_id in ALL_AGENT_IDS if agent_id in requested]
@@ -439,9 +410,7 @@ class ExpertFeedbackMemoryAgent:
                 if not targets:
                     targets = list(scoped_stages)
                 route_reason = f"stage_scope限制：{','.join(targets)}"
-        if row.get("expert_dimension_scores") and (
-            not scoped_stages or "S5" in scoped_stages
-        ):
+        if row.get("expert_dimension_scores") and (not scoped_stages or "S5" in scoped_stages):
             if "S5" not in targets:
                 targets = ["S5", *targets][:3]
             route_scores["S5"] = max(1, int(route_scores.get("S5", 0)))
@@ -586,9 +555,7 @@ def _atomic_write(path: Path, value: Any, *, root: Path) -> None:
         raise ValueError("feedback storage path is unsafe")
     temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
     try:
-        temporary.write_text(
-            json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
         # Recheck immediately before replacement. If a leaf link appeared in
         # the meantime, abort instead of silently replacing an unsafe path.
         if path.is_symlink():
@@ -612,9 +579,7 @@ def knowledge_feedback_path(output_root: Path) -> Path:
 def load_run_feedback(run_root: Path | None) -> list[dict[str, Any]]:
     if run_root is None:
         return []
-    path = _safe_storage_file(
-        Path(run_root), RUN_FEEDBACK_FILENAME, create_root=False
-    )
+    path = _safe_storage_file(Path(run_root), RUN_FEEDBACK_FILENAME, create_root=False)
     if path is None:
         return []
     value = _read_json(path, [])
@@ -627,17 +592,11 @@ def load_feedback_index(output_root: Path) -> list[dict[str, Any]]:
     root = _knowledge_root(Path(output_root), create=False)
     if root is None:
         return []
-    path = _safe_storage_file(
-        root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False
-    )
+    path = _safe_storage_file(root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False)
     if path is None:
         return []
     value = _read_json(path, [])
-    return (
-        [dict(item) for item in value if isinstance(item, Mapping)]
-        if isinstance(value, list)
-        else []
-    )
+    return [dict(item) for item in value if isinstance(item, Mapping)] if isinstance(value, list) else []
 
 
 def normalize_feedback(
@@ -671,6 +630,7 @@ def normalize_feedback(
     important = _clean_text(important_information, 2400)
     if not comment and not important:
         raise ValueError("comment or important_information is required")
+
     def normalized_scores(value: Any) -> dict[str, float]:
         if not isinstance(value, Mapping):
             return {}
@@ -758,9 +718,7 @@ def normalize_feedback(
         "stage_scope": normalized_scope,
         "taxonomy": _infer_feedback_taxonomy(learning_signal),
         "severity": str(severity or "").strip().lower() or "medium",
-        "confidence": (
-            None if confidence is None else _safe_float(confidence, 0.0)
-        ),
+        "confidence": (None if confidence is None else _safe_float(confidence, 0.0)),
         "effect_status": DEFAULT_EFFECT_STATUS,
         "memory_status": DEFAULT_MEMORY_STATUS,
         "utility_ema": 0.0,
@@ -788,9 +746,7 @@ def append_feedback(
     )
 
     with _lock:
-        run_path = _safe_storage_file(
-            Path(run_root), RUN_FEEDBACK_FILENAME, create_root=True
-        )
+        run_path = _safe_storage_file(Path(run_root), RUN_FEEDBACK_FILENAME, create_root=True)
         knowledge_root = _knowledge_root(Path(output_root), create=True)
         index_path = (
             None
@@ -820,9 +776,7 @@ def append_feedback(
                 item_key = str(item.get("dedupe_key", "")).strip()
                 if not item_key:
                     item_key = _feedback_dedupe_key(
-                        item.get("learning_signal")
-                        or item.get("important_information")
-                        or item.get("comment"),
+                        item.get("learning_signal") or item.get("important_information") or item.get("comment"),
                         item,
                     )
                 if item_key and item_key == dedupe_key:
@@ -844,11 +798,7 @@ def append_feedback(
 
         # Keep the index bounded and replace accidental duplicate retries by id.
         if not duplicate_of:
-            index = [
-                item
-                for item in index
-                if item.get("feedback_id") != processed.get("feedback_id")
-            ]
+            index = [item for item in index if item.get("feedback_id") != processed.get("feedback_id")]
             index.append(dict(processed))
         _atomic_write(index_path, index[-2000:], root=knowledge_root)
     return dict(processed)
@@ -874,9 +824,7 @@ def rollback_feedback(
     if not feedback_key:
         raise ValueError("feedback_id is required")
     with _lock:
-        run_path = _safe_storage_file(
-            Path(run_root), RUN_FEEDBACK_FILENAME, create_root=False
-        )
+        run_path = _safe_storage_file(Path(run_root), RUN_FEEDBACK_FILENAME, create_root=False)
         if run_path is None:
             raise KeyError("feedback not found")
         current_value = _read_json(run_path, [])
@@ -932,16 +880,12 @@ def rollback_feedback(
         knowledge_root = _knowledge_root(Path(output_root), create=False)
         if knowledge_root is None:
             raise ValueError("feedback storage path is unsafe")
-        index_path = _safe_storage_file(
-            knowledge_root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False
-        )
+        index_path = _safe_storage_file(knowledge_root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False)
         if index_path is None:
             raise ValueError("feedback storage path is unsafe")
         index_value = _read_json(index_path, [])
         index = (
-            [dict(item) for item in index_value if isinstance(item, Mapping)]
-            if isinstance(index_value, list)
-            else []
+            [dict(item) for item in index_value if isinstance(item, Mapping)] if isinstance(index_value, list) else []
         )
         for index_position, item in enumerate(index):
             if str(item.get("feedback_id", "")) == feedback_key:
@@ -971,9 +915,7 @@ def update_feedback_effect_status(
     """
 
     if _trusted_status_token is not _TRUSTED_FEEDBACK_STATUS_TOKEN:
-        raise PermissionError(
-            "trusted evaluator authorization is required to update feedback status"
-        )
+        raise PermissionError("trusted evaluator authorization is required to update feedback status")
     normalized_status = _normalize_effect_status(effect_status)
     if normalized_status == DEFAULT_EFFECT_STATUS:
         raise ValueError("effect_status must be a terminal validation status")
@@ -993,9 +935,7 @@ def update_feedback_effect_status(
         prior_evaluator = _clean_text(target.get("effect_evaluator_id"), 160)
         prior_evaluation = _clean_text(target.get("effect_evaluation_id"), 160)
         same_evidence_retry = (
-            prior_status == normalized_status
-            and prior_evaluator == evaluator
-            and prior_evaluation == evaluation
+            prior_status == normalized_status and prior_evaluator == evaluator and prior_evaluation == evaluation
         )
         # Tombstones are immutable.  A retry of the exact same evidence is
         # idempotent; any attempt to revive the row with a different status or
@@ -1036,9 +976,7 @@ def update_feedback_effect_status(
             "recorded_at": updated_at,
         }
         if utility_delta is not None:
-            target["effect_evidence"]["utility_delta"] = max(
-                -1.0, min(1.0, _safe_float(utility_delta))
-            )
+            target["effect_evidence"]["utility_delta"] = max(-1.0, min(1.0, _safe_float(utility_delta)))
         history = target.get("effect_history")
         if not isinstance(history, list):
             history = []
@@ -1057,9 +995,7 @@ def update_feedback_effect_status(
         knowledge_root = _knowledge_root(Path(output_root), create=False)
         if knowledge_root is None:
             raise ValueError("feedback storage path is unsafe")
-        index_path = _safe_storage_file(
-            knowledge_root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False
-        )
+        index_path = _safe_storage_file(knowledge_root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False)
         if index_path is None:
             raise ValueError("feedback storage path is unsafe")
         _atomic_write(index_path, rows, root=knowledge_root)
@@ -1122,11 +1058,7 @@ def load_feedback_knowledge(
     """
 
     rows = load_feedback_index(Path(output_root))
-    topic_tokens = {
-        token
-        for token in re.findall(r"[\w\u4e00-\u9fff]{2,}", str(topic).lower())
-        if token.strip()
-    }
+    topic_tokens = {token for token in re.findall(r"[\w\u4e00-\u9fff]{2,}", str(topic).lower()) if token.strip()}
     topic_taxonomy = set(_infer_feedback_taxonomy(str(topic)))
     # ``general_quality`` is a fallback label, not evidence that two
     # unrelated topics are semantically compatible.  It must never by itself
@@ -1151,9 +1083,9 @@ def load_feedback_knowledge(
         expected_stages = set(_normalize_agent_ids(stage_scope))
         item_stages = set(_normalize_agent_ids(item.get("stage_scope")))
         stage_fit = bool(expected_stages and expected_stages.intersection(item_stages))
-        taxonomy_fit = bool(specific_topic_taxonomy.intersection(
-            set(_clean_list(item.get("taxonomy"), limit=8, item_limit=80))
-        ))
+        taxonomy_fit = bool(
+            specific_topic_taxonomy.intersection(set(_clean_list(item.get("taxonomy"), limit=8, item_limit=80)))
+        )
         confidence = max(0.0, min(1.0, _safe_float(item.get("confidence"), 0.0)))
         utility = max(-1.0, min(1.0, _safe_float(item.get("utility_ema"), 0.0)))
         utility_factor = (utility + 1.0) / 2.0
@@ -1166,8 +1098,8 @@ def load_feedback_knowledge(
             try:
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 if created.tzinfo is None:
-                    created = created.replace(tzinfo=timezone.utc)
-                age_days = max(0.0, (datetime.now(timezone.utc) - created).total_seconds() / 86400.0)
+                    created = created.replace(tzinfo=UTC)
+                age_days = max(0.0, (datetime.now(UTC) - created).total_seconds() / 86400.0)
                 recency = 1.0 / (1.0 + age_days / 90.0)
             except ValueError:
                 pass
@@ -1185,19 +1117,13 @@ def load_feedback_knowledge(
     relevant = [dict(item) for item in rows if isinstance(item, Mapping)]
     # A user rollback is a hard memory boundary even for diagnostic callers
     # that request unvalidated rows; the tombstone remains audit-only.
-    relevant = [
-        item
-        for item in relevant
-        if _normalize_effect_status(item.get("effect_status")) != "withdrawn"
-    ]
+    relevant = [item for item in relevant if _normalize_effect_status(item.get("effect_status")) != "withdrawn"]
     if not include_unvalidated:
         relevant = [
             item
             for item in relevant
-            if _normalize_effect_status(item.get("effect_status"))
-            in {"validated", "effective"}
-            and _normalize_memory_status(item.get("memory_status"))
-            in {"validated", "active"}
+            if _normalize_effect_status(item.get("effect_status")) in {"validated", "effective"}
+            and _normalize_memory_status(item.get("memory_status")) in {"validated", "active"}
             and not _is_expired(item)
         ]
 
@@ -1217,20 +1143,14 @@ def load_feedback_knowledge(
     # lesson authored for S4/S6 is eligible for an S6-only run, but an item
     # with no explicit stage scope is treated as unknown and is not allowed to
     # cross an explicitly scoped boundary.
-    expected_stage_scope = {
-        stage
-        for stage in _normalize_agent_ids(stage_scope)
-        if stage in ALL_AGENT_IDS
-    }
+    expected_stage_scope = {stage for stage in _normalize_agent_ids(stage_scope) if stage in ALL_AGENT_IDS}
 
     def _matches_stage_scope(item: Mapping[str, Any]) -> bool:
         if not expected_stage_scope:
             return True
         actual_stage_scope = {
             stage
-            for stage in _normalize_agent_ids(
-                item.get("stage_scope") or item.get("target_agent_ids")
-            )
+            for stage in _normalize_agent_ids(item.get("stage_scope") or item.get("target_agent_ids"))
             if stage in ALL_AGENT_IDS
         }
         return bool(actual_stage_scope & expected_stage_scope)
@@ -1253,6 +1173,7 @@ def load_feedback_knowledge(
             if agent_key in _clean_list(item.get("target_agent_ids"), limit=6, item_limit=32)
             or not item.get("target_agent_ids")
         ]
+
     # A scope-valid but completely unrelated lesson is still dangerous: it
     # consumes context and can bias a stage toward the wrong failure mode.
     # Require at least one topical token or an explicit route/stage/taxonomy
@@ -1275,9 +1196,9 @@ def load_feedback_knowledge(
         expected_stages = set(_normalize_agent_ids(stage_scope))
         item_stages = set(_normalize_agent_ids(item.get("stage_scope")))
         stage_fit = bool(expected_stages and expected_stages.intersection(item_stages))
-        taxonomy_fit = bool(specific_topic_taxonomy.intersection(
-            set(_clean_list(item.get("taxonomy"), limit=8, item_limit=80))
-        ))
+        taxonomy_fit = bool(
+            specific_topic_taxonomy.intersection(set(_clean_list(item.get("taxonomy"), limit=8, item_limit=80)))
+        )
         return overlap or route_fit or stage_fit or taxonomy_fit
 
     relevant = [item for item in relevant if has_relevance(item)]
@@ -1286,9 +1207,7 @@ def load_feedback_knowledge(
     seen_signals: set[str] = set()
     for item in relevant:
         learning_signal = _curate_learning_signal(
-            item.get("learning_signal")
-            or item.get("important_information")
-            or item.get("comment"),
+            item.get("learning_signal") or item.get("important_information") or item.get("comment"),
             item.get("capability_name"),
         )
         signal_key = _feedback_dedupe_key(learning_signal, item)

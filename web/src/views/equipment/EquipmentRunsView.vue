@@ -1,4 +1,5 @@
 <script setup>
+import { sharedPolling } from '@/utils/sharedPolling'
 import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, reactive, ref, watch } from 'vue'
 import '@/assets/css/equipment-workbench-live.css'
 import '@/assets/css/equipment-research-launch.css'
@@ -11,25 +12,20 @@ import { Activity, BrainCircuit, CheckCircle2, ChevronDown, ChevronLeft, Chevron
 import { equipmentApi } from '@/apis/equipment_api'
 import { createIdempotencyKey } from '@/apis/base'
 import { useEquipmentStore } from '@/stores/equipment'
-import { useProjectsStore } from '@/stores/projects'
-import { useUserStore } from '@/stores/user'
-import { projectDisplayName } from '@/utils/projectSelection'
 import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
+import ResearchRunConfig from '@/components/equipment/ResearchRunConfig.vue'
 import { useEquipmentModelPrefill } from '@/composables/useEquipmentModelPrefill'
 import { inheritKnowledgeScope, normalizePagedResult } from '@/utils/equipmentQueries'
 
 const RESEARCH_MODE_PROFILES = [
   { id: 'legacy_v1', name: '传统固定编排', short_name: '传统模式', description: '固定流程执行，适合兼容回滚与对照。', badge: '兼容' },
-  { id: 'optimized_v2', name: '协同优化编排', short_name: '协同模式', description: '3–4 个业务 Agent 并行，并进入 S1–S6 Cohort。', recommended: true, badge: '推荐' },
+  { id: 'optimized_v2', name: '协同优化编排', short_name: '协同模式', description: '3–4 个业务 Agent 并行，在质量与响应速度之间取得平衡。', badge: '均衡' },
   { id: 'swarm_quality_v1', name: '质量残差蜂群', short_name: '质量集群', description: '按质量残差弹性孵化，最多 12 个 Agent。', badge: '高质量' },
-  { id: 'winning_swarm_dynamic_v2', name: 'Mission Graph 动态蜂群', short_name: '动态蜂群', description: '8–21 个实例动态孵化，提供最高并发能力。', default: true, badge: '最高并发' }
+  { id: 'winning_swarm_dynamic_v2', name: 'Mission Graph 动态蜂群', short_name: '动态蜂群', description: '8–21 个实例动态孵化，适合需要最大范围发散的复杂课题。', recommended: true, default: true, badge: '推荐默认' }
 ]
 
 const router = useRouter()
 const equipmentStore = useEquipmentStore()
-const projectsStore = useProjectsStore()
-const userStore = useUserStore()
-const { projects } = storeToRefs(projectsStore)
 const { resources, loading: resourceLoading } = storeToRefs(equipmentStore)
 const runs = computed(() => resources.value.runs)
 const loading = computed(() => Boolean(resourceLoading.value.runs))
@@ -57,10 +53,14 @@ const selectedRecommendation = computed(() =>
 let recommendationTimer = null
 let runtimeTimer = null
 const form = reactive({
-  project_id: '',
   topic: '',
   supplemental_information: '',
   research_route: 'auto',
+  interaction_mode: 'expert',
+  discovery_branch: 'auto',
+  report_template_mode: 'project_argument_v1',
+  selected_agent_ids: [],
+  max_rounds: 2,
   execution_profile_id: 'winning_swarm_dynamic_v2',
   model_spec: '',
   source_query_id: '',
@@ -207,13 +207,13 @@ const applyResearchCapacity = async () => {
   }
 }
 const startRuntimePolling = () => {
-  if (runtimeTimer) window.clearInterval(runtimeTimer)
-  runtimeTimer = window.setInterval(() => {
-    if (!document.hidden) void loadRuntime({ silent: true })
+  if (runtimeTimer) return
+  runtimeTimer = sharedPolling.subscribe(async () => {
+    await Promise.all([loadRuntime({ silent: true }), equipmentStore.loadResource('runs')])
   }, 5000)
 }
 const stopRuntimePolling = () => {
-  if (runtimeTimer) window.clearInterval(runtimeTimer)
+  if (runtimeTimer) runtimeTimer()
   runtimeTimer = null
 }
 const artifactCount = (run, key) => Number(run?.artifact_counts?.[key] || run?.result?.[`${key.replace(/s$/, '')}_count`] || 0)
@@ -240,14 +240,13 @@ const formatUpdatedAt = (value) => {
 }
 const load = async () => {
   try {
-    await Promise.all([projectsStore.loadProjects().catch(() => []), equipmentStore.loadResource('runs', {}, { force: true })])
+    await equipmentStore.loadResource('runs', {}, { force: true })
     const availableIds = new Set(runs.value.map((item) => item.run_id))
     selectedRunIds.value = selectedRunIds.value.filter((item) => availableIds.has(item))
-    if (!form.project_id && projects.value[0]?.id) form.project_id = projects.value[0].id
   } catch (error) { message.error(error.message || '任务列表加载失败') }
 }
-const createRun = async () => {
-  if (!form.topic.trim() || !form.project_id) return message.warning('请选择项目并填写研究问题')
+const createRun = async ({ startImmediately = form.start } = {}) => {
+  if (!form.topic.trim()) return message.warning('请先填写研究问题')
   if (creating.value) return
   creating.value = true
   let created = null
@@ -258,17 +257,23 @@ const createRun = async () => {
       supplemental_information: form.supplemental_information.trim(),
       research_route: form.research_route,
       execution_profile_id: form.execution_profile_id,
+      interaction_mode: form.interaction_mode,
+      discovery_branch: form.discovery_branch,
+      report_template_mode: form.report_template_mode,
+      max_rounds: form.max_rounds,
+      selected_agent_ids: form.selected_agent_ids,
+      analyst_confirmed: startImmediately,
       ...(form.model_spec ? { execution: { model_spec: form.model_spec } } : {}),
       ...(selectedRecommendation.value ? inheritKnowledgeScope(selectedRecommendation.value) : {}),
       source_query_id: form.source_query_id || undefined,
       source_query_version: form.source_query_id ? form.source_query_version : undefined
-    }, { projectId: form.project_id, idempotencyKey: `create:${requestId}` })
-    if (form.start) await equipmentApi.startResearchRun(created.run_id, {
+    }, { idempotencyKey: `create:${requestId}` })
+    if (startImmediately) await equipmentApi.startResearchRun(created.run_id, {
       idempotencyKey: `start:${requestId}:${created.run_id}`
     })
     form.topic = ''; form.supplemental_information = ''; clearSelectedRecommendation(); configOpen.value = false
     await load()
-    message.success(form.start ? '研究任务已创建并启动' : '研究草稿已创建')
+    message.success(startImmediately ? '研究任务已创建并启动' : '研究草稿已创建')
     await router.push(`/equipment/runs/${encodeURIComponent(created.run_id)}`)
   } catch (error) {
     if (created?.run_id) {
@@ -321,8 +326,8 @@ onBeforeUnmount(() => { if (recommendationTimer) window.clearInterval(recommenda
       <div class="research-query-composer" :class="{ 'config-open': configOpen }">
         <textarea id="research-query-input" v-model="form.topic" aria-label="Deep Research Query" maxlength="4000" placeholder="输入需要进行 Deep Research 的 Query，例如：研究低空无人装备在强对抗环境中的体系能力缺口" @input="clearSelectedRecommendation" @keydown.meta.enter="createRun" @keydown.ctrl.enter="createRun" />
         <div class="research-query-input-state"><span>{{ form.topic.trim() ? `已输入 ${form.topic.trim().length} 字` : '等待输入研究问题' }}</span><span><kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd> 快速启动</span><button v-if="form.topic" type="button" aria-label="清空 Query" @click="clearQuery"><X :size="12" />清空</button></div>
-        <footer><div class="research-query-footer-left"><button type="button" @click="openSupplement"><Plus :size="14" />补充背景与约束</button><details class="research-mode-picker"><summary><Layers3 :size="15" /><span><small>研究模式</small><b>{{ selectedResearchMode.short_name || selectedResearchMode.name }}</b></span><ChevronDown :size="14" /></summary><div class="research-mode-menu"><header><span><b>选择研究模式</b><small>模式将直接控制后端 Agent 编排与并发策略</small></span><em>{{ RESEARCH_MODE_PROFILES.length }} 种</em></header><div><button v-for="item in RESEARCH_MODE_PROFILES" :key="item.id" type="button" :class="{ selected: item.id === selectedResearchMode.id }" @click="selectResearchMode($event, item.id)"><span class="mode-icon"><Layers3 :size="16" /></span><span><b>{{ item.short_name || item.name }}<em>{{ item.badge }}</em></b><small>{{ item.description }}</small><code>{{ item.id }}</code></span><CheckCircle2 v-if="item.id === selectedResearchMode.id" :size="17" /></button></div><div class="research-mode-menu-note"><ShieldCheck :size="13" />所选模式随研究任务保存，可在草稿阶段修改并由 Worker 原样执行。</div></div></details><div class="research-model-picker" :class="{ 'missing-default': !hasDefaultModel && !form.model_spec }" :title="hasDefaultModel || form.model_spec ? '为本次研究任务选择模型' : '尚未配置系统默认模型，请为本次任务选择模型'"><CircleAlert v-if="!hasDefaultModel && !form.model_spec" :size="15" aria-hidden="true" /><BrainCircuit v-else :size="15" aria-hidden="true" /><ModelSelectorComponent upward :model_spec="form.model_spec" size="nano" display-name="mini" :placeholder="hasDefaultModel ? '系统默认模型' : '选择研究模型'" clearable @select-model="(spec) => (form.model_spec = spec || '')" /></div></div><div class="research-query-footer-right"><button type="button" @click="router.push('/equipment/queries')"><Sparkles :size="15" />AI 生成 Query</button><button type="button" class="research-config-trigger" :class="{ active: configOpen }" @click="configOpen = !configOpen"><Wrench :size="14" />{{ configOpen ? '收起运行配置' : '研究运行配置' }}<ChevronDown :size="13" /></button><button type="button" class="primary research-start-trigger" :disabled="!form.topic.trim() || creating" @click="createRun"><Play :size="14" />{{ creating ? '启动中…' : '启动研究' }}</button></div></footer>
-        <div v-if="configOpen" class="research-query-inline-config-shell"><textarea id="research-query-supplement" v-model="form.supplemental_information" class="research-query-supplement" maxlength="8000" placeholder="可选：补充作战场景、时间范围、约束、前提假设或希望覆盖的技术/装备类型。" /><div class="vue-run-config-grid"><label><span>所属项目</span><select v-model="form.project_id"><option v-for="item in projects" :key="item.id" :value="item.id">{{ projectDisplayName(item, userStore.isAdmin) }}</option></select></label><label><span>研究路线</span><select v-model="form.research_route"><option value="auto">自动选择</option><option value="new_winning_mechanism">新制胜机理</option><option value="traditional_gap">传统能力缺口</option><option value="war_case_learning">局部战争案例</option></select></label><a-checkbox v-model:checked="form.start">创建后立即排队</a-checkbox></div></div>
+        <footer><div class="research-query-footer-left"><button type="button" @click="openSupplement"><Plus :size="14" />补充背景与约束</button><details class="research-mode-picker"><summary><Layers3 :size="15" /><span><small>研究模式</small><b>{{ selectedResearchMode.short_name || selectedResearchMode.name }}</b></span><ChevronDown :size="14" /></summary><div class="research-mode-menu"><header><span><b>选择研究模式</b><small>模式将直接控制后端 Agent 编排与并发策略</small></span><em>{{ RESEARCH_MODE_PROFILES.length }} 种</em></header><div><button v-for="item in RESEARCH_MODE_PROFILES" :key="item.id" type="button" :class="{ selected: item.id === selectedResearchMode.id }" @click="selectResearchMode($event, item.id)"><span class="mode-icon"><Layers3 :size="16" /></span><span><b>{{ item.short_name || item.name }}<em>{{ item.badge }}</em></b><small>{{ item.description }}</small><code>{{ item.id }}</code></span><CheckCircle2 v-if="item.id === selectedResearchMode.id" :size="17" /></button></div><div class="research-mode-menu-note"><ShieldCheck :size="13" />所选模式随研究任务保存，可在草稿阶段修改并由 Worker 原样执行。</div></div></details><div class="research-model-picker" :class="{ 'missing-default': !hasDefaultModel && !form.model_spec }" :title="hasDefaultModel || form.model_spec ? '为本次研究任务选择模型' : '尚未配置系统默认模型，请为本次任务选择模型'"><CircleAlert v-if="!hasDefaultModel && !form.model_spec" :size="15" aria-hidden="true" /><BrainCircuit v-else :size="15" aria-hidden="true" /><ModelSelectorComponent upward :model_spec="form.model_spec" size="nano" display-name="mini" :placeholder="hasDefaultModel ? '系统默认模型' : '选择研究模型'" clearable @select-model="(spec) => (form.model_spec = spec || '')" /></div></div><div class="research-query-footer-right"><button type="button" @click="router.push('/equipment/queries')"><Sparkles :size="15" />AI 生成 Query</button><button type="button" class="research-config-trigger" :class="{ active: configOpen }" :aria-expanded="configOpen" aria-controls="research-run-config" @click="configOpen = !configOpen"><Wrench :size="14" />{{ configOpen ? '收起运行配置' : '研究运行配置' }}<ChevronDown :size="13" /></button><button type="button" class="primary research-start-trigger" :disabled="!form.topic.trim() || creating" @click="createRun"><Play :size="14" />{{ creating ? '处理中…' : form.start ? '启动研究' : '创建草稿' }}</button></div></footer>
+        <div v-show="configOpen" id="research-run-config" class="research-query-inline-config-shell"><textarea id="research-query-supplement" v-model="form.supplemental_information" class="research-query-supplement" maxlength="8000" placeholder="可选：补充作战场景、时间范围、约束、前提假设或希望覆盖的技术/装备类型。" /><ResearchRunConfig :model-value="form" :creating="creating" @update:model-value="Object.assign(form, $event)" @save-draft="createRun({ startImmediately: false })" /></div>
       </div>
       <div class="research-query-suggestions"><div class="research-query-suggestion-heading"><span><small>问题库灵感推荐</small><em><i />全库 {{ recommendations.length }} 条 · 自动轮播 · 点击即可带入研究</em></span><button type="button" class="suggestion-refresh" :disabled="recommendationLoading" @click="loadRecommendations"><RefreshCw :class="{ spin: recommendationLoading }" :size="12" />{{ recommendationLoading ? '读取中' : '重新排序' }}</button></div><div v-if="recommendationLoading && !recommendations.length" class="recommendation-skeleton" aria-hidden="true"><div v-for="index in 3" :key="index" /></div><div v-else-if="recommendations.length" class="recommendation-carousel"><button type="button" class="recommendation-playback" :aria-label="recommendationPaused ? '继续自动轮播' : '暂停自动轮播'" @click="recommendationPaused = !recommendationPaused">{{ recommendationPaused ? '继续轮播' : '暂停轮播' }}</button><button type="button" class="recommendation-arrow previous" aria-label="上一条推荐 Query" @click="moveRecommendation(-1)"><ChevronLeft :size="20" /></button><div class="recommendation-stage"><button v-for="(item, index) in recommendations" v-show="recommendationPosition(index)" :key="item.query_id || item.query" type="button" :title="item.query" :data-carousel-offset="recommendationPosition(index)" class="recommendation-card" :class="[recommendationPosition(index), { selected: selectedRecommendationId === item.query_id }]" @click="chooseRecommendation(item, index)"><span>{{ item.source_type === 'agent' ? 'AGENT DISCOVERY' : item.source_type === 'import' ? 'CURATED INSIGHT' : 'RESEARCH IDEA' }}<CheckCircle2 v-if="selectedRecommendationId === item.query_id" :size="14" /></span><b>{{ item.query }}</b><p>{{ item.supplemental_information || item.generation_rationale || '点击将此 Query 带入研究任务。' }}</p></button></div><button type="button" class="recommendation-arrow next" aria-label="下一条推荐 Query" @click="moveRecommendation(1)"><ChevronRight :size="20" /></button></div><div v-else class="recommendation-empty"><span>{{ recommendationError || '问题库中暂无可推荐 Query' }}</span><button type="button" @click="router.push('/equipment/queries')">打开问题库</button></div></div>
     </div></section>
@@ -367,9 +372,9 @@ onBeforeUnmount(() => { if (recommendationTimer) window.clearInterval(recommenda
       <div v-if="loading && !runs.length" class="research-run-grid skeleton-grid"><article v-for="index in 6" :key="index" class="research-run-card skeleton-card" /></div><a-empty v-else-if="!visibleRuns.length" :description="search || status !== 'all' ? '当前已加载任务中没有符合条件的结果' : '暂无研究任务。在页面顶部输入 Query 即可启动第一次研究。'" />
       <div v-else class="research-run-scroll"><div class="research-run-grid"><article v-for="run in visibleRuns" :key="run.run_id" class="research-run-card" :class="run.status" :data-run-id="run.run_id">
         <div class="run-card-heading"><label class="run-card-select" title="选择任务"><input type="checkbox" :aria-label="`选择 ${run.topic}`" :checked="selectedRunIds.includes(run.run_id)" @change="toggleSelectedRun(run.run_id)"></label><button class="run-card-title" @click="router.push(`/equipment/runs/${run.run_id}`)"><b>{{ run.topic }}</b><small>{{ run.supplemental_information || run.run_id }}</small></button><span class="status" :class="run.status">{{ statusLabels[run.status] || run.status }}</span></div>
-        <div class="run-card-counts" aria-label="研究产物数量"><span><b>{{ artifactCount(run, 'sources') }}</b> 信源</span><span><b>{{ artifactCount(run, 'evidence') }}</b> 证据</span><span><b>{{ artifactCount(run, 'capabilities') }}</b> 能力图像</span><span><b>{{ artifactCount(run, 'winning_steps') }}</b> S1–S6</span><span><b>{{ artifactCount(run, 'reports') }}</b> 报告</span><span :class="{ 'has-deep-sessions': deepSessionCount(run) }"><b>{{ deepSessionCount(run) }}</b> 深研</span></div>
-        <button v-if="run.status === 'completed'" type="button" class="run-card-capability-preview" @click="openArtifact(run, 'capabilities')"><span class="run-card-capability-icon"><ExperimentOutlined /></span><span class="run-card-capability-copy"><b>能力图像 <em>{{ artifactCount(run, 'capabilities') }}</em></b><small>点击查看完整能力画像与论证</small></span><ChevronRight :size="14" /></button>
-        <div class="run-card-artifacts" aria-label="研究产物快捷入口"><button type="button" class="run-card-deep-link" @click="openArtifact(run, 'deep-thinking')"><MessageSquare :size="13" />{{ deepSessionCount(run) ? '继续深研' : '发起深研' }}<span>{{ deepSessionCount(run) }}</span></button><button type="button" @click="openArtifact(run, 'interactions')"><Layers3 :size="13" />交互过程</button><button type="button" @click="openArtifact(run, 'evidence')"><Search :size="13" />证据中心<span>{{ artifactCount(run, 'evidence') }}</span></button><button type="button" @click="openArtifact(run, 'winning')"><BrainCircuit :size="13" />S1–S6 Agent<span>{{ artifactCount(run, 'winning_steps') }}</span></button><button v-if="run.status !== 'completed' && artifactCount(run, 'capabilities')" type="button" @click="openArtifact(run, 'capabilities')"><ExperimentOutlined />能力图像<span>{{ artifactCount(run, 'capabilities') }}</span></button><button v-if="artifactCount(run, 'reports')" type="button" @click="openArtifact(run, 'reports')"><FileCheck2 :size="13" />研究报告<span>{{ artifactCount(run, 'reports') }}</span></button></div>
+        <div class="run-card-counts" aria-label="研究产物数量"><span><b>{{ artifactCount(run, 'sources') }}</b> 信源</span><span><b>{{ artifactCount(run, 'evidence') }}</b> 证据</span><span><b>{{ artifactCount(run, 'capabilities') }}</b> 能力画像</span><span><b>{{ artifactCount(run, 'winning_steps') }}</b> S1–S6</span><span><b>{{ artifactCount(run, 'reports') }}</b> 报告</span><span :class="{ 'has-deep-sessions': deepSessionCount(run) }"><b>{{ deepSessionCount(run) }}</b> 深研</span></div>
+        <button v-if="run.status === 'completed'" type="button" class="run-card-capability-preview" @click="openArtifact(run, 'capabilities')"><span class="run-card-capability-icon"><ExperimentOutlined /></span><span class="run-card-capability-copy"><b>能力画像 <em>{{ artifactCount(run, 'capabilities') }}</em></b><small>点击查看完整能力画像与论证</small></span><ChevronRight :size="14" /></button>
+        <div class="run-card-artifacts" aria-label="研究产物快捷入口"><button type="button" class="run-card-deep-link" @click="openArtifact(run, 'deep-thinking')"><MessageSquare :size="13" />{{ deepSessionCount(run) ? '继续深研' : '发起深研' }}<span>{{ deepSessionCount(run) }}</span></button><button type="button" @click="openArtifact(run, 'interactions')"><Layers3 :size="13" />交互过程</button><button type="button" @click="openArtifact(run, 'evidence')"><Search :size="13" />证据中心<span>{{ artifactCount(run, 'evidence') }}</span></button><button type="button" @click="openArtifact(run, 'winning')"><BrainCircuit :size="13" />S1–S6 Agent<span>{{ artifactCount(run, 'winning_steps') }}</span></button><button v-if="run.status !== 'completed' && artifactCount(run, 'capabilities')" type="button" @click="openArtifact(run, 'capabilities')"><ExperimentOutlined />能力画像<span>{{ artifactCount(run, 'capabilities') }}</span></button><button v-if="artifactCount(run, 'reports')" type="button" @click="openArtifact(run, 'reports')"><FileCheck2 :size="13" />研究报告<span>{{ artifactCount(run, 'reports') }}</span></button></div>
         <div class="run-card-meta"><span>{{ formatUpdatedAt(run.updated_at) }}</span><span>{{ routeLabel(run.research_route) }}</span></div>
         <div v-if="run.status === 'failed'" class="run-card-recovery"><div><CircleAlert :size="15" /><span><b>任务执行中断</b><small>已保留检查点，可从上次进度继续</small></span></div><button type="button" class="primary" :disabled="actionRunId === run.run_id" @click="actOnRun('resume', run)"><RefreshCw :class="{ spin: actionRunId === run.run_id }" :size="14" />{{ actionRunId === run.run_id ? '恢复中' : '从断点继续' }}</button></div>
         <div class="run-card-footer"><span class="run-mode-label" :class="run.execution?.mode === 'fake' ? 'fake' : 'real'"><i />{{ run.execution?.mode === 'fake' ? '离线模拟' : '真实运行' }}</span><span>{{ run.payload?.model_spec || run.execution?.model || '系统默认模型' }}</span><div><button v-if="activeStatuses.has(run.status)" type="button" class="icon-button row-stop" :disabled="actionRunId === run.run_id" title="停止研究任务并终止所有 Agent 进程" @click="actOnRun('cancel', run)"><X :size="15" /></button><button type="button" class="icon-button" title="打开研究详情" @click="router.push(`/equipment/runs/${run.run_id}`)"><EyeOutlined /></button><button type="button" class="icon-button row-delete" :disabled="actionRunId === run.run_id" title="永久删除任务及后端数据" @click="actOnRun('delete', run)"><DeleteOutlined /></button></div></div>

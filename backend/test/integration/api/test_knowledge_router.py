@@ -576,22 +576,29 @@ async def test_update_database_additional_params_merge_keeps_chunk_preset(
 async def test_knowledge_routes_enforce_permissions(test_client, standard_user, knowledge_database):
     kb_id = knowledge_database["kb_id"]
 
-    forbidden_create = await test_client.post(
+    created = await test_client.post(
         "/api/knowledge/databases",
         json={
-            "database_name": "unauthorized_db",
-            "description": "Should not succeed",
+            "database_name": f"pytest_personal_permissions_{uuid.uuid4().hex[:8]}",
+            "description": "Personal owner permissions",
             "embedding_model_spec": "siliconflow-cn:Pro/BAAI/bge-m3",
         },
         headers=standard_user["headers"],
     )
-    _assert_forbidden_response(forbidden_create)
+    assert created.status_code == 200, created.text
+    personal_id = created.json()["kb_id"]
+    try:
+        assert created.json()["created_by"] == standard_user["user"]["uid"]
+    finally:
+        removed = await test_client.delete(f"/api/knowledge/databases/{personal_id}", headers=standard_user["headers"])
+        assert removed.status_code == 200, removed.text
 
     forbidden_list = await test_client.get("/api/knowledge/databases", headers=standard_user["headers"])
-    _assert_forbidden_response(forbidden_list)
+    assert forbidden_list.status_code == 200, forbidden_list.text
+    assert kb_id not in {item["kb_id"] for item in forbidden_list.json()["databases"]}
 
     forbidden_chunk_presets = await test_client.get("/api/knowledge/chunk-presets", headers=standard_user["headers"])
-    _assert_forbidden_response(forbidden_chunk_presets)
+    assert forbidden_chunk_presets.status_code == 200, forbidden_chunk_presets.text
 
     forbidden_get = await test_client.get(f"/api/knowledge/databases/{kb_id}", headers=standard_user["headers"])
     _assert_forbidden_response(forbidden_get)
@@ -1206,9 +1213,10 @@ async def test_mindmap_permissions(test_client, standard_user, knowledge_databas
     """测试思维导图接口的权限控制"""
     kb_id = knowledge_database["kb_id"]
 
-    # 普通用户应该无法访问
+    # 普通用户可以访问列表，但不能发现或读取他人的私有知识库。
     forbidden_list = await test_client.get("/api/knowledge/mindmap/databases", headers=standard_user["headers"])
-    _assert_forbidden_response(forbidden_list)
+    assert forbidden_list.status_code == 200, forbidden_list.text
+    assert kb_id not in forbidden_list.text
 
     forbidden_files = await test_client.get(
         f"/api/knowledge/databases/{kb_id}/mindmap/files", headers=standard_user["headers"]

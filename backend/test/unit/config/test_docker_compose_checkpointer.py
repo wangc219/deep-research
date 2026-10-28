@@ -40,14 +40,12 @@ def test_api_key_derivation_secret_is_required_for_api_and_worker():
 def test_initialization_scripts_enforce_security_secret_contract():
     project_root = _project_root()
     shell_script = project_root / "scripts/init.sh"
-    powershell_script = (project_root / "scripts/init.ps1").read_text()
 
     assert shell_script.stat().st_mode & stat.S_IXUSR
     assert "--validate-security-env" in shell_script.read_text()
     assert "umask 077" in shell_script.read_text()
-    assert "-AsSecureString" in powershell_script
-    assert "Assert-SecuritySecrets" in powershell_script
-    assert "Test-SecuritySecretValue" in powershell_script
+    assert "validate_security_env" in shell_script.read_text()
+    assert "security_secret_is_valid" in shell_script.read_text()
 
 
 @pytest.mark.parametrize(
@@ -60,7 +58,10 @@ def test_initialization_scripts_enforce_security_secret_contract():
         {"JWT_SECRET_KEY": '"123456789012345678901234567890"'},
     ],
 )
-def test_shell_initialization_validation_rejects_short_reused_or_padded_secrets(tmp_path: Path, overrides: dict):
+def test_shell_initialization_validation_rejects_short_reused_or_padded_secrets(
+    tmp_path: Path, overrides: dict, monkeypatch
+):
+    monkeypatch.delenv("DEEP_RESEARCH_ENV_FILE", raising=False)
     project_root = _project_root()
     values = {
         "JWT_SECRET_KEY": "jwt-secret-value-that-is-at-least-32-characters",
@@ -81,7 +82,8 @@ def test_shell_initialization_validation_rejects_short_reused_or_padded_secrets(
     assert completed.returncode != 0
 
 
-def test_shell_initialization_validation_accepts_distinct_strong_secrets(tmp_path: Path):
+def test_shell_initialization_validation_accepts_distinct_strong_secrets(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("DEEP_RESEARCH_ENV_FILE", raising=False)
     project_root = _project_root()
     (tmp_path / ".env").write_text(
         "JWT_SECRET_KEY=jwt-secret-value-that-is-at-least-32-characters\n"
@@ -102,14 +104,13 @@ def test_shell_initialization_validation_accepts_distinct_strong_secrets(tmp_pat
 
 def test_backend_unit_workflow_runs_for_initialization_contract_changes():
     project_root = _project_root()
-    workflow = yaml.load((project_root / ".github/workflows/test.yml").read_text(), Loader=yaml.BaseLoader)
-
+    workflow = yaml.load((project_root / ".github/workflows/quality.yml").read_text(), Loader=yaml.BaseLoader)
     for event in ("pull_request", "push"):
-        paths = workflow["on"][event]["paths"]
-        assert ".env.template" in paths
-        assert "scripts/init.sh" in paths
-        assert "scripts/init.ps1" in paths
-        assert "scripts/test_init_security.ps1" in paths
+        # 无路径过滤，初始化脚本和环境示例的变更都会执行配置契约测试。
+        assert event in workflow["on"]
+        assert not (workflow["on"][event] or {}).get("paths")
+    commands = [step.get("run", "") for step in workflow["jobs"]["python"]["steps"]]
+    assert any("backend/test/unit/config" in command for command in commands)
 
 
 def test_api_healthcheck_uses_readiness_in_development_and_production():
@@ -129,10 +130,14 @@ def test_worker_healthcheck_uses_arq_health_contract_in_development_and_producti
     for filename in ("compose.yaml", "compose.prod.yaml"):
         compose = yaml.safe_load((project_root / filename).read_text())
 
-        assert compose["services"]["worker"]["healthcheck"]["test"] == [
-            "CMD-SHELL",
-            "uv run --no-sync --no-dev arq --check server.worker_main.WorkerSettings",
-        ]
+        healthcheck = compose["services"]["worker"]["healthcheck"]["test"]
+        if healthcheck[0] == "CMD-SHELL":
+            import shlex
+            command = shlex.split(healthcheck[1])
+        else:
+            assert healthcheck[0] == "CMD"
+            command = healthcheck[1:]
+        assert command[-3:] == ["arq", "--check", "server.worker_main.WorkerSettings"]
 
 
 def test_worker_starts_owned_entrypoint_in_development_and_production():
@@ -146,6 +151,10 @@ def test_worker_starts_owned_entrypoint_in_development_and_production():
 def test_arq_dependency_changes_trigger_real_dispatch_regression():
     """单独升级依赖也必须触发拥有 ARQ 适配语义的真实 Redis gate。"""
     project_root = _project_root()
-    workflow = yaml.load((project_root / ".github/workflows/system-tests.yml").read_text(), Loader=yaml.BaseLoader)
+    workflow = yaml.load((project_root / ".github/workflows/quality.yml").read_text(), Loader=yaml.BaseLoader)
     for event in ("pull_request", "push"):
-        assert {"backend/uv.lock", "backend/pyproject.toml"}.issubset(workflow["on"][event]["paths"])
+        assert event in workflow["on"]
+        assert not (workflow["on"][event] or {}).get("paths")
+    job = workflow["jobs"]["redis-dispatch"]
+    assert job["services"]["redis"]["image"].startswith("redis:")
+    assert any("test_arq_worker_dispatch.py" in step.get("run", "") for step in job["steps"])

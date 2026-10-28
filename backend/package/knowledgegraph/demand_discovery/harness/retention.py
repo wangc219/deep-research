@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 import re
-from typing import Iterable
+from collections.abc import Iterable
 
 from knowledgegraph.demand_discovery.domain.store import DomainStore
 
@@ -46,7 +46,7 @@ def cleanup_outputs(
     domain_store: DomainStore | None = None,
 ) -> CleanupResult:
     base = Path(root)
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     protected_refs = _referenced_artifact_refs(domain_store)
     candidates: list[CleanupCandidate] = []
 
@@ -105,7 +105,7 @@ def _candidate(path: Path, layer: str, reason: str) -> CleanupCandidate:
 def _older_than(path: Path, keep_days: int, now: datetime) -> bool:
     if keep_days < 0:
         return False
-    modified = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc)
+    modified = datetime.fromtimestamp(path.stat().st_mtime, UTC)
     return (now - modified).days >= keep_days
 
 

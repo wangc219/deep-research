@@ -121,10 +121,7 @@ def resolve_controlled_action_url(
         action_url = str(target.get("action_url", "") or target.get("page_url", "")).strip()
         if not action_url:
             raise ValueError("controlled browser action submit_form requires action_url")
-        filled_values = {
-            str(key): str(item)
-            for key, item in dict(target.get("filled_values", {}) or {}).items()
-        }
+        filled_values = {str(key): str(item) for key, item in dict(target.get("filled_values", {}) or {}).items()}
         if value and not filled_values:
             filled_values[str(target.get("name", "q") or "q")] = value
         if not filled_values:
@@ -139,8 +136,7 @@ def _fetch_sync(url: str, timeout_ms: int, port: int) -> str:
         from DrissionPage import ChromiumOptions, ChromiumPage
     except Exception as exc:  # pragma: no cover - depends on local browser stack
         raise RuntimeError(
-            "browser_session transport requires DrissionPage and a Chrome "
-            f"debugging port on {port}"
+            f"browser_session transport requires DrissionPage and a Chrome debugging port on {port}"
         ) from exc
     options = ChromiumOptions().set_local_port(port)
     page = ChromiumPage(options)
@@ -161,8 +157,7 @@ def _execute_javascript_sync(
         from DrissionPage import ChromiumOptions, ChromiumPage
     except Exception as exc:  # pragma: no cover - depends on local browser stack
         raise RuntimeError(
-            "browser JavaScript execution requires DrissionPage and a Chrome "
-            f"debugging port on {port}"
+            f"browser JavaScript execution requires DrissionPage and a Chrome debugging port on {port}"
         ) from exc
 
     options = ChromiumOptions().set_local_port(port)

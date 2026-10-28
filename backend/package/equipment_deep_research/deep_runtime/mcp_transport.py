@@ -25,7 +25,10 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 from equipment_deep_research.deep_runtime.tool_registry import (
-    MCPAdapterError, MCPNotEnabledError, MCPToolDefinition, ToolRegistry,
+    MCPAdapterError,
+    MCPNotEnabledError,
+    MCPToolDefinition,
+    ToolRegistry,
 )
 
 
@@ -46,7 +49,12 @@ class MCPTransportConfig:
     max_result_items: int = 4096
 
     def __post_init__(self):
-        if not isinstance(self.timeout, (int, float)) or isinstance(self.timeout, bool) or not math.isfinite(self.timeout) or not 0 < self.timeout <= 120:
+        if (
+            not isinstance(self.timeout, (int, float))
+            or isinstance(self.timeout, bool)
+            or not math.isfinite(self.timeout)
+            or not 0 < self.timeout <= 120
+        ):
             raise ValueError("MCP timeout must be between 0 and 120 seconds")
         for label, value, low, high in (
             ("MCP max_concurrent_calls", self.max_concurrent_calls, 1, 32),
@@ -55,12 +63,7 @@ class MCPTransportConfig:
             ("MCP max_result_depth", self.max_result_depth, 1, 64),
             ("MCP max_result_items", self.max_result_items, 1, 100_000),
         ):
-            if (
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value < low
-                or value > high
-            ):
+            if not isinstance(value, int) or isinstance(value, bool) or value < low or value > high:
                 raise ValueError(f"{label} is outside the host limit")
         if self.transport == "stdio":
             executable = Path(self.command)
@@ -72,7 +75,13 @@ class MCPTransportConfig:
                 raise ValueError("MCP cwd must be an existing absolute directory")
         elif self.transport == "http":
             parsed = urlsplit(self.url)
-            if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.fragment
+            ):
                 raise ValueError("MCP endpoint must be a host-selected HTTP(S) URL without embedded credentials")
             if self.command or self.args or self.env or self.cwd:
                 raise ValueError("HTTP transport cannot include process configuration")
@@ -133,9 +142,7 @@ def _bounded_mcp_result(value: Any, config: MCPTransportConfig) -> Any:
 
     projected = project(value, 0)
     try:
-        encoded = json.dumps(
-            projected, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode("utf-8")
+        encoded = json.dumps(projected, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     except (TypeError, ValueError) as exc:
         raise MCPAdapterError("MCP result is not JSON serializable") from exc
     if len(encoded) > config.max_result_bytes:
@@ -163,11 +170,7 @@ class SDKMCPAdapter:
         """Return owner-loop connection health without performing I/O."""
 
         self._check_loop()
-        return bool(
-            self._session is not None
-            and self._owner is not None
-            and not self._owner.done()
-        )
+        return bool(self._session is not None and self._owner is not None and not self._owner.done())
 
     async def _own_connection(self):
         try:
@@ -180,29 +183,43 @@ class SDKMCPAdapter:
                 if self.config.transport == "stdio":
                     errlog = stack.enter_context(open(os.devnull, "w"))
                     params = StdioServerParameters(
-                        command=self.config.command, args=list(self.config.args),
-                        env=dict(self.config.env), cwd=self.config.cwd,
+                        command=self.config.command,
+                        args=list(self.config.args),
+                        env=dict(self.config.env),
+                        cwd=self.config.cwd,
                     )
                     read, write = await stack.enter_async_context(stdio_client(params, errlog=errlog))
                 else:
-                    client = await stack.enter_async_context(httpx.AsyncClient(
-                        headers=dict(self.config.headers), timeout=self.config.timeout,
-                        follow_redirects=False, trust_env=False,
-                    ))
-                    read, write, _session_id = await stack.enter_async_context(streamable_http_client(
-                        self.config.url, http_client=client,
-                    ))
-                session = await stack.enter_async_context(ClientSession(
-                    read, write, read_timeout_seconds=timedelta(seconds=self.config.timeout),
-                ))
+                    client = await stack.enter_async_context(
+                        httpx.AsyncClient(
+                            headers=dict(self.config.headers),
+                            timeout=self.config.timeout,
+                            follow_redirects=False,
+                            trust_env=False,
+                        )
+                    )
+                    read, write, _session_id = await stack.enter_async_context(
+                        streamable_http_client(
+                            self.config.url,
+                            http_client=client,
+                        )
+                    )
+                session = await stack.enter_async_context(
+                    ClientSession(
+                        read,
+                        write,
+                        read_timeout_seconds=timedelta(seconds=self.config.timeout),
+                    )
+                )
                 await session.initialize()
                 definitions = []
                 cursor = None
                 seen_cursors = set()
                 for _page in range(8):
                     result = await session.list_tools(cursor=cursor)
-                    definitions.extend(MCPToolDefinition(tool.name, tool.description or "", tool.inputSchema)
-                                       for tool in result.tools)
+                    definitions.extend(
+                        MCPToolDefinition(tool.name, tool.description or "", tool.inputSchema) for tool in result.tools
+                    )
                     if len(definitions) > 64:
                         raise MCPAdapterError("MCP tool-count limit exceeded")
                     cursor = result.nextCursor
@@ -235,9 +252,7 @@ class SDKMCPAdapter:
             self._ready = self._loop.create_future()
             self._close_requested = asyncio.Event()
             self._owner = asyncio.create_task(self._own_connection(), name="mcp-transport-owner")
-            self._owner.add_done_callback(
-                lambda task: None if task.cancelled() else task.exception()
-            )
+            self._owner.add_done_callback(lambda task: None if task.cancelled() else task.exception())
         try:
             return await asyncio.wait_for(asyncio.shield(self._ready), timeout=self.config.timeout)
         except BaseException:
@@ -250,12 +265,7 @@ class SDKMCPAdapter:
 
     async def call(self, tool_name: str, arguments: Mapping[str, Any]) -> Any:
         self._check_loop()
-        if (
-            self._session is None
-            or self._owner is None
-            or self._owner.done()
-            or self._call_limiter is None
-        ):
+        if self._session is None or self._owner is None or self._owner.done() or self._call_limiter is None:
             raise MCPNotEnabledError("MCP transport is not connected")
         try:
             async with self._call_limiter:
@@ -303,7 +313,9 @@ class HostMCPMount:
 
 
 class _PersistentProxy:
-    def __init__(self, host: "PersistentMCPHost", server_id: str, definitions: Sequence[MCPToolDefinition], *, max_calls: int):
+    def __init__(
+        self, host: PersistentMCPHost, server_id: str, definitions: Sequence[MCPToolDefinition], *, max_calls: int
+    ):
         self.host = host
         self.server_id = server_id
         self.definitions = tuple(definitions)
@@ -373,9 +385,7 @@ class PersistentMCPHost:
             if self._closed or self._closing:
                 raise MCPAdapterError("MCP host is closed")
             if self._thread is None:
-                self._thread = threading.Thread(
-                    target=self._thread_main, name="deep-mcp-host", daemon=True
-                )
+                self._thread = threading.Thread(target=self._thread_main, name="deep-mcp-host", daemon=True)
                 self._thread.start()
             ready = self._ready
         ready.wait(timeout=5)
@@ -431,9 +441,7 @@ class PersistentMCPHost:
                         pass
                     failures = min(7, self._failure_counts.get(mount.server_id, 0) + 1)
                     self._failure_counts[mount.server_id] = failures
-                    self._retry_after[mount.server_id] = time.monotonic() + min(
-                        30.0, 0.5 * (2 ** (failures - 1))
-                    )
+                    self._retry_after[mount.server_id] = time.monotonic() + min(30.0, 0.5 * (2 ** (failures - 1)))
                     raise
                 self._adapters[mount.server_id] = adapter
                 self._definitions[mount.server_id] = definitions
@@ -441,9 +449,7 @@ class PersistentMCPHost:
                 self._retry_after.pop(mount.server_id, None)
             return self._definitions[mount.server_id]
 
-    async def _call_one(
-        self, server_id: str, tool_name: str, arguments: Mapping[str, Any]
-    ) -> Any:
+    async def _call_one(self, server_id: str, tool_name: str, arguments: Mapping[str, Any]) -> Any:
         adapter = self._adapters.get(server_id)
         if adapter is None:
             raise MCPNotEnabledError("MCP host server is not connected")
@@ -461,11 +467,13 @@ class PersistentMCPHost:
             for mount in mounts:
                 runtime = registry.mcp_runtime(mount.server_id)
                 if runtime is None:
-                    registry.register_mcp_declaration({
-                        "server_id": mount.server_id,
-                        "transport": mount.config.transport,
-                        "plugin_id": "host",
-                    })
+                    registry.register_mcp_declaration(
+                        {
+                            "server_id": mount.server_id,
+                            "transport": mount.config.transport,
+                            "plugin_id": "host",
+                        }
+                    )
                 elif runtime.transport != mount.config.transport:
                     raise MCPAdapterError("MCP host mount transport does not match declaration")
                 definitions = await self._submit(self._start_one(mount))
@@ -551,6 +559,7 @@ class PersistentMCPHost:
                     self._closing = False
             return
         if loop is not None:
+
             async def shutdown():
                 for adapter in tuple(self._adapters.values()):
                     try:
@@ -561,6 +570,7 @@ class PersistentMCPHost:
                 self._definitions.clear()
                 self._failure_counts.clear()
                 self._retry_after.clear()
+
             future = asyncio.run_coroutine_threadsafe(shutdown(), loop)
             try:
                 await asyncio.wrap_future(future)
@@ -676,11 +686,12 @@ def _parse_host_mcp_mounts(raw: bytes) -> tuple[HostMCPMount, ...]:
             )
         elif transport == "http":
             headers = _host_mapping(row.get("headers"), label="MCP headers")
-            headers.update(
-                _resolve_env_references(row.get("headers_from"), label="MCP headers_from")
-            )
+            headers.update(_resolve_env_references(row.get("headers_from"), label="MCP headers_from"))
             config = MCPTransportConfig(
-                "http", url=str(row.get("url") or ""), headers=headers, timeout=timeout,
+                "http",
+                url=str(row.get("url") or ""),
+                headers=headers,
+                timeout=timeout,
                 max_concurrent_calls=max_concurrent_calls,
                 max_calls_per_turn=max_calls_per_turn,
                 max_result_bytes=max_result_bytes,
@@ -830,8 +841,9 @@ async def mounted_mcp_transports(registry: ToolRegistry, mounts: Sequence[HostMC
             if runtime is None or runtime.transport != mount.config.transport:
                 raise ValueError("MCP mount must match a registered transport declaration")
             attached.append(mount.server_id)
-            await registry.attach_mcp_adapter(mount.server_id, SDKMCPAdapter(mount.config),
-                                              allowed_tools=mount.allowed_tools)
+            await registry.attach_mcp_adapter(
+                mount.server_id, SDKMCPAdapter(mount.config), allowed_tools=mount.allowed_tools
+            )
         yield registry
     finally:
         active_error = sys.exc_info()[1]

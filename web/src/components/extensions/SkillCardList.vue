@@ -217,7 +217,6 @@
           <div class="skill-preview-footer-right">
             <a-button @click="closeSkillPreview">关闭</a-button>
             <a-button
-              v-if="previewSkill.sourceScope !== 'personal'"
               type="primary"
               class="lucide-icon-btn"
               @click="goToPreviewSkillManagement"
@@ -246,7 +245,7 @@
                     <div class="repo-input-field">
                       <a-input
                         v-model:value="remoteInstallForm.source"
-                        placeholder="来源仓库或合集地址，如 https://modelscope.cn/collections/MiniMax/MiniMax-Office-skills"
+                        placeholder="skills.sh / GitHub 仓库 / 魔搭 Skill 或合集地址"
                       >
                         <template #suffix>
                           <a-dropdown
@@ -834,8 +833,7 @@ const skillCardTags = (skill) => {
 const canManageSkill = (skill) => skill?.can_manage !== false
 const isSkillToggling = (slug) => togglingSkillSlugs.value.includes(slug)
 const navigateToDetail = (skill) => {
-  if (skill?.sourceScope === 'personal') return
-  router.push({ path: `/extensions/skill/${encodeURIComponent(skill.slug)}` })
+  router.push({ path: `/extensions/skill/${encodeURIComponent(skill.slug)}`, query: skill.sourceScope === 'personal' ? { scope: 'personal' } : {} })
 }
 
 const closeSkillPreview = () => {

@@ -117,7 +117,10 @@ async def resolve_configured_runtime_tools(context) -> list[Any]:
     # 去重后的 MCP server 列表(保持配置顺序)
     selected_mcp_servers: set[str] = set()
     server_names: list[str] = []
-    for server_name in getattr(context, "mcps", None) or []:
+    configured_mcps = (
+        [] if getattr(context, "mcp_tool_loading", "eager") == "on_demand" else (getattr(context, "mcps", None) or [])
+    )
+    for server_name in configured_mcps:
         if not isinstance(server_name, str) or server_name in selected_mcp_servers:
             continue
         selected_mcp_servers.add(server_name)

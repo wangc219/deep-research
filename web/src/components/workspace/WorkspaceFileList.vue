@@ -30,6 +30,7 @@
           <ListChecks :size="14" />
         </a-button>
       </a-tooltip>
+      <a-button v-if="effectiveSelectionMode" size="small" :disabled="!selectedPaths.length" @click="$emit('import-selected')">加入知识库</a-button>
       <a-button
         v-if="effectiveSelectionMode"
         size="small"
@@ -122,6 +123,7 @@ const emit = defineEmits([
   'update:selectedPaths',
   'update:selectionMode',
   'delete-selected',
+  'import-selected',
   'delete-entry',
   'download-entry',
   'page-change'

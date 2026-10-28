@@ -18,6 +18,7 @@ from platform_core.storage.postgres.manager import (
     V071_WORKDIR_CUTOVER_STATEMENTS,
     pg_manager,
 )
+from platform_core.storage_migrations.v077_mcp_access import MCP_ACCESS_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v071_options import migrate_system_options
 from platform_core.storage_migrations.v071_skills import (
     mark_migrated as mark_v071_skills_migrated,
@@ -120,14 +121,14 @@ async def main() -> None:
                 "business",
                 business_version,
                 BUSINESS_SCHEMA_VERSION,
-                upgrade_from=(2, 7, 8, 9, 10, 11, 12),
+                upgrade_from=(2, 7, 8, 9, 10, 11, 12, 13, 14, 15),
             )
             knowledge_version = versions.get("knowledge")
             _require_supported_version(
                 "knowledge",
                 knowledge_version,
                 KNOWLEDGE_SCHEMA_VERSION,
-                upgrade_from=(1,),
+                upgrade_from=(1, 2, 3, 4, 5, 6),
             )
 
             if business_version is None:
@@ -140,7 +141,19 @@ async def main() -> None:
                     await rewrite_v071_workdir_paths(session)
                     await verify_workdir_bindings(session)
                     await session.commit()
-            if business_version in {None, 2, 7, 8, 9, 10, 11, 12}:
+            if business_version == 13:
+                async with pg_manager.async_engine.begin() as conn:
+                    for statement in MCP_ACCESS_SCHEMA_STATEMENTS:
+                        await conn.execute(text(statement))
+                await pg_manager.ensure_business_schema()
+                await pg_manager.record_schema_version("business", BUSINESS_SCHEMA_VERSION)
+            elif business_version in {14, 15}:
+                # Schema versions remain monotonic after removal of the retired
+                # task-specific experiment. Existing tables, if any, stay inert
+                # for non-destructive rollback compatibility.
+                await pg_manager.ensure_business_schema()
+                await pg_manager.record_schema_version("business", BUSINESS_SCHEMA_VERSION)
+            elif business_version in {None, 2, 7, 8, 9, 10, 11, 12}:
                 await pg_manager.ensure_business_schema()
                 if business_version is None:
                     await pg_manager.setup_langgraph_checkpointer()
@@ -149,9 +162,15 @@ async def main() -> None:
             if knowledge_version is None:
                 await pg_manager.create_knowledge_tables()
                 await pg_manager.ensure_knowledge_schema()
-                await pg_manager.record_schema_version("knowledge", KNOWLEDGE_SCHEMA_VERSION)
             elif knowledge_version == 1:
                 await pg_manager.upgrade_knowledge_schema_v1_to_v2()
+
+            if knowledge_version in {1, 2, 3}:
+                await pg_manager.upgrade_knowledge_schema_v3_to_v4()
+            if knowledge_version in {None, 1, 2, 3, 4, 5}:
+                await pg_manager.upgrade_knowledge_schema_v5_to_v6()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6}:
+                await pg_manager.upgrade_knowledge_schema_v6_to_v7()
                 await pg_manager.record_schema_version("knowledge", KNOWLEDGE_SCHEMA_VERSION)
 
             await _converge_database_state(fail_nonterminal_runs=requires_quiescence)

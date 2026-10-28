@@ -274,6 +274,22 @@ class BaseContext:
         },
     )
 
+    mcp_tool_loading: str = field(
+        default="on_demand",
+        metadata={
+            "name": "MCP 工具加载方式",
+            "description": (
+                "按需加载先提供服务索引，调用 load_mcp_tools 后才获取工具定义；"
+                "立即加载在运行开始时获取全部已选服务工具。"
+            ),
+            "options": [
+                {"key": "on_demand", "name": "按需加载"},
+                {"key": "eager", "name": "立即加载"},
+            ],
+            "type": "string",
+        },
+    )
+
     skills: list[str] | None = field(
         default=None,
         metadata={
@@ -488,19 +504,21 @@ async def resolve_agent_resource_options(
     if "knowledges" in fields_to_load:
         from platform_core.knowledge.runtime import knowledge_base
 
-        databases = await knowledge_base.get_databases_by_user(user)
+        databases = await knowledge_base.get_databases_by_user(user, db=db)
         options["knowledges"] = [
             _resource_option(item.kb_id, item.name, item.description) for item in databases if item.kb_id
         ]
     if "mcps" in fields_to_load:
         from platform_core.agents.mcp.service import get_all_mcp_servers, get_enabled_mcp_server_slugs
 
+        from platform_core.agents.mcp.permissions import user_can_use_mcp
+
         servers = await get_all_mcp_servers(db)
         enabled_slugs = set(await get_enabled_mcp_server_slugs(db=db))
         options["mcps"] = [
             _resource_option(server.slug, server.name, server.description)
             for server in servers
-            if server.slug in enabled_slugs
+            if server.slug in enabled_slugs and user_can_use_mcp(user, server)
         ]
     if "skills" in fields_to_load:
         from platform_core.agents.skills.service import list_accessible_skills
@@ -603,6 +621,9 @@ async def prepare_agent_runtime_context(
             if hasattr(context, field_name):
                 setattr(context, field_name, normalized.get(field_name, []))
 
+        if getattr(context, "mcp_tool_loading", "eager") == "on_demand" and context.mcps:
+            context._mcp_server_catalog = (await resolve_agent_resource_options({"mcps"}, db=db, user=user))["mcps"]
+
         # skills=None 会在权限解析后展开为全部技能，仍需遵守本轮显式提及规则。
         if getattr(context, "_knowledge_retrieval_enabled", None) is False:
             context.skills = [slug for slug in context.skills if slug != "knowledge-base"]
@@ -618,6 +639,8 @@ async def prepare_agent_runtime_context(
 
         from platform_core.agents.backends.knowledge_base_backend import resolve_visible_knowledge_bases_for_context
 
+        # 知识库运行时自行读取授权数据，不能继续占用外层只读连接。
+        await db.commit()
         await resolve_visible_knowledge_bases_for_context(context)
         skill_scope = await resolve_runtime_skills_for_context(context, db=db, user=user)
         setattr(context, "_skill_runtime_snapshot", skill_scope)

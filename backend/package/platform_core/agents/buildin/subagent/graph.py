@@ -19,12 +19,16 @@ from platform_core.agents.context import (
 )
 from platform_core.agents.middlewares import (
     ImageInputCompatibilityMiddleware,
+    ModelCallSupervisorMiddleware,
     NetworkRetryMiddleware,
     SearchResilienceMiddleware,
     TokenUsageMiddleware,
     create_summary_middleware_from_context,
 )
 from platform_core.agents.middlewares.skills import SkillsMiddleware
+from platform_core.agents.middlewares.academic_evidence import AcademicEvidenceMiddleware
+from platform_core.agents.middlewares.model_output import ModelOutputMiddleware
+from platform_core.agents.middlewares.mcp_tools import McpToolsMiddleware
 from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
 from platform_core.agents.tool_approval import SENSITIVE_BACKEND_TOOLS, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
@@ -98,14 +102,22 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
             disabled_tools=_disabled_tools_for(tool_approval_mode),
         ),
         SkillsMiddleware(),
+        *(
+            [McpToolsMiddleware()]
+            if getattr(context, "mcp_tool_loading", "eager") == "on_demand" and context.mcps
+            else []
+        ),
         create_summary_middleware_from_context(context, backend=backend),
         TodoListMiddleware(system_prompt=TODO_MID_PROMPT),
         PatchToolCallsMiddleware(),
         SearchResilienceMiddleware(research_mode=getattr(context, "agent_slug", "") == "research-explorer"),
         _SubAgentToolFilterMiddleware(tool_approval_mode),
         KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
+        ModelCallSupervisorMiddleware(),
         NetworkRetryMiddleware(),
         ImageInputCompatibilityMiddleware(),
+        AcademicEvidenceMiddleware(),
+        ModelOutputMiddleware(),
         TokenUsageMiddleware(),
     ]
 

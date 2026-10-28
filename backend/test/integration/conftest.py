@@ -69,6 +69,17 @@ async def test_client() -> AsyncGenerator[httpx.AsyncClient, None]:
         yield client
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def isolate_runtime_client_loops():
+    """用例结束时关闭异步单例，避免连接池跨事件循环复用。"""
+    yield
+    from platform_core.storage.postgres.manager import pg_manager
+    from platform_core.storage.redis import close_async_redis_client
+
+    await close_async_redis_client()
+    await pg_manager.close()
+
+
 @pytest_asyncio.fixture(scope="function")
 async def admin_token() -> str:
     global _ADMIN_TOKEN_CACHE
@@ -150,7 +161,7 @@ def cleanup_test_knowledge_resources():
                 raise RuntimeError("Test resource cleanup current user payload is missing uid")
 
             await cleanup_test_chat_resources(client, headers, owner_uid=cleanup_uid)
-            await cleanup_pytest_knowledge_resources(client, headers)
+            await cleanup_pytest_knowledge_resources(client, headers, owner_uid=cleanup_uid)
 
     anyio.run(run_cleanup)
     yield
@@ -175,9 +186,8 @@ def _cleanup_provisioned_sandboxes() -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_test_sandboxes():
-    _cleanup_provisioned_sandboxes()
+    """沙盒随各用例所属线程清理，禁止枚举并删除其他用户的运行环境。"""
     yield
-    _cleanup_provisioned_sandboxes()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -222,7 +232,7 @@ async def standard_user(test_client: httpx.AsyncClient, admin_headers: dict[str,
     finally:
         await cleanup_test_chat_resources(
             test_client,
-            {"Authorization": f"Bearer {access_token}"},
+            admin_headers,
             owner_uid=str(user_payload["uid"]),
         )
         cleanup_error = None
@@ -240,6 +250,13 @@ async def standard_user(test_client: httpx.AsyncClient, admin_headers: dict[str,
 
 
 @pytest_asyncio.fixture(scope="function")
+async def other_user(test_client, admin_headers):
+    """创建第二个普通用户，避免以超级管理员代替无权访问者。"""
+    async for created in standard_user.__wrapped__(test_client, admin_headers):
+        yield created
+
+
+@pytest_asyncio.fixture(scope="function")
 async def knowledge_database(
     test_client: httpx.AsyncClient,
     admin_headers: dict[str, str],
@@ -250,6 +267,7 @@ async def knowledge_database(
     timestamp = int(time.time() * 1000000)
     db_name = f"pytest_kb_{timestamp}_{unique_id}"
     kb_id = None
+    owner = (await test_client.get("/api/auth/me", headers=admin_headers)).json()
 
     try:
         create_response = await test_client.post(
@@ -260,6 +278,11 @@ async def knowledge_database(
                 "embedding_model_spec": "siliconflow-cn:Pro/BAAI/bge-m3",
                 "kb_type": "milvus",
                 "additional_params": {},
+                "share_config": {
+                    "version": 2,
+                    "read_scope": {"access_level": "user", "user_uids": [owner["uid"]]},
+                    "manage_scope": None,
+                },
             },
             headers=admin_headers,
         )

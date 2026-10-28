@@ -16,6 +16,7 @@ AMINER_BASE_URL = "https://datacenter.aminer.cn/gateway/open_platform/api"
 ACADEMIC_TOOL_NAMES = frozenset({"academic_search", "academic_get_papers", "academic_get_references"})
 ENDPOINTS = {
     "search": ("GET", "/paper/search/pro", 1, "search"),
+    "semantic_search": ("POST", "/paper/qa/searchPro", 30, "search"),
     "title_search": ("GET", "/paper/search", 0, "free"),
     "info": ("POST", "/paper/info", 0, "free"),
     "detail": ("GET", "/paper/detail", 1, "detail"),
@@ -26,6 +27,22 @@ ENDPOINTS = {
 def aminer_credential_scope(config: dict[str, Any]) -> str:
     """用不可逆摘要隔离凭证变更前后的检索缓存。"""
     return hashlib.sha256(f"{config.get('user_id', '')}\0{config.get('api_key', '')}".encode()).hexdigest()
+
+
+def aminer_authorization_token(credentials: dict[str, Any], *, issued_at: int | None = None) -> str:
+    """复用控制台 Token，或用原始 Key 签发短期鉴权 Token。"""
+    credential = credentials["api_key"].strip()
+    if credential.lower().startswith("bearer "):
+        credential = credential[7:].strip()
+    if credential.startswith("eyJ") and credential.count(".") == 2:
+        return credential
+    now = issued_at if issued_at is not None else int(utc_now_naive().replace(tzinfo=UTC).timestamp())
+    return jwt.encode(
+        {"user_id": credentials["user_id"], "exp": now + 600, "timestamp": now},
+        credential,
+        algorithm="HS256",
+        headers={"sign_type": "SIGN"},
+    )
 
 
 class AMinerError(Exception):
@@ -46,23 +63,14 @@ class AMinerClient:
 
     async def request(self, endpoint: str, payload: dict[str, Any]) -> dict[str, Any]:
         """将 HTTP 与 JSON 业务错误转为可降级状态。"""
-        now = int(utc_now_naive().replace(tzinfo=UTC).timestamp())
-        credential = self.credentials["api_key"].strip()
-        if credential.lower().startswith("bearer "):
-            credential = credential[7:].strip()
-        if credential.startswith("eyJ") and credential.count(".") == 2:
-            # 官方控制台生成的 JWT 直接用作鉴权，不能把 Token 再作为签名密钥。
-            token = credential
-        else:
-            token = jwt.encode(
-                {"user_id": self.credentials["user_id"], "exp": now + 600, "timestamp": now},
-                credential,
-                algorithm="HS256",
-                headers={"sign_type": "SIGN"},
-            )
+        token = aminer_authorization_token(self.credentials)
         method, path, _cost, _kind = ENDPOINTS[endpoint]
         try:
-            async with httpx.AsyncClient(timeout=10.0, transport=self.transport, follow_redirects=False) as client:
+            async with httpx.AsyncClient(
+                timeout=30.0 if endpoint == "semantic_search" else 10.0,
+                transport=self.transport,
+                follow_redirects=False,
+            ) as client:
                 response = await client.request(
                     method,
                     f"{AMINER_BASE_URL}{path}",
@@ -98,6 +106,22 @@ class AMinerClient:
         # 供应商会用 HTTP 500 承载鉴权/限流等业务错误，先保留上面的稳定语义。
         if response.status_code >= 500:
             raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True)
+        if endpoint == "semantic_search" and data.get("success") is True and code in {"", "200"}:
+            semantic = data.get("data")
+            if not isinstance(semantic, dict) or not isinstance(semantic.get("items"), list):
+                raise AMinerError("unavailable", "AMiner 语义检索返回了无效数据")
+            cursor = semantic.get("next_cursor")
+            if cursor is not None and (not isinstance(cursor, str) or not 16 <= len(cursor) <= 256):
+                raise AMinerError("unavailable", "AMiner 语义检索返回了无效游标")
+            total = semantic.get("total")
+            return {
+                **data,
+                "data": semantic["items"],
+                "next_cursor": cursor,
+                "total": total.get("value") if isinstance(total, dict) else total,
+                "total_relation": total.get("relation") if isinstance(total, dict) else None,
+                "warnings": semantic.get("warnings", []),
+            }
         if data.get("success") is True and code == "200" and "data" in data and data["data"] is None:
             # 实际服务在无命中时返回 data:null，不应把空结果熔断成供应商故障。
             data["data"] = []
@@ -108,16 +132,16 @@ class AMinerClient:
 
 def normalize_paper(item: dict[str, Any], *, retrieved_at: str | None = None) -> dict[str, Any]:
     """保留真实题录与摘要层级，不将搜索命中包装成全文证据。"""
-    paper_id = str(item.get("id") or item.get("_id") or "")
+    paper_id = str(item.get("id") or item.get("_id") or item.get("paper_id") or "")
     doi = str(item.get("doi") or "").strip()
     for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
         if doi.lower().startswith(prefix):
             doi = doi[len(prefix) :].strip()
             break
     abstract = item.get("abstract") or item.get("abstract_zh") or ""
-    abstract = abstract if isinstance(abstract, str) else ""
+    abstract = abstract.strip() if isinstance(abstract, str) else ""
     partial = item.get("abstract_slice") or ""
-    partial = partial if isinstance(partial, str) else ""
+    partial = partial.strip() if isinstance(partial, str) else ""
     content = abstract or partial
     authors = item.get("authors") or []
     authors = authors if isinstance(authors, list) else []
@@ -168,6 +192,11 @@ def deduplicate_papers(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
         records = [groups[index][0] for index in matches] + [paper]
         best = max(records, key=lambda record: levels[record["content_level"]])
         combined = dict(best)
+        matched_queries = list(
+            dict.fromkeys(query for record in records for query in record.get("matched_queries", []))
+        )
+        if matched_queries:
+            combined["matched_queries"] = matched_queries
         for field in ("doi", "id", "authors", "year", "venue", "title_zh", "citation_bucket"):
             if not combined.get(field):
                 combined[field] = next((record[field] for record in records if record.get(field)), combined.get(field))

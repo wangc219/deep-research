@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections import deque
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
 from threading import Condition
 from time import monotonic
-from typing import Any, Iterator
+from typing import Any
 
 from equipment_deep_research.domain.capability_portrait import (
     S6_DEFAULT_CODEX_CONCURRENCY,
@@ -99,6 +100,7 @@ class AdaptiveCallGate:
         self._condition = Condition()
         self._active = 0
         self._priority_waiters = 0
+        self._async_waiters: set[asyncio.Future[None]] = set()
         self._recent: deque[tuple[float, bool]] = deque(maxlen=8)
 
     @contextmanager
@@ -131,6 +133,7 @@ class AdaptiveCallGate:
             finally:
                 if normalized_priority == "critical":
                     self._priority_waiters = max(0, self._priority_waiters - 1)
+                    self._notify_waiters()
 
     def try_acquire(self, *, priority: str = "normal") -> CallLease | None:
         normalized_priority = _normalize_priority(priority)
@@ -145,12 +148,44 @@ class AdaptiveCallGate:
                 priority=normalized_priority,
             )
 
+    async def acquire_async(self, *, priority: str = "normal") -> CallLease:
+        """异步等待槽位，避免排队调用占满模型计量和文件 I/O 共用的线程池。"""
+        queued_at = monotonic()
+        loop = asyncio.get_running_loop()
+        normalized_priority = _normalize_priority(priority)
+        with self._condition:
+            if normalized_priority == "critical":
+                self._priority_waiters += 1
+        try:
+            while True:
+                notified = loop.create_future()
+                with self._condition:
+                    if self._can_acquire(normalized_priority):
+                        self._active += 1
+                        return CallLease(
+                            queue_wait_seconds=round(monotonic() - queued_at, 3),
+                            concurrency_limit=self.limit,
+                            active_calls=self._active,
+                            priority=normalized_priority,
+                        )
+                    self._async_waiters.add(notified)
+                try:
+                    await notified
+                finally:
+                    with self._condition:
+                        self._async_waiters.discard(notified)
+        finally:
+            with self._condition:
+                if normalized_priority == "critical":
+                    self._priority_waiters = max(0, self._priority_waiters - 1)
+                self._notify_waiters()
+
     def release(self, elapsed: float, *, success: bool) -> None:
         with self._condition:
             self._active = max(0, self._active - 1)
             self._recent.append((elapsed, success))
             self._retune()
-            self._condition.notify_all()
+            self._notify_waiters()
 
     def snapshot(self) -> dict[str, Any]:
         with self._condition:
@@ -164,6 +199,7 @@ class AdaptiveCallGate:
                 "active": self._active,
                 "reserved_priority_slots": self.reserved_priority_slots,
                 "priority_waiters": self._priority_waiters,
+                "async_waiters": len(self._async_waiters),
                 "recent_calls": len(self._recent),
                 "latency_downshift_enabled": self.latency_downshift_enabled,
             }
@@ -182,7 +218,25 @@ class AdaptiveCallGate:
                 self.reserved_priority_slots,
                 max(0, self.limit - 1),
             )
-            self._condition.notify_all()
+            self._notify_waiters()
+
+    def _notify_waiters(self) -> None:
+        """在持锁时同时唤醒线程与各事件循环，注册和释放之间不会丢失通知。"""
+        self._condition.notify_all()
+        pending = tuple(self._async_waiters)
+        self._async_waiters.clear()
+        for future in pending:
+            try:
+                future.get_loop().call_soon_threadsafe(self._resolve_waiter, future)
+            except RuntimeError:
+                # 已关闭的事件循环无法继续调用，不应阻止其他循环释放槽位。
+                continue
+
+    @staticmethod
+    def _resolve_waiter(future: asyncio.Future[None]) -> None:
+        """仅在 Future 所属循环完成通知，兼容通知前已经取消的任务。"""
+        if not future.done():
+            future.set_result(None)
 
     def cap_concurrency(self, maximum: int) -> None:
         """Backward-compatible alias for per-run concurrency configuration."""

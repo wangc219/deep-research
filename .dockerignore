@@ -51,3 +51,18 @@ web/.env.*
 !web/.env.example
 
 **/*.egg-info/
+
+# 研究素材、临时产物与参考仓库不参与平台镜像构建。
+.tmp/
+.tmp-*/
+reference/
+projects/
+artifacts/
+output/
+report/
+.git/
+.DS_Store
+**/.DS_Store
+
+# 桌面程序由多阶段构建生成，不把宿主机二进制送入构建上下文。
+backend/video_collector/bin/

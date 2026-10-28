@@ -25,16 +25,19 @@ async def test_health_endpoint_is_public(test_client):
     assert response.json()["status"] == "ok"
 
 
-async def test_logs_endpoint_returns_only_api_process_log(test_client, admin_headers):
+async def test_logs_endpoint_returns_only_api_process_log(test_client, admin_headers, tmp_path):
     """管理员日志接口应明确读取当前 API 进程拥有的日志文件。"""
-    from platform_core.utils.logging_config import LOG_FILE
+    current_logs = await test_client.get("/api/system/logs?levels=INFO", headers=admin_headers)
+    assert current_logs.status_code == 200, current_logs.text
+    api_log_file = current_logs.json()["log_file"]
 
     api_marker = f"api-log-contract-{uuid4()}"
     worker_marker = f"worker-log-contract-{uuid4()}"
     legacy_marker = f"legacy-shared-log-contract-{uuid4()}"
-    log_path = Path(LOG_FILE)
+    log_path = Path(api_log_file)
     worker_log_path = get_runtime_dir().parent / "worker" / "logs" / log_path.name
-    legacy_log_path = get_legacy_storage_dir() / "logs" / log_path.name
+    # 生产 API 无旧广域目录的写权限，负控样本仅在测试私有目录中创建。
+    legacy_log_path = tmp_path / "legacy-saves" / "logs" / log_path.name
     worker_log_original = worker_log_path.read_bytes() if worker_log_path.exists() else None
     legacy_log_original = legacy_log_path.read_bytes() if legacy_log_path.exists() else None
 
@@ -56,7 +59,7 @@ async def test_logs_endpoint_returns_only_api_process_log(test_client, admin_hea
         assert response.status_code == 200, response.text
         payload = response.json()
         assert payload["scope"] == "api"
-        assert payload["log_file"] == LOG_FILE
+        assert payload["log_file"] == api_log_file
         assert api_marker in payload["log"]
         assert worker_marker not in payload["log"]
         assert legacy_marker not in payload["log"]

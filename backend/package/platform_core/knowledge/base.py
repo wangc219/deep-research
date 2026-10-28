@@ -54,6 +54,14 @@ class KBNameConflictError(KnowledgeBaseException):
     pass
 
 
+class KBIndexNotReadyError(KnowledgeBaseException):
+    """知识库向量索引与 PostgreSQL 分块事实不一致。"""
+
+    def __init__(self, message: str, health: dict[str, Any]):
+        super().__init__(message)
+        self.health = health
+
+
 class KnowledgeBase(ABC):
     """知识库抽象基类，定义统一接口"""
 
@@ -634,6 +642,9 @@ class KnowledgeBase(ABC):
                 metadata.setdefault("score", chunk.get("score"))
             if chunk.get("distance") is not None:
                 metadata.setdefault("distance", chunk.get("distance"))
+            for key in ("rerank_score", "rerank_status", "rerank_error_type"):
+                if chunk.get(key) is not None:
+                    metadata[key] = chunk[key]
 
             results.append(
                 SearchResultSchema(

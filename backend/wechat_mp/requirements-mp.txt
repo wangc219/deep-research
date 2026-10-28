@@ -1,0 +1,18 @@
+# 公众号 + RSS 独立服务的运行时依赖
+#
+# 由 AST 扫描 backend/{auth,accounts,articles,account_pool,proxy,rss_scheduler,
+# rss_feed,downloader,weread_signer,config,runtime}.py 得出，只保留真正用到的：
+#   flask / flask_cors / requests / bs4 / playwright / certifi
+#
+# 平台镜像安装 playwright 和 Chromium，支持 PDF 导出。
+#
+# 相比根目录的 requirements.txt，去掉了：curl_cffi、cryptography、scrapling、
+# pywebview、pythonnet、pyobjc、xhshow、pyyaml、httpx、mitmproxy。
+# 这些都是抖音/快手/小红书/B站/视频号/桌面壳才需要的。
+
+flask>=3.0
+flask-cors>=4.0
+requests[socks]>=2.31
+beautifulsoup4>=4.12
+playwright>=1.40
+certifi

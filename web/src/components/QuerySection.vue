@@ -10,10 +10,13 @@
               placeholder="输入查询内容..."
               :auto-size="{ minRows: 2, maxRows: 6 }"
               class="search-textarea"
+              :disabled="disabled"
               @press-enter.prevent="onQuery"
             />
             <div class="search-actions">
-              <span class="query-hint">Enter 检索知识库内容</span>
+              <span class="query-hint">{{
+                disabled ? disabledReason : 'Enter 检索知识库内容'
+              }}</span>
               <div style="display: flex; gap: 12px; align-items: center">
                 <a-tooltip :title="showRawData ? '切换至格式化显示' : '切换至原始数据'">
                   <a-button
@@ -31,7 +34,7 @@
                   :loading="searchLoading"
                   class="search-button"
                   type="primary"
-                  :disabled="!queryText.trim()"
+                  :disabled="disabled || !queryText.trim()"
                   :icon="h(SearchOutlined)"
                   shape="circle"
                 />
@@ -69,13 +72,20 @@
                     清空
                   </a-button>
                 </div>
+                <a-alert
+                  v-if="hasRerankDegradation"
+                  type="warning"
+                  show-icon
+                  message="重排服务暂不可用，本次保留原检索排序。"
+                  class="rerank-warning"
+                />
                 <div v-for="(chunk, index) in queryResult" :key="index" class="result-item">
                   <div class="result-header">
                     <span class="result-index">#{{ index + 1 }}</span>
-                    <span v-if="chunk.score" class="result-score">
+                    <span v-if="Number.isFinite(chunk.score)" class="result-score">
                       相似度: {{ (chunk.score * 100).toFixed(2) }}%
                     </span>
-                    <span v-if="chunk.rerank_score" class="result-rerank-score">
+                    <span v-if="Number.isFinite(chunk.rerank_score)" class="result-rerank-score">
                       重排序分数: {{ (chunk.rerank_score * 100).toFixed(2) }}%
                     </span>
                   </div>
@@ -165,7 +175,7 @@ import { Braces, RefreshCw } from '@lucide/vue'
 const store = useDatabaseStore()
 const MAX_VISIBLE_EXAMPLES = 10
 
-defineProps({
+const props = defineProps({
   visible: {
     type: Boolean,
     default: true
@@ -173,6 +183,14 @@ defineProps({
   style: {
     type: Object,
     default: () => ({})
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  disabledReason: {
+    type: String,
+    default: '当前知识库尚未具备检索条件'
   }
 })
 
@@ -181,6 +199,11 @@ defineEmits(['toggleVisible'])
 
 const searchLoading = computed(() => store.state.searchLoading)
 const queryResult = ref('')
+const hasRerankDegradation = computed(
+  () =>
+    Array.isArray(queryResult.value) &&
+    queryResult.value.some((chunk) => chunk.rerank_status === 'degraded')
+)
 const showRawData = ref(false)
 const showQuerySuggestions = computed(() => !searchLoading.value && !queryResult.value)
 
@@ -304,6 +327,10 @@ watch(
 )
 
 const onQuery = async () => {
+  if (props.disabled) {
+    message.warning(props.disabledReason)
+    return
+  }
   if (!queryText.value.trim()) {
     message.error('请输入查询内容')
     return
@@ -352,6 +379,10 @@ defineExpose({
 </script>
 
 <style scoped lang="less">
+.rerank-warning {
+  margin-bottom: 12px;
+}
+
 .query-section {
   height: 100%;
   display: flex;

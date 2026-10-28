@@ -12,10 +12,22 @@
       <template #info>
         <span class="header-context">
           {{ activeTab === 'overview' ? '系统运行与资源使用' : '会话趋势与历史审计' }}
+          <span v-if="lastUpdated && activeTab === 'overview'"> · 更新于 {{ lastUpdated }}</span>
         </span>
       </template>
       <template #actions>
         <div class="dashboard-header-actions">
+          <a-tooltip title="刷新数据，页面每 15 秒自动更新">
+            <button
+              type="button"
+              class="header-action-button"
+              aria-label="刷新数据总览"
+              :disabled="refreshing"
+              @click="refreshDashboard"
+            >
+              <RefreshCw class="header-action-icon" />
+            </button>
+          </a-tooltip>
           <a-tooltip title="系统设置">
             <button
               type="button"
@@ -62,25 +74,21 @@
     />
 
     <!-- Tab 1: 系统概览主要内容区域 -->
-    <div
-      v-if="overviewActivated"
-      v-show="activeTab === 'overview'"
-      class="dashboard-grid"
-    >
+    <div v-if="overviewActivated" v-show="activeTab === 'overview'" class="dashboard-grid">
       <!-- 调用统计模块 - 占据2x1网格 -->
-      <CallStatsComponent :loading="loading" ref="callStatsRef" />
+      <CallStatsComponent :loading="false" ref="callStatsRef" />
 
       <ModelUsageComponent
         class="grid-item model-usage"
         :usage="allStatsData?.modelUsage"
-        :loading="loading"
+        :loading="sectionLoading.modelUsage"
       />
 
       <!-- 用户活跃度分析 - 占据1x1网格 -->
       <div class="grid-item user-stats">
         <UserStatsComponent
           :user-stats="allStatsData?.users"
-          :loading="loading"
+          :loading="sectionLoading.users"
           ref="userStatsRef"
         />
       </div>
@@ -89,7 +97,7 @@
       <div class="grid-item agent-stats">
         <AgentStatsComponent
           :agent-stats="allStatsData?.agents"
-          :loading="loading"
+          :loading="sectionLoading.agents"
           ref="agentStatsRef"
         />
       </div>
@@ -98,7 +106,7 @@
       <div class="grid-item tool-stats">
         <ToolStatsComponent
           :tool-stats="allStatsData?.tools"
-          :loading="loading"
+          :loading="sectionLoading.tools"
           ref="toolStatsRef"
         />
       </div>
@@ -107,7 +115,7 @@
       <div class="grid-item knowledge-stats">
         <KnowledgeStatsComponent
           :knowledge-stats="allStatsData?.knowledge"
-          :loading="loading"
+          :loading="sectionLoading.knowledge"
           ref="knowledgeStatsRef"
         />
       </div>
@@ -124,10 +132,22 @@
 </template>
 
 <script setup>
-import { computed, inject, ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  inject,
+  reactive,
+  ref,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  watch
+} from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
+import { RefreshCw } from '@lucide/vue'
 import { dashboardApi } from '@/apis/dashboard_api'
 import { useTaskerStore } from '@/stores/tasker'
 import { useThemeStore } from '@/stores/theme'
@@ -144,7 +164,9 @@ import CallStatsComponent from '@/components/dashboard/CallStatsComponent.vue'
 import ModelUsageComponent from '@/components/dashboard/ModelUsageComponent.vue'
 import StatsOverviewComponent from '@/components/dashboard/StatsOverviewComponent.vue'
 import FeedbackModalComponent from '@/components/dashboard/FeedbackModalComponent.vue'
-import ThreadStatsComponent from '@/components/dashboard/ThreadStatsComponent.vue'
+const ThreadStatsComponent = defineAsyncComponent(
+  () => import('@/components/dashboard/ThreadStatsComponent.vue')
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -178,6 +200,16 @@ const allStatsData = ref({
 
 const loading = ref(false)
 const overviewLoaded = ref(false)
+const refreshing = ref(false)
+const lastUpdated = ref('')
+const sectionLoading = reactive({
+  basic: true,
+  users: true,
+  tools: true,
+  knowledge: true,
+  agents: true,
+  modelUsage: true
+})
 
 // 子组件引用
 const callStatsRef = ref(null)
@@ -187,43 +219,51 @@ const knowledgeStatsRef = ref(null)
 const agentStatsRef = ref(null)
 const threadStatsRef = ref(null)
 
-// 加载概览统计数据
-const loadAllStats = async () => {
-  if (overviewLoaded.value) return
-  loading.value = true
+// 各卡片独立展示，后续刷新保留已有内容。
+const loadAllStats = async ({ silent = false } = {}) => {
+  if (refreshing.value) return
+  refreshing.value = true
+  if (!silent && !overviewLoaded.value) loading.value = true
   try {
-    const response = await dashboardApi.getAllStats()
-
-    basicStats.value = response.basic
-    allStatsData.value = {
-      users: response.users,
-      tools: response.tools,
-      knowledge: response.knowledge,
-      agents: response.agents,
-      modelUsage: response.modelUsage
+    const response = await dashboardApi.getAllStats({
+      onSection: (name, value, error) => {
+        if (!error) {
+          if (name === 'basic') basicStats.value = value
+          else allStatsData.value[name] = value
+        }
+        sectionLoading[name] = false
+      }
+    })
+    if (response.errors.length) {
+      if (!silent) message.warning('部分统计暂不可用，其他数据已显示，将自动重试')
+    } else {
+      lastUpdated.value = new Date().toLocaleTimeString('zh-CN', { hour12: false })
     }
     overviewLoaded.value = true
-  } catch (error) {
-    console.error('加载统计数据失败:', error)
-    try {
-      const basicResponse = await dashboardApi.getStats()
-      basicStats.value = basicResponse
-      overviewLoaded.value = true
-      message.warning('详细统计暂不可用，当前仅显示基础指标')
-    } catch (basicError) {
-      console.error('加载基础统计数据失败:', basicError)
-      message.error('无法加载统计数据')
-    }
   } finally {
+    refreshing.value = false
     loading.value = false
   }
 }
+
+const refreshDashboard = async () => {
+  if (activeTab.value === 'overview') {
+    await Promise.all([
+      loadAllStats({ silent: overviewLoaded.value }),
+      callStatsRef.value?.refresh?.()
+    ])
+  } else {
+    await threadStatsRef.value?.refresh?.()
+  }
+}
+useLiveRefresh(refreshDashboard)
 
 // 切换 Tab 处理
 const handleTabChange = async ({ key }) => {
   if (key === 'overview') {
     overviewActivated.value = true
-    await loadAllStats()
+    if (!overviewLoaded.value) await loadAllStats()
+    else await refreshDashboard()
     await nextTick()
     if (userStatsRef.value?.updateCharts) userStatsRef.value.updateCharts()
     if (toolStatsRef.value?.updateCharts) toolStatsRef.value.updateCharts()

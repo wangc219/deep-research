@@ -112,6 +112,7 @@ import {
 
 const props = defineProps({
   stats: { type: Object, default: () => ({}) },
+  indexHealth: { type: Object, default: null },
   canManage: { type: Boolean, default: false },
   busy: { type: Boolean, default: false },
   chunkStrategy: { type: String, default: '默认分块策略' },
@@ -121,10 +122,14 @@ const props = defineProps({
   permissionDetail: { type: String, default: '' }
 })
 
-const emit = defineEmits(['upload', 'parse', 'index', 'navigate', 'configure'])
+const emit = defineEmits(['upload', 'parse', 'index', 'rebuild', 'navigate', 'configure'])
 
 const count = (key) => Math.max(Number(props.stats?.[key] || 0), 0)
 const formatCount = (value) => Number(value || 0).toLocaleString('zh-CN')
+const indexHealthIssue = computed(() =>
+  ['missing', 'incomplete', 'stale', 'unavailable'].includes(props.indexHealth?.status)
+)
+const indexSearchable = computed(() => props.indexHealth?.searchable === true)
 
 const health = computed(() => {
   if (count('processing_count') > 0) {
@@ -132,6 +137,13 @@ const health = computed(() => {
       tone: 'running',
       label: '处理中',
       description: `${formatCount(count('processing_count'))} 个文档正在后台处理，完成后会自动刷新。`
+    }
+  }
+  if (indexHealthIssue.value) {
+    return {
+      tone: 'warning',
+      label: '索引异常',
+      description: props.indexHealth?.message || '向量索引状态异常，请检查后重建。'
     }
   }
   if (count('failed_count') > 0) {
@@ -148,7 +160,7 @@ const health = computed(() => {
       description: '仍有文档等待解析或入库，完成后才能稳定参与检索。'
     }
   }
-  if (count('indexed_count') > 0) {
+  if (count('indexed_count') > 0 && indexSearchable.value) {
     return {
       tone: 'ready',
       label: '可检索',
@@ -164,6 +176,9 @@ const health = computed(() => {
 
 const primaryAction = computed(() => {
   if (!props.canManage || count('processing_count') > 0) return null
+  if (indexHealthIssue.value) {
+    return { event: 'rebuild', label: '重建向量索引', icon: Database }
+  }
   if (count('pending_parse_count') > 0) {
     return { event: 'parse', label: `解析 ${formatCount(count('pending_parse_count'))} 个文档`, icon: FileSearch }
   }
@@ -185,6 +200,10 @@ const pipelineSteps = computed(() => {
   const pendingIndex = count('pending_index_count')
   const processing = count('processing_count')
   const indexed = count('indexed_count')
+  const expectedVectors = Number(props.indexHealth?.expected_chunk_count)
+  const actualVectors = Number(props.indexHealth?.vector_count)
+  const hasVectorCounts = Number.isFinite(expectedVectors) && Number.isFinite(actualVectors)
+  const indexReady = indexed > 0 && indexSearchable.value
 
   return [
     {
@@ -206,26 +225,40 @@ const pipelineSteps = computed(() => {
     {
       key: 'index',
       label: '向量入库',
-      value: `${formatCount(indexed)} 个已入库`,
-      hint: pendingIndex ? `${formatCount(pendingIndex)} 个等待建立索引` : indexed ? '向量索引可参与召回' : '等待完成解析',
-      state: processing ? 'running' : indexed && !pendingIndex ? 'done' : 'pending',
-      action: props.canManage && pendingIndex ? { event: 'index', label: '开始入库' } : null
+      value:
+        indexHealthIssue.value && hasVectorCounts
+          ? `${formatCount(actualVectors)} / ${formatCount(expectedVectors)} 个向量`
+          : `${formatCount(indexed)} 个已入库`,
+      hint: indexHealthIssue.value
+        ? props.indexHealth?.message
+        : pendingIndex
+          ? `${formatCount(pendingIndex)} 个等待建立索引`
+          : indexReady
+            ? '向量索引可参与召回'
+            : '等待完成解析',
+      state: processing ? 'running' : indexReady && !pendingIndex ? 'done' : 'pending',
+      action:
+        props.canManage && indexHealthIssue.value
+          ? { event: 'rebuild', label: '重建索引' }
+          : props.canManage && pendingIndex
+            ? { event: 'index', label: '开始入库' }
+            : null
     },
     {
       key: 'verify',
       label: '检索验证',
-      value: indexed ? '可开始验证' : '尚未就绪',
+      value: indexReady ? '可开始验证' : '尚未就绪',
       hint: '检查召回片段、相似度与重排序效果',
-      state: indexed ? 'ready' : 'pending',
-      action: indexed ? { event: 'navigate', label: '测试检索', tab: 'query' } : null
+      state: indexReady ? 'ready' : 'pending',
+      action: indexReady ? { event: 'navigate', label: '测试检索', tab: 'query' } : null
     },
     {
       key: 'evaluate',
       label: '持续评估',
-      value: indexed ? '建立评估基线' : '等待索引',
+      value: indexReady ? '建立评估基线' : '等待索引',
       hint: '用问答集量化召回与回答质量',
-      state: indexed ? 'ready' : 'pending',
-      action: props.canManage && indexed
+      state: indexReady ? 'ready' : 'pending',
+      action: props.canManage && indexReady
         ? { event: 'navigate', label: '进入评估', tab: 'evaluation' }
         : null
     }

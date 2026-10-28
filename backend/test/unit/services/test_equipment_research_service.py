@@ -12,6 +12,27 @@ from platform_core.services import equipment_research_service as service
 from platform_core.storage.postgres.models_equipment import EquipmentResearchRun
 
 
+def test_capability_delivery_projection_removes_legacy_authoring_narration() -> None:
+    decision = "将照明状态监测转为连续自主感知，并耦合到灾时疏散引导。"
+    projected = service._normalize_capability_delivery_payload(
+        {
+            "capability_portrait_modules": {
+                "overview": (
+                    "当前背景：人工巡检存在维护盲区。"
+                    "解决思路：用自主节点连续感知照明状态。"
+                    f"达到效果：由solution_thesis与core_innovation_thesis直接推出——{decision}"
+                    "核心创新：改变疏散路径固定不变的前提。"
+                )
+            }
+        }
+    )
+
+    overview = projected["capability_portrait_modules"]["overview"]
+    assert "solution_thesis" not in overview
+    assert "core_innovation_thesis" not in overview
+    assert decision in overview
+
+
 @pytest.mark.asyncio
 async def test_owner_can_mutate_imported_historical_run() -> None:
     run = EquipmentResearchRun(
@@ -274,7 +295,10 @@ async def test_report_missing_returns_404(monkeypatch, tmp_path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_capabilities_projects_legacy_s6_artifacts(monkeypatch, tmp_path) -> None:
+@pytest.mark.parametrize("run_status,capability_count", [("completed", 2), ("reporting", 0), ("planning", 0)])
+async def test_list_capabilities_projects_legacy_s6_artifacts(
+    monkeypatch, tmp_path, run_status, capability_count
+) -> None:
     run_id = "legacy-s6-run"
     run_root = tmp_path / run_id
     run_root.mkdir()
@@ -297,8 +321,9 @@ async def test_list_capabilities_projects_legacy_s6_artifacts(monkeypatch, tmp_p
         id=run_id,
         project_id="project-1",
         owner_uid="owner",
+        status=run_status,
         payload={},
-        to_dict=lambda: {"artifact_counts": {"capabilities": 2}},
+        to_dict=lambda: {"artifact_counts": {"capabilities": capability_count}},
     )
     repository = SimpleNamespace(
         list_capability_versions=AsyncMock(return_value=[]),
@@ -982,7 +1007,7 @@ async def test_create_deep_session_snapshots_parent_query(monkeypatch) -> None:
     project = SimpleNamespace(id="project-1", uid="owner", status="active")
     run = SimpleNamespace(
         id="run-1",
-        project_id=project.id,
+        project_id="query-source-project",
         owner_uid="owner",
         topic="母任务 Query",
         payload={"supplemental_information": "背景与约束"},
@@ -1044,6 +1069,8 @@ async def test_create_deep_session_snapshots_parent_query(monkeypatch) -> None:
     )
 
     created = repository.add_deep_session.await_args.args[0]
+    assert created.project_id == project.id
+    assert created.run_id == run.id
     assert created.payload["query_snapshot"] == ["母任务 Query", "背景与约束"]
     assert created.payload["topic"] == "母任务 Query"
     assert created.payload["source_feedback_id"] == feedback.id
@@ -1054,6 +1081,38 @@ async def test_create_deep_session_snapshots_parent_query(monkeypatch) -> None:
         user=owner,
         requested_slug="weapon-equipment-scheme",
     )
+
+
+@pytest.mark.asyncio
+async def test_create_deep_session_rejects_query_owned_by_another_user(monkeypatch) -> None:
+    project = SimpleNamespace(id="deep-workspace", uid="owner", status="active")
+    run = SimpleNamespace(
+        id="run-1",
+        project_id="query-source-project",
+        owner_uid="another-user",
+        topic="其他用户的 Query",
+        payload={},
+    )
+    owner = SimpleNamespace(uid="owner", role="user")
+
+    monkeypatch.setattr(service, "_require_project", AsyncMock(return_value=project))
+    monkeypatch.setattr(service, "_require_run", AsyncMock(return_value=run))
+    monkeypatch.setattr(service, "_deep_execution_user", AsyncMock(return_value=owner))
+    monkeypatch.setattr(
+        service,
+        "_resolve_requested_model",
+        AsyncMock(return_value={"model_spec": "provider:model"}),
+    )
+
+    with pytest.raises(HTTPException, match="不属于同一用户") as exc_info:
+        await service.create_deep_session(
+            db=SimpleNamespace(),
+            user=owner,
+            project_id=project.id,
+            run_id=run.id,
+        )
+
+    assert exc_info.value.status_code == 422
 
 
 @pytest.mark.asyncio

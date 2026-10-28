@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from urllib.parse import urlparse
 
@@ -258,9 +258,7 @@ def create_source_record_tool(
             "url_or_path": args.get("url_or_path", ""),
             "summary_text": args.get("summary_text"),
             "summary_source": args.get("summary_source", "model_generated"),
-            "collection_decision": args.get(
-                "collection_decision", "use_as_signal_only"
-            ),
+            "collection_decision": args.get("collection_decision", "use_as_signal_only"),
             "author_or_org": args.get("author_or_org"),
             "is_repost": args.get("is_repost"),
             "original_source": args.get("original_source"),
@@ -313,9 +311,7 @@ def create_source_record_tool(
             call.name,
             f"recorded source {source_id}",
             {"source_id": source_id},
-            domain_proposals=[
-                DomainWriteProposal("upsert", "SourceRecord", payload)
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "SourceRecord", payload)],
             trace_proposals=[
                 DomainTraceProposal(
                     event_type="source_seen",
@@ -405,9 +401,7 @@ def create_evidence_card_tool(
             call.name,
             f"created evidence card {evidence_id}",
             {"evidence_id": evidence_id, "source_id": source_id},
-            domain_proposals=[
-                DomainWriteProposal("upsert", "EvidenceCard", payload)
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "EvidenceCard", payload)],
             trace_proposals=[
                 DomainTraceProposal(
                     event_type="evidence_created",
@@ -432,8 +426,7 @@ def create_evidence_card_tool(
                 "evidence_summary": _string("Short evidence summary."),
                 "excerpt": _string("Short quoted or paraphrased excerpt."),
                 "source_location": _string(
-                    "For fetched pages, use the exact '<simplified_ref>#para:<index>' "
-                    "location shown by read_document."
+                    "For fetched pages, use the exact '<simplified_ref>#para:<index>' location shown by read_document."
                 ),
                 "evidence_assessment": _string("Assessment such as strong or weak."),
                 "source_quality_assessment_id": _string("SourceQualityAssessment id for open sources."),
@@ -476,16 +469,8 @@ def create_assess_source_quality_tool(
                 {"quality_level": quality_level},
                 is_error=True,
             )
-        basis_artifact_refs = [
-            str(item).strip()
-            for item in args.get("basis_artifact_refs", [])
-            if str(item).strip()
-        ]
-        body_location_refs = [
-            str(item).strip()
-            for item in args.get("body_location_refs", [])
-            if str(item).strip()
-        ]
+        basis_artifact_refs = [str(item).strip() for item in args.get("basis_artifact_refs", []) if str(item).strip()]
+        body_location_refs = [str(item).strip() for item in args.get("body_location_refs", []) if str(item).strip()]
         assessment = SourceQualityAssessment(
             assessment_id=str(args["assessment_id"]),
             lead_id=lead_id,
@@ -526,9 +511,7 @@ def create_assess_source_quality_tool(
             call.name,
             f"assessed source quality {assessment.assessment_id}: {quality_level}",
             {"assessment_id": assessment.assessment_id, "lead_id": lead_id},
-            domain_proposals=[
-                DomainWriteProposal("upsert", "SourceQualityAssessment", payload)
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "SourceQualityAssessment", payload)],
             trace_proposals=[
                 DomainTraceProposal(
                     event_type="source_quality_assessed",
@@ -650,10 +633,7 @@ def create_or_update_candidate_tool(
                         target_type="CandidateDemand",
                         target_id=candidate_id,
                         payload_summary=f"duplicate checked {candidate_id}",
-                        input_refs=[
-                            item["candidate_id"]
-                            for item in near
-                        ],
+                        input_refs=[item["candidate_id"] for item in near],
                         output_refs=[candidate_id],
                         payload=dedup_result.to_dict(),
                     )
@@ -682,9 +662,7 @@ def create_or_update_candidate_tool(
             call.name,
             content,
             details,
-            domain_proposals=[
-                DomainWriteProposal("upsert", "CandidateDemand", payload)
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "CandidateDemand", payload)],
             trace_proposals=trace_proposals,
         )
 
@@ -698,8 +676,7 @@ def create_or_update_candidate_tool(
                 "title": _string("Short candidate title."),
                 "demand_statement": _string("Demand statement."),
                 "status": _string(
-                    "Candidate lifecycle status. Omit for candidate_demand; "
-                    "proposed is treated as candidate_demand."
+                    "Candidate lifecycle status. Omit for candidate_demand; proposed is treated as candidate_demand."
                 )
                 | {"enum": sorted(STATUSES)},
                 "evidence_ids": _string_array("Evidence ids supporting the candidate."),
@@ -817,9 +794,7 @@ def record_judgement_tool(
             call.name,
             f"recorded judgement {report.judgement_id}",
             {"judgement_id": report.judgement_id, "round_id": report.round_id},
-            domain_proposals=[
-                DomainWriteProposal("upsert", "JudgementReport", report.to_dict())
-            ],
+            domain_proposals=[DomainWriteProposal("upsert", "JudgementReport", report.to_dict())],
             trace_proposals=[
                 DomainTraceProposal(
                     event_type="judgement_recorded",
@@ -851,9 +826,7 @@ def record_judgement_tool(
                 "One judgement item statement. Do not use point, issue, "
                 "blind_spot, area, insight, details, impact, or limitation."
             ),
-            "worker_report_ids": _string_array(
-                "Worker report ids that support or produced this item."
-            ),
+            "worker_report_ids": _string_array("Worker report ids that support or produced this item."),
             "evidence_ids": _string_array("Evidence ids supporting this item."),
             "lead_ids": _string_array("Lead ids supporting this item."),
         },
@@ -1072,13 +1045,11 @@ def run_audit_tool(
         evidence_update_proposals: list[DomainWriteProposal] = []
         evidence_update_traces: list[DomainTraceProposal] = []
         if domain_store is not None:
-            evidence_update_proposals, evidence_update_traces = (
-                _reviewed_evidence_update_proposals(
-                    domain_store,
-                    candidate_id=candidate_id,
-                    audit_id=audit_id,
-                    scorecard=scorecard,
-                )
+            evidence_update_proposals, evidence_update_traces = _reviewed_evidence_update_proposals(
+                domain_store,
+                candidate_id=candidate_id,
+                audit_id=audit_id,
+                scorecard=scorecard,
             )
         return ToolResult(
             call.id,
@@ -1149,9 +1120,7 @@ def generate_demand_report_tool(
                     is_error=True,
                 )
             if report_context_bundle_id:
-                bundle = domain_store.report_context_bundles.get(
-                    report_context_bundle_id
-                )
+                bundle = domain_store.report_context_bundles.get(report_context_bundle_id)
                 if bundle is None:
                     return ToolResult(
                         call.id,
@@ -1199,9 +1168,7 @@ def generate_demand_report_tool(
                     sections=sections,
                     demand_type=demand_type,
                     evidence_ids=evidence_ids,
-                    related_technical_directions=list(
-                        args.get("related_technical_directions", [])
-                    ),
+                    related_technical_directions=list(args.get("related_technical_directions", [])),
                     solution_clues=list(args.get("solution_clues", [])),
                 )
             except ValueError as exc:
@@ -1241,11 +1208,7 @@ def generate_demand_report_tool(
             "created_at": _now(),
             "review_status": review_status,
         }
-        lineage_refs = (
-            _open_source_lineage_refs(domain_store, evidence_ids)
-            if domain_store is not None
-            else []
-        )
+        lineage_refs = _open_source_lineage_refs(domain_store, evidence_ids) if domain_store is not None else []
         domain_proposals: list[DomainWriteProposal] = []
         trace_proposals: list[DomainTraceProposal] = []
         if domain_store is not None:
@@ -1253,9 +1216,7 @@ def generate_demand_report_tool(
             candidate_payload = candidate.to_dict()
             candidate_payload["status"] = "demand_report"
             candidate_payload["updated_at"] = _now()
-            domain_proposals.append(
-                DomainWriteProposal("upsert", "CandidateDemand", candidate_payload)
-            )
+            domain_proposals.append(DomainWriteProposal("upsert", "CandidateDemand", candidate_payload))
             trace_proposals.append(
                 DomainTraceProposal(
                     event_type="candidate_updated",
@@ -1323,20 +1284,15 @@ def generate_demand_report_tool(
                     "type": "string",
                     "enum": sorted(VALID_DEMAND_TYPES),
                     "description": (
-                        "Use explicit only when a source directly states the "
-                        "same demand; otherwise use inferred."
+                        "Use explicit only when a source directly states the same demand; otherwise use inferred."
                     ),
                 },
-                "related_technical_directions": _string_array(
-                    "Related technical directions."
-                ),
+                "related_technical_directions": _string_array("Related technical directions."),
                 "solution_clues": _string_array("Solution clues."),
                 "evidence_ids": _string_array("Evidence ids cited by the report."),
                 "audit_id": _string("Audit report id."),
                 "domain_trace_ids": _string_array("Domain trace ids to cite."),
-                "report_context_bundle_id": _string(
-                    "Verified ReportContextBundle id used by the reporter."
-                ),
+                "report_context_bundle_id": _string("Verified ReportContextBundle id used by the reporter."),
                 "review_status": _string("Review status from ReportContextBundle."),
             },
         ),
@@ -1376,18 +1332,14 @@ def _dedupe_refs(refs: list[str]) -> list[str]:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _latest_quality_assessment_for_lead(
     domain_store: DomainStore,
     lead_id: str,
 ) -> SourceQualityAssessment | None:
-    assessments = [
-        item
-        for item in domain_store.source_quality_assessments.values()
-        if item.lead_id == lead_id
-    ]
+    assessments = [item for item in domain_store.source_quality_assessments.values() if item.lead_id == lead_id]
     if not assessments:
         return None
     return max(assessments, key=lambda item: item.created_at)
@@ -1397,10 +1349,7 @@ def _report_sections_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "required": list(REQUIRED_SECTIONS),
-        "properties": {
-            section: _string(f"Required report section: {section}.")
-            for section in REQUIRED_SECTIONS
-        },
+        "properties": {section: _string(f"Required report section: {section}.") for section in REQUIRED_SECTIONS},
         "additionalProperties": False,
         "description": "Structured report sections with exact snake_case keys.",
     }
@@ -1466,9 +1415,7 @@ def _scorecard_schema(rubric: AuditRubric | None) -> dict[str, Any]:
             "missing_link",
         ],
         "properties": {
-            "evidence_id": _string(
-                "Optional evidence id; the evidence_reviews object key is authoritative."
-            ),
+            "evidence_id": _string("Optional evidence id; the evidence_reviews object key is authoritative."),
             "support_level": {
                 "type": "string",
                 "enum": [
@@ -1497,9 +1444,7 @@ def _scorecard_schema(rubric: AuditRubric | None) -> dict[str, Any]:
                 "description": "True only when the evidence supports the core conclusion.",
             },
             "reason": _string("One sentence grounded in the excerpt/source location."),
-            "missing_link": _string(
-                "Empty when no link is missing; otherwise name the missing inference or evidence."
-            ),
+            "missing_link": _string("Empty when no link is missing; otherwise name the missing inference or evidence."),
         },
         "additionalProperties": False,
     }
@@ -1521,9 +1466,7 @@ def _scorecard_schema(rubric: AuditRubric | None) -> dict[str, Any]:
                 "enum": ["review_ready", "needs_revision", "watchlist", "rejected"],
                 "description": "Auditor recommendation for downstream report gate status.",
             },
-            "status_reason": _string(
-                "Reason for the recommended downstream report status."
-            ),
+            "status_reason": _string("Reason for the recommended downstream report status."),
             "recheck_conditions": _string_array(
                 "Concrete conditions that would justify rechecking a watchlist report."
             ),

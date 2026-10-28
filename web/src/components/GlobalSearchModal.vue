@@ -6,7 +6,7 @@
           class="global-search-modal"
           role="dialog"
           aria-modal="true"
-          :aria-label="activeMode === 'file' ? '搜索文件' : '搜索对话'"
+          :aria-label="activeMode === 'file' ? '搜索文件或文件夹' : '搜索对话'"
           @keydown.down.prevent="moveSelection(1)"
           @keydown.up.prevent="moveSelection(-1)"
           @keydown.enter.prevent="confirmSelection"
@@ -20,7 +20,7 @@
               type="text"
               :placeholder="inputPlaceholder"
               autocomplete="off"
-              :aria-label="activeMode === 'file' ? '搜索文件' : '搜索对话'"
+              :aria-label="activeMode === 'file' ? '搜索文件或文件夹' : '搜索对话'"
             />
             <button type="button" class="global-search-close" aria-label="关闭" @click="close">
               <X :size="20" />
@@ -70,7 +70,12 @@
                 @mouseenter="selectedIndex = index"
                 @click="selectFileResult(item)"
               >
-                <FileTypeIcon :name="item.name" :size="18" class="result-icon" />
+                <FileTypeIcon
+                  :name="item.name"
+                  :is-dir="item.is_dir"
+                  :size="18"
+                  class="result-icon"
+                />
                 <span class="result-main">
                   <span class="result-title">
                     <template v-for="(part, partIndex) in splitName(item)" :key="partIndex">
@@ -86,7 +91,9 @@
 
             <div v-else-if="fileSearchError" class="global-search-error">{{ fileSearchError }}</div>
 
-            <div v-else-if="!isSearching" class="global-search-empty">未找到相关文件</div>
+            <div v-else-if="!isSearching" class="global-search-empty">
+              未找到相关文件或文件夹
+            </div>
           </div>
 
           <div
@@ -212,7 +219,7 @@ const props = defineProps({
   },
   filePlaceholder: {
     type: String,
-    default: '搜索文件...'
+    default: '搜索文件或文件夹...'
   }
 })
 

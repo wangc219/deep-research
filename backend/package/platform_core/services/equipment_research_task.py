@@ -6,7 +6,9 @@ import asyncio
 import hashlib
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
+from queue import Empty, SimpleQueue
 from typing import Any
 
 from platform_core.config import get_int_env
@@ -88,21 +90,43 @@ def aggregate_model_usage(
     }
 
 
-async def _append(run_id: str, event_type: str, payload: dict[str, Any]) -> None:
-    async with pg_manager.get_async_session_context() as session:
-        repo = EquipmentResearchRepository(session)
-        run = await repo.lock_run(run_id)
-        if run is None or run.status in {"completed", "cancelled", "failed", "archived"}:
-            return
-        event = await repo.append_event(run_id, event_type, payload)
-        run.updated_at = utc_now_naive()
-    client = await get_async_redis_client()
-    await client.xadd(
-        f"equipment:events:{run_id}",
-        {"payload": json.dumps(event.to_dict(), ensure_ascii=False)},
-        maxlen=5000,
-        approximate=True,
-    )
+async def _append_events(run_id: str, events: list[tuple[str, dict[str, Any]]]) -> None:
+    """每批共用一个数据库事务，提交后按序发布 Redis 通知。"""
+    for offset in range(0, len(events), 100):
+        async with pg_manager.get_async_session_context() as session:
+            repo = EquipmentResearchRepository(session)
+            run = await repo.lock_run(run_id)
+            if run is None or run.status in {"completed", "cancelled", "failed", "archived"}:
+                return
+            rows = await repo.append_events(run_id, events[offset : offset + 100])
+            phases = {
+                "run_started": "researching",
+                "baseline_agents_summarized": "synthesizing",
+                "discovery_convergence_completed": "synthesizing",
+                "winning_model_call_started": "synthesizing",
+                "winning_swarm_started": "synthesizing",
+                "audit_completed": "reviewing",
+                "report_model_call_started": "reporting",
+            }
+            order = ["planning", "researching", "recalling", "synthesizing", "reviewing", "reporting"]
+            if run.status in order:
+                for event_type, envelope in events[offset : offset + 100]:
+                    event = envelope.get("event") if isinstance(envelope.get("event"), dict) else envelope
+                    phase = phases.get(str(event.get("event_type") or event_type))
+                    if phase and order.index(phase) > order.index(run.status):
+                        run.status = phase
+            messages = [json.dumps(event.to_dict(), ensure_ascii=False) for event in rows]
+            run.updated_at = utc_now_naive()
+        client = await get_async_redis_client()
+        async with client.pipeline(transaction=False) as pipeline:
+            for message in messages:
+                pipeline.xadd(
+                    f"equipment:events:{run_id}",
+                    {"payload": message},
+                    maxlen=5000,
+                    approximate=True,
+                )
+            await pipeline.execute()
 
 
 async def _set_status(run_id: str, status: str, **extra: Any) -> EquipmentResearchRun | None:
@@ -180,7 +204,12 @@ def resolve_research_workdir(run: EquipmentResearchRun) -> Path:
         raise
 
 
-def _run_domain(run: EquipmentResearchRun, *, resume: bool = False) -> dict[str, Any]:
+def _run_domain(
+    run: EquipmentResearchRun,
+    *,
+    resume: bool = False,
+    event_sink: Callable[[str, dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
     """在工作线程中调用既有装备研究编排器。"""
     from equipment_deep_research.application.dto import RunView
     from equipment_deep_research.application.factory import build_application_service
@@ -212,13 +241,7 @@ def _run_domain(run: EquipmentResearchRun, *, resume: bool = False) -> dict[str,
     if raw_knowledge_ids is None:
         knowledge_ids = None
     elif isinstance(raw_knowledge_ids, (list, tuple)):
-        knowledge_ids = list(
-            dict.fromkeys(
-                str(value).strip()
-                for value in raw_knowledge_ids
-                if str(value).strip()
-            )
-        )
+        knowledge_ids = list(dict.fromkeys(str(value).strip() for value in raw_knowledge_ids if str(value).strip()))
     else:
         # Persisted payloads predate the typed boundary.  Malformed scope must
         # fail closed instead of silently widening to every visible library.
@@ -241,11 +264,7 @@ def _run_domain(run: EquipmentResearchRun, *, resume: bool = False) -> dict[str,
         supplemental_information=supplemental_information,
         project_id=run.project_id,
         owner_uid=str(run.owner_uid),
-        knowledge_enabled=(
-            raw_knowledge_enabled
-            if isinstance(raw_knowledge_enabled, bool)
-            else False
-        ),
+        knowledge_enabled=(raw_knowledge_enabled if isinstance(raw_knowledge_enabled, bool) else False),
         knowledge_ids=knowledge_ids,
     )
     if service.repository is not None:
@@ -257,6 +276,8 @@ def _run_domain(run: EquipmentResearchRun, *, resume: bool = False) -> dict[str,
 
     def publish_event(event_type: str, event_payload: dict) -> None:
         events.append((event_type, dict(event_payload)))
+        if event_sink is not None:
+            event_sink(event_type, dict(event_payload))
 
     runner = DeepResearchRunner(
         project_root=project_root,
@@ -341,15 +362,35 @@ async def _run_domain_cancellable(
         terminate_run_process_groups,
     )
 
+    pending_events: SimpleQueue = SimpleQueue()
+    streamed_count = 0
+
+    def publish_event(event_type: str, payload: dict[str, Any]) -> None:
+        pending_events.put((event_type, payload))
+
     domain_task = asyncio.create_task(
-        asyncio.to_thread(_run_domain, run, resume=resume),
+        asyncio.to_thread(_run_domain, run, resume=resume, event_sink=publish_event),
         name=f"equipment-research-domain:{run.id}",
     )
     try:
         # Shield prevents cancellation from discarding the only handle to the
         # worker thread.  The handler owns explicit process cleanup below.
-        return await asyncio.shield(domain_task)
-    except asyncio.CancelledError:
+        while True:
+            await asyncio.wait({domain_task}, timeout=0.5)
+            batch = []
+            while len(batch) < 100:
+                try:
+                    batch.append(pending_events.get_nowait())
+                except Empty:
+                    break
+            if batch:
+                await _append_events(run.id, batch)
+                streamed_count += len(batch)
+            if domain_task.done() and pending_events.empty():
+                result = await asyncio.shield(domain_task)
+                # 已流式提交的事件不在完成时重复写入；完整列表仍用于用量聚合。
+                return {**result, "events": (result.get("events") or [])[streamed_count:]}
+    except (asyncio.CancelledError, Exception):
         try:
             grace_seconds = max(
                 0.0,
@@ -371,7 +412,7 @@ async def _run_domain_cancellable(
             grace_seconds=grace_seconds,
         )
         logger.info(
-            "equipment_research cancellation cleanup: run=%s orphan=%s terminated=%s forced=%s",
+            "equipment_research execution cleanup: run=%s orphan=%s terminated=%s forced=%s",
             run.id,
             cleanup.orphan_count,
             cleanup.terminated_count,
@@ -412,10 +453,7 @@ async def _persist_formal_capability_versions(
     for index, raw_snapshot in enumerate(capability_images, start=1):
         snapshot = dict(raw_snapshot)
         binding = str(
-            snapshot.get("card_binding_id")
-            or snapshot.get("capability_id")
-            or snapshot.get("hypothesis_id")
-            or index
+            snapshot.get("card_binding_id") or snapshot.get("capability_id") or snapshot.get("hypothesis_id") or index
         ).strip()
         hypothesis = str(snapshot.get("hypothesis_id") or "").strip()
         identity = f"{run.id}:{binding}:{hypothesis}"
@@ -482,8 +520,7 @@ async def run_equipment_research(context) -> dict[str, Any]:
         if current_status != "planning":
             return {"status": current_status or "missing", "run_id": run_id}
         result = await _run_domain_cancellable(run, resume=action == "resume")
-        for event_type, event_payload in result.get("events") or []:
-            await _append(run_id, event_type, event_payload)
+        await _append_events(run_id, result.get("events") or [])
         completed = await _set_status(
             run_id,
             "completed",

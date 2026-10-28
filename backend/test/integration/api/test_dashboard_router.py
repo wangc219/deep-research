@@ -80,6 +80,16 @@ async def test_agent_stats_http_omits_removed_top_performers_contract(test_clien
     assert response.status_code == 200, response.text
     assert set(response.json()) == {
         "total_agents",
+        "configured_agents",
+        "participating_agents",
+        "total_agent_runs",
+        "completed_agent_runs",
+        "failed_agent_runs",
+        "active_agent_runs",
+        "subagent_runs",
+        "deep_research_agent_runs",
+        "agent_run_success_rate",
+        "runtime_agent_stats",
         "agent_conversation_counts",
         "agent_satisfaction_rates",
         "agent_tool_usage",

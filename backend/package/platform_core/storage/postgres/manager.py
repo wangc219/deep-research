@@ -25,12 +25,13 @@ from platform_core.storage_migrations.v073_enterprise import ENTERPRISE_SCHEMA_S
 from platform_core.storage_migrations.v074_model_calls import MODEL_CALL_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v075_user_uid import USER_UID_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v076_academic_retrieval import ACADEMIC_RETRIEVAL_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v077_mcp_access import MCP_ACCESS_SCHEMA_STATEMENTS
 from platform_core.utils import logger
 from platform_core.utils.singleton import SingletonMeta
 
 AGENT_RUN_TERMINAL_STATUS_SQL = ", ".join(f"'{status}'" for status in AGENT_RUN_TERMINAL_STATUSES)
-BUSINESS_SCHEMA_VERSION = 13
-KNOWLEDGE_SCHEMA_VERSION = 2
+BUSINESS_SCHEMA_VERSION = 16
+KNOWLEDGE_SCHEMA_VERSION = 7
 SCHEMA_VERSION_TABLE = "platform_schema_migrations"
 LEGACY_SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
 EQUIPMENT_RESEARCH_SCHEMA_STATEMENTS = (
@@ -781,6 +782,44 @@ class PostgresManager(metaclass=SingletonMeta):
         async with self.async_engine.begin() as conn:
             for statement in KNOWLEDGE_FILE_TASK_OWNER_SCHEMA_STATEMENTS:
                 await conn.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v3_to_v4(self) -> None:
+        """幂等增加视频号本机采集端与交接物表。"""
+        from platform_core.storage.postgres.models_knowledge import VideoCollectorCapture, VideoCollectorDevice
+
+        async with self.async_engine.begin() as connection:
+            await connection.run_sync(
+                lambda sync: VideoCollectorDevice.metadata.create_all(
+                    sync, tables=[VideoCollectorDevice.__table__, VideoCollectorCapture.__table__], checkfirst=True
+                )
+            )
+
+    async def upgrade_knowledge_schema_v5_to_v6(self) -> None:
+        """移除已退役的文章表和专用任务，保留知识库及视频号数据。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for table in ("wechat_article_destinations", "wechat_subscriptions", "wechat_article_archives"):
+                await connection.execute(text(f"DROP TABLE IF EXISTS {table}"))
+            await connection.execute(
+                text(
+                    "DELETE FROM wechat_collector_captures WHERE task_id IN "
+                    "(SELECT id FROM tasks WHERE type IN ('wechat_article_ingest', 'wechat_account_discover'))"
+                )
+            )
+            await connection.execute(
+                text("DELETE FROM tasks WHERE type IN ('wechat_article_ingest', 'wechat_account_discover')")
+            )
+
+    async def upgrade_knowledge_schema_v6_to_v7(self) -> None:
+        """幂等创建按用户隔离的视频号及历史视频索引。"""
+        from platform_core.storage.postgres.models_knowledge import WechatChannel, WechatChannelVideo
+
+        async with self.async_engine.begin() as connection:
+            await connection.run_sync(
+                lambda sync: KnowledgeBase.metadata.create_all(
+                    sync, tables=[WechatChannel.__table__, WechatChannelVideo.__table__], checkfirst=True
+                )
+            )
 
     async def drop_tables(self):
         """删除所有表（慎用！）"""
@@ -1717,6 +1756,7 @@ class PostgresManager(metaclass=SingletonMeta):
             "CREATE INDEX IF NOT EXISTS ix_agent_run_requests_dispatched_run_id ON agent_run_requests(dispatched_run_id)",  # noqa: E501
             *TASK_DURABLE_SCHEMA_STATEMENTS,
             *ACADEMIC_RETRIEVAL_SCHEMA_STATEMENTS,
+            *MCP_ACCESS_SCHEMA_STATEMENTS,
         ]
         async with self.async_engine.begin() as conn:
             # 历史未绑定用户的 API Key 会在下方迁移语句里被静默删除，先计数告警

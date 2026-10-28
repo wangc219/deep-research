@@ -33,4 +33,9 @@ class SubagentPolicy:
             reasons.append("缺少可汇总的结构化回传契约")
         if not candidate.budget_available:
             reasons.append("预算不足")
-        return SubagentDecision(not reasons, reasons or ["满足可拆分、隔离、可汇总和预算条件"], candidate.estimated_cost, candidate.merge_contract or "parent_context")
+        return SubagentDecision(
+            not reasons,
+            reasons or ["满足可拆分、隔离、可汇总和预算条件"],
+            candidate.estimated_cost,
+            candidate.merge_contract or "parent_context",
+        )

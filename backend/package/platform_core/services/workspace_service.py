@@ -40,7 +40,7 @@ WORKSPACE_SCOPE_ROOT = "/"
 
 
 async def search_workspace_files(*, query: str, current_user: User) -> dict:
-    """按文件名在个人工作区内递归搜索，仅返回文件条目。"""
+    """按名称在个人工作区内递归搜索文件和文件夹。"""
     normalized_query = (query or "").strip().lower()
     if not normalized_query:
         return {"entries": []}
@@ -51,12 +51,15 @@ async def search_workspace_files(*, query: str, current_user: User) -> dict:
             backend.search_authorized_tree,
             WORKSPACE_SCOPE_ROOT,
             normalized_query,
-            include_directories=False,
+            include_directories=True,
             max_results=WORKSPACE_SEARCH_MAX_RESULTS,
         )
     except FileNotFoundError:
         return {"entries": []}
-    return {"entries": [_entry_from_metadata(item["path"], item) for item in matches]}
+    # Workspace.search_authorized_tree 也会命中父路径。全局搜索按条目名称展示，
+    # 否则命中一个目录后会把其所有后代都作为“匹配项”返回，既嘈杂又容易触顶。
+    named_matches = [item for item in matches if normalized_query in str(item.get("name") or "").lower()]
+    return {"entries": [_entry_from_metadata(item["path"], item) for item in named_matches]}
 
 
 async def list_workspace_tree(

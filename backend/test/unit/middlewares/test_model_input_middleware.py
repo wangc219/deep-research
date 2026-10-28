@@ -6,6 +6,7 @@ import pytest
 from langchain.agents.middleware.types import ModelRequest, ModelResponse
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_openai import ChatOpenAI
+from langgraph.graph import END, START, MessagesState, StateGraph
 
 from platform_core.agents.middlewares.model_input import ImageInputCompatibilityMiddleware
 
@@ -193,3 +194,43 @@ async def test_does_not_report_malformed_image_as_unsupported_model() -> None:
 
     with pytest.raises(RuntimeError, match="not a valid image"):
         await middleware.awrap_model_call(request, handler)
+
+
+@pytest.mark.asyncio
+async def test_ocr_handoff_declares_tool_call_in_v3_model_lifecycle() -> None:
+    """兼容层生成的 OCR 调用必须在 v3 流中先声明，供工具审计关联。"""
+    middleware = ImageInputCompatibilityMiddleware()
+
+    async def reject_image(request):
+        error = RuntimeError("model does not support image input")
+        error.status_code = 400
+        raise error
+
+    async def model_node(state):
+        response = await middleware.awrap_model_call(
+            _request(_openai_model(), [_read_file_image_message()]), reject_image
+        )
+        return {"messages": response.result}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("model", model_node)
+    builder.add_edge(START, "model")
+    builder.add_edge("model", END)
+    graph = builder.compile()
+    events = []
+    async with await graph.astream_events({"messages": []}, version="v3") as run:
+        async for event in run:
+            if event["method"] == "messages":
+                events.append(event["params"]["data"][0])
+
+    assert all(isinstance(event, dict) for event in events), events
+    assert events[0]["event"] == "message-start"
+    assert events[-1]["event"] == "message-finish"
+    declarations = [
+        event["content"]
+        for event in events
+        if event["event"] == "content-block-finish" and event["content"]["type"] == "tool_call"
+    ]
+    assert len(declarations) == 1
+    assert declarations[0]["name"] == "ocr_parse_file"
+    assert declarations[0]["id"].startswith("call_ocr_")

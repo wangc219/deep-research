@@ -5,7 +5,8 @@ import json
 import os
 from pathlib import Path
 import sqlite3
-from typing import Any, Mapping, cast
+from typing import Any, cast
+from collections.abc import Mapping
 
 from equipment_deep_research.domain.identifiers import validate_internal_identifier
 from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
@@ -60,7 +61,7 @@ class RecoveryState:
         finally:
             self.workspace.close()
 
-    def __enter__(self) -> "RecoveryState":
+    def __enter__(self) -> RecoveryState:
         return self
 
     def __exit__(self, *exc_info: object) -> None:
@@ -100,9 +101,7 @@ class RecoveryManager:
                 research_route=research_route,
                 resolved_route=resolved_route,
                 selected_agent_ids=selected_agent_ids,
-                config_fingerprint=(
-                    None if allow_config_mismatch else config_fingerprint
-                ),
+                config_fingerprint=(None if allow_config_mismatch else config_fingerprint),
             )
             domain_store = _restore_domain_store(sqlite_store.domain_objects())
             problem = self._load_problem(
@@ -156,9 +155,7 @@ class RecoveryManager:
     def _load_checkpoint(sqlite_store: SqliteRunStore, run_id: str) -> RunCheckpoint:
         rows = sqlite_store.domain_objects(object_type="RunCheckpoint")
         if len(rows) != 1:
-            raise RecoveryError(
-                f"run database must contain exactly one RunCheckpoint, found {len(rows)}"
-            )
+            raise RecoveryError(f"run database must contain exactly one RunCheckpoint, found {len(rows)}")
         try:
             checkpoint = RunCheckpoint.from_plain(rows[0]["payload"])
         except (KeyError, TypeError, ValueError) as exc:
@@ -179,16 +176,11 @@ class RecoveryManager:
     ) -> ResearchProblem:
         problems = list(domain_store.problems.values())
         if len(problems) != 1:
-            raise RecoveryError(
-                f"run database must contain exactly one ResearchProblem, found {len(problems)}"
-            )
+            raise RecoveryError(f"run database must contain exactly one ResearchProblem, found {len(problems)}")
         problem = problems[0]
         if topic is not None and problem.topic != topic:
             raise RecoveryError("ResearchProblem topic mismatch")
-        if (
-            supplemental_information is not None
-            and problem.supplemental_information != supplemental_information
-        ):
+        if supplemental_information is not None and problem.supplemental_information != supplemental_information:
             raise RecoveryError("ResearchProblem supplemental information mismatch")
         if research_route is not None and problem.research_route != research_route:
             raise RecoveryError("ResearchProblem research route mismatch")
@@ -204,10 +196,7 @@ class RecoveryManager:
             and problem.resolved_route() != resolved_route
         ):
             raise RecoveryError("ResearchProblem resolved route mismatch")
-        if (
-            selected_agent_ids is not None
-            and sorted(problem.selected_agent_ids) != sorted(selected_agent_ids)
-        ):
+        if selected_agent_ids is not None and sorted(problem.selected_agent_ids) != sorted(selected_agent_ids):
             raise RecoveryError("ResearchProblem selected agent mismatch")
         return problem
 
@@ -227,15 +216,9 @@ class RecoveryManager:
             raise RecoveryError("resume research route mismatch")
         if resolved_route is not None and checkpoint.resolved_route != resolved_route:
             raise RecoveryError("resume resolved route mismatch")
-        if (
-            selected_agent_ids is not None
-            and sorted(checkpoint.selected_agent_ids) != sorted(selected_agent_ids)
-        ):
+        if selected_agent_ids is not None and sorted(checkpoint.selected_agent_ids) != sorted(selected_agent_ids):
             raise RecoveryError("resume selected agent mismatch")
-        if (
-            config_fingerprint is not None
-            and checkpoint.config_fingerprint != config_fingerprint
-        ):
+        if config_fingerprint is not None and checkpoint.config_fingerprint != config_fingerprint:
             raise RecoveryError("resume configuration mismatch")
 
     @staticmethod
@@ -254,9 +237,7 @@ class RecoveryManager:
             agent_id = _marker_text(marker, "agent_id")
             turn_index = marker.get("turn_index")
             if isinstance(turn_index, bool) or not isinstance(turn_index, int):
-                raise RecoveryError(
-                    f"session reconciliation marker {marker_id} has invalid turn_index"
-                )
+                raise RecoveryError(f"session reconciliation marker {marker_id} has invalid turn_index")
             session: JsonlSessionStore | None = None
             try:
                 root_fd = workspace.dup_sessions_fd()
@@ -272,9 +253,7 @@ class RecoveryManager:
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
                 if session is not None:
                     session.close()
-                raise RecoveryError(
-                    f"cannot open reconciliation session {session_ref}: {exc}"
-                ) from exc
+                raise RecoveryError(f"cannot open reconciliation session {session_ref}: {exc}") from exc
             try:
                 if not any(
                     row.get("event_type") == "savepoint"
@@ -299,8 +278,7 @@ class RecoveryManager:
                     )
                     records = [*records, {"event_type": "savepoint"}]
                 if not any(
-                    row.get("event_type") == "session_reconciled"
-                    and row.get("reconciliation_marker_id") == marker_id
+                    row.get("event_type") == "session_reconciled" and row.get("reconciliation_marker_id") == marker_id
                     for row in records
                 ):
                     session.append(
@@ -318,9 +296,7 @@ class RecoveryManager:
                         }
                     )
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
-                raise RecoveryError(
-                    f"cannot update reconciliation session {session_ref}: {exc}"
-                ) from exc
+                raise RecoveryError(f"cannot update reconciliation session {session_ref}: {exc}") from exc
             finally:
                 session.close()
             reconciled_event = TraceEvent(
@@ -392,19 +368,14 @@ class RecoveryManager:
 
 def _normalize_unfinished_tasks(checkpoint: RunCheckpoint) -> RunCheckpoint:
     statuses = {
-        task_id: "pending" if status == "running" else status
-        for task_id, status in checkpoint.task_statuses.items()
+        task_id: "pending" if status == "running" else status for task_id, status in checkpoint.task_statuses.items()
     }
     ordered_tasks = [
         *[f"baseline:{agent_id}" for agent_id in checkpoint.selected_agent_ids],
         FINALIZE_TASK_ID,
     ]
-    completed = [
-        task_id for task_id in ordered_tasks if statuses.get(task_id) == "completed"
-    ]
-    pending = [
-        task_id for task_id in ordered_tasks if statuses.get(task_id) != "completed"
-    ]
+    completed = [task_id for task_id in ordered_tasks if statuses.get(task_id) == "completed"]
+    pending = [task_id for task_id in ordered_tasks if statuses.get(task_id) != "completed"]
     normalized = replace(
         checkpoint,
         completed_task_ids=completed,
@@ -453,15 +424,12 @@ def _restore_domain_store(rows: list[dict[str, Any]]) -> DomainStore:
             elif object_type == "WinningMechanismInput":
                 store.add_winning_input(WinningMechanismInput(**payload))
             elif object_type == "WinningKnowledgeProjection":
-                store.add_knowledge_projection(
-                    WinningKnowledgeProjection(**payload)
-                )
+                store.add_knowledge_projection(WinningKnowledgeProjection(**payload))
             elif object_type == "WinningReasoningNode":
                 store.add_reasoning_node(WinningReasoningNode(**payload))
             elif object_type == "WinningMechanismStageOutput":
                 payload["recall_requests"] = [
-                    RecallRequest(**dict(item))
-                    for item in payload.get("recall_requests", [])
+                    RecallRequest(**dict(item)) for item in payload.get("recall_requests", [])
                 ]
                 store.add_stage_output(WinningMechanismStageOutput(**payload))
             elif object_type == "CapabilityImageItem":
@@ -485,14 +453,18 @@ def _restore_trace_store(rows: list[dict[str, Any]]) -> TraceStore:
     trace = TraceStore()
     for row in rows:
         payload = row["payload"]
-        if isinstance(payload, dict) and {
-            "event_id",
-            "event_type",
-            "actor",
-            "summary",
-            "created_at",
-            "schema_version",
-        } <= payload.keys():
+        if (
+            isinstance(payload, dict)
+            and {
+                "event_id",
+                "event_type",
+                "actor",
+                "summary",
+                "created_at",
+                "schema_version",
+            }
+            <= payload.keys()
+        ):
             try:
                 event = TraceEvent(**payload)
             except TypeError as exc:
@@ -503,9 +475,7 @@ def _restore_trace_store(rows: list[dict[str, Any]]) -> TraceStore:
                 event_type=str(row["event_type"]),
                 actor=str(row["actor"]),
                 summary=str(
-                    payload.get("summary", row["event_type"])
-                    if isinstance(payload, dict)
-                    else row["event_type"]
+                    payload.get("summary", row["event_type"]) if isinstance(payload, dict) else row["event_type"]
                 ),
                 payload=dict(payload) if isinstance(payload, dict) else {"value": payload},
                 created_at=str(row["created_at"]),
@@ -526,10 +496,7 @@ def _restore_worker_reports(rows: list[dict[str, Any]]) -> list[WorkerReport]:
         existing = by_report_id.get(report.worker_report_id)
         if existing is not None:
             if existing != report:
-                raise RecoveryError(
-                    "conflicting worker report payload for id "
-                    f"{report.worker_report_id}"
-                )
+                raise RecoveryError(f"conflicting worker report payload for id {report.worker_report_id}")
             continue
         # The same agent may legitimately produce a baseline report and one or
         # more directed-recall reports on later resumes.  Preserve every
@@ -562,9 +529,7 @@ def _marker_text(marker: Mapping[str, Any], key: str) -> str:
     value = marker.get(key)
     if not isinstance(value, str) or not value:
         marker_id = marker.get("marker_id", "unknown")
-        raise RecoveryError(
-            f"session reconciliation marker {marker_id} has invalid {key}"
-        )
+        raise RecoveryError(f"session reconciliation marker {marker_id} has invalid {key}")
     return value
 
 

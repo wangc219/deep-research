@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
 from typing import Any
@@ -65,6 +65,6 @@ def _manifest(
         "evidence_ids": list(report.evidence_ids),
         "domain_trace_ids": list(report.domain_trace_ids),
         "created_at": report.created_at.isoformat(),
-        "published_at": datetime.now(timezone.utc).isoformat(),
+        "published_at": datetime.now(UTC).isoformat(),
         "sensitive_review_required": report.sensitive_review_required,
     }

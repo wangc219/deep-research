@@ -4,6 +4,7 @@ import { message } from 'ant-design-vue'
 import { taskerApi } from '@/apis/tasker'
 import { useUserStore } from '@/stores/user'
 import { parseToShanghai } from '@/utils/time'
+import { notifyDataChanged } from '@/utils/dataFreshness'
 
 const ACTIVE_STATUSES = new Set(['pending', 'running', 'queued'])
 const FAILED_STATUSES = new Set(['failed', 'cancelled'])
@@ -84,6 +85,13 @@ export const useTaskerStore = defineStore('tasker', () => {
     taskRevision += 1
     const task = toTask(rawTask)
     const index = tasks.value.findIndex((item) => item.id === task.id)
+    if (
+      index >= 0 &&
+      ACTIVE_STATUSES.has(tasks.value[index].status) &&
+      !ACTIVE_STATUSES.has(task.status)
+    ) {
+      notifyDataChanged('tasks')
+    }
     if (index >= 0) {
       tasks.value.splice(index, 1, { ...tasks.value[index], ...task })
     } else {
@@ -92,7 +100,7 @@ export const useTaskerStore = defineStore('tasker', () => {
   }
 
   async function loadTasks(params = {}) {
-    if (!userStore.isAdmin) {
+    if (!userStore.isLoggedIn) {
       reset()
       return
     }
@@ -109,6 +117,17 @@ export const useTaskerStore = defineStore('tasker', () => {
       summary.value = {
         ...createDefaultSummary(),
         ...(response?.summary || {})
+      }
+      if (
+        taskList.some(
+          (next) =>
+            !ACTIVE_STATUSES.has(next.status) &&
+            tasks.value.some(
+              (previous) => previous.id === next.id && ACTIVE_STATUSES.has(previous.status)
+            )
+        )
+      ) {
+        notifyDataChanged('tasks')
       }
       tasks.value = taskList.map(toTask)
       pollingFailures = 0
@@ -202,7 +221,7 @@ export const useTaskerStore = defineStore('tasker', () => {
   function createTaskRegistration() {
     const generation = sessionGeneration
     return (task) => {
-      if (generation !== sessionGeneration || !userStore.isAdmin) return
+      if (generation !== sessionGeneration || !userStore.isLoggedIn) return
       registerQueuedTask(task)
     }
   }
@@ -240,7 +259,7 @@ export const useTaskerStore = defineStore('tasker', () => {
   // 轮询所有权收敛到 store：抽屉打开或存在活跃任务时持续轮询，否则停止，
   // 修复抽屉关闭后任务角标（activeCount）不再更新的问题。
   function syncPolling() {
-    if (userStore.isAdmin && (isDrawerOpen.value || hasActiveTasks.value)) {
+    if (userStore.isLoggedIn && (isDrawerOpen.value || hasActiveTasks.value)) {
       startPolling()
     } else {
       stopPolling()

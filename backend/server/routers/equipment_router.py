@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from platform_core.config.options import invalidate_option_cache, system_options, update_option_value
 from platform_core.services import equipment_research_service as svc
+from platform_core.services.equipment_research_config import preview_research_agents, research_catalog
+from equipment_deep_research.domain.models import ResearchProblem
 from platform_core.services.equipment_research_task import (
     EQUIPMENT_RESEARCH_CAPACITY_LIMIT,
     EQUIPMENT_RESEARCH_TASK_TYPE,
@@ -26,7 +28,7 @@ equipment = APIRouter(prefix="/equipment", tags=["equipment"])
 class EquipmentRunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    project_id: str
+    project_id: str | None = None
     topic: str
     research_route: str = "auto"
     model_spec: str | None = None
@@ -55,6 +57,16 @@ class EquipmentRunUpdate(BaseModel):
     payload: dict[str, Any] | None = None
 
 
+class EquipmentAgentPreview(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    topic: str = Field(min_length=1, max_length=4000)
+    supplemental_information: str = Field(default="", max_length=8000)
+    research_route: Literal["auto", "new_winning_mechanism", "traditional_gap", "war_case_learning"] = "auto"
+    interaction_mode: Literal["expert", "autonomous"] = "expert"
+    discovery_branch: Literal["auto", "A", "B", "C", "D", "E", "F", "G", "H"] = "auto"
+
+
 class EquipmentResearchCapacityUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -64,7 +76,7 @@ class EquipmentResearchCapacityUpdate(BaseModel):
 class EquipmentQueryCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    project_id: str
+    project_id: str | None = None
     query: str
     supplemental_information: str = ""
     generation_rationale: str = Field(default="", max_length=2000)
@@ -89,7 +101,7 @@ class EquipmentQueryUpdate(BaseModel):
 class EquipmentQueryStatus(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    expected_version: int | None = Field(default=None, ge=1)
+    expected_version: int = Field(ge=1)
 
 
 class EquipmentQueryBulkStatus(BaseModel):
@@ -103,7 +115,7 @@ class EquipmentQueryBulkStatus(BaseModel):
 class EquipmentQueryGenerate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    project_id: str
+    project_id: str | None = None
     topic: str
     supplemental_information: str = ""
     reference_urls: list[str] = Field(default_factory=list, max_length=12)
@@ -139,7 +151,7 @@ class EquipmentReferenceWeapon(BaseModel):
 class EquipmentDeepSessionCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    project_id: str
+    project_id: str | None = None
     title: str = ""
     topic: str = ""
     focus: str = ""
@@ -197,11 +209,12 @@ class EquipmentCapabilityVerify(BaseModel):
 
 
 class EquipmentExpertFeedbackCreate(BaseModel):
-    """与 React 工作台相同口径的专家评分反馈。"""
+    """能力画像的专家评分与审计目标。"""
 
     model_config = ConfigDict(extra="forbid")
 
     capability_id: str = Field(default="", max_length=256)
+    capability_version_id: str = Field(default="", max_length=128)
     hypothesis_id: str = Field(default="", max_length=256)
     capability_name: str = Field(default="本任务整体能力画像", max_length=400)
     comment: str = Field(min_length=1, max_length=4000)
@@ -294,6 +307,18 @@ async def _research_runtime_snapshot(db: AsyncSession, user: User) -> dict[str, 
     }
 
 
+@equipment.get("/catalog")
+def get_research_catalog(current_user: User = Depends(get_required_user)):
+    """读取研究启动表单的领域配置。"""
+    return research_catalog()
+
+
+@equipment.post("/agent-selection-preview")
+def get_agent_preview(body: EquipmentAgentPreview, current_user: User = Depends(get_required_user)):
+    """预览当前配置对应的业务 Agent，不调用模型或创建任务。"""
+    return preview_research_agents(ResearchProblem(**body.model_dump()))
+
+
 @equipment.get("/portal")
 async def get_portal(current_user: User = Depends(get_required_user), db: AsyncSession = Depends(get_db)):
     """登录后领域知识总门户聚合数据。"""
@@ -335,10 +360,11 @@ async def update_research_capacity(
 async def list_runs(
     project_id: str | None = None,
     status: str | None = None,
+    compact: bool = False,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await svc.list_runs(db=db, user=current_user, project_id=project_id, status=status)
+    return await svc.list_runs(db=db, user=current_user, project_id=project_id, status=status, compact=compact)
 
 
 @equipment.post("/runs")
@@ -562,7 +588,7 @@ async def update_query(
 @equipment.post("/queries/{query_id}/publish")
 async def publish_query(
     query_id: str,
-    body: EquipmentQueryStatus | None = None,
+    body: EquipmentQueryStatus,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -570,14 +596,14 @@ async def publish_query(
         db=db,
         user=current_user,
         query_id=query_id,
-        expected_version=body.expected_version if body is not None else None,
+        expected_version=body.expected_version,
     )
 
 
 @equipment.post("/queries/{query_id}/archive")
 async def archive_query(
     query_id: str,
-    body: EquipmentQueryStatus | None = None,
+    body: EquipmentQueryStatus,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -585,17 +611,18 @@ async def archive_query(
         db=db,
         user=current_user,
         query_id=query_id,
-        expected_version=body.expected_version if body is not None else None,
+        expected_version=body.expected_version,
     )
 
 
 @equipment.delete("/queries/{query_id}")
 async def delete_query(
     query_id: str,
+    expected_version: int = Query(ge=1),
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await svc.delete_query(db=db, user=current_user, query_id=query_id)
+    return await svc.delete_query(db=db, user=current_user, query_id=query_id, expected_version=expected_version)
 
 
 @equipment.post("/queries/bulk-status")
@@ -698,8 +725,12 @@ async def delete_query_generation(
 
 
 @equipment.get("/capabilities")
-async def list_capabilities(current_user: User = Depends(get_required_user), db: AsyncSession = Depends(get_db)):
-    return await svc.list_capabilities(db=db, user=current_user)
+async def list_capabilities(
+    compact: bool = False,
+    current_user: User = Depends(get_required_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await svc.list_capabilities(db=db, user=current_user, compact=compact)
 
 
 @equipment.get("/runs/{run_id}/capability-versions")
@@ -768,10 +799,13 @@ async def purge_capability_version(
 @equipment.get("/runs/{run_id}/expert-feedback")
 async def list_expert_feedback(
     run_id: str,
+    include_rolled_back: bool = False,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await svc.list_expert_feedback(db=db, user=current_user, run_id=run_id)
+    return await svc.list_expert_feedback(
+        db=db, user=current_user, run_id=run_id, include_rolled_back=include_rolled_back
+    )
 
 
 @equipment.post("/runs/{run_id}/expert-feedback")

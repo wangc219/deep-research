@@ -518,12 +518,18 @@ html.dark .app-navigation-page :where(
     .capability-toolbar,
     .expert-feedback-panel,
     .expert-feedback-learning,
+    .expert-feedback-history article,
+    .feedback-empty-state,
+    .feedback-comment-block,
+    .feedback-score-details,
+    .feedback-learning-signal,
     .capability-sheet,
     .capability-sheet > header,
     .capability-dimensions,
     .capability-deep-version-switcher,
     .capability-portrait,
     .capability-portrait-card,
+    .capability-portrait-secondary,
     .capability-deep-research-panel,
     .deep-research-comparison,
     .deep-research-comparison-grid > div,
@@ -556,6 +562,9 @@ html.dark .app-navigation-page :where(
 html.dark .app-navigation-page :where(
     .capability-toolbar b,
     .expert-feedback-panel b,
+    .feedback-card-title-line b,
+    .feedback-comment-block > p,
+    .portrait-secondary-copy strong,
     .capability-sheet h2,
     .capability-dimensions-head b,
     .capability-portrait-card p,
@@ -578,6 +587,15 @@ html.dark .app-navigation-page :where(
     .deep-research-comparison-grid dt
   ) {
   color: #929bad !important;
+}
+
+html.dark .app-navigation-page :where(
+    .capability-portrait-secondary > summary:hover,
+    .feedback-card-chevron,
+    .feedback-empty-state > svg
+  ) {
+  background: #242b3c !important;
+  color: #c9c7ff !important;
 }
 
 /* The current Vue favorites view uses classless buttons inside

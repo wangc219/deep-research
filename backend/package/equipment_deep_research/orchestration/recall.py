@@ -31,7 +31,9 @@ class RecallCoordinator:
         self.max_per_target, self.max_rounds = max_per_target, max_rounds
         self._attempts: dict[str, int] = {}
 
-    def route(self, recall: RecallRequest, registry: AgentCatalog, selected_agent_ids: list[str], *, round_index: int) -> RecallRoute:
+    def route(
+        self, recall: RecallRequest, registry: AgentCatalog, selected_agent_ids: list[str], *, round_index: int
+    ) -> RecallRoute:
         target = recall.target_agent_id
         if not target and recall.target_capability_tag:
             selected = [registry.get(item) for item in selected_agent_ids]
@@ -43,7 +45,12 @@ class RecallCoordinator:
             return RecallRoute(replace(recall, status="limited"), "limited", target)
         if not target:
             tag = recall.target_capability_tag or "unknown"
-            recommendation = AgentRecommendation(f"recommend-{recall.recall_id}", tag, "当前选择的 agent 无法覆盖再调缺口。", f"建议启用具备 {tag} 能力标签的 agent。")
+            recommendation = AgentRecommendation(
+                f"recommend-{recall.recall_id}",
+                tag,
+                "当前选择的 agent 无法覆盖再调缺口。",
+                f"建议启用具备 {tag} 能力标签的 agent。",
+            )
             return RecallRoute(replace(recall, status="limited"), "limited", None, recommendation)
         self._attempts[key] = attempts + 1
         return RecallRoute(replace(recall, target_agent_id=target, status="routed"), "routed", target)

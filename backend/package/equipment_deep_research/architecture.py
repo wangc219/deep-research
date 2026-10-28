@@ -26,27 +26,59 @@ FORBIDDEN_IMPORTS: dict[str, frozenset[str]] = {
     # same settings without creating a dependency cycle.
     "config": frozenset(
         {
-            "api", "interfaces", "application", "orchestration", "harness", "agents",
-            "providers", "tools", "persistence", "queue", "deep_runtime", "delivery",
+            "api",
+            "interfaces",
+            "application",
+            "orchestration",
+            "harness",
+            "agents",
+            "providers",
+            "tools",
+            "persistence",
+            "queue",
+            "deep_runtime",
+            "delivery",
             "query_library",
         }
     ),
     "domain": frozenset(
         {
-            "api", "interfaces", "application", "orchestration", "harness", "agents",
-            "providers", "tools", "persistence", "queue", "deep_runtime", "delivery",
+            "api",
+            "interfaces",
+            "application",
+            "orchestration",
+            "harness",
+            "agents",
+            "providers",
+            "tools",
+            "persistence",
+            "queue",
+            "deep_runtime",
+            "delivery",
             "query_library",
         }
     ),
     "contracts": frozenset(
         {
-            "api", "interfaces", "application", "orchestration", "harness", "agents",
-            "providers", "tools", "persistence", "queue", "deep_runtime", "delivery",
+            "api",
+            "interfaces",
+            "application",
+            "orchestration",
+            "harness",
+            "agents",
+            "providers",
+            "tools",
+            "persistence",
+            "queue",
+            "deep_runtime",
+            "delivery",
             "query_library",
         }
     ),
     "providers": frozenset({"api", "interfaces", "orchestration", "harness", "agents", "persistence", "queue"}),
-    "persistence": frozenset({"api", "interfaces", "orchestration", "harness", "deep_runtime", "providers", "agents", "tools", "queue"}),
+    "persistence": frozenset(
+        {"api", "interfaces", "orchestration", "harness", "deep_runtime", "providers", "agents", "tools", "queue"}
+    ),
     # Tool authorization consumes the stable AgentSpec protocol.  It must not
     # import the executable registry, which would pull prompts and providers
     # into the low-level tool layer.
@@ -85,11 +117,7 @@ def module_metrics(source_root: str | Path) -> list[ModuleMetric]:
             tree = ast.parse(text, filename=str(path))
         except (OSError, SyntaxError):
             continue
-        imports = sum(
-            1
-            for node in tree.body
-            if isinstance(node, (ast.Import, ast.ImportFrom))
-        )
+        imports = sum(1 for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom)))
         metrics.append(ModuleMetric(module, text.count("\n") + 1, imports))
     return metrics
 
@@ -192,9 +220,7 @@ def import_graph(
             if not target.startswith(PACKAGE):
                 continue
             candidates = [
-                candidate
-                for candidate in modules
-                if target == candidate or target.startswith(candidate + ".")
+                candidate for candidate in modules if target == candidate or target.startswith(candidate + ".")
             ]
             if candidates:
                 graph[module].add(max(candidates, key=len))
@@ -265,9 +291,17 @@ def main() -> int:
 
 
 __all__ = [
-    "ArchitectureViolation", "FORBIDDEN_IMPORTS", "ModuleMetric", "assert_boundaries",
-    "find_import_cycles", "find_violations", "import_graph", "main",
-    "module_metrics", "module_name_for_path", "oversized_modules",
+    "ArchitectureViolation",
+    "FORBIDDEN_IMPORTS",
+    "ModuleMetric",
+    "assert_boundaries",
+    "find_import_cycles",
+    "find_violations",
+    "import_graph",
+    "main",
+    "module_metrics",
+    "module_name_for_path",
+    "oversized_modules",
 ]
 
 

@@ -23,6 +23,13 @@ test('管理员项目标签包含所有者且搜索支持 owner uid', () => {
   assert.deepEqual(filterProjects([project], 'owner-1'), [project])
 })
 
+test('项目名称已包含所有者时不重复追加用户名', () => {
+  for (const name of ['装备深研工作台 · Hitsz504', '装备深研工作台+Hitsz504', '研究 · Hitsz504', 'Hitsz504']) {
+    assert.equal(projectDisplayName({ name, uid: 'Hitsz504' }, true), name)
+  }
+  assert.equal(projectDisplayName({ name: '分析 Hitsz5040', uid: 'Hitsz504' }, true), '分析 Hitsz5040 · Hitsz504')
+})
+
 test('历史项目时间按分钟到年份显示相对时间', () => {
   const now = Date.parse('2026-08-22T12:00:00Z')
 

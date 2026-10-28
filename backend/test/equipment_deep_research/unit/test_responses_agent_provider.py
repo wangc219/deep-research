@@ -44,6 +44,7 @@ from equipment_deep_research.agents.provider import (
 from equipment_deep_research.agents.workflows.reporting_support import (
     _canonical_report_h3,
     _report_has_complete_canonical_structure,
+    _report_repair_system_prompt,
     _report_template_mode,
 )
 from equipment_deep_research.agents.workflows.reporter import (
@@ -1337,16 +1338,104 @@ def test_project_limited_report_uses_handoff_instead_of_template_phrases() -> No
     assert "把对手压制行为转化为可捕获的辐射暴露事件" in result
     assert "本限时版本只使用已接受交接" not in result
     assert "以comparative_findings交接为准" not in result
-    assert "任务状态与授权控制层" in result
+    assert "共享任务状态或授权关系" in result
     assert "| 子系统/装备方向 | 硬件与产品形态 |" in result
     assert "| 技术名称 | 技术内涵 | 成熟度/现有基础 |" in result
-    assert "不生成通用单位分工表" in result
+    assert "不推定单位名称和承担关系" in result
     assert "| 单位类型 | 主要责任 | 必须交付的接口或证据 |" not in result
-    assert "只保留交接中能够归属到具体武器" in result
+    assert "能够归属到具体武器的装备本体" in result
+    assert "交接" not in result
+    assert "研究主题为" not in result
     assert "按任务准备与装订、平台部署与进入" not in result
     assert "围绕时间链、信息与精度链" not in result
     assert "反辐射巡飞压制效应器群" in result.split("#### 1. 作战运用流程", 1)[1]
     assert "迫使压制源关机或暴露并制造突防窗口" in result
+
+
+def test_reporter_generation_removes_internal_identifiers_before_authoring() -> None:
+    payload = {
+        "topic": "民用公共避难场所应急照明可靠性研究",
+        "report_template_mode": "project_argument_v1",
+        "synthesis_seed": {
+            "decisive_anchors": [
+                "operational_employment",
+                "combat_scenario",
+            ],
+            "mission_chain_breaks": ["断电后电池状态不可见，故障在疏散时才暴露。"],
+            "capability_cues": [
+                {
+                    "direction": "自主续照应急灯",
+                    "equipment_form": "具备电池状态感知与自检能力的应急照明单元",
+                    "target_and_direct_effect": "在疏散窗口内保持照明并提前暴露失效单元",
+                    "operational_concept": "平时估计健康状态，断电后依据剩余能量分配照度",
+                    "system_contribution_thesis": (
+                        "由solution_thesis与core_innovation_thesis直接推出——"
+                        "将周期人工检查转变为连续自主感知"
+                    ),
+                }
+            ],
+        },
+    }
+
+    generation = _reporter_generation_payload(payload)
+    serialized = repr(generation["research_handoff"])
+
+    assert generation["research_handoff"]["decisive_anchors"] == []
+    assert "将周期人工检查转变为连续自主感知" in serialized
+    for token in (
+        "operational_employment",
+        "combat_scenario",
+        "solution_thesis",
+        "core_innovation_thesis",
+    ):
+        assert token not in serialized
+
+
+def test_project_limited_report_opens_with_substantive_background_not_pipeline_meta() -> None:
+    payload = {
+        "topic": "民用公共避难场所应急照明可靠性研究",
+        "report_template_mode": "project_argument_v1",
+        "synthesis_seed": {
+            "decisive_anchors": ["operational_employment", "combat_scenario"],
+            "mission_chain_breaks": ["断电后电池状态不可见，故障在疏散时才暴露。"],
+            "capability_cues": [
+                {
+                    "direction": "自主续照应急灯",
+                    "equipment_form": "具备电池状态感知与自检能力的应急照明单元",
+                    "target_scenario": "长期断电与人工巡检覆盖不足条件下",
+                    "capability_gap": "周期巡检无法识别两次检查之间的电池退化",
+                    "target_and_direct_effect": "在疏散窗口内保持照明并提前暴露失效单元",
+                    "scientific_principle": "基于内阻与负载响应的在线健康估计",
+                    "operational_concept": "平时估计健康状态，断电后依据剩余能量分配照度",
+                    "failure_boundary": "传感漂移时健康估计置信度下降",
+                }
+            ],
+        },
+    }
+
+    report = _build_limited_report(payload)
+
+    assert "长期断电与人工巡检覆盖不足条件下" in report
+    assert "断电后电池状态不可见" in report
+    for token in (
+        "研究主题为",
+        "本次交接",
+        "前置交接",
+        "operational_employment",
+        "combat_scenario",
+        "capability_cues",
+    ):
+        assert token not in report
+
+
+def test_report_quality_flags_internal_fields_even_without_branch_brief() -> None:
+    issues = _report_draft_quality_issues(
+        "本次交接形成的决定性判断为：operational_employment；combat_scenario。",
+        {"report_template_mode": "project_argument_v1"},
+    )
+
+    assert any("内部字段名或角色标识" in issue for issue in issues)
+    assert any("生成或交接过程措辞" in issue for issue in issues)
 
 
 def test_project_report_gate_flags_visible_writing_instructions() -> None:
@@ -1393,8 +1482,22 @@ def test_project_report_prompt_requires_plain_chinese_and_high_value_focus() -> 
         "少用英文缩写和生僻词",
         "首次出现写明中文含义",
         "删除方法论解释、泛化体系口号、同义复述",
+        "正式报告必须直接进入研究对象和现实矛盾",
+        "不得把输入键名翻译成句子",
+        "以每件入选武器能力画像的概述为论证中心",
+        "不得把“判断—依据—影响—边界”当作每段固定模板",
+        "不规定统一句序、字段数或论证骨架",
+        "背景分析首句直接陈述现实场景中的威胁",
     ):
         assert marker in prompt
+    assert "每个实质段落至少完成" not in prompt
+
+    repair_prompt = _report_repair_system_prompt(
+        {"report_template_mode": "project_argument_v1"}
+    )
+    assert "只修复实际缺陷" in repair_prompt
+    assert "保留原稿中已经成立的论证重心与组织方式" in repair_prompt
+    assert "不得把全文改造成统一段落模板" in repair_prompt
 
 
 def test_parallel_reporter_layer_keeps_full_quality_capacity() -> None:
@@ -1717,7 +1820,7 @@ def test_deadline_is_recomputed_after_model_queue_wait() -> None:
             del priority
             return None
 
-        def acquire(self, *, priority):
+        async def acquire_async(self, *, priority):
             provider._run_started_at -= 901
             return SimpleNamespace(
                 priority=priority,
@@ -1744,8 +1847,12 @@ def test_deadline_is_recomputed_after_model_queue_wait() -> None:
     )
 
     assert text == "queued result"
-    assert options["reasoning_effort"] == "low"
-    assert options["max_output_tokens"] <= 1800
+    assert options == {"reasoning_effort": "high", "max_output_tokens": 5000}
+    assert backend.inputs[0][2]["reasoning_effort"] == "low"
+    assert backend.inputs[0][2]["max_output_tokens"] <= 1800
+    metric = provider._model_call_metric("test", "queued", options, metadata)
+    assert metric["reasoning_effort"] == "low"
+    assert metric["max_output_tokens"] <= 1800
     assert metadata["deadline_mode"] == "fast_finalize"
     assert metadata["deadline_remaining_seconds"] <= 120
 

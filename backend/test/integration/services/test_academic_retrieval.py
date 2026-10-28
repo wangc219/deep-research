@@ -264,6 +264,34 @@ async def test_cross_user_and_stale_worker_denied(academic_db):
                 await repo.resolve_root(run_id=root.id, uid=uid, worker_id=worker)
 
 
+async def test_joint_search_shares_budget_and_cached_results_with_child(academic_db):
+    """联合查询各自预占，超额后保留论文，子运行复用缓存而不再次付费。"""
+    factory, _, _, root, child, _ = academic_db
+    requests = []
+
+    def handler(request):
+        requests.append(request.url.path)
+        if request.method == "POST":
+            data = [{"id": "paper-a", "abstract_slice": "public evidence"}]
+        else:
+            data = [{"id": "paper-a", "title": "Public paper"}]
+        return httpx.Response(200, json={"code": 200, "success": True, "data": data})
+
+    transport = httpx.MockTransport(handler)
+    result = await service(factory, root, transport).search("topic", related_queries=["English term", "third angle"])
+    assert result["status"] == "partial" and result["aminer_status"] == "limit_reached"
+    assert result["results"][0]["content"] == "public evidence"
+    assert result["results"][0]["matched_queries"] == ["topic", "English term"]
+    assert len(requests) == 3  # 两次搜索和一次免费题录补全。
+    cached = await service(factory, child, transport).search("topic", related_queries=["English term"])
+    assert cached["status"] == "ok" and cached["cached"]
+    assert len(requests) == 3
+    async with factory() as db:
+        calls = list((await db.scalars(select(AcademicRetrievalCall))).all())
+        assert sum(call.cost_cents for call in calls) == 2
+        assert {call.root_run_id for call in calls} == {root.id}
+
+
 @pytest.mark.parametrize("endpoint,ttl", [("search", timedelta(hours=1)), ("detail", timedelta(hours=24))])
 async def test_cross_turn_cache_expires_without_charging_hits(academic_db, endpoint, ttl):
     """不同轮次共享成功缓存；TTL 到期后的请求重新预占。"""
@@ -310,6 +338,28 @@ async def test_deep_research_uses_parent_six_search_limit(academic_db):
     )
     assert sum(result["status"] == "ok" for result in results) == 6
     assert sum(result["status"] == "limit_reached" for result in results) == 1
+
+
+async def test_zero_budget_and_limits_disable_application_quota(academic_db):
+    """配置为零时不设置 AMiner 费用与次数额度。"""
+    factory, _, _, root, child, _ = academic_db
+    async with factory.begin() as db:
+        await update_option_value(
+            db,
+            aminer_api_opts.key,
+            {
+                "chat_budget_cents": 0,
+                "chat_search_limit": 0,
+                "chat_detail_limit": 0,
+                "chat_reference_limit": 0,
+            },
+            "tester",
+        )
+    transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"code": 200, "success": True, "data": []}))
+    results = await asyncio.gather(
+        *[service(factory, child, transport)._request("search", {"keyword": f"unlimited-{i}"}) for i in range(25)]
+    )
+    assert all(result["status"] == "ok" for result in results)
 
 
 MODEL_ROUTING_CASES = [
@@ -373,6 +423,7 @@ async def test_live_model_routes_and_executes_academic_tools(
     from platform_core.services import equipment_deep_integration_service as deep_service
     from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
     from platform_core.storage.postgres.manager import pg_manager
+    from platform_core.workspace import filesystem as workspace_filesystem
 
     factory, _, manager, root, child, _ = academic_db
     await manager.create_knowledge_tables()
@@ -381,6 +432,9 @@ async def test_live_model_routes_and_executes_academic_tools(
     is_child = case in {"research_explorer", "fact_verifier"}
     is_deep = case.startswith(("deep_", "technology_")) or is_child
     run = child if is_child else root
+    workspace_root = tmp_path / "workspace"
+    (workspace_root / "projects/aminer-routing-probe").mkdir(parents=True)
+    monkeypatch.setattr(workspace_filesystem, "user_workspace_dir", lambda _: workspace_root)
     async with factory.begin() as db:
         if is_deep:
             (await db.get(AgentRun, root.id)).source = "equipment_deep_research"
@@ -465,7 +519,7 @@ async def test_live_model_routes_and_executes_academic_tools(
     context = await prepare_agent_runtime_context(context_schema(**context_args))
     assert ACADEMIC_TOOL_NAMES.issubset(context.tools)
     if case == "technology_preloaded":
-        assert {"deep-research", "equipment-research", "equipment-deep-conversation"}.issubset(context.preload_skills)
+        assert {"deep-research", "equipment-research", "equipment-deep-conversation"}.issubset(context.skills)
 
     papers = {
         "probe-attention": {
@@ -659,12 +713,21 @@ async def test_live_model_routes_and_executes_academic_tools(
     if expected_mode == "title":
         assert searches[0]["args"].get("mode", "topic") == "title"
     # 技术名已知时可先定位已知标题，再做主题发现；并行 HTTP 不保证先后顺序。
+    normalized_queries = {
+        (coverage.get("requested_query", coverage["query"]), coverage["query"])
+        for tool_result in tool_results
+        for coverage in tool_result.get("query_coverage", [])
+    }
     for request in http_requests:
         if request["path"] in {"search", "search/pro"}:
             assert request["payload"]["page"] == ("1" if request["path"] == "search" else "0")
             query_key = "title" if request["path"] == "search" else "keyword"
             assert any(
-                call["args"]["query"] == request["payload"][query_key]
+                any(
+                    request["payload"][query_key] == query
+                    or (query, request["payload"][query_key]) in normalized_queries
+                    for query in [call["args"]["query"], *call["args"].get("related_queries", [])]
+                )
                 and call["args"].get("mode", "topic") == ("title" if query_key == "title" else "topic")
                 for call in searches
             )
@@ -672,7 +735,8 @@ async def test_live_model_routes_and_executes_academic_tools(
         first_batch = next(
             message.tool_calls
             for message in result["messages"]
-            if isinstance(message, AIMessage) and message.tool_calls
+            if isinstance(message, AIMessage)
+            and any(call["name"] in ACADEMIC_TOOL_NAMES for call in message.tool_calls)
         )
         first_searches = [call for call in first_batch if call["name"] == "academic_search"]
         assert all(item["status"] == "auth_failed" for item in tool_results)
@@ -695,3 +759,36 @@ async def test_live_model_routes_and_executes_academic_tools(
             assert "A100" not in answer and "2–4" not in answer and "2-4" not in answer, (
                 "精确实验数据未在本轮证据中取得"
             )
+
+
+async def test_semantic_parent_child_reservations_share_real_fee_budget_and_cache(academic_db):
+    """语义搜索按每页三十分预占，父子并发不能穿透费用上限。"""
+    factory, _, _, root, child, _ = academic_db
+    async with factory.begin() as db:
+        await update_option_value(db, aminer_api_opts.key, {"chat_budget_cents": 30, "chat_search_limit": 0}, "tester")
+    requests = []
+
+    async def handler(request):
+        requests.append(request)
+        await asyncio.sleep(0.02)
+        return httpx.Response(
+            200, json={"success": True, "data": {"items": [], "total": {"value": 0, "relation": "eq"}}}
+        )
+
+    transport = httpx.MockTransport(handler)
+    results = await asyncio.gather(
+        *[
+            service(factory, run, transport)._request("semantic_search", {"query": f"public topic {index}"})
+            for index, run in enumerate([root, child, root, child])
+        ]
+    )
+    assert sum(result["status"] == "ok" for result in results) == 1
+    assert sum(result["status"] == "budget_exhausted" for result in results) == 3
+    assert len(requests) == 1
+    winner = next(index for index, result in enumerate(results) if result["status"] == "ok")
+    cached = await service(factory, child, transport)._request("semantic_search", {"query": f"public topic {winner}"})
+    assert cached["cached"] and cached["status"] == "ok"
+    assert len(requests) == 1
+    async with factory() as db:
+        assert await db.scalar(select(func.sum(AcademicRetrievalCall.cost_cents))) == 30
+        assert await db.scalar(select(func.count()).select_from(AcademicRetrievalCall)) == 1

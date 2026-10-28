@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""启动微信前对齐容器内系统代理，兼容上游 TUN 模式。"""
+import json
+import time
+import urllib.error
+import urllib.request
+
+base = 'http://127.0.0.1:2022'
+for attempt in range(45):
+    try:
+        request = urllib.request.Request(base + '/api/proxy/system/enable', data=b'{}', headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(request, timeout=3) as response:
+            assert json.load(response)['code'] == 0
+        with urllib.request.urlopen(base + '/api/proxy/status', timeout=3) as response:
+            assert json.load(response)['data']['system_proxy']['matched'] is True
+        print('Container WeChat system proxy ready.')
+        break
+    except (OSError, ValueError, KeyError, AssertionError):
+        if attempt == 44:
+            raise SystemExit('Container WeChat proxy unavailable; inspect collector before login.')
+        time.sleep(1)

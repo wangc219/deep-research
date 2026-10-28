@@ -1,6 +1,5 @@
-"""重排响应与输入文档的对应关系，以及既有批次降级契约。"""
+"""重排响应与输入文档的对应关系，以及批次错误的显式传播。"""
 
-import math
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -96,22 +95,16 @@ async def test_invalid_score_is_rejected(reranker, score):
         await reranker._batch_rerank("query", ["A"], max_length=128)
 
 
-@pytest.mark.parametrize("normalize", [False, True])
-async def test_bad_middle_batch_keeps_fallback_slots_and_later_document_scores(reranker, normalize):
+async def test_bad_middle_batch_fails_without_fabricated_scores(reranker):
+    """部分批次失败时让知识检索统一降级，不能混用真实分数和虚构中性分数。"""
     _respond_with(
         reranker,
         [{"index": 1, "relevance_score": 0.2}, {"index": 0, "relevance_score": 0.1}],
         [{"index": 1, "relevance_score": 0.9}],
-        [{"index": 0, "relevance_score": 0.7}],
     )
-
-    scores = await reranker.acompute_score(["query", ["A", "B", "C", "D", "E"]], batch_size=2, normalize=normalize)
-
-    expected = [0.1, 0.2, 0.5, 0.5, 0.7]
-    if normalize:
-        expected = [1 / (1 + math.exp(-score)) for score in expected]
-    assert len(scores) == 5
-    assert scores == pytest.approx(expected)
+    with pytest.raises(ValueError, match="Rerank response"):
+        await reranker.acompute_score(["query", ["A", "B", "C", "D"]], batch_size=2)
+    assert reranker.session.post.call_count == 2
 
 
 async def test_connection_reports_invalid_response(reranker):

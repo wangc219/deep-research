@@ -111,7 +111,6 @@ def _complete_s6_test_modules(name: str) -> dict[str, str]:
             "部队由此可把同一批火力分布在多个短时责任区，对手则要为每次开机和转场同时准备隐蔽、诱骗与近防资源。"
         ),
         "technology_implementation": (
-            f"承接解决思路：{anchors['solution_thesis']}。围绕核心创新：{anchors['core_innovation_thesis']}。"
             "主攻弹载多源复核与受约束任务控制，两者分别落在导引头、组合导航和任务计算单元。"
             "前者须在定位漂移、目标遮挡和诱饵并存时维持同一目标轨迹，后者须在小体积、低功耗、"
             "有限散热和末段时间压力下守住禁击边界。传统全量数据回传会受带宽与时延拖累，单一"
@@ -122,6 +121,9 @@ def _complete_s6_test_modules(name: str) -> dict[str, str]:
             "让每次目标确认都有可追溯依据，并在证据恶化时及时降级，而不是继续沿用依赖地面席位逐帧判读的实现方式。"
             "为防止感知模块给出高置信但无法攻击的假结论，任务计算机还要将目标证据与可达域、会遇几何和引信触发条件同步更新。"
             "软件输出必须能由独立安全监控通道否决，硬件则需在震动、温升和电源波动下保持门限计算一致，才能支撑实际落装。"
+            "形成两条差异化新质技术原理路线：主路径以资源受限多模态模型和可解释安全监控器在弹载任务计算单元内闭合复核，"
+            "备选路径以事件驱动视觉器件和规则化证据门控降低算力依赖。现有方法的研发卡点是高动态目标与弹载资源双重约束，"
+            "应优先突破稀疏推理、安全联锁和接口时延闭合方法，再嵌入导引头—任务计算机—飞控的联合构型。"
         ),
         "operational_process": (
             "发射平台先装订任务区、目标类别、禁击对象和最大自主权限，随后释放武器沿组合导航"
@@ -236,20 +238,23 @@ def test_parallel_s6_card_instruction_is_compact_but_preserves_authority() -> No
     assert "你拥有本卡场景推演、技术论证、作战流程、能力分类和文字编辑权" in instruction
     assert "同一次模型调用内部完成两遍工作" in instruction
     assert "再以总编辑视角静默复核并直接返回唯一终稿" in instruction
-    assert "1至2项真正决定装备能否实现的主攻关键技术" in instruction
+    assert "1至2项真正决定核心创新能否成立的主攻关键技术" in instruction
     assert "五栏合计通常约2000至2250字" in instruction
     assert "S5只负责入选" in instruction
-    assert "solution_thesis" in instruction
-    assert "core_innovation_thesis" in instruction
+    assert "解决思路" in instruction
+    assert "核心创新" in instruction
+    assert "solution_thesis" not in instruction
+    assert "core_innovation_thesis" not in instruction
     assert "当前背景、解决思路、达到效果、核心创新" in instruction
-    assert "敌方具体代价" in instruction
-    assert "原理假设、公开依据、关键约束、候选路径、验证判据" in instruction
+    assert "敌方代价" in instruction
+    assert "不同原理路线如何攻克断点—真正瓶颈为何形成—突破方法如何改变决定性约束" in instruction
+    assert "功能单元、接口、落装位置和任务状态不是技术栏必答项" in instruction
     assert "system_contribution_thesis、indicator_portrait" in instruction
     assert "指标从制胜机理和风险反推" in instruction
-    assert "不得复用其他卡的骨架、指标、技术路线或验收句式" in instruction
+    assert "不复用其他卡的骨架、路线或验收句式" in instruction
     assert "口号" in instruction and "因果" in instruction
     assert "严禁为凑字复用跨栏句子" in instruction
-    assert "导航精度、平台适配、保障" in instruction
+    assert "材料特性、成熟度和耦合关系也只在影响路线选择时展开" in instruction
     assert "INNOVATIVE_CAPABILITY_IMAGE_GUIDANCE" not in instruction
 
 
@@ -1386,6 +1391,7 @@ def test_dynamic_swarm_specialist_allows_provider_retry() -> None:
     options = backend.inputs[0][2]
     assert options["_provider_retry_attempts"] == 2
     assert options["_provider_timeout_seconds"] == 480
+    assert options["_disable_provider_timeout"] is False
 
 
 def test_semantic_pair_clustering_uses_fast_bounded_profile() -> None:
@@ -4245,17 +4251,34 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         in {"overview", "technology_implementation"}
     ]
     assert len(shared_anchor_payloads) == 10
+    assert all(
+        payload.get("决策写作素材", {}).get("概述决策素材")
+        for payload in shared_anchor_payloads
+        if payload.get("portrait_module_key") == "overview"
+    )
+    assert all(
+        "概述决策素材" not in payload.get("决策写作素材", {})
+        for payload in shared_anchor_payloads
+        if payload.get("portrait_module_key") == "technology_implementation"
+    )
     anchors_by_card: dict[str, set[tuple[str, str]]] = {}
     for payload in shared_anchor_payloads:
-        context = payload.get("module_authoring_context", {})
+        assert "spine_context" not in payload
+        assert "module_authoring_context" not in payload
+        context = payload.get("决策写作素材", {}).get("全卡共同因果主线", {})
         pair = (
-            str(context.get("solution_thesis", "")),
-            str(context.get("core_innovation_thesis", "")),
+            str(context.get("解决思路", "")),
+            str(context.get("核心创新", "")),
         )
         assert all(pair)
         binding = str(payload["candidate_weapon"]["card_binding_id"])
         anchors_by_card.setdefault(binding, set()).add(pair)
     assert all(len(pairs) == 1 for pairs in anchors_by_card.values())
+    assert all(
+        payload.get("决策写作素材", {}).get("全卡共同因果主线")
+        for payload in s6_payloads
+        if payload.get("portrait_module_key")
+    )
     assert len(set(card_binding_ids)) == 5
     assert all(card_binding_ids)
     if profile_id == "winning_swarm_dynamic_v2":
@@ -5643,6 +5666,118 @@ def test_traceability_middle_loop_uses_minimal_targeted_repairs(
     assert backtrack["rerun_steps"] == expected_steps
 
 
+def test_explicit_candidate_count_splits_compact_cohort_and_repairs_s4() -> None:
+    backend = ScriptedFakeProvider([])
+    backend.snapshot = lambda: {"type": "chat_completions"}  # type: ignore[attr-defined]
+    provider = ResponsesAgentProvider(backend)
+    calls: list[tuple[str, str]] = []
+    s4_calls = 0
+    second_s4_payload: dict[str, object] = {}
+
+    def sample_schema(value, key: str = ""):
+        if isinstance(value, Mapping):
+            if key == "reasoning_node":
+                return {
+                    "recognition": "形成可审计认识",
+                    "evidence_refs": ["packet-1"],
+                    "confidence": 0.8,
+                    "next_action": {
+                        "action": "continue",
+                        "target_step": 0,
+                        "reason": "继续",
+                    },
+                }
+            return {name: sample_schema(item, name) for name, item in value.items()}
+        if isinstance(value, list):
+            return [sample_schema(value[0], key)] if value else []
+        if key == "confidence":
+            return 0.8
+        if key in {"evidence_refs", "direct_evidence_refs", "derived_from"}:
+            return ["packet-1"]
+        if "boolean" in str(value):
+            return True
+        return f"{key or 'field'}-value"
+
+    async def fake_run_core_json(
+        agent_id,
+        system,
+        payload,
+        output_schema,
+        max_output_tokens,
+        *,
+        phase="structured_analysis",
+    ):
+        del system, max_output_tokens
+        nonlocal s4_calls, second_s4_payload
+        calls.append((agent_id, phase))
+        result = sample_schema(output_schema)
+        if agent_id == "winning_s4_capability":
+            s4_calls += 1
+            if s4_calls == 1:
+                result["concept_directions"] = []
+            else:
+                second_s4_payload = dict(payload)
+                result["concept_directions"] = [
+                    {
+                        "name": f"候选装备{index}",
+                        "type": "new_capability",
+                        "direct_evidence_refs": ["packet-1"],
+                    }
+                    for index in range(1, 4)
+                ]
+        return json.dumps(result, ensure_ascii=False)
+
+    provider._run_core_json = fake_run_core_json  # type: ignore[method-assign]
+    result = asyncio.run(
+        provider._analyze_winning_subagents(
+            {
+                "topic": "面向未来战争需求，请收敛为正好3个可工程化装备候选",
+                "research_route": "new_winning_mechanism",
+                "execution_profile_id": "optimized_v2",
+                "execution_contract": {
+                    "logical_agent_dag": {
+                        "S1": [],
+                        "S2": ["S1"],
+                        "S3": ["S1", "S2"],
+                        "S4": ["S3"],
+                        "S5": ["S4"],
+                        "S6": ["S4", "S5"],
+                    },
+                    # Production optimized_v2 may compact the non-contiguous
+                    # S3/S5 pair.  An explicit count contract must split this
+                    # shape too, otherwise S5 runs before repaired S4 output.
+                    "physical_cohorts": [[1, 2], [3, 5]],
+                },
+                "discovery_blueprint": {
+                    "primary_branch": "A",
+                    "adaptive_winning_step_modes": {
+                        "1": "light",
+                        "2": "light",
+                        "3": "light",
+                        "4": "standard",
+                        "5": "light",
+                        "6": "skip",
+                    },
+                },
+                "packets": [{"packet_id": "packet-1"}],
+                "evidence_index": [],
+            }
+        )
+    )
+
+    assert s4_calls == 2
+    assert len(result["s4_concept_directions"]) == 3
+    assert result["candidate_count_contract"]["target"] == 3
+    assert second_s4_payload["candidate_count_contract"]["target"] == 3
+    assert "current_candidate_directions" in second_s4_payload
+    assert not any(
+        row.get("physical_cohort_id") in {"cohort-s3-s4-s5", "cohort-s3-s5"}
+        for row in result["subagent_runs"]
+    )
+    assert not any(agent_id.startswith("winning_cohort-s3") for agent_id, _ in calls)
+    assert ("winning_s4_capability", "winning_s4_capability_standard") in calls
+
+
 def test_codex_cli_provider_builds_isolated_ephemeral_invocation(
     monkeypatch,
     tmp_path,
@@ -6954,6 +7089,7 @@ def test_codex_mode_runs_six_subagents_with_inner_and_middle_loops(monkeypatch) 
         "capability_synthesis_handoff",
         "execution_profile_id",
         "first_pass_quality_contract",
+        "candidate_count_contract",
         "valid_evidence_ids",
     }
     assert "disruptive_seed_context" not in s6_input
@@ -8413,6 +8549,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     result = provider.analyze_winning_mechanism(
         {
             "topic": "动态制胜机理装备集群",
+            "run_id": "dynamic-v2-identity-test",
             "research_route": "new_winning_mechanism",
             "execution_profile_id": "winning_swarm_dynamic_v2",
             "discovery_blueprint": {
@@ -8644,12 +8781,20 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     # set.
     assert creative_payload_keys <= set(first_s3_payload)
     assert set(first_s3_payload) - creative_payload_keys <= {
+        "run_id",
+        "agent_instance_id",
+        "mission_node",
+        "batch",
         "winning_dimension_package",
         "coverage_steer",
         "occupied_sibling_concepts",
         "occupied_s3_core_concepts",
         "occupied_s3_boundary_rule",
     }
+    assert first_s3_payload["run_id"] == "dynamic-v2-identity-test"
+    assert first_s3_payload["mission_node"] == "S3"
+    assert first_s3_payload["agent_instance_id"].startswith("winning-agent-")
+    assert isinstance(first_s3_payload["batch"], int)
     assert first_s3_payload["coverage_steer"]["exclusive_axis"]
     assert len(first_s3_payload["occupied_sibling_concepts"]) <= 12
     if "winning_dimension_package" in first_s3_payload:
@@ -8790,8 +8935,23 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         if row.get("event_type") == "winning_agent_session_started"
         and row.get("mission_node") == "S4"
     )
-    assert incremental_s4_events[0]["completed_s3_instance_ids"]
-    assert first_s3_completed < first_s4_started < last_s3_completed
+    first_s3_started = min(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_started"
+        and row.get("mission_node") == "S3"
+    )
+    first_s4_completed = min(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_completed"
+        and row.get("mission_node") == "S4"
+    )
+    assert incremental_s4_events[0]["completed_s3_instance_ids"] == []
+    assert incremental_s4_events[0]["parallel_start"] is True
+    assert first_s4_started < first_s3_completed
+    assert first_s3_started < first_s4_completed
+    assert first_s4_started < last_s3_completed
     first_s5_started = min(
         index
         for index, row in enumerate(progress_rows)
@@ -8886,7 +9046,10 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     )
     assert all("candidate_ledger" in item["payload_keys"] for item in reviewer_inputs)
     assert all(
-        item["payload_keys"] - {"candidate_ledger", "coverage_matrix", "expert_review_feedback"}
+        item["payload_keys"] - {
+            "candidate_ledger", "coverage_matrix", "expert_review_feedback",
+            "run_id", "agent_instance_id", "mission_node", "batch",
+        }
         == set()
         for item in reviewer_inputs
     )
@@ -8909,7 +9072,8 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for item in reviewer_inputs
     )
     assert all(
-        "最多保留创新性最强的7条" in item["system"]
+        "优先形成5—6条不同制胜角度、不同主装备身份的高质量组合" in item["system"]
+        and "最多保留6条" in item["system"]
         and "禁止为凑数回收已经判退的普通方向" in item["system"]
         for item in reviewer_inputs
     )

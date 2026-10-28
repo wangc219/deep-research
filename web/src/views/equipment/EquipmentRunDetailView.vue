@@ -1,4 +1,5 @@
 <script setup>
+import { sharedPolling } from '@/utils/sharedPolling'
 import '@/assets/css/equipment-workbench-live.css'
 import '@/assets/css/equipment-workbench-theme.css'
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -532,7 +533,7 @@ const refresh = async ({ silent = false, includeArtifacts = true } = {}) => {
 const startPolling = () => {
   if (timer) return
   pollEnabled.value = true
-  timer = window.setInterval(async () => {
+  timer = sharedPolling.subscribe(async () => {
     if (!pollEnabled.value || document.visibilityState === 'hidden' || terminal.value) return
     const previousStatus = run.value?.status
     await refresh({ silent: true, includeArtifacts: false })
@@ -544,7 +545,7 @@ const startPolling = () => {
 
 const stopPolling = () => {
   pollEnabled.value = false
-  if (timer) window.clearInterval(timer)
+  if (timer) timer()
   timer = null
 }
 

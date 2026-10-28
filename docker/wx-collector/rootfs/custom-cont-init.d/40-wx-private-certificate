@@ -1,0 +1,25 @@
+#!/usr/bin/with-contenv bash
+# 每个持久化节点生成自己的证书，仅信任在本容器内。
+set -euo pipefail
+cert_dir=/config/wx_video_download/certs
+mkdir -p "$cert_dir"
+chmod 700 "$cert_dir"
+if [[ ! -s "$cert_dir/collector.pem" || ! -s "$cert_dir/collector.key" ]]; then
+  umask 077
+  openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+    -subj '/CN=wx_channels_download/O=DeepQuest Collector' \
+    -addext 'basicConstraints=critical,CA:TRUE' \
+    -addext 'keyUsage=critical,keyCertSign,cRLSign' \
+    -keyout "$cert_dir/collector.key" -out "$cert_dir/collector.pem" >/dev/null 2>&1
+fi
+chown -R abc:abc "$cert_dir"
+chmod 600 "$cert_dir/collector.key"
+cp "$cert_dir/collector.pem" /usr/local/share/ca-certificates/SunnyNet.crt
+chmod 644 /usr/local/share/ca-certificates/SunnyNet.crt
+update-ca-certificates >/dev/null 2>&1
+mkdir -p /etc/pki/nssdb
+if [[ ! -f /etc/pki/nssdb/cert9.db ]]; then
+  certutil -d sql:/etc/pki/nssdb -N --empty-password
+fi
+certutil -d sql:/etc/pki/nssdb -D -n DeepQuestCollector >/dev/null 2>&1 || true
+certutil -d sql:/etc/pki/nssdb -A -n DeepQuestCollector -t 'CT,C,C' -i "$cert_dir/collector.pem"

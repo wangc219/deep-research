@@ -417,11 +417,6 @@ def _parallel_s6_semantic_quality_issues(
             issues.append("装备与技术实现未逐字追溯冻结的解决思路和核心创新")
 
     marker_rules = {
-        "technology_implementation": (
-            "装备与技术实现未形成路线取舍和主攻链",
-            r"路线|路径|方案|主路径|备选|取舍|瓶颈|攻关|落装|工程|主攻|核心|实现",
-            2,
-        ),
         "operational_process": (
             "关键作战流程未形成条件、动作、状态变化和转段闭环",
             r"条件|授权|进入|行动|发射|释放|部署|确认|切换|转入|拒打|终止|续接|脱离|回传|交给",
@@ -1237,7 +1232,7 @@ async def generate_parallel_s6_cards(
             }
             module_exclusive_contract = {
                 "overview": "只按当前背景、解决思路、达到效果、核心创新四项分条简述；解决思路与核心创新逐字承接共享创新锚点，但不展开工程路线、组件、参数、试验或逐步流程。",
-                "technology_implementation": "与概述并列，显式承接同一solution_thesis与core_innovation_thesis；只围绕该创新的原理假设、依据、关键约束、可选路径、验证判据和可行性结论研究，不复述作战流程或泛化效果。",
+                "technology_implementation": "与概述并列，显式承接同一solution_thesis与core_innovation_thesis；只围绕核心创新发散实质不同的新质技术原理路线，说明各路线攻克什么断点，深挖主攻路线的研发卡点、突破方向和装备化落点；材料特性、成熟度与耦合关系仅在影响路线选择时写入，不复述作战流程或泛化效果。",
                 "operational_process": "只负责行动主体、进入条件、关键动作、状态变化、授权/拒打和终止/续接；不重新论证技术路线。",
                 "capability_effects": "只负责过去不能执行的任务、新增能力、可观察战果、指标边界和对手约束；不复述旧规则推演。",
                 "winning_logic": "只负责旧规则、被逆转假设、新交换关系、对手新增代价和成立边界；不重复技术落装或流程步骤。",
@@ -1249,9 +1244,9 @@ async def generate_parallel_s6_cards(
                     "avoid": ["工程路线", "组件或参数", "试验方案", "多条次要创新", "功能清单", "颠覆性口号"],
                 },
                 "technology_implementation": {
-                    "objective": "验证共享解决思路和核心创新是否可行，并说明哪些路径、条件和证据支持继续或否定。",
-                    "must_deliver": ["承接解决思路", "围绕核心创新", "原理假设与公开依据", "关键约束", "可选路线比较", "验证判据", "可行性结论"],
-                    "avoid": ["另起技术主题", "无关后阶段配套问题", "零部件清单", "无关技术趋势", "作战流程复述"],
+                    "objective": "从共享核心创新发散可落地的新质技术原理路线，找出真正改变核心约束的研发突破，并把突破转成装备功能或构型。",
+                    "focus": ["不同原理路线及其创新断点", "主攻路线为何卡住及应突破什么", "突破后的装备内嵌入位置与新功能", "其他信息仅在改变路线取舍时选写"],
+                    "avoid": ["另起技术主题", "无关后阶段配套问题", "零部件清单", "不改变约束的新技术名词堆砌", "通用样机阶段或项目进度表", "作战流程复述"],
                 },
                 "operational_process": {
                     "objective": "说明本装备如何在真实交战条件下进入、改变并交付一个作战窗口。",
@@ -1481,7 +1476,7 @@ async def generate_parallel_s6_cards(
                         "module_authoring_context": module_authoring_context(module_key),
                         "module_completion_contract": module_completion_contract[module_key],
                         "parallel_quality_check": (
-                            "提交前静默检查：先确认任务目标、本栏must_deliver全部必答内容和栏目独占边界；"
+                            "提交前静默检查：先确认本栏完成目标、写作重点和栏目独占边界；"
                             "再检查约360至400字、完整句、装备专属事实、与兄弟栏无长句重复。"
                             "任何一项不满足都在本次调用内重写，不输出检查过程。"
                         ),

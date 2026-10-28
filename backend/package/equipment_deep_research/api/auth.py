@@ -25,7 +25,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from collections.abc import Mapping, MutableMapping
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -113,12 +114,7 @@ class TenantContext:
 
     @property
     def supplied(self) -> bool:
-        return bool(
-            self.tenant_id
-            or self.workspace_id
-            or self.project_id
-            or self.profile_id
-        )
+        return bool(self.tenant_id or self.workspace_id or self.project_id or self.profile_id)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -134,9 +130,7 @@ class TenantContext:
         }
 
 
-def resolve_tenant_context(
-    headers: Mapping[str, str], *, strict: bool | None = None
-) -> tuple[TenantContext, bool]:
+def resolve_tenant_context(headers: Mapping[str, str], *, strict: bool | None = None) -> tuple[TenantContext, bool]:
     """Resolve trusted or compatibility headers.
 
     Returns ``(context, conflict)``.  A conflict means a trusted claim and a
@@ -184,12 +178,7 @@ def resolve_tenant_context(
         )
     )
     trusted_supplied = bool(
-        trusted_tenant
-        or trusted_workspace
-        or trusted_project
-        or trusted_profile
-        or trusted_user
-        or trusted_roles
+        trusted_tenant or trusted_workspace or trusted_project or trusted_profile or trusted_user or trusted_roles
     )
     legacy_tenant = _header(normalized, "x-tenant-id")
     legacy_workspace = _header(normalized, "x-workspace-id")
@@ -283,19 +272,27 @@ def scope_matches(
                 return False
         elif actual:
             return False
-    if not any(_text(values.get(key) or nested.get(key, "")) for key in ("tenant_id", "workspace_id", "project_id", "profile_id")):
+    if not any(
+        _text(values.get(key) or nested.get(key, ""))
+        for key in ("tenant_id", "workspace_id", "project_id", "profile_id")
+    ):
         return bool(allow_global)
     return True
 
 
 def _is_public_path(path: str) -> bool:
-    return path in {
-        "/api/v1/health",
-        "/api/v1/query-library/health",
-        "/openapi.json",
-        "/docs",
-        "/redoc",
-    } or path.startswith("/docs/") or path.startswith("/redoc/")
+    return (
+        path
+        in {
+            "/api/v1/health",
+            "/api/v1/query-library/health",
+            "/openapi.json",
+            "/docs",
+            "/redoc",
+        }
+        or path.startswith("/docs/")
+        or path.startswith("/redoc/")
+    )
 
 
 def _replace_scope_headers(scope: MutableMapping[str, Any], context: TenantContext) -> None:
@@ -353,8 +350,7 @@ def install_tenant_auth_middleware(
                 return
             path = str(scope.get("path", ""))
             headers = {
-                key.decode("latin-1").lower(): value.decode("latin-1")
-                for key, value in scope.get("headers", [])
+                key.decode("latin-1").lower(): value.decode("latin-1") for key, value in scope.get("headers", [])
             }
             context, conflict = resolve_tenant_context(headers, strict=enabled)
             # ``state`` is copied by Starlette's Request wrapper.  Preserve an
@@ -423,14 +419,12 @@ def install_tenant_auth_middleware(
                             # the tenant and asserted the admin role before
                             # this bypass is honored.
                             cross_scope=(
-                                context.authenticated
-                                and "admin" in context.roles
-                                and cross_scope_requested(headers)
+                                context.authenticated and "admin" in context.roles and cross_scope_requested(headers)
                             ),
                         ):
-                            await JSONResponse(
-                                {"detail": "tenant scope mismatch"}, status_code=403
-                            )(scope, receive, send)
+                            await JSONResponse({"detail": "tenant scope mismatch"}, status_code=403)(
+                                scope, receive, send
+                            )
                             return
             await self.inner(scope, receive, send)
 

@@ -23,7 +23,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import inspect
 import re
 from typing import Any, Literal, Protocol, TYPE_CHECKING, runtime_checkable
@@ -60,7 +60,7 @@ def _text(value: object, limit: int = 1200) -> str:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _safe_schema(value: object) -> dict[str, Any]:
@@ -68,6 +68,7 @@ def _safe_schema(value: object) -> dict[str, Any]:
 
     if not isinstance(value, Mapping):
         return {"type": "object", "properties": {}}
+
     # Schemas are metadata, not an execution channel.  Keep only JSON-like
     # values and cap the serialized size to avoid a provider poisoning context.
     def project(item: Any, depth: int = 0) -> Any:
@@ -76,10 +77,7 @@ def _safe_schema(value: object) -> dict[str, Any]:
         if item is None or isinstance(item, (bool, int, float, str)):
             return item if not isinstance(item, str) else item[:800]
         if isinstance(item, Mapping):
-            return {
-                str(key)[:120]: project(value, depth + 1)
-                for key, value in list(item.items())[:64]
-            }
+            return {str(key)[:120]: project(value, depth + 1) for key, value in list(item.items())[:64]}
         if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [project(value, depth + 1) for value in list(item)[:64]]
         return None
@@ -120,9 +118,7 @@ class ToolSpec:
     description: str
     input_schema: Mapping[str, Any] = field(default_factory=dict)
     source: ToolSource = "builtin"
-    handler: Callable[["TurnState"], Awaitable[Mapping[str, Any]]] | None = field(
-        default=None, repr=False, compare=False
-    )
+    handler: Callable[[TurnState], Awaitable[Mapping[str, Any]]] | None = field(default=None, repr=False, compare=False)
     plugin_id: str = ""
     server_id: str = ""
     original_name: str = ""
@@ -234,8 +230,7 @@ class InProcessMCPAdapter:
         self,
         tools: Mapping[
             str,
-            Callable[[Mapping[str, Any]], Awaitable[Any] | Any]
-            | MCPToolDefinition,
+            Callable[[Mapping[str, Any]], Awaitable[Any] | Any] | MCPToolDefinition,
         ],
     ) -> None:
         self._tools: dict[str, MCPToolDefinition] = {}
@@ -319,7 +314,7 @@ class ToolRegistry:
     def register_handler(
         self,
         name: str,
-        handler: Callable[["TurnState"], Awaitable[Mapping[str, Any]]],
+        handler: Callable[[TurnState], Awaitable[Mapping[str, Any]]],
         *,
         description: str = "",
         input_schema: Mapping[str, Any] | None = None,
@@ -371,21 +366,19 @@ class ToolRegistry:
 
     def register_builtin_handlers(
         self,
-        handlers: Mapping[str, Callable[["TurnState"], Awaitable[Mapping[str, Any]]]],
+        handlers: Mapping[str, Callable[[TurnState], Awaitable[Mapping[str, Any]]]],
     ) -> None:
         for name, handler in handlers.items():
             self.register_handler(str(name), handler, replace=True)
 
-    async def execute(self, name: str, state: "TurnState") -> Mapping[str, Any]:
+    async def execute(self, name: str, state: TurnState) -> Mapping[str, Any]:
         """Execute one registered built-in action against the current state."""
 
         spec = self.get(name)
         if spec is None:
             raise KeyError(f"unknown runtime tool: {name}")
         if spec.source != "builtin" or spec.handler is None:
-            raise MCPNotEnabledError(
-                f"{name} is an MCP capability; call execute_mcp with JSON arguments"
-            )
+            raise MCPNotEnabledError(f"{name} is an MCP capability; call execute_mcp with JSON arguments")
         result = spec.handler(state)
         if not inspect.isawaitable(result):
             raise TypeError(f"tool handler {name!r} must be async")
@@ -395,7 +388,7 @@ class ToolRegistry:
         return resolved
 
     # ---- MCP declaration and lifecycle -----------------------------------------------
-    def register_mcp_declaration(self, declaration: "MCPDeclaration | Mapping[str, Any]") -> MCPServerRuntime:
+    def register_mcp_declaration(self, declaration: MCPDeclaration | Mapping[str, Any]) -> MCPServerRuntime:
         if isinstance(declaration, Mapping):
             server_id = _text(declaration.get("server_id"), 128)
             transport = _text(declaration.get("transport") or "unknown", 24)
@@ -422,10 +415,7 @@ class ToolRegistry:
         return self._mcp_servers.get(str(server_id))
 
     def mcp_status(self) -> dict[str, dict[str, Any]]:
-        return {
-            server_id: runtime.public_payload()
-            for server_id, runtime in sorted(self._mcp_servers.items())
-        }
+        return {server_id: runtime.public_payload() for server_id, runtime in sorted(self._mcp_servers.items())}
 
     async def attach_mcp_adapter(
         self,
@@ -459,9 +449,7 @@ class ToolRegistry:
             raise KeyError(f"MCP declaration not found: {server_id}")
         if not isinstance(adapter, MCPAdapter):
             raise TypeError("adapter must implement MCPAdapter")
-        allow = frozenset(
-            _text(item, 96) for item in allowed_tools if _text(item, 96)
-        )
+        allow = frozenset(_text(item, 96) for item in allowed_tools if _text(item, 96))
         if runtime.adapter is not None:
             await self._stop_mcp(server_id)
         runtime.adapter = adapter
@@ -486,7 +474,7 @@ class ToolRegistry:
                 qualified = _namespace_tool(runtime.server_id, definition.name)
 
                 async def invoke(
-                    state: "TurnState",
+                    state: TurnState,
                     *,
                     _adapter: MCPAdapter = adapter,
                     _tool_name: str = definition.name,
@@ -600,8 +588,7 @@ class ToolRegistry:
             "schema_version": "deep-tool-registry-v1",
             "tools": self.definitions(),
             "mcp_servers": [
-                item.public_payload()
-                for item in sorted(self._mcp_servers.values(), key=lambda value: value.server_id)
+                item.public_payload() for item in sorted(self._mcp_servers.values(), key=lambda value: value.server_id)
             ],
             "limits": {"max_mcp_tools": _MAX_MCP_TOOLS},
         }
@@ -609,8 +596,8 @@ class ToolRegistry:
 
 def build_tool_registry(
     *,
-    handlers: Mapping[str, Callable[["TurnState"], Awaitable[Mapping[str, Any]]]] | None = None,
-    capability_registry: "DeepCapabilityRegistry | None" = None,
+    handlers: Mapping[str, Callable[[TurnState], Awaitable[Mapping[str, Any]]]] | None = None,
+    capability_registry: DeepCapabilityRegistry | None = None,
 ) -> ToolRegistry:
     """Build one per-turn registry from the current capability snapshot."""
 

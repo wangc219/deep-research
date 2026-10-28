@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 from typing import Any
 
@@ -57,10 +57,7 @@ def synthesize_candidate_from_judgement(
             open_questions=[item.text for item in judgement.blind_spots],
             solution_signals=[],
             judgement_id=judgement.judgement_id,
-            rationale=(
-                "consensus has no direct or partial existing EvidenceCard "
-                "references"
-            ),
+            rationale=("consensus has no direct or partial existing EvidenceCard references"),
             status="needs_more_evidence",
             stop_reason="needs_more_evidence",
         )
@@ -83,7 +80,7 @@ def synthesize_candidate_from_judgement(
         judgement_id=judgement.judgement_id,
         rationale="candidate synthesized from judgement consensus and existing EvidenceCard refs",
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     store.upsert_candidate(
         CandidateDemand(
             candidate_id=draft.candidate_id,

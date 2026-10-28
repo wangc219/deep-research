@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 from platform_core.config.options import system_options
-from platform_core.knowledge.base import KBNameConflictError, KBNotFoundError
+from platform_core.knowledge.base import KBIndexNotReadyError, KBNameConflictError, KBNotFoundError
 from platform_core.knowledge.chunking.ragflow_like.presets import get_chunk_preset_options
 from platform_core.knowledge.graphs.milvus_graph_service import GRAPH_TASK_TYPE, MilvusGraphService
 from platform_core.knowledge.read_models import KnowledgeBaseDetail
@@ -52,6 +52,8 @@ from platform_core.utils import logger
 from platform_core.utils.upload_utils import MAX_UPLOAD_SIZE_BYTES, read_upload_with_limit, write_upload_to_path
 
 from server.utils.auth_middleware import get_admin_user, get_db, get_required_user
+from server.routers.wxchannels_router import router as wxchannels_router
+from server.routers.collection_artifact_router import router as collection_artifact_router
 from sqlalchemy.ext.asyncio import AsyncSession
 from server.utils.knowledge_response import serialize_knowledge_base, serialize_knowledge_base_list
 from server.utils.knowledge_permissions import (
@@ -62,10 +64,16 @@ from server.utils.knowledge_permissions import (
 
 knowledge = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
+
+knowledge.include_router(wxchannels_router)
+knowledge.include_router(collection_artifact_router)
+
+
 ACTIVE_GRAPH_BUILD_STATUSES = {"pending", "running"}
 MAX_DIRECT_DOCUMENT_ACTION_FILE_IDS = 1000
 PENDING_PARSE_STATUSES = ["uploaded"]
 PENDING_INDEX_STATUSES = ["parsed", "error_indexing"]
+REBUILD_INDEX_STATUSES = ["indexed", "done"]
 VIRTUAL_FOLDER_MIGRATION_TASK_TYPE = "knowledge_virtual_folder_migration"
 PRIVATE_KNOWLEDGE_SHARE_CONFIG = {"version": 2, "read_scope": None, "manage_scope": None}
 
@@ -557,7 +565,7 @@ async def index_graph_build(
         task, created = await tasker.enqueue_unique_by_payload(
             name=f"图谱构建 ({database.name})",
             task_type=GRAPH_TASK_TYPE,
-            payload={"kb_id": kb_id, "action": "build"},
+            payload={"kb_id": kb_id, "action": "build", "operator_id": current_user.uid},
             payload_match={"kb_id": kb_id},
         )
         if not created:
@@ -570,6 +578,50 @@ async def index_graph_build(
     except Exception as e:
         logger.error(f"提交图谱构建任务失败 {e}, {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"提交图谱构建任务失败: {e}")
+
+
+@knowledge.post("/databases/{kb_id}/graph-build/retry-failed")
+async def retry_failed_graph_extraction(
+    kb_id: str,
+    current_user: User = Depends(require_knowledge_base_manage),
+):
+    """仅将抽取失败的 Chunk 重新提交图谱构建。"""
+    try:
+        if await _has_running_graph_build_task(kb_id):
+            raise HTTPException(status_code=409, detail="该知识库已有正在运行的图谱构建任务")
+
+        database = await knowledge_base.get_database_info(kb_id)
+        if not database:
+            raise HTTPException(status_code=404, detail=f"知识库 {kb_id} 不存在")
+
+        graph_status = await MilvusGraphService().get_status(kb_id)
+        if not graph_status.get("locked"):
+            raise HTTPException(status_code=400, detail="请先确认并锁定图谱抽取配置")
+        failed_count = int((graph_status.get("extraction_counts") or {}).get("failed") or 0)
+        if failed_count <= 0:
+            raise HTTPException(status_code=409, detail="当前没有可重跑的抽取失败 Chunk")
+
+        task, created = await tasker.enqueue_unique_by_payload(
+            name=f"重跑图谱抽取失败项 ({database.name})",
+            task_type=GRAPH_TASK_TYPE,
+            payload={"kb_id": kb_id, "action": "retry_failed", "operator_id": current_user.uid},
+            payload_match={"kb_id": kb_id},
+        )
+        if not created:
+            raise HTTPException(status_code=409, detail="该知识库已有正在运行的图谱构建任务")
+        return {
+            "message": f"已提交 {failed_count} 个抽取失败 Chunk 重跑",
+            "status": "queued",
+            "task_id": task.id,
+            "failed_count": failed_count,
+        }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"提交图谱抽取失败项重跑任务失败 {e}, {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"提交图谱抽取失败项重跑任务失败: {e}")
 
 
 @knowledge.get("/databases/{kb_id}/graph-build/failed-chunks")
@@ -635,7 +687,7 @@ async def reconcile_graph_build(
         task, created = await tasker.enqueue_unique_by_payload(
             name=f"图谱向量索引修复 ({database.name})",
             task_type=GRAPH_TASK_TYPE,
-            payload={"kb_id": kb_id, "action": "reconcile", "reconcile_mode": mode},
+            payload={"kb_id": kb_id, "action": "reconcile", "reconcile_mode": mode, "operator_id": current_user.uid},
             payload_match={"kb_id": kb_id},
         )
         if not created:
@@ -1052,6 +1104,40 @@ async def index_pending_documents(
     )
 
 
+@knowledge.post("/databases/{kb_id}/documents/rebuild-index")
+async def rebuild_document_index(
+    kb_id: str,
+    payload: PendingIndexDocumentsRequest | None = None,
+    current_user: User = Depends(require_knowledge_base_manage),
+):
+    """显式重建所有已入库文档的向量索引。"""
+    params = (payload.params if payload else None) or {}
+    db_info = await _ensure_database_supports_documents(kb_id, "向量索引重建")
+    if db_info.indexed_count <= 0:
+        return {"message": "没有可重建索引的文档", "status": "success", "queued_count": 0}
+
+    task, created = await tasker.enqueue_unique_by_payload(
+        name=f"向量索引重建 ({db_info.name})",
+        task_type="knowledge_index",
+        payload={
+            "kb_id": kb_id,
+            "scope": "rebuild",
+            "action": "index",
+            "statuses": REBUILD_INDEX_STATUSES,
+            "count": db_info.indexed_count,
+            "params": params,
+            "operator_id": current_user.uid,
+        },
+        payload_match={"kb_id": kb_id, "scope": "rebuild", "action": "index"},
+    )
+    return {
+        "message": "索引重建任务已提交" if created else "已有索引重建任务正在执行",
+        "status": "queued",
+        "task_id": task.id,
+        "queued_count": db_info.indexed_count,
+    }
+
+
 @knowledge.get("/databases/{kb_id}/documents/{doc_id}")
 async def get_document_info(kb_id: str, doc_id: str, current_user: User = Depends(require_knowledge_base_read)):
     """获取文档详细信息（包含基本信息和内容信息）"""
@@ -1322,6 +1408,24 @@ async def get_kb_image(kb_id: str, object_path: str, current_user: User = Depend
 # =============================================================================
 
 
+@knowledge.get("/databases/{kb_id}/index-health")
+async def get_index_health(kb_id: str, current_user: User = Depends(require_knowledge_base_read)):
+    """返回 PostgreSQL 分块与向量索引的一致性状态。"""
+    return await knowledge_base.get_vector_index_health(kb_id)
+
+
+async def _ensure_query_index_ready(kb_id: str) -> None:
+    """将索引缺失转换为可操作的 HTTP 冲突响应。"""
+    try:
+        await knowledge_base.ensure_vector_index_searchable(kb_id)
+    except KBIndexNotReadyError as error:
+        status_code = 503 if error.health.get("status") == "unavailable" else 409
+        raise HTTPException(
+            status_code=status_code,
+            detail={"code": "vector_index_not_ready", "message": str(error), "health": error.health},
+        ) from error
+
+
 @knowledge.post("/databases/{kb_id}/query")
 async def query_knowledge_base(
     kb_id: str,
@@ -1332,6 +1436,7 @@ async def query_knowledge_base(
     """查询知识库"""
     logger.debug(f"Query knowledge base {kb_id}: {query}")
     try:
+        await _ensure_query_index_ready(kb_id)
         result = await knowledge_base.aquery(query, kb_id=kb_id, **meta)
         return {"result": result, "status": "success"}
     except HTTPException:
@@ -1351,6 +1456,7 @@ async def query_test(
     """测试查询知识库"""
     logger.debug(f"Query test in {kb_id}: {query}")
     try:
+        await _ensure_query_index_ready(kb_id)
         result = await knowledge_base.aquery(query, kb_id=kb_id, **meta)
         return result
     except HTTPException:

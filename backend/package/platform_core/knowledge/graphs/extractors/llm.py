@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import math
+import time
+from asyncio import timeout
 from typing import Any
 
 import json_repair
 
 from platform_core.models.chat import select_model
+from platform_core.utils import logger
 
 from .base import GraphExtractor
 from .defense_quality_contract import (
@@ -15,6 +18,7 @@ from .defense_quality_contract import (
 )
 
 DEFAULT_TRIPLE_EXTRACTION_PROMPT = """请从下面文本中抽取实体和实体关系，返回严格 JSON，不要输出解释。
+evidence_quote 必须逐字复制当前文本中连续的原文，保留原文语言，不翻译、不改写、不拼接相邻前文。
 JSON 格式：
 {
   "relations": [
@@ -58,18 +62,63 @@ ADJACENT_CONTEXT_INSTRUCTION = """下面还提供了当前文本之前的相邻 
 
 # 单次抽取调用的超时。抽取产出（实体+关系 JSON）通常远长于普通对话，推理型模型
 # 单块耗时可达数十秒；超时会触发重试，重试仍超时该分块才判定失败。可通过
-# extractor_options.timeout_seconds 调大，默认保持历史行为不变。
-DEFAULT_EXTRACTION_TIMEOUT_SECONDS = 60.0
+# extractor_options.timeout_seconds 调整。公网推理模型在复杂 Schema 下经常超过
+# 60 秒，因此使用更宽松的安全默认值；运行时仍有三次分块级重试。
+DEFAULT_EXTRACTION_TIMEOUT_SECONDS = 180.0
 MAX_EXTRACTION_TIMEOUT_SECONDS = 600.0
+DEFAULT_EXTRACTION_CONCURRENCY = 8
 DEFAULT_CONTEXT_WINDOW_SIZE = 1
 MAX_CONTEXT_WINDOW_SIZE = 5
 DEFAULT_CONTEXT_MAX_CHARS = 4000
 MAX_CONTEXT_MAX_CHARS = 20_000
 DEFAULT_ENABLE_HYPOTHESIS_EXTRACTION = True
+DEFAULT_EXTRACTION_MAX_TOKENS = 8192
+MAX_EXTRACTION_OUTPUT_TOKENS = 32768
+DEFAULT_EXTRACTION_THINKING_BUDGET = 2048
+
+
+class ExtractionOutputTruncatedError(ValueError):
+    """模型输出达到预算，禁止把不完整 JSON 当作成功抽取。"""
 
 
 class LLMGraphExtractor(GraphExtractor):
     extractor_type = "llm"
+
+    def __init__(self, options: dict[str, Any] | None = None):
+        super().__init__(options)
+        self._models: dict[int, Any] = {}
+
+    def _resolve_model_params(self) -> dict[str, Any]:
+        """给抽取设置独立预算，显式模型参数仍可覆盖默认值。"""
+        params = dict(self.options.get("model_params") or {})
+        raw = params.get(
+            "max_tokens",
+            params.get("max_completion_tokens", self.options.get("max_output_tokens", DEFAULT_EXTRACTION_MAX_TOKENS)),
+        )
+        if isinstance(raw, bool) or not isinstance(raw, int) or not 256 <= raw <= MAX_EXTRACTION_OUTPUT_TOKENS:
+            raise ValueError("抽取最大输出必须是 256 到 32768 之间的整数")
+        params.pop("max_completion_tokens", None)
+        params["max_tokens"] = raw
+        if params.get("extra_body") is not None and not isinstance(params["extra_body"], dict):
+            raise ValueError("模型参数 extra_body 必须是对象")
+        thinking = self.options.get("enable_thinking", True)
+        if not isinstance(thinking, bool):
+            raise ValueError("enable_thinking 必须是布尔值")
+        provider_id = self.options["model_spec"].partition(":")[0].lower()
+        if provider_id in {"siliconflow", "siliconflow-cn"}:
+            params["extra_body"] = {"enable_thinking": thinking, **dict(params.get("extra_body") or {})}
+            if not isinstance(params["extra_body"]["enable_thinking"], bool):
+                raise ValueError("模型参数 enable_thinking 必须是布尔值")
+            budget = params["extra_body"].get(
+                "thinking_budget", self.options.get("thinking_budget", DEFAULT_EXTRACTION_THINKING_BUDGET)
+            )
+            if isinstance(budget, bool) or not isinstance(budget, int) or not 128 <= budget <= 32768:
+                raise ValueError("思考预算必须是 128 到 32768 之间的整数")
+            if params["extra_body"]["enable_thinking"]:
+                params["extra_body"]["thinking_budget"] = budget
+        # 分块级统一执行退避重试，避免 SDK 的隐式重试把一次超时放大成数倍。
+        params["max_retries"] = 0
+        return params
 
     def _resolve_timeout_seconds(self) -> float:
         raw = self.options.get("timeout_seconds", DEFAULT_EXTRACTION_TIMEOUT_SECONDS)
@@ -93,7 +142,7 @@ class LLMGraphExtractor(GraphExtractor):
             raise ValueError("LLM 抽取器需要 model_spec")
         if self.options.get("prompt"):
             raise ValueError("LLM 图谱抽取器不支持自定义完整 Prompt，请使用 schema 配置抽取约束")
-        concurrency_count = self.options.get("concurrency_count", 1)
+        concurrency_count = self.options.get("concurrency_count", DEFAULT_EXTRACTION_CONCURRENCY)
         try:
             concurrency_count = int(concurrency_count)
         except (TypeError, ValueError) as exc:
@@ -105,6 +154,7 @@ class LLMGraphExtractor(GraphExtractor):
         self._resolve_timeout_seconds()
         if self.options.get("model_params") is not None and not isinstance(self.options["model_params"], dict):
             raise ValueError("LLM 抽取器 model_params 必须是对象")
+        self._resolve_model_params()
         self._resolve_context_window_size()
         self._resolve_context_max_chars()
         self._resolve_enable_hypothesis_extraction()
@@ -160,15 +210,55 @@ class LLMGraphExtractor(GraphExtractor):
 
     async def extract(self, text: str, *, chunk_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         self.validate_options()
-        model = select_model(
-            model_spec=self.options["model_spec"],
-            timeout=self._resolve_timeout_seconds(),
-            model_params=self.options.get("model_params") or {},
-        )
         prompt = self._build_prompt(text, chunk_metadata=chunk_metadata)
-        response = await model.call(prompt, stream=False)
-        parsed = json_repair.loads(response.content if response else "")
-        return parsed
+        params = self._resolve_model_params()
+        budget = params["max_tokens"]
+        # 只有供应商明确报告截断才提高预算，最多补跑两次，避免静默丢失关系。
+        for attempt in range(3):
+            model = self._models.get(budget)
+            if model is None:
+                model = select_model(
+                    model_spec=self.options["model_spec"],
+                    own_http_clients=True,
+                    timeout=self._resolve_timeout_seconds(),
+                    model_params={**params, "max_tokens": budget},
+                )
+                self._models[budget] = model
+            started = time.monotonic()
+            deadline = self._resolve_timeout_seconds()
+            try:
+                # HTTP read timeout 会在收到字节后重置；这里同时限制整次调用的墙钟时间。
+                async with timeout(deadline):
+                    response = await model.call(prompt, stream=False)
+            except TimeoutError as exc:
+                raise TimeoutError(f"图谱抽取超过 {deadline:g} 秒时限") from exc
+            logger.info(
+                "图谱模型调用 chunk_id={} duration={:.2f}s budget={} finish={} usage={}",
+                (chunk_metadata or {}).get("chunk_id", ""),
+                time.monotonic() - started,
+                budget,
+                getattr(response, "finish_reason", None),
+                getattr(response, "usage", {}),
+            )
+            if str(getattr(response, "finish_reason", "")).lower() in {"length", "max_tokens"}:
+                if budget >= MAX_EXTRACTION_OUTPUT_TOKENS or attempt == 2:
+                    break
+                budget = min(budget * 2, MAX_EXTRACTION_OUTPUT_TOKENS)
+                continue
+            content = response.content if response else ""
+            if not content or not content.strip():
+                raise ValueError("模型返回空抽取内容")
+            parsed = json_repair.loads(content)
+            if not isinstance(parsed, dict) or not any(key in parsed for key in ("relations", "entities")):
+                raise ValueError("模型未返回实体或关系 JSON")
+            return parsed
+        raise ExtractionOutputTruncatedError(f"抽取输出被截断，已尝试提高预算至 {budget} tokens")
+
+    async def aclose(self) -> None:
+        """释放本次构建复用的模型连接。"""
+        for model in self._models.values():
+            await model.aclose()
+        self._models.clear()
 
     def _build_prompt(self, text: str, *, chunk_metadata: dict[str, Any] | None = None) -> str:
         quality_contract = build_defense_quality_contract(

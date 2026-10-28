@@ -109,7 +109,7 @@ class RunWorkspace:
             except OSError:
                 pass
 
-    def __enter__(self) -> "RunWorkspace":
+    def __enter__(self) -> RunWorkspace:
         self._require_open_fd(self._run_fd)
         return self
 
@@ -135,9 +135,7 @@ class RunWorkspace:
         return self.read_run_bytes(relative_path).decode("utf-8")
 
     def read_run_bytes(self, relative_path: str | Path) -> bytes:
-        return _RootedAtomicWriter(self._require_open_fd(self._run_fd)).read(
-            relative_path
-        )
+        return _RootedAtomicWriter(self._require_open_fd(self._run_fd)).read(relative_path)
 
     def write_checkpoint_text(self, relative_path: str | Path, text: str) -> None:
         _RootedAtomicWriter(self._require_open_fd(self._checkpoints_fd)).write(
@@ -152,27 +150,19 @@ class RunWorkspace:
         )
 
     def read_artifact_bytes(self, relative_path: str | Path) -> bytes:
-        return _RootedAtomicWriter(self._require_open_fd(self._artifacts_fd)).read(
-            relative_path
-        )
+        return _RootedAtomicWriter(self._require_open_fd(self._artifacts_fd)).read(relative_path)
 
     def artifact_file_is_regular(self, relative_path: str | Path) -> bool:
-        return _RootedAtomicWriter(
-            self._require_open_fd(self._artifacts_fd)
-        ).is_regular_file(relative_path)
+        return _RootedAtomicWriter(self._require_open_fd(self._artifacts_fd)).is_regular_file(relative_path)
 
     def artifact_file_names(self) -> list[str]:
-        return _RootedAtomicWriter(
-            self._require_open_fd(self._artifacts_fd)
-        ).list_regular_file_names(".")
+        return _RootedAtomicWriter(self._require_open_fd(self._artifacts_fd)).list_regular_file_names(".")
 
     def run_file_is_regular(self, relative_path: str | Path) -> bool:
-        return _RootedAtomicWriter(
-            self._require_open_fd(self._run_fd)
-        ).is_regular_file(relative_path)
+        return _RootedAtomicWriter(self._require_open_fd(self._run_fd)).is_regular_file(relative_path)
 
     @classmethod
-    def create(cls, output_root: str | Path, run_id: str) -> "RunWorkspace":
+    def create(cls, output_root: str | Path, run_id: str) -> RunWorkspace:
         _validate_run_id(run_id)
         resolved_root, output_fd = open_directory_handle(output_root, create=True)
         run_fd: int | None = None
@@ -188,11 +178,7 @@ class RunWorkspace:
             checkpoints_fd = _create_directory_at(run_fd, "checkpoints")
             database_fd = _open_at(
                 "run.db",
-                os.O_RDWR
-                | os.O_CREAT
-                | os.O_EXCL
-                | _close_on_exec()
-                | _no_follow(),
+                os.O_RDWR | os.O_CREAT | os.O_EXCL | _close_on_exec() | _no_follow(),
                 0o600,
                 dir_fd=run_fd,
             )
@@ -225,7 +211,7 @@ class RunWorkspace:
             os.close(output_fd)
 
     @classmethod
-    def open_existing(cls, output_root: str | Path, run_id: str) -> "RunWorkspace":
+    def open_existing(cls, output_root: str | Path, run_id: str) -> RunWorkspace:
         _validate_run_id(run_id)
         resolved_root, output_fd = open_directory_handle(output_root, create=False)
         run_fd: int | None = None
@@ -236,9 +222,7 @@ class RunWorkspace:
         try:
             _require_trusted_output_root(os.fstat(output_fd), resolved_root)
             if _lstat_at(run_id, output_fd) is None:
-                raise FileNotFoundError(
-                    f"run directory does not exist: {resolved_root / run_id}"
-                )
+                raise FileNotFoundError(f"run directory does not exist: {resolved_root / run_id}")
             run_fd = _open_directory_at(output_fd, run_id)
             sessions_fd = _open_directory_at(run_fd, "agent_sessions")
             artifacts_fd = _open_directory_at(run_fd, "artifacts")
@@ -327,19 +311,14 @@ def open_directory_handle(
             _require_directory(component_stat, Path(component))
             next_fd = _open_at(
                 component,
-                os.O_RDONLY
-                | _directory_only()
-                | _close_on_exec()
-                | _no_follow(),
+                os.O_RDONLY | _directory_only() | _close_on_exec() | _no_follow(),
                 dir_fd=current_fd,
             )
             opened_stat = os.fstat(next_fd)
             try:
                 _require_directory(opened_stat, Path(component))
                 if _identity(component_stat) != _identity(opened_stat):
-                    raise RuntimeError(
-                        f"directory changed during access: {component}"
-                    )
+                    raise RuntimeError(f"directory changed during access: {component}")
             except BaseException:
                 os.close(next_fd)
                 raise
@@ -393,9 +372,7 @@ def _require_trusted_output_root(value: os.stat_result, path: Path) -> None:
     if value.st_uid != os.geteuid():
         raise PermissionError(f"output root must be owned by the current user: {path}")
     if value.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
-        raise PermissionError(
-            f"output root must not be group/world writable: {path}"
-        )
+        raise PermissionError(f"output root must not be group/world writable: {path}")
 
 
 class _RootedAtomicWriter:
@@ -415,11 +392,7 @@ class _RootedAtomicWriter:
                 _require_regular_file(existing, relative)
             descriptor = _open_at(
                 temporary_name,
-                os.O_WRONLY
-                | os.O_CREAT
-                | os.O_EXCL
-                | _close_on_exec()
-                | _no_follow(),
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | _close_on_exec() | _no_follow(),
                 0o600,
                 dir_fd=parent_fd,
             )
@@ -464,9 +437,7 @@ class _RootedAtomicWriter:
                 opened = os.fstat(descriptor)
                 _require_regular_file(opened, relative)
                 if _identity(existing) != _identity(opened):
-                    raise RuntimeError(
-                        f"workspace path changed during access: {relative}"
-                    )
+                    raise RuntimeError(f"workspace path changed during access: {relative}")
             finally:
                 os.close(descriptor)
             return True
@@ -525,25 +496,18 @@ class _RootedAtomicWriter:
             for component in relative.parts[:-1]:
                 component_stat = _lstat_at(component, current_fd)
                 if component_stat is None:
-                    raise FileNotFoundError(
-                        f"workspace path ancestor does not exist: {component}"
-                    )
+                    raise FileNotFoundError(f"workspace path ancestor does not exist: {component}")
                 _require_directory(component_stat, Path(component))
                 next_fd = _open_at(
                     component,
-                    os.O_RDONLY
-                    | _directory_only()
-                    | _close_on_exec()
-                    | _no_follow(),
+                    os.O_RDONLY | _directory_only() | _close_on_exec() | _no_follow(),
                     dir_fd=current_fd,
                 )
                 opened_stat = os.fstat(next_fd)
                 try:
                     _require_directory(opened_stat, Path(component))
                     if _identity(component_stat) != _identity(opened_stat):
-                        raise RuntimeError(
-                            f"workspace path changed during access: {component}"
-                        )
+                        raise RuntimeError(f"workspace path changed during access: {component}")
                 except BaseException:
                     os.close(next_fd)
                     raise
@@ -647,11 +611,7 @@ def _open_directory_at(parent_fd: int, name: str) -> int:
 
 def _relative_workspace_path(path: str | Path) -> Path:
     candidate = Path(path)
-    if (
-        candidate.is_absolute()
-        or not candidate.parts
-        or any(part in {"", ".", ".."} for part in candidate.parts)
-    ):
+    if candidate.is_absolute() or not candidate.parts or any(part in {"", ".", ".."} for part in candidate.parts):
         raise ValueError("workspace path must stay within its trusted root")
     return candidate
 
@@ -669,9 +629,7 @@ def _require_secure_writer_platform() -> None:
         if function not in supports_dir_fd:
             missing.append(name)
     if missing:
-        raise RuntimeError(
-            "secure workspace path operations require " + ", ".join(missing)
-        )
+        raise RuntimeError("secure workspace path operations require " + ", ".join(missing))
 
 
 def _require_secure_list_platform() -> None:

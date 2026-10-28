@@ -24,7 +24,11 @@ jobs:
         with:
           enable-cache: true
       - name: Install platform dependencies
-        run: uv sync --project backend --frozen
+        run: uv sync --project backend --frozen --group test
+      - name: Reject new backend lint issues
+        run: uv run --project backend python scripts/check_backend_quality.py
+      - name: Validate deployment configuration contracts
+        run: uv run --project backend pytest -q backend/test/unit/config
       - name: Compile and check active architecture
         run: make check
 
@@ -45,7 +49,31 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Check workbench lint
+        run: pnpm lint:check
       - name: Run unit tests
         run: pnpm test:unit
       - name: Build workbench
         run: pnpm build
+
+  redis-dispatch:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4.10-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - name: Install platform test dependencies
+        run: uv sync --project backend --frozen --group test
+      - name: Verify real Redis dispatch, competition and retry
+        env:
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: uv run --project backend pytest -q backend/test/integration/services/test_arq_worker_dispatch.py

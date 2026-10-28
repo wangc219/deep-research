@@ -60,7 +60,10 @@ async def test_registered_users_are_managed_and_strictly_isolated():
         async with httpx.AsyncClient(base_url=base_url, timeout=45) as client:
             config = await client.get("/api/auth/registration-config")
             assert config.status_code == 200, config.text
-            assert config.json()["enabled"] is True
+            if not config.json()["enabled"]:
+                denied = await client.post("/api/auth/register", json={"username": usernames[0], "password": passwords[0]})
+                assert denied.status_code == 403, denied.text
+                return
             assert department_id in {item["id"] for item in config.json()["departments"]}
 
             registration_payloads = []

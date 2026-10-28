@@ -187,6 +187,13 @@ async def test_superadmin_run_inherits_published_query_scope_without_taking_owne
         version=3,
         payload={"knowledge_enabled": True, "knowledge_ids": []},
         import_batch_id=None,
+        to_dict=lambda: {
+            "query_id": "query-1",
+            "version": 3,
+            "owner_uid": "owner",
+            "knowledge_enabled": True,
+            "knowledge_ids": [],
+        },
     )
     event = SimpleNamespace(to_dict=lambda: {"event_type": "run_created"})
     repo = SimpleNamespace(
@@ -271,6 +278,8 @@ async def test_superadmin_updates_run_scope_without_changing_owner(monkeypatch, 
         "owner_uid": "owner",
         "knowledge_enabled": True,
         "knowledge_ids": None,
+        "historical_snapshot": False,
+        "readonly": False,
     }
 
     none_visible = await service.update_run(
@@ -285,13 +294,14 @@ async def test_superadmin_updates_run_scope_without_changing_owner(monkeypatch, 
 
 
 @pytest.mark.asyncio
-async def test_superadmin_created_native_deep_session_keeps_owner_domain(monkeypatch):
+async def test_superadmin_can_bind_cross_user_query_while_session_keeps_project_owner_domain(monkeypatch):
     project = _project()
     parent_run = SimpleNamespace(
         id="run-1",
-        project_id=project.id,
-        owner_uid="owner",
+        project_id="another-project",
+        owner_uid="another-owner",
         topic="目标研究",
+        payload={},
     )
     repo = SimpleNamespace(add_deep_session=AsyncMock())
     conversations = SimpleNamespace(add_conversation=AsyncMock())

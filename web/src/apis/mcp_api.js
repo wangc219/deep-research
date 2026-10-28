@@ -114,7 +114,11 @@ export const toggleMcpServerTool = async (serverName, toolName) => {
   )
 }
 
+export const updateMcpAccessPolicy = (slug, policy) =>
+  apiAdminPut(`${BASE_URL}/${encodeURIComponent(slug)}/access-policy`, policy)
+
 export const mcpApi = {
+  updateMcpAccessPolicy,
   getMcpServers,
   getMcpServer,
   createMcpServer,

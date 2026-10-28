@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -62,7 +62,7 @@ class FileInbox:
         return interventions
 
     def _processed_path(self, path: Path) -> Path:
-        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         candidate = self.processed_dir / f"{stamp}_{path.name}"
         if not candidate.exists():
             return candidate

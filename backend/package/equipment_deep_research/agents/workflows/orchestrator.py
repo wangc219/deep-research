@@ -24,9 +24,7 @@ from equipment_deep_research.domain.research_gaps import (
     sanitize_public_research_prose,
 )
 
-globals().update(
-    {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
-)
+globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
 async def _deep_dialogue_provider_json(
@@ -86,10 +84,10 @@ _DEEP_DIALOGUE_NAMING_FORMATS: dict[str, tuple[str, str, str]] = {
 
 
 def _deep_dialogue_naming_seed(payload: Mapping[str, Any]) -> str:
-    return "|".join(
-        str(payload.get(key, "") or "")
-        for key in ("run_id", "question", "focus")
-    ) or "deep-contextual-dialogue"
+    return (
+        "|".join(str(payload.get(key, "") or "") for key in ("run_id", "question", "focus"))
+        or "deep-contextual-dialogue"
+    )
 
 
 def _deep_dialogue_naming_assignments(
@@ -110,9 +108,7 @@ def _deep_dialogue_naming_assignment(payload: Mapping[str, Any]) -> dict[str, An
     """Give a deep turn the same reviewed A--O naming contract as S3/S4."""
 
     assignments = payload.get("deep_dialogue_naming_assignments")
-    if isinstance(assignments, Mapping) and isinstance(
-        assignments.get("deep_thinking_dialogue"), Mapping
-    ):
+    if isinstance(assignments, Mapping) and isinstance(assignments.get("deep_thinking_dialogue"), Mapping):
         return dict(assignments["deep_thinking_dialogue"])
     return _deep_dialogue_naming_assignments(payload)["deep_thinking_dialogue"]
 
@@ -121,9 +117,7 @@ def _deep_dialogue_naming_format_contract(assignment: Mapping[str, Any] | None) 
     """Render the assigned A--O types as a format contract, not a copy sheet."""
 
     rows = []
-    for item in _deep_dialogue_list(
-        (assignment or {}).get("candidate_order")
-    )[:3]:
+    for item in _deep_dialogue_list((assignment or {}).get("candidate_order"))[:3]:
         if not isinstance(item, Mapping):
             continue
         code = _deep_dialogue_text(item.get("code"), 4).upper()
@@ -149,8 +143,7 @@ def _deep_dialogue_naming_format_contract(assignment: Mapping[str, Any] | None) 
         "名称格式必须是「命名重点核心 + 武器身份」。"
         "专名/代号只给专名本身加中文双引号；无专名时整名不加引号。"
         "名称主体尽量 8—12 个汉字。类型字母、类型名不得写入名称；"
-        "不得照抄示例、关键词或源装备/Query 已有武器名称。\n"
-        + "\n".join(rows)
+        "不得照抄示例、关键词或源装备/Query 已有武器名称。\n" + "\n".join(rows)
     )
 
 
@@ -159,10 +152,7 @@ def _deep_dialogue_s6_contract() -> str:
 
     sections = []
     for index in range(1, 6):
-        sections.append(
-            f"\n【S6 第{index}栏原始规范】\n"
-            + _deep_dialogue_s6_column_contract(index)
-        )
+        sections.append(f"\n【S6 第{index}栏原始规范】\n" + _deep_dialogue_s6_column_contract(index))
     return "\n".join(sections)
 
 
@@ -225,9 +215,7 @@ DEEP_DIALOGUE_COUNCIL_ROLES: tuple[dict[str, Any], ...] = (
 )
 
 
-DEEP_DIALOGUE_DIVERGENCE_AXES: tuple[str, ...] = tuple(
-    str(role["axis"]) for role in DEEP_DIALOGUE_COUNCIL_ROLES
-)
+DEEP_DIALOGUE_DIVERGENCE_AXES: tuple[str, ...] = tuple(str(role["axis"]) for role in DEEP_DIALOGUE_COUNCIL_ROLES)
 DEEP_DIALOGUE_INTERNAL_DIMENSIONS: tuple[str, ...] = tuple(
     str(dimension)
     for role in DEEP_DIALOGUE_COUNCIL_ROLES
@@ -385,9 +373,8 @@ DEEP_DIALOGUE_S6_COLUMN_SPECS: tuple[tuple[str, str], ...] = (
     ("winning_logic", "制胜逻辑机理"),
 )
 
-DEEP_DIALOGUE_S6_CARD_FIELDS: tuple[str, ...] = tuple(
-    key for key, _label in DEEP_DIALOGUE_S6_COLUMN_SPECS
-)
+DEEP_DIALOGUE_S6_CARD_FIELDS: tuple[str, ...] = tuple(key for key, _label in DEEP_DIALOGUE_S6_COLUMN_SPECS)
+
 
 def _deep_dialogue_s6_column_extra_contract(key: str) -> str:
     if key != "technology_implementation":
@@ -395,7 +382,7 @@ def _deep_dialogue_s6_column_extra_contract(key: str) -> str:
     return """【装备与技术实现专属质量要求】
 首轮优先使用已开启的联网检索能力，围绕 synthesis_spine 锁定的装备概念、核心战果和工程瓶颈，检索可公开核验的新原理、新材料、新工艺、新器件、新算法或跨行业技术进展；检索通道不可用时，直接利用模型已有能力完成同一工程分析，不得把检索失败当成空响应理由。只选能够提升能力、降低关键约束或支撑新质武器装备概念落地的具体技术；不要把“智能化、先进材料、无人化”等泛词当作答案。
 检索采用国内外混合策略：至少分别尝试中国大陆公开科研/工程来源与英文国际政府、科研机构、论文或标准来源；任一来源通道不可达时继续使用另一通道，不把单一地区访问失败升级为整栏失败。
-写作时必须给出：可选实现途径与主路径取舍、1至2项最关键工程瓶颈、新技术对应的装备落装位置或作用对象、该技术如何赋能作战窗口、从民用/邻域迁移到本装备的断点，以及公开事实、类比迁移、研发推演的区分。来源只作为内部检索依据，正文不要输出“检索不可用”“未发现可靠可迁移的新技术”“来源边界”或其他检索状态提示；没有可引用来源时，直接完成可复用的工程路线、约束、验证条件分析，不得编造具体引用。"""
+围绕核心创新先发散若干条实质不同的技术原理路线，说明各自攻克哪个创新断点；对最有价值的路线深挖现有方法为何卡住、要突破什么底层机理、关键方法或制备能力，以及突破后如何嵌入装备构型并形成新功能。材料特性、成熟度、迁移条件和耦合关系只有在改变路线选择时才展开，不按固定字段逐项填充。来源只作为内部检索依据，正文不要输出“检索不可用”“未发现可靠可迁移的新技术”“来源边界”或其他检索状态提示；没有可引用来源时，直接完成技术原理、研发卡点、突破方向和装备化落点分析，不得编造具体引用。"""
 
 
 def _clean_technology_column_text(
@@ -423,7 +410,20 @@ def _deep_dialogue_technology_column_publishable(text: Any) -> bool:
     if not body:
         return False
     required_marker_groups = (
-        ("检索", "公开", "公开事实", "可核验", "来源", "论文", "专利", "标准", "科研机构", "国内", "中国", "未发现可靠"),
+        (
+            "检索",
+            "公开",
+            "公开事实",
+            "可核验",
+            "来源",
+            "论文",
+            "专利",
+            "标准",
+            "科研机构",
+            "国内",
+            "中国",
+            "未发现可靠",
+        ),
         ("新技术", "新原理", "新材料", "新工艺", "新器件", "新算法", "技术进展", "工程技术", "跨行业", "前沿技术"),
         ("路线", "技术路线", "途径", "实现途径", "主路径", "主攻", "备选", "方案", "取舍", "切换"),
         ("瓶颈", "工程瓶颈", "约束", "卡住", "难点", "工程化", "攻关"),
@@ -510,11 +510,7 @@ def _compact_deep_dialogue_equipment(value: Any) -> dict[str, Any]:
             if nested:
                 compact[key] = nested
         elif isinstance(child, (list, tuple, set, frozenset)):
-            items = [
-                _deep_dialogue_text(item, 500)
-                for item in list(child)[:6]
-                if _deep_dialogue_text(item, 500)
-            ]
+            items = [_deep_dialogue_text(item, 500) for item in list(child)[:6] if _deep_dialogue_text(item, 500)]
             if items:
                 compact[key] = items
         elif isinstance(child, (int, float, bool)):
@@ -569,25 +565,16 @@ def _compact_deep_dialogue_seed_payload(
         from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
 
         compact["workspace_context"] = sanitize_runtime_payload(parent["workspace_context"], max_string_length=2400)
-    equipment = _compact_deep_dialogue_equipment(
-        parent.get("source_equipment") or payload.get("source_equipment")
-    )
-    prior_questions = _deep_dialogue_list(
-        parent.get("prior_expert_questions") or payload.get("expert_questions")
-    )
+    equipment = _compact_deep_dialogue_equipment(parent.get("source_equipment") or payload.get("source_equipment"))
+    prior_questions = _deep_dialogue_list(parent.get("prior_expert_questions") or payload.get("expert_questions"))
     mission_context: dict[str, Any] = {}
     if equipment:
         mission_context["source_equipment"] = equipment
-    questions = [
-        _deep_dialogue_text(item, 700)
-        for item in prior_questions[-4:]
-        if _deep_dialogue_text(item, 700)
-    ]
+    questions = [_deep_dialogue_text(item, 700) for item in prior_questions[-4:] if _deep_dialogue_text(item, 700)]
     if questions:
         mission_context["prior_expert_questions"] = questions
     prior_conclusions = _deep_dialogue_text(
-        parent.get("prior_round_conclusions")
-        or payload.get("prior_round_conclusions"),
+        parent.get("prior_round_conclusions") or payload.get("prior_round_conclusions"),
         2200,
     )
     if prior_conclusions:
@@ -595,9 +582,7 @@ def _compact_deep_dialogue_seed_payload(
     query_weapons = parent.get("query_weapons") or payload.get("query_weapons")
     if isinstance(query_weapons, Sequence) and not isinstance(query_weapons, (str, bytes)):
         compact_weapons = [
-            _compact_deep_dialogue_equipment(item)
-            for item in list(query_weapons)[:6]
-            if isinstance(item, Mapping)
+            _compact_deep_dialogue_equipment(item) for item in list(query_weapons)[:6] if isinstance(item, Mapping)
         ]
         compact_weapons = [item for item in compact_weapons if item]
         if compact_weapons:
@@ -605,15 +590,11 @@ def _compact_deep_dialogue_seed_payload(
     dialogue_turn = parent.get("dialogue_turn") or payload.get("dialogue_turn")
     if dialogue_turn not in (None, ""):
         mission_context["dialogue_turn"] = dialogue_turn
-    identity = _deep_dialogue_text(
-        parent.get("identity") or payload.get("identity"), 1600
-    )
+    identity = _deep_dialogue_text(parent.get("identity") or payload.get("identity"), 1600)
     if identity:
         mission_context["identity"] = identity
     active_skills = parent.get("active_skills") or payload.get("active_skills")
-    if isinstance(active_skills, Sequence) and not isinstance(
-        active_skills, (str, bytes)
-    ):
+    if isinstance(active_skills, Sequence) and not isinstance(active_skills, (str, bytes)):
         # The full selected procedures live in the system prompt for this
         # turn. Keep only their identities in the handoff payload so every
         # council seat receives the same bounded mission packet without a
@@ -621,8 +602,7 @@ def _compact_deep_dialogue_seed_payload(
         active_skill_ids = [
             _deep_dialogue_text(item.get("skill_id"), 140)
             for item in list(active_skills)[:6]
-            if isinstance(item, Mapping)
-            and _deep_dialogue_text(item.get("skill_id"), 140)
+            if isinstance(item, Mapping) and _deep_dialogue_text(item.get("skill_id"), 140)
         ]
         if active_skill_ids:
             mission_context["active_skill_ids"] = active_skill_ids
@@ -637,9 +617,7 @@ def _compact_deep_dialogue_seed_payload(
                     {
                         "mode": _deep_dialogue_text(item.get("mode"), 32),
                         "content": content,
-                        "received_stage": _deep_dialogue_text(
-                            item.get("received_stage"), 64
-                        ),
+                        "received_stage": _deep_dialogue_text(item.get("received_stage"), 64),
                     }
                 )
         else:
@@ -648,12 +626,8 @@ def _compact_deep_dialogue_seed_payload(
                 steering_inputs.append({"mode": "steer", "content": content})
     if steering_inputs:
         compact["steering_inputs"] = steering_inputs
-    if include_naming and isinstance(
-        payload.get("random_naming_style_assignment"), Mapping
-    ):
-        compact["random_naming_style_assignment"] = dict(
-            payload["random_naming_style_assignment"]
-        )
+    if include_naming and isinstance(payload.get("random_naming_style_assignment"), Mapping):
+        compact["random_naming_style_assignment"] = dict(payload["random_naming_style_assignment"])
     subagent_rows = payload.get("subagent_context")
     if not isinstance(subagent_rows, Sequence) or isinstance(subagent_rows, (str, bytes)):
         subagent_rows = parent.get("subagent_findings")
@@ -744,9 +718,7 @@ def _compact_deep_dialogue_synthesis_payload(
                 "agent_id": packet.get("agent_id", ""),
                 "role": packet.get("role", ""),
                 "axis": packet.get("axis", ""),
-                "agent_summary": _deep_dialogue_text(
-                    packet.get("agent_summary"), 600
-                ),
+                "agent_summary": _deep_dialogue_text(packet.get("agent_summary"), 600),
                 "proposals": proposals,
             }
         )
@@ -757,15 +729,9 @@ def _compact_deep_dialogue_synthesis_payload(
         compact["adjudication"] = {
             "review_summary": adjudication.get("review_summary", ""),
             "mission_focus": adjudication.get("mission_focus", ""),
-            "candidate_reviews": _deep_dialogue_list(
-                adjudication.get("candidate_reviews")
-            )[:6],
-            "selection_order": _deep_dialogue_list(
-                adjudication.get("selection_order")
-            )[:3],
-            "priority_revision_targets": _deep_dialogue_list(
-                adjudication.get("priority_revision_targets")
-            )[:3],
+            "candidate_reviews": _deep_dialogue_list(adjudication.get("candidate_reviews"))[:6],
+            "selection_order": _deep_dialogue_list(adjudication.get("selection_order"))[:3],
+            "priority_revision_targets": _deep_dialogue_list(adjudication.get("priority_revision_targets"))[:3],
         }
     return compact
 
@@ -781,18 +747,10 @@ def _compact_deep_dialogue_synthesis_spine(
             for item in _deep_dialogue_list(spine.get("visible_summary"))[:2]
             if _deep_dialogue_text(item, 500)
         ],
-        "selection_rationale": _deep_dialogue_text(
-            spine.get("selection_rationale"), 900
-        ),
-        "stable_hypothesis_id": _deep_dialogue_text(
-            spine.get("stable_hypothesis_id"), 240
-        ),
+        "selection_rationale": _deep_dialogue_text(spine.get("selection_rationale"), 900),
+        "stable_hypothesis_id": _deep_dialogue_text(spine.get("stable_hypothesis_id"), 240),
     }
-    directions = [
-        item
-        for item in _deep_dialogue_list(spine.get("concept_directions"))
-        if isinstance(item, Mapping)
-    ]
+    directions = [item for item in _deep_dialogue_list(spine.get("concept_directions")) if isinstance(item, Mapping)]
     selected = next((item for item in directions if bool(item.get("stable"))), None)
     if selected is None and directions:
         selected = directions[0]
@@ -820,19 +778,11 @@ def _compact_deep_dialogue_synthesis_spine(
             "stable",
         )
         compact["selected_direction"] = {
-            key: (
-                bool(selected.get(key))
-                if key == "stable"
-                else _deep_dialogue_text(selected.get(key), 900)
-            )
+            key: (bool(selected.get(key)) if key == "stable" else _deep_dialogue_text(selected.get(key), 900))
             for key in direction_fields
             if selected.get(key) not in (None, "", [], {})
         }
-    return {
-        key: value
-        for key, value in compact.items()
-        if value not in (None, "", [], {})
-    }
+    return {key: value for key, value in compact.items() if value not in (None, "", [], {})}
 
 
 async def _write_deep_dialogue_s6_columns(
@@ -855,25 +805,15 @@ async def _write_deep_dialogue_s6_columns(
 
     completed: dict[str, str] = {}
     failures: list[str] = []
-    skill_prompt = _deep_dialogue_text(
-        synthesis_payload.get("deep_skill_prompt"), 12000
-    )
-    skill_section = (
-        f"\n【本轮程序性 Skill】\n{skill_prompt}\n"
-        if skill_prompt
-        else ""
-    )
+    skill_prompt = _deep_dialogue_text(synthesis_payload.get("deep_skill_prompt"), 12000)
+    skill_section = f"\n【本轮程序性 Skill】\n{skill_prompt}\n" if skill_prompt else ""
     seed_payload = _compact_deep_dialogue_seed_payload(synthesis_payload)
     base_payload = {
         **seed_payload,
-        "synthesis_spine": _compact_deep_dialogue_synthesis_spine(
-            synthesis_spine
-        ),
+        "synthesis_spine": _compact_deep_dialogue_synthesis_spine(synthesis_spine),
     }
     deep_run_id = _deep_dialogue_text(
-        synthesis_payload.get("run_id")
-        or synthesis_payload.get("_run_id")
-        or synthesis_payload.get("deep_job_id"),
+        synthesis_payload.get("run_id") or synthesis_payload.get("_run_id") or synthesis_payload.get("deep_job_id"),
         160,
     )
     if deep_run_id:
@@ -882,14 +822,10 @@ async def _write_deep_dialogue_s6_columns(
         base_payload["run_id"] = deep_run_id
     total = len(DEEP_DIALOGUE_S6_COLUMN_SPECS)
     try:
-        configured_column_slots = int(
-            os.environ.get("EQUIPMENT_DR_DEEP_S6_COLUMN_CONCURRENCY", str(total))
-        )
+        configured_column_slots = int(os.environ.get("EQUIPMENT_DR_DEEP_S6_COLUMN_CONCURRENCY", str(total)))
     except (TypeError, ValueError):
         configured_column_slots = total
-    column_semaphore = asyncio.Semaphore(
-        max(1, min(total, configured_column_slots))
-    )
+    column_semaphore = asyncio.Semaphore(max(1, min(total, configured_column_slots)))
 
     # S6 is one user-visible deliverable, but each column is an independent
     # durable work item.  Only reuse a checkpoint that belongs to this exact
@@ -899,12 +835,8 @@ async def _write_deep_dialogue_s6_columns(
     if isinstance(resume_checkpoint, Mapping):
         checkpoint_id = str(resume_checkpoint.get("card_authoring_id", "") or "")
         raw_columns = resume_checkpoint.get("s6_columns", {})
-        if (
-            raw_columns is None
-            or isinstance(raw_columns, Mapping)
-        ) and (
-            not card_authoring_id
-            or checkpoint_id == card_authoring_id
+        if (raw_columns is None or isinstance(raw_columns, Mapping)) and (
+            not card_authoring_id or checkpoint_id == card_authoring_id
         ):
             for raw_key, raw_row in (raw_columns or {}).items():
                 key = str(raw_key or "").strip()
@@ -959,8 +891,7 @@ async def _write_deep_dialogue_s6_columns(
             "completed_count": sum(
                 1
                 for item in checkpoint_rows.values()
-                if str(item.get("status", "")).lower() == "completed"
-                and _deep_dialogue_text(item.get("content"), 8)
+                if str(item.get("status", "")).lower() == "completed" and _deep_dialogue_text(item.get("content"), 8)
             ),
             "total_count": total,
             "s6_columns": dict(checkpoint_rows),
@@ -1030,9 +961,7 @@ async def _write_deep_dialogue_s6_columns(
                         "迁移断点和验证条件。不得编造具体引用、不得输出检索状态，必须返回完整正文。"
                     )
                 else:
-                    recovery_instruction = (
-                        "\n这是该栏的自动恢复续写；直接给出完整 content，不得省略或改写其他栏目。"
-                    )
+                    recovery_instruction = "\n这是该栏的自动恢复续写；直接给出完整 content，不得省略或改写其他栏目。"
             try:
                 async with column_semaphore:
                     raw = await _deep_dialogue_provider_json(
@@ -1050,12 +979,8 @@ async def _write_deep_dialogue_s6_columns(
                 # Backwards-compatible adapters may still return the former
                 # whole-card shape.  Consume only the requested field while
                 # keeping the per-column progress contract.
-                if not content and isinstance(
-                    parsed.get("capability_card_draft"), Mapping
-                ):
-                    content = _deep_dialogue_text(
-                        parsed["capability_card_draft"].get(key), 6000
-                    )
+                if not content and isinstance(parsed.get("capability_card_draft"), Mapping):
+                    content = _deep_dialogue_text(parsed["capability_card_draft"].get(key), 6000)
                 if key == "technology_implementation" and content:
                     content = _clean_technology_column_text(content, synthesis_spine)
                 if (
@@ -1220,18 +1145,16 @@ async def _write_deep_dialogue_s6_columns(
                         "kind": "summary",
                         "round": "authoring",
                         "role": "能力画像综合总编",
-                            "axis": label,
-                            "column_key": key,
-                            "agent_id": "deep_thinking_dialogue",
-                            "technology_research_status": (
-                                "pending_retry"
-                                if key == "technology_implementation"
-                                else "failed"
-                            ),
-                            "completed_count": emitted_count,
+                        "axis": label,
+                        "column_key": key,
+                        "agent_id": "deep_thinking_dialogue",
+                        "technology_research_status": (
+                            "pending_retry" if key == "technology_implementation" else "failed"
+                        ),
+                        "completed_count": emitted_count,
                         "total_count": total,
                         "text": f"第{index}/{total}栏“{label}”暂未完成，其他栏继续并行；整卡不会提前发布。",
-                    "summary_text": f"第{index}栏未完成，已保留缺口并继续并行五栏任务。",
+                        "summary_text": f"第{index}栏未完成，已保留缺口并继续并行五栏任务。",
                     },
                 )
                 continue
@@ -1245,9 +1168,7 @@ async def _write_deep_dialogue_s6_columns(
                 status="completed",
                 attempt=attempts_used,
                 fallback=used_fallback,
-                quality_advisories=(
-                    ["technology_quality_gap"] if technology_quality_gap else []
-                ),
+                quality_advisories=(["technology_quality_gap"] if technology_quality_gap else []),
             )
             excerpt = _deep_dialogue_text(content, 220).replace("\n", " ")
             _emit_deep_dialogue_live_progress(
@@ -1269,7 +1190,9 @@ async def _write_deep_dialogue_s6_columns(
                         else "advisory_quality_gap"
                         if technology_quality_gap
                         else "completed"
-                    ) if key == "technology_implementation" else "completed",
+                    )
+                    if key == "technology_implementation"
+                    else "completed",
                     "agent_id": "deep_thinking_dialogue",
                     "deliverable_refs": [label],
                     "completed_count": emitted_count,
@@ -1321,11 +1244,7 @@ def _seed_equipment_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
     parent = payload.get("deep_parent_context")
     parent = parent if isinstance(parent, Mapping) else {}
     equipment = parent.get("source_equipment") or payload.get("source_equipment")
-    return (
-        _compact_deep_dialogue_equipment(equipment)
-        if isinstance(equipment, Mapping)
-        else {}
-    )
+    return _compact_deep_dialogue_equipment(equipment) if isinstance(equipment, Mapping) else {}
 
 
 def _seed_equipment_label(payload: Mapping[str, Any]) -> str:
@@ -1392,12 +1311,8 @@ def _proposal_is_seed_relabel(
     markers = [str(key).strip() for key in (seed_keys or ()) if str(key).strip()]
     if not markers:
         return False
-    name_key = _normalize_identity_key(
-        item.get("name") or item.get("innovation_variant_name")
-    )
-    form_key = _normalize_identity_key(
-        item.get("equipment_form") or item.get("innovation_equipment_form")
-    )
+    name_key = _normalize_identity_key(item.get("name") or item.get("innovation_variant_name"))
+    form_key = _normalize_identity_key(item.get("equipment_form") or item.get("innovation_equipment_form"))
 
     def _too_close(value: str) -> bool:
         if not value:
@@ -1414,9 +1329,7 @@ def _proposal_is_seed_relabel(
 
     if _too_close(name_key):
         return True
-    if form_key and form_key in markers and any(
-        seed in name_key for seed in markers if len(seed) >= 4
-    ):
+    if form_key and form_key in markers and any(seed in name_key for seed in markers if len(seed) >= 4):
         return True
     return False
 
@@ -1483,8 +1396,7 @@ def _heuristic_raw_review(
     closed = _proposal_has_closure(proposal)
     relabel = _proposal_is_seed_relabel(proposal, seed_keys)
     incremental = _proposal_looks_incremental(bundled) or any(
-        marker in name
-        for marker in ("增程", "增速", "增精", "增功率", "换壳", "换皮", "参数升级")
+        marker in name for marker in ("增程", "增速", "增精", "增功率", "换壳", "换皮", "参数升级")
     )
     has_damage = all(
         _deep_dialogue_text(proposal.get(field), 8)
@@ -1497,9 +1409,7 @@ def _heuristic_raw_review(
     if relabel or incremental:
         verdict, winning_class = "reject", "incremental"
         scores = 0.22
-        revision = (
-            "不得复述或换壳源装备；必须形成名称、构型与作用机理均已跃迁的新质装备。"
-        )
+        revision = "不得复述或换壳源装备；必须形成名称、构型与作用机理均已跃迁的新质装备。"
         decisive = "仍是现有装备的参数升级或换壳改名，未形成新质颠覆武器。"
     elif closed and has_damage:
         verdict, winning_class = "keep", "disruptive"
@@ -1524,9 +1434,7 @@ def _heuristic_raw_review(
         "direct_damage_closure_score": 0.8 if has_damage else 0.35,
         "distinctness_score": 0.28 if relabel else (0.74 if closed else 0.42),
         "initiative_claim": _deep_dialogue_text(proposal.get("winning_angle"), 500),
-        "counterbalance_claim": _deep_dialogue_text(
-            proposal.get("disruptive_difference"), 500
-        ),
+        "counterbalance_claim": _deep_dialogue_text(proposal.get("disruptive_difference"), 500),
         "decisive_issue": decisive,
         "required_revision": revision,
     }
@@ -1545,9 +1453,7 @@ def _build_scored_review(
     verdict = _deep_dialogue_text(item.get("verdict"), 32).lower()
     if verdict not in {"keep", "revise", "reject"}:
         verdict = "revise"
-    winning_class = _deep_dialogue_text(
-        item.get("winning_logic_class"), 32
-    ).lower()
+    winning_class = _deep_dialogue_text(item.get("winning_logic_class"), 32).lower()
     if winning_class not in {
         "disruptive",
         "counterbalance",
@@ -1565,9 +1471,7 @@ def _build_scored_review(
     decisive = _deep_dialogue_text(item.get("decisive_issue"), 500)
     revision = _deep_dialogue_text(item.get("required_revision"), 500)
     initiative_claim = _deep_dialogue_text(item.get("initiative_claim"), 500)
-    counterbalance_claim = _deep_dialogue_text(
-        item.get("counterbalance_claim"), 500
-    )
+    counterbalance_claim = _deep_dialogue_text(item.get("counterbalance_claim"), 500)
     bundled = " ".join(
         part
         for part in (
@@ -1579,21 +1483,18 @@ def _build_scored_review(
         )
         if part
     )
-    if winning_class == "incremental" or _proposal_looks_incremental(bundled) or any(
-        marker in name
-        for marker in ("增程", "增速", "增精", "增功率", "换壳", "换皮", "参数升级")
+    if (
+        winning_class == "incremental"
+        or _proposal_looks_incremental(bundled)
+        or any(marker in name for marker in ("增程", "增速", "增精", "增功率", "换壳", "换皮", "参数升级"))
     ):
         winning_class = "incremental"
         if verdict == "keep":
             verdict = "reject"
         if not revision:
-            revision = (
-                "改为颠覆传统制胜逻辑，并明确如何在 Query 局势下夺取先机、形成制衡。"
-            )
+            revision = "改为颠覆传统制胜逻辑，并明确如何在 Query 局势下夺取先机、形成制衡。"
     matched_proposal = proposals_by_name.get(name)
-    if matched_proposal is not None and _proposal_is_seed_relabel(
-        matched_proposal, seed_keys
-    ):
+    if matched_proposal is not None and _proposal_is_seed_relabel(matched_proposal, seed_keys):
         winning_class = "incremental"
         if verdict != "reject":
             verdict = "reject"
@@ -1639,9 +1540,7 @@ def _build_scored_review(
         priority = round(priority * 0.85, 3)
     return {
         "candidate_name": name,
-        "originating_role": _deep_dialogue_text(
-            item.get("originating_role"), 120
-        ),
+        "originating_role": _deep_dialogue_text(item.get("originating_role"), 120),
         "discontinuity_score": discontinuity,
         "mechanism_closure_score": closure,
         "adversarial_resilience_score": resilience,
@@ -1698,9 +1597,7 @@ def _compact_council_packets_for_critic(
                 "agent_id": packet.get("agent_id"),
                 "role": packet.get("role"),
                 "axis": packet.get("axis"),
-                "agent_summary": _deep_dialogue_text(
-                    packet.get("agent_summary"), 400
-                ),
+                "agent_summary": _deep_dialogue_text(packet.get("agent_summary"), 400),
                 "proposals": proposals,
             }
         )
@@ -1719,9 +1616,7 @@ def _normalize_adjudication(
     origin_by_name: dict[str, str] = {}
     packet_proposals: list[tuple[str, Mapping[str, Any], str]] = []
     for packet in packets:
-        role = _deep_dialogue_text(
-            packet.get("role") or packet.get("agent_id"), 120
-        )
+        role = _deep_dialogue_text(packet.get("role") or packet.get("agent_id"), 120)
         for proposal in _deep_dialogue_list(packet.get("proposals")):
             if not isinstance(proposal, Mapping):
                 continue
@@ -1742,9 +1637,7 @@ def _normalize_adjudication(
         if review is None or review["candidate_name"] in seen:
             continue
         if not review["originating_role"]:
-            review["originating_role"] = origin_by_name.get(
-                review["candidate_name"], ""
-            )
+            review["originating_role"] = origin_by_name.get(review["candidate_name"], "")
         reviews.append(review)
         seen.add(review["candidate_name"])
 
@@ -1832,32 +1725,24 @@ def _normalize_adjudication(
                 review["required_revision"] = review["required_revision"] or (
                     "按新质颠覆装备标准补足先机、制衡与直接毁伤闭合。"
                 )
-                review["priority_score"] = round(
-                    max(float(review["priority_score"]), 0.4), 3
-                )
+                review["priority_score"] = round(max(float(review["priority_score"]), 0.4), 3)
             if name not in selection_order:
                 selection_order.append(name)
             if len(selection_order) >= 3:
                 break
     if known_names:
-        selection_order = [
-            name for name in selection_order if name in known_names
-        ] or selection_order
+        selection_order = [name for name in selection_order if name in known_names] or selection_order
     priority_revision_targets = [
         item["candidate_name"]
         for item in reviews
-        if item["verdict"] == "revise"
-        and item["winning_logic_class"]
-        in {"disruptive", "counterbalance", "unclear"}
+        if item["verdict"] == "revise" and item["winning_logic_class"] in {"disruptive", "counterbalance", "unclear"}
     ][:3]
     mission_focus = _deep_dialogue_text(raw.get("mission_focus"), 800) or (
         "优先保留能在 Query/未来战争局势下，以颠覆传统制胜逻辑夺取先机并制衡对手的新质装备方向。"
     )
     raw_summary = _deep_dialogue_text(raw.get("review_summary"), 1200)
     if not raw_summary or "未返回" in raw_summary:
-        review_summary = (
-            "已按颠覆性制胜、直接毁伤闭合、先机优势与相对现装新质性完成对抗裁决。"
-        )
+        review_summary = "已按颠覆性制胜、直接毁伤闭合、先机优势与相对现装新质性完成对抗裁决。"
         if selection_order:
             review_summary += f"优先保留：{'、'.join(selection_order)}。"
         elif reviews:
@@ -1891,14 +1776,10 @@ def _proposal_has_closure(item: Mapping[str, Any]) -> bool:
         _deep_dialogue_text(item.get(field), 12)
         for field in ("winning_angle", "changed_assumption", "innovation_thesis")
     )
-    has_form = any(
-        _deep_dialogue_text(item.get(field), 12)
-        for field in ("equipment_form",)
-    )
+    has_form = any(_deep_dialogue_text(item.get(field), 12) for field in ("equipment_form",))
     has_mechanism = _deep_dialogue_text(item.get("operational_mechanism"), 12)
     has_effect = any(
-        _deep_dialogue_text(item.get(field), 12)
-        for field in ("direct_military_effects", "disruptive_difference")
+        _deep_dialogue_text(item.get(field), 12) for field in ("direct_military_effects", "disruptive_difference")
     )
     has_direct_damage = all(
         _deep_dialogue_text(item.get(field), 8)
@@ -1908,13 +1789,7 @@ def _proposal_has_closure(item: Mapping[str, Any]) -> bool:
             "mission_kill_criterion",
         )
     )
-    return bool(
-        has_discontinuity
-        and has_form
-        and has_mechanism
-        and has_effect
-        and has_direct_damage
-    )
+    return bool(has_discontinuity and has_form and has_mechanism and has_effect and has_direct_damage)
 
 
 def _public_council_packet(
@@ -2034,9 +1909,7 @@ def _govern_deep_dialogue_final(
         # ``innovation_variant_name`` field while returning the actual weapon
         # name in ``name``. Keep the public card, S6 prose and version title on
         # one concrete equipment identity.
-        name = _deep_dialogue_text(
-            direction.get("name") or direction.get("innovation_variant_name"), 240
-        )
+        name = _deep_dialogue_text(direction.get("name") or direction.get("innovation_variant_name"), 240)
         if not name:
             continue
         direction["name"] = name
@@ -2049,18 +1922,14 @@ def _govern_deep_dialogue_final(
         if _proposal_is_seed_relabel(direction, seed_keys):
             missing.append("source_equipment_leap")
         direction["stable"] = bool(direction.get("stable", False)) and not missing
-        direction["research_completeness"] = round(
-            (len(required_groups) - len(missing)) / len(required_groups), 3
-        )
+        direction["research_completeness"] = round((len(required_groups) - len(missing)) / len(required_groups), 3)
         direction["research_gaps"] = list(missing)
         directions.append(direction)
         reviews.append(
             {
                 "candidate_name": name,
                 "passed": not missing,
-                "closure_score": round(
-                    (len(required_groups) - len(missing)) / len(required_groups), 3
-                ),
+                "closure_score": round((len(required_groups) - len(missing)) / len(required_groups), 3),
                 "missing_fields": missing,
             }
         )
@@ -2068,25 +1937,16 @@ def _govern_deep_dialogue_final(
     draft = final.get("capability_card_draft", {})
     draft = draft if isinstance(draft, Mapping) else {}
     s6_fields = DEEP_DIALOGUE_S6_CARD_FIELDS
-    missing_s6 = (
-        [field for field in s6_fields if not _deep_dialogue_text(draft.get(field), 8)]
-        if require_s6
-        else []
-    )
+    missing_s6 = [field for field in s6_fields if not _deep_dialogue_text(draft.get(field), 8)] if require_s6 else []
     technology_quality_missing = bool(
         require_s6
-        and
-        _deep_dialogue_text(draft.get("technology_implementation"), 8)
-        and not _deep_dialogue_technology_column_publishable(
-            draft.get("technology_implementation")
-        )
+        and _deep_dialogue_text(draft.get("technology_implementation"), 8)
+        and not _deep_dialogue_technology_column_publishable(draft.get("technology_implementation"))
     )
     passed_directions = sum(1 for item in reviews if item["passed"])
     direction_ready = bool(directions)
     has_s6_content = bool(
-        require_s6
-        and not missing_s6
-        and all(_deep_dialogue_text(draft.get(field), 8) for field in s6_fields)
+        require_s6 and not missing_s6 and all(_deep_dialogue_text(draft.get(field), 8) for field in s6_fields)
     )
     # S6 is an explicit user-confirmed transition and an atomic deliverable:
     # one missing column keeps the research result visible but can never mint a
@@ -2097,17 +1957,12 @@ def _govern_deep_dialogue_final(
         advisories.append("本轮尚未形成具名候选方向，可继续扩大研究视角")
     elif passed_directions == 0:
         advisories.append("候选仍有未闭合研究维度，可在下一轮继续补充")
-    if any(
-        "source_equipment_leap" in (item.get("missing_fields") or [])
-        for item in reviews
-    ):
+    if any("source_equipment_leap" in (item.get("missing_fields") or []) for item in reviews):
         advisories.append("候选仍接近源装备，需要继续推演构型或作用机理跃迁")
     for item in reviews:
         missing = item.get("missing_fields") or []
         if missing:
-            advisories.append(
-                f"{item['candidate_name']}缺少：{'、'.join(str(field) for field in missing)}"
-            )
+            advisories.append(f"{item['candidate_name']}缺少：{'、'.join(str(field) for field in missing)}")
     if missing_s6:
         column_labels = {
             "overview": "概述",
@@ -2117,10 +1972,7 @@ def _govern_deep_dialogue_final(
             "capability_effects": "能力与作战效果",
             "winning_logic": "制胜逻辑机理",
         }
-        advisories.append(
-            "S6 草稿仍可补充："
-            + "、".join(column_labels.get(field, field) for field in missing_s6)
-        )
+        advisories.append("S6 草稿仍可补充：" + "、".join(column_labels.get(field, field) for field in missing_s6))
     # Keep the quality finding as machine-readable metadata only.  Retrieval
     # availability or a soft engineering advisory must not be copied into the
     # user's manuscript as a source-boundary notice.
@@ -2143,22 +1995,10 @@ def _govern_deep_dialogue_final(
         "advisories": advisories[:8],
         "non_blocking": True,
     }
-    completeness_values = [
-        float(item.get("closure_score", 0.0) or 0.0) for item in reviews
-    ]
-    average_completeness = (
-        round(sum(completeness_values) / len(completeness_values), 3)
-        if completeness_values
-        else 0.0
-    )
+    completeness_values = [float(item.get("closure_score", 0.0) or 0.0) for item in reviews]
+    average_completeness = round(sum(completeness_values) / len(completeness_values), 3) if completeness_values else 0.0
     final["research_assessment"] = {
-        "status": (
-            "card_draft_ready"
-            if publishable
-            else "research_complete"
-            if directions
-            else "research_partial"
-        ),
+        "status": ("card_draft_ready" if publishable else "research_complete" if directions else "research_partial"),
         "research_complete": bool(directions),
         "non_blocking": True,
         "direction_count": len(directions),
@@ -2166,9 +2006,7 @@ def _govern_deep_dialogue_final(
         "average_completeness": average_completeness,
         "gaps": advisories[:8],
     }
-    final["research_gaps"] = sanitize_public_research_gaps(
-        advisories, limit=8, item_limit=500
-    )
+    final["research_gaps"] = sanitize_public_research_gaps(advisories, limit=8, item_limit=500)
     final["research_assessment"]["gaps"] = list(final["research_gaps"])
     return final
 
@@ -2214,16 +2052,12 @@ def _consume_deep_dialogue_steers(
     if not accepted:
         return []
     current = [
-        dict(item)
-        for item in _deep_dialogue_list(governed_payload.get("steering_inputs"))
-        if isinstance(item, Mapping)
+        dict(item) for item in _deep_dialogue_list(governed_payload.get("steering_inputs")) if isinstance(item, Mapping)
     ]
     governed_payload["steering_inputs"] = [*current, *accepted][-8:]
     parent = governed_payload.get("deep_parent_context")
     parent_context = dict(parent) if isinstance(parent, Mapping) else {}
-    parent_context["active_steers"] = [
-        item["content"] for item in governed_payload["steering_inputs"][-8:]
-    ]
+    parent_context["active_steers"] = [item["content"] for item in governed_payload["steering_inputs"][-8:]]
     governed_payload["deep_parent_context"] = parent_context
     return accepted
 
@@ -2316,15 +2150,9 @@ def _preserve_council_result_when_synthesis_fails(
                 },
                 "name": name,
                 "innovation_variant_name": name,
-                "innovation_equipment_form": _deep_dialogue_text(
-                    item.get("equipment_form"), 900
-                ),
-                "military_value": _deep_dialogue_text(
-                    item.get("direct_military_effects"), 900
-                ),
-                "capability_gap": _deep_dialogue_text(
-                    item.get("changed_assumption"), 900
-                ),
+                "innovation_equipment_form": _deep_dialogue_text(item.get("equipment_form"), 900),
+                "military_value": _deep_dialogue_text(item.get("direct_military_effects"), 900),
+                "capability_gap": _deep_dialogue_text(item.get("changed_assumption"), 900),
                 "stable": False,
             }
         )
@@ -2341,8 +2169,7 @@ def _preserve_council_result_when_synthesis_fails(
         "selection_rationale": review,
         "divergence_steps": [
             {
-                "title": _deep_dialogue_text(packet.get("axis"), 160)
-                or _deep_dialogue_text(packet.get("role"), 160),
+                "title": _deep_dialogue_text(packet.get("axis"), 160) or _deep_dialogue_text(packet.get("role"), 160),
                 "text": _deep_dialogue_text(packet.get("agent_summary"), 1200),
                 "stage": "divergence",
             }
@@ -2430,14 +2257,8 @@ async def _run_deep_dialogue_council(
 
     _consume_deep_dialogue_steers(host, governed_payload, "context")
     authoring_requested = bool(governed_payload.get("authoring_requested", False))
-    skill_prompt = _deep_dialogue_text(
-        governed_payload.get("deep_skill_prompt"), 12000
-    )
-    skill_section = (
-        f"\n【本轮程序性 Skill】\n{skill_prompt}\n"
-        if skill_prompt
-        else ""
-    )
+    skill_prompt = _deep_dialogue_text(governed_payload.get("deep_skill_prompt"), 12000)
+    skill_section = f"\n【本轮程序性 Skill】\n{skill_prompt}\n" if skill_prompt else ""
     completed_proposers = 0
     started_proposers = 0
     seed_keys = _seed_identity_keys(governed_payload)
@@ -2446,17 +2267,13 @@ async def _run_deep_dialogue_council(
     parent = parent if isinstance(parent, Mapping) else {}
     query_weapon_names = [
         _deep_dialogue_text(
-            item.get("name")
-            or item.get("title")
-            or item.get("primary_equipment_identity"),
+            item.get("name") or item.get("title") or item.get("primary_equipment_identity"),
             80,
         )
         for item in _deep_dialogue_list(parent.get("query_weapons"))[:6]
         if isinstance(item, Mapping)
         and _deep_dialogue_text(
-            item.get("name")
-            or item.get("title")
-            or item.get("primary_equipment_identity"),
+            item.get("name") or item.get("title") or item.get("primary_equipment_identity"),
             80,
         )
     ]
@@ -2465,11 +2282,7 @@ async def _run_deep_dialogue_council(
     naming_by_seat = dict(naming_by_seat) if isinstance(naming_by_seat, Mapping) else {}
     seed_leap_contract = (
         (f"当前聚焦源装备是「{seed_label}」。" if seed_label else "")
-        + (
-            f"当前 Query 下已有武器装备包括：{catalog_text}。"
-            if catalog_text
-            else ""
-        )
+        + (f"当前 Query 下已有武器装备包括：{catalog_text}。" if catalog_text else "")
         + "这些现有装备只是发散基线，不是终稿对象。"
         "必须从其作战关系、任务缺口、脆弱性与可改写假设出发，"
         "推理出相关但名称、构型、作用机理均已跃迁的新质颠覆武器装备；"
@@ -2525,9 +2338,7 @@ async def _run_deep_dialogue_council(
             phase="deep_contextual_dialogue_task_planning",
         )
         planned_json = _deep_dialogue_json(planned_raw)
-        planning_summary = _deep_dialogue_text(
-            planned_json.get("planning_summary"), 600
-        )
+        planning_summary = _deep_dialogue_text(planned_json.get("planning_summary"), 600)
         planned_dimensions = tuple(
             _deep_dialogue_text(item, 140)
             for item in _deep_dialogue_list(planned_json.get("winning_logic_dimensions"))[:8]
@@ -2538,9 +2349,7 @@ async def _run_deep_dialogue_council(
         for index, raw_task in enumerate(raw_tasks[:4], start=1):
             if not isinstance(raw_task, Mapping):
                 continue
-            question = _deep_dialogue_text(
-                raw_task.get("question") or raw_task.get("prompt"), 1000
-            )
+            question = _deep_dialogue_text(raw_task.get("question") or raw_task.get("prompt"), 1000)
             if not question:
                 continue
             role = _deep_dialogue_text(raw_task.get("role"), 100) or "按需研究探针"
@@ -2551,9 +2360,9 @@ async def _run_deep_dialogue_council(
                 for item in _deep_dialogue_list(raw_task.get("internal_dimensions"))[:6]
                 if _deep_dialogue_text(item, 100)
             )
-            winning_dimension = _deep_dialogue_text(
-                raw_task.get("winning_logic_dimension"), 180
-            ) or (planned_dimensions[index - 1] if index <= len(planned_dimensions) else axis)
+            winning_dimension = _deep_dialogue_text(raw_task.get("winning_logic_dimension"), 180) or (
+                planned_dimensions[index - 1] if index <= len(planned_dimensions) else axis
+            )
             dimension_key = " ".join(winning_dimension.casefold().split())
             # Parallel probes must represent distinct winning dimensions.  A
             # model may mention several angles in one task, but repeating the
@@ -2572,21 +2381,11 @@ async def _run_deep_dialogue_council(
                     "question": question,
                     "internal_dimensions": dimensions,
                     "winning_logic_dimension": winning_dimension,
-                    "countermeasure_dimension": _deep_dialogue_text(
-                        raw_task.get("countermeasure_dimension"), 500
-                    ),
-                    "direct_damage_closure": _deep_dialogue_text(
-                        raw_task.get("direct_damage_closure"), 700
-                    ),
-                    "query_scenario_fit": _deep_dialogue_text(
-                        raw_task.get("query_scenario_fit"), 500
-                    ),
-                    "merge_contract": _deep_dialogue_text(
-                        raw_task.get("merge_contract"), 600
-                    ),
-                    "planner_task_id": _deep_dialogue_text(
-                        raw_task.get("task_id"), 80
-                    ),
+                    "countermeasure_dimension": _deep_dialogue_text(raw_task.get("countermeasure_dimension"), 500),
+                    "direct_damage_closure": _deep_dialogue_text(raw_task.get("direct_damage_closure"), 700),
+                    "query_scenario_fit": _deep_dialogue_text(raw_task.get("query_scenario_fit"), 500),
+                    "merge_contract": _deep_dialogue_text(raw_task.get("merge_contract"), 600),
+                    "planner_task_id": _deep_dialogue_text(raw_task.get("task_id"), 80),
                 }
             )
     except Exception:
@@ -2595,10 +2394,7 @@ async def _run_deep_dialogue_council(
     if not planned_roles:
         planning_source = "fallback"
         if legacy_compat:
-            planned_roles = [
-                {**dict(role), "legacy_fixed_seat": True}
-                for role in DEEP_DIALOGUE_COUNCIL_ROLES
-            ]
+            planned_roles = [{**dict(role), "legacy_fixed_seat": True} for role in DEEP_DIALOGUE_COUNCIL_ROLES]
             planning_summary = "structured provider unavailable; compatibility seats retained"
         else:
             planned_roles = [
@@ -2607,9 +2403,7 @@ async def _run_deep_dialogue_council(
                     "role": "按需研究探针",
                     "axis": "本轮专家问题",
                     "lens": "只回答当前专家问题，沿最关键未知量做内部多角度推理，并返回可审核结论、反例与下一验证问题。",
-                    "question": _deep_dialogue_text(
-                        governed_payload.get("question"), 1000
-                    )
+                    "question": _deep_dialogue_text(governed_payload.get("question"), 1000)
                     or "找出当前装备方向最关键的未闭合问题。",
                     "internal_dimensions": ("关键未知量", "反例", "验证边界"),
                     "merge_contract": "返回一组可合并的研究发现、假设、反例和下一验证问题。",
@@ -2637,9 +2431,7 @@ async def _run_deep_dialogue_council(
     # explicitly bounded so a provider cannot over-admit requests, while the
     # shared provider gate remains the final deployment-wide ceiling.
     try:
-        configured_parallelism = int(
-            os.environ.get("EQUIPMENT_DR_DEEP_COUNCIL_CONCURRENCY", str(total_proposers))
-        )
+        configured_parallelism = int(os.environ.get("EQUIPMENT_DR_DEEP_COUNCIL_CONCURRENCY", str(total_proposers)))
     except (TypeError, ValueError):
         configured_parallelism = total_proposers
     council_parallelism = max(1, min(total_proposers, configured_parallelism))
@@ -2688,9 +2480,7 @@ async def _run_deep_dialogue_council(
             )
             role_payload = _compact_deep_dialogue_seed_payload(governed_payload)
             internal_dimensions = [
-                str(item).strip()
-                for item in (role.get("internal_dimensions") or ())
-                if str(item).strip()
+                str(item).strip() for item in (role.get("internal_dimensions") or ()) if str(item).strip()
             ]
             role_payload["council_role"] = {
                 "role": role["role"],
@@ -2734,9 +2524,7 @@ async def _run_deep_dialogue_council(
                 role_payload["random_naming_style_assignment"] = dict(role_assignment)
             role_naming_contract = _deep_dialogue_naming_format_contract(
                 role_payload.get("random_naming_style_assignment")
-                if isinstance(
-                    role_payload.get("random_naming_style_assignment"), Mapping
-                )
+                if isinstance(role_payload.get("random_naming_style_assignment"), Mapping)
                 else None
             )
             dimensions_text = "、".join(internal_dimensions) or role["axis"]
@@ -2752,16 +2540,16 @@ async def _run_deep_dialogue_council(
                     host,
                     provider_runtime,
                     role["agent_id"],
-            f"""你是{role['role']}，参加当前 Query 下已有武器装备的新质创新议事。
-你的对外研究轴是：{role['axis']}。
+                    f"""你是{role["role"]}，参加当前 Query 下已有武器装备的新质创新议事。
+你的对外研究轴是：{role["axis"]}。
 你必须在一次推理内完成多维发散，内部维度包括：{dimensions_text}。
-{role['lens']}
-本探针必须优先回答任务规划器指定的问题：{role.get('question') or role['axis']}。
+{role["lens"]}
+本探针必须优先回答任务规划器指定的问题：{role.get("question") or role["axis"]}。
 本探针必须围绕以下制胜约束给出可审计结果：
-- 制胜维度：{role.get('winning_logic_dimension') or role['axis']}
-- 对手最低成本反制及边界：{role.get('countermeasure_dimension') or '识别最便宜、最快的反制并说明何时失效'}
-- 直接毁伤闭环：{role.get('direct_damage_closure') or '闭合装备构型→作用机理→明确目标→直接物理毁伤→可观察任务失能'}
-- Query 场景贴合：{role.get('query_scenario_fit') or '说明结论如何服务当前 Query 的任务场景'}
+- 制胜维度：{role.get("winning_logic_dimension") or role["axis"]}
+- 对手最低成本反制及边界：{role.get("countermeasure_dimension") or "识别最便宜、最快的反制并说明何时失效"}
+- 直接毁伤闭环：{role.get("direct_damage_closure") or "闭合装备构型→作用机理→明确目标→直接物理毁伤→可观察任务失能"}
+- Query 场景贴合：{role.get("query_scenario_fit") or "说明结论如何服务当前 Query 的任务场景"}
 {seed_leap_contract}
 只使用输入中的 Query、canonical 源装备、query_weapons（当前 Query 已有武器清单）、专家问题、历史专家问题、prior_round_conclusions 与 steering_inputs（如提供），不使用父任务证据、旧验证结论或其他 Agent 的原始会话。steering_inputs 是用户在生成中追加的最新约束，优先级高于本轮早期假设，必须明确吸收。
 若 prior_round_conclusions 非空，本轮是追问轮：必须在上一轮候选方向的基础上深化、修订或推翻，围绕专家最新问题给出更进一步的构型跃迁；严禁原样复述或轻微改写上一轮结论。
@@ -2780,14 +2568,12 @@ async def _run_deep_dialogue_council(
 {role_naming_contract}
 {skill_section}
 明确对手的最可能反制、方案仍成立的理由以及应被淘汰的风险。保持在装备概念和能力画像层，不输出制造参数、配方或具体操作步骤。不要写 S6 五栏终稿，不输出思维链；只输出可供下一轮质疑的严格 JSON。""",
-            role_payload,
-            DEEP_DIALOGUE_PROPOSAL_SCHEMA,
-            3200,
-            phase="deep_contextual_dialogue_divergence",
+                    role_payload,
+                    DEEP_DIALOGUE_PROPOSAL_SCHEMA,
+                    3200,
+                    phase="deep_contextual_dialogue_divergence",
                 )
-                packet = _public_council_packet(
-                    _deep_dialogue_json(raw), role, seed_keys=seed_keys
-                )
+                packet = _public_council_packet(_deep_dialogue_json(raw), role, seed_keys=seed_keys)
                 completed_proposers += 1
                 names = _proposal_names_for_progress(packet)
                 briefs = _proposal_briefs_for_progress(packet)
@@ -2804,9 +2590,7 @@ async def _run_deep_dialogue_council(
                     if brief_lines
                     else (f" · 候选：{'、'.join(names)}" if names else "")
                 )
-                progress = _monotonic_progress(
-                    0.32 + min(0.12, (0.12 * completed_proposers / total_proposers))
-                )
+                progress = _monotonic_progress(0.32 + min(0.12, (0.12 * completed_proposers / total_proposers)))
                 _emit_deep_dialogue_live_progress(
                     host,
                     {
@@ -2830,8 +2614,7 @@ async def _run_deep_dialogue_council(
                         "total_count": total_proposers,
                         "elapsed_seconds": round(monotonic() - council_started_at, 3),
                         "text": (
-                            f"{role['axis']}：{_deep_dialogue_text(packet.get('agent_summary'), 900)}"
-                            f"{proposal_text}"
+                            f"{role['axis']}：{_deep_dialogue_text(packet.get('agent_summary'), 900)}{proposal_text}"
                         )[:1200],
                         "summary_text": f"{role['role']}已完成内部多维提案，结果已即时汇入对话。",
                     },
@@ -2880,10 +2663,7 @@ async def _run_deep_dialogue_council(
     # Consume tasks as they finish instead of awaiting them in role order.
     # This is what makes the first completed branch visible immediately even
     # when a later provider call is slow or needs a retry.
-    proposal_tasks = [
-        asyncio.create_task(propose(role), name=f"deep-council-{role['agent_id']}")
-        for role in roles
-    ]
+    proposal_tasks = [asyncio.create_task(propose(role), name=f"deep-council-{role['agent_id']}") for role in roles]
     proposal_results: list[Any] = []
     try:
         for completed_task in asyncio.as_completed(proposal_tasks):
@@ -2892,9 +2672,7 @@ async def _run_deep_dialogue_council(
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                if type(exc).__name__ in {
-                    "_DeepJobCancelled", "_DeepJobInterrupted", "_DeepJobClaimLost"
-                }:
+                if type(exc).__name__ in {"_DeepJobCancelled", "_DeepJobInterrupted", "_DeepJobClaimLost"}:
                     raise
                 proposal_results.append(exc)
     finally:
@@ -2906,9 +2684,7 @@ async def _run_deep_dialogue_council(
         item
         for role in roles
         for item in proposal_results
-        if isinstance(item, Mapping)
-        and item.get("proposals")
-        and item.get("agent_id") == role["agent_id"]
+        if isinstance(item, Mapping) and item.get("proposals") and item.get("agent_id") == role["agent_id"]
     ]
     if not packets:
         first_error = next(
@@ -2939,11 +2715,7 @@ async def _run_deep_dialogue_council(
             ),
         )
 
-    council_deliverables = [
-        name
-        for packet in packets
-        for name in _proposal_names_for_progress(packet)
-    ][:8]
+    council_deliverables = [name for packet in packets for name in _proposal_names_for_progress(packet)][:8]
     _emit_deep_dialogue_live_progress(
         host,
         {
@@ -2960,9 +2732,7 @@ async def _run_deep_dialogue_council(
             "to_agent_id": "deep_dialogue_adversarial_judge",
             "handoff_kind": "proposal_review",
             "deliverable_refs": council_deliverables,
-            "summary_text": (
-                f"{len(packets)} 路发散 Agent 已完成内部多维提案，候选进入对抗裁决。"
-            ),
+            "summary_text": (f"{len(packets)} 路发散 Agent 已完成内部多维提案，候选进入对抗裁决。"),
         },
     )
     _consume_deep_dialogue_steers(host, governed_payload, "council_critique")
@@ -3098,9 +2868,7 @@ async def _run_deep_dialogue_council(
             "selection_order": [],
             "priority_revision_targets": [],
         }
-    adjudication = _normalize_adjudication(
-        parsed_adjudication, packets, seed_keys=seed_keys
-    )
+    adjudication = _normalize_adjudication(parsed_adjudication, packets, seed_keys=seed_keys)
 
     selection = [
         _deep_dialogue_text(item, 120)
@@ -3115,11 +2883,7 @@ async def _run_deep_dialogue_council(
     verdicts = [
         (
             f"{item['candidate_name']}→{item['verdict']}"
-            + (
-                f"/{item['winning_logic_class']}"
-                if item.get("winning_logic_class")
-                else ""
-            )
+            + (f"/{item['winning_logic_class']}" if item.get("winning_logic_class") else "")
         )
         for item in _deep_dialogue_list(adjudication.get("candidate_reviews"))[:6]
         if isinstance(item, Mapping)
@@ -3222,9 +2986,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             7000,
             phase="deep_contextual_dialogue_synthesis",
         )
-        synthesis_spine: dict[str, Any] | None = _deep_dialogue_json(
-            synthesis_raw
-        )
+        synthesis_spine: dict[str, Any] | None = _deep_dialogue_json(synthesis_raw)
     except Exception:
         _emit_deep_dialogue_live_progress(
             host,
@@ -3271,9 +3033,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
 
     if synthesis_spine is not None:
         if authoring_requested:
-            late_steers = _consume_deep_dialogue_steers(
-                host, governed_payload, "s6_authoring"
-            )
+            late_steers = _consume_deep_dialogue_steers(host, governed_payload, "s6_authoring")
             if late_steers:
                 synthesis_payload["steering_inputs"] = [
                     *(
@@ -3285,20 +3045,16 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
                 ][-8:]
             if skill_prompt:
                 synthesis_payload["deep_skill_prompt"] = skill_prompt
-            capability_card_draft, column_failures = (
-                await _write_deep_dialogue_s6_columns(
-                    host,
-                    synthesis_payload=synthesis_payload,
-                    synthesis_spine=synthesis_spine,
-                    provider_runtime=provider_runtime,
-                )
+            capability_card_draft, column_failures = await _write_deep_dialogue_s6_columns(
+                host,
+                synthesis_payload=synthesis_payload,
+                synthesis_spine=synthesis_spine,
+                provider_runtime=provider_runtime,
             )
             synthesis_spine["capability_card_draft"] = capability_card_draft
             if column_failures:
                 synthesis_spine["finalization_status"] = "analysis_only"
-                open_questions = _deep_dialogue_list(
-                    synthesis_spine.get("open_questions")
-                )
+                open_questions = _deep_dialogue_list(synthesis_spine.get("open_questions"))
                 synthesis_spine["open_questions"] = [
                     *column_failures,
                     *open_questions,
@@ -3315,9 +3071,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
         )
     else:
         final = _govern_deep_dialogue_final(
-            _preserve_council_result_when_synthesis_fails(
-                packets, adjudication
-            ),
+            _preserve_council_result_when_synthesis_fails(packets, adjudication),
             seed_keys=seed_keys,
             require_s6=authoring_requested,
         )
@@ -3326,32 +3080,21 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "candidate_name": _deep_dialogue_text(item.get("candidate_name"), 240),
             "originating_role": _deep_dialogue_text(item.get("originating_role"), 120),
             "verdict": _deep_dialogue_text(item.get("verdict"), 32).lower(),
-            "winning_logic_class": _deep_dialogue_text(
-                item.get("winning_logic_class"), 32
-            ).lower(),
+            "winning_logic_class": _deep_dialogue_text(item.get("winning_logic_class"), 32).lower(),
             "initiative_claim": _deep_dialogue_text(item.get("initiative_claim"), 500),
-            "counterbalance_claim": _deep_dialogue_text(
-                item.get("counterbalance_claim"), 500
-            ),
+            "counterbalance_claim": _deep_dialogue_text(item.get("counterbalance_claim"), 500),
             "decisive_issue": _deep_dialogue_text(item.get("decisive_issue"), 500),
             "required_revision": _deep_dialogue_text(item.get("required_revision"), 500),
             "priority_score": _deep_dialogue_score(item.get("priority_score")),
             "discontinuity_score": _deep_dialogue_score(item.get("discontinuity_score")),
-            "initiative_advantage_score": _deep_dialogue_score(
-                item.get("initiative_advantage_score")
-            ),
-            "query_scenario_fit_score": _deep_dialogue_score(
-                item.get("query_scenario_fit_score")
-            ),
-            "direct_damage_closure_score": _deep_dialogue_score(
-                item.get("direct_damage_closure_score")
-            ),
+            "initiative_advantage_score": _deep_dialogue_score(item.get("initiative_advantage_score")),
+            "query_scenario_fit_score": _deep_dialogue_score(item.get("query_scenario_fit_score")),
+            "direct_damage_closure_score": _deep_dialogue_score(item.get("direct_damage_closure_score")),
         }
         for item in _deep_dialogue_list(adjudication.get("candidate_reviews"))[:8]
         if isinstance(item, Mapping)
         and _deep_dialogue_text(item.get("candidate_name"), 240)
-        and _deep_dialogue_text(item.get("verdict"), 32).lower()
-        in {"keep", "revise", "reject"}
+        and _deep_dialogue_text(item.get("verdict"), 32).lower() in {"keep", "revise", "reject"}
     ]
     final["adjudication"] = {
         "review_summary": _deep_dialogue_text(adjudication.get("review_summary"), 1200),
@@ -3359,9 +3102,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
         "candidate_reviews": candidate_reviews,
         "cross_candidate_conflicts": [
             _deep_dialogue_text(item, 500)
-            for item in _deep_dialogue_list(
-                adjudication.get("cross_candidate_conflicts")
-            )[:4]
+            for item in _deep_dialogue_list(adjudication.get("cross_candidate_conflicts"))[:4]
             if _deep_dialogue_text(item, 500)
         ],
         "selection_order": [
@@ -3371,17 +3112,12 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
         ],
         "priority_revision_targets": [
             _deep_dialogue_text(item, 240)
-            for item in _deep_dialogue_list(
-                adjudication.get("priority_revision_targets")
-            )[:3]
+            for item in _deep_dialogue_list(adjudication.get("priority_revision_targets"))[:3]
             if _deep_dialogue_text(item, 240)
         ],
         "adjudication_complete": bool(
             adjudication.get("adjudication_complete")
-            or (
-                candidate_reviews
-                and _deep_dialogue_list(adjudication.get("selection_order"))
-            )
+            or (candidate_reviews and _deep_dialogue_list(adjudication.get("selection_order")))
         ),
     }
     final["agent_dialogue"] = [
@@ -3391,9 +3127,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "axis": packet.get("axis", ""),
             "round": "divergence",
             "summary": packet["agent_summary"],
-            "proposal_names": [
-                item["name"] for item in packet["proposals"] if item.get("name")
-            ],
+            "proposal_names": [item["name"] for item in packet["proposals"] if item.get("name")],
         }
         for packet in packets
     ] + [
@@ -3403,8 +3137,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "axis": "先机制衡裁决",
             "round": "critique",
             "summary": _deep_dialogue_text(
-                adjudication.get("review_summary")
-                or adjudication.get("mission_focus"),
+                adjudication.get("review_summary") or adjudication.get("mission_focus"),
                 1200,
             ),
             "proposal_names": [
@@ -3415,11 +3148,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "verdicts": [
                 (
                     f"{item['candidate_name']}→{item['verdict']}"
-                    + (
-                        f"/{item['winning_logic_class']}"
-                        if item.get("winning_logic_class")
-                        else ""
-                    )
+                    + (f"/{item['winning_logic_class']}" if item.get("winning_logic_class") else "")
                 )
                 for item in candidate_reviews[:6]
             ],
@@ -3456,9 +3185,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "s6_synthesis" if authoring_requested else "direction_synthesis",
         ],
         "divergence_axes": [
-            _deep_dialogue_text(role.get("axis"), 120)
-            for role in roles
-            if _deep_dialogue_text(role.get("axis"), 120)
+            _deep_dialogue_text(role.get("axis"), 120) for role in roles if _deep_dialogue_text(role.get("axis"), 120)
         ],
         "winning_logic_dimensions": [
             _deep_dialogue_text(role.get("winning_logic_dimension"), 180)
@@ -3482,9 +3209,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
         "requested_agents": len(roles) + 2,
         "completed_divergence_agents": len(packets),
         "degraded": (
-            len(packets) < len(roles)
-            or _deep_dialogue_text(final.get("deep_divergence_status"), 32)
-            == "partial"
+            len(packets) < len(roles) or _deep_dialogue_text(final.get("deep_divergence_status"), 32) == "partial"
         ),
         "quality_gate_passed": bool(final["quality_gate"]["publishable"]),
         "finalization_status": final["finalization_status"],
@@ -3493,9 +3218,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
     # stored clients that do not expose a provider-backed task planner. Real
     # provider turns use the dynamic projection above, including the actual
     # probe count and planner provenance.
-    if planning_source == "fallback" and all(
-        bool(role.get("legacy_fixed_seat")) for role in roles
-    ):
+    if planning_source == "fallback" and all(bool(role.get("legacy_fixed_seat")) for role in roles):
         final["orchestration"] = {
             "pattern": "internal_multidim_divergence_adversarial_review_synthesis",
             "rounds": 3,
@@ -3510,8 +3233,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
             "completed_divergence_agents": len(packets),
             "degraded": (
                 len(packets) < len(DEEP_DIALOGUE_COUNCIL_ROLES)
-                or _deep_dialogue_text(final.get("deep_divergence_status"), 32)
-                == "partial"
+                or _deep_dialogue_text(final.get("deep_divergence_status"), 32) == "partial"
             ),
             "quality_gate_passed": bool(final["quality_gate"]["publishable"]),
             "finalization_status": final["finalization_status"],
@@ -3538,11 +3260,7 @@ visible_summary 和 divergence_steps 只写可审核的角色分歧、淘汰原�
     ]
     synthesis_summary = _deep_dialogue_text(
         final.get("selection_rationale")
-        or "；".join(
-            str(item)
-            for item in _deep_dialogue_list(final.get("visible_summary"))[:3]
-            if str(item).strip()
-        )
+        or "；".join(str(item) for item in _deep_dialogue_list(final.get("visible_summary"))[:3] if str(item).strip())
         or (
             "已形成可写入能力画像的完整结果。"
             if final["quality_gate"]["publishable"]
@@ -3591,16 +3309,10 @@ def select_agents(host, request: AgentSelectionRequest) -> AgentSelectionResult:
     if not isinstance(payload, dict):
         payload = {}
     return AgentSelectionResult(
-        selected_agent_ids=[
-            str(item)
-            for item in payload.get("selected_agent_ids", [])
-            if str(item).strip()
-        ],
+        selected_agent_ids=[str(item) for item in payload.get("selected_agent_ids", []) if str(item).strip()],
         rationale=str(payload.get("rationale", "模型未返回有效选择理由。")),
         task_analysis=[str(item) for item in payload.get("task_analysis", [])],
-        dependency_notes=[
-            str(item) for item in payload.get("dependency_notes", [])
-        ],
+        dependency_notes=[str(item) for item in payload.get("dependency_notes", [])],
         model_used=True,
     )
 
@@ -3616,17 +3328,15 @@ def analyze_winning_mechanism(host, payload: dict[str, Any]) -> dict[str, Any]:
     # candidates.  Keep legacy profiles on the original path while enabling
     # the governed S1-S6 subagent workflow whenever a quality profile is
     # selected, independent of the transport protocol.
-    use_quality_subagents = is_quality_execution_profile_id(
-        payload.get("execution_profile_id")
-    ) or str(payload.get("execution_profile_id", "")) == "deep_divergence_v1"
+    use_quality_subagents = (
+        is_quality_execution_profile_id(payload.get("execution_profile_id"))
+        or str(payload.get("execution_profile_id", "")) == "deep_divergence_v1"
+    )
     if host.supports_agent_runtime or use_quality_subagents:
         try:
             return asyncio.run(host._analyze_winning_subagents(payload))
         except (RuntimeError, TimeoutError) as exc:
-            if not (
-                is_aggressive_optimized_v2_payload(payload)
-                and _is_harness_budget_error(exc)
-            ):
+            if not (is_aggressive_optimized_v2_payload(payload) and _is_harness_budget_error(exc)):
                 raise
             host._emit_winning_progress(
                 {
@@ -3698,10 +3408,7 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
             "status": "model_completed" if result else "model_empty",
             "elapsed_seconds": round(monotonic() - started_at, 3),
             "fallback": not bool(result),
-            "transport": str(
-                getattr(host, "_last_blueprint_transport", "")
-                or getattr(host, "provider_kind", "")
-            ),
+            "transport": str(getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")),
         }
         return result
     except Exception as exc:
@@ -3720,8 +3427,7 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
                     "error_message": str(exc)[:300],
                     "fallback": "deterministic_query_blueprint",
                     "transport": str(
-                        getattr(host, "_last_blueprint_transport", "")
-                        or getattr(host, "provider_kind", "")
+                        getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")
                     ),
                 }
             )
@@ -3731,10 +3437,7 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
             "failure_type": type(exc).__name__,
             "error_message": str(exc)[:300],
             "fallback": True,
-            "transport": str(
-                getattr(host, "_last_blueprint_transport", "")
-                or getattr(host, "provider_kind", "")
-            ),
+            "transport": str(getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")),
         }
         return {}
 
@@ -3751,9 +3454,7 @@ def converge_discovery_outputs(host, payload: dict[str, Any]) -> dict[str, Any]:
                 for item in packets
             ],
             "conflicts": [],
-            "priorities": [
-                str(item.get("handoff_summary", "")) for item in packets[:6]
-            ],
+            "priorities": [str(item.get("handoff_summary", "")) for item in packets[:6]],
             "cross_branch_links": [],
             "open_questions": [],
         }
@@ -3801,9 +3502,7 @@ def review_discovery_meta_loop(host, payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def review_audit(host, payload: dict[str, Any]) -> dict[str, Any]:
-    optimized_v2 = is_quality_execution_profile_id(
-        payload.get("execution_profile_id")
-    )
+    optimized_v2 = is_quality_execution_profile_id(payload.get("execution_profile_id"))
     timeout_seconds = max(
         10.0,
         float(
@@ -3825,7 +3524,7 @@ def review_audit(host, payload: dict[str, Any]) -> dict[str, Any]:
             asyncio.wait_for(
                 host._run_core_json(
                     "auditor",
-                "你是独立模型审计Agent。只做一次快速S6业务审计，不重做研究。"
+                    "你是独立模型审计Agent。只做一次快速S6业务审计，不重做研究。"
                     "以S6能力画像为主，只审计创新前瞻、新质性、科学性与可实现性；"
                     "军事价值、因果闭环、具体装备本体、证据覆盖、TRL/成熟度、误伤评估和法律适用"
                     "本轮均不判别、不设要求，只可作为模型备注记录。"

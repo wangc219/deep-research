@@ -2,7 +2,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { storeToRefs } from 'pinia'
 import {
   Bot,
   BrainCircuit,
@@ -26,21 +25,20 @@ import {
 } from '@lucide/vue'
 import { equipmentApi } from '@/apis/equipment_api'
 import { agentApi } from '@/apis/agent_api'
-import { useProjectsStore } from '@/stores/projects'
 import { useUserStore } from '@/stores/user'
-import { projectDisplayName } from '@/utils/projectSelection'
 import AgentChatComponent from '@/components/AgentChatComponent.vue'
+import { readConversationDraft, saveConversationDraft, shouldSubmitConversation } from '@/utils/conversationLaunch'
 import EquipmentLegacyDeepSession from '@/components/equipment/EquipmentLegacyDeepSession.vue'
 import EquipmentDeepCandidateVersions from '@/components/equipment/EquipmentDeepCandidateVersions.vue'
 import EquipmentDeepSessionHistory from '@/components/equipment/EquipmentDeepSessionHistory.vue'
 import EquipmentDeepSkillPicker from '@/components/equipment/EquipmentDeepSkillPicker.vue'
 import EquipmentDeepStageProjection from '@/components/equipment/EquipmentDeepStageProjection.vue'
-import EquipmentModelField from '@/components/equipment/EquipmentModelField.vue'
+import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
 import { useEquipmentModelPrefill } from '@/composables/useEquipmentModelPrefill'
+import { capabilityPortraitModules } from '@/utils/equipmentCapabilities.js'
 import {
-  CAPABILITY_PORTRAIT_AGENT_SLUG,
+  PORTRAIT_SECTION_ORDER,
   TECHNOLOGY_CABIN_ACTIONS,
-  WEAPON_SCHEME_AGENT_SLUG,
   capabilitySeedFocus,
   isTechnologyCabinSection,
   newWeaponDivergencePrompt,
@@ -57,9 +55,7 @@ import { normalizeEquipmentDeepSkillIds } from '@/utils/equipmentDeepSkills.js'
 
 const route = useRoute()
 const router = useRouter()
-const projectsStore = useProjectsStore()
 const userStore = useUserStore()
-const { projects } = storeToRefs(projectsStore)
 const loading = ref(false)
 const sessionsLoading = ref(true)
 const sessionsError = ref('')
@@ -69,6 +65,12 @@ const sessionSwitchError = ref('')
 const sessionSwitching = ref(false)
 const pendingSessionId = ref('')
 const creating = ref(false)
+const createError = ref('')
+const launchInput = ref(null)
+const bindingTreeOpen = ref(false)
+const bindingSearch = ref('')
+const expandedBindingRunId = ref('')
+const pendingInitialQuestion = ref(null)
 const branchCreating = ref(false)
 const contextOpen = ref(false)
 const researchControlOpen = ref(false)
@@ -113,7 +115,6 @@ const readActiveSkillCache = () => {
 }
 const activeSkillIdsBySession = ref(readActiveSkillCache())
 const form = ref({
-  project_id: '',
   run_id: undefined,
   research_object_type: 'selected',
   capability_card_key: undefined,
@@ -140,6 +141,37 @@ const cardKey = computed(() => String(route.query.cap || ''))
 const referenceKey = computed(() => String(route.query.reference || ''))
 const cardRunId = computed(() => String(route.query.run || ''))
 const requestedSection = computed(() => String(route.query.section || '').trim())
+const launchDraftKey = computed(() => `deep-launch:${JSON.stringify([userStore.uid, cardRunId.value, cardKey.value, referenceKey.value])}`)
+const draftStorage = () => {
+  try { return window.sessionStorage } catch { return null }
+}
+const isLegacyGeneratedLaunchPrompt = (value) => {
+  const prompt = String(value || '').trim()
+  return prompt === '请围绕具体武器装备【填写装备名称】形成研发技术方案。' ||
+    /^请围绕「[^」]+」开展深研，结合所属 Query 分析其能力目标、关键技术、作战运用、风险边界与验证路径。$/.test(prompt) ||
+    /^请以参考武器「[^」]+」为对象开展深研，结合所属 Query 分析其能力边界、关键技术、作战运用、风险与可验证的改进方向。$/.test(prompt)
+}
+watch([launchDraftKey, sessionId], () => {
+  if (sessionId.value) return
+  const draft = readConversationDraft(draftStorage(), launchDraftKey.value)
+  if (isLegacyGeneratedLaunchPrompt(draft.topic)) {
+    draft.topic = ''
+    saveConversationDraft(draftStorage(), launchDraftKey.value, draft)
+  }
+  Object.assign(form.value, draft)
+  createError.value = ''
+}, { immediate: true, flush: 'sync' })
+watch(() => [form.value.topic, form.value.focus], () => {
+  if (!sessionId.value && userStore.uid) {
+    saveConversationDraft(draftStorage(), launchDraftKey.value, form.value)
+  }
+}, { flush: 'sync' })
+const handleLaunchKeydown = (event) => {
+  if (!shouldSubmitConversation(event)) return
+  event.preventDefault()
+  void createSession()
+}
+
 const RESEARCH_MODE_IDS = new Set(['section_deepen', 'new_weapon_diverge'])
 const resolveResearchMode = (value) => (RESEARCH_MODE_IDS.has(value) ? value : 'section_deepen')
 const researchMode = ref('section_deepen')
@@ -225,24 +257,11 @@ const sessionCapabilities = computed(() => [
   { icon: Bot, label: session.value?.payload?.agent_name || '装备研究助手' }
 ])
 const agentOptions = computed(() =>
-  agents.value.map((item) => ({ value: item.slug, label: item.name || item.slug }))
+  agents.value
+    .filter((item) => !item.is_subagent)
+    .map((item) => ({ value: item.slug, label: item.name || item.slug }))
 )
-const weaponSchemeAgentAvailable = computed(() =>
-  agents.value.some((item) => item.slug === WEAPON_SCHEME_AGENT_SLUG)
-)
-const capabilityPortraitAgentAvailable = computed(() =>
-  agents.value.some((item) => item.slug === CAPABILITY_PORTRAIT_AGENT_SLUG)
-)
-const recommendedAgentSlug = (
-  section = form.value.research_section,
-  mode = form.value.research_mode
-) => {
-  if (isTechnologyCabinSection(section) && weaponSchemeAgentAvailable.value)
-    return WEAPON_SCHEME_AGENT_SLUG
-  if (mode === 'new_weapon_diverge' && capabilityPortraitAgentAvailable.value)
-    return CAPABILITY_PORTRAIT_AGENT_SLUG
-  return 'deep-research'
-}
+const recommendedAgentSlug = () => 'deep-research'
 const applyRecommendedAgent = (
   section = form.value.research_section,
   mode = form.value.research_mode
@@ -255,9 +274,22 @@ const researchAgentSlug = (
 ) => form.value.agent_slug || recommendedAgentSlug(section, mode)
 const researchContext = computed(() => session.value?.research_context || {})
 const branchItems = computed(() => session.value?.branches || [])
-const filteredRuns = computed(() =>
-  runs.value.filter((item) => !form.value.project_id || item.project_id === form.value.project_id)
+const queryRunOptions = computed(() =>
+  runs.value.map((item) => ({
+    value: item.run_id,
+    label: `Query · ${item.topic || '未命名研究任务'}`,
+    topic: item.topic || '未命名研究任务',
+    owner_uid: item.owner_uid,
+    disabled: Boolean(item.readonly)
+  }))
 )
+const filteredQueryRunOptions = computed(() => {
+  const keyword = bindingSearch.value.trim().toLowerCase()
+  if (!keyword) return queryRunOptions.value
+  return queryRunOptions.value.filter((item) =>
+    `${item.topic} ${item.owner_uid || ''}`.toLowerCase().includes(keyword)
+  )
+})
 const capabilityCards = computed(() => contextOptions.value.capability_cards || [])
 const referenceWeapons = computed(() => contextOptions.value.reference_weapons || [])
 const selectedRun = computed(() =>
@@ -289,36 +321,12 @@ const selectedCapabilitySections = computed(() => {
   if (form.value.capability_scope === 'all') return sections
   return sections.filter((item) => item.label === form.value.capability_scope)
 })
-const capabilitySectionOptions = computed(() => {
-  if (!selectedCapability.value) return [{ value: 'all', label: '全部五栏' }]
-  const sections = parsePortraitSections(
-    selectedCapability.value.deep_capability_portrait || selectedCapability.value.capability_image
-  )
-  return [
-    { value: 'all', label: `全部五栏（${sections.length} 栏）` },
-    ...sections.map((item) => ({ value: item.label, label: item.label }))
-  ]
-})
 const selectedReference = computed(() => {
   if (form.value.research_object_type !== 'reference') return undefined
   return referenceWeapons.value.find(
     (item) => item.hypothesis_id === form.value.reference_weapon_id
   )
 })
-const selectedScopeLabel = computed(() =>
-  form.value.capability_scope === 'all' ? '全部五栏' : form.value.capability_scope
-)
-const contextBindingSummary = computed(() => {
-  const parts = []
-  if (selectedCapability.value) {
-    parts.push(`${capabilityEquipmentName(selectedCapability.value)} · ${selectedScopeLabel.value}`)
-  }
-  if (selectedReference.value) parts.push(`参考武器 · ${selectedReference.value.title}`)
-  return parts.join(' / ')
-})
-const suggestedTopic = ref('')
-const suggestedFocus = ref('')
-
 const syncNativeThread = async () => {
   if (!nativeThreadId.value) return
   await nextTick()
@@ -332,8 +340,7 @@ const loadList = async () => {
   sessionsLoading.value = true
   sessionsError.value = ''
   try {
-    const [loadedProjects, agentResponse, sessionResponse, runResponse] = await Promise.all([
-      projectsStore.loadProjects().catch(() => []),
+    const [agentResponse, sessionResponse, runResponse] = await Promise.all([
       agentApi.getAgents().catch(() => ({ agents: [] })),
       equipmentApi.listDeepSessions().catch((error) => {
         sessionsError.value = error.message || '无法读取专家会话。'
@@ -345,16 +352,10 @@ const loadList = async () => {
     applyRecommendedAgent(requestedSection.value || form.value.research_section)
     sessions.value = normalizeDeepSessions(sessionResponse)
     runs.value = runResponse || []
-    const ownProjects = loadedProjects.filter(
-      (project) => String(project.uid || '') === String(userStore.uid || '')
-    )
-    const defaultProject = ownProjects[0] || (await projectsStore.ensureEquipmentProject())
     const requestedRun = runs.value.find((item) => String(item.run_id || '') === cardRunId.value)
     if (!sessionId.value && requestedRun) {
-      if (requestedRun.project_id) form.value.project_id = requestedRun.project_id
       form.value.run_id = requestedRun.run_id
     }
-    if (!form.value.project_id && defaultProject?.id) form.value.project_id = defaultProject.id
     if (!agentOptions.value.some((item) => item.value === form.value.agent_slug)) {
       form.value.agent_slug =
         agentOptions.value.find((item) => item.value === 'deep-research')?.value ||
@@ -390,6 +391,7 @@ const loadContextOptions = async (runId) => {
     ) {
       form.value.research_object_type = 'selected'
     }
+    if (equipmentChoices.value.length === 1) selectEquipmentChoice(equipmentChoices.value[0])
   } catch (error) {
     if (sequence !== contextRequestSequence.value) return
     contextOptionsError.value = error.message || '研究对象加载失败'
@@ -399,49 +401,115 @@ const loadContextOptions = async (runId) => {
 }
 
 const updateResearchSuggestions = () => {
-  const capabilityName = selectedCapability.value
-    ? capabilityEquipmentName(selectedCapability.value)
-    : ''
-  const referenceName = String(selectedReference.value?.title || '').trim()
-  const runTopic = String(selectedRun.value?.topic || '').trim()
-  const seedName = capabilityName || referenceName
   const scopedSection = selectedCapabilitySections.value[0]
-  const deepenCurrent = form.value.research_mode === 'section_deepen' && capabilityName
-  form.value.research_section = deepenCurrent && scopedSection ? scopedSection.label : ''
-  const nextTopic = deepenCurrent
-    ? scopedSection
-      ? `深化「${capabilityName}」的「${scopedSection.label}」栏并形成可核验修订`
-      : `深化「${capabilityName}」现有能力画像，破解技术卡点并闭合作战流程与制胜逻辑`
-    : runTopic
-      ? `面向「${runTopic}」发散未来制胜新质武器装备${seedName ? `（以「${seedName}」为启发）` : ''}`
-      : seedName
-        ? `以「${seedName}」为启发，发散未来制胜新质武器装备`
-        : ''
-  const contextLead = runTopic
-    ? `以关联 Query「${runTopic}」及其未来战争态势为核心问题空间`
-    : '以未来战争态势下的制胜与制衡需求为核心问题空间'
-  const seedContext = capabilityName
-    ? `当前能力画像「${capabilityName}」及${selectedScopeLabel.value}仅作为启发与待突破基线，不是候选边界`
-    : referenceName
-      ? `参考武器「${referenceName}」仅作为启发与对照基线，不是候选边界`
-      : '现有装备与技术路线仅作为启发和对照基线，不是候选边界'
-  const nextFocus = deepenCurrent
-    ? scopedSection
-      ? portraitSectionPrompt(scopedSection.label, capabilityName, scopedSection.text)
-      : capabilitySeedFocus(capabilityName, selectedCapabilitySections.value)
-    : [
-        `${contextLead}，开放发散能够形成制胜优势、制衡对手的新质创新颠覆武器装备`,
-        seedContext,
-        '从任务链反转、作用机理、装备构型、交战窗口、成本交换和对手反适应等多维探索正交方向',
-        '不预设单一装备形态、技术路线或固定结论，先扩大解空间，再按作战价值、颠覆性与可行性收敛'
-      ].join('；')
+  form.value.research_section =
+    form.value.research_mode === 'section_deepen' &&
+    selectedCapability.value &&
+    form.value.capability_scope !== 'all' &&
+    scopedSection
+      ? scopedSection.label
+      : ''
+}
 
-  if (!form.value.topic.trim() || form.value.topic === suggestedTopic.value)
-    form.value.topic = nextTopic
-  if (!form.value.focus.trim() || form.value.focus === suggestedFocus.value)
-    form.value.focus = nextFocus
-  suggestedTopic.value = nextTopic
-  suggestedFocus.value = nextFocus
+const selectQuickCapability = (cardKey) => {
+  form.value.research_object_type = 'selected'
+  form.value.capability_card_key = cardKey
+  form.value.capability_scope = 'all'
+  form.value.reference_weapon_id = undefined
+  form.value.research_mode = 'section_deepen'
+  updateResearchSuggestions()
+}
+
+const selectQuickReference = (hypothesisId) => {
+  form.value.research_object_type = 'reference'
+  form.value.reference_weapon_id = hypothesisId
+  form.value.capability_card_key = undefined
+  form.value.capability_scope = 'all'
+  form.value.research_mode = 'new_weapon_diverge'
+  updateResearchSuggestions()
+}
+
+const referenceWeaponName = (item) =>
+  String(item?.title || item?.primary_equipment_identity || item?.equipment_name || '').trim() ||
+  '未命名参考武器'
+
+const equipmentChoices = computed(() => [
+  ...capabilityCards.value.map((item) => ({
+    id: `selected:${item.card_key}`,
+    type: 'selected',
+    key: item.card_key,
+    name: capabilityEquipmentName(item),
+    source: item
+  })),
+  ...referenceWeapons.value.map((item) => ({
+    id: `reference:${item.hypothesis_id}`,
+    type: 'reference',
+    key: item.hypothesis_id,
+    name: referenceWeaponName(item),
+    source: item
+  }))
+])
+const selectedEquipmentChoice = computed(() =>
+  equipmentChoices.value.find((item) =>
+    item.type === 'selected'
+      ? form.value.research_object_type === 'selected' &&
+        item.key === form.value.capability_card_key
+      : form.value.research_object_type === 'reference' &&
+        item.key === form.value.reference_weapon_id
+  )
+)
+const selectedEquipmentName = computed(() => selectedEquipmentChoice.value?.name || '')
+const selectedEquipmentPortraitSections = computed(() => {
+  const choice = selectedEquipmentChoice.value
+  if (!choice) return []
+  const modules = choice.type === 'selected'
+    ? capabilityPortraitModules(choice.source)
+    : [{ label: '概述', text: String(choice.source?.overview || '').trim() }]
+  const byLabel = new Map(modules.map((item) => [item.label, item.text]))
+  return PORTRAIT_SECTION_ORDER.map((label) => ({
+    label,
+    text: String(byLabel.get(label) || '').trim()
+  }))
+})
+const selectEquipmentChoice = (choice) => {
+  if (!choice) return
+  if (choice.type === 'selected') selectQuickCapability(choice.key)
+  else selectQuickReference(choice.key)
+  createError.value = ''
+}
+const selectQueryFromTree = (run) => {
+  if (run.disabled) return
+  const runId = String(run.value || '')
+  if (expandedBindingRunId.value === runId) {
+    expandedBindingRunId.value = ''
+    return
+  }
+  expandedBindingRunId.value = runId
+  form.value.run_id = run.value
+  createError.value = ''
+}
+const selectEquipmentFromTree = (choice) => {
+  selectEquipmentChoice(choice)
+}
+const startPortraitSectionResearch = async (section) => {
+  const choice = selectedEquipmentChoice.value
+  if (!choice || choice.type !== 'selected') return
+  const overview = selectedEquipmentPortraitSections.value.find((item) => item.label === '概述')?.text || ''
+  form.value.capability_scope = section.label
+  form.value.research_mode = 'section_deepen'
+  form.value.research_section = section.label
+  form.value.topic = isTechnologyCabinSection(section.label)
+    ? technologyCabinPrompt(choice.name, section.text, 'implementation_plan', overview)
+    : portraitSectionPrompt(section.label, choice.name, section.text, overview)
+  bindingTreeOpen.value = false
+  await nextTick()
+  launchInput.value?.focus()
+}
+const clearBinding = () => {
+  form.value.run_id = undefined
+  bindingSearch.value = ''
+  expandedBindingRunId.value = ''
+  bindingTreeOpen.value = false
 }
 
 const loadSession = async () => {
@@ -483,6 +551,15 @@ const loadSession = async () => {
     if (requestedSection.value) {
       prefilledSectionKey.value = ''
       await prefillRequestedSection()
+    }
+    if (sequence !== sessionRequestSequence.value || requestedSessionId !== sessionId.value) return
+    // 线程已就绪；首轮发送会等待流式回复，不能继续遮挡对话。
+    pendingSessionId.value = ''
+    sessionSwitching.value = false
+    const initialQuestion = pendingInitialQuestion.value
+    if (usesNativeAgent.value && initialQuestion?.sessionId === requestedSessionId) {
+      pendingInitialQuestion.value = null
+      await nativeChat.value?.submitPrompt(initialQuestion.text)
     }
   } catch (error) {
     if (sequence !== sessionRequestSequence.value || requestedSessionId !== sessionId.value) return
@@ -588,18 +665,20 @@ const load = async () => {
 }
 
 const createSession = async () => {
+  if (creating.value || loading.value) return
+  createError.value = ''
   if (selectedRunReadOnly.value) {
     message.warning('历史研究任务为只读数据')
     return
   }
-  if (!form.value.project_id || !(form.value.topic || form.value.title).trim()) {
-    message.warning('请填写项目与研讨主题')
+  if (!(form.value.topic || form.value.title).trim()) {
+    createError.value = '请先输入想研究的问题'
+    launchInput.value?.focus()
     return
   }
   creating.value = true
   try {
     const created = await equipmentApi.createDeepSession({
-      project_id: form.value.project_id,
       title: form.value.title,
       topic: form.value.topic,
       focus: form.value.focus,
@@ -617,13 +696,16 @@ const createSession = async () => {
       capability_sections: selectedCapabilitySections.value,
       reference_weapons: selectedReference.value ? [selectedReference.value] : []
     })
+    if (!created?.session_id) throw new Error('未能打开深研对话，请重试')
+    pendingInitialQuestion.value = { sessionId: created.session_id, text: form.value.topic.trim() }
+    await router.push(`/equipment/deep-thinking/${created.session_id}`)
+    saveConversationDraft(draftStorage(), launchDraftKey.value, { topic: '', focus: '' })
     form.value.topic = ''
     form.value.title = ''
     form.value.focus = ''
-    await loadList()
-    await router.push(`/equipment/deep-thinking/${created.session_id}`)
+    void loadList().catch(() => undefined)
   } catch (error) {
-    message.error(error.message || '创建会话失败')
+    createError.value = error.message || '创建会话失败，请重试。输入内容已保留。'
   } finally {
     creating.value = false
   }
@@ -705,19 +787,16 @@ const provisionFromCard = async () => {
           .join('；')
       : sectionFocus
     const technologyCabin = isTechnologyCabinSection(section?.label)
-    if (technologyCabin && weaponSchemeAgentAvailable.value) {
-      form.value.agent_slug = WEAPON_SCHEME_AGENT_SLUG
-    }
     const sessionTitle = technologyCabin
       ? `技术攻关舱 · ${name}`
       : section
         ? `深挖${section.label} · ${name}`
         : `定向深研 · ${name}`
     const sessionTopic = technologyCabin
-      ? `面向「${name}」形成武器装备研究方案，贯通能力目标、总体设计、技术体系、关键技术、突破难点、解决路径与具体实现`
+      ? `研究「${name}」的装备与技术实现`
       : section
         ? `深挖「${name}」能力画像的「${section.label}」栏并形成可核验修订`
-        : `以能力画像卡「${name}」为启发，面向关联 Query 发散未来制胜新质武器装备`
+        : `继续研究「${name}」能力画像`
     const targetRunId = cardRunId.value || runId || ''
     form.value.run_id = targetRunId || form.value.run_id
     form.value.topic = sessionTopic
@@ -730,12 +809,7 @@ const provisionFromCard = async () => {
       message.warning('当前研究任务为只读数据')
       return
     }
-    if (!form.value.project_id) {
-      message.warning('请先选择所属项目后再创建深研会话')
-      return
-    }
     const payload = {
-      project_id: form.value.project_id,
       title: sessionTitle,
       topic: `${sessionTopic}。`,
       focus: resolvedFocus,
@@ -794,7 +868,6 @@ const provisionFromReference = async () => {
       return
     }
     const requestedRun = runs.value.find((item) => String(item.run_id || '') === runId)
-    if (requestedRun?.project_id) form.value.project_id = requestedRun.project_id
     form.value.run_id = runId
     if (isReadOnlyRun(requestedRun)) {
       message.warning('当前研究任务为只读数据')
@@ -818,13 +891,7 @@ const provisionFromReference = async () => {
     const name = String(
       reference.title || reference.primary_equipment_identity || '参考武器'
     ).trim()
-    if (!form.value.project_id) {
-      form.value.title = `定向深研 · ${name}`
-      message.warning('请先选择所属项目后再创建深研会话')
-      return
-    }
     const created = await equipmentApi.createDeepSession({
-      project_id: form.value.project_id,
       title: `定向深研 · ${name}`,
       topic: form.value.topic || `以参考武器「${name}」为启发，发散未来制胜新质武器装备。`,
       focus: form.value.focus,
@@ -978,7 +1045,7 @@ const quoteMessage = async (item) => {
     .map((line) => `> ${line}`)
     .join('\n')
   await nativeChat.value?.submitPrompt(
-    `${quote}\n\n请针对上述引用继续深化：闭合打击对象、直接毁伤机理与任务失能判据。`,
+    `${quote}\n\n请针对上述引用继续深化：解释关键判断、适用条件和下一步验证方式。`,
     { send: false }
   )
 }
@@ -1172,21 +1239,9 @@ watch(cardRunId, (runId) => {
   if (sessionId.value || !runId) return
   const requestedRun = runs.value.find((item) => String(item.run_id || '') === runId)
   if (!requestedRun) return
-  if (requestedRun.project_id) form.value.project_id = requestedRun.project_id
   form.value.run_id = requestedRun.run_id
   updateResearchSuggestions()
 })
-watch(
-  () => form.value.project_id,
-  () => {
-    if (
-      form.value.run_id &&
-      !filteredRuns.value.some((item) => item.run_id === form.value.run_id)
-    ) {
-      form.value.run_id = undefined
-    }
-  }
-)
 watch(
   () => form.value.run_id,
   (runId) => {
@@ -1312,9 +1367,7 @@ onBeforeUnmount(() => {
       </template>
       <template v-else-if="session">
         <nav
-          v-if="
-            !conversationFocusMode && (session.payload?.parent_session_id || branchItems.length)
-          "
+          v-if="session.payload?.parent_session_id || branchItems.length"
           class="branch-bar"
           aria-label="研究分支"
         >
@@ -1324,7 +1377,7 @@ onBeforeUnmount(() => {
             type="button"
             @click="selectSession(session.payload.parent_session_id)"
           >
-            主线
+            返回主线
           </button>
           <button
             v-for="branch in branchItems"
@@ -1455,22 +1508,27 @@ onBeforeUnmount(() => {
           该会话已归档，当前为只读状态；可在左侧“归档”中恢复后继续追问。
         </div>
         <section
-          v-if="technologyCabinMode && usesNativeAgent"
+          v-if="technologyCabinMode && usesNativeAgent && !conversationFocusMode"
           class="technology-cabin-panel"
           aria-label="技术攻关舱"
         >
           <div class="technology-cabin-heading">
             <span class="technology-cabin-icon"><Wrench :size="17" /></span>
             <div>
-              <small>装备与技术实现专属模块</small>
+              <small>可选研究角度</small>
               <strong>技术攻关舱</strong>
             </div>
           </div>
           <div class="technology-cabin-object">
             <span>当前攻关对象</span>
             <b>{{ boundEquipment || '当前装备' }}</b>
-            <em><Target :size="11" /> 装备身份锁定</em>
-            <em><Bot :size="11" /> {{ session.payload?.agent_name || '武器装备研究方案' }}</em>
+            <em><Target :size="11" /> 聚焦当前装备</em>
+            <em><Bot :size="11" /> {{ session.payload?.agent_name || '深度研究' }}</em>
+          </div>
+          <div class="technology-cabin-sources" aria-label="技术攻关证据源">
+            <span><Network :size="12" /><b>Open Web</b><small>公开工程与标准</small></span>
+            <span><Database :size="12" /><b>本地知识库</b><small>内部材料与已有研究</small></span>
+            <span><Quote :size="12" /><b>AMiner</b><small>原理、论文与技术进展</small></span>
           </div>
           <nav class="technology-cabin-actions" aria-label="技术攻关工作流">
             <button
@@ -1489,7 +1547,7 @@ onBeforeUnmount(() => {
               </div>
             </button>
           </nav>
-          <p>七级链由方案智能体逐级推进；点击步骤只会生成可编辑的研究问题，请确认后再发送。</p>
+          <p>可按问题需要选择研究角度；点击后可编辑问题，再发送。</p>
         </section>
         <AgentChatComponent
           v-if="usesNativeAgent"
@@ -1497,6 +1555,7 @@ onBeforeUnmount(() => {
           class="native-deep-chat"
           :agent-id="session.payload?.agent_slug || 'deep-research'"
           :initial-project-id="session.project_id"
+          :show-project-selector="false"
           draft-scope="equipment-deep"
           :is-new-conversation="false"
           :single-mode="true"
@@ -1542,10 +1601,13 @@ onBeforeUnmount(() => {
           <template #empty-state>
             <section class="deep-empty-state" aria-label="深研对话使用指引">
               <span class="deep-empty-icon"><BrainCircuit :size="22" /></span>
-              <h2>从问题出发，完整追踪研究过程</h2>
+              <h2>
+                {{
+                  activeResearchSection ? `继续研究${activeResearchSection}` : '想进一步弄清什么？'
+                }}
+              </h2>
               <p>
-                在下方输入问题；可引用资料或技能。运行后，步骤、子任务、工具调用和 Token
-                用量会随任务更新。可生成研究文档、数据表、图表和 HTML 页面，在「文件」中预览、编辑 Markdown 或打包下载。
+                直接提出问题，模型会结合已有研究与栏目目标，自主选择研究路径。需要资料时可引用文件或知识库。
               </p>
               <div class="deep-mention-shortcuts" aria-label="快速引用">
                 <button
@@ -1689,12 +1751,13 @@ onBeforeUnmount(() => {
                 title="设置研究方式和下一步；不会自动发送"
               >
                 <Target :size="14" />
-                <span>研究方式</span>
-                <em>{{ researchModeLabel }}</em>
+                <span>{{ activeResearchSection || '研究目标' }}</span>
+                <em v-if="!conversationFocusMode">{{ researchModeLabel }}</em>
                 <ChevronDown :size="13" />
               </button>
             </a-popover>
             <EquipmentDeepSkillPicker
+              v-if="!conversationFocusMode"
               v-model="activeSkillIds"
               :session-id="sessionId"
               placement="top"
@@ -1708,7 +1771,11 @@ onBeforeUnmount(() => {
               <FileText :size="14" />
               <span>生成研究文件</span>
             </button>
-            <label class="artifact-toggle" :class="{ active: createArtifact }">
+            <label
+              v-if="!conversationFocusMode"
+              class="artifact-toggle"
+              :class="{ active: createArtifact }"
+            >
               <FileCheck2 :size="14" />
               <span>形成能力画像草案</span>
               <a-switch v-model:checked="createArtifact" size="small" />
@@ -1773,327 +1840,297 @@ onBeforeUnmount(() => {
       </template>
 
       <template v-else>
-        <div class="create-workspace">
-          <div class="create-intro">
-            <div class="empty-orb create-orb"><Sparkles :size="22" /></div>
-            <div class="create-intro-copy">
-              <div class="deep-kicker"><Sparkles :size="13" /> 新建定向研究</div>
-              <h1>深化装备画像，也可发散新质方向</h1>
-              <p>绑定现有装备时默认深挖栏目；需要突破原装备身份时，再显式切换到新质发散。</p>
-            </div>
-            <div class="create-intro-tags" aria-label="研究方式">
-              <span>栏目深化</span><span>证据核验</span><span>可选新质发散</span>
-            </div>
-          </div>
-          <section v-if="activeRun" class="linked-run-banner" aria-label="已关联研究任务">
-            <span><Target :size="16" /></span>
-            <div>
-              <small>已从研究任务进入 · 将自动继承 Query 与研究材料</small>
-              <b>{{ activeRun.topic }}</b>
-            </div>
-            <em>{{ relatedSessionCount }} 个既有深研</em>
-            <button type="button" @click="openRunWorkspace('runs')">查看任务</button>
+        <div class="create-workspace conversation-launch-workspace">
+          <section class="conversation-launch-intro">
+            <span><Sparkles :size="22" /></span>
+            <h1>深度追问每一处未知&nbsp;&nbsp;持续探索每一种可能</h1>
+            <p>直接提问，或在输入框上方快速绑定 Query 与武器装备。</p>
           </section>
-          <a-form class="create-form" layout="vertical">
-            <section class="launch-section">
-              <header class="launch-section-head">
-                <span class="launch-step">01</span>
-                <div>
-                  <b>研究上下文</b><small>关联 Query 和已有研究材料，为模型提供问题空间</small>
-                </div>
-                <Layers :size="17" />
-              </header>
-              <div class="launch-section-body">
-                <div class="form-grid">
-                  <a-form-item label="所属项目" required>
-                    <a-select
-                      v-model:value="form.project_id"
-                      :options="
-                        projects.map((item) => ({
-                          value: item.id,
-                          label: projectDisplayName(item, userStore.isAdmin)
-                        }))
-                      "
-                    />
-                  </a-form-item>
-                  <a-form-item label="关联研究任务">
-                    <a-select
-                      v-model:value="form.run_id"
-                      allow-clear
-                      show-search
-                      option-filter-prop="label"
-                      placeholder="可选：带入 Query 与研究上下文"
-                      :options="
-                        filteredRuns.map((item) => ({ value: item.run_id, label: item.topic }))
-                      "
-                    />
-                  </a-form-item>
-                </div>
-                <section
-                  v-if="form.run_id"
-                  class="research-binding-builder"
-                  aria-label="研究对象级联配置"
-                >
-                  <div class="binding-builder-head">
-                    <span><Layers :size="16" /></span>
-                    <div>
-                      <b>研究对象</b>
-                      <small
-                        >先选择对象类型，再选择具体武器；入选武器与参考武器分别独立配置。</small
-                      >
-                    </div>
-                    <span v-if="contextOptionsLoading" class="binding-status">加载中</span>
-                  </div>
-                  <div v-if="contextOptionsError" class="binding-error" role="alert">
-                    <span>{{ contextOptionsError }}</span>
-                    <button type="button" @click="loadContextOptions(form.run_id)">重新加载</button>
-                  </div>
-                  <div v-else class="binding-object-picker">
-                    <div class="binding-type-field">
-                      <span class="binding-step-copy"
-                        ><b>研究对象类型</b><small>本次深研选择其中一种对象</small></span
-                      >
-                      <a-radio-group v-model:value="form.research_object_type" button-style="solid">
-                        <a-radio-button
-                          value="selected"
-                          :disabled="contextOptionsLoading || !capabilityCards.length"
-                        >
-                          入选武器<span class="binding-option-count">{{
-                            capabilityCards.length
-                          }}</span>
-                        </a-radio-button>
-                        <a-radio-button
-                          value="reference"
-                          :disabled="contextOptionsLoading || !referenceWeapons.length"
-                        >
-                          参考武器<span class="binding-option-count">{{
-                            referenceWeapons.length
-                          }}</span>
-                        </a-radio-button>
-                      </a-radio-group>
-                    </div>
-                    <section
-                      v-if="form.research_object_type === 'selected'"
-                      class="binding-object-panel selected-object-panel"
-                    >
-                      <header>
-                        <span
-                          ><b>选择入选武器</b
-                          ><small>以已形成正式能力画像的武器装备为研究主体</small></span
-                        >
-                      </header>
-                      <label class="binding-step">
-                        <span class="binding-step-copy"
-                          ><b>能力画像卡</b><small>选择本次深挖的武器装备主体</small></span
-                        >
-                        <a-select
-                          v-model:value="form.capability_card_key"
-                          allow-clear
-                          show-search
-                          option-filter-prop="label"
-                          :loading="contextOptionsLoading"
-                          :disabled="contextOptionsLoading || !capabilityCards.length"
-                          :placeholder="
-                            capabilityCards.length ? '选择入选武器' : '该任务暂无入选武器'
-                          "
-                          :options="
-                            capabilityCards.map((item) => ({
-                              value: item.card_key,
-                              label: capabilityEquipmentName(item)
-                            }))
-                          "
-                        />
-                      </label>
-                      <label class="binding-step" :class="{ muted: !selectedCapability }">
-                        <span class="binding-step-copy"
-                          ><b>画像范围</b><small>继续级联到全部五栏或某一栏</small></span
-                        >
-                        <a-select
-                          v-model:value="form.capability_scope"
-                          :disabled="!selectedCapability"
-                          :options="capabilitySectionOptions"
-                        />
-                      </label>
-                    </section>
-                    <section v-else class="binding-object-panel reference-object-panel">
-                      <header>
-                        <span
-                          ><b>选择参考武器</b
-                          ><small>以任务中的候选参考武器为独立研究主体</small></span
-                        >
-                      </header>
-                      <label class="binding-step">
-                        <span class="binding-step-copy"
-                          ><b>参考武器</b><small>直接选择本次需要深研的参考对象</small></span
-                        >
-                        <a-select
-                          v-model:value="form.reference_weapon_id"
-                          allow-clear
-                          show-search
-                          option-filter-prop="label"
-                          :loading="contextOptionsLoading"
-                          :disabled="contextOptionsLoading || !referenceWeapons.length"
-                          :placeholder="
-                            referenceWeapons.length ? '选择参考武器' : '该任务暂无可用参考武器'
-                          "
-                          :options="
-                            referenceWeapons.map((item) => ({
-                              value: item.hypothesis_id,
-                              label: item.title || item.primary_equipment_identity
-                            }))
-                          "
-                        />
-                      </label>
-                    </section>
-                  </div>
-                  <div v-if="contextBindingSummary" class="binding-summary">
-                    <Target :size="14" />
-                    <span
-                      ><small>将注入会话</small><b>{{ contextBindingSummary }}</b></span
-                    >
-                  </div>
-                  <p v-if="selectedReference?.overview" class="reference-preview">
-                    {{ selectedReference.overview }}
-                  </p>
-                </section>
-              </div>
-            </section>
-            <section class="launch-section launch-question-section">
-              <header class="launch-section-head">
-                <span class="launch-step">02</span>
-                <div><b>研究目标</b><small>明确是深化当前装备，还是突破身份发散新装备</small></div>
-                <Target :size="17" />
-              </header>
-              <div class="launch-section-body">
-                <div class="launch-mode-picker" role="group" aria-label="新会话研究模式">
-                  <button
-                    type="button"
-                    :class="{ active: form.research_mode === 'section_deepen' }"
-                    :disabled="!selectedCapability"
-                    @click="form.research_mode = 'section_deepen'"
+
+          <a-form class="conversation-launch-composer" @submit.prevent="createSession">
+            <div class="conversation-context-bar">
+              <a-popover
+                v-model:open="bindingTreeOpen"
+                trigger="click"
+                placement="bottomLeft"
+                overlay-class-name="conversation-binding-overlay"
+              >
+                <template #content>
+                  <div
+                    class="conversation-binding-tree"
+                    :class="{
+                      'has-equipment': expandedBindingRunId,
+                      'has-portrait': expandedBindingRunId && selectedEquipmentChoice
+                    }"
                   >
-                    <b>深化当前装备</b>
-                    <small>锁定装备身份，深挖技术攻关、流程与制胜机理</small>
-                  </button>
-                  <button
-                    type="button"
-                    :class="{ active: form.research_mode === 'new_weapon_diverge' }"
-                    @click="form.research_mode = 'new_weapon_diverge'"
-                  >
-                    <b>发散新质武器</b>
-                    <small>形成正交候选，并由能力画像智能体择优生成五栏卡</small>
-                  </button>
-                </div>
-                <a-form-item label="研讨主题" required>
-                  <a-textarea
-                    v-model:value="form.topic"
-                    :rows="3"
-                    :placeholder="
-                      form.research_mode === 'section_deepen'
-                        ? '例如：深化现有装备的技术实现，破解研发卡点并闭合作战流程与制胜逻辑'
-                        : '例如：面向未来低空饱和威胁，发散重构防御成本的新质装备'
-                    "
-                  />
-                </a-form-item>
-                <a-form-item
-                  :label="
-                    form.research_mode === 'section_deepen'
-                      ? '研究焦点（锁定装备）'
-                      : '研究焦点（开放发散）'
-                  "
-                  :extra="
-                    form.research_mode === 'section_deepen'
-                      ? '保持装备身份和任务定位不变，可深化技术实现、作战流程与制胜机理。'
-                      : '能力卡和参考武器只作为启发基线，允许形成新装备候选。'
-                  "
+                    <header>
+                      <div>
+                        <b>绑定研究对象</b>
+                        <small>{{ userStore.isAdmin ? '全局 Query' : '我的 Query' }}</small>
+                      </div>
+                      <button
+                        v-if="form.run_id"
+                        type="button"
+                        class="binding-clear-button"
+                        @click="clearBinding"
+                      >
+                        清除绑定
+                      </button>
+                    </header>
+
+                    <div class="binding-tree-workspace">
+                      <section class="binding-query-panel" aria-label="Query 目录">
+                        <a-input
+                          v-model:value="bindingSearch"
+                          class="binding-tree-search"
+                          allow-clear
+                          placeholder="搜索 Query"
+                          aria-label="搜索可绑定 Query"
+                          @click.stop
+                        />
+
+                        <div class="binding-query-list">
+                          <div
+                            v-for="run in filteredQueryRunOptions"
+                            :key="run.value"
+                            class="binding-query-node"
+                            :class="{
+                              selected: String(form.run_id || '') === String(run.value),
+                              expanded: expandedBindingRunId === String(run.value),
+                              disabled: run.disabled
+                            }"
+                          >
+                            <button
+                              type="button"
+                              class="binding-query-row"
+                              :disabled="run.disabled"
+                              :aria-expanded="expandedBindingRunId === String(run.value)"
+                              @click="selectQueryFromTree(run)"
+                            >
+                              <ChevronDown
+                                :size="14"
+                                :class="{ collapsed: expandedBindingRunId !== String(run.value) }"
+                              />
+                              <Target :size="15" />
+                              <span>
+                                <b>{{ run.topic }}</b>
+                                <small v-if="userStore.isAdmin && run.owner_uid">
+                                  用户 {{ run.owner_uid }}
+                                </small>
+                              </span>
+                              <em v-if="run.disabled">只读</em>
+                            </button>
+                          </div>
+
+                          <span v-if="!filteredQueryRunOptions.length" class="binding-tree-state empty">
+                            暂无可绑定 Query
+                          </span>
+                        </div>
+                      </section>
+
+                      <aside
+                        v-if="expandedBindingRunId"
+                        class="binding-equipment-panel"
+                        aria-label="武器装备目录"
+                      >
+                        <header>
+                          <span>
+                            <b>武器装备</b>
+                            <small>{{ selectedRun?.topic || '当前 Query' }}</small>
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="收起武器装备"
+                            @click="expandedBindingRunId = ''"
+                          >
+                            收起
+                          </button>
+                        </header>
+
+                        <div class="binding-equipment-list">
+                          <span v-if="contextOptionsLoading" class="binding-tree-state">
+                            <RefreshCw :size="13" class="spin" />正在读取武器装备…
+                          </span>
+                          <span v-else-if="contextOptionsError" class="binding-tree-state error">
+                            装备读取失败
+                            <button type="button" @click="loadContextOptions(form.run_id)">重试</button>
+                          </span>
+                          <template v-else>
+                            <button
+                              v-for="choice in equipmentChoices"
+                              :key="choice.id"
+                              type="button"
+                              class="binding-equipment-node"
+                              :class="{ selected: selectedEquipmentChoice?.id === choice.id }"
+                              @click="selectEquipmentFromTree(choice)"
+                            >
+                              <Wrench :size="14" />
+                              <span>
+                                <b>{{ choice.name }}</b>
+                                <small>{{ choice.type === 'selected' ? '入选武器' : '参考武器' }}</small>
+                              </span>
+                              <FileCheck2 v-if="selectedEquipmentChoice?.id === choice.id" :size="15" />
+                            </button>
+                            <span v-if="!equipmentChoices.length" class="binding-tree-state empty">
+                              该 Query 暂无可绑定武器装备
+                            </span>
+                          </template>
+                        </div>
+                      </aside>
+
+                      <aside
+                        v-if="expandedBindingRunId && selectedEquipmentChoice"
+                        class="binding-portrait-panel"
+                        aria-label="能力画像五栏"
+                      >
+                        <header>
+                          <span>
+                            <b>能力画像五栏</b>
+                            <small>{{ selectedEquipmentName }}</small>
+                          </span>
+                          <em>{{ selectedEquipmentChoice.type === 'selected' ? '入选武器' : '参考武器' }}</em>
+                        </header>
+
+                        <div class="binding-portrait-list">
+                          <article
+                            v-for="section in selectedEquipmentPortraitSections"
+                            :key="section.label"
+                            :class="{ empty: !section.text }"
+                          >
+                            <header>
+                              <b>{{ section.label }}</b>
+                              <button
+                                type="button"
+                                :disabled="selectedEquipmentChoice.type !== 'selected'"
+                                :aria-label="`${selectedEquipmentName}·${section.label}深入调研`"
+                                @click="startPortraitSectionResearch(section)"
+                              >
+                                <Wrench v-if="isTechnologyCabinSection(section.label)" :size="11" />
+                                <BrainCircuit v-else :size="11" />
+                                {{ isTechnologyCabinSection(section.label) ? '按模板生成技术方案' : '深入调研' }}
+                              </button>
+                            </header>
+                            <p>
+                              {{
+                                section.text ||
+                                (selectedEquipmentChoice.type === 'reference'
+                                  ? '参考武器暂无正式能力画像'
+                                  : '该栏尚未形成')
+                              }}
+                            </p>
+                          </article>
+                        </div>
+                      </aside>
+                    </div>
+                  </div>
+                </template>
+
+                <button
+                  type="button"
+                  class="conversation-binding-trigger"
+                  :class="{ bound: form.run_id }"
                 >
-                  <a-textarea
-                    v-model:value="form.focus"
-                    :rows="4"
-                    :maxlength="1600"
-                    show-count
-                    :placeholder="
-                      form.research_mode === 'section_deepen'
-                        ? '围绕关键技术卡点、工程痛点、攻关路线、作战流程和制胜逻辑深化。'
-                        : '围绕 Query 场景发散制胜、制衡对手的新质武器，不预设形态与技术路线。'
-                    "
+                  <Target :size="15" />
+                  <span v-if="selectedRun">
+                    <small>已绑定</small>
+                    <b>{{ selectedEquipmentName || selectedRun.topic || '当前 Query' }}</b>
+                    <em v-if="selectedEquipmentName">{{ selectedRun.topic || '所属 Query' }}</em>
+                  </span>
+                  <span v-else>
+                    <b>绑定 Query / 武器装备</b>
+                    <small>从研究目录中快速选择</small>
+                  </span>
+                  <ChevronDown :size="14" />
+                </button>
+              </a-popover>
+            </div>
+
+            <a-textarea
+              ref="launchInput"
+              v-model:value="form.topic"
+              class="conversation-launch-input"
+              :auto-size="{ minRows: 4, maxRows: 9 }"
+              :disabled="creating"
+              @keydown="handleLaunchKeydown"
+              placeholder="输入武器装备名称或研究问题…"
+              aria-label="研究问题"
+            />
+
+            <div class="conversation-launch-tools">
+              <div class="conversation-inline-config">
+                <label class="conversation-agent-picker" title="选择本次深研使用的智能体">
+                  <Bot :size="15" />
+                  <a-select
+                    v-model:value="form.agent_slug"
+                    :options="agentOptions"
+                    :bordered="false"
+                    :dropdown-match-select-width="false"
+                    :disabled="creating || !agentOptions.length"
+                    placeholder="选择智能体"
+                    aria-label="选择研究智能体"
                   />
-                </a-form-item>
-                <div
-                  v-if="form.research_mode === 'new_weapon_diverge'"
-                  class="divergence-axis-list"
-                  aria-label="默认发散维度"
-                >
-                  <span>任务链反转</span><span>作用机理</span><span>装备构型</span>
-                  <span>交战窗口</span><span>成本交换</span><span>对手反适应</span>
+                </label>
+
+                <div class="conversation-model-picker" title="选择本次深研使用的模型">
+                  <BrainCircuit :size="15" />
+                  <ModelSelectorComponent
+                    upward
+                    :model_spec="form.model_spec"
+                    size="nano"
+                    display-name="mini"
+                    :placeholder="hasDefaultModel ? '默认模型' : '选择模型'"
+                    clearable
+                    @select-model="(spec) => (form.model_spec = spec || '')"
+                  />
                 </div>
               </div>
-            </section>
-            <section class="launch-section">
-              <header class="launch-section-head">
-                <span class="launch-step">03</span>
-                <div><b>研究编排</b><small>选择主模型，并配置检索与并行协作能力</small></div>
-                <Bot :size="17" />
-              </header>
-              <div class="launch-section-body">
-                <div class="form-grid runtime-grid">
-                  <EquipmentModelField
-                    v-model:model-spec="form.model_spec"
-                    label="研究模型"
-                    :has-default-model="hasDefaultModel"
-                  />
-                  <a-form-item label="研究智能体">
-                    <a-select
-                      v-model:value="form.agent_slug"
-                      :options="agentOptions"
-                      placeholder="选择智能体"
-                    />
-                  </a-form-item>
-                </div>
-                <div class="capability-switches">
-                  <label :class="{ enabled: form.knowledge_enabled }">
-                    <span
-                      ><Database :size="17" /><b>知识库检索</b
-                      ><small>检索可访问资料并保留来源</small></span
-                    >
-                    <a-switch v-model:checked="form.knowledge_enabled" />
-                  </label>
-                  <label :class="{ enabled: form.subagents_enabled }">
-                    <span
-                      ><Network :size="17" /><b>Subagent 协同</b
-                      ><small>并行拆解、交叉核验与汇总</small></span
-                    >
-                    <a-switch v-model:checked="form.subagents_enabled" />
-                  </label>
-                </div>
-              </div>
-            </section>
-            <footer class="launch-footer">
-              <div>
-                <Sparkles :size="16" />
-                <span
-                  ><b>{{
-                    form.research_mode === 'section_deepen'
-                      ? '准备深化当前装备'
-                      : '准备启动新质发散'
-                  }}</b
-                  ><small>{{
-                    form.research_mode === 'section_deepen'
-                      ? '锁定装备身份，推进技术攻关、流程推演、机理深化并修订'
-                      : '先发散正交方向，再按价值与可行性收敛'
-                  }}</small></span
-                >
-              </div>
+
+              <a-popover trigger="click" placement="bottomRight">
+                <template #content>
+                  <div class="conversation-research-settings">
+                    <a-form-item label="补充偏好（可选）">
+                      <a-textarea
+                        v-model:value="form.focus"
+                        :rows="2"
+                        :maxlength="1600"
+                        placeholder="例如：重点比较工程可行性"
+                      />
+                    </a-form-item>
+                    <label>
+                      <span><Database :size="15" />资料检索</span>
+                      <a-switch v-model:checked="form.knowledge_enabled" size="small" />
+                    </label>
+                    <label>
+                      <span><Network :size="15" />多智能体协同</span>
+                      <a-switch v-model:checked="form.subagents_enabled" size="small" />
+                    </label>
+                  </div>
+                </template>
+                <button type="button" class="conversation-tool-button">
+                  <Wrench :size="15" />更多设置
+                </button>
+              </a-popover>
+
               <a-button
+                class="conversation-start-button"
                 type="primary"
                 size="large"
                 :loading="creating"
-                :disabled="selectedRunReadOnly"
+                :disabled="selectedRunReadOnly || !form.topic.trim() || loading"
                 :title="selectedRunReadOnly ? '历史研究任务为只读数据' : ''"
                 @click="createSession"
               >
-                创建深研会话
+                {{ selectedEquipmentName ? `开始深研 · ${selectedEquipmentName}` : '开始深研' }}
               </a-button>
+            </div>
+
+            <div v-if="createError" class="launch-error" role="alert">
+              <span>{{ createError }}</span>
+            </div>
+
+            <footer class="conversation-launch-footnote">
+              <span>Enter 开始 · Shift + Enter 换行</span>
+              <small>对话自动保存</small>
             </footer>
           </a-form>
         </div>
@@ -2114,6 +2151,497 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.launch-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--color-error-50, var(--gray-50)); color: var(--color-error-700, var(--gray-800)); font-size: 13px; }
+.launch-error button { border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; white-space: nowrap; }
+
+.conversation-launch-workspace {
+  width: min(780px, calc(100% - 48px));
+}
+.conversation-launch-intro {
+  display: grid;
+  justify-items: center;
+  margin-bottom: 22px;
+  text-align: center;
+}
+.conversation-launch-intro > span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 12px;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--main-50);
+  color: var(--main-color);
+}
+.conversation-launch-intro h1 {
+  margin: 0;
+  color: var(--gray-900);
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.03em;
+}
+.conversation-launch-intro p {
+  margin: 8px 0 0;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+.conversation-launch-composer {
+  border: 1px solid color-mix(in srgb, var(--main-color) 22%, var(--gray-150));
+  border-radius: 18px;
+  background: var(--gray-0);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--main-color) 9%, transparent);
+}
+.conversation-context-bar {
+  display: flex;
+  padding: 12px 14px 0;
+}
+.conversation-binding-trigger {
+  display: flex;
+  width: min(100%, 430px);
+  min-height: 42px;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border: 1px solid var(--gray-150);
+  border-radius: 11px;
+  background: var(--gray-25);
+  color: var(--gray-600);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.conversation-binding-trigger:hover,
+.conversation-binding-trigger.bound {
+  border-color: color-mix(in srgb, var(--main-color) 38%, var(--gray-150));
+  background: color-mix(in srgb, var(--main-50) 62%, var(--gray-0));
+  color: var(--main-color);
+}
+.conversation-binding-trigger > span {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+.conversation-binding-trigger b,
+.conversation-binding-trigger em,
+.conversation-binding-trigger small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conversation-binding-trigger b { color: var(--gray-800); font-size: 12px; font-style: normal; }
+.conversation-binding-trigger em,
+.conversation-binding-trigger small { color: var(--gray-450); font-size: 10px; font-style: normal; }
+.conversation-binding-tree {
+  width: min(390px, 82vw);
+  transition: width 0.18s ease;
+}
+.conversation-binding-tree.has-equipment { width: min(760px, 88vw); }
+.conversation-binding-tree.has-portrait { width: min(1120px, 94vw); }
+.conversation-binding-tree > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.conversation-binding-tree > header > div { display: grid; gap: 1px; }
+.conversation-binding-tree > header b { color: var(--gray-850, var(--gray-900)); font-size: 13px; }
+.conversation-binding-tree > header small { color: var(--gray-450); font-size: 10px; }
+.binding-clear-button {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 10px;
+}
+.binding-clear-button:hover { color: var(--main-color); }
+.binding-tree-search { margin-bottom: 10px; }
+.binding-tree-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.conversation-binding-tree.has-equipment .binding-tree-workspace {
+  grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1.1fr);
+}
+.conversation-binding-tree.has-portrait .binding-tree-workspace {
+  grid-template-columns: minmax(240px, 0.8fr) minmax(260px, 0.9fr) minmax(320px, 1.3fr);
+}
+.binding-query-panel { min-width: 0; }
+.binding-query-list,
+.binding-equipment-list {
+  overflow-y: auto;
+  max-height: min(430px, 55vh);
+  padding-right: 3px;
+}
+.binding-query-node {
+  overflow: hidden;
+  margin-bottom: 5px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+.binding-query-node.selected {
+  border-color: color-mix(in srgb, var(--main-color) 22%, var(--gray-150));
+  background: color-mix(in srgb, var(--main-50) 42%, var(--gray-0));
+}
+.binding-query-node.expanded {
+  border-color: color-mix(in srgb, var(--main-color) 42%, var(--gray-150));
+}
+.binding-query-node.disabled { opacity: 0.6; }
+.binding-query-row,
+.binding-equipment-node {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-600);
+  cursor: pointer;
+  text-align: left;
+}
+.binding-query-row { min-height: 44px; padding: 7px 9px; }
+.binding-query-row:hover,
+.binding-equipment-node:hover { background: color-mix(in srgb, var(--main-50) 60%, transparent); }
+.binding-query-row:disabled { cursor: not-allowed; }
+.binding-query-row > svg:first-child { transition: transform 0.16s ease; }
+.binding-query-row > svg:first-child.collapsed { transform: rotate(-90deg); }
+.binding-query-row > span,
+.binding-equipment-node > span:not(.binding-tree-branch) {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+.binding-query-row b,
+.binding-equipment-node b {
+  overflow: hidden;
+  color: var(--gray-800);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.binding-query-row small,
+.binding-equipment-node small { color: var(--gray-450); font-size: 9px; }
+.binding-query-row em {
+  color: var(--gray-450);
+  font-size: 9px;
+  font-style: normal;
+}
+.binding-equipment-panel {
+  min-width: 0;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--gray-150);
+}
+.binding-equipment-panel > header {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.binding-equipment-panel > header > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+.binding-equipment-panel > header b {
+  color: var(--gray-800);
+  font-size: 11px;
+}
+.binding-equipment-panel > header small {
+  overflow: hidden;
+  color: var(--gray-450);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.binding-equipment-panel > header button {
+  flex: 0 0 auto;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 10px;
+}
+.binding-equipment-panel > header button:hover { color: var(--main-color); }
+.binding-equipment-list {
+  padding: 3px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gray-25) 72%, var(--gray-0));
+}
+.binding-equipment-node {
+  min-height: 44px;
+  padding: 7px 9px;
+  border-radius: 8px;
+}
+.binding-equipment-node.selected {
+  background: color-mix(in srgb, var(--main-color) 10%, transparent);
+  color: var(--main-color);
+}
+.binding-portrait-panel {
+  min-width: 0;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--gray-150);
+}
+.binding-portrait-panel > header {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.binding-portrait-panel > header > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+.binding-portrait-panel > header b {
+  color: var(--gray-800);
+  font-size: 11px;
+}
+.binding-portrait-panel > header small {
+  overflow: hidden;
+  color: var(--gray-450);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.binding-portrait-panel > header em {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--main-color) 9%, var(--gray-0));
+  color: var(--main-color);
+  font-size: 9px;
+  font-style: normal;
+}
+.binding-portrait-list {
+  display: grid;
+  overflow-y: auto;
+  max-height: min(430px, 55vh);
+  gap: 6px;
+  padding: 3px;
+}
+.binding-portrait-list article {
+  padding: 8px 10px;
+  border: 1px solid var(--gray-100);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--gray-25) 72%, var(--gray-0));
+}
+.binding-portrait-list article > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.binding-portrait-list article > header > b {
+  color: var(--gray-800);
+  font-size: 10px;
+}
+.binding-portrait-list article > header > button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--main-color) 9%, var(--gray-0));
+  color: var(--main-color);
+  cursor: pointer;
+  font-size: 9px;
+}
+.binding-portrait-list article > header > button:hover {
+  background: color-mix(in srgb, var(--main-color) 15%, var(--gray-0));
+}
+.binding-portrait-list article > header > button:disabled {
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+.binding-portrait-list article > p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: var(--gray-550, var(--gray-600));
+  font-size: 9px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.binding-portrait-list article.empty {
+  border-style: dashed;
+  background: transparent;
+}
+.binding-portrait-list article.empty > p { color: var(--gray-400); }
+.binding-tree-state {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--gray-450);
+  font-size: 10px;
+}
+.binding-tree-state.empty { min-height: 82px; }
+.binding-tree-state.error { color: var(--color-error-600, #c2413a); }
+.binding-tree-state button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.conversation-launch-input {
+  padding: 14px 20px 12px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+}
+.conversation-launch-input:hover,
+.conversation-launch-input:focus {
+  border: 0;
+  box-shadow: none;
+}
+.conversation-launch-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  border-top: 1px solid var(--gray-100);
+  background: color-mix(in srgb, var(--gray-25) 70%, var(--gray-0));
+}
+.conversation-inline-config {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.conversation-agent-picker,
+.conversation-model-picker {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px;
+  border: 1px solid var(--gray-150);
+  border-radius: 9px;
+  background: var(--gray-0);
+  color: var(--gray-550, var(--gray-600));
+}
+.conversation-agent-picker { cursor: pointer; }
+.conversation-agent-picker :deep(.ant-select) {
+  width: 132px;
+  font-size: 11px;
+}
+.conversation-agent-picker :deep(.ant-select-selector) {
+  padding-inline: 3px !important;
+  box-shadow: none !important;
+}
+.conversation-agent-picker :deep(.ant-select-selection-item),
+.conversation-agent-picker :deep(.ant-select-selection-placeholder) {
+  color: var(--gray-700);
+  font-size: 11px;
+}
+.conversation-model-picker { max-width: 210px; }
+.conversation-model-picker :deep(.config-dropdown-trigger) {
+  max-width: 170px;
+  height: 30px;
+  padding-inline: 4px;
+  font-size: 11px;
+}
+.conversation-tool-button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--gray-150);
+  border-radius: 9px;
+  background: var(--gray-0);
+  color: var(--gray-650, var(--gray-700));
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.conversation-tool-button:hover {
+  border-color: var(--main-200);
+  color: var(--main-color);
+}
+.conversation-start-button { margin-left: auto; }
+.conversation-launch-composer > .launch-error { margin: 0 12px 10px; }
+.conversation-launch-footnote {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 12px;
+  color: var(--gray-400);
+  font-size: 10px;
+}
+.conversation-launch-footnote small { font-size: inherit; }
+.conversation-research-settings {
+  display: grid;
+  width: min(340px, 72vw);
+  gap: 10px;
+}
+.conversation-research-settings :deep(.ant-form-item) { margin-bottom: 0; }
+.conversation-research-settings > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--gray-700);
+  font-size: 12px;
+}
+.conversation-research-settings > label > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.launch-options {
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: var(--gray-0);
+  overflow: hidden;
+}
+.launch-options > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 16px 20px;
+  font-weight: 600;
+}
+.launch-options > summary small {
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--gray-600);
+}
+.launch-options[open] > summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.launch-options > .launch-section {
+  border: 0;
+  border-radius: 0;
+}
+.launch-hint {
+  color: var(--gray-600);
+  font-size: 13px;
+  margin: 0;
+}
+
 .deep-research-shell {
   display: flex;
   height: 100vh;
@@ -2849,6 +3377,232 @@ onBeforeUnmount(() => {
   border-color: color-mix(in srgb, var(--main-color) 20%, var(--gray-150));
   box-shadow: 0 10px 28px color-mix(in srgb, var(--main-color) 6%, transparent);
 }
+.quick-equipment-binding {
+  display: grid;
+  gap: 12px;
+  padding: 15px 16px;
+  border: 1px solid color-mix(in srgb, var(--main-color) 26%, var(--gray-150));
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--main-50) 78%, var(--gray-0)), var(--gray-0));
+}
+.quick-equipment-binding > header,
+.quick-binding-scope {
+  display: flex;
+  align-items: center;
+}
+.quick-equipment-binding > header {
+  gap: 10px;
+}
+.quick-binding-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--main-color);
+  color: #fff;
+}
+.quick-equipment-binding > header > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+.quick-equipment-binding > header b {
+  color: var(--gray-850, var(--gray-900));
+  font-size: 13px;
+}
+.quick-equipment-binding > header small,
+.quick-equipment-binding > header em,
+.quick-binding-status,
+.quick-binding-empty {
+  color: var(--gray-500);
+  font-size: 10px;
+  font-style: normal;
+  line-height: 1.45;
+}
+.quick-equipment-binding > header em {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--main-50);
+  color: var(--main-color);
+  white-space: nowrap;
+}
+.quick-binding-path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.quick-binding-path label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--gray-150);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gray-0) 90%, var(--main-50));
+}
+.quick-binding-path label > span,
+.quick-object-type > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-700);
+  font-size: 10px;
+}
+.quick-binding-path i,
+.quick-object-type i {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--main-50);
+  color: var(--main-color);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 750;
+}
+.quick-binding-path :deep(.ant-select) {
+  width: 100%;
+  min-width: 0;
+}
+.quick-object-type {
+  display: grid;
+  grid-template-columns: minmax(118px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--gray-150);
+  border-radius: 10px;
+  background: var(--gray-0);
+}
+.quick-object-type :deep(.ant-radio-group) {
+  display: flex;
+  width: min(360px, 100%);
+}
+.quick-object-type :deep(.ant-radio-button-wrapper) {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+.quick-object-type :deep(.ant-radio-button-wrapper em) {
+  margin-left: 4px;
+  font-size: 9px;
+  font-style: normal;
+  opacity: .72;
+}
+.quick-binding-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+.quick-binding-retry {
+  border: 0;
+  background: transparent;
+  color: var(--main-color);
+  font-size: 10px;
+  cursor: pointer;
+}
+.quick-weapon-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.quick-weapon-list button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 2px 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--gray-150);
+  border-radius: 10px;
+  background: var(--gray-0);
+  color: var(--gray-750);
+  cursor: pointer;
+  text-align: left;
+}
+.quick-weapon-list button > span {
+  display: grid;
+  grid-row: 1 / 3;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--gray-75);
+  color: var(--gray-500);
+}
+.quick-weapon-list button b,
+.quick-weapon-list button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.quick-weapon-list button b { font-size: 11px; }
+.quick-weapon-list button small { color: var(--gray-500); font-size: 9px; }
+.quick-weapon-list button:hover,
+.quick-weapon-list button.selected {
+  border-color: var(--main-300);
+  background: var(--main-50);
+  color: var(--main-color);
+}
+.quick-weapon-list button.selected > span {
+  background: var(--main-color);
+  color: #fff;
+}
+.quick-binding-empty {
+  padding: 9px 11px;
+  border: 1px dashed var(--gray-200);
+  border-radius: 9px;
+  background: var(--gray-25);
+}
+.quick-binding-scope {
+  justify-content: flex-end;
+  gap: 9px;
+}
+.quick-binding-scope > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gray-600);
+  font-size: 10px;
+}
+.quick-binding-scope :deep(.ant-select) { width: min(260px, 52%); }
+.quick-binding-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--main-color) 24%, var(--gray-150));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--main-50) 72%, var(--gray-0));
+  color: var(--main-color);
+}
+.quick-binding-summary > span {
+  display: grid;
+  gap: 1px;
+}
+.quick-binding-summary small {
+  color: var(--gray-500);
+  font-size: 9px;
+}
+.quick-binding-summary b {
+  color: var(--gray-750);
+  font-size: 10px;
+}
+.quick-reference-preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 10px;
+  line-height: 1.55;
+}
 .launch-section-head {
   display: flex;
   min-height: 58px;
@@ -3508,6 +4262,32 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
 }
+.technology-cabin-sources {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.technology-cabin-sources > span {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--main-color) 15%, var(--gray-150));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--main-50) 48%, var(--gray-0));
+  color: var(--main-color);
+}
+.technology-cabin-sources b { font-size: 9px; white-space: nowrap; }
+.technology-cabin-sources small {
+  overflow: hidden;
+  color: var(--gray-500);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .technology-cabin-heading {
   gap: 9px;
 }
@@ -4153,6 +4933,25 @@ onBeforeUnmount(() => {
 :global(html.dark) .technology-cabin-actions button > span {
   background: #2b3345;
 }
+:global(html.dark) .conversation-launch-composer,
+:global(html.dark) .conversation-tool-button,
+:global(html.dark) .conversation-binding-trigger,
+:global(html.dark) .conversation-agent-picker,
+:global(html.dark) .conversation-model-picker {
+  border-color: #3b4559 !important;
+  background: #1c2333 !important;
+  color: #d8deeb;
+}
+:global(html.dark) .conversation-binding-trigger b,
+:global(html.dark) .binding-query-row b,
+:global(html.dark) .binding-equipment-node b { color: #d8deeb; }
+:global(html.dark) .binding-query-node.selected { background: #202838; }
+:global(html.dark) .binding-equipment-panel { border-color: #343a47; }
+:global(html.dark) .binding-equipment-list { background: #171e2c; }
+:global(html.dark) .conversation-launch-tools {
+  border-color: #343a47;
+  background: #171e2c;
+}
 
 @media (max-width: 960px) {
   .deep-research-shell {
@@ -4219,6 +5018,40 @@ onBeforeUnmount(() => {
   }
 }
 @media (max-width: 820px) {
+  .conversation-launch-workspace {
+    width: calc(100% - 24px);
+    padding-top: 22px;
+  }
+  .conversation-launch-intro {
+    margin-bottom: 16px;
+  }
+  .conversation-launch-intro > span {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 9px;
+  }
+  .conversation-launch-intro h1 { font-size: 23px; }
+  .conversation-launch-intro p {
+    margin-top: 5px;
+    font-size: 12px;
+  }
+  .conversation-launch-tools {
+    flex-wrap: wrap;
+  }
+  .conversation-inline-config { width: 100%; }
+  .conversation-agent-picker,
+  .conversation-model-picker { flex: 1; }
+  .conversation-agent-picker :deep(.ant-select) { width: 100%; }
+  .conversation-binding-trigger { width: 100%; }
+  .conversation-start-button {
+    width: 100%;
+    margin-left: 0;
+  }
+  .conversation-launch-footnote {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
   .research-summary {
     gap: 8px;
   }
@@ -4278,6 +5111,19 @@ onBeforeUnmount(() => {
   .launch-footer :deep(.ant-btn) {
     width: 100%;
   }
+  .quick-weapon-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .quick-binding-path {
+    grid-template-columns: 1fr;
+  }
+  .quick-object-type {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .quick-object-type :deep(.ant-radio-group) {
+    width: 100%;
+  }
   .binding-type-field {
     align-items: stretch;
     flex-direction: column;
@@ -4300,6 +5146,13 @@ onBeforeUnmount(() => {
     gap: 1px;
   }
 }
+@media (max-width: 520px) {
+  .conversation-query-select,
+  .conversation-equipment-select {
+    width: 100%;
+  }
+  .conversation-tool-button { min-height: 34px; }
+}
 @media (max-width: 560px) {
   .technology-cabin-panel {
     grid-template-columns: 1fr;
@@ -4314,6 +5167,19 @@ onBeforeUnmount(() => {
     grid-column: auto;
     overflow-x: auto;
     padding-bottom: 2px;
+  }
+  .technology-cabin-sources {
+    grid-template-columns: 1fr;
+  }
+  .quick-weapon-list {
+    grid-template-columns: 1fr;
+  }
+  .quick-binding-scope {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .quick-binding-scope :deep(.ant-select) {
+    width: 100%;
   }
   .technology-cabin-actions button {
     min-width: 116px;
@@ -4340,6 +5206,22 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 720px) {
+  .conversation-binding-tree.has-equipment,
+  .conversation-binding-tree.has-portrait { width: min(440px, 88vw); }
+  .conversation-binding-tree.has-equipment .binding-tree-workspace,
+  .conversation-binding-tree.has-portrait .binding-tree-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .binding-equipment-panel,
+  .binding-portrait-panel {
+    margin: 10px 0 0;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--gray-150);
+    border-left: 0;
+  }
+  .binding-query-list,
+  .binding-equipment-list,
+  .binding-portrait-list { max-height: min(260px, 32vh); }
   .deep-sidebar,
   .deep-sidebar.collapsed {
     height: 80px;

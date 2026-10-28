@@ -14,7 +14,8 @@ import re
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 from urllib.parse import urlsplit, urlunsplit
 
 import yaml
@@ -34,7 +35,7 @@ LEGACY_PROFILE_ALIASES = {
     # Queen (Qwen).
     "codex-kimi": "codex-queen",
     "kimi": "codex-queen",
-} 
+}
 
 
 def normalize_profile_id(profile_id: str | None) -> str:
@@ -159,11 +160,7 @@ def credential_env_name(profile: Mapping[str, Any]) -> str:
             if provider == "codex_deepseek"
             else "EQUIPMENT_DR_CODEX_API_KEY_ENV"
         )
-        default_declared = (
-            "DEEPSEEK_API_KEY"
-            if provider == "codex_deepseek"
-            else "EQUIPMENT_DR_CODEX_API_KEY"
-        )
+        default_declared = "DEEPSEEK_API_KEY" if provider == "codex_deepseek" else "EQUIPMENT_DR_CODEX_API_KEY"
         alias = os.environ.get(alias_name, "").strip()
         if alias and (not declared or declared == default_declared):
             return alias
@@ -236,6 +233,7 @@ def public_profile(profile_id: str, profile: Mapping[str, Any]) -> dict[str, Any
 
 def public_profiles(path: str | Path | None = None) -> dict[str, Any]:
     from equipment_deep_research.providers.platform_access import platform_model_profiles
+
     managed = platform_model_profiles()
     if managed is not None:
         return managed
@@ -352,7 +350,9 @@ def profile_execution(profile_id: str, path: str | Path | None = None) -> dict[s
     }
 
 
-def activate_profile(profile_id: str, *, path: str | Path | None = None, env_file: str | Path | None = None) -> dict[str, Any]:
+def activate_profile(
+    profile_id: str, *, path: str | Path | None = None, env_file: str | Path | None = None
+) -> dict[str, Any]:
     """Persist only the selected profile id in a controlled local env file."""
 
     selected, profile = get_profile(profile_id, path)
@@ -456,9 +456,7 @@ def doctor_profile(profile_id: str, path: str | Path | None = None) -> dict[str,
         result["errors"].append(f"missing environment credential: {key_env or '(unset)'}")
         return result
     if not model:
-        result["errors"].append(
-            f"model id is not configured ({model_env or 'model_env'} in .env)"
-        )
+        result["errors"].append(f"model id is not configured ({model_env or 'model_env'} in .env)")
         return result
     headers = {"Authorization": f"Bearer {os.environ.get(key_env, '').strip()}"}
     models_url = _models_url(endpoint)

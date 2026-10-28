@@ -106,10 +106,18 @@ def parse_image(file, params=None):
 
 
 async def parse_pdf_async(file, params=None):
+    if (params or {}).get("ocr_engine") == "rapid_ocr":
+        from platform_core.knowledge.parser.local_ocr_pool import process_local_document
+
+        return await process_local_document(file, params)
     return await asyncio.to_thread(parse_pdf, file, params=params)
 
 
 async def parse_image_async(file, params=None):
+    if (params or {}).get("ocr_engine") == "rapid_ocr":
+        from platform_core.knowledge.parser.local_ocr_pool import process_local_document
+
+        return await process_local_document(file, params)
     return await asyncio.to_thread(parse_image, file, params=params)
 
 
@@ -139,6 +147,7 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
 
             async with aiofiles.open(temp_path, "wb") as f:
                 await f.write(file_content)
+            del file_content
 
             logger.debug(f"File downloaded to temp path: {temp_path}")
             actual_file_path = temp_path
@@ -157,7 +166,7 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
         file_ext = file_path_obj.suffix.lower()
 
         if file_ext == ".pdf":
-            validate_pdf_page_tree_loadable(file_path_obj)
+            await asyncio.to_thread(validate_pdf_page_tree_loadable, file_path_obj)
             result = await parse_pdf_async(str(file_path_obj), params=params)
 
         elif file_ext in [".txt", ".md"]:

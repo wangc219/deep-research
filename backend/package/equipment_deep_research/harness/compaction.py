@@ -40,7 +40,9 @@ class ContextCompactor:
             sections[name] = compacted
         # Deterministically drop tail items only after their identifiers were retained.
         while estimate_tokens(sections) > token_budget:
-            candidates = [(name, value) for name, value in sections.items() if isinstance(value, list) and len(value) > 1]
+            candidates = [
+                (name, value) for name, value in sections.items() if isinstance(value, list) and len(value) > 1
+            ]
             if not candidates:
                 break
             name, value = max(candidates, key=lambda pair: (len(pair[1]), pair[0]))

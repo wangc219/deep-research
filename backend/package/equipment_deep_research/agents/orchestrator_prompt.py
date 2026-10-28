@@ -29,8 +29,7 @@ skills、tools、输入输出契约与 handoff 约束，以最接近的 A-H 作�
 
 
 REFERENCE_FOCUS_CATALOG = "\n".join(
-    f"{code}参考任务核：{item['task_kernel']}"
-    for code, item in BRANCH_REFERENCE_FOCUS.items()
+    f"{code}参考任务核：{item['task_kernel']}" for code, item in BRANCH_REFERENCE_FOCUS.items()
 )
 
 REFERENCE_DEDUP_POLICY = "\n".join(f"- {rule}" for rule in REFERENCE_DEDUP_RULES)
@@ -179,12 +178,8 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
         "constraints_and_assumptions": ["最多5个约束或待验证假设"],
         "combat_problem_frame": "基于完整Query语义推演的任务对象、对手、阶段和核心作战矛盾",
         "enemy_target_profile": ["敌方目标/威胁、行为、防护和反制特征"],
-        "battle_phase_and_constraints": [
-            "真实作战阶段、地域/距离、链路/环境和交战约束"
-        ],
-        "required_direct_military_effects": [
-            "由当前Query推导的直接战场效果；不得受系统Prompt中的效果词限制"
-        ],
+        "battle_phase_and_constraints": ["真实作战阶段、地域/距离、链路/环境和交战约束"],
+        "required_direct_military_effects": ["由当前Query推导的直接战场效果；不得受系统Prompt中的效果词限制"],
         "equipment_semantic_boundary": "后续哪些效果必须由具体战斗装备本体承担，哪些能力只能作为接口、保障或证据边界",
         "query_equipment_mode": "direct_combat|mission_equipment；由模型依据完整Query判断，默认direct_combat",
         "winning_problem_propositions": [
@@ -198,9 +193,7 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
                 "exclusion_and_falsification_boundary": "与相邻命题的排他边界及何时不成立",
             }
         ],
-        "rejected_template_anchors": [
-            "与当前Query无直接因果关系、不得默认生成的常见装备模板"
-        ],
+        "rejected_template_anchors": ["与当前Query无直接因果关系、不得默认生成的常见装备模板"],
         "handoff_rule": "说明假设需验证且不得视为事实",
     },
     "meta_triggers": ["触发L4复核的可观察条件"],
@@ -307,8 +300,7 @@ def orchestrator_system_prompt(phase: str) -> str:
         return BLUEPRINT_FAST_PROMPT
     instruction = PHASE_INSTRUCTIONS.get(phase, "")
     return (
-        f"{ORCHESTRATOR_BASE_PROMPT}\n\n当前阶段：{phase}\n{instruction}\n"
-        "只输出严格 JSON，不要使用 Markdown 代码围栏。"
+        f"{ORCHESTRATOR_BASE_PROMPT}\n\n当前阶段：{phase}\n{instruction}\n只输出严格 JSON，不要使用 Markdown 代码围栏。"
     ).strip()
 
 

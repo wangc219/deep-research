@@ -63,4 +63,9 @@ router.include_router(workspace_knowledge)  # /api/workspace/knowledge/* 工作�
 router.include_router(equipment)  # /api/equipment/* 装备研究、Query、能力画像与深度思考
 
 from server.routers.enterprise_router import enterprise
+
 router.include_router(enterprise)
+
+from server.routers.wechat_mp_router import router as wechat_mp
+
+router.include_router(wechat_mp)

@@ -9,10 +9,15 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/connection-error',
+      name: 'ConnectionRecovery',
+      component: () => import('../views/ConnectionRecoveryView.vue'),
+      meta: { public: true }
+    },
+    {
       path: '/document-research',
       name: 'DocumentResearch',
-      component: () => import('../views/DocumentResearchView.vue'),
-      meta: { public: true, requiresAuth: false }
+      redirect: { path: '/extensions', query: { tool: 'document-research' } }
     },
     {
       path: '/',
@@ -247,8 +252,6 @@ const router = createRouter({
 
 // 全局前置守卫
 router.beforeEach(async (to) => {
-  // 文档解析入口使用独立令牌；不读取或刷新平台会话。
-  if (to.name === 'DocumentResearch') return true
   // 检查路由是否需要认证
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth === true)
   const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
@@ -257,13 +260,16 @@ router.beforeEach(async (to) => {
   const userStore = useUserStore()
 
   // 如果有 token 但用户信息未加载，先获取用户信息
-  if (userStore.token && !userStore.userId) {
+  if (userStore.token && !userStore.userId && to.name !== 'ConnectionRecovery') {
     try {
       await userStore.getCurrentUser()
     } catch (error) {
-      // 如果获取用户信息失败（如 token 过期），清除 token
       console.error('获取用户信息失败:', error)
-      userStore.logout()
+      if ((error.status || error.response?.status) === 401) {
+        userStore.logout()
+      } else {
+        return { name: 'ConnectionRecovery', query: { redirect: to.fullPath } }
+      }
     }
   }
 

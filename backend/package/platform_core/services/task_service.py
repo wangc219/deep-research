@@ -34,7 +34,16 @@ TERMINAL_STATUSES = TERMINAL_TASK_STATUSES
 PROGRESS_PERSIST_DELTA = 2.0
 TASKER_DEFAULT_TIMEOUT_SECONDS = float(os.getenv("TASKER_DEFAULT_TIMEOUT_SECONDS", 6 * 60 * 60))
 DURABLE_TASK_MAX_RUNNING = get_int_env("DURABLE_TASK_MAX_RUNNING", 4)
+EQUIPMENT_TASK_LEASE_SECONDS = float(
+    get_int_env(
+        "EQUIPMENT_TASK_LEASE_SECONDS",
+        10 * 60,
+        minimum=int(TASK_LEASE_SECONDS),
+    )
+)
 EQUIPMENT_TASK_CAPACITIES = {
+    "wxchannels_transcribe": 1,
+    "wxchannels_central_discover": 1,
     EQUIPMENT_RESEARCH_TASK_TYPE: EQUIPMENT_RESEARCH_MAX_RUNNING,
     EQUIPMENT_QUERY_TASK_TYPE: EQUIPMENT_QUERY_MAX_RUNNING,
     EQUIPMENT_DEEP_TASK_TYPE: EQUIPMENT_DEEP_MAX_RUNNING,
@@ -51,14 +60,36 @@ async def resolve_task_capacity(task_type: str) -> int:
     """读取任务类型的实时容量；研究槽位支持通过系统设置热更新。"""
 
     fallback = EQUIPMENT_TASK_CAPACITIES.get(task_type, DURABLE_TASK_MAX_RUNNING)
+    from platform_core.services.resource_budget import read_budget
+
+    budget = read_budget()
     if task_type != EQUIPMENT_RESEARCH_TASK_TYPE:
+        if budget is not None:
+            if task_type == 'wxchannels_transcribe' and budget.get('memory_pressure'):
+                return 0
+            if task_type not in EQUIPMENT_TASK_CAPACITIES:
+                return min(fallback, int(budget['bulk_slots']))
         return fallback
     try:
         configured = int((await system_options.get()).get("equipment_research_max_running") or fallback)
     except Exception:  # noqa: BLE001 - 配置中心异常时继续使用安全启动值
         logger.warning("Failed to resolve live equipment research capacity; using startup fallback", exc_info=True)
-        return fallback
-    return min(max(configured, 1), EQUIPMENT_RESEARCH_CAPACITY_LIMIT)
+        configured = fallback
+    configured = min(max(configured, 1), EQUIPMENT_RESEARCH_CAPACITY_LIMIT)
+    return min(configured, int(budget['research_slots'])) if budget is not None else configured
+
+
+def resolve_task_lease_seconds(task_type: str) -> float:
+    """Give long-running model tasks enough lease headroom for one blocking call.
+
+    Heartbeats still renew every ten seconds.  The larger lease is a safety
+    margin for provider calls that temporarily hold the worker event loop;
+    ordinary short durable tasks keep the fast 30-second orphan recovery.
+    """
+
+    if task_type in EQUIPMENT_TASK_CAPACITIES:
+        return EQUIPMENT_TASK_LEASE_SECONDS
+    return TASK_LEASE_SECONDS
 
 
 @dataclass
@@ -96,7 +127,14 @@ class Task:
 class TaskContext:
     """向领域 Handler 提供受当前 attempt lease 保护的进度与取消边界。"""
 
-    def __init__(self, task_id: str, worker_id: str, payload: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        task_id: str,
+        worker_id: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        lease_seconds: float = TASK_LEASE_SECONDS,
+    ):
         self.task_id = task_id
         self.worker_id = worker_id
         self.payload = payload or {}
@@ -104,6 +142,7 @@ class TaskContext:
         self._cancel_requested = False
         self._last_persisted_progress: float | None = None
         self._last_persisted_message: str | None = None
+        self.lease_seconds = float(lease_seconds)
         self._repo = TaskRepository()
 
     async def set_progress(self, progress: float, message: str | None = None) -> None:
@@ -273,11 +312,14 @@ class Tasker:
         )
         return Task.from_dict(record.to_dict()) if record else None
 
-    async def list_tasks(self, status: str | None = None, limit: int = 100) -> dict[str, Any]:
-        records = await self._repo.list(status=status, limit=limit)
+    async def list_tasks(
+        self, status: str | None = None, limit: int = 100, *, operator_id: str | None = None
+    ) -> dict[str, Any]:
+        filters = {"operator_id": operator_id} if operator_id is not None else {}
+        records = await self._repo.list(status=status, limit=limit, **filters)
         return {
             "tasks": [record.to_summary_dict() for record in records],
-            "summary": await self._repo.summarize(status=status),
+            "summary": await self._repo.summarize(status=status, **filters),
         }
 
     async def get_task(self, task_id: str) -> dict[str, Any] | None:
@@ -397,7 +439,7 @@ async def _heartbeat_task(context: TaskContext, execution: asyncio.Task[Any]) ->
             renewed, cancel_requested = await repo.renew_lease(
                 context.task_id,
                 worker_id=context.worker_id,
-                lease_seconds=TASK_LEASE_SECONDS,
+                lease_seconds=context.lease_seconds,
             )
         except asyncio.CancelledError:
             raise
@@ -468,17 +510,18 @@ async def process_task(ctx: dict[str, Any], task_id: str) -> None:
     owner = f"{process_identity}:{uuid.uuid4().hex}"
     task_type = str(record.type or "")
     task_capacity = await resolve_task_capacity(task_type)
+    if task_capacity <= 0:
+        return
+    task_lease_seconds = resolve_task_lease_seconds(task_type)
     uses_independent_capacity = task_type in EQUIPMENT_TASK_CAPACITIES
     record, claimed = await repo.claim(
         task_id,
         worker_id=owner,
-        lease_seconds=TASK_LEASE_SECONDS,
+        lease_seconds=task_lease_seconds,
         max_running=task_capacity,
         type_filter=task_type if uses_independent_capacity else None,
         exclude_type=None if uses_independent_capacity else "equipment_",
-        lock_scope=(
-            f"durable-task-capacity:{task_type}" if uses_independent_capacity else "durable-task-capacity"
-        ),
+        lock_scope=(f"durable-task-capacity:{task_type}" if uses_independent_capacity else "durable-task-capacity"),
     )
     if not claimed or record is None:
         return
@@ -501,7 +544,12 @@ async def process_task(ctx: dict[str, Any], task_id: str) -> None:
         await _publish_pending_after_slot_release()
         return
 
-    context = TaskContext(task_id, owner, record.payload or {})
+    context = TaskContext(
+        task_id,
+        owner,
+        record.payload or {},
+        lease_seconds=task_lease_seconds,
+    )
     execution = asyncio.create_task(handler(context), name=f"durable-task:{task_id}")
     heartbeat = asyncio.create_task(_heartbeat_task(context, execution), name=f"durable-task-heartbeat:{task_id}")
     try:

@@ -31,32 +31,115 @@ _MATERIALIZED_SOURCE_STATUSES = frozenset(
 # meaningful change from the baseline.  Missing a registry tag or a numeric
 # confidence threshold is therefore only a diagnostic.
 _MILITARY_CONTEXT_MARKERS = (
-    "作战", "战场", "对手", "敌", "交战", "打击", "毁伤", "火力", "侦察",
-    "预警", "防御", "防空", "反制", "拒止", "突防", "兵力", "任务链", "战术",
-    "战役", "战区", "编队", "目标", "生存", "抗毁", "持续作战", "作战阶段",
+    "作战",
+    "战场",
+    "对手",
+    "敌",
+    "交战",
+    "打击",
+    "毁伤",
+    "火力",
+    "侦察",
+    "预警",
+    "防御",
+    "防空",
+    "反制",
+    "拒止",
+    "突防",
+    "兵力",
+    "任务链",
+    "战术",
+    "战役",
+    "战区",
+    "编队",
+    "目标",
+    "生存",
+    "抗毁",
+    "持续作战",
+    "作战阶段",
 )
 _GENERIC_FILL_MARKERS = (
-    "待智能体", "待模型", "待确认", "尚待", "未知", "暂无", "由智能体依据",
-    "提升能力", "增强能力", "形成能力", "创新性待", "前瞻判断待",
+    "待智能体",
+    "待模型",
+    "待确认",
+    "尚待",
+    "未知",
+    "暂无",
+    "由智能体依据",
+    "提升能力",
+    "增强能力",
+    "形成能力",
+    "创新性待",
+    "前瞻判断待",
 )
-_GENERIC_INNOVATION_TERMS = frozenset(
-    {"智能化", "数字化", "网络化", "体系化", "分布式", "模块化", "增强型", "自主化"}
-)
+_GENERIC_INNOVATION_TERMS = frozenset({"智能化", "数字化", "网络化", "体系化", "分布式", "模块化", "增强型", "自主化"})
 _DISRUPTION_MARKERS = (
-    "重构", "改变对抗", "改变交战", "改变任务链", "跨代", "范式", "非对称",
-    "时间交换", "空间交换", "成本交换", "数量交换", "平台依赖", "交战几何",
-    "低成本", "规模化", "蜂群", "无人集群", "拒止", "抗毁", "饱和", "自主协同",
-    "任务链重构", "体系协同", "替代平台", "分布式协同", "转向", "交换关系", "断链", "持续消耗", "迫使",
+    "重构",
+    "改变对抗",
+    "改变交战",
+    "改变任务链",
+    "跨代",
+    "范式",
+    "非对称",
+    "时间交换",
+    "空间交换",
+    "成本交换",
+    "数量交换",
+    "平台依赖",
+    "交战几何",
+    "低成本",
+    "规模化",
+    "蜂群",
+    "无人集群",
+    "拒止",
+    "抗毁",
+    "饱和",
+    "自主协同",
+    "任务链重构",
+    "体系协同",
+    "替代平台",
+    "分布式协同",
+    "转向",
+    "交换关系",
+    "断链",
+    "持续消耗",
+    "迫使",
 )
 _NON_EQUIPMENT_EXACT = frozenset(
     {"流程", "机制", "方法", "算法", "模型", "架构", "体系能力", "平台能力", "作战概念", "保障节点"}
 )
 _NON_EQUIPMENT_MARKERS = ("流程", "算法", "模型", "架构", "概念", "机制")
 _EQUIPMENT_MARKERS = (
-    "系统", "平台", "装置", "终端", "雷达", "导弹", "无人机", "舰", "机", "车", "炮", "弹", "载荷", "机器人"
+    "系统",
+    "平台",
+    "装置",
+    "终端",
+    "雷达",
+    "导弹",
+    "无人机",
+    "舰",
+    "机",
+    "车",
+    "炮",
+    "弹",
+    "载荷",
+    "机器人",
 )
 _CAUSAL_MARKERS = (
-    "导致", "因此", "通过", "从而", "使", "闭合", "断点", "任务链", "转向", "恢复", "维持", "避免", "降低", "实现"
+    "导致",
+    "因此",
+    "通过",
+    "从而",
+    "使",
+    "闭合",
+    "断点",
+    "任务链",
+    "转向",
+    "恢复",
+    "维持",
+    "避免",
+    "降低",
+    "实现",
 )
 _EXACT_PERFORMANCE_CLAIM = re.compile(
     r"(?:\d+(?:\.\d+)?\s*(?:%|％|百分比|公里|千米|米|秒|分钟|小时)|"
@@ -68,9 +151,7 @@ def _audit_text(value: Any) -> str:
     """Flatten a card field for semantic checks without exposing internals."""
 
     if isinstance(value, Mapping):
-        return "；".join(
-            f"{key}:{_audit_text(item)}" for key, item in value.items() if str(item).strip()
-        )
+        return "；".join(f"{key}:{_audit_text(item)}" for key, item in value.items() if str(item).strip())
     if isinstance(value, (list, tuple, set)):
         return "；".join(_audit_text(item) for item in value if str(item).strip())
     return str(value or "").strip()
@@ -93,9 +174,7 @@ def _card_substantive_checks(image: CapabilityImageItem, *, route: str) -> dict[
     """
 
     scenario = _audit_text(image.target_scenario or image.related_scenario)
-    military_effect = _audit_text(
-        image.military_utility or image.mission_effect or image.capability_outcome
-    )
+    military_effect = _audit_text(image.military_utility or image.mission_effect or image.capability_outcome)
     military_relevance = bool(
         _meaningful_text(scenario, minimum=4)
         and _meaningful_text(military_effect, minimum=8)
@@ -108,33 +187,23 @@ def _card_substantive_checks(image: CapabilityImageItem, *, route: str) -> dict[
 
     problem = _audit_text(image.problem_statement or image.capability_gap)
     gap = _audit_text(image.capability_gap or image.project_function)
-    mechanism = _audit_text(
-        image.winning_mechanism or image.operational_mechanism
-    )
+    mechanism = _audit_text(image.winning_mechanism or image.operational_mechanism)
     outcome = _audit_text(image.capability_outcome or image.mission_effect or image.military_utility)
     causal_coherence = bool(
         _meaningful_text(problem)
         and _meaningful_text(gap)
         and _meaningful_text(mechanism)
         and _meaningful_text(outcome)
-        and any(
-            marker in "；".join((problem, gap, mechanism, outcome))
-            for marker in _CAUSAL_MARKERS
-        )
+        and any(marker in "；".join((problem, gap, mechanism, outcome)) for marker in _CAUSAL_MARKERS)
     )
 
-    identity = _audit_text(
-        image.primary_equipment_identity or image.equipment_form or image.equipment_category
-    )
+    identity = _audit_text(image.primary_equipment_identity or image.equipment_form or image.equipment_category)
     category = _audit_text(image.equipment_category)
     concrete_equipment = bool(
         _meaningful_text(identity, minimum=2)
         and identity not in _NON_EQUIPMENT_EXACT
         and not identity.endswith("能力")
-        and (
-            any(marker in identity for marker in _EQUIPMENT_MARKERS)
-            or _meaningful_text(category, minimum=6)
-        )
+        and (any(marker in identity for marker in _EQUIPMENT_MARKERS) or _meaningful_text(category, minimum=6))
         and not (
             any(marker in identity for marker in _NON_EQUIPMENT_MARKERS)
             and not any(marker in identity for marker in _EQUIPMENT_MARKERS)
@@ -142,23 +211,15 @@ def _card_substantive_checks(image: CapabilityImageItem, *, route: str) -> dict[
     )
 
     novelty = _audit_text(image.novelty or image.winning_mechanism)
-    comparison = _audit_text(
-        image.baseline_system or image.upgrade_boundary or image.combat_effect_uplift
-    )
+    comparison = _audit_text(image.baseline_system or image.upgrade_boundary or image.combat_effect_uplift)
     innovation_new_quality = bool(
         _meaningful_text(novelty, minimum=12)
         and (
             len(novelty) >= 22
             or any(marker in novelty for marker in _DISRUPTION_MARKERS)
-            or (
-                image.capability_type == "upgrade"
-                and _meaningful_text(comparison, minimum=10)
-            )
+            or (image.capability_type == "upgrade" and _meaningful_text(comparison, minimum=10))
         )
-        and not (
-            len(novelty) <= 12
-            and any(term in novelty for term in _GENERIC_INNOVATION_TERMS)
-        )
+        and not (len(novelty) <= 12 and any(term in novelty for term in _GENERIC_INNOVATION_TERMS))
     )
 
     route_text = " ".join(
@@ -234,16 +295,12 @@ def _substantive_audit(
     # S-chain but no persisted S6 card yet.  Keep this path compatible while
     # making the absence visible to the caller; a run with no stages at all is
     # still a real hard blocker below.
-    evidence_refs = [
-        ref for stage in stage_outputs for ref in getattr(stage, "evidence_ids", [])
-    ]
-    stage_content = any(
-        _audit_text(getattr(stage, "outputs", {}))
-        for stage in stage_outputs
-    )
-    if stage_outputs and evidence_refs and (
-        all(getattr(stage, "gate_passed", False) for stage in stage_outputs)
-        or stage_content
+    evidence_refs = [ref for stage in stage_outputs for ref in getattr(stage, "evidence_ids", [])]
+    stage_content = any(_audit_text(getattr(stage, "outputs", {})) for stage in stage_outputs)
+    if (
+        stage_outputs
+        and evidence_refs
+        and (all(getattr(stage, "gate_passed", False) for stage in stage_outputs) or stage_content)
     ):
         return (
             {
@@ -273,9 +330,7 @@ def _has_materialized_source(source_materials: list[dict]) -> bool:
     """Return true only when at least one source has usable materialized content."""
 
     return any(
-        str(row.get("status") or row.get("materialization_status") or "")
-        .strip()
-        .lower()
+        str(row.get("status") or row.get("materialization_status") or "").strip().lower()
         in _MATERIALIZED_SOURCE_STATUSES
         for row in source_materials
     )
@@ -304,16 +359,13 @@ def audit_run(
     materialization_ok = True
     if source_materials:
         materialization_ok = _has_materialized_source(source_materials)
-    stage_gates_passed = bool(stage_outputs) and all(
-        stage.gate_passed for stage in stage_outputs
-    )
+    stage_gates_passed = bool(stage_outputs) and all(stage.gate_passed for stage in stage_outputs)
     # Keep historical process booleans as diagnostics only.  They are never
     # combined into an approval/limited result.
     mechanical_diagnostics = {
         "consistency": bool(stage_outputs),
         "stage_gates_passed": stage_gates_passed,
-        "confidence_ge_70": min_confidence >= 0.7
-        or (risk_based_confidence and stage_gates_passed),
+        "confidence_ge_70": min_confidence >= 0.7 or (risk_based_confidence and stage_gates_passed),
         "coverage": bool(coverage.get("coverage_passed")),
         "user_confirmation": analyst_confirmed,
         "round_limit": current_rounds <= max_rounds,
@@ -369,9 +421,7 @@ def audit_run(
             # A complete card is the business result; mechanical retrieval,
             # confidence and publication fields remain diagnostics only.
             status = "approved" if substantive_passed else "limited"
-            hard_blockers = [
-                key for key, passed in substantive_checks.items() if not passed
-            ]
+            hard_blockers = [key for key, passed in substantive_checks.items() if not passed]
         else:
             # Without a persisted card, retain the historical stage-only
             # compatibility semantics.  Failed stage/source/process gates are
@@ -437,10 +487,7 @@ def render_report(
     report_title = str(report_title).strip() or _branch_report_title(topic, artifacts)
     complete_model_report = bool(
         executive_summary.strip()
-        and (
-            prefer_model_report
-            or _looks_like_branch_deep_report(executive_summary, branch_output)
-        )
+        and (prefer_model_report or _looks_like_branch_deep_report(executive_summary, branch_output))
     )
     if complete_model_report:
         model_body = _embedded_model_report_body(executive_summary)
@@ -526,9 +573,7 @@ def _branch_report_title(topic: str, artifacts: Mapping[str, Any]) -> str:
     # the publication title.  Keep this deterministic fallback aligned with
     # the Reporter title-rewrite path so every render surface is consistent.
     normalized_topic = re.split(r"[：:]", normalized_topic, maxsplit=1)[0].strip()
-    normalized_topic = re.sub(r"[（(].*?[）)]", "", normalized_topic).strip(
-        " ，,；;。．"
-    )
+    normalized_topic = re.sub(r"[（(].*?[）)]", "", normalized_topic).strip(" ，,；;。．")
     normalized_topic = re.sub(
         r"(?:只提出|按创新性|按需求性|按科学可行性|按效能性|按发展性|综合评分|只选前\d+|生成入选.*)$",
         "",
@@ -554,11 +599,7 @@ def _compact_executive_summary(
         text = re.sub(r"\[([^\]]+)\]\(https?://[^)]+\)", r"\1", text)
         if not text or text in {"执行摘要", "综合研判摘要", "能力画像研究报告"}:
             continue
-        sentences = [
-            item.strip()
-            for item in re.split(r"(?<=[。！？])", text)
-            if item.strip()
-        ]
+        sentences = [item.strip() for item in re.split(r"(?<=[。！？])", text) if item.strip()]
         rows.append(_compact_text(sentences[0] if sentences else text, 220))
         if len(rows) >= 3 or sum(len(item) for item in rows) >= 800:
             break
@@ -590,11 +631,7 @@ def _embedded_model_report_body(text: str) -> str:
         lines.pop(0)
     normalized = re.sub(
         r"^(#{1,6})\s*([^#\s].*)$",
-        lambda match: (
-            ("##" if len(match.group(1)) == 1 else match.group(1))
-            + " "
-            + match.group(2).strip()
-        ),
+        lambda match: ("##" if len(match.group(1)) == 1 else match.group(1)) + " " + match.group(2).strip(),
         "\n".join(lines).strip(),
         flags=re.MULTILINE,
     )
@@ -607,11 +644,7 @@ def _strategic_judgment_lines(images: list[CapabilityImageItem]) -> list[str]:
         return ["当前尚无满足门控的能力方向，应先补足证据和效果链。", ""]
     rows: list[str] = []
     for image in images[:4]:
-        portrait = (
-            image.deep_capability_portrait
-            or image.capability_image
-            or _primary_capability_statement(image)
-        )
+        portrait = image.deep_capability_portrait or image.capability_image or _primary_capability_statement(image)
         value = (
             image.strike_countermeasure_value
             or image.military_utility
@@ -628,10 +661,7 @@ def _strategic_judgment_lines(images: list[CapabilityImageItem]) -> list[str]:
                 "",
                 portrait,
                 "",
-                (
-                    f"**军事运用价值（{operational_roles}）。** "
-                    f"{_compact_text(value, 180)}"
-                ),
+                (f"**军事运用价值（{operational_roles}）。** {_compact_text(value, 180)}"),
                 "",
                 (
                     f"**适用边界。** "
@@ -694,16 +724,8 @@ def _deterministic_cross_material_lines(
     )[:4]
     contract = branch_output.get("report_contract", {})
     thesis = str(contract.get("thesis", "")) if isinstance(contract, Mapping) else ""
-    military_test = (
-        str(contract.get("military_test", ""))
-        if isinstance(contract, Mapping)
-        else ""
-    )
-    future_test = (
-        str(contract.get("future_test", ""))
-        if isinstance(contract, Mapping)
-        else ""
-    )
+    military_test = str(contract.get("military_test", "")) if isinstance(contract, Mapping) else ""
+    future_test = str(contract.get("future_test", "")) if isinstance(contract, Mapping) else ""
     return [
         "### 主矛盾、效果链断点与制胜判断",
         "",
@@ -818,10 +840,13 @@ def _looks_like_branch_deep_report(
 
 
 def _has_numbered_label(text: str, label: str, index: int) -> bool:
-    return re.search(
-        rf"{re.escape(label)}\s*[（(]?\s*0*{index}\s*[）)]?",
-        text,
-    ) is not None
+    return (
+        re.search(
+            rf"{re.escape(label)}\s*[（(]?\s*0*{index}\s*[）)]?",
+            text,
+        )
+        is not None
+    )
 
 
 def _branch_delivery_index_lines(branch_output: Mapping[str, Any]) -> list[str]:
@@ -896,7 +921,9 @@ def _branch_b_lines(products: Mapping[str, Any]) -> list[str]:
     for card in list(cards)[:8] if isinstance(cards, list) else []:
         if not isinstance(card, Mapping):
             continue
-        military_value = card.get("strike_countermeasure_value") or card.get("military_utility") or card.get("mission_effect")
+        military_value = (
+            card.get("strike_countermeasure_value") or card.get("military_utility") or card.get("mission_effect")
+        )
         indicators = _compact_list(card.get("key_indicators", []), 3, 130)
         scenarios = _compact_list(card.get("supporting_scenarios", []), 1, 100)
         evidence_count = len(list(card.get("evidence_chain", [])))
@@ -1011,7 +1038,9 @@ def _generic_product_items(key: str, value: Any) -> list[str]:
         for card in value[:8]:
             if not isinstance(card, Mapping):
                 continue
-            military_value = card.get("strike_countermeasure_value") or card.get("military_utility") or card.get("mission_effect")
+            military_value = (
+                card.get("strike_countermeasure_value") or card.get("military_utility") or card.get("mission_effect")
+            )
             rows.append(
                 f"{card.get('weapon_equipment', '待发展武器装备')}（{card.get('priority', '待评估')}）："
                 f"{military_value or card.get('deep_capability_portrait', '')}；"
@@ -1029,11 +1058,7 @@ def _capability_portfolio_lines(images: list[CapabilityImageItem]) -> list[str]:
         "|---|---|---|---|",
     ]
     for image in images[:8]:
-        action_prefix = (
-            "优先现役改装"
-            if image.capability_type == "upgrade"
-            else "纳入新研论证"
-        )
+        action_prefix = "优先现役改装" if image.capability_type == "upgrade" else "纳入新研论证"
         lines.append(
             f"| {image.priority} | {_table_text(image.name, 65)} | "
             f"{_table_text(image.equipment_form or image.equipment_category, 60)} | "
@@ -1057,9 +1082,7 @@ def _evolution_path_lines(images: list[CapabilityImageItem]) -> list[str]:
             "近期完成接口、软件或保障模块验证；中期开展体系集成和压力联试；"
             "远期依据成熟度、任务增益和失效边界决定规模部署或转入新研。"
         )
-        lines.append(
-            f"- **{image.name}：** {_compact_text(path, 190)}"
-        )
+        lines.append(f"- **{image.name}：** {_compact_text(path, 190)}")
     if not images:
         lines.append("- 当前缺少可进入演进路径的能力方向，应先补足证据与效果链。")
     lines.append("")
@@ -1121,10 +1144,7 @@ def _evidence_boundary_lines(
         )
     ]
     if public_comments:
-        lines.extend(
-            f"- {_compact_text(_public_report_text(comment), 160)}"
-            for comment in public_comments[:3]
-        )
+        lines.extend(f"- {_compact_text(_public_report_text(comment), 160)}" for comment in public_comments[:3])
     else:
         lines.append("- 后续仍需使用仿真、半实物联试、演训和失效注入校准性能阈值与适用边界。")
     lines.extend(
@@ -1169,12 +1189,15 @@ def _formal_evidence_reference_lines(store: DomainStore) -> list[str]:
             publication_year=publication_year,
             collected_date=collected_date,
         )
-        claim = re.sub(
-            r"^E\s*0*\d+\s*[:：]\s*",
-            "",
-            str(evidence.claim or "").strip(),
-            flags=re.IGNORECASE,
-        ) or "证据卡未登记对应结论，不能作为独立结论依据。"
+        claim = (
+            re.sub(
+                r"^E\s*0*\d+\s*[:：]\s*",
+                "",
+                str(evidence.claim or "").strip(),
+                flags=re.IGNORECASE,
+            )
+            or "证据卡未登记对应结论，不能作为独立结论依据。"
+        )
         excerpt = (
             _compact_text(str(evidence.excerpt).strip(), 260)
             if str(evidence.excerpt or "").strip()
@@ -1208,9 +1231,7 @@ def _formal_evidence_reference_lines(store: DomainStore) -> list[str]:
 def render_formal_evidence_reference(store: DomainStore) -> str:
     """Render the complete human-readable evidence ledger as a sidecar."""
 
-    return _public_report_text(
-        "\n".join(_formal_evidence_reference_lines(store))
-    ).strip() + "\n"
+    return _public_report_text("\n".join(_formal_evidence_reference_lines(store))).strip() + "\n"
 
 
 def _compact_evidence_reference_lines(
@@ -1252,9 +1273,7 @@ def _compact_evidence_reference_lines(
         support_label = "直接/有限直接支撑" if "直接支撑" in support_type else "背景/间接支撑"
         publication_date, _ = _source_publication_date(evidence)
         title = _compact_text(
-            evidence.source_title
-            or urlsplit(evidence.source_url).hostname
-            or "未命名来源",
+            evidence.source_title or urlsplit(evidence.source_url).hostname or "未命名来源",
             90,
         )
         claim = _compact_text(str(evidence.claim or "证据作用待核验"), 120)
@@ -1381,21 +1400,13 @@ def _evidence_time_validity(*, publication_year: int | None, collected_date: str
     collected_year_match = re.match(r"(20\d{2})", collected_date)
     collected_year = int(collected_year_match.group(1)) if collected_year_match else None
     if publication_year is None:
-        return (
-            f"截至 {collected_date}，发布日期未闭环；不得单独支撑当前数量、部署状态或现行政策判断。"
-        )
+        return f"截至 {collected_date}，发布日期未闭环；不得单独支撑当前数量、部署状态或现行政策判断。"
     age = max(0, collected_year - publication_year) if collected_year is not None else 0
     if age >= 4:
-        return (
-            f"截至 {collected_date}，属于历史/基础性材料；可支撑长期机理，不能单独证明当前状态。"
-        )
+        return f"截至 {collected_date}，属于历史/基础性材料；可支撑长期机理，不能单独证明当前状态。"
     if age >= 2:
-        return (
-            f"截至 {collected_date} 可作趋势与背景依据；涉及当前数量、部署或政策状态时需再次核验。"
-        )
-    return (
-        f"截至 {collected_date} 属近期材料；动态数量、部署进度和政策状态仍应在使用时复核。"
-    )
+        return f"截至 {collected_date} 可作趋势与背景依据；涉及当前数量、部署或政策状态时需再次核验。"
+    return f"截至 {collected_date} 属近期材料；动态数量、部署进度和政策状态仍应在使用时复核。"
 
 
 def _public_report_text(value: Any) -> str:
@@ -1513,10 +1524,7 @@ def _indicator_lines(values: list[str]) -> list[str]:
     rows: list[str] = []
     for start in range(0, len(values), 5):
         batch = values[start : start + 5]
-        rendered = "；".join(
-            f"{start + offset + 1}.{_compact_text(value, 70)}"
-            for offset, value in enumerate(batch)
-        )
+        rendered = "；".join(f"{start + offset + 1}.{_compact_text(value, 70)}" for offset, value in enumerate(batch))
         rows.append(f"- {rendered}")
     return rows
 
@@ -1528,10 +1536,7 @@ def _completion_line(completion: Any) -> list[str]:
     for key, row in completion.items():
         if not isinstance(row, Mapping):
             continue
-        values.append(
-            f"{key} {row.get('actual', 0)}/{row.get('target', 0)}"
-            f"（{'满足' if row.get('met') else '不足'}）"
-        )
+        values.append(f"{key} {row.get('actual', 0)}/{row.get('target', 0)}（{'满足' if row.get('met') else '不足'}）")
     return [f"**交付门槛：** {'；'.join(values)}。", ""] if values else []
 
 
@@ -1589,11 +1594,13 @@ def _image_lines(image: CapabilityImageItem, store: DomainStore) -> list[str]:
     rows.extend(_list_section("任务效果", [image.mission_effect] if image.mission_effect else []))
     rows.extend(_list_section("体系依赖与接口", image.system_dependencies))
     rows.extend(_list_section("风险边界", image.risk_boundaries))
-    rows.extend([
-        "#### 证据追溯",
-        f"- 关联证据：{len(image.evidence_ids)} 项（{', '.join(image.evidence_ids[:8])}{' 等' if len(image.evidence_ids) > 8 else ''}）",
-        "",
-    ])
+    rows.extend(
+        [
+            "#### 证据追溯",
+            f"- 关联证据：{len(image.evidence_ids)} 项（{', '.join(image.evidence_ids[:8])}{' 等' if len(image.evidence_ids) > 8 else ''}）",
+            "",
+        ]
+    )
     return rows
 
 
@@ -1621,31 +1628,16 @@ def _integrated_capability_argument(
     image: CapabilityImageItem,
     store: DomainStore,
 ) -> list[str]:
-    evidence = [
-        store.evidence[evidence_id]
-        for evidence_id in image.evidence_ids
-        if evidence_id in store.evidence
-    ]
+    evidence = [store.evidence[evidence_id] for evidence_id in image.evidence_ids if evidence_id in store.evidence]
     source_families = sorted(
-        {
-            (item.source_url.split("/", 3)[2] if "://" in item.source_url else item.source_title)
-            for item in evidence
-        }
+        {(item.source_url.split("/", 3)[2] if "://" in item.source_url else item.source_title) for item in evidence}
     )
     evidence_claims = [item.claim for item in evidence if item.claim.strip()][:4]
     reasoning_by_step: dict[int, list[str]] = {}
     for node in store.reasoning_nodes.values():
         reasoning_by_step.setdefault(node.step, []).append(node.summary)
-    s1_s3 = [
-        summary
-        for step in (1, 2, 3)
-        for summary in reasoning_by_step.get(step, [])
-    ][:3]
-    s4_s6 = [
-        summary
-        for step in (4, 5, 6)
-        for summary in reasoning_by_step.get(step, [])
-    ][:3]
+    s1_s3 = [summary for step in (1, 2, 3) for summary in reasoning_by_step.get(step, [])][:3]
+    s4_s6 = [summary for step in (4, 5, 6) for summary in reasoning_by_step.get(step, [])][:3]
     novelty = image.novelty or (
         "以新的能力组合和装备形态重构任务链，而非在既有平台上单项叠加性能"
         if image.capability_type == "new_capability"
@@ -1727,7 +1719,9 @@ def _route_question_chain(route: str) -> str:
     if route == "traditional_gap":
         return "国际形势/威胁 -> 对抗场景 -> 传统场景/制胜/战法 -> 当前装备对比 -> 能力不足与空白 -> 新能力补位和现有装备升级。"
     if route == "war_case_learning":
-        return "局部战争时间线 -> 参战装备与体系 -> 新打法和新能力 -> 作战效果、经验与不足 -> 可迁移方向 -> 未来装备布局。"
+        return (
+            "局部战争时间线 -> 参战装备与体系 -> 新打法和新能力 -> 作战效果、经验与不足 -> 可迁移方向 -> 未来装备布局。"
+        )
     return "国际形势/威胁 -> 对抗场景 -> 新制胜机制、新作战打法、新体系组合 -> 能力增长点 -> 新概念装备与现有装备适配升级。"
 
 
@@ -1752,9 +1746,7 @@ def _integrated_summary_lines(images: list[CapabilityImageItem], branch: str) ->
     rows: list[str] = []
     for image in images:
         novelty = (
-            "以新能力方向重构任务链"
-            if image.capability_type == "new_capability"
-            else "以现役升级方式闭合关键短板"
+            "以新能力方向重构任务链" if image.capability_type == "new_capability" else "以现役升级方式闭合关键短板"
         )
         rows.extend(
             [
@@ -1788,12 +1780,7 @@ def _reasoning_conclusion_lines(store: DomainStore) -> list[str]:
     rows: list[str] = []
     for title, steps in themes:
         summaries = list(
-            dict.fromkeys(
-                summary
-                for step in steps
-                for summary in by_step.get(step, [])
-                if summary.strip()
-            )
+            dict.fromkeys(summary for step in steps for summary in by_step.get(step, []) if summary.strip())
         )
         if not summaries:
             continue

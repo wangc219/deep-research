@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import json
 import re
@@ -98,8 +98,7 @@ class SearchHit:
 
 
 class SearchAdapter(Protocol):
-    async def search(self, query: str, page: int) -> list[SearchHit]:
-        ...
+    async def search(self, query: str, page: int) -> list[SearchHit]: ...
 
 
 @dataclass(frozen=True)
@@ -123,8 +122,7 @@ class OpenSearchHit:
 
 
 class OpenSearchAdapter(Protocol):
-    async def search(self, query: str, page: int) -> list[OpenSearchHit]:
-        ...
+    async def search(self, query: str, page: int) -> list[OpenSearchHit]: ...
 
 
 class StaticOpenSearchAdapter:
@@ -379,10 +377,7 @@ def create_search_sources_tool(
         )
         selected = all_hits[:top_k]
         lines = [
-            (
-                f"{index + 1}. {hit['title']} | tier={hit['source_tier']} | "
-                f"score={hit['keyword_score']} | {hit['url']}"
-            )
+            (f"{index + 1}. {hit['title']} | tier={hit['source_tier']} | score={hit['keyword_score']} | {hit['url']}")
             for index, hit in enumerate(selected)
         ]
         return ToolResult(
@@ -459,11 +454,7 @@ def create_open_search_sources_tool(
                 },
                 is_error=True,
             )
-        used_result_count = sum(
-            1
-            for lead in domain_store.open_source_leads.values()
-            if lead.plan_id == plan_id
-        )
+        used_result_count = sum(1 for lead in domain_store.open_source_leads.values() if lead.plan_id == plan_id)
         remaining_budget = plan.allowed_result_count - used_result_count
         if remaining_budget <= 0:
             return ToolResult(
@@ -482,11 +473,7 @@ def create_open_search_sources_tool(
         rows: list[dict[str, object]] = []
         proposals: list[DomainWriteProposal] = []
         lead_ids: list[str] = []
-        known_lead_ids = {
-            lead.lead_id
-            for lead in domain_store.open_source_leads.values()
-            if lead.plan_id == plan_id
-        }
+        known_lead_ids = {lead.lead_id for lead in domain_store.open_source_leads.values() if lead.plan_id == plan_id}
         for adapter in adapter_list:
             for hit in await adapter.search(query, page):
                 scope, excluded_reason = _open_search_scope(registry, hit.url)
@@ -535,24 +522,17 @@ def create_open_search_sources_tool(
         selected_lead_ids = [
             str(row["open_source_lead_id"])
             for row in selected
-            if row.get("source_scope") == "open_web"
-            and row.get("open_source_lead_id")
-            and not row.get("budget_status")
+            if row.get("source_scope") == "open_web" and row.get("open_source_lead_id") and not row.get("budget_status")
         ]
         selected_proposals = [
-            proposal
-            for proposal in proposals
-            if str(proposal.payload.get("lead_id")) in selected_lead_ids
+            proposal for proposal in proposals if str(proposal.payload.get("lead_id")) in selected_lead_ids
         ]
         lead_trace_proposals = [
             DomainTraceProposal(
                 event_type="open_source_lead_recorded",
                 target_type="OpenSourceLead",
                 target_id=str(proposal.payload.get("lead_id", "")),
-                payload_summary=(
-                    "recorded open source lead "
-                    f"{proposal.payload.get('lead_id', '')}"
-                ),
+                payload_summary=(f"recorded open source lead {proposal.payload.get('lead_id', '')}"),
                 input_refs=[plan_id],
                 output_refs=[str(proposal.payload.get("lead_id", ""))],
                 payload={
@@ -566,10 +546,7 @@ def create_open_search_sources_tool(
             for proposal in selected_proposals
             if proposal.object_type == "OpenSourceLead"
         ]
-        lines = [
-            _open_search_result_line(index + 1, row)
-            for index, row in enumerate(selected)
-        ]
+        lines = [_open_search_result_line(index + 1, row) for index, row in enumerate(selected)]
         return ToolResult(
             call.id,
             call.name,
@@ -603,15 +580,14 @@ def create_open_search_sources_tool(
                         "allowed_result_count": plan.allowed_result_count,
                         "used_result_count": used_result_count + len(selected_lead_ids),
                     },
-                )
+                ),
             ],
         )
 
     return ToolDefinition(
         name="open_search_sources",
         description=(
-            "Search open web candidates only after an OpenSearchPlan exists; "
-            "records OpenSourceLead for open_web hits."
+            "Search open web candidates only after an OpenSearchPlan exists; records OpenSourceLead for open_web hits."
         ),
         parameters_schema={
             "type": "object",
@@ -665,9 +641,7 @@ def create_open_search_sources_batch_tool(
                 {"open_search_plan_id": plan_id, "status": plan.status},
                 is_error=True,
             )
-        queries = _dedupe_strings(
-            [str(item).strip() for item in args.get("queries", []) if str(item).strip()]
-        )
+        queries = _dedupe_strings([str(item).strip() for item in args.get("queries", []) if str(item).strip()])
         if not queries:
             return ToolResult(
                 call.id,
@@ -690,11 +664,7 @@ def create_open_search_sources_batch_tool(
                 },
                 is_error=True,
             )
-        used_result_count = sum(
-            1
-            for lead in domain_store.open_source_leads.values()
-            if lead.plan_id == plan_id
-        )
+        used_result_count = sum(1 for lead in domain_store.open_source_leads.values() if lead.plan_id == plan_id)
         remaining_budget = plan.allowed_result_count - used_result_count
         if remaining_budget <= 0:
             return ToolResult(
@@ -732,9 +702,7 @@ def create_open_search_sources_batch_tool(
             selected.extend(rows_for_query[:top_k_per_query])
 
         existing_lead_ids = {
-            lead.lead_id
-            for lead in domain_store.open_source_leads.values()
-            if lead.plan_id == plan_id
+            lead.lead_id for lead in domain_store.open_source_leads.values() if lead.plan_id == plan_id
         }
         new_lead_ids: list[str] = []
         proposals: list[DomainWriteProposal] = []
@@ -782,10 +750,7 @@ def create_open_search_sources_batch_tool(
                 event_type="open_source_lead_recorded",
                 target_type="OpenSourceLead",
                 target_id=str(proposal.payload.get("lead_id", "")),
-                payload_summary=(
-                    "recorded open source lead "
-                    f"{proposal.payload.get('lead_id', '')}"
-                ),
+                payload_summary=(f"recorded open source lead {proposal.payload.get('lead_id', '')}"),
                 input_refs=[plan_id],
                 output_refs=[str(proposal.payload.get("lead_id", ""))],
                 payload={
@@ -799,10 +764,7 @@ def create_open_search_sources_batch_tool(
             for proposal in proposals
             if proposal.object_type == "OpenSourceLead"
         ]
-        lines = [
-            _open_search_result_line(index + 1, row)
-            for index, row in enumerate(selected)
-        ]
+        lines = [_open_search_result_line(index + 1, row) for index, row in enumerate(selected)]
         return ToolResult(
             call.id,
             call.name,
@@ -872,11 +834,7 @@ async def _open_search_hits_by_query(
     page: int,
 ) -> dict[str, list[OpenSearchHit]]:
     results: dict[str, list[OpenSearchHit]] = {query: [] for query in queries}
-    tasks = [
-        _search_open_query(adapter, query, page)
-        for query in queries
-        for adapter in adapter_list
-    ]
+    tasks = [_search_open_query(adapter, query, page) for query in queries for adapter in adapter_list]
     if not tasks:
         return results
     for query, hits in await asyncio.gather(*tasks):
@@ -907,7 +865,7 @@ def _open_search_scope(registry: SourceRegistry, url: str) -> tuple[str, str]:
 
 
 def _open_source_lead_id(plan_id: str, url: str) -> str:
-    digest = hashlib.sha256(f"{plan_id}:{url}".encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha256(f"{plan_id}:{url}".encode()).hexdigest()[:12]
     return f"osl-{digest}"
 
 
@@ -918,14 +876,11 @@ def _open_search_result_line(index: int, row: dict[str, object]) -> str:
         else ""
     )
     query_text = f" | query={row['query']}" if row.get("query") else ""
-    return (
-        f"{index}. {row['title']} | scope={row['source_scope']}"
-        f"{lead_text}{query_text} | {row['url']}"
-    )
+    return f"{index}. {row['title']} | scope={row['source_scope']}{lead_text}{query_text} | {row['url']}"
 
 
 def _now_dt() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _tier_weight(tier: str) -> int:
@@ -958,10 +913,7 @@ def _site_directives_target_other_hosts(query: str, allowed_hosts: list[str]) ->
 
 def _host_matches_allowed(host: str, allowed_hosts: list[str]) -> bool:
     normalized = host.strip().lower()
-    return any(
-        normalized == allowed or normalized.endswith(f".{allowed}")
-        for allowed in allowed_hosts
-    )
+    return any(normalized == allowed or normalized.endswith(f".{allowed}") for allowed in allowed_hosts)
 
 
 def _rank_hits_for_query(query: str, hits: list[SearchHit]) -> list[SearchHit]:
@@ -969,8 +921,7 @@ def _rank_hits_for_query(query: str, hits: list[SearchHit]) -> list[SearchHit]:
     if not _query_requires_relevance(query):
         return deduped
     scored = [
-        (_query_relevance_score(query, f"{hit.title} {hit.snippet}"), index, hit)
-        for index, hit in enumerate(deduped)
+        (_query_relevance_score(query, f"{hit.title} {hit.snippet}"), index, hit) for index, hit in enumerate(deduped)
     ]
     relevant = [row for row in scored if row[0] > 0]
     relevant.sort(key=lambda row: (row[0], -row[1]), reverse=True)
@@ -999,11 +950,7 @@ def _query_relevance_score(query: str, text: str) -> int:
 
 def _query_tokens(query: str) -> list[str]:
     text = _strip_site_directives(query)
-    return [
-        token
-        for token in re.split(r"""[\s,，;；|()（）\[\]{}"'“”‘’]+""", text)
-        if len(token.strip()) >= 2
-    ]
+    return [token for token in re.split(r"""[\s,，;；|()（）\[\]{}"'“”‘’]+""", text) if len(token.strip()) >= 2]
 
 
 def _normalize_query_text(text: str) -> str:
@@ -1139,10 +1086,7 @@ def _script_endpoint_urls(
 
 
 def _resolve_js_url_expression(expression: str, page_url: str) -> str:
-    fragments = [
-        _strip_js_string(match.group(0))
-        for match in re.finditer(r"""(?:"[^"]*"|'[^']*')""", expression)
-    ]
+    fragments = [_strip_js_string(match.group(0)) for match in re.finditer(r"""(?:"[^"]*"|'[^']*')""", expression)]
     if not fragments:
         return ""
     value = "".join(fragments)
@@ -1354,9 +1298,7 @@ def _parse_js_value(raw: str) -> object:
         return text == "true"
     if text.isdigit():
         return int(text)
-    if (text.startswith('"') and text.endswith('"')) or (
-        text.startswith("'") and text.endswith("'")
-    ):
+    if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
         return _strip_js_string(text)
     return None
 

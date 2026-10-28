@@ -5,7 +5,9 @@ from typing import Any
 from uuid import uuid4
 
 from langchain.agents.middleware.types import AgentMiddleware, ModelRequest, ModelResponse
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_openai import ChatOpenAI
 
 from platform_core.agents.toolkits.buildin.tools import ocr_parse_file
@@ -39,7 +41,8 @@ class ImageInputCompatibilityMiddleware(AgentMiddleware[Any, Any, Any]):
             return handler(request)
         except Exception as exc:  # noqa: BLE001
             if _has_image(request.messages) and _is_image_input_rejection(exc):
-                return _ocr_fallback_response(image_paths)
+                message = _ImageInputFallback(image_paths=image_paths).invoke([])
+                return ModelResponse(result=[message])
             raise
 
     async def awrap_model_call(
@@ -53,7 +56,8 @@ class ImageInputCompatibilityMiddleware(AgentMiddleware[Any, Any, Any]):
             return await handler(request)
         except Exception as exc:  # noqa: BLE001
             if _has_image(request.messages) and _is_image_input_rejection(exc):
-                return _ocr_fallback_response(image_paths)
+                message = await _ImageInputFallback(image_paths=image_paths).ainvoke([])
+                return ModelResponse(result=[message])
             raise
 
 
@@ -137,9 +141,28 @@ def _read_file_image_paths(messages: list[Any]) -> list[str]:
     return paths
 
 
-def _ocr_fallback_response(image_paths: list[str]) -> ModelResponse:
+class _ImageInputFallback(BaseChatModel):
+    """通过标准回调声明兼容层工具调用，使流式审计先记录调用来源。"""
+
+    image_paths: list[str]
+
+    @property
+    def _llm_type(self) -> str:
+        return "image-input-compatibility"
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
+        """生成确定性 OCR 交接消息，不请求外部模型或计入模型用量。"""
+        return ChatResult(generations=[ChatGeneration(message=_ocr_fallback_message(self.image_paths))])
+
+    def _stream(self, messages, stop=None, run_manager=None, **kwargs):
+        """发出标准消息块，保证 v3 流先声明 OCR 调用再执行工具。"""
+        message = _ocr_fallback_message(self.image_paths)
+        yield ChatGenerationChunk(message=AIMessageChunk(content=message.content, tool_calls=message.tool_calls))
+
+
+def _ocr_fallback_message(image_paths: list[str]) -> AIMessage:
     if not image_paths:
-        return ModelResponse(result=[AIMessage(content="当前模型无法读取图片，且没有可供 OCR 工具解析的文件路径。")])
+        return AIMessage(content="当前模型无法读取图片，且没有可供 OCR 工具解析的文件路径。")
 
     tool_calls = [
         {
@@ -149,13 +172,9 @@ def _ocr_fallback_response(image_paths: list[str]) -> ModelResponse:
         }
         for path in image_paths
     ]
-    return ModelResponse(
-        result=[
-            AIMessage(
-                content="当前模型不支持图片输入，正在改用 OCR 工具提取图片文字。",
-                tool_calls=tool_calls,
-            )
-        ]
+    return AIMessage(
+        content="当前模型不支持图片输入，正在改用 OCR 工具提取图片文字。",
+        tool_calls=tool_calls,
     )
 
 

@@ -569,7 +569,14 @@ def test_html_preview_builtin_skill_spec(builtin_skill_specs):
 
 
 def test_deep_research_builtin_skill_has_no_html_preview_dependency(builtin_skill_specs):
-    assert builtin_skill_specs["deep-research"]["skill_dependencies"] == []
+    assert builtin_skill_specs["deep-research"]["skill_dependencies"] == ["academic-evidence"]
+    assert builtin_skill_specs["deep-research"]["tool_dependencies"] == [
+        "web_search",
+        "academic_search",
+        "academic_get_papers",
+        "academic_get_references",
+        "present_artifacts",
+    ]
 
 
 def test_knowledge_base_builtin_skill_spec(builtin_skill_specs):
@@ -579,6 +586,7 @@ def test_knowledge_base_builtin_skill_spec(builtin_skill_specs):
     assert knowledge_base["tool_dependencies"] == [
         "list_kbs",
         "query_kb",
+        "query_kbs",
         "find_kb_document",
         "open_kb_document",
         "get_mindmap",
@@ -1080,13 +1088,17 @@ async def test_get_skill_dependency_options(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(svc, "get_enabled_mcp_server_slugs", fake_get_enabled_mcp_server_slugs)
 
-    user = SimpleNamespace(uid="user")
+    user = SimpleNamespace(uid="user", role="user")
 
-    async def fake_list_skill_slugs(_db, *, user):
+    async def fake_list_accessible_skills(_db, user):
         assert user.uid == "user"
-        return ["alpha", "beta"]
+        return [SimpleNamespace(slug="alpha"), SimpleNamespace(slug="beta")]
 
-    monkeypatch.setattr(svc, "list_skill_slugs", fake_list_skill_slugs)
+    async def fake_servers(_db):
+        return [SimpleNamespace(slug=slug, access_policy=None) for slug in ["mcp-a", "mcp-b"]]
+
+    monkeypatch.setattr(svc, "list_accessible_skills", fake_list_accessible_skills)
+    monkeypatch.setattr("platform_core.agents.mcp.service.get_all_mcp_servers", fake_servers)
 
     result = await svc.get_skill_dependency_options(None, user)
     assert result["tools"] == [{"slug": "calculator", "name": "Calculator"}, {"slug": "search", "name": "Search"}]
@@ -1659,7 +1671,11 @@ async def test_init_builtin_skills_create_missing(tmp_path: Path, monkeypatch: p
     assert len(items) == 1
     assert items[0].slug == "reporter"
     assert FakeRepo.created_payload["source_type"] == "builtin"
-    assert FakeRepo.created_payload["share_config"] == svc.BUILTIN_SKILL_SHARE_CONFIG
+    assert FakeRepo.created_payload["share_config"] == {
+        "version": 2,
+        "read_scope": svc.BUILTIN_SKILL_SHARE_CONFIG,
+        "manage_scope": None,
+    }
     assert FakeRepo.created_payload["enabled"] is True
     assert FakeRepo.created_payload["created_by"] == "system"
     assert FakeRepo.created_payload["tool_dependencies"] == ["mysql_query"]

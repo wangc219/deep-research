@@ -740,8 +740,18 @@ async def prepare_agent_run_creation_scope(
 
 async def enqueue_agent_run(run_id: str) -> None:
     """把已持久化的 run 投递到后台 worker 队列。"""
+    from platform_core.services.run_scheduling import AGENT_QUEUES, run_lane, split_agent_queues
+
     queue = await get_arq_pool()
-    await queue.enqueue_job("process_agent_run", run_id, _job_id=f"run:{run_id}")
+    if not split_agent_queues():
+        await queue.enqueue_job("process_agent_run", run_id, _job_id=f"run:{run_id}")
+        return
+    async with pg_manager.get_async_session_context() as db:
+        run = await AgentRunRepository(db).get_run(run_id)
+        if run is None:
+            raise ValueError("待投递 AgentRun 不存在")
+        queue_name = AGENT_QUEUES[run_lane(run)]
+    await queue.enqueue_job("process_agent_run", run_id, _job_id=f"run:{run_id}", _queue_name=queue_name)
 
 
 async def get_agent_run_view(*, run_id: str, current_uid: str, db: AsyncSession) -> dict:
@@ -826,13 +836,19 @@ async def load_agent_run_result(*, run_id: str, current_uid: str) -> dict:
 
 
 async def await_agent_run_result(*, run_id: str, current_uid: str) -> dict:
-    """阻塞至 run 终结并返回最终结果，供 cron 等 in-process 调用。
+    """等待新增事件至 Run 终结；结果取自持久化输出，不重放历史消息。
 
-    复用有限事件流 ``stream_agent_run_events``：它在 run 终结或超时后自然结束，
-    因此排空即等待，无需额外轮询。等待上限继承事件流内部的 ``SSE_MAX_CONNECTION_MINUTES``。
-    如果等待结束后 run 仍非终态，抛出 ``AgentRunWaitTimeout``，避免调用方把非终态误当最终结果。
+    先鉴权再读取事件游标。游标读取期间发生的终态由事件流的数据库补偿收敛；
+    等待上限沿用事件流设置，未终结仍抛出 AgentRunWaitTimeout。
     """
-    async for _ in stream_agent_run_events(run_id=run_id, after_seq="0-0", current_uid=current_uid, verbose=False):
+    run = await _load_stream_run_for_user(run_id, current_uid)
+    if run is None or (
+        run.status in TERMINAL_RUN_STATUSES and not bool(getattr(run, "runtime_cleanup_pending", False))
+    ):
+        return await load_agent_run_result(run_id=run_id, current_uid=current_uid)
+
+    after_seq = await get_last_run_stream_seq(run_id)
+    async for _ in stream_agent_run_events(run_id=run_id, after_seq=after_seq, current_uid=current_uid, verbose=False):
         pass
     result = await load_agent_run_result(run_id=run_id, current_uid=current_uid)
     if str(result.get("status") or "") not in TERMINAL_RUN_STATUSES:

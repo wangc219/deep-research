@@ -141,8 +141,8 @@ def test_structured_s5_scores_preserve_model_expert_delta_and_route_to_s5() -> N
     processed = process_feedback_memory(normalized)
 
     assert normalized["score_schema"] == "s5_five_dimension_v1"
-    assert normalized["model_weighted_score"] == 0.863
-    assert normalized["expert_weighted_score"] == 0.83
+    assert normalized["model_weighted_score"] == 0.8515
+    assert normalized["expert_weighted_score"] == 0.809
     assert normalized["score_deltas"]["feasibility"] == -0.08
     assert normalized["rating"] == 4
     assert "S5" in processed["target_agent_ids"]

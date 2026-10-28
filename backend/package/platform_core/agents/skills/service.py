@@ -191,7 +191,10 @@ def normalize_skill_share_config(
     allowed_access_levels: set[str] | None = None,
 ) -> dict:
     if source_type == "builtin":
-        return {"version": 2, "read_scope": BUILTIN_SKILL_SHARE_CONFIG.copy(), "manage_scope": None}
+        config = {"version": 2, "read_scope": BUILTIN_SKILL_SHARE_CONFIG.copy(), "manage_scope": None}
+        if share_config and "allowed_roles" in share_config:
+            config["allowed_roles"] = share_config["allowed_roles"]
+        return normalize_permission_config(config, strict=True)
 
     default_scope = {
         "access_level": "user",
@@ -208,6 +211,9 @@ def normalize_skill_share_config(
 
 def user_can_access_skill(user: User, skill: Skill, *, require_enabled: bool = True) -> bool:
     if require_enabled and not skill.enabled:
+        return False
+    allowed_roles = (skill.share_config or {}).get("allowed_roles")
+    if allowed_roles is not None and user.role not in allowed_roles:
         return False
     return resolve_skill_permission(user, skill) != ResourcePermission.NONE
 
@@ -665,10 +671,16 @@ async def get_skill_dependency_options(
         return [{"slug": tool["slug"], "name": tool.get("name", tool["slug"])} for tool in all_tools]
 
     skill_slugs, tool_list, mcp_names = await asyncio.gather(
-        list_skill_slugs(db, user=user),
+        list_accessible_skills(db, user),
         asyncio.to_thread(get_tools),
         get_enabled_mcp_server_slugs(db=db),
     )
+    skill_slugs = [item.slug for item in skill_slugs]
+    from platform_core.agents.mcp.permissions import user_can_use_mcp
+    from platform_core.agents.mcp.service import get_all_mcp_servers
+
+    permitted_mcps = {s.slug for s in await get_all_mcp_servers(db) if user_can_use_mcp(user, s)}
+    mcp_names = [name for name in mcp_names if name in permitted_mcps]
     if slug:
         skill_slugs = [item for item in skill_slugs if item != slug]
 
@@ -956,6 +968,82 @@ async def read_personal_skill_file(uid: str, slug: str, relative_path: str) -> d
     return {"path": normalized_path, "content": content}
 
 
+async def get_personal_skill_tree(uid: str, slug: str) -> list[dict]:
+    """返回当前用户个人 Skill 的目录树。"""
+    skill_dir = _resolve_personal_skill_dir(_personal_skills_root(uid), slug)
+    if not skill_dir.is_dir():
+        raise ValueError("个人 Skill 不存在")
+    return await asyncio.to_thread(_build_tree, skill_dir, skill_dir)
+
+
+async def edit_personal_skill_node(
+    uid: str, slug: str, relative_path: str, *, operation: str, content: str = ""
+) -> None:
+    """在用户锁内验证完整快照后原子更新个人 Skill。"""
+
+    if PurePosixPath(relative_path.replace("\\", "/")).is_absolute():
+        raise ValueError("必须使用相对 Skill 根目录的路径")
+
+    def edit() -> None:
+        with _get_user_skills_lock(uid), _user_skills_file_lock(uid):
+            skill_dir = _resolve_personal_skill_dir(_personal_skills_root(uid), slug)
+            if not skill_dir.is_dir():
+                raise ValueError("个人 Skill 不存在")
+            with tempfile.TemporaryDirectory(prefix=".skill-edit-") as temp:
+                staged = Path(temp) / slug
+                copy_skill_tree_no_symlinks(skill_dir, staged)
+                target, path = _resolve_relative_path(staged, relative_path)
+                if operation == "delete":
+                    if path == "SKILL.md":
+                        raise ValueError("不允许删除根级 SKILL.md")
+                    if not target.exists():
+                        raise ValueError("文件不存在")
+                    shutil.rmtree(target) if target.is_dir() else target.unlink()
+                elif operation in {"create", "directory", "update"}:
+                    if operation == "update" and not target.is_file():
+                        raise ValueError("文件不存在")
+                    if operation != "update" and target.exists():
+                        raise ValueError("路径已存在")
+                    if operation == "directory":
+                        target.mkdir(parents=True)
+                    else:
+                        if not _is_text_path(target):
+                            raise ValueError("仅支持编辑文本文件")
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        target.write_text(content, encoding="utf-8")
+                else:
+                    raise ValueError("不支持的个人 Skill 操作")
+                metadata = parse_skill_dir_metadata(staged)
+                if metadata["slug"] != slug:
+                    raise ValueError("SKILL.md slug 必须与目录名一致")
+                _replace_skill_target(skill_dir, staged)
+
+    await asyncio.to_thread(edit)
+
+
+async def update_personal_skill_dependencies(
+    db: AsyncSession, user: User, slug: str, *, tools: list[str], mcps: list[str], skills: list[str]
+) -> ResolvedSkill:
+    """将已授权的个人依赖写入 SKILL.md，供统一运行时解析。"""
+    options = await get_skill_dependency_options(db, user, slug)
+    tools, mcps, skills = map(normalize_string_list, (tools, mcps, skills))
+    for selected, available in (
+        (tools, {item["slug"] for item in options["tools"]}),
+        (mcps, set(options["mcps"])),
+        (skills, set(options["skills"])),
+    ):
+        if set(selected) - available:
+            raise ValueError("存在不可用或未授权的 Skill 依赖")
+    uid = str(user.uid)
+    source = await read_personal_skill_file(uid, slug, "SKILL.md")
+    _, _, _, metadata = _parse_skill_markdown(source["content"])
+    _, body = _split_frontmatter(source["content"])
+    metadata.update(tool_dependencies=tools, mcp_dependencies=mcps, skill_dependencies=skills)
+    content = "---\n" + yaml.safe_dump(metadata, allow_unicode=True, sort_keys=False) + "---\n" + body
+    await edit_personal_skill_node(uid, slug, "SKILL.md", operation="update", content=content)
+    return next(item for item in await list_personal_skills(uid) if item.slug == slug)
+
+
 async def delete_personal_skill(uid: str, slug: str) -> None:
     """删除当前用户个人 Skill。"""
     skill_dir = _resolve_personal_skill_dir(_personal_skills_root(uid), slug)
@@ -1044,9 +1132,9 @@ def _resolved_personal_skill(uid: str, root: Path, metadata: dict[str, Any]) -> 
         enabled=True,
         created_by=uid,
         share_config=None,
-        tool_dependencies=[],
-        mcp_dependencies=[],
-        skill_dependencies=[],
+        tool_dependencies=normalize_string_list(metadata.get("tool_dependencies")),
+        mcp_dependencies=normalize_string_list(metadata.get("mcp_dependencies")),
+        skill_dependencies=normalize_string_list(metadata.get("skill_dependencies")),
     )
 
 
@@ -1689,7 +1777,6 @@ async def update_skill_share_config(
     operator: User,
 ) -> Skill:
     item = await get_manageable_skill_or_raise(db, operator, slug)
-    _ensure_non_builtin(item)
     normalized = normalize_skill_share_config(
         share_config,
         operator_uid=operator.uid,
@@ -1800,7 +1887,9 @@ async def init_builtin_skills(db: AsyncSession, *, created_by: str = "system") -
                 mcp_dependencies=spec["mcp_dependencies"],
                 skill_dependencies=spec["skill_dependencies"],
                 dir_path=_build_builtin_skill_dir_path(slug),
-                share_config=BUILTIN_SKILL_SHARE_CONFIG.copy(),
+                share_config=normalize_skill_share_config(
+                    None, operator_uid=created_by or BUILTIN_SKILL_OPERATOR, source_type="builtin"
+                ),
                 enabled=True,
                 version=spec["version"],
                 content_hash=spec["content_hash"],

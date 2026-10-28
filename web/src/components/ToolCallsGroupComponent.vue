@@ -146,7 +146,7 @@ const getToolCallLabel = (toolCall) => {
 }
 
 const toolCallsSummaryTitle = computed(() => {
-  if (normalizedToolCalls.value.length === 0) return props.isActive ? 'Thinking...' : '推理过程'
+  if (normalizedToolCalls.value.length === 0) return props.isActive ? '正在思考' : '推理过程'
   if (hasReasoning.value) return `推理与工具调用 · ${normalizedToolCalls.value.length} 个工具`
   if (normalizedToolCalls.value.length === 1) {
     return `调用: ${getToolCallLabel(normalizedToolCalls.value[0])}`

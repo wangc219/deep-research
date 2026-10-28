@@ -60,8 +60,7 @@ S6_MAX_CODEX_CONCURRENCY = 32
 CAPABILITY_PORTRAIT_TARGET_MODULE_CHARS = 380
 CAPABILITY_PORTRAIT_REPAIR_TRIGGER_CHARS = 360
 CAPABILITY_PORTRAIT_QUALITY_CONTRACT_VERSION = (
-    "s6-portrait-v6-"
-    f"target{CAPABILITY_PORTRAIT_TARGET_MODULE_CHARS}x5-shared-innovation-anchors"
+    f"s6-portrait-v14-target{CAPABILITY_PORTRAIT_TARGET_MODULE_CHARS}x5-innovation-tech-first"
 )
 CAPABILITY_PORTRAIT_MIN_BODY_CHARS = 1900
 CAPABILITY_PORTRAIT_MAX_BODY_CHARS = 2250
@@ -150,9 +149,7 @@ def normalize_capability_classification(value: object) -> dict[str, object]:
         primary=True,
     )
     raw_secondary = value.get("secondary_dimensions") or value.get("secondary") or []
-    if isinstance(raw_secondary, Sequence) and not isinstance(
-        raw_secondary, (str, bytes)
-    ):
+    if isinstance(raw_secondary, Sequence) and not isinstance(raw_secondary, (str, bytes)):
         candidates = raw_secondary
     else:
         candidates = re.split(r"[、,，;；]", str(raw_secondary))
@@ -170,12 +167,11 @@ def normalize_capability_classification(value: object) -> dict[str, object]:
         "primary_dimension": primary,
         "secondary_dimensions": secondary,
     }
-    basis = re.sub(
-        r"\s+", " ", strip_schema_placeholders(value.get("classification_basis", ""))
-    ).strip()
+    basis = re.sub(r"\s+", " ", strip_schema_placeholders(value.get("classification_basis", ""))).strip()
     if basis:
         result["classification_basis"] = basis
     return result if primary or secondary else {}
+
 
 _CAPABILITY_PORTRAIT_LEGACY_LABELS = {
     "winning_logic": ("制胜逻辑机理与对抗边界", "制胜逻辑与边界"),
@@ -206,9 +202,47 @@ _STRUCTURED_DUMP_RE = re.compile(
     r"^\s*[{\[].*[}\]]\s*$",
     flags=re.DOTALL,
 )
-_SNAKE_CASE_KEY_FRAGMENT_RE = re.compile(
-    r"['\"]?[a-z][a-z0-9]*(?:_[a-z0-9]+)+['\"]?\s*:"
+_SNAKE_CASE_KEY_FRAGMENT_RE = re.compile(r"['\"]?[a-z][a-z0-9]*(?:_[a-z0-9]+)+['\"]?\s*:")
+
+# Older S6 prompts asked the model to repeat internal innovation field names
+# and even to narrate how one field was derived from another.  These patterns
+# are intentionally presentation-only compatibility rules: current authoring
+# prevents the language at source, while persisted cards remain readable.
+_PORTRAIT_AUTHORING_META_PREFIX_RE = re.compile(
+    r"(?:"
+    r"(?:由|根据|基于)\s*[`'\"]?solution_thesis[`'\"]?\s*(?:与|和|、)\s*"
+    r"[`'\"]?core_innovation_thesis[`'\"]?\s*(?:直接)?(?:推导|推出|得出)(?:可知)?|"
+    r"(?:由|根据|基于)\s*(?:该|上述)?(?:解决)?思路\s*(?:与|和|、)?\s*(?:核心创新)?\s*"
+    r"直接(?:推导|推演|推出|得出)(?:可知)?|"
+    r"承接\s*(?:字段|锚点)?\s*[`'\"]?solution_thesis[`'\"]?|"
+    r"围绕\s*(?:字段|锚点)?\s*[`'\"]?core_innovation_thesis[`'\"]?"
+    r")\s*[：:—–,，-]*\s*",
+    flags=re.IGNORECASE,
 )
+_PORTRAIT_AUTHORING_META_TOKEN_RE = re.compile(
+    r"\b(?:solution_thesis|core_innovation_thesis|module_authoring_context|"
+    r"shared_innovation_anchors|spine_context|module_completion_contract|"
+    r"module_exclusive_contract|parallel_quality_check)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def normalize_portrait_decision_prose(value: object) -> str:
+    """Remove legacy authoring narration while preserving its actual judgment."""
+
+    text = str(value or "")
+    text = _PORTRAIT_AUTHORING_META_PREFIX_RE.sub("", text)
+    text = _PORTRAIT_AUTHORING_META_TOKEN_RE.sub("", text)
+    text = re.sub(
+        r"(?:由|根据|基于)\s*(?:解决思路)?\s*(?:与|和|、)\s*(?:核心创新)?\s*"
+        r"直接(?:推导|推出|得出)\s*[：:—–,，-]*\s*",
+        "",
+        text,
+    )
+    text = re.sub(r"\s+([，。；：！？])", r"\1", text)
+    text = re.sub(r"([：:—–-])\s*(?=[，。；！？])", "", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
 
 
 def strip_schema_placeholders(value: object) -> str:
@@ -219,12 +253,7 @@ def strip_schema_placeholders(value: object) -> str:
     while previous != text:
         previous = text
         text = _SCHEMA_PLACEHOLDER_RE.sub(r"\1", text)
-    return (
-        text.replace("；；", "；")
-        .replace(";;", ";")
-        .replace("；。", "。")
-        .replace(";。", "。")
-    )
+    return text.replace("；；", "；").replace(";;", ";").replace("；。", "。").replace(";。", "。")
 
 
 def portrait_module_looks_structured(value: object) -> bool:
@@ -287,7 +316,7 @@ def coerce_portrait_module_prose(
     if not text:
         return ""
     if not portrait_module_looks_structured(text):
-        return re.sub(r"\s+", " ", text).strip()
+        return re.sub(r"\s+", " ", normalize_portrait_decision_prose(text)).strip()
 
     parsed = _parse_structured_module_dump(text)
     if parsed is None:
@@ -316,11 +345,7 @@ def _parse_structured_module_dump(text: str) -> object | None:
             return parsed
     # Common model/provider path: single-quoted JSON-like objects.
     if candidate[0] in "{[" and "'" in candidate:
-        softened = (
-            candidate.replace("None", "null")
-            .replace("True", "true")
-            .replace("False", "false")
-        )
+        softened = candidate.replace("None", "null").replace("True", "true").replace("False", "false")
         softened = re.sub(r"'([^'\\]*)'", r'"\1"', softened)
         try:
             parsed = json.loads(softened)
@@ -373,13 +398,13 @@ def _strip_schema_keys_from_prose(text: str) -> str:
     cleaned = re.sub(r"\s+", " ", cleaned)
     cleaned = re.sub(r"\s*[：:]\s*", "：", cleaned)
     cleaned = re.sub(r"(?:；|;|,|，){2,}", "；", cleaned)
-    return cleaned.strip(" ，,；;。:：{}[]'\"")
+    return normalize_portrait_decision_prose(cleaned).strip(" ，,；;。:：{}[]'\"")
 
 
 def normalize_capability_portrait_text(value: object) -> str:
     """Re-normalize a full portrait string at the API/display boundary."""
 
-    text = strip_schema_placeholders(value).strip()
+    text = normalize_portrait_decision_prose(strip_schema_placeholders(value)).strip()
     if not text:
         return ""
     modules = parse_capability_portrait_modules(text)
@@ -412,12 +437,7 @@ def normalize_capability_portrait_text(value: object) -> str:
     if not assembled:
         return text
     if classification_match and not assembled.startswith("能力分类："):
-        return (
-            "能力分类："
-            + classification_match.group("body").strip().rstrip("。")
-            + "。\n"
-            + assembled
-        )
+        return "能力分类：" + classification_match.group("body").strip().rstrip("。") + "。\n" + assembled
     return assembled
 
 
@@ -446,9 +466,7 @@ def assemble_capability_portrait_modules(modules: Mapping[str, object] | object)
     if not isinstance(modules, Mapping):
         return ""
     rows: list[str] = []
-    classification = normalize_capability_classification(
-        modules.get("capability_classification", {})
-    )
+    classification = normalize_capability_classification(modules.get("capability_classification", {}))
     if isinstance(classification, Mapping):
         primary = _clean_clause(classification.get("primary_dimension", ""))
         raw_secondary = classification.get("secondary_dimensions", [])
@@ -501,9 +519,7 @@ def parse_capability_portrait_modules(value: object) -> dict[str, str]:
         labels = (label, *_CAPABILITY_PORTRAIT_LEGACY_LABELS.get(key, ()))
         label_pattern = "|".join(re.escape(item) for item in labels)
         next_key_label = (
-            CAPABILITY_PORTRAIT_MODULES[index + 1]
-            if index + 1 < len(CAPABILITY_PORTRAIT_MODULES)
-            else None
+            CAPABILITY_PORTRAIT_MODULES[index + 1] if index + 1 < len(CAPABILITY_PORTRAIT_MODULES) else None
         )
         pattern = rf"(?:^|\n)\s*(?:-\s*)?(?:{label_pattern})\s*[：:]\s*(?P<body>.*?)"
         if next_key_label:
@@ -527,11 +543,7 @@ def capability_portrait_module_lengths(
 ) -> dict[str, int]:
     """Count substantive CJK characters in each governed portrait module."""
 
-    modules = (
-        value
-        if isinstance(value, Mapping)
-        else parse_capability_portrait_modules(value)
-    )
+    modules = value if isinstance(value, Mapping) else parse_capability_portrait_modules(value)
     return {
         key: len(
             re.findall(
@@ -555,11 +567,7 @@ def short_capability_portrait_modules(
     """Return modules below the soft editorial target for diagnostics only."""
 
     lengths = capability_portrait_module_lengths(value)
-    return [
-        key
-        for key, _ in CAPABILITY_PORTRAIT_MODULES
-        if lengths.get(key, 0) < minimum
-    ]
+    return [key for key, _ in CAPABILITY_PORTRAIT_MODULES if lengths.get(key, 0) < minimum]
 
 
 def capability_portrait_quality_issues(
@@ -587,22 +595,16 @@ def capability_portrait_quality_issues(
         structured_labels = [
             label
             for key, label in CAPABILITY_PORTRAIT_MODULES
-            if portrait_module_looks_structured(raw_modules.get(key, ""))
-            and not modules.get(key, "")
+            if portrait_module_looks_structured(raw_modules.get(key, "")) and not modules.get(key, "")
         ]
         if structured_labels:
-            return [
-                "装备能力画像栏目须一次性写成中文正文，禁止嵌套对象或字段清单："
-                + "、".join(structured_labels)
-            ]
+            return ["装备能力画像栏目须一次性写成中文正文，禁止嵌套对象或字段清单：" + "、".join(structured_labels)]
         return ["装备能力画像缺少完整五栏，无法执行精简度交付门"]
 
     issues: list[str] = []
     for key, label in CAPABILITY_PORTRAIT_MODULES:
         if portrait_module_looks_structured(raw_modules.get(key, "")):
-            issues.append(
-                f"{label}出现结构化对象或原始字段名，须重写为一次性中文正文"
-            )
+            issues.append(f"{label}出现结构化对象或原始字段名，须重写为一次性中文正文")
     # Keep this compatibility diagnostic conservative.  Concurrent S6 has a
     # separate per-column 380-character enhancement trigger; this lower check
     # still lets older persisted cards surface truly empty semantic blurbs
@@ -610,19 +612,13 @@ def capability_portrait_quality_issues(
     for key, label in CAPABILITY_PORTRAIT_MODULES:
         compact = re.sub(r"\s+", "", modules.get(key, ""))
         if len(compact) < CAPABILITY_PORTRAIT_MIN_MODULE_CHARS:
-            issues.append(
-                f"{label}明显过短，低于约180字告警线；请补足缺失论证，但不要用泛化句凑字"
-            )
+            issues.append(f"{label}明显过短，低于约180字告警线；请补足缺失论证，但不要用泛化句凑字")
         if portrait_module_has_incomplete_ending(modules.get(key, "")):
-            issues.append(
-                f"{label}句末疑似截断或逻辑未闭合；请保留完整句和完整因果，不得按字符硬切"
-            )
+            issues.append(f"{label}句末疑似截断或逻辑未闭合；请保留完整句和完整因果，不得按字符硬切")
 
     overview = modules.get("overview", "")
     if _MECHANICAL_PORTRAIT_FILL_RE.search(overview):
-        issues.append(
-            "概述含跨装备通用机械句式；必须依据本卡具体武器的作用对象、关键动作和直接战果整段重写"
-        )
+        issues.append("概述含跨装备通用机械句式；必须依据本卡具体武器的作用对象、关键动作和直接战果整段重写")
     if not re.search(
         r"传统|原有|过去|敌|对手|常规|旧有|原先",
         overview,
@@ -649,26 +645,16 @@ def capability_portrait_quality_issues(
         issues.append("装备与技术实现未说明关键原理如何落到装备本体")
 
     clauses_by_module = [
-        [
-            clause.strip()
-            for clause in re.split(r"[。！？!?；;]+", body)
-            if len(re.sub(r"\s+", "", clause)) >= 18
-        ]
+        [clause.strip() for clause in re.split(r"[。！？!?；;]+", body) if len(re.sub(r"\s+", "", clause)) >= 18]
         for body in bodies
     ]
     repeated_pairs = 0
     for left_index, left_rows in enumerate(clauses_by_module):
         for right_rows in clauses_by_module[left_index + 1 :]:
-            if any(
-                SequenceMatcher(None, left, right).ratio() >= 0.82
-                for left in left_rows
-                for right in right_rows
-            ):
+            if any(SequenceMatcher(None, left, right).ratio() >= 0.82 for left in left_rows for right in right_rows):
                 repeated_pairs += 1
     if repeated_pairs:
-        issues.append(
-            f"装备能力画像存在跨栏重复（{repeated_pairs}组栏目复用相同或近似长句）"
-        )
+        issues.append(f"装备能力画像存在跨栏重复（{repeated_pairs}组栏目复用相同或近似长句）")
 
     def trigrams(text: str) -> set[str]:
         normalized = re.sub(r"[\s，。；：、,.!?！？:（）()\-]", "", text)
@@ -682,9 +668,7 @@ def capability_portrait_quality_issues(
         if exclusive_ratio < 0.10:
             nonexclusive.append(CAPABILITY_PORTRAIT_MODULES[index][1])
     if nonexclusive:
-        issues.append(
-            "装备能力画像栏目缺少独占信息：" + "、".join(nonexclusive)
-        )
+        issues.append("装备能力画像栏目缺少独占信息：" + "、".join(nonexclusive))
     return issues
 
 
@@ -749,29 +733,18 @@ def _legacy_overview_semantics(value: object) -> dict[str, str]:
         "capability": "capability",
         "effect": "effect",
     }
-    return {
-        key_map[key]: _clean_clause(raw)
-        for key, raw in match.groupdict().items()
-        if _clean_clause(raw)
-    }
+    return {key_map[key]: _clean_clause(raw) for key, raw in match.groupdict().items() if _clean_clause(raw)}
 
 
 def _clean_clause(value: object, fallback: str = "") -> str:
-    if isinstance(value, Mapping) or (
-        isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-    ):
+    if isinstance(value, Mapping) or (isinstance(value, Sequence) and not isinstance(value, (str, bytes))):
         value = coerce_portrait_module_prose(
             value,
             allow_structured_salvage=True,
         )
     text = re.sub(r"\s+", " ", strip_schema_placeholders(value)).strip()
     text = _FIELD_LABEL_RE.sub("", text).strip(" ，,；;。:：")
-    text = (
-        text.replace("。；", "；")
-        .replace("；。", "；")
-        .replace("。。", "。")
-        .replace("；；", "；")
-    )
+    text = text.replace("。；", "；").replace("；。", "；").replace("。。", "。").replace("；；", "；")
     return text or fallback
 
 
@@ -833,9 +806,7 @@ def _clean_items(values: Sequence[object] | object, *, limit: int) -> list[str]:
 
 def _first_complete_clause(value: object, fallback: str) -> str:
     for row in _clean_items(value, limit=6):
-        if len(row) >= 8 and not row.endswith(
-            ("并", "及", "与", "和", "或", "但", "且", "的", "为", "通过")
-        ):
+        if len(row) >= 8 and not row.endswith(("并", "及", "与", "和", "或", "但", "且", "的", "为", "通过")):
             return row
     return _clean_clause(fallback, "待由Query推演补充")
 
@@ -900,9 +871,7 @@ def _is_concrete_title(value: str) -> bool:
     return bool(str(value or "").strip())
 
 
-def build_capability_title(
-    *, name: object, equipment_form: object, effect: object = ""
-) -> str:
+def build_capability_title(*, name: object, equipment_form: object, effect: object = "") -> str:
     """Preserve an Agent-authored weapon name; never invent one from a family.
 
     ``effect`` remains in the signature for compatibility but is deliberately
@@ -926,12 +895,8 @@ def normalize_capability_problem(value: object, *, fallback: str) -> str:
     # A baseline citation is useful in the implementation module but is not a
     # combat problem on its own.  Do not let a legacy evidence preface occupy
     # the "针对" position in the overview.
-    if (
-        "公开基线" in source
-        and not any(
-            marker in source
-            for marker in ("不能", "难以", "不足", "缺", "受限", "中断", "失效", "不具备")
-        )
+    if "公开基线" in source and not any(
+        marker in source for marker in ("不能", "难以", "不足", "缺", "受限", "中断", "失效", "不具备")
     ):
         return _first_complete_clause(fallback, "核心任务断点尚未由Agent明确")
     return _first_complete_clause(source, fallback)
@@ -946,13 +911,7 @@ def _winning_clause(value: object, fallback: str) -> str:
         r"(?:研究|项目|报告|论文).*(?:支持|证实|表明))"
     )
     meaningful = next(
-        (
-            row
-            for row in rows
-            if "公开基线" not in row
-            and "基线" not in row
-            and not evidence_prose.search(row)
-        ),
+        (row for row in rows if "公开基线" not in row and "基线" not in row and not evidence_prose.search(row)),
         rows[0] if rows else fallback,
     )
     return _compact_clause(meaningful, fallback, limit=80)
@@ -1140,11 +1099,7 @@ def build_agent_led_capability_portrait(
             ),
             (
                 "关键作战流程："
-                + (
-                    "；".join(process_rows)
-                    if process_rows
-                    else f"按{concept_text}执行候选声明的装备专属任务流程"
-                )
+                + ("；".join(process_rows) if process_rows else f"按{concept_text}执行候选声明的装备专属任务流程")
                 + "。"
             ),
             f"形成能力与作战效果：{capability_text}；{effect_text}。",

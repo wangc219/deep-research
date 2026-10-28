@@ -467,7 +467,7 @@ async def test_durable_task_starts_domain_without_prefetching_knowledge(
 
     captured = []
 
-    def run_domain(bound_run, *, resume):
+    def run_domain(bound_run, *, resume, event_sink=None):
         captured.append((bound_run, resume))
         return {
             "events": [],
@@ -480,7 +480,7 @@ async def test_durable_task_starts_domain_without_prefetching_knowledge(
     monkeypatch.setattr(task, "EquipmentResearchRepository", Repository)
     monkeypatch.setattr(task, "ProjectRepository", ProjectRepository)
     monkeypatch.setattr(task, "_set_status", set_status)
-    monkeypatch.setattr(task, "_append", AsyncMock())
+    monkeypatch.setattr(task, "_append_events", AsyncMock())
     monkeypatch.setattr(task, "_run_domain", run_domain)
 
     result = await task.run_equipment_research(

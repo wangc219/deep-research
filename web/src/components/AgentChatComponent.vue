@@ -16,7 +16,7 @@
             v-if="currentThread?.title && currentThread.title !== '新的对话'"
             class="conversation-title"
           >
-            {{ currentThread.title }}
+            {{ normalizeConversationTitle(currentThread.title) || '新的对话' }}
           </div>
         </div>
         <div class="header__right">
@@ -110,10 +110,10 @@
         }"
       >
         <!-- Main Chat Area -->
-        <div class="chat-main" ref="chatMainRef">
+        <div class="chat-main" :class="{ 'has-welcome': isNewConversation && !!$slots['empty-state'] }" ref="chatMainRef">
           <div class="chat-box">
             <slot
-              v-if="!conversationRows.length && !isLoadingMessages && !isReplyLoading && currentChatId"
+              v-if="!conversationRows.length && !isLoadingMessages && !isReplyLoading"
               name="empty-state"
             ></slot>
             <template v-for="row in conversationRows" :key="row.key">
@@ -134,6 +134,19 @@
                     :mention="mentionConfig"
                     @retry="retryMessage(displayItem.message, row.conv)"
                   >
+                    <template #human-actions>
+                      <button
+                        v-if="canEditLatestQuestion(displayItem.message)"
+                        type="button"
+                        class="edit-question-button"
+                        :disabled="isProcessing || isWaitingForUserAction || isLoadingMessages || sendCooldownActive"
+                        aria-label="编辑重新提问"
+                        title="编辑重新提问"
+                        @click="editLatestQuestion(displayItem.message)"
+                      >
+                        <SquarePen :size="15" aria-hidden="true" />
+                      </button>
+                    </template>
                     <slot
                       name="message-actions"
                       :message="displayItem.message"
@@ -155,7 +168,10 @@
                     :mention="mentionConfig"
                   />
                 </template>
-                <div v-if="!row.displayItems.length && row.conv.run" class="chat-inline-notice">
+                <div
+                  v-if="shouldShowEmptyRunStatus(row.displayItems, row.conv.run)"
+                  class="chat-inline-notice"
+                >
                   {{ formatEmptyRunStatus(row.conv.run.status) }}
                 </div>
                 <AgentArtifactsCard
@@ -198,7 +214,7 @@
           <div
             ref="messageInputDockRef"
             class="bottom"
-            :class="{ 'start-screen': isNewConversation }"
+            :class="{ 'start-screen': isNewConversation && !$slots['empty-state'] }"
           >
             <div class="message-input-wrapper">
               <!-- 加载状态：加载消息 -->
@@ -208,7 +224,7 @@
               </div>
 
               <!-- 打招呼区域 - 在输入框上方 -->
-              <div v-if="isNewConversation" class="chat-greeting-input">
+              <div v-if="isNewConversation && !$slots['empty-state']" class="chat-greeting-input">
                 <h1 class="research-theme-title">{{ randomGreeting }}</h1>
               </div>
 
@@ -277,6 +293,10 @@
                 </div>
               </section>
 
+              <div v-if="editingQuestion" class="editing-question-banner" role="status">
+                <span>正在修改最近的问题，发送后将替换原问答及其反馈。</span>
+                <button type="button" @click="cancelQuestionEdit">取消编辑</button>
+              </div>
               <div
                 class="message-input-stage"
                 :class="{ 'has-tool-approval': currentToolApprovalVisible }"
@@ -317,7 +337,7 @@
                     <template #extra>
                       <ProjectSelectionSection
                         upward
-                        v-if="!currentChatId"
+                        v-if="showProjectSelector && !currentChatId"
                         v-model="selectedProjectId"
                         :disabled="threadCreationInFlight"
                       />
@@ -906,10 +926,13 @@ import {
   ListCollapse,
   Play,
   RefreshCw,
+  SquarePen,
   Trash2
 } from '@lucide/vue'
 import FileTypeIcon from '@/components/common/FileTypeIcon.vue'
 import { generatePixelAvatar } from '@/utils/pixelAvatar'
+import { normalizeConversationTitle } from '@/utils/conversationTitle'
+import { latestHumanMessage, truncateReplacedMessageBranch } from '@/utils/conversationMessages'
 import { CheckCircleOutlined, CloseCircleOutlined, SyncOutlined } from '@ant-design/icons-vue'
 import AgentInputArea from '@/components/AgentInputArea.vue'
 import ContextUsageRing from '@/components/ContextUsageRing.vue'
@@ -918,6 +941,7 @@ import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
 import AgentMessageComponent from '@/components/AgentMessageComponent.vue'
 import {
   formatEmptyRunStatus,
+  shouldShowEmptyRunStatus,
   groupConversationContinuations,
   isConversationSettled as isRunConversationSettled
 } from '@/utils/conversationProcessGrouping'
@@ -976,6 +1000,7 @@ import {
   getFloatingStatePanelMaxHeight
 } from '@/utils/statePanelLayout'
 import { AUTO_PROJECT_ID } from '@/utils/projectSelection'
+import { projectApi } from '@/apis/project_api'
 import { createSingleFlight } from '@/utils/singleFlight'
 import { createThreadForContext } from '@/utils/threadCreation'
 import {
@@ -999,6 +1024,7 @@ import { matchSlashCommand, slashCommandRunMeta } from '@/utils/slashCommands'
 const props = defineProps({
   agentId: { type: String, default: '' },
   initialProjectId: { type: String, default: '' },
+  showProjectSelector: { type: Boolean, default: true },
   draftScope: { type: String, default: DEFAULT_DRAFT_SCOPE },
   isNewConversation: { type: Boolean, required: true },
   singleMode: { type: Boolean, default: true },
@@ -1033,7 +1059,7 @@ const sendCooldownActive = ref(false)
 const cancellingRequestIds = reactive(new Set())
 const steeringRequestIds = reactive(new Set())
 let sendCooldownTimer = null
-const randomGreeting = '智启新境 · 探索装备未来'
+const randomGreeting = '智启新境 · 探索未来'
 
 // 业务状态（保留在组件本地）
 const chatState = reactive({
@@ -2407,6 +2433,28 @@ const conversationRows = computed(() => {
   return rows
 })
 
+const editingQuestion = ref(null)
+let draftBeforeQuestionEdit = ''
+const latestQuestion = computed(() => latestHumanMessage(conversations.value))
+const canEditLatestQuestion = (item) => {
+  const latest = latestQuestion.value
+  return !props.sendDisabled && item.type === 'human' && Boolean(String(item.content || '').trim()) &&
+    Boolean(item.id) &&
+    Boolean(latest && (item === latest || (item.id && item.id === latest.id)))
+}
+const editLatestQuestion = async (item) => {
+  if (!canEditLatestQuestion(item) || isProcessing.value || isWaitingForUserAction.value || isLoadingMessages.value || sendCooldownActive.value) return
+  if (!editingQuestion.value) draftBeforeQuestionEdit = userInput.value
+  editingQuestion.value = item
+  await submitPrompt(item.content, { send: false })
+}
+const cancelQuestionEdit = () => {
+  userInput.value = draftBeforeQuestionEdit
+  editingQuestion.value = null
+  draftBeforeQuestionEdit = ''
+  agentInputAreaRef.value?.focus()
+}
+
 const isLoadingMessages = computed(() => chatUIStore.isLoadingMessages)
 const isStreaming = computed(() => {
   const threadState = currentThreadState.value
@@ -2490,6 +2538,10 @@ const isReplyLoading = computed(() => {
 const replyLoadingText = computed(() => {
   const threadState = currentThreadState.value
   if (threadState?.contextCompressing) return '正在压缩上下文...'
+  if (threadState?.agentProgress?.status === 'waiting') {
+    const seconds = Math.max(0, Math.round(Number(threadState.agentProgress.elapsed_seconds) || 0))
+    return `模型正在处理当前步骤（已等待 ${seconds}s）...`
+  }
   if (hasQueuedRequests.value) return `排队中（${queuedRequestCount.value} 条）...`
   return '正在生成回复...'
 })
@@ -2898,13 +2950,14 @@ const createThread = async (agentId, title = '新的对话', projectId = '', req
   if (!agentId) return null
 
   try {
+    const resolvedProjectId = projectId || (await projectApi.ensureEquipmentProject()).id
     const thread = await chatThreadsStore.createThread(
       agentId,
       title,
       { tool_approval_mode: currentToolApprovalMode.value },
       {
         requestId,
-        projectId: projectId || undefined
+        projectId: resolvedProjectId
       }
     )
     if (thread) {
@@ -3351,6 +3404,8 @@ const selectThreadFromRoute = async (threadId) => {
 
 const handleSendMessage = async ({ image, queuePolicy = 'enqueue' } = {}) => {
   const text = userInput.value.trim()
+  const editedQuestion = editingQuestion.value
+  const replaceMessageId = editedQuestion?.id ? Number(editedQuestion.id) : null
   const slashCommand = matchSlashCommand(text, props.slashCommands)
   const slashRunMeta = slashCommandRunMeta(text, props.slashCommands)
   const imageContent = image?.imageContent || null
@@ -3468,6 +3523,7 @@ const handleSendMessage = async ({ image, queuePolicy = 'enqueue' } = {}) => {
       image_content: imageContent,
       model_spec: modelSpec,
       tool_approval_mode: toolApprovalMode,
+      replace_message_id: replaceMessageId,
       queue_policy: queuePolicy
     })
     emit('run-submitted', {
@@ -3477,6 +3533,17 @@ const handleSendMessage = async ({ image, queuePolicy = 'enqueue' } = {}) => {
       status: runResp?.status || ''
     })
     const status = runResp?.status
+    if (status !== 'rejected' && currentChatId.value === threadId) {
+      if (replaceMessageId) {
+        const persistedMessages = threadMessages.value[threadId] || []
+        threadMessages.value[threadId] = truncateReplacedMessageBranch(
+          persistedMessages,
+          replaceMessageId
+        )
+      }
+      editingQuestion.value = null
+      draftBeforeQuestionEdit = ''
+    }
     const runId = runResp?.run_id
     const sendingRequest = threadState.queuedRequests.find(
       (request) => request.request_id === requestId
@@ -3553,8 +3620,9 @@ const handleSendMessage = async ({ image, queuePolicy = 'enqueue' } = {}) => {
         message.error('审批状态恢复失败，请刷新页面后重试')
       }
     }
-    if (queuePolicy === 'steer' && currentChatId.value === threadId && !userInput.value) {
+    if (currentChatId.value === threadId && !userInput.value) {
       userInput.value = text
+      agentInputAreaRef.value?.restoreImage?.(image)
     }
     handleChatError(error, 'send')
   }
@@ -3716,7 +3784,11 @@ const submitPrompt = async (text, { send = true, onlyIfEmpty = false } = {}) => 
   if (!content) return false
   if (onlyIfEmpty && userInput.value.trim()) return false
   userInput.value = content
-  if (!send) return true
+  if (!send) {
+    await nextTick()
+    agentInputAreaRef.value?.focus()
+    return true
+  }
   await nextTick()
   await handleSendMessage()
   return true
@@ -4053,6 +4125,8 @@ watch(
 )
 
 watch(currentChatId, (threadId, oldThreadId) => {
+  editingQuestion.value = null
+  draftBeforeQuestionEdit = ''
   if (threadId === oldThreadId) return
   // 旧线程已被删除时丢弃输入草稿，避免写入无法再次访问的孤儿缓存
   const keepInput = !oldThreadId || threads.value.some((thread) => thread.id === oldThreadId)
@@ -4074,6 +4148,11 @@ watch(currentChatId, (threadId, oldThreadId) => {
 </script>
 
 <style lang="less" scoped>
+.edit-question-button:disabled { opacity: 0.5; cursor: wait; }
+.editing-question-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; color: var(--gray-700); background: var(--main-50); border-radius: 10px; font-size: 12px; }
+.editing-question-banner button { flex-shrink: 0; border: 0; background: transparent; color: var(--main-color); cursor: pointer; }
+.edit-question-button:focus-visible, .editing-question-banner button:focus-visible { outline: 2px solid var(--main-color); outline-offset: 3px; }
+
 @import '@/assets/css/main.css';
 @import '@/assets/css/animations.less';
 @import '@/components/composerStyles.less';
@@ -4234,6 +4313,10 @@ watch(currentChatId, (threadId, oldThreadId) => {
     }
   }
 }
+
+.chat-main.has-welcome { padding-top: clamp(12px, 3vh, 32px); }
+.chat-main.has-welcome .chat-box { flex-grow: 0; }
+.chat-main.has-welcome .bottom { position: relative; background: transparent; padding-bottom: 24px; z-index: 1; }
 
 .chat-content-container {
   flex: 1;
@@ -4800,6 +4883,10 @@ watch(currentChatId, (threadId, oldThreadId) => {
     border-top: none;
     z-index: 100; /* Ensure it's above other elements */
   }
+}
+
+@media (max-width: 520px) {
+  .bottom .input-model-selector { max-width: 112px; }
 }
 
 .loading-dots {

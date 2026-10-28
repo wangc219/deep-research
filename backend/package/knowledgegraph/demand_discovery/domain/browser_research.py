@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from knowledgegraph.demand_discovery.domain.models import SerializableDataclass
@@ -55,13 +55,9 @@ class BrowserRecipeDraft(SerializableDataclass):
 
     def __post_init__(self) -> None:
         if self.review_status not in BROWSER_RECIPE_REVIEW_STATUSES:
-            raise ValueError(
-                f"unknown BrowserRecipeDraft review_status: {self.review_status}"
-            )
+            raise ValueError(f"unknown BrowserRecipeDraft review_status: {self.review_status}")
         if self.output_type not in BROWSER_RECIPE_OUTPUT_TYPES:
-            raise ValueError(
-                f"unknown BrowserRecipeDraft output_type: {self.output_type}"
-            )
+            raise ValueError(f"unknown BrowserRecipeDraft output_type: {self.output_type}")
         if self.output_type == "api_candidate" and self.api_candidate is None:
             raise ValueError("BrowserRecipeDraft api_candidate is required")
 
@@ -111,4 +107,4 @@ def _parse_datetime(value: Any) -> datetime:
         return value
     if isinstance(value, str) and value:
         return datetime.fromisoformat(value)
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

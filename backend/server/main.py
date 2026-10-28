@@ -29,7 +29,8 @@ from platform_core.config.environment import deep_research_env
 # 设置日志配置
 setup_logging()
 
-RATE_LIMIT_MAX_ATTEMPTS = 10
+# 同一办公出口允许多用户同时登录；失败滑动窗口和账号锁定仍由 Redis/数据库执行。
+RATE_LIMIT_MAX_ATTEMPTS = 32
 RATE_LIMIT_WINDOW_SECONDS = 60
 RATE_LIMIT_ENDPOINTS = {("/api/auth/token", "POST")}
 DEFAULT_DEVELOPMENT_CORS_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
@@ -92,6 +93,7 @@ app = FastAPI(lifespan=lifespan)
 # 所有业务接口统一挂载到 /api，具体分组在 server.routers 中集中注册。
 app.include_router(router, prefix="/api")
 from server.utils.enterprise_middleware import EnterpriseMiddleware
+
 app.add_middleware(EnterpriseMiddleware, run_loader=getattr(app.state, "platform_read_run", None))
 
 # CORS 设置

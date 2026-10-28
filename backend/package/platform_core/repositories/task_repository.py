@@ -19,22 +19,30 @@ class TaskRepository:
         async with pg_manager.get_async_session_context() as session:
             return await session.get(TaskRecord, task_id)
 
-    async def list(self, status: str | None = None, limit: int = 100) -> list[TaskRecord]:
+    async def list(
+        self, status: str | None = None, limit: int = 100, *, operator_id: str | None = None
+    ) -> list[TaskRecord]:
         async with pg_manager.get_async_session_context() as session:
             stmt = select(TaskRecord)
             if status:
                 stmt = stmt.where(TaskRecord.status == status)
+            if operator_id is not None:
+                stmt = stmt.where(TaskRecord.payload["operator_id"].as_string() == operator_id)
             active_first = case((TaskRecord.status.in_({"pending", "running"}), 0), else_=1)
             stmt = stmt.order_by(active_first, TaskRecord.created_at.desc()).limit(max(limit, 0))
             return list((await session.execute(stmt)).scalars().all())
 
-    async def summarize(self, *, status: str | None = None) -> dict[str, Any]:
+    async def summarize(self, *, status: str | None = None, operator_id: str | None = None) -> dict[str, Any]:
         """从完整 Task 表计算列表摘要，不受返回 limit 影响。"""
         async with pg_manager.get_async_session_context() as session:
-            status_rows = (
-                await session.execute(select(TaskRecord.status, func.count()).group_by(TaskRecord.status))
-            ).all()
-            type_rows = (await session.execute(select(TaskRecord.type, func.count()).group_by(TaskRecord.type))).all()
+            statuses = select(TaskRecord.status, func.count()).group_by(TaskRecord.status)
+            types = select(TaskRecord.type, func.count()).group_by(TaskRecord.type)
+            if operator_id is not None:
+                owned = TaskRecord.payload["operator_id"].as_string() == operator_id
+                statuses = statuses.where(owned)
+                types = types.where(owned)
+            status_rows = (await session.execute(statuses)).all()
+            type_rows = (await session.execute(types)).all()
             total = sum(int(count) for _value, count in status_rows)
             filtered_total = total
             if status is not None:

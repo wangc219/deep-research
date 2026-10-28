@@ -68,9 +68,7 @@ def test_collect_stream_keeps_empty_tools_on_the_legacy_single_turn_path() -> No
 def test_collect_stream_does_not_execute_tool_when_model_answers_directly() -> None:
     calls: list[str] = []
 
-    async def lookup(
-        call: ToolCall, context: ToolExecutionContext
-    ) -> ToolResult:
+    async def lookup(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         del context
         calls.append(call.call_id)
         return ToolResult(call.call_id, "unexpected")
@@ -112,9 +110,7 @@ def test_collect_stream_does_not_execute_tool_when_model_answers_directly() -> N
 def test_collect_stream_runs_one_tool_round_then_hides_all_tools() -> None:
     observed: list[tuple[dict, dict]] = []
 
-    async def lookup(
-        call: ToolCall, context: ToolExecutionContext
-    ) -> ToolResult:
+    async def lookup(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         observed.append((call.to_plain(), context.to_plain()))
         return ToolResult(
             call.call_id,
@@ -233,9 +229,7 @@ def test_collect_stream_runs_one_tool_round_then_hides_all_tools() -> None:
 def test_collect_stream_does_not_offer_or_execute_tools_for_unsupported_provider() -> None:
     calls: list[str] = []
 
-    async def lookup(
-        call: ToolCall, context: ToolExecutionContext
-    ) -> ToolResult:
+    async def lookup(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         del context
         calls.append(call.call_id)
         return ToolResult(call.call_id, "unexpected")
@@ -244,9 +238,7 @@ def test_collect_stream_does_not_offer_or_execute_tools_for_unsupported_provider
         def capabilities(self) -> ProviderCapabilities:
             return ProviderCapabilities(streaming=True, function_tools=False)
 
-    backend = UnsupportedProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text="fallback answer"))]]
-    )
+    backend = UnsupportedProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text="fallback answer"))]])
     host = ResponsesAgentProvider(backend)
 
     text, metadata = asyncio.run(
@@ -268,9 +260,7 @@ def test_collect_stream_does_not_offer_or_execute_tools_for_unsupported_provider
 def test_collect_stream_never_executes_a_second_round_tool_request() -> None:
     calls: list[str] = []
 
-    async def lookup(
-        call: ToolCall, context: ToolExecutionContext
-    ) -> ToolResult:
+    async def lookup(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         del context
         calls.append(call.call_id)
         return ToolResult(call.call_id, "first result")
@@ -279,24 +269,14 @@ def test_collect_stream_never_executes_a_second_round_tool_request() -> None:
         [
             [
                 ProviderStreamEvent.final(
-                    ProviderFinalTurn(
-                        tool_calls=[
-                            ProviderToolCall(
-                                "call-1", "lookup_knowledge", {"query": "first"}
-                            )
-                        ]
-                    )
+                    ProviderFinalTurn(tool_calls=[ProviderToolCall("call-1", "lookup_knowledge", {"query": "first"})])
                 )
             ],
             [
                 ProviderStreamEvent.final(
                     ProviderFinalTurn(
                         text="bounded answer",
-                        tool_calls=[
-                            ProviderToolCall(
-                                "call-2", "lookup_knowledge", {"query": "second"}
-                            )
-                        ],
+                        tool_calls=[ProviderToolCall("call-2", "lookup_knowledge", {"query": "second"})],
                     )
                 )
             ],
@@ -318,3 +298,39 @@ def test_collect_stream_never_executes_a_second_round_tool_request() -> None:
     assert len(backend.inputs) == 2
     assert backend.inputs[1][1] == ()
     assert metadata["tool_loop_turns"] == 2
+
+
+def test_structured_phase_controls_reasoning_without_progress_subscriber() -> None:
+    """没有进度订阅时，S5 阶段仍必须取得可解析正文并保留调用参数。"""
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"decisions":[]}'))]])
+    backend.provider_type = "chat_completions"
+    host = ResponsesAgentProvider(backend)
+    options = {"phase": "winning_swarm_dynamic_portfolio_review_fast", "max_output_tokens": 8000}
+    text, _ = asyncio.run(host._collect_stream(backend, [], options))
+    assert text == '{"decisions":[]}'
+    sent = backend.inputs[0][2]
+    assert sent["_disable_hidden_reasoning"] is True
+    assert sent["phase"] == options["phase"] and sent["max_output_tokens"] == 8000
+
+
+def test_progress_phase_reaches_provider_usage_and_bounds_source_anchor_reasoning():
+    """进度中的阶段既控制正文预算，也必须进入供应商计量，调用者原参数不变。"""
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text="来源线索待核验"))]])
+    backend.provider_type = "chat_completions"
+    host = ResponsesAgentProvider(backend)
+    options = {"max_output_tokens": 900, "_provider_timeout_seconds": 20}
+    text, _ = asyncio.run(
+        host._collect_stream(
+            backend,
+            [],
+            options,
+            progress={"phase": "source_anchor_reasoning", "run_id": "phase-test", "agent_id": "anchor"},
+        )
+    )
+    sent = backend.inputs[0][2]
+    assert text == "来源线索待核验"
+    assert sent["phase"] == "source_anchor_reasoning"
+    assert sent["_run_id"] == "phase-test"
+    assert sent["_disable_hidden_reasoning"] is True
+    assert sent["_provider_timeout_seconds"] == 20
+    assert options == {"max_output_tokens": 900, "_provider_timeout_seconds": 20}

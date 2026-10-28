@@ -6,6 +6,7 @@ import {
   buildDivergenceExamplePatch,
   buildResearchRunPayload,
   createKnowledgeScope,
+  generationErrorSummary,
   indexQueriesById,
   inheritKnowledgeScope,
   normalizePagedResult,
@@ -97,6 +98,7 @@ test('research payload preserves Query lineage, knowledge scope, and selected mo
   assert.equal(payload.source_query_version, 3)
   assert.deepEqual(payload.knowledge_ids, [])
   assert.deepEqual(payload.execution, { model_spec: 'openai/gpt-test' })
+  assert.equal(payload.execution_profile_id, 'winning_swarm_dynamic_v2')
 })
 
 test('研究任务 API 将 Query 的知识范围与来源版本写入后端契约', async () => {
@@ -127,6 +129,13 @@ test('Query 生成数量与后端最多 12 条的契约一致', async () => {
   assert.doesNotMatch(source, /v-for="count in \[[^\]]*(?:16|20)/)
 })
 
+test('Query 发现页标题保持简洁并聚焦技术与能力研究', async () => {
+  const source = await readFile(new URL('../../src/views/equipment/EquipmentQueriesView.vue', import.meta.url), 'utf8')
+  assert.match(source, /<h1>从安全态势发现研究命题<\/h1>/)
+  assert.match(source, /聚焦当前安全态势与未来军事需求，牵引关键技术方向与能力研究，评估战略制衡价值。/)
+  assert.doesNotMatch(source, /从中国安全态势发现装备研究命题/)
+})
+
 test('Query 全生命周期只使用统一装备平台 API', async () => {
   const source = await readFile(new URL('../../src/apis/equipment_api.js', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /\/api\/v1\/query-library/)
@@ -134,10 +143,11 @@ test('Query 全生命周期只使用统一装备平台 API', async () => {
   assert.match(source, /\/api\/equipment\/query-generations/)
 })
 
-test('Query 创建与生成显式绑定当前平台项目', async () => {
+test('Query 创建与生成允许省略项目，由服务端归入个人默认项目', async () => {
   const source = await readFile(new URL('../../src/views/equipment/EquipmentQueriesView.vue', import.meta.url), 'utf8')
-  assert.match(source, /equipmentApi\.generateQueries\(\{\s*project_id: runProjectId\.value,/)
-  assert.match(source, /equipmentApi\.createQuery\(\{\s*project_id: runProjectId\.value,/)
+  assert.doesNotMatch(source, /runProjectId|query-project-picker|projectsStore/)
+  assert.match(source, /equipmentApi\.createQuery\(payload\)/)
+  assert.doesNotMatch(source, /请先选择 Query 所属项目/)
 })
 
 test('generated Query inherits its generation model and filters are deterministic', () => {
@@ -145,4 +155,30 @@ test('generated Query inherits its generation model and filters are deterministi
   assert.equal(queryLineageModelSpec(query, [{ generation_id: 'g1', model_config: { model_spec: 'model-x' } }], 'fallback'), 'model-x')
   assert.equal(queryMatchesFilters(query, { search: '蜂群', status: 'draft', sourceType: 'agent' }), true)
   assert.equal(queryMatchesFilters(query, { search: '海上', status: 'draft', sourceType: 'agent' }), false)
+})
+
+test('Query 阶段以中文呈现并展示已保存进度', async () => {
+  const { generationProgressText } = await import('../../src/utils/equipmentQueries.js')
+  assert.equal(generationProgressText({ stage: 'demand_divergence', requested_count: 6, result_query_ids: ['a', 'b'] }), '梳理候选研究方向 · 已保存 2/6')
+  assert.equal(generationProgressText({ stage: 'query_generation', count: 6, query_ids: ['a'] }), '多维发散生成需求选题 · 已保存 1/6')
+  assert.equal(generationProgressText({ stage: 'queued' }), '等待生成 Worker')
+})
+
+test('Query 进度展示耗时、请求、修复批次与恢复数量', async () => {
+  const { generationProgressText } = await import('../../src/utils/equipmentQueries.js')
+  const text = generationProgressText({
+    stage: 'query_generation', count: 6, query_ids: ['a', 'b'],
+    batch_progress: { elapsed_seconds: 12.4, request_batches: 3, repair_batches: 1, restored_count: 2 }
+  })
+  assert.match(text, /已保存 2\/6.*耗时 12 秒.*请求 3 批 \/ 修复 1 批.*恢复 2 条/)
+})
+
+test('Query 失败原因转为用户可执行的中文说明', () => {
+  const summary = generationErrorSummary({
+    error: '仅 0/4 条通过校验；query is outside the supported weapon-equipment capability domain; query is not anchored to its weapon requirement'
+  })
+  assert.match(summary, /质量校验未通过/)
+  assert.match(summary, /装备领域关键词/)
+  assert.match(summary, /共享核心对象/)
+  assert.doesNotMatch(summary, /weapon-equipment/)
 })

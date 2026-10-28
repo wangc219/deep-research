@@ -45,6 +45,21 @@ _TASK_DEFINITIONS = {
     definition.task_type: definition
     for definition in (
         TaskDefinition(
+            "wxchannels_discover",
+            "platform_core.services.video_collector_service",
+            "run_personal_video_discovery",
+        ),
+        TaskDefinition(
+            "wxchannels_central_discover",
+            "platform_core.services.wxchannels_service",
+            "run_central_video_discovery",
+        ),
+        TaskDefinition(
+            "wxchannels_transcribe",
+            "platform_core.services.wxchannels_service",
+            "run_wxchannels_transcribe",
+        ),
+        TaskDefinition(
             "knowledge_ingest",
             "platform_core.services.knowledge_task_service",
             "run_knowledge_ingest",

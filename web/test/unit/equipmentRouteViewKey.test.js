@@ -70,7 +70,7 @@ test('装备深研复用平台原生聊天内核并保留领域扩展槽位', ()
   assert.match(nativeChat, /run-submitted/)
 })
 
-test('研究焦点区分绑定装备深化与显式新质发散', () => {
+test('深研从空白问题出发，绑定和高级设置折叠，装备选择不预写提示词', () => {
   const deepView = readFileSync(
     new URL('../../src/views/equipment/EquipmentDeepThinkingView.vue', import.meta.url),
     'utf8'
@@ -79,15 +79,24 @@ test('研究焦点区分绑定装备深化与显式新质发散', () => {
     new URL('../../src/utils/equipmentDeepPortraitSections.js', import.meta.url),
     'utf8'
   )
-
-  assert.match(deepView, /research_mode === 'section_deepen'/)
-  assert.match(deepView, /research_mode === 'new_weapon_diverge'/)
-  assert.match(deepView, /不预设单一装备形态、技术路线或固定结论/)
-  assert.match(deepView, /'研究焦点（锁定装备）'\s*:\s*'研究焦点（开放发散）'/)
-  assert.match(seedSource, /保持装备身份不变/)
-  assert.match(seedSource, /关键技术卡点、工程痛点、指标耦合和系统集成难题/)
-  assert.match(seedSource, /证据缺口、失效边界和验证动作只在确实影响方案成立或研发决策时补充/)
-  assert.match(seedSource, /显式切换到新质发散模式才生成新装备候选/)
+  assert.match(deepView, /aria-label="研究问题"/)
+  assert.match(deepView, /v-model:open="bindingTreeOpen"/)
+  assert.match(deepView, /class="conversation-research-settings"/)
+  assert.match(deepView, /aria-label="选择研究智能体"/)
+  assert.match(deepView, /<ModelSelectorComponent[\s\S]*?size="nano"[\s\S]*?display-name="mini"/)
+  assert.match(
+    deepView,
+    /pendingInitialQuestion\.value = \{ sessionId: created\.session_id, text: form\.value\.topic\.trim\(\) \}/
+  )
+  assert.match(deepView, /initialQuestion\?\.sessionId === requestedSessionId/)
+  assert.match(deepView, /submitPrompt\(initialQuestion\.text\)/)
+  assert.match(deepView, /const isLegacyGeneratedLaunchPrompt = \(value\) =>/)
+  assert.match(deepView, /draft\.topic = ''/)
+  assert.doesNotMatch(deepView, /suggestedEquipmentTopic|const nextTopic/)
+  assert.match(deepView, /aria-label="能力画像五栏"/)
+  assert.match(deepView, /v-for="section in selectedEquipmentPortraitSections"/)
+  assert.match(deepView, /@click="startPortraitSectionResearch\(section\)"/)
+  assert.match(seedSource, /根据本栏目标自主选择研究路径和回答形式/)
   assert.match(seedSource, /允许突破原装备身份、任务链与作用机理/)
 })
 
@@ -167,7 +176,8 @@ test('研究任务与深研对话共享 run 上下文并提供双向入口', () 
   )
 
   assert.match(deepView, /form\.value\.run_id = requestedRun\.run_id/)
-  assert.match(deepView, /class="linked-run-banner"/)
+  assert.match(deepView, /class="conversation-binding-trigger"/)
+  assert.match(deepView, /selectedEquipmentName \|\| selectedRun\.topic \|\| '当前 Query'/)
   assert.match(deepView, /返回研究任务/)
   assert.match(deepView, /openRunWorkspace\('capabilities'\)/)
   assert.match(deepView, /query: runId \? \{ run: runId \} : \{\}/)
@@ -175,6 +185,15 @@ test('研究任务与深研对话共享 run 上下文并提供双向入口', () 
   assert.match(runsView, /继续深研.*发起深研/)
   assert.match(runsView, /openArtifact\(run, 'deep-thinking'\)/)
   assert.match(runsView, /\/equipment\/deep-thinking\?run=/)
+})
+
+test('研究任务由后端归入个人工作台，前端无需绑定项目', () => {
+  const runsView = readFileSync(
+    new URL('../../src/views/equipment/EquipmentRunsView.vue', import.meta.url), 'utf8'
+  )
+  assert.doesNotMatch(runsView, /research-project-picker|form\.project_id|projectsStore/)
+  assert.match(runsView, /:disabled="!form\.topic\.trim\(\) \|\| creating"/)
+  assert.match(runsView, /execution_profile_id: 'winning_swarm_dynamic_v2'/)
 })
 
 test('Vue 装备工作台不再从 React 工程加载运行时资源', () => {

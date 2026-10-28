@@ -54,7 +54,12 @@ from equipment_deep_research.domain.proposals import DomainWriteProposal, TraceP
 from equipment_deep_research.domain.store import DomainStore, SqliteRunStore, TraceStore
 from equipment_deep_research.domain.workspace import RunWorkspace, path_from_fd
 from equipment_deep_research.harness.context import compact_packet_handoff
-from equipment_deep_research.agents.workflows.shared_context import query_domain_contract
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_contract,
+    reconcile_discovery_blueprint_domain,
+    sanitize_mission_artifact,
+    sanitize_mission_narrative_text,
+)
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
 from equipment_deep_research.harness.recovery import RecoveryManager
 from equipment_deep_research.harness.scheduler import DiscoveryScheduler, WorkerReport
@@ -137,6 +142,8 @@ _DEEP_DIVERGENCE_STEP_MODES = {
     5: "skip",
     6: "deep",
 }
+
+
 def merge_enterprise_knowledge_context(
     supplemental_information: str,
     enterprise_knowledge_context: str,
@@ -159,11 +166,7 @@ def build_deep_parent_context(
     except (TypeError, ValueError, json.JSONDecodeError):
         decoded = {}
     context = (
-        {
-            key: decoded[key]
-            for key in ("parent_run_id", "hypothesis_id", "candidate", "focus")
-            if key in decoded
-        }
+        {key: decoded[key] for key in ("parent_run_id", "hypothesis_id", "candidate", "focus") if key in decoded}
         if isinstance(decoded, Mapping)
         else {}
     )
@@ -194,6 +197,18 @@ def _enforce_deep_divergence_step_modes(blueprint: dict[str, Any]) -> None:
     contract = blueprint.get("execution_contract")
     if isinstance(contract, dict):
         contract["step_intensity"] = dict(modes)
+
+
+def _mission_public_artifact(
+    discovery_blueprint: Mapping[str, Any],
+    value: Any,
+) -> Any:
+    """在报告提示与公开物化阶段统一执行非战斗任务语义边界。"""
+
+    domain = discovery_blueprint.get("query_domain_contract", {})
+    if isinstance(domain, Mapping) and str(domain.get("mode", "")) == "mission_equipment":
+        return sanitize_mission_artifact(value)
+    return value
 
 
 def _bounded_scope_value(value: Any, *, limit: int = 160) -> str:
@@ -239,6 +254,8 @@ def _normalize_evolution_scope(
         "route": _bounded_scope_value(route, limit=120),
         "stage_scope": _normalized_stage_scope(stage_scope),
     }
+
+
 PRIMARY_BUSINESS_AGENT_IDS = {
     "international_situation",
     "combat_scenario",
@@ -298,16 +315,10 @@ def _baseline_wave_concurrency(
         try:
             limit = int(configured)
         except ValueError as exc:
-            raise ValueError(
-                "EQUIPMENT_DR_BASELINE_WAVE_CONCURRENCY must be a positive integer"
-            ) from exc
+            raise ValueError("EQUIPMENT_DR_BASELINE_WAVE_CONCURRENCY must be a positive integer") from exc
     else:
         runtime_budgets = discovery_blueprint.get("runtime_budgets", {})
-        limit = int(
-            runtime_budgets.get("codex_concurrency", 4)
-            if isinstance(runtime_budgets, Mapping)
-            else 4
-        )
+        limit = int(runtime_budgets.get("codex_concurrency", 4) if isinstance(runtime_budgets, Mapping) else 4)
     if limit < 1:
         raise ValueError("baseline wave concurrency must be positive")
     return min(wave_size, limit)
@@ -318,9 +329,7 @@ def _failure_handoff_candidates(
     registry: AgentRegistry,
 ) -> list[str]:
     required = set(failed_agent.capability_tags)
-    published_targets = {
-        str(item) for item in failed_agent.handoff_policy.get("publish_to", [])
-    }
+    published_targets = {str(item) for item in failed_agent.handoff_policy.get("publish_to", [])}
     candidates = [
         agent
         for agent in registry.enabled_baseline_agents()
@@ -373,17 +382,11 @@ def _failure_handoff(
         max_string_length=512,
     )
     envelope = AgentMessageEnvelope(
-        message_id=(
-            f"handoff-failed-{agent.agent_id}-w{wave_index}-r{resume_count}"
-        ),
+        message_id=(f"handoff-failed-{agent.agent_id}-w{wave_index}-r{resume_count}"),
         message_type="handoff_ready",
         sender=agent.agent_id,
         recipient=candidates[0] if candidates else "orchestrator",
-        object_refs=[
-            item
-            for item in [report.packet_id, *report.new_evidence_ids]
-            if item
-        ],
+        object_refs=[item for item in [report.packet_id, *report.new_evidence_ids] if item],
         payload=dict(safe_payload),
         capability_tags=list(dict.fromkeys(agent.capability_tags)),
         status="failed",
@@ -397,9 +400,7 @@ def _failure_handoff(
 def _admitted_packet_snapshot(store: DomainStore) -> list[Any]:
     """Legacy packets have no status and remain eligible; v2 rejections do not."""
     return [
-        packet
-        for packet in store.baseline_packet_snapshot()
-        if getattr(packet, "admission_status", "") != "rejected"
+        packet for packet in store.baseline_packet_snapshot() if getattr(packet, "admission_status", "") != "rejected"
     ]
 
 
@@ -512,12 +513,8 @@ def _model_audit_payload(
     return {
         "topic": _compact_text_value(topic, 320),
         "research_route": _compact_text_value(route, 80),
-        "execution_profile_id": _compact_text_value(
-            discovery_blueprint.get("execution_profile_id", ""), 80
-        ),
-        "discovery_branch": _compact_text_value(
-            discovery_blueprint.get("primary_branch", ""), 40
-        ),
+        "execution_profile_id": _compact_text_value(discovery_blueprint.get("execution_profile_id", ""), 80),
+        "discovery_branch": _compact_text_value(discovery_blueprint.get("primary_branch", ""), 40),
         "audit_criteria": ["创新前瞻", "新质性", "科学性", "可实现性"],
         "audit_scope": (
             "前瞻创新模式：S6能力画像只判断创新前瞻、新质性、科学性、可实现性；"
@@ -555,7 +552,9 @@ def _apply_model_audit_result(audit: Any, review: Mapping[str, Any]) -> Any:
         raw_status = str(review.get("release_recommendation", "")).strip().lower()
     # Pending is an internal transport/review state, not a user-facing
     # outcome. Keep delivery moving with a bounded, reviewable result.
-    status = "limited" if raw_status == "pending" else raw_status if raw_status in {"approved", "limited"} else "limited"
+    status = (
+        "limited" if raw_status == "pending" else raw_status if raw_status in {"approved", "limited"} else "limited"
+    )
 
     raw_checks = review.get("substantive_checks", {})
     model_checks: dict[str, bool] = {}
@@ -563,9 +562,7 @@ def _apply_model_audit_result(audit: Any, review: Mapping[str, Any]) -> Any:
         for key in _MODEL_AUDIT_CHECK_KEYS:
             value = raw_checks.get(key)
             if isinstance(value, str):
-                model_checks[key] = value.strip().lower() in {
-                    "true", "pass", "passed", "approved", "yes", "是", "通过"
-                }
+                model_checks[key] = value.strip().lower() in {"true", "pass", "passed", "approved", "yes", "是", "通过"}
             elif isinstance(value, (bool, int, float)):
                 model_checks[key] = bool(value)
 
@@ -591,14 +588,8 @@ def _apply_model_audit_result(audit: Any, review: Mapping[str, Any]) -> Any:
         "阶段门",
         "门控",
     )
-    blockers = [
-        item for item in raw_blockers
-        if not any(term.lower() in item.lower() for term in mechanical_terms)
-    ]
-    mechanical_notes = [
-        item for item in raw_blockers
-        if any(term.lower() in item.lower() for term in mechanical_terms)
-    ]
+    blockers = [item for item in raw_blockers if not any(term.lower() in item.lower() for term in mechanical_terms)]
+    mechanical_notes = [item for item in raw_blockers if any(term.lower() in item.lower() for term in mechanical_terms)]
     advisories = _rows("advisories")
     if raw_status == "pending":
         advisories.append("模型返回待定，已按轻量S6业务审计标记为受限可审阅。")
@@ -609,16 +600,12 @@ def _apply_model_audit_result(audit: Any, review: Mapping[str, Any]) -> Any:
     comments = [
         str(item).strip()
         for item in getattr(audit, "comments", [])
-        if str(item).strip()
-        and "模型审计尚未返回" not in str(item)
-        and "不回退到机械审计结论" not in str(item)
+        if str(item).strip() and "模型审计尚未返回" not in str(item) and "不回退到机械审计结论" not in str(item)
     ]
     comments.extend(f"模型审计提示：{item}" for item in advisories)
     if risk_summary:
         comments.append(f"模型审计摘要：{risk_summary[:800]}")
-    comments.append(
-        f"模型审计完成，最终状态由模型给出：{status}。机械流程字段不参与结论。"
-    )
+    comments.append(f"模型审计完成，最终状态由模型给出：{status}。机械流程字段不参与结论。")
     checks = {
         **dict(getattr(audit, "checks", {}) or {}),
         "audit_status": status,
@@ -705,30 +692,18 @@ def _apply_frontier_innovation_policy(
         return audit
     blockers = [str(item).strip() for item in getattr(audit, "hard_blockers", []) if str(item).strip()]
     safety_blockers = [
-        item
-        for item in blockers
-        if any(marker.lower() in item.lower() for marker in _EXPLORATORY_SAFETY_MARKERS)
+        item for item in blockers if any(marker.lower() in item.lower() for marker in _EXPLORATORY_SAFETY_MARKERS)
     ]
     deferred = [
         item
         for item in blockers
         if item not in safety_blockers
-        and any(
-            marker.lower() in item.lower()
-            for marker in _EXPLORATORY_DEFERRED_VALIDATION_MARKERS
-        )
+        and any(marker.lower() in item.lower() for marker in _EXPLORATORY_DEFERRED_VALIDATION_MARKERS)
     ]
-    substantive_blockers = [
-        item
-        for item in blockers
-        if item not in safety_blockers and item not in deferred
-    ]
+    substantive_blockers = [item for item in blockers if item not in safety_blockers and item not in deferred]
     advisories = list(getattr(audit, "advisories", []) or [])
     if deferred:
-        advisories.extend(
-            f"前瞻创新模式：{item}；转为后续验证议题，不阻断启发性研究交付。"
-            for item in deferred
-        )
+        advisories.extend(f"前瞻创新模式：{item}；转为后续验证议题，不阻断启发性研究交付。" for item in deferred)
     retained_blockers = [*substantive_blockers, *safety_blockers]
     if retained_blockers:
         advisories.append("创新前瞻、新质性、科学性、可实现性或明确安全问题未通过，保留审计阻断。")
@@ -752,11 +727,7 @@ def _apply_frontier_innovation_policy(
     # blocker, while marking the dimensional audit as deferred for the next
     # run instead of fabricating a positive score.
     legacy_compatible = not assessed and not substantive_blockers and not safety_blockers
-    frontier_passed = (
-        all(bool(frontier_checks[key]) for key in _FRONTIER_AUDIT_KEYS)
-        if assessed
-        else legacy_compatible
-    )
+    frontier_passed = all(bool(frontier_checks[key]) for key in _FRONTIER_AUDIT_KEYS) if assessed else legacy_compatible
     # Missing proof is deferred, but the independent model must still
     # positively assess the four frontier dimensions before approval.
     status = "approved" if frontier_passed and not retained_blockers else "limited"
@@ -795,11 +766,7 @@ def _apply_frontier_innovation_policy(
 
 def _military_effects_for_text(text: str) -> list[str]:
     lowered = text.lower()
-    return [
-        label
-        for label, terms in _MILITARY_EFFECT_TERMS
-        if any(term.lower() in lowered for term in terms)
-    ]
+    return [label for label, terms in _MILITARY_EFFECT_TERMS if any(term.lower() in lowered for term in terms)]
 
 
 def _claim_downstream_steps(agent_id: str, text: str) -> list[str]:
@@ -828,12 +795,7 @@ def _military_claim_score(
     topic: str,
 ) -> float:
     lowered = text.lower()
-    topic_markers = [
-        term
-        for _, terms in _MILITARY_EFFECT_TERMS
-        for term in terms
-        if term.lower() in topic.lower()
-    ]
+    topic_markers = [term for _, terms in _MILITARY_EFFECT_TERMS for term in terms if term.lower() in topic.lower()]
     topic_overlap = sum(term.lower() in lowered for term in topic_markers[:8])
     mechanism_hits = sum(term in lowered for term in _MILITARY_MECHANISM_TERMS)
     score = (
@@ -858,9 +820,7 @@ def _claims_are_near_duplicates(left: str, right: str) -> bool:
 
 
 def _case_branch_products(packet: Any) -> dict[str, list[Any]]:
-    payload = getattr(packet, "payload", None) or getattr(
-        packet, "analysis_sections", {}
-    )
+    payload = getattr(packet, "payload", None) or getattr(packet, "analysis_sections", {})
     if not isinstance(payload, Mapping):
         return {}
     sources = {
@@ -889,8 +849,7 @@ def _case_branch_products(packet: Any) -> dict[str, list[Any]]:
             (
                 payload.get(source_key)
                 for source_key in source_keys
-                if isinstance(payload.get(source_key), list)
-                and payload.get(source_key)
+                if isinstance(payload.get(source_key), list) and payload.get(source_key)
             ),
             [],
         )
@@ -937,9 +896,7 @@ def _build_military_value_handoff(
                     "availability": "unavailable",
                     "limitations": list(packet.limitations)[:2],
                     "open_questions": list(packet.open_questions)[:2],
-                    "downstream_obligations": list(
-                        packet.payload.get("downstream_obligations", [])
-                    )[:3],
+                    "downstream_obligations": list(packet.payload.get("downstream_obligations", []))[:3],
                 }
             )
         if packet.agent_id == "case_research":
@@ -947,14 +904,8 @@ def _build_military_value_handoff(
         packet_payload = getattr(packet, "payload", {})
         packet_sections = getattr(packet, "analysis_sections", {})
         raw_inspirations = (
-            packet_payload.get("frontier_inspirations", [])
-            if isinstance(packet_payload, Mapping)
-            else []
-        ) or (
-            packet_sections.get("frontier_inspirations", [])
-            if isinstance(packet_sections, Mapping)
-            else []
-        )
+            packet_payload.get("frontier_inspirations", []) if isinstance(packet_payload, Mapping) else []
+        ) or (packet_sections.get("frontier_inspirations", []) if isinstance(packet_sections, Mapping) else [])
         if isinstance(raw_inspirations, Mapping):
             raw_inspirations = [raw_inspirations]
         elif not isinstance(raw_inspirations, list):
@@ -966,20 +917,13 @@ def _build_military_value_handoff(
             if isinstance(raw_urls, str):
                 raw_urls = [raw_urls]
             requested_urls = list(
-                dict.fromkeys(
-                    str(url)
-                    for url in raw_urls
-                    if str(url).startswith(("http://", "https://"))
-                )
+                dict.fromkeys(str(url) for url in raw_urls if str(url).startswith(("http://", "https://")))
             )
             evidence_ids = [
                 evidence_id
                 for evidence_id in packet.evidence_ids
                 if evidence_id in store.evidence
-                and (
-                    not requested_urls
-                    or store.evidence[evidence_id].source_url in requested_urls
-                )
+                and (not requested_urls or store.evidence[evidence_id].source_url in requested_urls)
             ][:3]
             frontier_inspirations.append(
                 {
@@ -992,15 +936,9 @@ def _build_military_value_handoff(
                     "possible_military_discontinuity": _compact_text_value(
                         item.get("possible_military_discontinuity"), 220
                     ),
-                    "query_relevance": _compact_text_value(
-                        item.get("query_relevance"), 180
-                    ),
-                    "evidence_boundary": _compact_text_value(
-                        item.get("evidence_boundary"), 220
-                    ),
-                    "downstream_question": _compact_text_value(
-                        item.get("downstream_question"), 220
-                    ),
+                    "query_relevance": _compact_text_value(item.get("query_relevance"), 180),
+                    "evidence_boundary": _compact_text_value(item.get("evidence_boundary"), 220),
+                    "downstream_question": _compact_text_value(item.get("downstream_question"), 220),
                     "evidence_ids": evidence_ids,
                     "source_urls": requested_urls[:2],
                     "status": "optional_post_divergence_inspiration",
@@ -1014,35 +952,22 @@ def _build_military_value_handoff(
             # new value contributed by the baseline Agent.
             effect_basis = text.replace(_compact_text_value(topic, 320), "")
             effects = _military_effects_for_text(effect_basis)
-            mechanism_hits = sum(
-                marker in effect_basis.lower()
-                for marker in _MILITARY_MECHANISM_TERMS
-            )
+            mechanism_hits = sum(marker in effect_basis.lower() for marker in _MILITARY_MECHANISM_TERMS)
             # Generic information lists do not enter the S-chain. A conclusion
             # must carry a military task effect, or at least combine a clear
             # causal mechanism with a military mission/体系 term.
             if not effects and mechanism_hits < 2:
                 continue
-            evidence_ids = [
-                evidence_id
-                for evidence_id in claim.evidence_ids
-                if evidence_id in store.evidence
-            ][:2]
+            evidence_ids = [evidence_id for evidence_id in claim.evidence_ids if evidence_id in store.evidence][:2]
             source_urls = [
                 store.evidence[evidence_id].source_url
                 for evidence_id in evidence_ids
-                if store.evidence[evidence_id].source_url.startswith(
-                    ("http://", "https://")
-                )
+                if store.evidence[evidence_id].source_url.startswith(("http://", "https://"))
             ][:1]
             if not source_urls:
                 source_urls = list(claim.source_urls[:1])
             boundary_source = next(
-                (
-                    item
-                    for item in list(getattr(packet, "limitations", []))
-                    if str(item).strip()
-                ),
+                (item for item in list(getattr(packet, "limitations", [])) if str(item).strip()),
                 "",
             )
             downstream_steps = _claim_downstream_steps(packet.agent_id, text)
@@ -1079,8 +1004,7 @@ def _build_military_value_handoff(
                 {
                     key: value
                     for key, value in candidate.items()
-                    if value not in (None, "", [], {})
-                    or key == "_selection_score"
+                    if value not in (None, "", [], {}) or key == "_selection_score"
                 }
             )
 
@@ -1095,12 +1019,7 @@ def _build_military_value_handoff(
     )
     deduplicated: list[dict[str, Any]] = []
     for candidate in ranked:
-        if any(
-            _claims_are_near_duplicates(
-                candidate["mechanism"], existing["mechanism"]
-            )
-            for existing in deduplicated
-        ):
+        if any(_claims_are_near_duplicates(candidate["mechanism"], existing["mechanism"]) for existing in deduplicated):
             continue
         deduplicated.append(candidate)
 
@@ -1125,18 +1044,13 @@ def _build_military_value_handoff(
             if item["source_agent_id"] == agent_id
             for effect in item.get("military_effects", [])
         }
-        adds_new_effect = bool(
-            set(candidate.get("military_effects", [])) - existing_effects
-        )
+        adds_new_effect = bool(set(candidate.get("military_effects", [])) - existing_effects)
         if float(candidate["_selection_score"]) < 0.62 and not adds_new_effect:
             continue
         selected.append(candidate)
         per_agent[agent_id] = per_agent.get(agent_id, 0) + 1
 
-    selected = [
-        {key: value for key, value in item.items() if key != "_selection_score"}
-        for item in selected
-    ]
+    selected = [{key: value for key, value in item.items() if key != "_selection_score"} for item in selected]
 
     selected_packet_ids = {item["packet_id"] for item in selected}
     open_questions = list(
@@ -1146,9 +1060,7 @@ def _build_military_value_handoff(
                 *selected_packet_ids,
                 *(item["packet_id"] for item in baseline_boundaries),
             ]
-            for question in getattr(
-                packet_by_id.get(packet_id), "open_questions", []
-            )[:1]
+            for question in getattr(packet_by_id.get(packet_id), "open_questions", [])[:1]
             if str(question).strip()
         )
     )[:4]
@@ -1156,8 +1068,7 @@ def _build_military_value_handoff(
     conflicts = [
         _compact_text_value(item, 240)
         for item in raw_conflicts
-        if _military_effects_for_text(str(item))
-        or any(marker in str(item) for marker in _MILITARY_MECHANISM_TERMS)
+        if _military_effects_for_text(str(item)) or any(marker in str(item) for marker in _MILITARY_MECHANISM_TERMS)
     ][:3]
     handoff = {
         "schema": "military_value_handoff_v1",
@@ -1179,13 +1090,7 @@ def _build_military_value_handoff(
         "candidate_claim_count": len(candidates),
         "selected_claim_count": len(selected),
         "source_agent_count": len({item["source_agent_id"] for item in selected}),
-        "evidence_url_count": len(
-            {
-                url
-                for item in selected
-                for url in item.get("source_urls", [])
-            }
-        ),
+        "evidence_url_count": len({url for item in selected for url in item.get("source_urls", [])}),
         "limited_baseline_count": len(baseline_boundaries),
         "frontier_inspiration_count": min(6, len(frontier_inspirations)),
         "input_chars": input_chars,
@@ -1206,9 +1111,7 @@ def _military_handoff_packet_refs(
     }
     if not selected_packet_ids and handoff.get("branch_products"):
         selected_packet_ids = {
-            packet.packet_id
-            for packet in _admitted_packet_snapshot(store)
-            if packet.agent_id == "case_research"
+            packet.packet_id for packet in _admitted_packet_snapshot(store) if packet.agent_id == "case_research"
         }
     selected_packet_ids.update(
         str(item.get("packet_id", ""))
@@ -1310,11 +1213,7 @@ def _military_handoff_evidence_index(
         if evidence_id.startswith("ev-weapon_equipment-")
         or str(store.evidence[evidence_id].created_by) == "weapon_equipment"
     ]
-    other_packet_ids = [
-        evidence_id
-        for evidence_id in packet_evidence_ids
-        if evidence_id not in direct_weapon_ids
-    ]
+    other_packet_ids = [evidence_id for evidence_id in packet_evidence_ids if evidence_id not in direct_weapon_ids]
     # Selected claims intentionally carry only a tiny citation subset, while
     # the winning swarm needs all accepted object-level cards from the packet.
     # Expand direct weapon evidence before generic packet context so a
@@ -1347,13 +1246,9 @@ def _optimized_fake_model_analysis(branch: str, store: DomainStore) -> dict[str,
     """Deterministic acceptance fixture for branch-contract smoke tests."""
     evidence_ids = list(store.evidence)[:6]
     base = {
-        "effect_chain": [
-            "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证"
-        ],
+        "effect_chain": ["任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证"],
         "capability_mapping": ["把任务效果映射为功能、指标、接口和验证条件"],
-        "gap_assessment": [
-            {"capability": "任务链韧性", "grade": "关键差距", "basis": "公开证据与场景压力"}
-        ],
+        "gap_assessment": [{"capability": "任务链韧性", "grade": "关键差距", "basis": "公开证据与场景压力"}],
         "assumptions": ["离线fixture仅验证合同与数据流，不代表真实军事结论"],
         "open_questions": [],
         "confidence": 0.78,
@@ -1362,13 +1257,16 @@ def _optimized_fake_model_analysis(branch: str, store: DomainStore) -> dict[str,
     }
     if branch == "A":
         domains = [
-            "分布式感知", "边缘决策", "抗扰协同", "任务重构", "精确效应",
-            "电子对抗", "持续保障", "试验评估",
+            "分布式感知",
+            "边缘决策",
+            "抗扰协同",
+            "任务重构",
+            "精确效应",
+            "电子对抗",
+            "持续保障",
+            "试验评估",
         ]
-        indicators = [
-            f"{domains[index % len(domains)]}指标{index + 1}（任务级可验证口径）"
-            for index in range(30)
-        ]
+        indicators = [f"{domains[index % len(domains)]}指标{index + 1}（任务级可验证口径）" for index in range(30)]
         base["branch_products"] = {
             "tactic_concepts": [
                 "去中心蜂群自主决策",
@@ -1399,20 +1297,12 @@ def _optimized_fake_model_analysis(branch: str, store: DomainStore) -> dict[str,
         )
         sections = (case_packet.payload or case_packet.analysis_sections) if case_packet else {}
         base["branch_products"] = {
-            "case_patterns": list(
-                sections.get("case_patterns")
-                or sections.get("cross_case_patterns")
-                or []
-            )[:6],
-            "future_scenarios": list(
-                sections.get("future_scenarios")
-                or sections.get("future_scenario_mapping")
-                or []
-            )[:3],
+            "case_patterns": list(sections.get("case_patterns") or sections.get("cross_case_patterns") or [])[:6],
+            "future_scenarios": list(sections.get("future_scenarios") or sections.get("future_scenario_mapping") or [])[
+                :3
+            ],
             "emerging_equipment_categories": list(
-                sections.get("emerging_equipment_categories")
-                or sections.get("equipment_needs")
-                or []
+                sections.get("emerging_equipment_categories") or sections.get("equipment_needs") or []
             )[:4],
         }
     else:
@@ -1436,30 +1326,25 @@ def _deep_divergence_fake_model_analysis(
     parent = dict(parent_context or {}) if isinstance(parent_context, Mapping) else {}
     candidate = parent.get("candidate", {})
     candidate = dict(candidate) if isinstance(candidate, Mapping) else {}
-    evidence_ids = [
-        str(item)
-        for item in candidate.get("evidence_ids", [])
-        if str(item).strip() in set(store.evidence)
-    ]
+    evidence_ids = [str(item) for item in candidate.get("evidence_ids", []) if str(item).strip() in set(store.evidence)]
     if not evidence_ids:
         evidence_ids = list(store.evidence)[:3]
     name = str(
-        candidate.get("name")
-        or candidate.get("title")
-        or candidate.get("equipment_form")
-        or "参考装备深研方向"
+        candidate.get("name") or candidate.get("title") or candidate.get("equipment_form") or "参考装备深研方向"
     ).strip()
     equipment_form = str(candidate.get("equipment_form") or name).strip()
-    hypothesis_id = str(
-        candidate.get("hypothesis_id") or parent.get("hypothesis_id") or "hypothesis-deep-fake"
-    )
+    hypothesis_id = str(candidate.get("hypothesis_id") or parent.get("hypothesis_id") or "hypothesis-deep-fake")
     direction = {
         "name": name,
         "type": "upgrade" if str(candidate.get("type", "")).lower() == "upgrade" else "new_capability",
         "function": str(candidate.get("function") or f"在{topic}任务链中形成可验证的直接作战效果").strip(),
         "equipment_form": equipment_form,
         "primary_equipment_identity": str(candidate.get("primary_equipment_identity") or equipment_form),
-        "operational_mechanism": str(candidate.get("operational_mechanism") or candidate.get("mechanism_chain") or "通过前端感知—决策—交战闭环压缩目标暴露窗口").strip(),
+        "operational_mechanism": str(
+            candidate.get("operational_mechanism")
+            or candidate.get("mechanism_chain")
+            or "通过前端感知—决策—交战闭环压缩目标暴露窗口"
+        ).strip(),
         "target_scenario": str(candidate.get("target_scenario") or topic),
         "military_value": str(candidate.get("military_value") or "提升任务链直接打击/反制效果，具体增益需试验校准"),
         "capability_gap": str(candidate.get("capability_gap") or "现有装备在该场景下存在独立且可验证的能力断点"),
@@ -1509,22 +1394,14 @@ class DeepResearchRunner:
         self.provider_config_path = (
             Path(provider_config_path)
             if provider_config_path is not None
-            else self.project_root
-            / "configs"
-            / "equipment_deep_research"
-            / "providers.yaml"
+            else self.project_root / "configs" / "equipment_deep_research" / "providers.yaml"
         )
         self.evidence_config_path = (
             Path(evidence_config_path)
             if evidence_config_path is not None
-            else self.project_root
-            / "configs"
-            / "equipment_deep_research"
-            / "evidence.yaml"
+            else self.project_root / "configs" / "equipment_deep_research" / "evidence.yaml"
         )
-        default_route_config_path = (
-            self.project_root / "configs" / "equipment_deep_research" / "routes.yaml"
-        )
+        default_route_config_path = self.project_root / "configs" / "equipment_deep_research" / "routes.yaml"
         sibling_route_config_path = self.agent_config_path.parent / "routes.yaml"
         if route_config_path is not None:
             self.route_config_path = Path(route_config_path)
@@ -1539,17 +1416,11 @@ class DeepResearchRunner:
         self.session_store_factory = session_store_factory
         self.event_sink = event_sink
         if provider_config_path is not None and not self.provider_config_path.is_file():
-            raise FileNotFoundError(
-                f"configuration file does not exist: {self.provider_config_path}"
-            )
+            raise FileNotFoundError(f"configuration file does not exist: {self.provider_config_path}")
         if evidence_config_path is not None and not self.evidence_config_path.is_file():
-            raise FileNotFoundError(
-                f"configuration file does not exist: {self.evidence_config_path}"
-            )
+            raise FileNotFoundError(f"configuration file does not exist: {self.evidence_config_path}")
         if route_config_path is not None and not self.route_config_path.is_file():
-            raise FileNotFoundError(
-                f"configuration file does not exist: {self.route_config_path}"
-            )
+            raise FileNotFoundError(f"configuration file does not exist: {self.route_config_path}")
 
     def _evolution_snapshot(
         self,
@@ -1558,13 +1429,7 @@ class DeepResearchRunner:
         scope: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Hash the prompt bundle and selected memory for reproducible replay."""
-        prompt_root = (
-            self.project_root
-            / "src"
-            / "equipment_deep_research"
-            / "agents"
-            / "prompts"
-        )
+        prompt_root = self.project_root / "src" / "equipment_deep_research" / "agents" / "prompts"
         prompt_files: dict[str, str] = {}
         if prompt_root.is_dir():
             # Only hash the active bundle and its manifest.  Historical
@@ -1603,11 +1468,7 @@ class DeepResearchRunner:
             memory_rows.append(
                 {
                     "feedback_id": str(item.get("feedback_id", "")),
-                    "target_agent_ids": sorted(
-                        str(x)
-                        for x in item.get("target_agent_ids", [])
-                        if str(x).strip()
-                    ),
+                    "target_agent_ids": sorted(str(x) for x in item.get("target_agent_ids", []) if str(x).strip()),
                     "effect_status": str(item.get("effect_status", "")),
                     "memory_status": str(item.get("memory_status", "")),
                     "taxonomy": str(item.get("taxonomy", "")),
@@ -1617,16 +1478,14 @@ class DeepResearchRunner:
                     "project_id": str(item.get("project_id", "")),
                     "route": str(item.get("route", "")),
                     "stage_scope": sorted(
-                        str(value).upper()
-                        for value in item.get("stage_scope", [])
-                        if str(value).strip()
+                        str(value).upper() for value in item.get("stage_scope", []) if str(value).strip()
                     ),
                 }
             )
         memory_rows.sort(key=lambda row: row["feedback_id"])
-        prompt_encoded = json.dumps(
-            prompt_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode("utf-8")
+        prompt_encoded = json.dumps(prompt_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
         # Scope is part of the effective memory input even when no feedback
         # rows were selected.  Including it in the digest prevents two
         # otherwise identical runs from different tenant/workspace/profile
@@ -1651,11 +1510,10 @@ class DeepResearchRunner:
             "prompt_bundle_hash": f"sha256:{sha256(prompt_encoded).hexdigest()}",
             "prompt_files": prompt_files,
             "memory_snapshot_hash": f"sha256:{sha256(memory_encoded).hexdigest()}",
-            "memory_ids": [
-                row["feedback_id"] for row in memory_rows if row["feedback_id"]
-            ],
+            "memory_ids": [row["feedback_id"] for row in memory_rows if row["feedback_id"]],
             "scope": dict(scope or {}),
         }
+
     def run(
         self,
         *,
@@ -1775,7 +1633,7 @@ class DeepResearchRunner:
         report_template_mode: str,
         stage_policy_id: str,
         allow_resume_config_mismatch: bool,
-        resources: "_RunResourceScope",
+        resources: _RunResourceScope,
         tenant_id: str = "",
         workspace_id: str = "",
         project_id: str = "",
@@ -1886,9 +1744,7 @@ class DeepResearchRunner:
             # reporter.  In a real run the selected provider/model is the
             # deployment authority; only an explicit env-level reporter model
             # is allowed to diverge from it.
-            explicit_reporter_model = str(
-                configured_agent_models().get("reporter", {}).get("model", "")
-            ).strip()
+            explicit_reporter_model = str(configured_agent_models().get("reporter", {}).get("model", "")).strip()
             if not explicit_reporter_model:
                 reporter_profile.update(
                     {
@@ -1920,39 +1776,21 @@ class DeepResearchRunner:
         if callable(install_research_knowledge_tools):
             install_research_knowledge_tools(tuple(research_knowledge_tools or ()))
         resources.bind_provider(provider)
-        stored_blueprint = (
-            self._load_discovery_blueprint(run_id)
-            if (
-                resume
-                and mode == "real"
-            )
-            else None
-        )
+        stored_blueprint = self._load_discovery_blueprint(run_id) if (resume and mode == "real") else None
         branch_specialist_ids = list(
-            dict.fromkeys(
-                agent_id
-                for spec in BRANCH_BLUEPRINTS.values()
-                for agent_id in spec.specialist_agent_ids
-            )
+            dict.fromkeys(agent_id for spec in BRANCH_BLUEPRINTS.values() for agent_id in spec.specialist_agent_ids)
         )
         available_blueprint_agents = registry.enabled_baseline_agents()
         if mode == "real" and getattr(provider, "provider_kind", "") == "codex_cli":
             available_blueprint_agents = [
                 *available_blueprint_agents,
-                *(
-                    agent
-                    for agent_id in branch_specialist_ids
-                    for agent in [registry.get(agent_id)]
-                    if agent.enabled
-                ),
+                *(agent for agent_id in branch_specialist_ids for agent in [registry.get(agent_id)] if agent.enabled),
             ]
         available_agent_capabilities = {
-            agent.agent_id: tuple(agent.capability_tags)
-            for agent in available_blueprint_agents
+            agent.agent_id: tuple(agent.capability_tags) for agent in available_blueprint_agents
         }
         available_skills = {
-            skill_id: skill.to_agent_skill()
-            for skill_id, skill in registry.harness_catalog.skills.items()
+            skill_id: skill.to_agent_skill() for skill_id, skill in registry.harness_catalog.skills.items()
         }
         available_knowledge_pack_ids = list(registry.harness_catalog.knowledge_packs)
         model_blueprint: dict[str, Any] = {}
@@ -1995,9 +1833,7 @@ class DeepResearchRunner:
                             {
                                 "skill_id": str(item.get("skill_id", "")),
                                 "description": str(item.get("description", ""))[:240],
-                                "capability_tags": list(
-                                    item.get("capability_tags", [])
-                                )[:8],
+                                "capability_tags": list(item.get("capability_tags", []))[:8],
                             }
                             for item in available_skills.values()
                             if item.get("shared")
@@ -2049,6 +1885,10 @@ class DeepResearchRunner:
                         )
                     except Exception:
                         pass
+        discovery_blueprint = reconcile_discovery_blueprint_domain(
+            topic,
+            discovery_blueprint,
+        )
         discovery_blueprint = apply_execution_profile_to_blueprint(
             discovery_blueprint,
             execution_profile,
@@ -2119,23 +1959,14 @@ class DeepResearchRunner:
             requested_problem,
             discovery_branch=str(discovery_blueprint["primary_branch"]),
         )
-        additional_required_tags = set(
-            str(item)
-            for item in discovery_blueprint.get("required_capability_tags", [])
-        )
-        specialist_agent_ids = [
-            str(item) for item in discovery_blueprint.get("specialist_agent_ids", [])
-        ]
+        additional_required_tags = set(str(item) for item in discovery_blueprint.get("required_capability_tags", []))
+        specialist_agent_ids = [str(item) for item in discovery_blueprint.get("specialist_agent_ids", [])]
         blueprint_initial_agent_ids = list(
             dict.fromkeys(
                 str(item)
                 for item in [
                     *discovery_blueprint.get("initial_baseline_agent_ids", []),
-                    *(
-                        discovery_blueprint.get("promoted_callback_agent_ids", [])
-                        if resume
-                        else []
-                    ),
+                    *(discovery_blueprint.get("promoted_callback_agent_ids", []) if resume else []),
                 ]
                 if str(item).strip()
             )
@@ -2144,19 +1975,12 @@ class DeepResearchRunner:
         # baseline_agent_plan.  Re-appending the full specialist catalog here
         # bypassed that bound and launched duplicate/redundant Codex lanes.
         active_specialist_agent_ids = (
-            [
-                agent_id
-                for agent_id in specialist_agent_ids
-                if agent_id in blueprint_initial_agent_ids
-            ]
+            [agent_id for agent_id in specialist_agent_ids if agent_id in blueprint_initial_agent_ids]
             if execution_profile is not None
             else list(specialist_agent_ids)
         )
         planner = ResearchPlanner(policy)
-        required_tags = sorted(
-            planner.required_tags_for_problem(blueprinted_problem)
-            | additional_required_tags
-        )
+        required_tags = sorted(planner.required_tags_for_problem(blueprinted_problem) | additional_required_tags)
         if agent_ids:
             (
                 effective_agent_ids,
@@ -2175,11 +1999,7 @@ class DeepResearchRunner:
             # expand baseline retrieval roles or consume extra Codex sessions.
             architecture_additions: list[Any] = []
             selection_view = {
-                "mode": (
-                    "blueprint_plus_analyst_additions"
-                    if execution_profile is not None
-                    else "analyst_explicit"
-                ),
+                "mode": ("blueprint_plus_analyst_additions" if execution_profile is not None else "analyst_explicit"),
                 "model_used": False,
                 "rationale": (
                     "optimized_v2保留A-H蓝图默认Agent，并将分析师勾选的其他角色作为追加项合并执行；"
@@ -2206,12 +2026,8 @@ class DeepResearchRunner:
                 "analyst_requested_agent_ids": analyst_requested_agent_ids,
                 "analyst_additional_agent_ids": analyst_additional_agent_ids,
                 "selection_locked_by_analyst": execution_profile is None,
-                "selection_augmented_by_analyst": bool(
-                    execution_profile is not None and analyst_additional_agent_ids
-                ),
-                "architecture_additions": [
-                    agent.agent_id for agent in architecture_additions
-                ],
+                "selection_augmented_by_analyst": bool(execution_profile is not None and analyst_additional_agent_ids),
+                "architecture_additions": [agent.agent_id for agent in architecture_additions],
             }
         elif blueprint_initial_agent_ids:
             selected_ids = (
@@ -2237,8 +2053,7 @@ class DeepResearchRunner:
                 "task_analysis": [
                     f"主发现分支={discovery_blueprint['primary_branch']}（{discovery_blueprint['branch_name']}）",
                     "首轮Agent=" + "、".join(blueprint_initial_agent_ids),
-                    "回调候选="
-                    + "、".join(discovery_blueprint.get("callback_agent_ids", [])),
+                    "回调候选=" + "、".join(discovery_blueprint.get("callback_agent_ids", [])),
                 ],
                 "dependency_notes": [
                     "required与reference角色进入首轮；callback角色仅在L3/L4发现独立缺口时启用。",
@@ -2247,25 +2062,17 @@ class DeepResearchRunner:
                 "required_capability_tags": required_tags,
                 "model_selected_agent_ids": selected_ids,
                 "coverage_additions": [],
-                "baseline_agent_plan": discovery_blueprint.get(
-                    "baseline_agent_plan", []
-                ),
-                "callback_agent_ids": discovery_blueprint.get(
-                    "callback_agent_ids", []
-                ),
+                "baseline_agent_plan": discovery_blueprint.get("baseline_agent_plan", []),
+                "callback_agent_ids": discovery_blueprint.get("callback_agent_ids", []),
             }
         else:
             primary_candidates = [
-                agent
-                for agent in registry.enabled_baseline_agents()
-                if agent.agent_id in PRIMARY_BUSINESS_AGENT_IDS
+                agent for agent in registry.enabled_baseline_agents() if agent.agent_id in PRIMARY_BUSINESS_AGENT_IDS
             ]
             candidates = primary_candidates or registry.enabled_baseline_agents()
             candidate_ids = {agent.agent_id for agent in candidates}
             candidates.extend(
-                registry.get(agent_id)
-                for agent_id in specialist_agent_ids
-                if agent_id not in candidate_ids
+                registry.get(agent_id) for agent_id in specialist_agent_ids if agent_id not in candidate_ids
             )
             selection_request = AgentSelectionRequest(
                 topic=topic,
@@ -2305,18 +2112,14 @@ class DeepResearchRunner:
             ]
             final_ids = [agent.agent_id for agent in selected_candidates]
             selection_view = {
-                "mode": "model_driven"
-                if decision.model_used
-                else "capability_fallback",
+                "mode": "model_driven" if decision.model_used else "capability_fallback",
                 "model_used": decision.model_used,
                 "rationale": decision.rationale,
                 "task_analysis": decision.task_analysis,
                 "dependency_notes": decision.dependency_notes,
                 "required_capability_tags": required_tags,
                 "model_selected_agent_ids": model_ids,
-                "coverage_additions": [
-                    item for item in final_ids if item not in model_ids
-                ],
+                "coverage_additions": [item for item in final_ids if item not in model_ids],
             }
         if os.environ.get("EQUIPMENT_DR_PROMOTE_REQUIRED_BASELINE", "1") != "0":
             selected_candidates, promoted_callback_ids = _promote_required_callbacks(
@@ -2334,27 +2137,19 @@ class DeepResearchRunner:
             promoted_callback_ids = []
             discovery_blueprint["promoted_callback_agent_ids"] = []
         if promoted_callback_ids:
-            selection_view["coverage_promoted_callback_agent_ids"] = list(
-                promoted_callback_ids
-            )
+            selection_view["coverage_promoted_callback_agent_ids"] = list(promoted_callback_ids)
             selection_view["dependency_notes"] = [
                 *list(selection_view.get("dependency_notes", [])),
                 "为避免完成制胜分析后再进入外循环，缺失必需能力对应的蓝图补充角色已前移执行。",
             ]
         minimum_agent_additions: list[str] = []
         if execution_profile is not None:
-            selected_candidates, minimum_agent_additions = (
-                _ensure_minimum_business_agents(
-                    selected_candidates=selected_candidates,
-                    discovery_blueprint=discovery_blueprint,
-                    registry=registry,
-                    minimum=int(
-                        discovery_blueprint.get("minimum_business_agents", 3)
-                    ),
-                    maximum=int(
-                        discovery_blueprint.get("maximum_business_agents", 4)
-                    ),
-                )
+            selected_candidates, minimum_agent_additions = _ensure_minimum_business_agents(
+                selected_candidates=selected_candidates,
+                discovery_blueprint=discovery_blueprint,
+                registry=registry,
+                minimum=int(discovery_blueprint.get("minimum_business_agents", 3)),
+                maximum=int(discovery_blueprint.get("maximum_business_agents", 4)),
             )
         if minimum_agent_additions:
             selection_view["minimum_agent_additions"] = minimum_agent_additions
@@ -2405,12 +2200,9 @@ class DeepResearchRunner:
         planned_recall_agent_ids = [
             str(item.get("agent_id", ""))
             for item in discovery_blueprint.get("baseline_agent_plan", [])
-            if isinstance(item, Mapping)
-            and str(item.get("agent_id", "")) in set(registry.all_agent_ids())
+            if isinstance(item, Mapping) and str(item.get("agent_id", "")) in set(registry.all_agent_ids())
         ]
-        registered_recall_agent_ids = [
-            agent.agent_id for agent in registry.enabled_baseline_agents()
-        ]
+        registered_recall_agent_ids = [agent.agent_id for agent in registry.enabled_baseline_agents()]
         recall_candidate_agent_ids = list(
             dict.fromkeys(
                 [
@@ -2421,9 +2213,7 @@ class DeepResearchRunner:
                 ]
             )
         )
-        recall_candidate_agents = [
-            registry.get(agent_id) for agent_id in recall_candidate_agent_ids
-        ]
+        recall_candidate_agents = [registry.get(agent_id) for agent_id in recall_candidate_agent_ids]
         baseline_plan_mode_by_agent = {
             str(item.get("agent_id", "")): str(item.get("mode", "reference"))
             for item in discovery_blueprint.get("baseline_agent_plan", [])
@@ -2441,12 +2231,7 @@ class DeepResearchRunner:
         # blueprint or the S1-S3 innovation path when model slots are scarce.
         baseline_priority_by_agent = {
             agent.agent_id: (
-                "critical"
-                if baseline_plan_mode_by_agent.get(
-                    agent.agent_id, "reference"
-                )
-                == "required"
-                else "normal"
+                "critical" if baseline_plan_mode_by_agent.get(agent.agent_id, "reference") == "required" else "normal"
             )
             for wave in selected_agent_waves
             for agent in wave
@@ -2509,13 +2294,9 @@ class DeepResearchRunner:
             failure_path = self.output_root / run_id / "report_failure.json"
             try:
                 if failure_path.is_file():
-                    failure_payload = json.loads(
-                        failure_path.read_text(encoding="utf-8")
-                    )
-                    recovery_failure = (
-                        str(failure_payload.get("status", "")).strip()
-                        == "failed_no_fallback"
-                        and bool(failure_payload.get("resumable", True))
+                    failure_payload = json.loads(failure_path.read_text(encoding="utf-8"))
+                    recovery_failure = str(failure_payload.get("status", "")).strip() == "failed_no_fallback" and bool(
+                        failure_payload.get("resumable", True)
                     )
             except (OSError, TypeError, ValueError):
                 recovery_failure = False
@@ -2527,9 +2308,7 @@ class DeepResearchRunner:
                 resolved_route=route,
                 selected_agent_ids=selected_agent_ids,
                 config_fingerprint=config_fingerprint,
-                allow_config_mismatch=(
-                    allow_resume_config_mismatch or recovery_failure
-                ),
+                allow_config_mismatch=(allow_resume_config_mismatch or recovery_failure),
             )
             workspace = recovered.workspace
             sqlite_store = recovered.sqlite_store
@@ -2537,34 +2316,23 @@ class DeepResearchRunner:
             store = recovered.domain_store
             trace = recovered.trace_store
             trace.set_event_sink(self.event_sink)
-            resume_config_changed = (
-                recovered.checkpoint.config_fingerprint != config_fingerprint
-            )
+            resume_config_changed = recovered.checkpoint.config_fingerprint != config_fingerprint
             checkpoint = replace(
                 recovered.checkpoint,
                 resume_count=recovered.checkpoint.resume_count + 1,
             )
             reopen_limited_quality_delivery = (
                 checkpoint.status == "completed"
-                and is_quality_execution_profile_id(
-                    discovery_blueprint.get("execution_profile_id")
-                )
-                and any(
-                    str(item.status).strip().lower() != "approved"
-                    for item in store.audits.values()
-                )
+                and is_quality_execution_profile_id(discovery_blueprint.get("execution_profile_id"))
+                and any(str(item.status).strip().lower() != "approved" for item in store.audits.values())
             )
-            if checkpoint.status == "completed" and (
-                resume_config_changed or reopen_limited_quality_delivery
-            ):
+            if checkpoint.status == "completed" and (resume_config_changed or reopen_limited_quality_delivery):
                 checkpoint = replace(
                     checkpoint,
                     status="running",
                     config_fingerprint=config_fingerprint,
                     completed_task_ids=[
-                        task_id
-                        for task_id in checkpoint.completed_task_ids
-                        if task_id != FINALIZE_TASK_ID
+                        task_id for task_id in checkpoint.completed_task_ids if task_id != FINALIZE_TASK_ID
                     ],
                     pending_task_ids=[FINALIZE_TASK_ID],
                     task_statuses={
@@ -2589,9 +2357,7 @@ class DeepResearchRunner:
                     "pending_task_ids": checkpoint.pending_task_ids,
                     "status": checkpoint.status,
                     "configuration_changed": resume_config_changed,
-                    "limited_quality_delivery_reopened": (
-                        reopen_limited_quality_delivery
-                    ),
+                    "limited_quality_delivery_reopened": (reopen_limited_quality_delivery),
                     "evolution": evolution_snapshot,
                     "evolution_scope": evolution_scope,
                     "tenant_id": evolution_scope["tenant_id"],
@@ -2606,11 +2372,7 @@ class DeepResearchRunner:
             )
             trace.append(resumed_event)
             savepoint_id = sqlite_store.commit(
-                (
-                    self._checkpoint_proposal(
-                        checkpoint, f"resume-{checkpoint.resume_count}"
-                    ),
-                ),
+                (self._checkpoint_proposal(checkpoint, f"resume-{checkpoint.resume_count}"),),
                 (self._trace_proposal(resumed_event),),
             )
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
@@ -2637,16 +2399,11 @@ class DeepResearchRunner:
                     store=store,
                 )
                 return result
-            if (
-                os.getenv("EQUIPMENT_DR_FORCE_S6_REWRITE", "").strip() != "1"
-                and _is_report_delivery_only_resume(
+            if os.getenv("EQUIPMENT_DR_FORCE_S6_REWRITE", "").strip() != "1" and _is_report_delivery_only_resume(
                 workspace=workspace,
                 checkpoint=checkpoint,
                 store=store,
-                execution_profile_id=str(
-                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
-                ),
-                )
+                execution_profile_id=str(discovery_blueprint.get("execution_profile_id", "legacy_v1")),
             ):
                 return self._resume_report_delivery_only(
                     workspace=workspace,
@@ -2684,9 +2441,7 @@ class DeepResearchRunner:
             resources.bind_store(sqlite_store)
             self._emit_hook("after_workspace_created", workspace)
             store = DomainStore()
-            store.add_problem(
-                _persistent_problem(problem, original_supplemental_information)
-            )
+            store.add_problem(_persistent_problem(problem, original_supplemental_information))
             trace = TraceStore(event_sink=self.event_sink)
             worker_reports: list[WorkerReport] = []
             source_materials: list[dict[str, Any]] = []
@@ -2711,16 +2466,10 @@ class DeepResearchRunner:
                     or (
                         "fake"
                         if mode == "fake"
-                        else (
-                            "codex"
-                            if getattr(provider, "provider_kind", "") == "codex_cli"
-                            else "responses"
-                        )
+                        else ("codex" if getattr(provider, "provider_kind", "") == "codex_cli" else "responses")
                     ),
                     "model": provider_model or "",
-                    "base_url_host": urlsplit(provider_base_url).hostname
-                    if provider_base_url
-                    else "",
+                    "base_url_host": urlsplit(provider_base_url).hostname if provider_base_url else "",
                     "api_key_env": provider_api_key_env or "",
                     "route": route,
                     "interaction_mode": interaction_mode,
@@ -2745,14 +2494,10 @@ class DeepResearchRunner:
                         agent_id: {
                             "provider": profile.get("provider") or provider_name,
                             "model": profile.get("model"),
-                            "base_url_host": urlsplit(
-                                str(profile.get("base_url") or "")
-                            ).hostname,
+                            "base_url_host": urlsplit(str(profile.get("base_url") or "")).hostname,
                             "api_key_env": profile.get("api_key_env"),
                         }
-                        for agent_id, profile in sorted(
-                            effective_agent_model_profiles.items()
-                        )
+                        for agent_id, profile in sorted(effective_agent_model_profiles.items())
                     },
                 },
             )
@@ -2760,9 +2505,7 @@ class DeepResearchRunner:
                 workspace,
                 "orchestrator",
                 {
-                    "event_type": "model_result"
-                    if selection_view.get("model_used")
-                    else "plan_result",
+                    "event_type": "model_result" if selection_view.get("model_used") else "plan_result",
                     "task_analysis": selection_view.get("task_analysis", []),
                     "rationale": selection_view.get("rationale", ""),
                     "dependency_notes": selection_view.get("dependency_notes", []),
@@ -2784,9 +2527,7 @@ class DeepResearchRunner:
                 output_refs=[str(discovery_blueprint["blueprint_id"])],
                 payload={
                     "cycle": 1,
-                    "maximum_cycles": discovery_blueprint["loop_policy"][
-                        "meta_max_cycles"
-                    ],
+                    "maximum_cycles": discovery_blueprint["loop_policy"]["meta_max_cycles"],
                     "primary_branch": discovery_blueprint["primary_branch"],
                     "secondary_branches": discovery_blueprint["secondary_branches"],
                     "runtime_route": route,
@@ -2809,11 +2550,7 @@ class DeepResearchRunner:
                 ),
                 (
                     self._trace_proposal(started_event),
-                    *(
-                        (self._trace_proposal(meta_event),)
-                        if stage_policy.meta_loop_enabled
-                        else ()
-                    ),
+                    *((self._trace_proposal(meta_event),) if stage_policy.meta_loop_enabled else ()),
                 ),
             )
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
@@ -2841,25 +2578,18 @@ class DeepResearchRunner:
         def _append_evolution_trace(payload: Mapping[str, Any]) -> None:
             if not isinstance(payload, Mapping):
                 return
-            event_type = str(
-                payload.get("event_type", "evolution_retrieval_event")
-            ).strip() or "evolution_retrieval_event"
-            retrieval_id = str(payload.get("retrieval_event_id", "")).strip()
-            event_id = (
-                f"{retrieval_id}:{event_type}"
-                if retrieval_id
-                else f"evolution-{uuid4()}"
+            event_type = (
+                str(payload.get("event_type", "evolution_retrieval_event")).strip() or "evolution_retrieval_event"
             )
+            retrieval_id = str(payload.get("retrieval_event_id", "")).strip()
+            event_id = f"{retrieval_id}:{event_type}" if retrieval_id else f"evolution-{uuid4()}"
             try:
                 trace.append(
                     TraceEvent(
                         event_id=event_id,
                         event_type=event_type,
                         actor=str(payload.get("agent_id", "orchestrator")),
-                        summary=(
-                            f"{event_type}: "
-                            f"{str(payload.get('stage_id', '')) or 'unknown-stage'}"
-                        ),
+                        summary=(f"{event_type}: {str(payload.get('stage_id', '')) or 'unknown-stage'}"),
                         payload=dict(payload),
                     )
                 )
@@ -2889,13 +2619,9 @@ class DeepResearchRunner:
             harness_catalog=registry.harness_catalog,
             shared_context={
                 "discovery_blueprint": discovery_blueprint,
-                "structured_query_brief": discovery_blueprint.get(
-                    "structured_query_brief", {}
-                ),
+                "structured_query_brief": discovery_blueprint.get("structured_query_brief", {}),
                 "selected_business_agent_ids": [
-                    agent_id
-                    for agent_id in selected_agent_ids
-                    if agent_id in PRIMARY_BUSINESS_AGENT_IDS
+                    agent_id for agent_id in selected_agent_ids if agent_id in PRIMARY_BUSINESS_AGENT_IDS
                 ],
                 "evolution": evolution_snapshot,
                 "evolution_scope": evolution_scope,
@@ -2916,6 +2642,7 @@ class DeepResearchRunner:
         # the in-process provider host; it returns redacted rows and never
         # exposes scheduler internals to model prompts.
         if getattr(provider, "_deep_evidence_materializer", None) is None:
+
             def _materialize_deep_evidence(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 projected: list[dict[str, Any]] = []
                 for raw in list(rows)[:6]:
@@ -2964,23 +2691,29 @@ class DeepResearchRunner:
                             assessment=assessment,
                         )
                         with scheduler._state_lock:
-                            scheduler.source_materials.append({
-                                **dict(materialized.material),
-                                "evidence_id": evidence_id,
-                                "evidence_assessment": assessment.__dict__,
-                            })
-                        projected.append({
-                            **dict(raw),
-                            "formal_evidence_allowed": formal,
-                            "artifact_refs": list(materialized.material.get("artifact_refs", [])),
-                            "quality_assessment": materialized.evidence.quality_assessment,
-                        })
+                            scheduler.source_materials.append(
+                                {
+                                    **dict(materialized.material),
+                                    "evidence_id": evidence_id,
+                                    "evidence_assessment": assessment.__dict__,
+                                }
+                            )
+                        projected.append(
+                            {
+                                **dict(raw),
+                                "formal_evidence_allowed": formal,
+                                "artifact_refs": list(materialized.material.get("artifact_refs", [])),
+                                "quality_assessment": materialized.evidence.quality_assessment,
+                            }
+                        )
                     except Exception as exc:
-                        projected.append({
-                            **dict(raw),
-                            "formal_evidence_allowed": False,
-                            "quality_assessment": f"deep_retrieval_materialization_failed:{type(exc).__name__}",
-                        })
+                        projected.append(
+                            {
+                                **dict(raw),
+                                "formal_evidence_allowed": False,
+                                "quality_assessment": f"deep_retrieval_materialization_failed:{type(exc).__name__}",
+                            }
+                        )
                 return projected
 
             setattr(provider, "_deep_evidence_materializer", _materialize_deep_evidence)
@@ -2997,9 +2730,7 @@ class DeepResearchRunner:
                 nonlocal progress_sequence
                 progress_sequence += 1
                 event_type = str(row.get("event_type", "baseline_pipeline_progress"))
-                details = {
-                    key: value for key, value in row.items() if key != "event_type"
-                }
+                details = {key: value for key, value in row.items() if key != "event_type"}
                 agent_id = str(details.get("agent_id", "orchestrator"))
                 event_hash = sha256(
                     json.dumps(
@@ -3026,8 +2757,7 @@ class DeepResearchRunner:
                 trace.append(
                     TraceEvent(
                         event_id=(
-                            f"trace-{event_type}-{agent_id}-{progress_session_id}-"
-                            f"{progress_sequence}-{event_hash}"
+                            f"trace-{event_type}-{agent_id}-{progress_session_id}-{progress_sequence}-{event_hash}"
                         ),
                         event_type=event_type,
                         actor=agent_id,
@@ -3038,13 +2768,9 @@ class DeepResearchRunner:
 
             baseline_progress_setter(emit_baseline_progress)
         reports_by_agent = {report.agent_id: report for report in worker_reports}
-        agents_by_id = {
-            agent.agent_id: agent for agent in recall_candidate_agents
-        }
+        agents_by_id = {agent.agent_id: agent for agent in recall_candidate_agents}
         pending_prefetch_agents = [
-            agent
-            for agent in selected_agents
-            if checkpoint.task_statuses.get(_task_id(agent.agent_id)) != "completed"
+            agent for agent in selected_agents if checkpoint.task_statuses.get(_task_id(agent.agent_id)) != "completed"
         ]
         baseline_concurrency_ceiling = _baseline_wave_concurrency(
             discovery_blueprint,
@@ -3069,14 +2795,9 @@ class DeepResearchRunner:
                     event_type="baseline_pipeline_started",
                     actor="orchestrator",
                     summary="六业务 Agent 检索阶段已按全局并发预算提前流水化启动",
-                    output_refs=[
-                        f"baseline:{agent.agent_id}"
-                        for agent in pending_prefetch_agents
-                    ],
+                    output_refs=[f"baseline:{agent.agent_id}" for agent in pending_prefetch_agents],
                     payload={
-                        "agent_ids": [
-                            agent.agent_id for agent in pending_prefetch_agents
-                        ],
+                        "agent_ids": [agent.agent_id for agent in pending_prefetch_agents],
                         "stage": "discovery_prefetch",
                         "dependency_mode": "analysis_only",
                         "max_concurrency": baseline_concurrency_ceiling,
@@ -3157,10 +2878,7 @@ class DeepResearchRunner:
             wave_attempt_suffix = f"-r{checkpoint.resume_count}"
             trace.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-baseline-wave-{wave_index}-started"
-                        f"{wave_attempt_suffix}"
-                    ),
+                    event_id=(f"trace-baseline-wave-{wave_index}-started{wave_attempt_suffix}"),
                     event_type="baseline_wave_started",
                     actor="orchestrator",
                     summary=f"baseline wave {wave_index} started with {len(wave)} agent(s)",
@@ -3172,12 +2890,8 @@ class DeepResearchRunner:
                         "wave_size": len(wave),
                         "max_concurrency": wave_concurrency,
                         "bounded": True,
-                        "execution_batches": math.ceil(
-                            len(wave) / wave_concurrency
-                        ),
-                        "execution_mode": discovery_blueprint.get(
-                            "baseline_execution_mode", "dependency_waves"
-                        ),
+                        "execution_batches": math.ceil(len(wave) / wave_concurrency),
+                        "execution_mode": discovery_blueprint.get("baseline_execution_mode", "dependency_waves"),
                         "codex_session_policy": (
                             "isolated_ephemeral_per_agent"
                             if getattr(provider, "provider_kind", "") == "codex_cli"
@@ -3233,10 +2947,7 @@ class DeepResearchRunner:
                                 new_evidence_ids=[],
                                 packet_id="",
                                 handoff_summary="",
-                                session_path=str(
-                                    workspace.sessions_dir
-                                    / f"{agent.agent_id}.jsonl"
-                                ),
+                                session_path=str(workspace.sessions_dir / f"{agent.agent_id}.jsonl"),
                                 error=str(exc),
                             )
                         wave_reports.append(report)
@@ -3247,17 +2958,9 @@ class DeepResearchRunner:
                 checkpoint = self._set_task_status(
                     checkpoint,
                     _task_id(report.agent_id),
-                    (
-                        "completed"
-                        if report.status in {"completed", "limited"}
-                        else "pending"
-                    ),
+                    ("completed" if report.status in {"completed", "limited"} else "pending"),
                 )
-            worker_reports = [
-                reports_by_agent[item]
-                for item in selected_agent_ids
-                if item in reports_by_agent
-            ]
+            worker_reports = [reports_by_agent[item] for item in selected_agent_ids if item in reports_by_agent]
             checkpoint = replace(
                 checkpoint,
                 source_materials=_dedupe_plain_rows(scheduler.source_materials),
@@ -3276,8 +2979,7 @@ class DeepResearchRunner:
                         store.baseline_packets[report.packet_id],
                     )
                     for report in wave_reports
-                    if report.status in {"completed", "limited"}
-                    and report.packet_id
+                    if report.status in {"completed", "limited"} and report.packet_id
                 ),
                 *(
                     self._domain_proposal(
@@ -3310,27 +3012,18 @@ class DeepResearchRunner:
                         event_id=f"trace-{handoff.message_id}",
                         event_type="agent_failure_handoff_ready",
                         actor=handoff.sender,
-                        summary=(
-                            f"failed task handoff prepared for {handoff.recipient}"
-                        ),
+                        summary=(f"failed task handoff prepared for {handoff.recipient}"),
                         input_refs=list(handoff.object_refs),
                         output_refs=[f"{handoff.message_id}.json"],
                         payload=handoff.to_plain(),
                     )
                 )
-            limited_reports = [
-                report for report in wave_reports if report.status == "limited"
-            ]
+            limited_reports = [report for report in wave_reports if report.status == "limited"]
             trace.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-baseline-wave-{wave_index}-completed"
-                        f"{wave_attempt_suffix}"
-                    ),
+                    event_id=(f"trace-baseline-wave-{wave_index}-completed{wave_attempt_suffix}"),
                     event_type=(
-                        "baseline_wave_limited"
-                        if wave_failures or limited_reports
-                        else "baseline_wave_completed"
+                        "baseline_wave_limited" if wave_failures or limited_reports else "baseline_wave_completed"
                     ),
                     actor="orchestrator",
                     summary=(
@@ -3345,38 +3038,22 @@ class DeepResearchRunner:
                         )
                     ),
                     input_refs=[f"baseline:{agent.agent_id}" for agent in wave],
-                    output_refs=[
-                        report.packet_id
-                        for report in wave_reports
-                        if report.packet_id
-                    ],
+                    output_refs=[report.packet_id for report in wave_reports if report.packet_id],
                     payload={
                         "wave_index": wave_index,
                         "agent_ids": [report.agent_id for report in wave_reports],
                         "completed_agent_ids": [
-                            report.agent_id
-                            for report in wave_reports
-                            if report.status in {"completed", "limited"}
+                            report.agent_id for report in wave_reports if report.status in {"completed", "limited"}
                         ],
-                        "limited_agent_ids": [
-                            report.agent_id
-                            for report in wave_reports
-                            if report.status == "limited"
-                        ],
+                        "limited_agent_ids": [report.agent_id for report in wave_reports if report.status == "limited"],
                         "failed_agent_ids": [
-                            report.agent_id
-                            for report in wave_reports
-                            if report.status not in {"completed", "limited"}
+                            report.agent_id for report in wave_reports if report.status not in {"completed", "limited"}
                         ],
-                        "handoff_ids": [
-                            handoff.message_id for handoff in failure_handoffs
-                        ],
+                        "handoff_ids": [handoff.message_id for handoff in failure_handoffs],
                     },
                 )
             )
-            trace_proposals = [
-                self._trace_proposal(event) for event in trace.snapshot()[trace_start:]
-            ]
+            trace_proposals = [self._trace_proposal(event) for event in trace.snapshot()[trace_start:]]
             batch_hash = _proposal_batch_hash(domain_proposals, trace_proposals)
             savepoint_id = sqlite_store.commit(domain_proposals, trace_proposals)
             for report in wave_reports:
@@ -3422,9 +3099,7 @@ class DeepResearchRunner:
 
         baseline_packets = store.baseline_packet_snapshot()
         usable_baseline_packets = [
-            packet
-            for packet in baseline_packets
-            if not _is_unavailable_baseline_boundary(packet)
+            packet for packet in baseline_packets if not _is_unavailable_baseline_boundary(packet)
         ]
         if baseline_packets and not usable_baseline_packets:
             raise RuntimeError(
@@ -3435,32 +3110,21 @@ class DeepResearchRunner:
         if execution_profile is not None:
             admission_packets = store.baseline_packet_snapshot()
             admission_already_complete = bool(admission_packets) and all(
-                packet.claim_bundle_ref
-                and packet.admission_status in {"accepted", "limited", "rejected"}
+                packet.claim_bundle_ref and packet.admission_status in {"accepted", "limited", "rejected"}
                 for packet in admission_packets
             )
             if resume and admission_already_complete:
                 trace.append(
                     TraceEvent(
-                        event_id=(
-                            "trace-packet-admission-reused-"
-                            f"r{checkpoint.resume_count}"
-                        ),
+                        event_id=(f"trace-packet-admission-reused-r{checkpoint.resume_count}"),
                         event_type="packet_admission_reused",
                         actor="packet_admission_gate",
                         summary="复用已提交的 Packet Admission 结果",
-                        input_refs=[
-                            packet.packet_id for packet in admission_packets
-                        ],
-                        output_refs=[
-                            packet.claim_bundle_ref for packet in admission_packets
-                        ],
+                        input_refs=[packet.packet_id for packet in admission_packets],
+                        output_refs=[packet.claim_bundle_ref for packet in admission_packets],
                         payload={
                             "packet_count": len(admission_packets),
-                            "statuses": {
-                                packet.packet_id: packet.admission_status
-                                for packet in admission_packets
-                            },
+                            "statuses": {packet.packet_id: packet.admission_status for packet in admission_packets},
                         },
                     )
                 )
@@ -3470,26 +3134,18 @@ class DeepResearchRunner:
                     store=store,
                     topic=topic,
                     discovery_blueprint=discovery_blueprint,
-                    generation_suffix=(
-                        f"-r{checkpoint.resume_count}" if resume else ""
-                    ),
+                    generation_suffix=(f"-r{checkpoint.resume_count}" if resume else ""),
                 )
                 for event in admission_events:
                     trace.append(event)
                 if admission_proposals or admission_events:
                     sqlite_store.commit(
                         admission_proposals,
-                        tuple(
-                            self._trace_proposal(event)
-                            for event in admission_events
-                        ),
+                        tuple(self._trace_proposal(event) for event in admission_events),
                     )
 
         self._emit_hook("after_baseline_agents", workspace)
-        is_deep_divergence = (
-            str(discovery_blueprint.get("execution_profile_id", ""))
-            == _DEEP_DIVERGENCE_PROFILE_ID
-        )
+        is_deep_divergence = str(discovery_blueprint.get("execution_profile_id", "")) == _DEEP_DIVERGENCE_PROFILE_ID
         if is_deep_divergence:
             # Deep research is a continuation of a canonical parent snapshot,
             # not a fresh baseline run.  Do not invoke the ordinary
@@ -3548,11 +3204,7 @@ class DeepResearchRunner:
                     event_type="baseline_agents_summarized",
                     actor="orchestrator",
                     summary=f"{len(worker_reports)} baseline agents completed",
-                    output_refs=[
-                        report.packet_id
-                        for report in worker_reports
-                        if report.packet_id
-                    ],
+                    output_refs=[report.packet_id for report in worker_reports if report.packet_id],
                 )
             )
             if is_deep_divergence:
@@ -3660,22 +3312,16 @@ class DeepResearchRunner:
                 risk_based_gates=execution_profile is not None,
             )
             recovered_winning_analysis = (
-                self._load_latest_core_agent_result(workspace, "winning_mechanism")
-                if resume
-                else {}
+                self._load_latest_core_agent_result(workspace, "winning_mechanism") if resume else {}
             )
             winning_model_analysis = recovered_winning_analysis
             prior_winning_analysis: dict[str, Any] = {}
             winning_resume_steps: list[int] = []
             if recovered_winning_analysis and not _winning_analysis_reusable_for_profile(
                 recovered_winning_analysis,
-                execution_profile_id=str(
-                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
-                ),
+                execution_profile_id=str(discovery_blueprint.get("execution_profile_id", "legacy_v1")),
             ):
-                execution_profile_id = str(
-                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
-                )
+                execution_profile_id = str(discovery_blueprint.get("execution_profile_id", "legacy_v1"))
                 if _winning_analysis_can_resume_s6_only(
                     recovered_winning_analysis,
                     execution_profile_id=execution_profile_id,
@@ -3683,22 +3329,13 @@ class DeepResearchRunner:
                     prior_winning_analysis = dict(recovered_winning_analysis)
                     winning_resume_steps = [6]
                     rejection_reason = "s6_quality_gate_failed_resume_s6_only"
-                    rejection_summary = (
-                        "已复用通过专家门的候选账本与最终组合，"
-                        "仅重新执行未通过发布门的S6装备能力画像"
-                    )
+                    rejection_summary = "已复用通过专家门的候选账本与最终组合，仅重新执行未通过发布门的S6装备能力画像"
                 else:
                     rejection_reason = "profile_authoritative_portfolio_missing"
-                    rejection_summary = (
-                        "已完成的核心结果不含当前质量模式要求的权威制胜组合，"
-                        "本次恢复重新执行制胜主链"
-                    )
+                    rejection_summary = "已完成的核心结果不含当前质量模式要求的权威制胜组合，本次恢复重新执行制胜主链"
                 trace.append(
                     TraceEvent(
-                        event_id=(
-                            "trace-winning-model-reuse-rejected-r"
-                            f"{checkpoint.resume_count}"
-                        ),
+                        event_id=(f"trace-winning-model-reuse-rejected-r{checkpoint.resume_count}"),
                         event_type="winning_model_result_reuse_rejected",
                         actor="winning_mechanism",
                         summary=rejection_summary,
@@ -3723,42 +3360,27 @@ class DeepResearchRunner:
                     )
                 )
             elif mode == "real" and callable(winning_advisor):
-                minimal_winning_input = is_quality_execution_profile_id(
-                    discovery_blueprint.get("execution_profile_id")
-                )
+                minimal_winning_input = is_quality_execution_profile_id(discovery_blueprint.get("execution_profile_id"))
                 winning_packets = (
                     _military_handoff_packet_refs(store, military_value_handoff)
                     if minimal_winning_input
-                    else [
-                        compact_packet_handoff(packet, minimal=False)
-                        for packet in _admitted_packet_snapshot(store)
-                    ]
+                    else [compact_packet_handoff(packet, minimal=False) for packet in _admitted_packet_snapshot(store)]
                 )
                 winning_input = {
                     "run_id": run_id,
                     "topic": topic,
-                    "structured_query_brief": discovery_blueprint.get(
-                        "structured_query_brief", {}
-                    ),
+                    "structured_query_brief": discovery_blueprint.get("structured_query_brief", {}),
                     "research_route": route,
                     "interaction_mode": problem.interaction_mode,
-                    "discovery_blueprint": _compact_winning_blueprint(
-                        discovery_blueprint
-                    )
+                    "discovery_blueprint": _compact_winning_blueprint(discovery_blueprint)
                     if minimal_winning_input
                     else discovery_blueprint,
-                    "discovery_convergence": _compact_winning_convergence(
-                        convergence
-                    )
+                    "discovery_convergence": _compact_winning_convergence(convergence)
                     if minimal_winning_input
                     else convergence,
-                    "coverage": _compact_winning_coverage(coverage)
-                    if minimal_winning_input
-                    else coverage,
+                    "coverage": _compact_winning_coverage(coverage) if minimal_winning_input else coverage,
                     "packets": winning_packets,
-                    "military_value_handoff": _minimal_military_value_handoff(
-                        military_value_handoff
-                    )
+                    "military_value_handoff": _minimal_military_value_handoff(military_value_handoff)
                     if minimal_winning_input
                     else {},
                     "evidence_index": (
@@ -3780,26 +3402,19 @@ class DeepResearchRunner:
                     "selected_business_agent_ids": list(selected_agent_ids),
                     "prior_winning_analysis": prior_winning_analysis,
                     "resume_steps": list(winning_resume_steps),
-                    "execution_profile_id": discovery_blueprint.get(
-                        "execution_profile_id", "legacy_v1"
-                    ),
-                    "execution_contract": _compact_winning_contract(
-                        discovery_blueprint.get("execution_contract", {})
-                    )
+                    "execution_profile_id": discovery_blueprint.get("execution_profile_id", "legacy_v1"),
+                    "execution_contract": _compact_winning_contract(discovery_blueprint.get("execution_contract", {}))
                     if minimal_winning_input
                     else discovery_blueprint.get("execution_contract", {}),
                     "ablation_scope": (
-                        "restricted_generic_baseline_evidence_closed"
-                        if stage_policy.evidence_closed
-                        else ""
+                        "restricted_generic_baseline_evidence_closed" if stage_policy.evidence_closed else ""
                     ),
                     "evidence_closed": stage_policy.evidence_closed,
                     "expert_review_feedback": expert_feedback,
                     **(
                         {"deep_parent_context": deep_parent_context}
                         if deep_parent_context
-                        and str(discovery_blueprint.get("execution_profile_id", ""))
-                        == _DEEP_DIVERGENCE_PROFILE_ID
+                        and str(discovery_blueprint.get("execution_profile_id", "")) == _DEEP_DIVERGENCE_PROFILE_ID
                         else {}
                     ),
                 }
@@ -3809,9 +3424,7 @@ class DeepResearchRunner:
                     {
                         "event_type": "task_received",
                         "summary": "消费结构化基线、正式证据与coverage，执行核心制胜机理分析。",
-                        "input_refs": [
-                            packet["packet_id"] for packet in winning_input["packets"]
-                        ],
+                        "input_refs": [packet["packet_id"] for packet in winning_input["packets"]],
                     },
                 )
                 trace.append(
@@ -3820,9 +3433,7 @@ class DeepResearchRunner:
                         event_type="tool_call",
                         actor="winning_mechanism",
                         summary="核心制胜机理 Agent 调用独立真实模型",
-                        input_refs=[
-                            packet["packet_id"] for packet in winning_input["packets"]
-                        ],
+                        input_refs=[packet["packet_id"] for packet in winning_input["packets"]],
                         payload={
                             "tool_name": "analyze_winning_mechanism",
                             "provider_mode": "real",
@@ -3852,24 +3463,18 @@ class DeepResearchRunner:
                     progress_setter(record_winning_progress)
                 try:
                     if stage_policy.feedback_loops_enabled and not is_deep_divergence:
-                        winning_model_analysis, winning_harness_result, winning_tools = (
-                            WinningCoreHarness(
-                                run_id=run_id,
-                                agent=registry.get("winning_mechanism"),
-                                catalog=registry.harness_catalog,
-                                sessions_dir=workspace.sessions_dir,
-                                workspace=workspace,
-                                store=sqlite_store,
-                            ).execute(
-                                winning_advisor,
-                                winning_input,
-                                attempt=checkpoint.round_index,
-                                resume_from=(
-                                    "L3"
-                                    if winning_resume_steps == [6]
-                                    else "L1"
-                                ),
-                            )
+                        winning_model_analysis, winning_harness_result, winning_tools = WinningCoreHarness(
+                            run_id=run_id,
+                            agent=registry.get("winning_mechanism"),
+                            catalog=registry.harness_catalog,
+                            sessions_dir=workspace.sessions_dir,
+                            workspace=workspace,
+                            store=sqlite_store,
+                        ).execute(
+                            winning_advisor,
+                            winning_input,
+                            attempt=checkpoint.round_index,
+                            resume_from=("L3" if winning_resume_steps == [6] else "L1"),
                         )
                     else:
                         # Deep-divergence uses the provider's constrained
@@ -3901,9 +3506,7 @@ class DeepResearchRunner:
                     # already-produced S3/S4 candidates; retain the partial
                     # structured result and let the normal audit/report path
                     # publish it as limited/pending verification.
-                    winning_model_analysis = (
-                        dict(partial_result) if isinstance(partial_result, Mapping) else {}
-                    )
+                    winning_model_analysis = dict(partial_result) if isinstance(partial_result, Mapping) else {}
                     trace.append(
                         TraceEvent(
                             event_id=f"trace-deep-divergence-partial-s6-r{checkpoint.resume_count}",
@@ -3938,12 +3541,7 @@ class DeepResearchRunner:
                                 "runtime_profile_id": "winning_core_v1",
                                 "active_skill_ids": (
                                     registry.get("winning_mechanism").skill_ids[:1]
-                                    if str(
-                                        discovery_blueprint.get(
-                                            "execution_profile_id", ""
-                                        )
-                                    )
-                                    == "optimized_v2"
+                                    if str(discovery_blueprint.get("execution_profile_id", "")) == "optimized_v2"
                                     else registry.get("winning_mechanism").skill_ids
                                 ),
                                 "active_tool_names": winning_tools,
@@ -4083,9 +3681,7 @@ class DeepResearchRunner:
                         },
                     )
                 )
-            store.retain_capability_images(
-                {item.capability_id for item in images}
-            )
+            store.retain_capability_images({item.capability_id for item in images})
             recall_coordinator = RecallCoordinator(max_rounds=resolved_max_rounds)
             recall_packet_ids: list[str] = []
             recall_evidence_ids: list[str] = []
@@ -4109,9 +3705,7 @@ class DeepResearchRunner:
                     )
                     store.add_recall_request(routed.recall)
                     if routed.status == "routed" and routed.target_agent_id:
-                        recall_report = recall_reports_by_agent.get(
-                            routed.target_agent_id
-                        )
+                        recall_report = recall_reports_by_agent.get(routed.target_agent_id)
                         reused_recall_result = recall_report is not None
                         if recall_report is None:
                             try:
@@ -4119,11 +3713,7 @@ class DeepResearchRunner:
                                     agent=agents_by_id[routed.target_agent_id],
                                     topic=topic,
                                     research_route=route,
-                                    round_index=(
-                                        checkpoint.round_index
-                                        + len(recall_reports)
-                                        + 1
-                                    ),
+                                    round_index=(checkpoint.round_index + len(recall_reports) + 1),
                                     recall_request={
                                         "recall_id": routed.recall.recall_id,
                                         "reason": routed.recall.reason,
@@ -4144,15 +3734,11 @@ class DeepResearchRunner:
                                 store.add_recall_request(limited)
                                 trace.append(
                                     TraceEvent(
-                                        event_id=(
-                                            "trace-recall-budget-limited-"
-                                            f"{recall.recall_id}"
-                                        ),
+                                        event_id=(f"trace-recall-budget-limited-{recall.recall_id}"),
                                         event_type="recall_skipped_budget_limited",
                                         actor="orchestrator",
                                         summary=(
-                                            "可选定向再调因模型预算或截止时间停止；"
-                                            "保留已完成的制胜链与S6研究结果"
+                                            "可选定向再调因模型预算或截止时间停止；保留已完成的制胜链与S6研究结果"
                                         ),
                                         input_refs=[recall.recall_id],
                                         output_refs=[routed.recall.return_node],
@@ -4166,14 +3752,10 @@ class DeepResearchRunner:
                                     )
                                 )
                                 continue
-                            recall_reports_by_agent[
-                                routed.target_agent_id
-                            ] = recall_report
+                            recall_reports_by_agent[routed.target_agent_id] = recall_report
                             recall_reports.append(recall_report)
                             recall_packet_ids.append(recall_report.packet_id)
-                            recall_evidence_ids.extend(
-                                recall_report.new_evidence_ids
-                            )
+                            recall_evidence_ids.extend(recall_report.new_evidence_ids)
                         completed = recall_coordinator.complete(routed)
                         store.add_recall_request(completed.recall)
                         completed_return_nodes.append(completed.recall.return_node)
@@ -4194,18 +3776,11 @@ class DeepResearchRunner:
                                 "return_node": completed.recall.return_node,
                                 "packet_id": recall_report.packet_id,
                                 "handoff_summary": str(
-                                    getattr(packet, "handoff_summary", "")
-                                    or recall_report.handoff_summary
+                                    getattr(packet, "handoff_summary", "") or recall_report.handoff_summary
                                 )[:600],
-                                "high_value_findings": [
-                                    str(item)[:500] for item in findings
-                                ],
-                                "new_evidence_ids": list(
-                                    dict.fromkeys(recall_report.new_evidence_ids)
-                                ),
-                                "limitations_or_open_questions": [
-                                    str(item)[:400] for item in limitations
-                                ],
+                                "high_value_findings": [str(item)[:500] for item in findings],
+                                "new_evidence_ids": list(dict.fromkeys(recall_report.new_evidence_ids)),
+                                "limitations_or_open_questions": [str(item)[:400] for item in limitations],
                             }
                         )
                         trace.append(
@@ -4217,8 +3792,7 @@ class DeepResearchRunner:
                                     "recall reused the completed callback packet and "
                                     f"returned to {completed.recall.return_node}"
                                     if reused_recall_result
-                                    else "recall completed and returned to "
-                                    f"{completed.recall.return_node}"
+                                    else f"recall completed and returned to {completed.recall.return_node}"
                                 ),
                                 input_refs=[recall.recall_id],
                                 output_refs=[
@@ -4248,9 +3822,7 @@ class DeepResearchRunner:
                                     "target_agent_id": routed.target_agent_id,
                                     "return_node": completed.recall.return_node,
                                     "finding_count": len(findings),
-                                    "evidence_count": len(
-                                        recall_report.new_evidence_ids
-                                    ),
+                                    "evidence_count": len(recall_report.new_evidence_ids),
                                 },
                             )
                         )
@@ -4270,37 +3842,23 @@ class DeepResearchRunner:
                             output_refs=(
                                 [routed.target_agent_id]
                                 if routed.target_agent_id
-                                else (
-                                    [routed.recommendation.recommendation_id]
-                                    if routed.recommendation
-                                    else []
-                                )
+                                else ([routed.recommendation.recommendation_id] if routed.recommendation else [])
                             ),
                         )
                     )
             if recall_reports:
                 recalled_agent_ids = list(recall_reports_by_agent)
-                selected_agent_ids = list(
-                    dict.fromkeys([*selected_agent_ids, *recalled_agent_ids])
-                )
-                selected_agents = [
-                    registry.get(agent_id) for agent_id in selected_agent_ids
-                ]
+                selected_agent_ids = list(dict.fromkeys([*selected_agent_ids, *recalled_agent_ids]))
+                selected_agents = [registry.get(agent_id) for agent_id in selected_agent_ids]
                 coverage = coverage_for_route(
                     route=route,
                     selected_agents=selected_agents,
                     policy=policy,
                     additional_required_tags=list(required_tags),
-                    discovery_branch=str(
-                        discovery_blueprint["primary_branch"]
-                    ),
+                    discovery_branch=str(discovery_blueprint["primary_branch"]),
                 )
                 unresolved_tags = set(coverage["missing_required_tags"])
-                recommendations = [
-                    item
-                    for item in recommendations
-                    if item.missing_capability_tag in unresolved_tags
-                ]
+                recommendations = [item for item in recommendations if item.missing_capability_tag in unresolved_tags]
                 problem = replace(
                     problem,
                     selected_agent_ids=selected_agent_ids,
@@ -4313,10 +3871,7 @@ class DeepResearchRunner:
                 )
                 trace.append(
                     TraceEvent(
-                        event_id=(
-                            f"trace-coverage-recomputed-r"
-                            f"{checkpoint.round_index + 1}"
-                        ),
+                        event_id=(f"trace-coverage-recomputed-r{checkpoint.round_index + 1}"),
                         event_type="coverage_recomputed_after_recall",
                         actor="orchestrator",
                         summary=(
@@ -4324,27 +3879,19 @@ class DeepResearchRunner:
                             + (
                                 "全部必需标签已覆盖"
                                 if coverage["coverage_passed"]
-                                else "仍缺少"
-                                + "、".join(
-                                    coverage["missing_required_tags"]
-                                )
+                                else "仍缺少" + "、".join(coverage["missing_required_tags"])
                             )
                         ),
                         input_refs=list(dict.fromkeys(recall_packet_ids)),
                         payload={
                             "coverage_passed": coverage["coverage_passed"],
                             "provided_tags": coverage["provided_tags"],
-                            "missing_required_tags": coverage[
-                                "missing_required_tags"
-                            ],
+                            "missing_required_tags": coverage["missing_required_tags"],
                             "recalled_agent_ids": recalled_agent_ids,
                         },
                     )
                 )
-                prior_gate_state = {
-                    stage.layer: (stage.confidence, stage.gate_passed)
-                    for stage in stage_outputs
-                }
+                prior_gate_state = {stage.layer: (stage.confidence, stage.gate_passed) for stage in stage_outputs}
                 stage_outputs = engine.reevaluate_gates_after_recall(
                     topic=topic,
                     route=route,
@@ -4357,11 +3904,7 @@ class DeepResearchRunner:
                 for stage in stage_outputs:
                     store.add_stage_output(stage)
                     before_confidence, before_gate = prior_gate_state[stage.layer]
-                    supplements = [
-                        item
-                        for item in completed_recall_supplements
-                        if item["return_node"] == stage.layer
-                    ]
+                    supplements = [item for item in completed_recall_supplements if item["return_node"] == stage.layer]
                     trace.append(
                         TraceEvent(
                             event_id=f"trace-winning-gate-reevaluated-{stage.stage_id}",
@@ -4371,10 +3914,7 @@ class DeepResearchRunner:
                                 f"{stage.layer}已基于再调证据局部重评门控："
                                 f"{before_gate} -> {stage.gate_passed}；未重跑S1-S6"
                             ),
-                            input_refs=[
-                                item["packet_id"]
-                                for item in completed_recall_supplements
-                            ],
+                            input_refs=[item["packet_id"] for item in completed_recall_supplements],
                             output_refs=[stage.stage_id],
                             payload={
                                 "layer": stage.layer,
@@ -4382,10 +3922,7 @@ class DeepResearchRunner:
                                 "after_confidence": stage.confidence,
                                 "before_gate_passed": before_gate,
                                 "after_gate_passed": stage.gate_passed,
-                                "evidence_delta": sum(
-                                    len(item["new_evidence_ids"])
-                                    for item in supplements
-                                ),
+                                "evidence_delta": sum(len(item["new_evidence_ids"]) for item in supplements),
                                 "winning_chain_rerun": False,
                             },
                         )
@@ -4394,28 +3931,23 @@ class DeepResearchRunner:
             if stage_policy.feedback_loops_enabled:
                 trace.append(
                     TraceEvent(
-                    event_id=f"trace-winning-outer-loop-r{checkpoint.round_index}",
-                    event_type="winning_outer_loop_evaluated",
-                    actor="orchestrator",
-                    summary=(
-                        "外循环完成定向再调，受影响门控已局部重评且未重跑S1-S6"
-                        if recall_reports
-                        else "外循环评估完成，无需定向再调"
-                    ),
-                    input_refs=[
-                        item.recall_id for item in store.recall_requests.values()
-                    ],
-                    output_refs=[report.packet_id for report in recall_reports],
-                    payload={
-                        "attempt": checkpoint.round_index,
-                        "maximum_rounds": resolved_max_rounds,
-                        "recall_count": len(recall_reports),
-                        "return_nodes": completed_return_nodes,
-                        "passed": not any(
-                            item.status == "limited"
-                            for item in store.recall_requests.values()
+                        event_id=f"trace-winning-outer-loop-r{checkpoint.round_index}",
+                        event_type="winning_outer_loop_evaluated",
+                        actor="orchestrator",
+                        summary=(
+                            "外循环完成定向再调，受影响门控已局部重评且未重跑S1-S6"
+                            if recall_reports
+                            else "外循环评估完成，无需定向再调"
                         ),
-                    },
+                        input_refs=[item.recall_id for item in store.recall_requests.values()],
+                        output_refs=[report.packet_id for report in recall_reports],
+                        payload={
+                            "attempt": checkpoint.round_index,
+                            "maximum_rounds": resolved_max_rounds,
+                            "recall_count": len(recall_reports),
+                            "return_nodes": completed_return_nodes,
+                            "passed": not any(item.status == "limited" for item in store.recall_requests.values()),
+                        },
                     )
                 )
             for recommendation in recommendations:
@@ -4533,9 +4065,7 @@ class DeepResearchRunner:
                 stage_outputs=stage_outputs,
                 capability_images=images,
                 evidence_count=len(store.evidence),
-                execution_profile_id=str(
-                    discovery_blueprint.get("execution_profile_id", "")
-                ),
+                execution_profile_id=str(discovery_blueprint.get("execution_profile_id", "")),
             )
             # Upstream S5/expert judgements are context for the final model,
             # never a pre-populated audit result or a release blocker.
@@ -4559,12 +4089,12 @@ class DeepResearchRunner:
                     trace.append(
                         TraceEvent(
                             event_id="trace-auditor-model-call",
-                        event_type="tool_call",
-                        actor="auditor",
-                        summary="审计 Agent 调用独立模型执行精简业务审计",
-                        payload={"tool_name": "review_audit", "provider_mode": mode},
+                            event_type="tool_call",
+                            actor="auditor",
+                            summary="审计 Agent 调用独立模型执行精简业务审计",
+                            payload={"tool_name": "review_audit", "provider_mode": mode},
+                        )
                     )
-                )
                 audit_payload = _model_audit_payload(
                     topic=topic,
                     route=route,
@@ -4577,18 +4107,14 @@ class DeepResearchRunner:
                 # coverage, but make it explicit that it is not an audit gate.
                 audit_payload["coverage_summary"] = {
                     "coverage_passed": bool(coverage.get("coverage_passed")),
-                    "missing_required_tags": list(
-                        coverage.get("missing_required_tags", [])
-                    )[:8],
+                    "missing_required_tags": list(coverage.get("missing_required_tags", []))[:8],
                     "diagnostic_only": True,
                 }
                 audit_payload["legacy_diagnostics"] = dict(audit.mechanical_diagnostics)
                 audit_payload["stage_gate_summary"] = [
                     {
                         "layer": str(getattr(item, "layer", "")),
-                        "summary": _compact_text_value(
-                            getattr(item, "outputs", {}), 320
-                        ),
+                        "summary": _compact_text_value(getattr(item, "outputs", {}), 320),
                     }
                     for item in stage_outputs[:3]
                 ]
@@ -4612,10 +4138,14 @@ class DeepResearchRunner:
                             *audit.comments,
                             "模型审计响应超时，已采用轻量S6业务审计快速通过路径；报告可继续审阅，后续可人工复核。",
                         ],
-                        advisories=list(dict.fromkeys([
-                            *audit.advisories,
-                            "模型响应超时，轻量S6审计快速通过；建议后续人工复核。",
-                        ])),
+                        advisories=list(
+                            dict.fromkeys(
+                                [
+                                    *audit.advisories,
+                                    "模型响应超时，轻量S6审计快速通过；建议后续人工复核。",
+                                ]
+                            )
+                        ),
                     )
                     trace.append(
                         TraceEvent(
@@ -4697,9 +4227,7 @@ class DeepResearchRunner:
             # Apply their innovation/science/implementability policy only
             # after a real model response has been persisted; an unavailable
             # auditor is never silently upgraded.
-            frontier_mode = str(
-                discovery_blueprint.get("execution_profile_id", "")
-            ) == "winning_swarm_dynamic_v2"
+            frontier_mode = str(discovery_blueprint.get("execution_profile_id", "")) == "winning_swarm_dynamic_v2"
             if frontier_mode and bool(getattr(audit, "model_review", {})):
                 audit = _apply_frontier_innovation_policy(
                     audit,
@@ -4718,12 +4246,7 @@ class DeepResearchRunner:
                 for row in material_rows
                 if isinstance(row, Mapping)
             )
-            if (
-                failed_materialization
-                and not store.evidence
-                and audit.status == "approved"
-                and not frontier_mode
-            ):
+            if failed_materialization and not store.evidence and audit.status == "approved" and not frontier_mode:
                 audit = replace(
                     audit,
                     status="limited",
@@ -4831,9 +4354,7 @@ class DeepResearchRunner:
             reporter_summary = ""
             winning_swarm_summary = (
                 discovery_blueprint.get("winning_swarm", {})
-                if isinstance(
-                    discovery_blueprint.get("winning_swarm", {}), Mapping
-                )
+                if isinstance(discovery_blueprint.get("winning_swarm", {}), Mapping)
                 else {}
             )
             if not winning_swarm_summary:
@@ -4842,9 +4363,7 @@ class DeepResearchRunner:
                         dict(event.payload.get("swarm_summary", {}))
                         for event in reversed(trace.snapshot())
                         if event.event_type == "swarm_gate_evaluated"
-                        and isinstance(
-                            event.payload.get("swarm_summary", {}), Mapping
-                        )
+                        and isinstance(event.payload.get("swarm_summary", {}), Mapping)
                         and event.payload.get("swarm_summary")
                     ),
                     {},
@@ -4864,6 +4383,10 @@ class DeepResearchRunner:
                 store=store,
                 convergence=convergence,
             )
+            delivery_artifacts = _mission_public_artifact(
+                discovery_blueprint,
+                delivery_artifacts,
+            )
             # S6 capability images are an independently useful artifact.  Make
             # them durable before the (potentially long-running) Reporter
             # starts so the UI can render the image cards while the report is
@@ -4871,7 +4394,10 @@ class DeepResearchRunner:
             workspace.write_run_text(
                 "capability_images.json",
                 json.dumps(
-                    [to_plain(item) for item in store.capability_images.values()],
+                    _mission_public_artifact(
+                        discovery_blueprint,
+                        [to_plain(item) for item in store.capability_images.values()],
+                    ),
                     ensure_ascii=False,
                     indent=2,
                     sort_keys=True,
@@ -4908,11 +4434,7 @@ class DeepResearchRunner:
 
             if mode == "real":
                 try:
-                    execution_profile_id = str(
-                        discovery_blueprint.get(
-                            "execution_profile_id", "legacy_v1"
-                        )
-                    )
+                    execution_profile_id = str(discovery_blueprint.get("execution_profile_id", "legacy_v1"))
                     if (
                         execution_profile_id == "winning_swarm_dynamic_v2"
                         and portfolio_quality_gate
@@ -4929,12 +4451,8 @@ class DeepResearchRunner:
                                 actor="winning_swarm_controller",
                                 summary="动态蜂群组合门未满足数量/多样性偏好，作为审计告警继续报告交付",
                                 payload={
-                                    "portfolio_quality_gate": dict(
-                                        portfolio_quality_gate
-                                    ),
-                                    "hard_blockers": list(
-                                        portfolio_quality_gate.get("hard_blockers", [])
-                                    ),
+                                    "portfolio_quality_gate": dict(portfolio_quality_gate),
+                                    "hard_blockers": list(portfolio_quality_gate.get("hard_blockers", [])),
                                     "delivery_policy": "advisory_only",
                                 },
                             )
@@ -4952,69 +4470,42 @@ class DeepResearchRunner:
                                 "tool_name": "draft_report",
                                 "provider_mode": "real",
                                 "branch": discovery_blueprint["primary_branch"],
-                                "required_sections": delivery_artifacts[
-                                    "branch_writer_brief"
-                                ]["required_sections"],
+                                "required_sections": delivery_artifacts["branch_writer_brief"]["required_sections"],
                             },
                         )
                     )
                     if callable(reporter_progress_setter):
                         reporter_progress_setter(record_reporter_progress)
                     if not callable(report_drafter):
-                        raise RuntimeError(
-                            "真实模式必须由独立报告Agent生成正文；"
-                            "当前Provider不支持draft_report"
-                        )
+                        raise RuntimeError("真实模式必须由独立报告Agent生成正文；当前Provider不支持draft_report")
                     reporter_summary = report_drafter(
                         {
                             "run_id": run_id,
                             "topic": topic,
                             "research_route": route,
-                            "execution_profile_id": discovery_blueprint.get(
-                                "execution_profile_id", "legacy_v1"
-                            ),
-                            "portfolio_quality_gate": dict(
-                                portfolio_quality_gate
-                            ),
+                            "execution_profile_id": discovery_blueprint.get("execution_profile_id", "legacy_v1"),
+                            "portfolio_quality_gate": dict(portfolio_quality_gate),
                             "report_template_mode": report_template_mode,
-                            "structured_query_brief": discovery_blueprint.get(
-                                "structured_query_brief", {}
-                            ),
+                            "structured_query_brief": discovery_blueprint.get("structured_query_brief", {}),
                             "ablation_scope": (
-                                "restricted_generic_baseline_evidence_closed"
-                                if stage_policy.evidence_closed
-                                else ""
+                                "restricted_generic_baseline_evidence_closed" if stage_policy.evidence_closed else ""
                             ),
                             "evidence_closed": stage_policy.evidence_closed,
                             "report_context": {
-                                "primary_branch": discovery_blueprint.get(
-                                    "primary_branch", ""
-                                ),
-                                "branch_name": delivery_artifacts[
-                                    "branch_deliverables"
-                                ].get("branch_name", ""),
-                                "secondary_branches": list(
-                                    discovery_blueprint.get(
-                                        "secondary_branches", []
-                                    )
-                                )[:2],
+                                "primary_branch": discovery_blueprint.get("primary_branch", ""),
+                                "branch_name": delivery_artifacts["branch_deliverables"].get("branch_name", ""),
+                                "secondary_branches": list(discovery_blueprint.get("secondary_branches", []))[:2],
                                 "audit_status": audit.status,
                                 "substantive_audit": {
                                     "checks": dict(audit.substantive_checks),
                                     "hard_blockers": list(audit.hard_blockers),
                                 },
-                                "audit_limits": [
-                                    str(item)[:220] for item in audit.advisories[:3]
-                                ],
-                                "coverage_passed": bool(
-                                    coverage.get("coverage_passed")
-                                ),
+                                "audit_limits": [str(item)[:220] for item in audit.advisories[:3]],
+                                "coverage_passed": bool(coverage.get("coverage_passed")),
                             },
                             "synthesis_seed": _report_synthesis_seed(
                                 store=store,
-                                branch_output=delivery_artifacts[
-                                    "branch_deliverables"
-                                ],
+                                branch_output=delivery_artifacts["branch_deliverables"],
                                 convergence=convergence,
                             ),
                             "evidence_catalog": _report_evidence_catalog(
@@ -5022,12 +4513,8 @@ class DeepResearchRunner:
                                 limit=8,
                                 claim_chars=150,
                             ),
-                            "branch_report_contract": delivery_artifacts[
-                                "branch_report_contract"
-                            ],
-                            "branch_writer_brief": delivery_artifacts[
-                                "branch_writer_brief"
-                            ],
+                            "branch_report_contract": delivery_artifacts["branch_report_contract"],
+                            "branch_writer_brief": delivery_artifacts["branch_writer_brief"],
                             # Local Reporter gates use this compact status and
                             # product inventory to distinguish missing branch
                             # content from harmless wording differences. The
@@ -5035,12 +4522,8 @@ class DeepResearchRunner:
                             # serialize this object, so it cannot pollute the
                             # Reporter context.
                             "branch_deliverables": {
-                                "delivery_status": delivery_artifacts[
-                                    "branch_deliverables"
-                                ].get("delivery_status", ""),
-                                "products": delivery_artifacts[
-                                    "branch_deliverables"
-                                ].get("products", {}),
+                                "delivery_status": delivery_artifacts["branch_deliverables"].get("delivery_status", ""),
+                                "products": delivery_artifacts["branch_deliverables"].get("products", {}),
                             },
                         }
                     )
@@ -5048,9 +4531,7 @@ class DeepResearchRunner:
                         raise ValueError("empty report summary")
                     reporter_model_succeeded = True
                 except Exception as exc:
-                    partial_report = str(
-                        getattr(provider, "_latest_report_draft", "") or ""
-                    ).strip()
+                    partial_report = str(getattr(provider, "_latest_report_draft", "") or "").strip()
                     if partial_report:
                         workspace.write_run_text(
                             "report-partial.md",
@@ -5063,27 +4544,14 @@ class DeepResearchRunner:
                         "detail": str(exc)[:1000],
                         "resumable": True,
                         "partial_report_available": bool(partial_report),
-                        "partial_report_path": (
-                            "report-partial.md" if partial_report else ""
-                        ),
-                        "failed_columns": list(
-                            getattr(provider, "_last_report_failed_columns", [])
-                            or []
-                        ),
-                        "repair_reasons": list(
-                            getattr(provider, "_last_report_quality_issues", [])
-                            or []
-                        )[:8],
+                        "partial_report_path": ("report-partial.md" if partial_report else ""),
+                        "failed_columns": list(getattr(provider, "_last_report_failed_columns", []) or []),
+                        "repair_reasons": list(getattr(provider, "_last_report_quality_issues", []) or [])[:8],
                     }
                     if portfolio_quality_gate:
-                        failure_payload["portfolio_quality_gate"] = dict(
-                            portfolio_quality_gate
-                        )
+                        failure_payload["portfolio_quality_gate"] = dict(portfolio_quality_gate)
                     failure_event = TraceEvent(
-                        event_id=(
-                            "trace-reporter-model-failed-"
-                            f"r{checkpoint.resume_count}"
-                        ),
+                        event_id=(f"trace-reporter-model-failed-r{checkpoint.resume_count}"),
                         event_type="report_model_failed",
                         actor="reporter",
                         summary="独立报告Agent未成功生成正文，已停止交付并保留检查点",
@@ -5133,19 +4601,14 @@ class DeepResearchRunner:
                         ),
                     )
                     raise RuntimeError(
-                        "独立报告Agent生成失败；真实模式禁止确定性降级报告，"
-                        "任务已保留检查点，可恢复后重新生成。"
+                        "独立报告Agent生成失败；真实模式禁止确定性降级报告，任务已保留检查点，可恢复后重新生成。"
                     ) from exc
                 else:
                     # A successful resume supersedes any prior Reporter
                     # failure diagnostic. Leaving the stale file behind makes
                     # completed runs look failed to filesystem-based tooling.
-                    (workspace.run_dir / "report_failure.json").unlink(
-                        missing_ok=True
-                    )
-                    (workspace.run_dir / "report-partial.md").unlink(
-                        missing_ok=True
-                    )
+                    (workspace.run_dir / "report_failure.json").unlink(missing_ok=True)
+                    (workspace.run_dir / "report-partial.md").unlink(missing_ok=True)
                 finally:
                     if callable(reporter_progress_setter):
                         reporter_progress_setter(None)
@@ -5179,6 +4642,10 @@ class DeepResearchRunner:
                 store=store,
                 convergence=convergence,
             )
+            delivery_artifacts = _mission_public_artifact(
+                discovery_blueprint,
+                delivery_artifacts,
+            )
             quality_delivery_blockers: list[str] = []
             report = render_report(
                 topic=topic,
@@ -5204,9 +4671,7 @@ class DeepResearchRunner:
                         _report_delivery_limit_payload(
                             discovery_blueprint=discovery_blueprint,
                             report_template_mode=report_template_mode,
-                            branch_writer_brief=delivery_artifacts[
-                                "branch_writer_brief"
-                            ],
+                            branch_writer_brief=delivery_artifacts["branch_writer_brief"],
                         ),
                     ),
                 )
@@ -5216,8 +4681,7 @@ class DeepResearchRunner:
                     total_limit=1000,
                 )
                 binding_rate = (
-                    sum(bool(item.get("public_urls")) for item in accepted_claim_rows)
-                    / len(accepted_claim_rows)
+                    sum(bool(item.get("public_urls")) for item in accepted_claim_rows) / len(accepted_claim_rows)
                     if accepted_claim_rows
                     else 0.0
                 )
@@ -5261,12 +4725,7 @@ class DeepResearchRunner:
                         sort_keys=True,
                     ),
                 )
-                branch_gate_passed = (
-                    delivery_artifacts["branch_deliverables"].get(
-                        "delivery_status"
-                    )
-                    == "complete"
-                )
+                branch_gate_passed = delivery_artifacts["branch_deliverables"].get("delivery_status") == "complete"
                 trace.append(
                     TraceEvent(
                         event_id="trace-report-quality-gate-v2",
@@ -5282,9 +4741,7 @@ class DeepResearchRunner:
                             "quality_passed": quality_report.passed,
                             "quality_score": quality_report.overall_score,
                             "branch_deliverables_passed": branch_gate_passed,
-                            "branch_delivery_status": delivery_artifacts[
-                                "branch_deliverables"
-                            ].get("delivery_status"),
+                            "branch_delivery_status": delivery_artifacts["branch_deliverables"].get("delivery_status"),
                             "claim_source_binding_rate": round(binding_rate, 6),
                             "claim_source_binding_minimum": CLAIM_SOURCE_BINDING_MINIMUM,
                             "claim_source_binding_soft_gate": True,
@@ -5300,20 +4757,12 @@ class DeepResearchRunner:
                 # internal labels or template instructions) remain blocking.
                 quality_delivery_advisories: list[str] = []
                 if binding_rate < CLAIM_SOURCE_BINDING_MINIMUM:
-                    quality_delivery_advisories.append(
-                        "关键结论与公开来源绑定率低于80%（软门槛，仅作审阅提示）"
-                    )
+                    quality_delivery_advisories.append("关键结论与公开来源绑定率低于80%（软门槛，仅作审阅提示）")
                 if not quality_report.passed or internal_reference_found:
-                    quality_delivery_blockers = list(
-                        quality_report.compact().get("blockers", [])
-                    )
+                    quality_delivery_blockers = list(quality_report.compact().get("blockers", []))
                     if internal_reference_found:
-                        quality_delivery_blockers.append(
-                            "正式报告仍含内部packet、claim或候选标签"
-                        )
-                    quality_delivery_blockers = list(
-                        dict.fromkeys(quality_delivery_blockers)
-                    )[:8]
+                        quality_delivery_blockers.append("正式报告仍含内部packet、claim或候选标签")
+                    quality_delivery_blockers = list(dict.fromkeys(quality_delivery_blockers))[:8]
                 workspace.write_run_text(
                     "report_quality_advisories.json",
                     json.dumps(
@@ -5360,9 +4809,7 @@ class DeepResearchRunner:
                             coverage=coverage,
                             audit=audit,
                             executive_summary=reporter_summary,
-                            discovery_branch=str(
-                                discovery_blueprint["primary_branch"]
-                            ),
+                            discovery_branch=str(discovery_blueprint["primary_branch"]),
                             discovery_blueprint=discovery_blueprint,
                             delivery_artifacts=delivery_artifacts,
                             prefer_model_report=bool(reporter_summary.strip()),
@@ -5378,9 +4825,7 @@ class DeepResearchRunner:
                                 _report_delivery_limit_payload(
                                     discovery_blueprint=discovery_blueprint,
                                     report_template_mode=report_template_mode,
-                                    branch_writer_brief=delivery_artifacts[
-                                        "branch_writer_brief"
-                                    ],
+                                    branch_writer_brief=delivery_artifacts["branch_writer_brief"],
                                 ),
                             ),
                         )
@@ -5403,10 +4848,7 @@ class DeepResearchRunner:
             store.add_report(report)
             if quality_delivery_blockers:
                 failure_event = TraceEvent(
-                    event_id=(
-                        "trace-report-quality-limited-r"
-                        f"{checkpoint.resume_count}"
-                    ),
+                    event_id=(f"trace-report-quality-limited-r{checkpoint.resume_count}"),
                     event_type="report_quality_gate_limited",
                     actor="report_quality_gate",
                     summary="报告质量门存在缺口，已作为软门告警交付正式报告",
@@ -5417,12 +4859,8 @@ class DeepResearchRunner:
                     },
                 )
                 trace.append(failure_event)
-                (workspace.run_dir / "report_failure.json").unlink(
-                    missing_ok=True
-                )
-                (workspace.run_dir / "report-partial.md").unlink(
-                    missing_ok=True
-                )
+                (workspace.run_dir / "report_failure.json").unlink(missing_ok=True)
+                (workspace.run_dir / "report-partial.md").unlink(missing_ok=True)
             trace.append(
                 TraceEvent(
                     event_id="trace-tool-result-report",
@@ -5468,9 +4906,7 @@ class DeepResearchRunner:
                     for item in sorted(set(recall_evidence_ids))
                 ),
                 *(
-                    self._domain_proposal(
-                        "BaselineFindingPacket", store.baseline_packets[item]
-                    )
+                    self._domain_proposal("BaselineFindingPacket", store.baseline_packets[item])
                     for item in sorted(set(recall_packet_ids))
                 ),
                 *(
@@ -5481,34 +4917,16 @@ class DeepResearchRunner:
                     for report in recall_reports
                     if report.domain_object_type and report.domain_object_id
                 ),
-                *(
-                    self._domain_proposal("WinningMechanismStageOutput", item)
-                    for item in stage_outputs
-                ),
-                *(
-                    self._domain_proposal("WinningMechanismInput", item)
-                    for item in store.winning_inputs.values()
-                ),
+                *(self._domain_proposal("WinningMechanismStageOutput", item) for item in stage_outputs),
+                *(self._domain_proposal("WinningMechanismInput", item) for item in store.winning_inputs.values()),
                 *(
                     self._domain_proposal("WinningKnowledgeProjection", item)
                     for item in store.knowledge_projections.values()
                 ),
-                *(
-                    self._domain_proposal("WinningReasoningNode", item)
-                    for item in store.reasoning_nodes.values()
-                ),
-                *(
-                    self._domain_proposal("CapabilityImageItem", item)
-                    for item in images
-                ),
-                *(
-                    self._domain_proposal("AgentRecommendation", item)
-                    for item in recommendations
-                ),
-                *(
-                    self._domain_proposal("RecallRequest", item)
-                    for item in store.recall_requests.values()
-                ),
+                *(self._domain_proposal("WinningReasoningNode", item) for item in store.reasoning_nodes.values()),
+                *(self._domain_proposal("CapabilityImageItem", item) for item in images),
+                *(self._domain_proposal("AgentRecommendation", item) for item in recommendations),
+                *(self._domain_proposal("RecallRequest", item) for item in store.recall_requests.values()),
                 self._domain_proposal("AuditResult", audit),
                 self._domain_proposal("ResearchReport", report),
                 self._checkpoint_proposal(
@@ -5516,10 +4934,7 @@ class DeepResearchRunner:
                     f"completed-r{checkpoint.resume_count}",
                 ),
             ]
-            final_trace_proposals = [
-                self._trace_proposal(event)
-                for event in trace.events[final_trace_start:]
-            ]
+            final_trace_proposals = [self._trace_proposal(event) for event in trace.events[final_trace_start:]]
             if resume and checkpoint.resume_count:
                 generation_suffix = f"-r{checkpoint.resume_count}"
                 final_domain_proposals = [
@@ -5658,10 +5073,14 @@ class DeepResearchRunner:
                         *audit.comments,
                         "模型审计响应超时，已采用轻量S6业务审计快速通过路径；基线报告可继续审阅。",
                     ],
-                    advisories=list(dict.fromkeys([
-                        *audit.advisories,
-                        "模型响应超时，轻量S6审计快速通过；建议后续人工复核。",
-                    ])),
+                    advisories=list(
+                        dict.fromkeys(
+                            [
+                                *audit.advisories,
+                                "模型响应超时，轻量S6审计快速通过；建议后续人工复核。",
+                            ]
+                        )
+                    ),
                     audit_source="model",
                 )
                 trace.append(
@@ -5684,10 +5103,14 @@ class DeepResearchRunner:
                     *audit.comments,
                     "当前Provider未提供模型审计，已采用轻量S6业务审计快速通过路径；报告可继续审阅。",
                 ],
-                advisories=list(dict.fromkeys([
-                    *audit.advisories,
-                    "模型审计Provider不可用，轻量S6审计快速通过；建议后续人工复核。",
-                ])),
+                advisories=list(
+                    dict.fromkeys(
+                        [
+                            *audit.advisories,
+                            "模型审计Provider不可用，轻量S6审计快速通过；建议后续人工复核。",
+                        ]
+                    )
+                ),
                 audit_source="model",
             )
         store.add_audit(audit)
@@ -5697,6 +5120,10 @@ class DeepResearchRunner:
             blueprint=discovery_blueprint,
             store=store,
             convergence=convergence,
+        )
+        delivery_artifacts = _mission_public_artifact(
+            discovery_blueprint,
+            delivery_artifacts,
         )
         synthesis_seed = _baseline_only_synthesis_seed(store, convergence)
         reporter_summary = _baseline_only_report_summary(
@@ -5712,17 +5139,11 @@ class DeepResearchRunner:
                 {
                     "topic": problem.topic,
                     "research_route": route,
-                    "execution_profile_id": discovery_blueprint.get(
-                        "execution_profile_id", "legacy_v1"
-                    ),
-                    "structured_query_brief": discovery_blueprint.get(
-                        "structured_query_brief", {}
-                    ),
+                    "execution_profile_id": discovery_blueprint.get("execution_profile_id", "legacy_v1"),
+                    "structured_query_brief": discovery_blueprint.get("structured_query_brief", {}),
                     "ablation_scope": "baseline_only_no_winning_no_loops",
                     "report_context": {
-                        "primary_branch": discovery_blueprint.get(
-                            "primary_branch", ""
-                        ),
+                        "primary_branch": discovery_blueprint.get("primary_branch", ""),
                         "audit_status": audit.status,
                         "coverage_passed": bool(coverage.get("coverage_passed")),
                     },
@@ -5732,12 +5153,8 @@ class DeepResearchRunner:
                         limit=8,
                         claim_chars=150,
                     ),
-                    "branch_report_contract": delivery_artifacts[
-                        "branch_report_contract"
-                    ],
-                    "branch_writer_brief": delivery_artifacts[
-                        "branch_writer_brief"
-                    ],
+                    "branch_report_contract": delivery_artifacts["branch_report_contract"],
+                    "branch_writer_brief": delivery_artifacts["branch_writer_brief"],
                     "branch_deliverables": {
                         "delivery_status": "ablation_baseline_only",
                         "products": {},
@@ -5775,8 +5192,7 @@ class DeepResearchRunner:
                 )
                 if fallback_violations:
                     raise RuntimeError(
-                        "baseline-only safe report validation failed: "
-                        + "; ".join(fallback_violations[:8])
+                        "baseline-only safe report validation failed: " + "; ".join(fallback_violations[:8])
                     )
                 trace.append(
                     TraceEvent(
@@ -5784,8 +5200,7 @@ class DeepResearchRunner:
                         event_type="report_provenance_closed",
                         actor="reporter",
                         summary=(
-                            "模型草稿未满足基线溯源合同，已仅用准入基线标记和公开来源"
-                            "生成证据限定报告；实验继续完成"
+                            "模型草稿未满足基线溯源合同，已仅用准入基线标记和公开来源生成证据限定报告；实验继续完成"
                         ),
                         payload={"violations": violations[:8]},
                     )
@@ -5835,10 +5250,7 @@ class DeepResearchRunner:
                 self._domain_proposal("ResearchReport", report),
                 self._checkpoint_proposal(checkpoint, "ablation-completed"),
             ),
-            tuple(
-                self._trace_proposal(event)
-                for event in trace.events[final_trace_start:]
-            ),
+            tuple(self._trace_proposal(event) for event in trace.events[final_trace_start:]),
         )
         self._write_outputs(
             workspace=workspace,
@@ -5889,10 +5301,7 @@ class DeepResearchRunner:
             return RealAgentProvider()
         provider_registry = ProviderRegistry.load(self.provider_config_path)
         safe_run_scope = "".join(
-            character
-            if character.isalnum() or character in {"-", "_"}
-            else "-"
-            for character in str(run_id).strip()
+            character if character.isalnum() or character in {"-", "_"} else "-" for character in str(run_id).strip()
         ).strip("-")[:96]
 
         def task_isolation(value: str) -> str:
@@ -5907,16 +5316,19 @@ class DeepResearchRunner:
             def platform_provider(_profile: str, isolation_id: str):
                 """隔离运行实例，同时保持平台模型、地址和凭据一致。"""
                 return provider_registry.create(
-                    "platform", model=model, base_url=base_url, api_key_env=api_key_env,
-                    api_key=api_key, workspace_path=self.project_root,
+                    "platform",
+                    model=model,
+                    base_url=base_url,
+                    api_key_env=api_key_env,
+                    api_key=api_key,
+                    workspace_path=self.project_root,
                     isolation_key=task_isolation(isolation_id),
                 )
 
             return ResponsesAgentProvider(
                 platform_provider("platform", "orchestrator-default"),
                 agent_providers={
-                    agent_id: platform_provider("platform", agent_id)
-                    for agent_id in registry.all_agent_ids()
+                    agent_id: platform_provider("platform", agent_id) for agent_id in registry.all_agent_ids()
                 },
                 agent_definitions={agent_id: registry.get(agent_id) for agent_id in registry.all_agent_ids()},
                 harness_profiles=registry.harness_catalog.profiles,
@@ -5932,13 +5344,9 @@ class DeepResearchRunner:
             fallback_profiles = [item.strip() for item in configured_fallbacks.split(",") if item.strip()]
         configured_fallback_policy = os.environ.get("EQUIPMENT_DR_FALLBACK_POLICY", "").strip()
         if not isinstance(fallback_profiles, list):
-            raise ProviderConfigurationError(
-                f"provider {selected_profile} fallback_providers must be a list"
-            )
+            raise ProviderConfigurationError(f"provider {selected_profile} fallback_providers must be a list")
         registry = agent_registry or AgentRegistry.load(self.agent_config_path)
-        reporter_workspace = (
-            self.output_root / "runtime" / "reporter-agent-workspace"
-        ).resolve()
+        reporter_workspace = (self.output_root / "runtime" / "reporter-agent-workspace").resolve()
         if safe_run_scope:
             reporter_workspace = reporter_workspace / safe_run_scope
         reporter_workspace.mkdir(parents=True, exist_ok=True)
@@ -5949,22 +5357,14 @@ class DeepResearchRunner:
             reporter_definition = registry.get("reporter")
             effective_agent_profiles["reporter"] = {
                 "provider": selected_profile,
-                "model": str(
-                    model or ""
-                ),
-                "api_key_env": str(
-                    reporter_definition.model_profile.get("api_key_env") or ""
-                ),
-                "base_url": str(
-                    reporter_definition.model_profile.get("base_url") or ""
-                ),
+                "model": str(model or ""),
+                "api_key_env": str(reporter_definition.model_profile.get("api_key_env") or ""),
+                "base_url": str(reporter_definition.model_profile.get("base_url") or ""),
             }
         model_provider = provider_registry.create_chain(
             selected_profile,
             fallback_profiles=fallback_profiles,
-            fallback_policy=configured_fallback_policy or str(
-                selected_provider_config.get("fallback_policy", "any")
-            ),
+            fallback_policy=configured_fallback_policy or str(selected_provider_config.get("fallback_policy", "any")),
             model=model,
             base_url=base_url,
             api_key_env=api_key_env,
@@ -5981,38 +5381,26 @@ class DeepResearchRunner:
             # every agent definition. An explicit provider in the environment
             # or request remains authoritative for that agent.
             env_profile = configured_agent_profile_overrides.get(agent_id, {})
-            if (
-                not str(env_profile.get("provider", "")).strip()
-                and routed_profile in {"", "default", "codex"}
-            ):
+            if not str(env_profile.get("provider", "")).strip() and routed_profile in {"", "default", "codex"}:
                 routed_profile = selected_profile
             routed_profile = routed_profile or selected_profile
-            inherited_base_url = (
-                base_url if routed_profile == selected_profile else None
-            )
-            inherited_key_env = (
-                api_key_env if routed_profile == selected_profile else None
-            )
-            inherited_api_key = (
-                api_key if routed_profile == selected_profile else None
-            )
+            inherited_base_url = base_url if routed_profile == selected_profile else None
+            inherited_key_env = api_key_env if routed_profile == selected_profile else None
+            inherited_api_key = api_key if routed_profile == selected_profile else None
             routed_providers[agent_id] = provider_registry.create_chain(
                 routed_profile,
                 fallback_profiles=(
-                    ([item.strip() for item in configured_fallbacks.split(",") if item.strip()] if configured_fallbacks else list(
-                        provider_registry.profile(routed_profile).get(
-                            "fallback_providers", []
-                        )
-                    ))
+                    (
+                        [item.strip() for item in configured_fallbacks.split(",") if item.strip()]
+                        if configured_fallbacks
+                        else list(provider_registry.profile(routed_profile).get("fallback_providers", []))
+                    )
                     if routed_profile == selected_profile
                     else []
                 ),
                 fallback_policy=(
-                    configured_fallback_policy or str(
-                        provider_registry.profile(routed_profile).get(
-                            "fallback_policy", "any"
-                        )
-                    )
+                    configured_fallback_policy
+                    or str(provider_registry.profile(routed_profile).get("fallback_policy", "any"))
                     if routed_profile == selected_profile
                     else None
                 ),
@@ -6026,17 +5414,10 @@ class DeepResearchRunner:
                     fallback=str(profile.get("model") or registry.default_model),
                     provider=routed_profile,
                 ),
-                base_url=str(profile.get("base_url") or inherited_base_url or "")
-                or None,
-                api_key_env=(
-                    str(profile.get("api_key_env") or inherited_key_env or "") or None
-                ),
+                base_url=str(profile.get("base_url") or inherited_base_url or "") or None,
+                api_key_env=(str(profile.get("api_key_env") or inherited_key_env or "") or None),
                 api_key=inherited_api_key,
-                workspace_path=(
-                    reporter_workspace
-                    if agent_id == "reporter"
-                    else self.project_root
-                ),
+                workspace_path=(reporter_workspace if agent_id == "reporter" else self.project_root),
                 isolation_key=task_isolation(agent_id),
                 include_default_skills=agent_id != "reporter",
             )
@@ -6046,9 +5427,7 @@ class DeepResearchRunner:
             routed_providers[agent_id] = provider_registry.create_chain(
                 selected_profile,
                 fallback_profiles=fallback_profiles,
-                fallback_policy=str(
-                    selected_provider_config.get("fallback_policy", "any")
-                ),
+                fallback_policy=str(selected_provider_config.get("fallback_policy", "any")),
                 model=str(model or "") or None,
                 base_url=base_url,
                 api_key_env=api_key_env,
@@ -6056,9 +5435,7 @@ class DeepResearchRunner:
                 workspace_path=self.project_root,
                 isolation_key=task_isolation(agent_id),
             )
-        agent_definitions = {
-            agent_id: registry.get(agent_id) for agent_id in registry.all_agent_ids()
-        }
+        agent_definitions = {agent_id: registry.get(agent_id) for agent_id in registry.all_agent_ids()}
         adapter = ResponsesAgentProvider(  # type: ignore[arg-type]
             model_provider,
             agent_providers=routed_providers,  # type: ignore[arg-type]
@@ -6075,13 +5452,9 @@ class DeepResearchRunner:
                 isolation_key=task_isolation(isolation_id),
             ),
         )
-        reporter_capabilities = getattr(
-            adapter._provider_for("reporter"), "capabilities", lambda: None
-        )()
+        reporter_capabilities = getattr(adapter._provider_for("reporter"), "capabilities", lambda: None)()
         if reporter_capabilities is not None and not reporter_capabilities.structured_output:
-            raise ProviderConfigurationError(
-                "reporter provider must support structured output"
-            )
+            raise ProviderConfigurationError("reporter provider must support structured output")
         return adapter
 
     def _initial_checkpoint(
@@ -6147,9 +5520,7 @@ class DeepResearchRunner:
             budget_remaining={
                 **checkpoint.budget_remaining,
                 "baseline_tasks": sum(
-                    1
-                    for item in ordered_tasks
-                    if item != FINALIZE_TASK_ID and statuses[item] != "completed"
+                    1 for item in ordered_tasks if item != FINALIZE_TASK_ID and statuses[item] != "completed"
                 ),
                 "finalize_tasks": int(statuses.get(FINALIZE_TASK_ID) != "completed"),
             },
@@ -6237,9 +5608,7 @@ class DeepResearchRunner:
     ) -> None:
         session_ref = Path(report.session_path).name
         marker_seed = f"{run_id}:{task_id}:{checkpoint_id}:{batch_hash}:{session_ref}"
-        marker_id = (
-            f"runner-session-{sha256(marker_seed.encode('utf-8')).hexdigest()[:24]}"
-        )
+        marker_id = f"runner-session-{sha256(marker_seed.encode('utf-8')).hexdigest()[:24]}"
         marker_event = TraceEvent(
             event_id=marker_id,
             event_type="session_write_failed",
@@ -6301,8 +5670,7 @@ class DeepResearchRunner:
             "files": {
                 name: (
                     None
-                    if name in {"providers", "evidence", "routes", "harness"}
-                    and not path.exists()
+                    if name in {"providers", "evidence", "routes", "harness"} and not path.exists()
                     else sha256(path.read_bytes()).hexdigest()
                 )
                 for name, path in files.items()
@@ -6328,17 +5696,13 @@ class DeepResearchRunner:
             "provider": {
                 "name": provider_name,
                 "model": provider_model,
-                "base_url_host": urlsplit(provider_base_url).hostname
-                if provider_base_url
-                else None,
+                "base_url_host": urlsplit(provider_base_url).hostname if provider_base_url else None,
                 "api_key_env": provider_api_key_env,
             },
             "agent_models": {
                 agent_id: {
                     "model": profile.get("model"),
-                    "base_url_host": urlsplit(
-                        str(profile.get("base_url") or "")
-                    ).hostname,
+                    "base_url_host": urlsplit(str(profile.get("base_url") or "")).hostname,
                     "api_key_env": profile.get("api_key_env"),
                 }
                 for agent_id, profile in sorted((agent_model_profiles or {}).items())
@@ -6394,13 +5758,9 @@ class DeepResearchRunner:
                 event_type="military_value_handoff_created",
                 actor="convergence_fusion",
                 summary=(
-                    "基线结果已收敛为"
-                    f"{statistics.get('selected_claim_count', 0)}条高军事价值结论，"
-                    "仅向S1–S5按职责投影"
+                    f"基线结果已收敛为{statistics.get('selected_claim_count', 0)}条高军事价值结论，仅向S1–S5按职责投影"
                 ),
-                input_refs=[
-                    packet.packet_id for packet in _admitted_packet_snapshot(store)
-                ],
+                input_refs=[packet.packet_id for packet in _admitted_packet_snapshot(store)],
                 output_refs=["military-value-handoff"],
                 payload=statistics,
             )
@@ -6429,17 +5789,11 @@ class DeepResearchRunner:
             for step, mode in winning_step_modes(
                 str(discovery_blueprint.get("primary_branch", "A")),
                 research_route=str(discovery_blueprint.get("runtime_route", "")),
-                adaptive_modes=discovery_blueprint.get(
-                    "adaptive_winning_step_modes", {}
-                ),
+                adaptive_modes=discovery_blueprint.get("adaptive_winning_step_modes", {}),
             ).items()
             if mode != "skip"
         ]
-        task_terms = [
-            item
-            for item in re.split(r"[，。；、\s/]+", topic)
-            if len(item.strip()) >= 2
-        ][:12]
+        task_terms = [item for item in re.split(r"[，。；、\s/]+", topic) if len(item.strip()) >= 2][:12]
         packet_snapshot = store.baseline_packet_snapshot()
         available_packet_agents = {packet.agent_id for packet in packet_snapshot}
         for packet in packet_snapshot:
@@ -6454,10 +5808,7 @@ class DeepResearchRunner:
                 store.evidence,
                 task_terms=task_terms,
                 accepted_claim_texts=accepted_texts,
-                upstream_required=bool(
-                    set(hard_dependencies.get(packet.agent_id, []))
-                    & available_packet_agents
-                ),
+                upstream_required=bool(set(hard_dependencies.get(packet.agent_id, [])) & available_packet_agents),
             )
             updated = replace(
                 packet,
@@ -6467,16 +5818,12 @@ class DeepResearchRunner:
             store.add_baseline_packet(updated)
             proposals.append(
                 DomainWriteProposal(
-                    proposal_id=(
-                        "domain-BaselineFindingPacket:"
-                        f"{updated.packet_id}:admission-v2{generation_suffix}"
-                    ),
+                    proposal_id=(f"domain-BaselineFindingPacket:{updated.packet_id}:admission-v2{generation_suffix}"),
                     object_type="BaselineFindingPacket",
                     operation="upsert",
                     payload=to_plain(updated),
                     idempotency_key=(
-                        "domain:BaselineFindingPacket:"
-                        f"{updated.packet_id}:admission-v2{generation_suffix}"
+                        f"domain:BaselineFindingPacket:{updated.packet_id}:admission-v2{generation_suffix}"
                     ),
                 )
             )
@@ -6486,10 +5833,7 @@ class DeepResearchRunner:
                 accepted_texts.extend(item.text for item in bundle.claims)
             events.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-packet-admission-{packet.packet_id}"
-                        f"{generation_suffix}"
-                    ),
+                    event_id=(f"trace-packet-admission-{packet.packet_id}{generation_suffix}"),
                     event_type="packet_admission_evaluated",
                     actor="packet_admission_gate",
                     summary=f"{packet.agent_id} packet {decision.status}",
@@ -6586,10 +5930,7 @@ class DeepResearchRunner:
             },
         )
         converger = getattr(provider, "converge_discovery_outputs", None)
-        aggressive_compaction = (
-            str(discovery_blueprint.get("execution_profile_id", ""))
-            == "optimized_v2"
-        )
+        aggressive_compaction = str(discovery_blueprint.get("execution_profile_id", "")) == "optimized_v2"
         material_conflicts = [
             limitation
             for packet in packets
@@ -6602,9 +5943,7 @@ class DeepResearchRunner:
             convergence["model_call_skipped"] = True
         else:
             convergence = (
-                converger(payload)
-                if callable(converger)
-                else FakeAgentProvider().converge_discovery_outputs(payload)
+                converger(payload) if callable(converger) else FakeAgentProvider().converge_discovery_outputs(payload)
             )
         if not isinstance(convergence, dict) or not convergence:
             convergence = FakeAgentProvider().converge_discovery_outputs(payload)
@@ -6613,9 +5952,7 @@ class DeepResearchRunner:
             workspace,
             "convergence_fusion",
             {
-                "event_type": (
-                    "model_result" if mode == "real" else "deterministic_result"
-                ),
+                "event_type": ("model_result" if mode == "real" else "deterministic_result"),
                 "result": convergence,
             },
         )
@@ -6687,11 +6024,7 @@ class DeepResearchRunner:
                         "convergence": convergence,
                         "allowed_branches": list("ABCDEFGH"),
                         "allowed_step_modes": ["skip", "light", "standard", "deep"],
-                        "available_shared_skills": [
-                            item
-                            for item in available_skills.values()
-                            if item.get("shared")
-                        ],
+                        "available_shared_skills": [item for item in available_skills.values() if item.get("shared")],
                         "available_knowledge_packs": list(available_knowledge_pack_ids),
                     }
                 )
@@ -6717,8 +6050,7 @@ class DeepResearchRunner:
                 )
             )[:2]
             discovery_blueprint["adaptive_winning_step_modes"] = {
-                str(item["step"]): item["mode"]
-                for item in meta_review["step_mode_overrides"]
+                str(item["step"]): item["mode"] for item in meta_review["step_mode_overrides"]
             }
             discovery_blueprint["dynamic_subagents"] = list(
                 {
@@ -6754,14 +6086,10 @@ class DeepResearchRunner:
                 output_refs=[str(discovery_blueprint["blueprint_id"])],
                 payload={
                     "cycle": discovery_blueprint["loop_policy"]["meta_max_cycles"],
-                    "maximum_cycles": discovery_blueprint["loop_policy"][
-                        "meta_max_cycles"
-                    ],
+                    "maximum_cycles": discovery_blueprint["loop_policy"]["meta_max_cycles"],
                     "primary_branch": discovery_blueprint["primary_branch"],
                     "secondary_branches": discovery_blueprint["secondary_branches"],
-                    "cross_branch_link_count": len(
-                        convergence.get("cross_branch_links", [])
-                    ),
+                    "cross_branch_link_count": len(convergence.get("cross_branch_links", [])),
                     "open_question_count": len(convergence.get("open_questions", [])),
                     "replan_required": meta_review["replan_required"],
                     "added_secondary_branches": meta_review["added_secondary_branches"],
@@ -6874,12 +6202,14 @@ class DeepResearchRunner:
         ) -> list[dict[str, Any]]:
             """Overlay repaired S6 cards without truncating the prior portfolio."""
 
-            merged = [
-                dict(item) for item in prior_rows if isinstance(item, Mapping)
-            ] if isinstance(prior_rows, list) else []
-            updates = [
-                dict(item) for item in latest_rows if isinstance(item, Mapping)
-            ] if isinstance(latest_rows, list) else []
+            merged = (
+                [dict(item) for item in prior_rows if isinstance(item, Mapping)] if isinstance(prior_rows, list) else []
+            )
+            updates = (
+                [dict(item) for item in latest_rows if isinstance(item, Mapping)]
+                if isinstance(latest_rows, list)
+                else []
+            )
             if not merged:
                 return updates
             positions_by_id = {
@@ -6912,21 +6242,12 @@ class DeepResearchRunner:
                 except json.JSONDecodeError:
                     continue
                 prior_result = prior_row.get("result")
-                if (
-                    prior_row.get("event_type") != "model_checkpoint"
-                    or not isinstance(prior_result, Mapping)
-                ):
+                if prior_row.get("event_type") != "model_checkpoint" or not isinstance(prior_result, Mapping):
                     continue
                 prior_swarm = prior_result.get("winning_swarm", {})
-                prior_gate = (
-                    prior_swarm.get("portfolio_quality_gate", {})
-                    if isinstance(prior_swarm, Mapping)
-                    else {}
-                )
+                prior_gate = prior_swarm.get("portfolio_quality_gate", {}) if isinstance(prior_swarm, Mapping) else {}
                 prior_portfolio = (
-                    prior_swarm.get("final_equipment_portfolio", [])
-                    if isinstance(prior_swarm, Mapping)
-                    else []
+                    prior_swarm.get("final_equipment_portfolio", []) if isinstance(prior_swarm, Mapping) else []
                 )
                 prior_directions = prior_result.get("concept_directions", [])
                 if (
@@ -6953,9 +6274,7 @@ class DeepResearchRunner:
             controller_path = workspace.sessions_dir / "winning_swarm_controller.jsonl"
             if not controller_path.is_file():
                 return {}
-            for controller_line in reversed(
-                controller_path.read_text(encoding="utf-8").splitlines()
-            ):
+            for controller_line in reversed(controller_path.read_text(encoding="utf-8").splitlines()):
                 try:
                     controller_row = json.loads(controller_line)
                 except json.JSONDecodeError:
@@ -6964,11 +6283,7 @@ class DeepResearchRunner:
                 if not isinstance(summary, Mapping):
                     continue
                 policy = summary.get("policy", {})
-                policy_id = (
-                    str(policy.get("policy_id", ""))
-                    if isinstance(policy, Mapping)
-                    else ""
-                )
+                policy_id = str(policy.get("policy_id", "")) if isinstance(policy, Mapping) else ""
                 finalists = summary.get("finalists", [])
                 if (
                     policy_id in {"winning_swarm_quality_v1", "swarm_quality_v1"}
@@ -6992,9 +6307,7 @@ class DeepResearchRunner:
             result = row.get("result")
             if row.get("event_type") == "model_result" and isinstance(result, dict):
                 return dict(result)
-            if row.get("event_type") == "model_checkpoint" and isinstance(
-                result, dict
-            ):
+            if row.get("event_type") == "model_checkpoint" and isinstance(result, dict):
                 checkpoint_result = dict(result)
                 checkpoint_swarm = checkpoint_result.get("winning_swarm", {})
                 checkpoint_portfolio = (
@@ -7002,25 +6315,18 @@ class DeepResearchRunner:
                     if isinstance(checkpoint_swarm, Mapping)
                     else []
                 )
-                checkpoint_directions = checkpoint_result.get(
-                    "concept_directions", []
-                )
-                if (
-                    bool(checkpoint_result.get("s6_quality_gate_failed"))
-                    and (
-                        not isinstance(checkpoint_portfolio, list)
-                        or len(checkpoint_portfolio) < 5
-                        or not isinstance(checkpoint_directions, list)
-                        or len(checkpoint_directions) < 5
-                    )
+                checkpoint_directions = checkpoint_result.get("concept_directions", [])
+                if bool(checkpoint_result.get("s6_quality_gate_failed")) and (
+                    not isinstance(checkpoint_portfolio, list)
+                    or len(checkpoint_portfolio) < 5
+                    or not isinstance(checkpoint_directions, list)
+                    or len(checkpoint_directions) < 5
                 ):
                     prior_dynamic = recovered_dynamic_checkpoint()
                     if prior_dynamic:
                         prior_swarm = prior_dynamic.get("winning_swarm", {})
                         prior_portfolio = (
-                            prior_swarm.get("final_equipment_portfolio", [])
-                            if isinstance(prior_swarm, Mapping)
-                            else []
+                            prior_swarm.get("final_equipment_portfolio", []) if isinstance(prior_swarm, Mapping) else []
                         )
                         merged_directions = merge_direction_rows(
                             prior_dynamic.get("concept_directions", []),
@@ -7028,24 +6334,16 @@ class DeepResearchRunner:
                         )
                         checkpoint_result["concept_directions"] = merged_directions
                         checkpoint_result["capability_synthesis"] = [
-                            str(item.get("name", ""))
-                            for item in merged_directions
-                            if str(item.get("name", "")).strip()
+                            str(item.get("name", "")) for item in merged_directions if str(item.get("name", "")).strip()
                         ]
                         restored_swarm = dict(prior_swarm)
-                        restored_swarm["final_equipment_portfolio"] = (
-                            merge_direction_rows(
-                                prior_portfolio,
-                                checkpoint_portfolio,
-                            )
+                        restored_swarm["final_equipment_portfolio"] = merge_direction_rows(
+                            prior_portfolio,
+                            checkpoint_portfolio,
                         )
                         checkpoint_result["winning_swarm"] = restored_swarm
                 swarm = checkpoint_result.get("winning_swarm", {})
-                gate = (
-                    swarm.get("portfolio_quality_gate", {})
-                    if isinstance(swarm, Mapping)
-                    else {}
-                )
+                gate = swarm.get("portfolio_quality_gate", {}) if isinstance(swarm, Mapping) else {}
                 if (
                     not isinstance(swarm, Mapping)
                     or not swarm
@@ -7056,11 +6354,7 @@ class DeepResearchRunner:
                     if recovered:
                         checkpoint_result["winning_swarm"] = recovered
                         swarm = recovered
-                gate = (
-                    swarm.get("portfolio_quality_gate", {})
-                    if isinstance(swarm, Mapping)
-                    else {}
-                )
+                gate = swarm.get("portfolio_quality_gate", {}) if isinstance(swarm, Mapping) else {}
                 # Keep an explicit S6 failure checkpoint available to the
                 # orchestrator.  The previous loader only returned a result
                 # after ``portfolio_quality_gate.passed`` became true, which
@@ -7085,33 +6379,21 @@ class DeepResearchRunner:
                         topic="",
                     )
                     normalized_swarm = normalized.get("winning_swarm", {})
-                    normalized_directions = normalized.get(
-                        "concept_directions", []
-                    )
+                    normalized_directions = normalized.get("concept_directions", [])
                     if (
                         isinstance(normalized_swarm, dict)
                         and isinstance(normalized_directions, list)
                         and normalized_directions
                     ):
                         normalized_swarm["final_equipment_portfolio"] = [
-                            dict(item)
-                            for item in normalized_directions
-                            if isinstance(item, Mapping)
+                            dict(item) for item in normalized_directions if isinstance(item, Mapping)
                         ]
-                    resume_s6_warnings = _capability_direction_quality_issues(
-                        normalized
-                    )
-                    resume_s6_issues = _s6_delivery_blocking_issues(
-                        resume_s6_warnings
-                    )
-                    persisted_s6_failed = bool(
-                        checkpoint_result.get("s6_quality_gate_failed")
-                    )
+                    resume_s6_warnings = _capability_direction_quality_issues(normalized)
+                    resume_s6_issues = _s6_delivery_blocking_issues(resume_s6_warnings)
+                    persisted_s6_failed = bool(checkpoint_result.get("s6_quality_gate_failed"))
                     persisted_s6_issues = [
                         str(issue).strip()
-                        for issue in checkpoint_result.get(
-                            "s6_quality_gate_issues", []
-                        )
+                        for issue in checkpoint_result.get("s6_quality_gate_issues", [])
                         if str(issue).strip()
                     ]
                     # Historical checkpoints may carry a failure flag written
@@ -7122,9 +6404,7 @@ class DeepResearchRunner:
                     normalized["s6_quality_gate_passed"] = True
                     normalized["s6_quality_gate_failed"] = False
                     normalized["s6_quality_gate_limited"] = bool(
-                        persisted_s6_failed
-                        or persisted_s6_issues
-                        or resume_s6_warnings
+                        persisted_s6_failed or persisted_s6_issues or resume_s6_warnings
                     )
                     normalized["s6_quality_gate_issues"] = []
                     normalized["s6_quality_warnings"] = list(
@@ -7164,11 +6444,7 @@ class DeepResearchRunner:
             if not isinstance(row, dict):
                 continue
             loop_name = str(row.get("loop", "inner"))
-            actor = (
-                "winning_step_critic"
-                if loop_name == "inner"
-                else "winning_round_critic"
-            )
+            actor = "winning_step_critic" if loop_name == "inner" else "winning_round_critic"
             cls._write_core_agent_session(
                 workspace,
                 actor,
@@ -7183,9 +6459,7 @@ class DeepResearchRunner:
                     event_id=f"trace-winning-{loop_name}-loop-r{attempt}-{index}",
                     event_type=f"winning_{loop_name}_loop_evaluated",
                     actor=actor,
-                    summary=(
-                        f"{loop_name} loop {'通过' if row.get('passed') else '触发回溯'}"
-                    ),
+                    summary=(f"{loop_name} loop {'通过' if row.get('passed') else '触发回溯'}"),
                     payload={**row, "attempt": attempt},
                 )
             )
@@ -7205,15 +6479,11 @@ class DeepResearchRunner:
             )
             trace.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-winning-model-call-{agent_id}-"
-                        f"r{attempt}-{index}"
-                    ),
+                    event_id=(f"trace-winning-model-call-{agent_id}-r{attempt}-{index}"),
                     event_type="winning_model_call_completed",
                     actor=agent_id,
                     summary=(
-                        f"{payload.get('phase', 'winning')} completed in "
-                        f"{payload.get('elapsed_seconds', 'unknown')}s"
+                        f"{payload.get('phase', 'winning')} completed in {payload.get('elapsed_seconds', 'unknown')}s"
                     ),
                     payload={**payload, "attempt": attempt},
                 )
@@ -7231,22 +6501,19 @@ class DeepResearchRunner:
     ) -> None:
         payload = dict(row)
         agent_id = str(payload.get("agent_id", "winning_mechanism"))
-        event_type = str(
-            payload.get("event_type", "winning_subagent_completed")
-        )
+        event_type = str(payload.get("event_type", "winning_subagent_completed"))
         if event_type.startswith("evolution_retrieval_"):
             # Prompt/memory attribution is emitted directly by the provider
             # runtime.  Persist it through the same progress bridge so runs
             # that use the legacy callback path still retain the full
             # selected -> applied -> outcome lifecycle.
             retrieval_id = str(payload.get("retrieval_event_id", "")).strip()
-            status = str(
-                payload.get("retrieval_status")
-                or event_type.rsplit("_", 1)[-1]
-            ).strip()
+            status = str(payload.get("retrieval_status") or event_type.rsplit("_", 1)[-1]).strip()
             suffix = f":{status}" if status else ""
-            event_id = f"trace-{retrieval_id}{suffix}" if retrieval_id else (
-                f"trace-{event_type}-{agent_id}-r{attempt}-{event_suffix}"
+            event_id = (
+                f"trace-{retrieval_id}{suffix}"
+                if retrieval_id
+                else (f"trace-{event_type}-{agent_id}-r{attempt}-{event_suffix}")
             )
             cls._write_core_agent_session(
                 workspace,
@@ -7262,21 +6529,10 @@ class DeepResearchRunner:
                     event_id=event_id,
                     event_type=event_type,
                     actor=agent_id,
-                    summary=(
-                        f"{payload.get('stage_id') or payload.get('stage') or 'S?'} "
-                        f"演化记忆 {status}"
-                    ),
+                    summary=(f"{payload.get('stage_id') or payload.get('stage') or 'S?'} 演化记忆 {status}"),
                     input_refs=[
-                        *[
-                            str(item)
-                            for item in payload.get("memory_ids", [])
-                            if str(item).strip()
-                        ],
-                        *[
-                            str(item)
-                            for item in payload.get("evidence_ids", [])
-                            if str(item).strip()
-                        ],
+                        *[str(item) for item in payload.get("memory_ids", []) if str(item).strip()],
+                        *[str(item) for item in payload.get("evidence_ids", []) if str(item).strip()],
                     ],
                     output_refs=[retrieval_id] if retrieval_id else [],
                     payload={**payload, "attempt": attempt},
@@ -7306,10 +6562,7 @@ class DeepResearchRunner:
             )
             trace.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-{event_type}-{agent_id}-"
-                        f"r{attempt}-{event_suffix}"
-                    ),
+                    event_id=(f"trace-{event_type}-{agent_id}-r{attempt}-{event_suffix}"),
                     event_type=event_type,
                     actor=agent_id,
                     summary=f"{current_step}：{status_text}",
@@ -7401,10 +6654,7 @@ class DeepResearchRunner:
             )
             trace.append(
                 TraceEvent(
-                    event_id=(
-                        f"trace-{event_type}-{agent_id}-"
-                        f"r{attempt}-{event_suffix}"
-                    ),
+                    event_id=(f"trace-{event_type}-{agent_id}-r{attempt}-{event_suffix}"),
                     event_type=event_type,
                     actor=agent_id,
                     summary=swarm_event_summaries[event_type],
@@ -7432,10 +6682,7 @@ class DeepResearchRunner:
                     else (
                         f"S{payload.get('step')} 按A-H分支蓝图跳过"
                         if payload.get("status") == "skipped_by_branch_blueprint"
-                        else (
-                            f"S{payload.get('step')} 专用 Agent 完成"
-                            f"（中循环{payload.get('middle_cycle', 1)}）"
-                        )
+                        else (f"S{payload.get('step')} 专用 Agent 完成（中循环{payload.get('middle_cycle', 1)}）")
                     )
                 ),
                 payload={**payload, "attempt": attempt},
@@ -7476,9 +6723,7 @@ class DeepResearchRunner:
         )
         trace.append(
             TraceEvent(
-                event_id=(
-                    f"trace-{event_type}-reporter-r{attempt}-{event_suffix}"
-                ),
+                event_id=(f"trace-{event_type}-reporter-r{attempt}-{event_suffix}"),
                 event_type=event_type,
                 actor="reporter",
                 summary=f"{current_step}：{status_text}",
@@ -7574,6 +6819,10 @@ class DeepResearchRunner:
             store=store,
             convergence=convergence,
         )
+        initial_delivery_artifacts = _mission_public_artifact(
+            discovery_blueprint,
+            initial_delivery_artifacts,
+        )
         _report_decision_brief(
             store=store,
             branch_output=initial_delivery_artifacts["branch_deliverables"],
@@ -7585,6 +6834,10 @@ class DeepResearchRunner:
             blueprint=discovery_blueprint,
             store=store,
             convergence=convergence,
+        )
+        delivery_artifacts = _mission_public_artifact(
+            discovery_blueprint,
+            delivery_artifacts,
         )
         report = (
             max(
@@ -7626,28 +6879,22 @@ class DeepResearchRunner:
         # ``report-partial.md`` is deliberately audit-only; it is a repair input
         # and must never be exposed as the formal report by this method.
         try:
-            failure_payload = json.loads(
-                workspace.read_run_text("report_failure.json")
-            )
+            failure_payload = json.loads(workspace.read_run_text("report_failure.json"))
         except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
             failure_payload = {}
-        partial_path = str(
-            failure_payload.get("partial_report_path", "report-partial.md")
-        ).strip() or "report-partial.md"
+        partial_path = (
+            str(failure_payload.get("partial_report_path", "report-partial.md")).strip() or "report-partial.md"
+        )
         try:
             existing_partial = workspace.read_run_text(partial_path).strip()
         except (FileNotFoundError, OSError):
             existing_partial = report.body.strip()
         raw_blockers = failure_payload.get("blockers", [])
-        if not isinstance(raw_blockers, Sequence) or isinstance(
-            raw_blockers, (str, bytes)
-        ):
+        if not isinstance(raw_blockers, Sequence) or isinstance(raw_blockers, (str, bytes)):
             raw_blockers = [raw_blockers] if raw_blockers else []
         project_mode = report_template_mode == "project_argument_v1"
         failed_columns = failure_payload.get("failed_columns", [])
-        if not isinstance(failed_columns, Sequence) or isinstance(
-            failed_columns, (str, bytes)
-        ):
+        if not isinstance(failed_columns, Sequence) or isinstance(failed_columns, (str, bytes)):
             failed_columns = []
         failed_columns = [str(item).strip() for item in failed_columns if str(item).strip()]
         if not failed_columns:
@@ -7662,25 +6909,15 @@ class DeepResearchRunner:
                 "run_id": checkpoint.run_id,
                 "topic": problem.topic,
                 "research_route": route,
-                "execution_profile_id": discovery_blueprint.get(
-                    "execution_profile_id", "legacy_v1"
-                ),
-                "portfolio_quality_gate": failure_payload.get(
-                    "portfolio_quality_gate", {}
-                ),
+                "execution_profile_id": discovery_blueprint.get("execution_profile_id", "legacy_v1"),
+                "portfolio_quality_gate": failure_payload.get("portfolio_quality_gate", {}),
                 "report_template_mode": report_template_mode,
-                "structured_query_brief": discovery_blueprint.get(
-                    "structured_query_brief", {}
-                ),
+                "structured_query_brief": discovery_blueprint.get("structured_query_brief", {}),
                 "evidence_closed": False,
                 "report_context": {
                     "primary_branch": discovery_blueprint.get("primary_branch", ""),
-                    "branch_name": delivery_artifacts["branch_deliverables"].get(
-                        "branch_name", ""
-                    ),
-                    "secondary_branches": list(
-                        discovery_blueprint.get("secondary_branches", [])
-                    )[:2],
+                    "branch_name": delivery_artifacts["branch_deliverables"].get("branch_name", ""),
+                    "secondary_branches": list(discovery_blueprint.get("secondary_branches", []))[:2],
                     "audit_status": max(
                         store.audits.values(),
                         key=lambda item: (item.created_at, item.audit_id),
@@ -7697,17 +6934,11 @@ class DeepResearchRunner:
                     limit=8,
                     claim_chars=150,
                 ),
-                "branch_report_contract": delivery_artifacts[
-                    "branch_report_contract"
-                ],
+                "branch_report_contract": delivery_artifacts["branch_report_contract"],
                 "branch_writer_brief": delivery_artifacts["branch_writer_brief"],
                 "branch_deliverables": {
-                    "delivery_status": delivery_artifacts["branch_deliverables"].get(
-                        "delivery_status", ""
-                    ),
-                    "products": delivery_artifacts["branch_deliverables"].get(
-                        "products", {}
-                    ),
+                    "delivery_status": delivery_artifacts["branch_deliverables"].get("delivery_status", ""),
+                    "products": delivery_artifacts["branch_deliverables"].get("products", {}),
                 },
                 "delivery_resume": {
                     "existing_report": existing_partial,
@@ -7784,9 +7015,7 @@ class DeepResearchRunner:
                     )
                 )
             except Exception as exc:
-                partial = str(
-                    getattr(provider, "_latest_report_draft", "") or existing_partial
-                ).strip()
+                partial = str(getattr(provider, "_latest_report_draft", "") or existing_partial).strip()
                 if partial:
                     workspace.write_run_text("report-partial.md", partial)
                 failure_event = TraceEvent(
@@ -7801,11 +7030,13 @@ class DeepResearchRunner:
                     },
                 )
                 trace.append(failure_event)
-                checkpoint = self._set_task_status(
-                    checkpoint, FINALIZE_TASK_ID, "pending"
-                )
+                checkpoint = self._set_task_status(checkpoint, FINALIZE_TASK_ID, "pending")
                 savepoint_id = sqlite_store.commit(
-                    (self._checkpoint_proposal(checkpoint, f"report-delivery-resume-repair-failed-r{checkpoint.resume_count}"),),
+                    (
+                        self._checkpoint_proposal(
+                            checkpoint, f"report-delivery-resume-repair-failed-r{checkpoint.resume_count}"
+                        ),
+                    ),
                     (self._trace_proposal(failure_event),),
                 )
                 self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
@@ -7832,9 +7063,7 @@ class DeepResearchRunner:
                         sort_keys=True,
                     ),
                 )
-                raise RuntimeError(
-                    "报告交付定向修复失败；已保留partial与可恢复检查点。"
-                ) from exc
+                raise RuntimeError("报告交付定向修复失败；已保留partial与可恢复检查点。") from exc
         accepted_claim_rows = _report_accepted_claims(
             store,
             per_packet_limit=100,
@@ -7880,10 +7109,7 @@ class DeepResearchRunner:
                 sort_keys=True,
             ),
         )
-        branch_gate_passed = (
-            delivery_artifacts["branch_deliverables"].get("delivery_status")
-            == "complete"
-        )
+        branch_gate_passed = delivery_artifacts["branch_deliverables"].get("delivery_status") == "complete"
         blockers = list(quality_report.compact().get("blockers", []))
         if not bool(binding_summary["passed"]):
             if internal_reference_found:
@@ -7911,9 +7137,7 @@ class DeepResearchRunner:
             event_type="report_delivery_resume_gate_evaluated",
             actor="report_quality_gate",
             summary=(
-                "报告门失败检查点已复用，三项发布门通过"
-                if not blockers
-                else "报告门失败检查点已复用，发布门仍受限"
+                "报告门失败检查点已复用，三项发布门通过" if not blockers else "报告门失败检查点已复用，发布门仍受限"
             ),
             input_refs=[report.report_id],
             payload={
@@ -7946,12 +7170,8 @@ class DeepResearchRunner:
             )
             store.add_audit(audit)
             store.add_report(report)
-            (workspace.run_dir / "report_failure.json").unlink(
-                missing_ok=True
-            )
-            (workspace.run_dir / "report-partial.md").unlink(
-                missing_ok=True
-            )
+            (workspace.run_dir / "report_failure.json").unlink(missing_ok=True)
+            (workspace.run_dir / "report-partial.md").unlink(missing_ok=True)
 
         audit = max(
             store.audits.values(),
@@ -7961,22 +7181,12 @@ class DeepResearchRunner:
             workspace,
             "winning_mechanism",
         )
-        winning_swarm = (
-            winning_analysis.get("winning_swarm", {})
-            if isinstance(winning_analysis, Mapping)
-            else {}
-        )
-        portfolio_gate = (
-            winning_swarm.get("portfolio_quality_gate", {})
-            if isinstance(winning_swarm, Mapping)
-            else {}
-        )
+        winning_swarm = winning_analysis.get("winning_swarm", {}) if isinstance(winning_analysis, Mapping) else {}
+        portfolio_gate = winning_swarm.get("portfolio_quality_gate", {}) if isinstance(winning_swarm, Mapping) else {}
         authoritative_dynamic_passed = (
             isinstance(portfolio_gate, Mapping)
             and bool(portfolio_gate.get("passed"))
-            and str(portfolio_gate.get("selection_rule", "")).startswith(
-                "增量五轴语义聚类"
-            )
+            and str(portfolio_gate.get("selection_rule", "")).startswith("增量五轴语义聚类")
             and bool(winning_analysis.get("s6_quality_gate_passed"))
             and not bool(winning_analysis.get("s6_quality_gate_failed"))
             and not bool(winning_analysis.get("s6_quality_gate_limited"))
@@ -8035,10 +7245,7 @@ class DeepResearchRunner:
         checkpoint.validate()
         savepoint_id = sqlite_store.commit(
             (
-                *(
-                    self._domain_proposal("CapabilityImageItem", item)
-                    for item in store.capability_images.values()
-                ),
+                *(self._domain_proposal("CapabilityImageItem", item) for item in store.capability_images.values()),
                 self._domain_proposal("AuditResult", audit),
                 self._domain_proposal("ResearchReport", report),
                 self._checkpoint_proposal(
@@ -8151,7 +7358,17 @@ class DeepResearchRunner:
             store=store,
             convergence=convergence,
         )
-        workspace.write_run_text("report.md", report_body)
+        mission_delivery = (
+            str(discovery_blueprint.get("query_domain_contract", {}).get("mode", "")) == "mission_equipment"
+        )
+        public_report_body = sanitize_mission_narrative_text(report_body) if mission_delivery else report_body
+        public_delivery_artifacts = (
+            sanitize_mission_artifact(delivery_artifacts) if mission_delivery else delivery_artifacts
+        )
+        public_capability_images = [to_plain(item) for item in store.capability_images.values()]
+        if mission_delivery:
+            public_capability_images = sanitize_mission_artifact(public_capability_images)
+        workspace.write_run_text("report.md", public_report_body)
         workspace.write_run_text(
             "evidence_references.md",
             render_formal_evidence_reference(store),
@@ -8159,7 +7376,7 @@ class DeepResearchRunner:
         workspace.write_run_text(
             "branch_deliverables.json",
             json.dumps(
-                delivery_artifacts["branch_deliverables"],
+                public_delivery_artifacts["branch_deliverables"],
                 ensure_ascii=False,
                 indent=2,
                 sort_keys=True,
@@ -8174,7 +7391,7 @@ class DeepResearchRunner:
             workspace.write_run_text(
                 f"{name}.json",
                 json.dumps(
-                    delivery_artifacts[name],
+                    public_delivery_artifacts[name],
                     ensure_ascii=False,
                     indent=2,
                     sort_keys=True,
@@ -8183,7 +7400,7 @@ class DeepResearchRunner:
         workspace.write_run_text(
             "capability_images.json",
             json.dumps(
-                [to_plain(item) for item in store.capability_images.values()],
+                public_capability_images,
                 ensure_ascii=False,
                 indent=2,
                 sort_keys=True,
@@ -8206,9 +7423,7 @@ class DeepResearchRunner:
             "selected_agent_ids": selected_agent_ids,
             "coverage": coverage,
             "worker_reports": [to_plain(report) for report in worker_reports],
-            "recall_requests": [
-                to_plain(recall) for recall in store.recall_requests.values()
-            ],
+            "recall_requests": [to_plain(recall) for recall in store.recall_requests.values()],
             "agent_recommendations": [to_plain(item) for item in recommendations],
             "source_materials": source_materials,
             "store_summary": store.summary(),
@@ -8254,12 +7469,8 @@ class DeepResearchRunner:
             ),
             "winning_mechanism": {
                 "inputs": [to_plain(item) for item in store.winning_inputs.values()],
-                "resource_projections": [
-                    to_plain(item) for item in store.knowledge_projections.values()
-                ],
-                "reasoning_nodes": [
-                    to_plain(item) for item in store.reasoning_nodes.values()
-                ],
+                "resource_projections": [to_plain(item) for item in store.knowledge_projections.values()],
+                "reasoning_nodes": [to_plain(item) for item in store.reasoning_nodes.values()],
                 "stages": [to_plain(item) for item in store.stage_outputs.values()],
             },
             "evidence_assessments": self._evidence_assessments(store),
@@ -8280,9 +7491,7 @@ class DeepResearchRunner:
             ),
             {},
         )
-        if is_quality_execution_profile_id(
-            discovery_blueprint.get("execution_profile_id")
-        ):
+        if is_quality_execution_profile_id(discovery_blueprint.get("execution_profile_id")):
             contribution_observations = _agent_contribution_observations(
                 store=store,
                 trace=trace,
@@ -8339,22 +7548,14 @@ class DeepResearchRunner:
 
         dated = [value for event in events if (value := timestamp(event)) is not None]
         try:
-            actual_start = (
-                datetime.fromisoformat(execution_started_at)
-                if execution_started_at
-                else min(dated)
-            )
+            actual_start = datetime.fromisoformat(execution_started_at) if execution_started_at else min(dated)
         except (TypeError, ValueError):
             actual_start = min(dated) if dated else None
         total_seconds = (
-            round((max(dated) - actual_start).total_seconds(), 3)
-            if dated and actual_start is not None
-            else 0.0
+            round((max(dated) - actual_start).total_seconds(), 3) if dated and actual_start is not None else 0.0
         )
         orchestration_setup_seconds = (
-            round((min(dated) - actual_start).total_seconds(), 3)
-            if dated and actual_start is not None
-            else 0.0
+            round((min(dated) - actual_start).total_seconds(), 3) if dated and actual_start is not None else 0.0
         )
         call_events = [
             event
@@ -8379,22 +7580,11 @@ class DeepResearchRunner:
         step_runs = [
             event
             for event in events
-            if event.event_type == "winning_subagent_completed"
-            and event.payload.get("status") == "completed"
+            if event.event_type == "winning_subagent_completed" and event.payload.get("status") == "completed"
         ]
-        inner_events = [
-            event
-            for event in events
-            if event.event_type == "winning_inner_loop_evaluated"
-        ]
-        middle_events = [
-            event
-            for event in events
-            if event.event_type == "winning_middle_loop_evaluated"
-        ]
-        baseline_wave_events = [
-            event for event in events if event.event_type == "baseline_wave_started"
-        ]
+        inner_events = [event for event in events if event.event_type == "winning_inner_loop_evaluated"]
+        middle_events = [event for event in events if event.event_type == "winning_middle_loop_evaluated"]
+        baseline_wave_events = [event for event in events if event.event_type == "baseline_wave_started"]
         completed_swarm_agent_ids = {
             str(event.actor)
             for event in events
@@ -8402,8 +7592,7 @@ class DeepResearchRunner:
                 event.event_type == "winning_agent_session_completed"
                 or (
                     event.event_type == "winning_subagent_completed"
-                    and event.payload.get("event_type")
-                    == "winning_agent_session_completed"
+                    and event.payload.get("event_type") == "winning_agent_session_completed"
                 )
             )
             and str(event.actor).strip()
@@ -8418,57 +7607,35 @@ class DeepResearchRunner:
             "orchestration_setup_seconds": max(0.0, orchestration_setup_seconds),
             "selected_agent_count": len(selected_agent_ids),
             "selected_business_agent_count": sum(
-                agent_id in PRIMARY_BUSINESS_AGENT_IDS
-                for agent_id in selected_agent_ids
+                agent_id in PRIMARY_BUSINESS_AGENT_IDS for agent_id in selected_agent_ids
             ),
-            "required_agent_count": sum(
-                plan_modes.get(agent_id) == "required"
-                for agent_id in selected_agent_ids
-            ),
+            "required_agent_count": sum(plan_modes.get(agent_id) == "required" for agent_id in selected_agent_ids),
             "reference_agent_count": sum(
-                plan_modes.get(agent_id, "reference") == "reference"
-                for agent_id in selected_agent_ids
+                plan_modes.get(agent_id, "reference") == "reference" for agent_id in selected_agent_ids
             ),
-            "dynamic_agent_count": sum(
-                str(agent_id).startswith("dynamic-")
-                for agent_id in selected_agent_ids
-            )
+            "dynamic_agent_count": sum(str(agent_id).startswith("dynamic-") for agent_id in selected_agent_ids)
             + len(completed_swarm_agent_ids),
             "model_call_count": len(call_events),
             "model_elapsed_seconds_sum": round(sum(elapsed_values), 3),
             "max_model_call_seconds": round(max(elapsed_values, default=0.0), 3),
             "max_queue_wait_seconds": round(max(queue_values, default=0.0), 3),
             "winning_step_call_counts": {
-                str(step): sum(
-                    1
-                    for event in step_runs
-                    if int(event.payload.get("step", 0) or 0) == step
-                )
+                str(step): sum(1 for event in step_runs if int(event.payload.get("step", 0) or 0) == step)
                 for step in range(1, 7)
             },
             "inner_review_count": len(inner_events),
-            "inner_retry_count": sum(
-                int(event.payload.get("iteration", 1) or 1) > 1
-                for event in inner_events
-            ),
+            "inner_retry_count": sum(int(event.payload.get("iteration", 1) or 1) > 1 for event in inner_events),
             "middle_review_count": len(middle_events),
             "middle_cycle_count": max(
-                (
-                    int(event.payload.get("cycle", 1) or 1)
-                    for event in middle_events
-                ),
+                (int(event.payload.get("cycle", 1) or 1) for event in middle_events),
                 default=0,
             ),
             "baseline_wave_governance": [
                 {
                     "wave_index": int(event.payload.get("wave_index", 0) or 0),
                     "wave_size": int(event.payload.get("wave_size", 0) or 0),
-                    "max_concurrency": int(
-                        event.payload.get("max_concurrency", 0) or 0
-                    ),
-                    "execution_batches": int(
-                        event.payload.get("execution_batches", 0) or 0
-                    ),
+                    "max_concurrency": int(event.payload.get("max_concurrency", 0) or 0),
+                    "execution_batches": int(event.payload.get("execution_batches", 0) or 0),
                     "bounded": event.payload.get("bounded") is True,
                 }
                 for event in baseline_wave_events
@@ -8484,11 +7651,7 @@ class DeepResearchRunner:
             return {"type": "fake", "model": "fake", "base_url_host": ""}
         if trace is not None:
             started = next(
-                (
-                    event
-                    for event in trace.snapshot()
-                    if event.event_type == "run_started"
-                ),
+                (event for event in trace.snapshot() if event.event_type == "run_started"),
                 None,
             )
             if started is not None:
@@ -8496,8 +7659,7 @@ class DeepResearchRunner:
                 if provider_name == "codex":
                     return {
                         "type": "codex_cli",
-                        "model": str(started.payload.get("model", ""))
-                        or "(cli default)",
+                        "model": str(started.payload.get("model", "")) or "(cli default)",
                         "base_url_host": str(started.payload.get("base_url_host", "")),
                     }
                 if provider_name == "responses":
@@ -8533,14 +7695,10 @@ class DeepResearchRunner:
         return {
             "plan_id": graph.plan_id,
             "discovery_blueprint": blueprint,
-            "baseline_map_count": sum(
-                node.node_type == "baseline_map" for node in graph.nodes
-            ),
+            "baseline_map_count": sum(node.node_type == "baseline_map" for node in graph.nodes),
             "nodes": [to_plain(node) for node in graph.nodes],
             "dependency_edges": [
-                {"from": dependency, "to": node.node_id}
-                for node in graph.nodes
-                for dependency in node.depends_on
+                {"from": dependency, "to": node.node_id} for node in graph.nodes for dependency in node.depends_on
             ],
             "execution_waves": [
                 {
@@ -8618,14 +7776,10 @@ class DeepResearchRunner:
         }
         image_rows = [to_plain(item) for item in store.capability_images.values()]
         selected = list(summary.get("selected_agent_ids", []))
-        session_agents = {
-            path.stem for path in (workspace.run_dir / "agent_sessions").glob("*.jsonl")
-        }
+        session_agents = {path.stem for path in (workspace.run_dir / "agent_sessions").glob("*.jsonl")}
         resource_projections = summary["winning_mechanism"]["resource_projections"]
         trace_rows = list(summary.get("trace_summary", []))
-        event_types = {
-            str(item.get("event_type", "")) for item in trace_rows
-        }
+        event_types = {str(item.get("event_type", "")) for item in trace_rows}
         wave_governance = list(
             summary.get("performance_summary", {}).get(
                 "baseline_wave_governance",
@@ -8637,9 +7791,7 @@ class DeepResearchRunner:
             try:
                 records = [
                     json.loads(line)
-                    for line in workspace.read_run_text(
-                        f"agent_sessions/{agent_id}.jsonl"
-                    ).splitlines()
+                    for line in workspace.read_run_text(f"agent_sessions/{agent_id}.jsonl").splitlines()
                     if line.strip()
                 ]
             except (FileNotFoundError, json.JSONDecodeError, OSError, ValueError):
@@ -8656,11 +7808,7 @@ class DeepResearchRunner:
                 and isinstance(task_record.get("budget"), dict)
                 and task_record.get("budget")
             )
-        failure_handoff_rows = [
-            item
-            for item in trace_rows
-            if item.get("event_type") == "agent_failure_handoff_ready"
-        ]
+        failure_handoff_rows = [item for item in trace_rows if item.get("event_type") == "agent_failure_handoff_ready"]
         persisted_loop_kinds = _persisted_winning_loop_kinds(store)
         blueprint = summary.get("discovery_blueprint", {})
         execution_profile_id = str(blueprint.get("execution_profile_id", "")).strip()
@@ -8672,15 +7820,12 @@ class DeepResearchRunner:
             "plan_graph_complete": bool(summary["plan_graph"].get("execution_waves"))
             and len(summary["plan_graph"].get("gate_points", [])) >= 5,
             "isolated_agent_sessions": set(selected) <= session_agents,
-            "permission_and_budget_contracts_recorded": bool(governed_sessions)
-            and all(governed_sessions.values()),
+            "permission_and_budget_contracts_recorded": bool(governed_sessions) and all(governed_sessions.values()),
             "bounded_wave_concurrency_enforced": bool(wave_governance)
             and all(
                 item.get("bounded") is True
                 and isinstance(item.get("max_concurrency"), int)
-                and 1
-                <= item["max_concurrency"]
-                <= item.get("wave_size", 0)
+                and 1 <= item["max_concurrency"] <= item.get("wave_size", 0)
                 for item in wave_governance
             ),
             "structured_map_reduce_handoffs": (
@@ -8688,24 +7833,17 @@ class DeepResearchRunner:
                 or (
                     bool(store.baseline_packets)
                     and all(
-                        packet.packet_id
-                        and packet.handoff_summary
-                        and isinstance(packet.evidence_ids, list)
+                        packet.packet_id and packet.handoff_summary and isinstance(packet.evidence_ids, list)
                         for packet in store.baseline_packets.values()
                     )
                     and bool(summary.get("discovery_convergence"))
                 )
             ),
-            "recoverable_checkpoint_lineage": workspace.run_file_is_regular(
-                "run.db"
-            )
+            "recoverable_checkpoint_lineage": workspace.run_file_is_regular("run.db")
             and workspace.run_file_is_regular("checkpoints/latest.json"),
             "failure_handoff_contracts_persisted": (
                 all(
-                    all(
-                        workspace.run_file_is_regular(str(output_ref))
-                        for output_ref in item.get("output_refs", [])
-                    )
+                    all(workspace.run_file_is_regular(str(output_ref)) for output_ref in item.get("output_refs", []))
                     for item in failure_handoff_rows
                 )
                 if failure_handoff_rows
@@ -8720,14 +7858,8 @@ class DeepResearchRunner:
                         "winning_mechanism",
                     }
                     <= session_agents
-                    and (
-                        "auditor" in session_agents
-                        or "audit_completed" in event_types
-                    )
-                    and (
-                        "reporter" in session_agents
-                        or "report_completed" in event_types
-                    )
+                    and ("auditor" in session_agents or "audit_completed" in event_types)
+                    and ("reporter" in session_agents or "report_completed" in event_types)
                     if summary.get("mode") == "real"
                     else True
                 )
@@ -8736,9 +7868,7 @@ class DeepResearchRunner:
             "a_h_blueprint_executable": bool(blueprint)
             and blueprint.get("primary_branch") in set("ABCDEFGH")
             and bool(blueprint.get("waves")),
-            "cross_scenario_convergence_present": (
-                deep_divergence_mode or bool(summary.get("discovery_convergence"))
-            ),
+            "cross_scenario_convergence_present": (deep_divergence_mode or bool(summary.get("discovery_convergence"))),
             "outer_and_meta_loops_recorded": (
                 deep_divergence_mode
                 or {
@@ -8757,7 +7887,8 @@ class DeepResearchRunner:
                     session_agents=session_agents,
                 )
             ),
-            "four_knowledge_resources_projected": deep_divergence_mode or (
+            "four_knowledge_resources_projected": deep_divergence_mode
+            or (
                 bool(resource_projections)
                 and all(
                     key in resource_projections[-1]
@@ -8769,13 +7900,9 @@ class DeepResearchRunner:
                     )
                 )
             ),
-            "six_step_reasoning_complete": (
-                deep_divergence_mode or reasoning_steps == {1, 2, 3, 4, 5, 6}
-            ),
+            "six_step_reasoning_complete": (deep_divergence_mode or reasoning_steps == {1, 2, 3, 4, 5, 6}),
             "l1_l2_l3_present": (
-                (stage_layers == {"S3", "S4", "S6"})
-                if deep_divergence_mode
-                else stage_layers == {"L1", "L2", "L3"}
+                (stage_layers == {"S3", "S4", "S6"}) if deep_divergence_mode else stage_layers == {"L1", "L2", "L3"}
             ),
             "nine_field_capability_images": bool(image_rows)
             and all(required_image_fields <= set(row) for row in image_rows),
@@ -8802,9 +7929,7 @@ class DeepResearchRunner:
             "release_ready": all(checks.values()) and audit_status == "approved",
             "audit_status": audit_status,
             "deferred_validation": (
-                ["装备级实证", "TRL/成熟度", "误伤评估", "法律适用"]
-                if frontier_innovation_mode
-                else []
+                ["装备级实证", "TRL/成熟度", "误伤评估", "法律适用"] if frontier_innovation_mode else []
             ),
             "limitations": []
             if audit_status == "approved"
@@ -8867,18 +7992,10 @@ class DeepResearchRunner:
             return EvidenceGovernor()
         import yaml
 
-        payload = (
-            yaml.safe_load(self.evidence_config_path.read_text(encoding="utf-8")) or {}
-        )
+        payload = yaml.safe_load(self.evidence_config_path.read_text(encoding="utf-8")) or {}
         return EvidenceGovernor(
-            minimum_score=float(
-                payload.get("acceptance", {}).get("min_quality_score", 0.62)
-            ),
-            weights={
-                str(key): float(value)
-                for key, value in payload.get("weights", {}).items()
-            }
-            or None,
+            minimum_score=float(payload.get("acceptance", {}).get("min_quality_score", 0.62)),
+            weights={str(key): float(value) for key, value in payload.get("weights", {}).items()} or None,
         )
 
     @staticmethod
@@ -8908,8 +8025,7 @@ class DeepResearchRunner:
             "artifact_counts": {
                 "sources": int(store_summary.get("baseline_packet_count", 0)),
                 "evidence": int(
-                    store_summary.get("materialized_evidence_count")
-                    or store_summary.get("evidence_count", 0)
+                    store_summary.get("materialized_evidence_count") or store_summary.get("evidence_count", 0)
                 ),
                 "capabilities": int(store_summary.get("capability_image_count", 0)),
                 "winning_steps": int(store_summary.get("stage_output_count", 0)),
@@ -8945,9 +8061,9 @@ def _proposal_batch_hash(
     domain_proposals: Sequence[DomainWriteProposal],
     trace_proposals: Sequence[TraceProposal],
 ) -> str:
-    rows = [
-        {"channel": "domain", **proposal.to_plain()} for proposal in domain_proposals
-    ] + [{"channel": "trace", **proposal.to_plain()} for proposal in trace_proposals]
+    rows = [{"channel": "domain", **proposal.to_plain()} for proposal in domain_proposals] + [
+        {"channel": "trace", **proposal.to_plain()} for proposal in trace_proposals
+    ]
     rows.sort(key=lambda row: (str(row["proposal_id"]), str(row["channel"])))
     encoded = json.dumps(
         rows,
@@ -9057,18 +8173,11 @@ def _minimal_winning_evidence_index(
 ) -> list[dict[str, Any]]:
     requested_ids = list(
         dict.fromkeys(
-            str(evidence_id)
-            for packet in packets
-            for evidence_id in packet.get("evidence_ids", [])
-            if str(evidence_id)
+            str(evidence_id) for packet in packets for evidence_id in packet.get("evidence_ids", []) if str(evidence_id)
         )
     )
     if len(requested_ids) < 18:
-        requested_ids.extend(
-            evidence_id
-            for evidence_id in store.evidence
-            if evidence_id not in requested_ids
-        )
+        requested_ids.extend(evidence_id for evidence_id in store.evidence if evidence_id not in requested_ids)
     rows: list[dict[str, Any]] = []
     for evidence_id in requested_ids[:24]:
         item = store.evidence.get(evidence_id)
@@ -9112,22 +8221,13 @@ def _report_evidence_catalog(
         ),
     )
     decision_evidence_ids = list(
-        dict.fromkeys(
-            evidence_id
-            for image_item in decision_images
-            for evidence_id in image_item.evidence_ids[:3]
-        )
+        dict.fromkeys(evidence_id for image_item in decision_images for evidence_id in image_item.evidence_ids[:3])
     )
     priority_rows = [
-        store.evidence[evidence_id]
-        for evidence_id in decision_evidence_ids
-        if evidence_id in store.evidence
+        store.evidence[evidence_id] for evidence_id in decision_evidence_ids if evidence_id in store.evidence
     ]
     rows = list(
-        dict.fromkeys(
-            [item.evidence_id for item in priority_rows]
-            + [item.evidence_id for item in ranked_rows]
-        )
+        dict.fromkeys([item.evidence_id for item in priority_rows] + [item.evidence_id for item in ranked_rows])
     )
     selected = [store.evidence[evidence_id] for evidence_id in rows[: max(1, limit)]]
     return [
@@ -9164,9 +8264,7 @@ def _report_accepted_claims(
                     "claim": str(finding)[:520],
                     "confidence": packet.confidence,
                     "public_urls": public_urls[:3],
-                    "counter_evidence_or_limits": [
-                        str(item)[:180] for item in packet.limitations[:2]
-                    ],
+                    "counter_evidence_or_limits": [str(item)[:180] for item in packet.limitations[:2]],
                 }
             )
     return rows[:total_limit]
@@ -9190,12 +8288,8 @@ def _claim_source_binding_summary(
         if not item.get("public_urls") and str(item.get("claim", "")).strip()
     ]
     claim_count = len(accepted_claim_rows)
-    claims_with_public_sources = sum(
-        bool(item.get("public_urls")) for item in accepted_claim_rows
-    )
-    binding_rate = (
-        claims_with_public_sources / claim_count if claim_count else 0.0
-    )
+    claims_with_public_sources = sum(bool(item.get("public_urls")) for item in accepted_claim_rows)
+    binding_rate = claims_with_public_sources / claim_count if claim_count else 0.0
     return {
         "accepted_claim_count": claim_count,
         "claims_with_public_sources": claims_with_public_sources,
@@ -9206,8 +8300,7 @@ def _claim_source_binding_summary(
         "internal_reference_found": bool(internal_reference_found),
         "soft_gate": True,
         "blocking": bool(internal_reference_found),
-        "passed": binding_rate >= CLAIM_SOURCE_BINDING_MINIMUM
-        and not internal_reference_found,
+        "passed": binding_rate >= CLAIM_SOURCE_BINDING_MINIMUM and not internal_reference_found,
     }
 
 
@@ -9219,9 +8312,7 @@ def _report_quality_gate_metadata(
     delivery_artifacts: Mapping[str, Any],
     store: DomainStore,
 ) -> dict[str, Any]:
-    profile_id = str(
-        discovery_blueprint.get("execution_profile_id", "legacy_v1")
-    )
+    profile_id = str(discovery_blueprint.get("execution_profile_id", "legacy_v1"))
     quality_profile = profile_id in {
         "swarm_quality_v1",
         "winning_swarm_dynamic_v2",
@@ -9257,9 +8348,7 @@ def _report_quality_gate_metadata(
         "report_template_mode": report_template_mode,
         "delivery_owned_h1": True,
         "mechanical_structure_blocking": False,
-        "branch_delivery_status": delivery_artifacts[
-            "branch_deliverables"
-        ].get("delivery_status"),
+        "branch_delivery_status": delivery_artifacts["branch_deliverables"].get("delivery_status"),
         "require_disruptive_lens_diversity": len(images) >= 5,
         "expected_capability_directions": [item.name for item in images],
         "expected_capability_records": [
@@ -9326,10 +8415,11 @@ def _bind_capability_evidence(
         anchors = tokens(image)
         for evidence_id in dict.fromkeys(str(item) for item in image.evidence_ids):
             evidence = store.evidence.get(evidence_id)
-            text = " ".join(
-                str(getattr(evidence, key, "") or "")
-                for key in ("source_title", "claim", "excerpt")
-            ) if evidence is not None else ""
+            text = (
+                " ".join(str(getattr(evidence, key, "") or "") for key in ("source_title", "claim", "excerpt"))
+                if evidence is not None
+                else ""
+            )
             if anchors and any(anchor.casefold() in text.casefold() for anchor in anchors):
                 direct.append(evidence_id)
             else:
@@ -9371,16 +8461,10 @@ def _is_report_delivery_only_resume(
     if checkpoint.task_statuses.get(FINALIZE_TASK_ID) == "completed":
         return False
     if any(
-        status != "completed"
-        for task_id, status in checkpoint.task_statuses.items()
-        if task_id != FINALIZE_TASK_ID
+        status != "completed" for task_id, status in checkpoint.task_statuses.items() if task_id != FINALIZE_TASK_ID
     ):
         return False
-    if not (
-        store.audits
-        and store.stage_outputs
-        and store.capability_images
-    ):
+    if not (store.audits and store.stage_outputs and store.capability_images):
         return False
     try:
         payload = json.loads(workspace.read_run_text("report_failure.json"))
@@ -9399,10 +8483,10 @@ def _is_report_delivery_only_resume(
         # requiring report_written here made every such checkpoint fall back
         # into the full research path (or loop forever on the same draft).
         partial_path = str(payload.get("partial_report_path", "")).strip()
-        has_partial = bool(
-            partial_path
-            and (workspace.run_dir / partial_path).is_file()
-        ) or (workspace.run_dir / "report-partial.md").is_file()
+        has_partial = (
+            bool(partial_path and (workspace.run_dir / partial_path).is_file())
+            or (workspace.run_dir / "report-partial.md").is_file()
+        )
         # A pure model/transport failure may have no partial body.  The
         # completed S1-S6 objects are still sufficient to restart only the
         # Reporter lane, so treat the checkpoint as delivery-resumable too.
@@ -9413,25 +8497,16 @@ def _is_report_delivery_only_resume(
     # historical limited status.  Reopen only the audit/output reconciliation;
     # completed research Agents remain frozen.
     try:
-        report_gate = json.loads(
-            workspace.read_run_text("report_quality_gate.json")
-        )
-        binding_gate = json.loads(
-            workspace.read_run_text("claim_source_binding.json")
-        )
-        branch_gate = json.loads(
-            workspace.read_run_text("branch_deliverables.json")
-        )
+        report_gate = json.loads(workspace.read_run_text("report_quality_gate.json"))
+        binding_gate = json.loads(workspace.read_run_text("claim_source_binding.json"))
+        branch_gate = json.loads(workspace.read_run_text("branch_deliverables.json"))
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
         return False
     return (
         bool(report_gate.get("passed"))
         and bool(binding_gate.get("passed"))
         and str(branch_gate.get("delivery_status", "")) == "complete"
-        and any(
-            str(item.status).strip().lower() != "approved"
-            for item in store.audits.values()
-        )
+        and any(str(item.status).strip().lower() != "approved" for item in store.audits.values())
     )
 
 
@@ -9495,11 +8570,7 @@ def _report_resume_failed_columns(
         "chapter_5_units": ("参与单位", "研制单位"),
         "chapter_5_technical_foundation": ("技术基础", "成熟基础", "供应链"),
     }
-    selected = [
-        layer_id
-        for layer_id in known
-        if any(term.lower() in text for term in mapping.get(layer_id, ()))
-    ]
+    selected = [layer_id for layer_id in known if any(term.lower() in text for term in mapping.get(layer_id, ()))]
     # A generic blocker (Markdown corruption, unknown structural defect, or an
     # empty report) cannot be safely attributed to one H3. Repair all columns,
     # but keep the set bounded to the configured contract.
@@ -9509,14 +8580,10 @@ def _report_resume_failed_columns(
 def _publicize_report_references(body: str, store: DomainStore) -> str:
     """Replace internal object identifiers with citation-ready public handles."""
     result = str(body)
-    for evidence in sorted(
-        store.evidence.values(), key=lambda item: len(item.evidence_id), reverse=True
-    ):
+    for evidence in sorted(store.evidence.values(), key=lambda item: len(item.evidence_id), reverse=True):
         label = evidence.source_title.strip() or "公开来源"
         replacement = (
-            f"[{label}]({evidence.source_url})"
-            if evidence.source_url.startswith(("http://", "https://"))
-            else label
+            f"[{label}]({evidence.source_url})" if evidence.source_url.startswith(("http://", "https://")) else label
         )
         result = result.replace(evidence.evidence_id, replacement)
     for packet in store.baseline_packets.values():
@@ -9536,11 +8603,7 @@ def _normalize_delivery_report_structure(
 
     text = str(body)
     h1 = next(
-        (
-            line.strip()
-            for line in text.splitlines()
-            if line.startswith("# ") and not line.startswith("## ")
-        ),
+        (line.strip() for line in text.splitlines() if line.startswith("# ") and not line.startswith("## ")),
         "",
     )
     normalized = _normalize_report_structure_deterministically(text, payload).strip()
@@ -9571,9 +8634,7 @@ def _report_delivery_limit_payload(
     """Preserve the execution contract during post-render length handling."""
 
     return {
-        "execution_profile_id": discovery_blueprint.get(
-            "execution_profile_id", "legacy_v1"
-        ),
+        "execution_profile_id": discovery_blueprint.get("execution_profile_id", "legacy_v1"),
         "report_template_mode": report_template_mode,
         "branch_writer_brief": branch_writer_brief,
     }
@@ -9591,19 +8652,13 @@ def _agent_contribution_observations(
     for packet in _admitted_packet_snapshot(store):
         evidence_ids = set(packet.evidence_ids)
         adopted_by_steps = {
-            f"S{node.step}": [
-                claim_id
-                for claim_id in packet.claim_ids
-                if claim_id in set(node.claim_ids)
-            ]
+            f"S{node.step}": [claim_id for claim_id in packet.claim_ids if claim_id in set(node.claim_ids)]
             or list(packet.claim_ids[:1])
             for node in store.reasoning_nodes.values()
             if evidence_ids & set(node.evidence_ids)
         }
         capability_ids = [
-            item.capability_id
-            for item in store.capability_images.values()
-            if evidence_ids & set(item.evidence_ids)
+            item.capability_id for item in store.capability_images.values() if evidence_ids & set(item.evidence_ids)
         ]
         public_urls = [
             store.evidence[evidence_id].source_url
@@ -9616,8 +8671,7 @@ def _agent_contribution_observations(
             event
             for event in events
             if event.actor == packet.agent_id
-            and event.event_type
-            in {"agent_model_call_completed", "winning_model_call_completed"}
+            and event.event_type in {"agent_model_call_completed", "winning_model_call_completed"}
         ]
         # A resumed run reconstructs domain objects from checkpoints, but its
         # in-memory TraceStore intentionally contains only the resumed segment.
@@ -9640,9 +8694,7 @@ def _agent_contribution_observations(
                 "adopted_by_report_sections": report_sections,
                 "model_calls": model_calls,
                 "loao_quality_delta": None,
-                "contributed": bool(
-                    adopted_by_steps or capability_ids or report_sections
-                ),
+                "contributed": bool(adopted_by_steps or capability_ids or report_sections),
             }
         )
     return observations
@@ -9656,9 +8708,7 @@ def _persisted_agent_model_call_count(
     if workspace is None or not agent_id:
         return 0
     try:
-        payload = workspace.read_run_text(
-            Path("agent_sessions") / f"{agent_id}.jsonl"
-        )
+        payload = workspace.read_run_text(Path("agent_sessions") / f"{agent_id}.jsonl")
     except (FileNotFoundError, OSError, ValueError):
         return 0
 
@@ -9673,8 +8723,7 @@ def _persisted_agent_model_call_count(
         if (
             isinstance(event, Mapping)
             and event.get("agent_id") == agent_id
-            and event.get("event_type")
-            in {"agent_model_call_completed", "winning_model_call_completed"}
+            and event.get("event_type") in {"agent_model_call_completed", "winning_model_call_completed"}
         ):
             count += 1
     return count
@@ -9698,14 +8747,9 @@ def _report_decision_brief(
     for cluster in convergence.get("clusters", []):
         if isinstance(cluster, Mapping):
             cluster_name = str(cluster.get("name", ""))
-            if any(
-                marker in cluster_name
-                for marker in ("回调", "缺失标签", "覆盖闭合")
-            ):
+            if any(marker in cluster_name for marker in ("回调", "缺失标签", "覆盖闭合")):
                 continue
-            thesis_candidates.append(
-                cluster.get("shared_need") or cluster.get("name")
-            )
+            thesis_candidates.append(cluster.get("shared_need") or cluster.get("name"))
     thesis_candidates.extend(convergence.get("priorities", []))
     thesis_candidates.extend(
         node.summary
@@ -9715,9 +8759,7 @@ def _report_decision_brief(
             reverse=True,
         )
     )
-    thesis_candidates.extend(
-        packet.handoff_summary for packet in store.baseline_packets.values()
-    )
+    thesis_candidates.extend(packet.handoff_summary for packet in store.baseline_packets.values())
 
     images = sorted(
         store.capability_images.values(),
@@ -9744,9 +8786,7 @@ def _report_decision_brief(
         )
         normalized_problem = normalize_capability_problem(
             image_item.problem_statement or mission_failure,
-            fallback=(
-                f"{image_item.name}对应的关键任务链存在目标、授权、交战或毁伤评估断点"
-            ),
+            fallback=(f"{image_item.name}对应的关键任务链存在目标、授权、交战或毁伤评估断点"),
         )
         normalized_process = normalize_operational_process(
             image_item.operational_process or image_item.strike_chain_contribution,
@@ -9756,16 +8796,10 @@ def _report_decision_brief(
             image_item.verification_plan,
             equipment_identity=equipment_identity,
             failure_boundary=(
-                image_item.risk_boundaries
-                or image_item.operational_constraints
-                or image_item.upgrade_boundary
+                image_item.risk_boundaries or image_item.operational_constraints or image_item.upgrade_boundary
             ),
         )
-        normalized_portrait = str(
-            image_item.deep_capability_portrait
-            or image_item.capability_image
-            or ""
-        ).strip()
+        normalized_portrait = str(image_item.deep_capability_portrait or image_item.capability_image or "").strip()
         portrait_markers = (
             "概述：",
             "装备与技术实现：",
@@ -9808,9 +8842,7 @@ def _report_decision_brief(
             and image_item.semantic_consistency_check.get("consistent") is True
         ) or portrait_status == "s6_authored_semantically_consistent"
         trusted_s6_portrait = (
-            bool(normalized_portrait)
-            and consistency_asserted
-            and portrait_status.startswith("s6_authored")
+            bool(normalized_portrait) and consistency_asserted and portrait_status.startswith("s6_authored")
         )
         if portrait_semantics_stale and not trusted_s6_portrait:
             normalized_portrait = build_agent_led_capability_portrait(
@@ -9823,27 +8855,12 @@ def _report_decision_brief(
                     or image_item.source_winning_logic
                 ),
                 technologies=image_item.enabling_technologies,
-                operational_concept=(
-                    image_item.operational_concept
-                    or image_item.operational_mechanism
-                ),
+                operational_concept=(image_item.operational_concept or image_item.operational_mechanism),
                 operational_steps=image_item.operational_process,
-                capability=(
-                    image_item.capability_outcome
-                    or image_item.project_function
-                ),
-                effect=(
-                    image_item.mission_effect
-                    or image_item.military_utility
-                ),
-                winning_mechanism=(
-                    image_item.winning_mechanism
-                    or image_item.source_winning_logic
-                ),
-                equipment_form=(
-                    image_item.equipment_form
-                    or image_item.equipment_category
-                ),
+                capability=(image_item.capability_outcome or image_item.project_function),
+                effect=(image_item.mission_effect or image_item.military_utility),
+                winning_mechanism=(image_item.winning_mechanism or image_item.source_winning_logic),
+                equipment_form=(image_item.equipment_form or image_item.equipment_category),
                 baseline=image_item.baseline_system,
                 development_path=image_item.development_path,
                 failure_boundary=[
@@ -9915,24 +8932,16 @@ def _report_decision_brief(
                     or image_item.source_winning_logic,
                     max_chars=280,
                 ),
-                "unique_operational_role": _clean_report_brief_text(
-                    image_item.unique_operational_role, max_chars=240
-                ),
+                "unique_operational_role": _clean_report_brief_text(image_item.unique_operational_role, max_chars=240),
                 "target_and_direct_effect": _clean_report_brief_text(
                     image_item.target_and_direct_effect, max_chars=280
                 ),
-                "mechanism_chain": _clean_report_brief_items(
-                    image_item.mechanism_chain, limit=6, max_chars=120
-                ),
+                "mechanism_chain": _clean_report_brief_items(image_item.mechanism_chain, limit=6, max_chars=120),
                 "non_substitutable_difference": _clean_report_brief_text(
                     image_item.non_substitutable_difference, max_chars=240
                 ),
-                "adversary_adaptation": _clean_report_brief_text(
-                    image_item.adversary_adaptation, max_chars=220
-                ),
-                "failure_boundary": _clean_report_brief_text(
-                    image_item.failure_boundary, max_chars=220
-                ),
+                "adversary_adaptation": _clean_report_brief_text(image_item.adversary_adaptation, max_chars=220),
+                "failure_boundary": _clean_report_brief_text(image_item.failure_boundary, max_chars=220),
                 "target_scenario": _clean_report_brief_text(
                     image_item.target_scenario or image_item.related_scenario,
                     max_chars=220,
@@ -9942,8 +8951,7 @@ def _report_decision_brief(
                     max_chars=220,
                 ),
                 "scientific_principle": _clean_report_brief_text(
-                    image_item.scientific_principle
-                    or image_item.operational_mechanism,
+                    image_item.scientific_principle or image_item.operational_mechanism,
                     max_chars=200,
                 ),
                 "enabling_technologies": _clean_report_brief_items(
@@ -9952,8 +8960,7 @@ def _report_decision_brief(
                     max_chars=100,
                 ),
                 "operational_concept": _clean_report_brief_text(
-                    image_item.operational_concept
-                    or image_item.operational_mechanism,
+                    image_item.operational_concept or image_item.operational_mechanism,
                     max_chars=240,
                 ),
                 "operational_process": _clean_report_brief_items(
@@ -9969,8 +8976,7 @@ def _report_decision_brief(
                     max_chars=200,
                 ),
                 "winning_mechanism": _clean_report_brief_text(
-                    image_item.winning_mechanism
-                    or image_item.source_winning_logic,
+                    image_item.winning_mechanism or image_item.source_winning_logic,
                     max_chars=240,
                 ),
                 "system_contribution_thesis": _clean_report_brief_text(
@@ -10002,9 +9008,7 @@ def _report_decision_brief(
                     limit=4,
                     max_chars=180,
                 ),
-                "capability_portrait": _clean_report_capability_portrait(
-                    normalized_portrait
-                ),
+                "capability_portrait": _clean_report_capability_portrait(normalized_portrait),
                 "indicator_portrait": _report_indicator_portrait(image_item),
                 "coupling_risk": _report_coupling_risk(image_item),
                 "boundaries": _clean_report_brief_items(
@@ -10029,11 +9033,7 @@ def _report_decision_brief(
                 )
                 for item in images
             ),
-            *(
-                item
-                for packet in store.baseline_packets.values()
-                for item in packet.limitations
-            ),
+            *(item for packet in store.baseline_packets.values() for item in packet.limitations),
         ],
         limit=4,
         max_chars=240,
@@ -10041,11 +9041,7 @@ def _report_decision_brief(
     counterevidence = _clean_report_brief_items(
         [
             *convergence.get("conflicts", []),
-            *(
-                item
-                for packet in store.baseline_packets.values()
-                for item in packet.limitations
-            ),
+            *(item for packet in store.baseline_packets.values() for item in packet.limitations),
             *(item for image_item in images for item in image_item.risk_boundaries),
         ],
         limit=4,
@@ -10054,11 +9050,7 @@ def _report_decision_brief(
     priorities = _clean_report_brief_items(
         [
             *convergence.get("priorities", []),
-            *(
-                f"{item.priority}：{item.name}—"
-                f"{item.development_path or item.equipment_form}"
-                for item in images
-            ),
+            *(f"{item.priority}：{item.name}—{item.development_path or item.equipment_form}" for item in images),
         ],
         limit=4,
         max_chars=220,
@@ -10175,9 +9167,7 @@ def _report_coupling_risk(image_item: CapabilityImageItem) -> str:
     dependency_text = "、".join(dependencies)
     shortfall = _preferred_report_failure_boundary(boundaries) if boundaries else ""
     failed_effect = _clean_report_brief_text(
-        image_item.capability_outcome
-        or image_item.mission_effect
-        or image_item.project_function,
+        image_item.capability_outcome or image_item.mission_effect or image_item.project_function,
         max_chars=90,
     ).rstrip("。；，, ")
     if not dependency_text and not shortfall and not failed_effect:
@@ -10247,100 +9237,56 @@ def _report_synthesis_seed(
             continue
         capability_cues.append(
             {
-                "direction": _clean_report_brief_text(
-                    item.get("name", ""), max_chars=90
-                ),
-                "mission_effect": _clean_report_brief_text(
-                    item.get("operational_effect", ""), max_chars=180
-                ),
+                "direction": _clean_report_brief_text(item.get("name", ""), max_chars=90),
+                "mission_effect": _clean_report_brief_text(item.get("operational_effect", ""), max_chars=180),
                 "unique_operational_role": _clean_report_brief_text(
                     item.get("unique_operational_role", ""), max_chars=220
                 ),
                 "target_and_direct_effect": _clean_report_brief_text(
                     item.get("target_and_direct_effect", ""), max_chars=240
                 ),
-                "mechanism_chain": _clean_report_brief_items(
-                    item.get("mechanism_chain", []), limit=6, max_chars=110
-                ),
+                "mechanism_chain": _clean_report_brief_items(item.get("mechanism_chain", []), limit=6, max_chars=110),
                 "non_substitutable_difference": _clean_report_brief_text(
                     item.get("non_substitutable_difference", ""), max_chars=220
                 ),
-                "project_function": _clean_report_brief_text(
-                    item.get("project_function", ""), max_chars=180
-                ),
-                "capability_gap": _clean_report_brief_text(
-                    item.get("mission_failure", ""), max_chars=150
-                ),
-                "mechanism_hint": _clean_report_brief_text(
-                    item.get("mechanism", ""), max_chars=160
-                ),
-                "target_scenario": _clean_report_brief_text(
-                    item.get("target_scenario", ""), max_chars=180
-                ),
-                "problem_statement": _clean_report_brief_text(
-                    item.get("problem_statement", ""), max_chars=180
-                ),
-                "scientific_principle": _clean_report_brief_text(
-                    item.get("scientific_principle", ""), max_chars=160
-                ),
+                "project_function": _clean_report_brief_text(item.get("project_function", ""), max_chars=180),
+                "capability_gap": _clean_report_brief_text(item.get("mission_failure", ""), max_chars=150),
+                "mechanism_hint": _clean_report_brief_text(item.get("mechanism", ""), max_chars=160),
+                "target_scenario": _clean_report_brief_text(item.get("target_scenario", ""), max_chars=180),
+                "problem_statement": _clean_report_brief_text(item.get("problem_statement", ""), max_chars=180),
+                "scientific_principle": _clean_report_brief_text(item.get("scientific_principle", ""), max_chars=160),
                 "enabling_technologies": _clean_report_brief_items(
                     item.get("enabling_technologies", []), limit=5, max_chars=90
                 ),
-                "operational_concept": _clean_report_brief_text(
-                    item.get("operational_concept", ""), max_chars=180
-                ),
+                "operational_concept": _clean_report_brief_text(item.get("operational_concept", ""), max_chars=180),
                 "operational_process": _clean_report_brief_items(
                     item.get("operational_process", []), limit=6, max_chars=100
                 ),
-                "capability_outcome": _clean_report_brief_text(
-                    item.get("capability_outcome", ""), max_chars=160
-                ),
-                "winning_mechanism": _clean_report_brief_text(
-                    item.get("winning_mechanism", ""), max_chars=180
-                ),
+                "capability_outcome": _clean_report_brief_text(item.get("capability_outcome", ""), max_chars=160),
+                "winning_mechanism": _clean_report_brief_text(item.get("winning_mechanism", ""), max_chars=180),
                 "system_contribution_thesis": _clean_report_brief_text(
                     item.get("system_contribution_thesis", ""), max_chars=260
                 ),
-                "equipment_hint": _clean_report_brief_text(
-                    item.get("equipment_form", ""), max_chars=140
-                ),
+                "equipment_hint": _clean_report_brief_text(item.get("equipment_form", ""), max_chars=140),
                 "public_equipment_baseline": _clean_report_brief_text(
                     item.get("public_equipment_baseline", ""), max_chars=220
                 ),
-                "future_trigger": _clean_report_brief_text(
-                    item.get("future_trigger", ""), max_chars=140
-                ),
+                "future_trigger": _clean_report_brief_text(item.get("future_trigger", ""), max_chars=140),
                 "disruptive_relationship": _clean_report_brief_text(
                     item.get("disruptive_relationship", ""), max_chars=160
                 ),
-                "development_path": _clean_report_brief_text(
-                    item.get("development_path", ""), max_chars=140
-                ),
+                "development_path": _clean_report_brief_text(item.get("development_path", ""), max_chars=140),
                 "verification_plan": _clean_report_brief_items(
                     item.get("verification_plan", []), limit=4, max_chars=150
                 ),
-                "capability_portrait": _clean_report_capability_portrait(
-                    item.get("capability_portrait", "")
-                ),
-                "indicator_portrait": _clean_report_brief_text(
-                    item.get("indicator_portrait", ""), max_chars=220
-                ),
-                "coupling_risk": _clean_report_brief_text(
-                    item.get("coupling_risk", ""), max_chars=220
-                ),
-                "adversary_adaptation": _clean_report_brief_text(
-                    item.get("adversary_adaptation", ""), max_chars=200
-                ),
-                "failure_boundary": _clean_report_brief_text(
-                    item.get("failure_boundary", ""), max_chars=220
-                ),
-                "priority": _clean_report_brief_text(
-                    item.get("priority", ""), max_chars=30
-                ),
+                "capability_portrait": _clean_report_capability_portrait(item.get("capability_portrait", "")),
+                "indicator_portrait": _clean_report_brief_text(item.get("indicator_portrait", ""), max_chars=220),
+                "coupling_risk": _clean_report_brief_text(item.get("coupling_risk", ""), max_chars=220),
+                "adversary_adaptation": _clean_report_brief_text(item.get("adversary_adaptation", ""), max_chars=200),
+                "failure_boundary": _clean_report_brief_text(item.get("failure_boundary", ""), max_chars=220),
+                "priority": _clean_report_brief_text(item.get("priority", ""), max_chars=30),
                 "boundary": _clean_report_brief_text(
-                    _preferred_report_failure_boundary(
-                        item.get("boundaries", []) or []
-                    ),
+                    _preferred_report_failure_boundary(item.get("boundaries", []) or []),
                     max_chars=120,
                 ),
             }
@@ -10386,11 +9332,9 @@ def _baseline_only_synthesis_seed(
     capability_cues = _baseline_only_capability_cues(packets, tagged=tagged)
 
     return {
-        "decisive_anchors": [
-            tagged(finding, max_chars=180)
-            for packet in packets
-            for finding in packet.findings[:2]
-        ][:6],
+        "decisive_anchors": [tagged(finding, max_chars=180) for packet in packets for finding in packet.findings[:2]][
+            :6
+        ],
         "mission_chain_breaks": [],
         "capability_cues": capability_cues,
         "counterevidence_and_limits": [
@@ -10399,8 +9343,7 @@ def _baseline_only_synthesis_seed(
             for item in [*packet.limitations[:1], *packet.open_questions[:1]]
         ][:4],
         "priority_signals": [
-            tagged(item, max_chars=150)
-            for item in list((convergence or {}).get("priorities", []))[:2]
+            tagged(item, max_chars=150) for item in list((convergence or {}).get("priorities", []))[:2]
         ],
     }
 
@@ -10464,10 +9407,7 @@ def _baseline_only_capability_cues(
             candidates.append((name + "低信息依赖作战升级", profile, "upgrade"))
     for requirement in new_requirements:
         name = title_before_detail(requirement)
-        if not name or any(
-            term in name
-            for term in ("模块", "节点", "任务包系统", "火力协同", "授权")
-        ):
+        if not name or any(term in name for term in ("模块", "节点", "任务包系统", "火力协同", "授权")):
             continue
         candidates.append((name, requirement, "new_capability"))
         if len(candidates) >= 7:
@@ -10490,15 +9430,15 @@ def _baseline_only_capability_cues(
                 "mission_effect": operational[:180] or source[:180],
                 "capability_gap": gaps[index % len(gaps)][:150] if gaps else "基线未形成独立差距结论",
                 "mechanism_hint": (
-                    "作战运用基线：" + operational[:145]
-                    if operational
-                    else "仅形成装备观察，具体制胜因果待验证"
+                    "作战运用基线：" + operational[:145] if operational else "仅形成装备观察，具体制胜因果待验证"
                 ),
                 "equipment_hint": source[:160],
                 "public_equipment_baseline": source[:220],
                 "future_trigger": development[index % len(development)][:140] if development else "",
                 "disruptive_relationship": "去制胜机理消融不形成颠覆关系结论；仅保留基线支持的装备演进方向",
-                "development_path": development[index % len(development)][:150] if development else "待开展装备级方案论证",
+                "development_path": development[index % len(development)][:150]
+                if development
+                else "待开展装备级方案论证",
                 "indicator_portrait": (
                     function_requirements[index % len(function_requirements)][:220]
                     if function_requirements
@@ -10558,12 +9498,7 @@ def _baseline_only_report_summary(
     synthesis_seed: Mapping[str, Any] | None = None,
 ) -> str:
     packets = store.baseline_packet_snapshot()
-    findings = [
-        str(finding)
-        for packet in packets
-        for finding in packet.findings[:3]
-        if str(finding).strip()
-    ]
+    findings = [str(finding) for packet in packets for finding in packet.findings[:3] if str(finding).strip()]
     limitations = [
         str(item)
         for packet in packets
@@ -10575,16 +9510,18 @@ def _baseline_only_report_summary(
         for item in store.evidence.values()
         if item.source_url.startswith(("http://", "https://"))
     ]
-    fact_lines = "\n".join(
-        f"- [B{index:02d}] {item}" for index, item in enumerate(findings[:8], 1)
-    ) or "- 基线未形成可发布判断。"
-    limit_lines = "\n".join(
-        f"- [B{index:02d}] {item}"
-        for index, item in enumerate(limitations[:6], len(findings[:8]) + 1)
-    ) or "- 需进一步核验关键假设。"
-    source_lines = "\n".join(
-        f"- [{title}]({url})" for title, url in list(dict.fromkeys(sources))[:6]
-    ) or "- 本次离线运行未包含公开URL。"
+    fact_lines = (
+        "\n".join(f"- [B{index:02d}] {item}" for index, item in enumerate(findings[:8], 1))
+        or "- 基线未形成可发布判断。"
+    )
+    limit_lines = (
+        "\n".join(f"- [B{index:02d}] {item}" for index, item in enumerate(limitations[:6], len(findings[:8]) + 1))
+        or "- 需进一步核验关键假设。"
+    )
+    source_lines = (
+        "\n".join(f"- [{title}]({url})" for title, url in list(dict.fromkeys(sources))[:6])
+        or "- 本次离线运行未包含公开URL。"
+    )
     capability_image = _baseline_only_capability_image_markdown(
         synthesis_seed or _baseline_only_synthesis_seed(store, {})
     )
@@ -10665,9 +9602,7 @@ def _baseline_only_grounded_fallback_report(
                 str(getattr(item, "source_url", "")),
             )
             for item in evidence
-            if str(getattr(item, "source_url", "")).startswith(
-                ("http://", "https://")
-            )
+            if str(getattr(item, "source_url", "")).startswith(("http://", "https://"))
         )
     )[:8]
     source_lines = "\n".join(f"- [{title}]({url})" for title, url in sources)
@@ -10728,9 +9663,7 @@ def _baseline_only_report_violations(
     synthesis_seed: Mapping[str, Any],
     allowed_urls: set[str],
 ) -> list[str]:
-    allowed_markers = set(
-        re.findall(r"\[B\d{2}\]", json.dumps(synthesis_seed, ensure_ascii=False))
-    )
+    allowed_markers = set(re.findall(r"\[B\d{2}\]", json.dumps(synthesis_seed, ensure_ascii=False)))
     used_markers = set(re.findall(r"\[B\d{2}\]", report))
     issues: list[str] = []
     if allowed_markers and not used_markers:
@@ -10795,9 +9728,7 @@ def _compact_report_branch_output(
             limit=8,
             max_chars=100,
         ),
-        "completion": _compact_report_completion(
-            branch_output.get("completion", {})
-        ),
+        "completion": _compact_report_completion(branch_output.get("completion", {})),
         "products": compact_products if include_products else {},
         "report_contract": _compact_report_product(
             "report_contract",
@@ -10808,27 +9739,19 @@ def _compact_report_branch_output(
 
 
 def _compact_report_product(key: str, value: Any, *, limit: int) -> Any:
-    if key == "demand_cards" and isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes)
-    ):
+    if key == "demand_cards" and isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         rows = []
         for item in value[:limit]:
             if not isinstance(item, Mapping):
                 continue
             rows.append(
                 {
-                    "weapon_equipment": _clean_report_brief_text(
-                        item.get("weapon_equipment", ""), max_chars=100
-                    ),
+                    "weapon_equipment": _clean_report_brief_text(item.get("weapon_equipment", ""), max_chars=100),
                     "equipment_configuration": _clean_report_brief_text(
                         item.get("equipment_configuration", ""), max_chars=180
                     ),
-                    "development_mode": _clean_report_brief_text(
-                        item.get("development_mode", ""), max_chars=40
-                    ),
-                    "priority": _clean_report_brief_text(
-                        item.get("priority", ""), max_chars=40
-                    ),
+                    "development_mode": _clean_report_brief_text(item.get("development_mode", ""), max_chars=40),
+                    "priority": _clean_report_brief_text(item.get("priority", ""), max_chars=40),
                     "mission_failure": _derive_report_mission_failure(
                         capability_gap=item.get("capability_gap", ""),
                         deep_portrait=item.get("deep_capability_portrait", ""),
@@ -10841,9 +9764,7 @@ def _compact_report_product(key: str, value: Any, *, limit: int) -> Any:
                         or item.get("mission_effect", ""),
                         max_chars=280,
                     ),
-                    "equipment_form": _clean_report_brief_text(
-                        item.get("equipment_form", ""), max_chars=220
-                    ),
+                    "equipment_form": _clean_report_brief_text(item.get("equipment_form", ""), max_chars=220),
                     "indicators": _clean_report_brief_items(
                         item.get("key_indicators", []),
                         limit=3,
@@ -10856,12 +9777,8 @@ def _compact_report_product(key: str, value: Any, *, limit: int) -> Any:
         return {
             "domains": [
                 {
-                    "domain": _clean_report_brief_text(
-                        item.get("domain", ""), max_chars=100
-                    ),
-                    "indicators": _clean_report_brief_items(
-                        item.get("indicators", []), limit=3, max_chars=120
-                    ),
+                    "domain": _clean_report_brief_text(item.get("domain", ""), max_chars=100),
+                    "indicators": _clean_report_brief_items(item.get("indicators", []), limit=3, max_chars=120),
                     "scenarios": _clean_report_brief_items(
                         item.get("supporting_scenarios", []),
                         limit=2,
@@ -10938,11 +9855,7 @@ def _clean_report_brief_items(
 
 def _clean_report_brief_text(value: Any, *, max_chars: int) -> str:
     if isinstance(value, Mapping):
-        value = "；".join(
-            f"{key}：{item}"
-            for key, item in list(value.items())[:6]
-            if item not in (None, "", [], {})
-        )
+        value = "；".join(f"{key}：{item}" for key, item in list(value.items())[:6] if item not in (None, "", [], {}))
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         value = "；".join(str(item) for item in value[:6])
     text = " ".join(str(value or "").split())
@@ -11035,11 +9948,7 @@ def _derive_report_mission_failure(
     portrait = _clean_report_brief_text(deep_portrait, max_chars=max_chars * 3)
     if portrait:
         portrait = re.split(r"(?:该方向|为此|因此提出)", portrait, maxsplit=1)[0]
-        sentences = [
-            item.strip()
-            for item in re.split(r"[。]", portrait)
-            if item.strip()
-        ]
+        sentences = [item.strip() for item in re.split(r"[。]", portrait) if item.strip()]
         candidate = "。".join(sentences[:2])
         candidate = re.sub(
             r"^(?:共同揭示(?:的断点)?|反复提示(?:一个风险)?|显示)[，：:\s]*",
@@ -11074,9 +9983,7 @@ def _persisted_winning_loop_kinds(store: DomainStore) -> set[str]:
         analysis = outputs.get("core_agent_analysis", {})
         analysis = analysis if isinstance(analysis, Mapping) else {}
         loop_trace = analysis.get("loop_trace", outputs.get("loop_trace", []))
-        if not isinstance(loop_trace, Sequence) or isinstance(
-            loop_trace, (str, bytes)
-        ):
+        if not isinstance(loop_trace, Sequence) or isinstance(loop_trace, (str, bytes)):
             continue
         loop_kinds.update(
             str(item.get("loop", "")).strip().lower()
@@ -11134,7 +10041,8 @@ def _reconcile_final_audit_status(
         substantive = {
             key: bool(value)
             for key, value in checks.items()
-            if key in {
+            if key
+            in {
                 "military_relevance",
                 "causal_coherence",
                 "concrete_equipment",
@@ -11161,24 +10069,16 @@ def _reconcile_final_audit_status(
     # whose stage, evidence, coverage and delivery gates all passed.
     hard_blockers = list(getattr(audit, "hard_blockers", []) or [])
     if legacy_artifact:
-        legacy_quality_checks = {
-            key: value for key, value in checks.items() if key != "user_confirmation"
-        }
+        legacy_quality_checks = {key: value for key, value in checks.items() if key != "user_confirmation"}
         if hard_blockers or not legacy_quality_checks or not all(legacy_quality_checks.values()):
             return audit
     elif hard_blockers or not substantive.get("substantive_five_criteria", all(substantive.values())):
         return audit
     if getattr(audit, "status", "") == "approved" and checks == audit.checks:
         return audit
-    comments = [
-        str(item)
-        for item in getattr(audit, "comments", [])
-        if str(item).strip()
-    ]
+    comments = [str(item) for item in getattr(audit, "comments", []) if str(item).strip()]
     if checks.get("user_confirmation") is False:
-        comments.append(
-            "自动研究质量与交付门已通过；分析师尚未确认，当前成果可交付审阅，正式发布仍待人工确认。"
-        )
+        comments.append("自动研究质量与交付门已通过；分析师尚未确认，当前成果可交付审阅，正式发布仍待人工确认。")
     comments.append(
         "五项业务实质审计及安全/交付阻断均已通过；覆盖、置信度、轮次、材料化和人工确认"
         "作为诊断或发布责任提示保留，不再单独降低机器交付状态。"
@@ -11203,28 +10103,15 @@ def _promote_required_callbacks(
 
     selected = list(selected_candidates)
     selected_ids = {agent.agent_id for agent in selected}
-    provided = {
-        str(tag)
-        for agent in selected
-        for tag in agent.capability_tags
-        if str(tag).strip()
-    }
+    provided = {str(tag) for agent in selected for tag in agent.capability_tags if str(tag).strip()}
     missing = {str(tag) for tag in required_tags if str(tag) not in provided}
     if not missing:
         return selected, []
-    plan = [
-        item
-        for item in discovery_blueprint.get("baseline_agent_plan", [])
-        if isinstance(item, dict)
-    ]
+    plan = [item for item in discovery_blueprint.get("baseline_agent_plan", []) if isinstance(item, dict)]
     # 人工锁定的 Agent 集可能将蓝图中的 reference/callback 角色
     # 排除在首轮之外。若该角色恰好承担必需能力标签，必须在
     # 制胜分析前以最小覆盖集前移，而不是等外循环再补调。
-    supplement_rows = [
-        item
-        for item in plan
-        if item.get("mode") in {"reference", "callback"}
-    ]
+    supplement_rows = [item for item in plan if item.get("mode") in {"reference", "callback"}]
     promoted: list[str] = []
     while missing and len(selected) < maximum:
         best_row: dict[str, Any] | None = None
@@ -11267,11 +10154,7 @@ def _ensure_minimum_business_agents(
     selected_ids = {agent.agent_id for agent in selected}
     if len(selected) >= minimum:
         return selected, []
-    plan_rows = [
-        item
-        for item in discovery_blueprint.get("baseline_agent_plan", [])
-        if isinstance(item, dict)
-    ]
+    plan_rows = [item for item in discovery_blueprint.get("baseline_agent_plan", []) if isinstance(item, dict)]
     candidate_ids = list(
         dict.fromkeys(
             [
@@ -11320,19 +10203,11 @@ def _merge_blueprint_and_analyst_agent_ids(
 
     defaults = list(
         dict.fromkeys(
-            str(agent_id)
-            for agent_id in [*blueprint_agent_ids, *specialist_agent_ids]
-            if str(agent_id).strip()
+            str(agent_id) for agent_id in [*blueprint_agent_ids, *specialist_agent_ids] if str(agent_id).strip()
         )
     )
-    requested = list(
-        dict.fromkeys(
-            str(agent_id) for agent_id in analyst_agent_ids if str(agent_id).strip()
-        )
-    )
-    effective = list(
-        dict.fromkeys([*(defaults if preserve_blueprint_defaults else []), *requested])
-    )
+    requested = list(dict.fromkeys(str(agent_id) for agent_id in analyst_agent_ids if str(agent_id).strip()))
+    effective = list(dict.fromkeys([*(defaults if preserve_blueprint_defaults else []), *requested]))
     additions = [agent_id for agent_id in requested if agent_id not in defaults]
     return effective, defaults, requested, additions
 
@@ -11362,9 +10237,7 @@ def _normalize_discovery_meta_review(
     added_secondary = [
         str(item)
         for item in raw.get("added_secondary_branches", [])
-        if str(item) in "ABCDEFGH"
-        and str(item) != primary
-        and str(item) not in current_secondary
+        if str(item) in "ABCDEFGH" and str(item) != primary and str(item) not in current_secondary
     ][:2]
     overrides: list[dict[str, Any]] = []
     seen_steps: set[int] = set()
@@ -11381,11 +10254,7 @@ def _normalize_discovery_meta_review(
             except (TypeError, ValueError):
                 continue
             mode = str(item.get("mode", ""))
-            if (
-                step not in range(1, 7)
-                or step in seen_steps
-                or mode not in {"skip", "light", "standard", "deep"}
-            ):
+            if step not in range(1, 7) or step in seen_steps or mode not in {"skip", "light", "standard", "deep"}:
                 continue
             previous_mode = current_step_modes[step]
             if mode == previous_mode:
@@ -11450,11 +10319,9 @@ def _normalize_discovery_meta_review(
         if replan_required
         else [],
         "dynamic_subagents": dynamic_subagents if replan_required else [],
-        "focus_questions": [
-            str(item).strip()[:500]
-            for item in raw.get("focus_questions", [])
-            if str(item).strip()
-        ][:8],
+        "focus_questions": [str(item).strip()[:500] for item in raw.get("focus_questions", []) if str(item).strip()][
+            :8
+        ],
         "rationale": str(raw.get("rationale", "")).strip()[:1000],
         "stop_reason": stop_reason[:300],
     }
@@ -11499,8 +10366,7 @@ def _winning_analysis_reusable_for_profile(
         # their authoritative portfolio/S6 gate is otherwise complete.  A
         # present, older contract version still requires reauthoring.
         and bool(str(item.get("portrait_quality_contract_version", "")).strip())
-        and str(item.get("portrait_quality_contract_version", "")).strip()
-        != S6_PORTRAIT_QUALITY_CONTRACT_VERSION
+        and str(item.get("portrait_quality_contract_version", "")).strip() != S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         for item in direction_rows
     )
     return (
@@ -11557,32 +10423,22 @@ def _winning_analysis_can_resume_s6_only(
     contract_changed = any(
         isinstance(item, Mapping)
         and bool(str(item.get("portrait_quality_contract_version", "")).strip())
-        and str(item.get("portrait_quality_contract_version", "")).strip()
-        != S6_PORTRAIT_QUALITY_CONTRACT_VERSION
+        and str(item.get("portrait_quality_contract_version", "")).strip() != S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         for item in direction_rows
     )
     force_s6_rewrite = os.getenv("EQUIPMENT_DR_FORCE_S6_REWRITE", "").strip() == "1"
     s6_needs_resume = bool(
         force_s6_rewrite
-        or
-        result.get("s6_quality_gate_limited")
+        or result.get("s6_quality_gate_limited")
         or limited_card
         or contract_changed
-        or (
-            result.get("s6_quality_gate_failed")
-            and not result.get("s6_quality_gate_passed")
-        )
+        or (result.get("s6_quality_gate_failed") and not result.get("s6_quality_gate_passed"))
     )
     reusable_cards = any(
         isinstance(value, list) and any(isinstance(item, Mapping) for item in value)
         for value in (portfolio, directions, finalists, candidate_lineage)
     )
-    return (
-        isinstance(portfolio, list)
-        and reusable_cards
-        and isinstance(gate, Mapping)
-        and s6_needs_resume
-    )
+    return isinstance(portfolio, list) and reusable_cards and isinstance(gate, Mapping) and s6_needs_resume
 
 
 def _is_optional_recall_budget_error(exc: BaseException) -> bool:
@@ -11591,16 +10447,12 @@ def _is_optional_recall_budget_error(exc: BaseException) -> bool:
     if isinstance(exc, TimeoutError):
         return True
     message = str(exc).lower()
-    return "harness v2" in message and any(
-        marker in message
-        for marker in ("budget", "deadline", "no new model call")
-    )
+    return "harness v2" in message and any(marker in message for marker in ("budget", "deadline", "no new model call"))
 
 
 def _is_unavailable_baseline_boundary(packet: Any) -> bool:
     return bool(
-        getattr(packet, "payload_type", "")
-        == "baseline_availability_boundary_v1"
+        getattr(packet, "payload_type", "") == "baseline_availability_boundary_v1"
         and isinstance(getattr(packet, "payload", None), Mapping)
         and packet.payload.get("availability") == "unavailable"
         and not getattr(packet, "findings", None)
@@ -11674,9 +10526,7 @@ class _RunResourceScope:
         if scheduler is not None:
             closers.append(scheduler.close)
         if prefetch_executor is not None:
-            closers.append(
-                lambda: prefetch_executor.shutdown(wait=True, cancel_futures=True)
-            )
+            closers.append(lambda: prefetch_executor.shutdown(wait=True, cancel_futures=True))
         if sqlite_store is not None:
             closers.append(sqlite_store.close)
         if workspace is not None:

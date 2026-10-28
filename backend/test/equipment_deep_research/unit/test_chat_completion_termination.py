@@ -74,3 +74,27 @@ def test_chat_done_returns_over_http_while_gateway_keeps_connection_open():
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
+
+
+def test_call_can_disable_structured_expansion_without_changing_provider_defaults():
+    """短 Query 禁止自动扩容重跑，其他调用仍保留默认恢复策略。"""
+    import asyncio
+    from equipment_deep_research.providers.base import ModelMessage
+
+    class TruncatedProvider(openai_compatible.OpenAICompatibleProvider):
+        calls = 0
+        def _post(self, payload, **_kwargs):
+            self.calls += 1
+            return ['data: {"choices":[{"delta":{"reasoning_content":"reason"},"finish_reason":"length"}]}\n\n',
+                    'data: [DONE]\n\n']
+
+    async def collect(provider, options):
+        return [event async for event in provider.stream([ModelMessage(role="user", content="JSON")], (), options)]
+
+    options = {"output_schema": {"titles": ["string"]}, "max_output_tokens": 100}
+    provider = TruncatedProvider(provider_id="test", model="test", base_url="http://localhost/v1", api_key="test-only")
+    asyncio.run(collect(provider, {**options, "_provider_structured_retry_attempts": 0}))
+    assert provider.calls == 1
+    other = TruncatedProvider(provider_id="test", model="test", base_url="http://localhost/v1", api_key="test-only")
+    asyncio.run(collect(other, options))
+    assert other.calls > 1

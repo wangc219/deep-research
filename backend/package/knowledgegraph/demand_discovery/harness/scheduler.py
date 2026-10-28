@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from uuid import uuid4
 
 from knowledgegraph.demand_discovery.domain.dedup import (
@@ -198,14 +199,12 @@ class DiscoveryScheduler:
             for spec in specs
         ]
         await self.run_until_idle()
-        return [self._runtimes[agent_id].report for agent_id in agent_ids if self._runtimes[agent_id].report is not None]
+        return [
+            self._runtimes[agent_id].report for agent_id in agent_ids if self._runtimes[agent_id].report is not None
+        ]
 
     async def run_until_idle(self) -> list[WorkerReport]:
-        pending = [
-            runtime
-            for runtime in self._runtimes.values()
-            if runtime.state.status == "pending"
-        ]
+        pending = [runtime for runtime in self._runtimes.values() if runtime.state.status == "pending"]
         semaphore = asyncio.Semaphore(self.max_concurrency)
 
         async def run_one(runtime: WorkerRuntime) -> WorkerReport:
@@ -274,15 +273,11 @@ class DiscoveryScheduler:
                 parent_event_id=state.parent_event_id,
                 before_tool_call=self.before_tool_call_factory(runtime.spec),
                 apparent_stop_follow_up_policy=(
-                    stop_policy.apparent_stop_follow_up_policy
-                    if stop_policy is not None
-                    else None
+                    stop_policy.apparent_stop_follow_up_policy if stop_policy is not None else None
                 ),
                 model_options=_model_options_from_prompt(model_prompt),
             )
-            harness.subscribe(
-                lambda event: self._handle_child_event(event, state.parent_event_id)
-            )
+            harness.subscribe(lambda event: self._handle_child_event(event, state.parent_event_id))
             final_message = await harness.prompt(model_prompt.render_input())
             if runtime.cancel_token.cancelled or harness.last_run_aborted:
                 state.status = "cancelled"
@@ -325,17 +320,13 @@ class DiscoveryScheduler:
             report.assignment_id = assignment_id
             report.source_id = runtime.spec.source_id
             checks = [
-                check
-                for check in self.domain_store.worker_self_checks.values()
-                if check.assignment_id == assignment_id
+                check for check in self.domain_store.worker_self_checks.values() if check.assignment_id == assignment_id
             ]
             if checks:
                 report.self_check = checks[-1]
                 report.queries_used = list(checks[-1].queries_used)
                 report.routes_used = list(checks[-1].routes_used)
-            report.follow_up_instructions = list(
-                runtime.stop_policy.follow_up_instruction_ids
-            )
+            report.follow_up_instructions = list(runtime.stop_policy.follow_up_instruction_ids)
             report.follow_up_attempt_count = runtime.stop_policy.follow_up_attempt_count
             report = normalize_worker_report_evidence_policy(report)
         self._append_worker_report_trace(runtime, report)
@@ -358,9 +349,7 @@ class DiscoveryScheduler:
                     {"language": "auto", "query": str(query)}
                     for query in spec.source_guidance.get("planned_queries", [])
                 ],
-                route_revisions=[
-                    str(item) for item in spec.source_guidance.get("route_hints", [])
-                ],
+                route_revisions=[str(item) for item in spec.source_guidance.get("route_hints", [])],
                 allowed_tools=list(spec.tools),
                 max_follow_ups_per_assignment=self.max_worker_follow_ups_per_assignment,
             ),
@@ -392,7 +381,7 @@ class DiscoveryScheduler:
                 prompt_id=None,
                 tool_refs=[],
                 runtime_event_id=None,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
         )
 
@@ -514,9 +503,7 @@ def _model_options_from_prompt(prompt: ModelPrompt) -> dict[str, Any]:
     if prompt.output_schema is not None:
         options["output_schema"] = dict(prompt.output_schema)
         name = str(
-            prompt.output_schema.get("title")
-            or prompt.output_schema.get("name")
-            or "demand_discovery_worker_output"
+            prompt.output_schema.get("title") or prompt.output_schema.get("name") or "demand_discovery_worker_output"
         )
         options["output_schema_name"] = _schema_name(name)
     return options
@@ -668,4 +655,3 @@ def _normalize_brief(role: str, brief: str) -> str:
 
 def _missing_provider_factory(spec: WorkerSpec) -> Any:
     raise RuntimeError("provider_factory is required to run worker specs")
-

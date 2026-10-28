@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from email.utils import parsedate_to_datetime
 import json
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from uuid import uuid4
 
 from knowledgegraph.demand_discovery.domain.models import (
@@ -134,9 +135,7 @@ class DomainStore:
         if not self._jsonl_path.exists():
             self._jsonl_path.write_text("", encoding="utf-8")
 
-    def append_accepted_proposals(
-        self, proposals: list[DomainWriteProposal]
-    ) -> None:
+    def append_accepted_proposals(self, proposals: list[DomainWriteProposal]) -> None:
         for proposal in proposals:
             self._append_jsonl(
                 {
@@ -147,14 +146,12 @@ class DomainStore:
                 }
             )
 
-    def append_accepted_trace_events(
-        self, events: list[DomainTraceEvent]
-    ) -> None:
+    def append_accepted_trace_events(self, events: list[DomainTraceEvent]) -> None:
         for event in events:
             self._append_jsonl({"kind": "trace_event", "payload": event.to_dict()})
 
     @classmethod
-    def load_jsonl(cls, path: str | Path) -> "DomainStore":
+    def load_jsonl(cls, path: str | Path) -> DomainStore:
         store = cls()
         input_path = Path(path)
         if not input_path.exists():
@@ -178,17 +175,13 @@ class DomainStore:
                 record = _human_review_from_dict(dict(row.get("payload", {})))
                 store.human_reviews[record.review_id] = record
             elif row.get("kind") == "web_research_session":
-                session = web_research_session_from_dict(
-                    dict(row.get("payload", {}))
-                )
+                session = web_research_session_from_dict(dict(row.get("payload", {})))
                 store.web_research_sessions[session.session_id] = session
             elif row.get("kind") == "worker_self_check":
                 check = worker_self_check_from_dict(dict(row.get("payload", {})))
                 store.worker_self_checks[check.check_id] = check
             elif row.get("kind") == "follow_up_instruction":
-                instruction = follow_up_instruction_from_dict(
-                    dict(row.get("payload", {}))
-                )
+                instruction = follow_up_instruction_from_dict(dict(row.get("payload", {})))
                 store.follow_up_instructions[instruction.instruction_id] = instruction
             elif row.get("type"):
                 export_rows.append((str(row["type"]), dict(row.get("payload", {}))))
@@ -204,9 +197,7 @@ class DomainStore:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True))
             handle.write("\n")
 
-    def _accepted_payload_for_proposal(
-        self, proposal: DomainWriteProposal
-    ) -> dict[str, Any]:
+    def _accepted_payload_for_proposal(self, proposal: DomainWriteProposal) -> dict[str, Any]:
         payload = dict(proposal.payload)
         if proposal.object_type == "SourceRecord" and proposal.action == "upsert":
             return self.sources[str(payload["source_id"])].to_dict()
@@ -282,9 +273,7 @@ class DomainStore:
         bundle: ReportContextBundle,
     ) -> ReportContextBundle:
         if bundle.candidate_id not in self.candidates and self.candidates:
-            raise ValueError(
-                f"unknown candidate_id for ReportContextBundle: {bundle.candidate_id}"
-            )
+            raise ValueError(f"unknown candidate_id for ReportContextBundle: {bundle.candidate_id}")
         self.report_context_bundles[bundle.bundle_id] = bundle
         return bundle
 
@@ -362,25 +351,17 @@ class DomainStore:
         self,
         assessment: SourceQualityAssessment,
     ) -> None:
-        bodies = [
-            body
-            for body in self.open_source_body_artifacts.values()
-            if body.lead_id == assessment.lead_id
-        ]
+        bodies = [body for body in self.open_source_body_artifacts.values() if body.lead_id == assessment.lead_id]
         if not bodies:
             raise ValueError("open source body artifact is required before quality assessment")
-        artifact_refs = {body.artifact_ref for body in bodies} | {
-            body.simplified_ref for body in bodies
-        }
+        artifact_refs = {body.artifact_ref for body in bodies} | {body.simplified_ref for body in bodies}
         for ref in assessment.basis_artifact_refs:
             if ref not in artifact_refs:
                 raise ValueError(f"unknown basis_artifact_ref for lead: {ref}")
         prefixes = [body.body_location_prefix for body in bodies]
         for ref in assessment.body_location_refs:
             if not any(ref.startswith(prefix) for prefix in prefixes):
-                raise ValueError(
-                    f"body_location_ref is not from lead body artifact: {ref}"
-                )
+                raise ValueError(f"body_location_ref is not from lead body artifact: {ref}")
 
     def _validate_open_source_evidence(
         self,
@@ -394,9 +375,7 @@ class DomainStore:
         if assessment is None:
             raise ValueError(f"unknown source_quality_assessment_id: {assessment_id}")
         if assessment.lead_id != source.open_source_lead_id:
-            raise ValueError(
-                "source_quality_assessment_id does not belong to source open_source_lead_id"
-            )
+            raise ValueError("source_quality_assessment_id does not belong to source open_source_lead_id")
         if card.source_location not in assessment.body_location_refs:
             raise ValueError(
                 "EvidenceCard source_location is not covered by SourceQualityAssessment body_location_refs"
@@ -447,14 +426,8 @@ class DomainStore:
         existing = self.audit_reports.get(report.audit_id)
         if existing is not None:
             if existing.candidate_id != report.candidate_id:
-                raise ValueError(
-                    "audit_id "
-                    f"{report.audit_id} already exists for candidate "
-                    f"{existing.candidate_id}"
-                )
-            if _normalize_audit_conclusion(existing.conclusion) != _normalize_audit_conclusion(
-                report.conclusion
-            ):
+                raise ValueError(f"audit_id {report.audit_id} already exists for candidate {existing.candidate_id}")
+            if _normalize_audit_conclusion(existing.conclusion) != _normalize_audit_conclusion(report.conclusion):
                 raise ValueError(
                     "audit_id "
                     f"{report.audit_id} already exists with conclusion "
@@ -468,9 +441,7 @@ class DomainStore:
         if report.candidate_id not in self.candidates:
             raise ValueError(f"unknown candidate_id: {report.candidate_id}")
         if self.candidates[report.candidate_id].status != "demand_report":
-            raise ValueError(
-                "candidate must be in demand_report status before appending report"
-        )
+            raise ValueError("candidate must be in demand_report status before appending report")
         self._validate_report_review_status(report.review_status)
         strict_report_gate = report.review_status in {"draft", "review_ready"}
         if strict_report_gate:
@@ -482,9 +453,7 @@ class DomainStore:
                 )
             except ValueError as exc:
                 if report.review_status == "review_ready":
-                    raise ValueError(
-                        "review_ready report requires approved audit: " + str(exc)
-                    ) from exc
+                    raise ValueError("review_ready report requires approved audit: " + str(exc)) from exc
                 raise
         else:
             self.validate_demand_report_reference_gate(
@@ -495,10 +464,7 @@ class DomainStore:
             )
         resolved = replace(
             report,
-            sensitive_review_required=(
-                report.sensitive_review_required
-                or self._audit_sensitive_flag(report.audit_id)
-            ),
+            sensitive_review_required=(report.sensitive_review_required or self._audit_sensitive_flag(report.audit_id)),
         )
         self.demand_reports[resolved.report_id] = resolved
         return resolved
@@ -518,11 +484,7 @@ class DomainStore:
         return self._append_human_review_record(record, persist=True)
 
     def latest_human_review(self, report_id: str) -> HumanReviewRecord | None:
-        reviews = [
-            record
-            for record in self.human_reviews.values()
-            if record.report_id == report_id
-        ]
+        reviews = [record for record in self.human_reviews.values() if record.report_id == report_id]
         if not reviews:
             return None
         return max(reviews, key=lambda item: item.review_time)
@@ -549,10 +511,7 @@ class DomainStore:
         assert audit is not None
         if audit.conclusion.strip().lower() not in APPROVED_AUDIT_CONCLUSIONS:
             raise ValueError(f"audit {audit_id} is not approved")
-        if not any(
-            self._evidence_satisfies_minimum_report_gate(evidence_id)
-            for evidence_id in evidence_ids
-        ):
+        if not any(self._evidence_satisfies_minimum_report_gate(evidence_id) for evidence_id in evidence_ids):
             raise ValueError(
                 "minimum evidence requirement not met: report requires at least one "
                 "EvidenceCard from an article body or downloaded document body that "
@@ -565,8 +524,7 @@ class DomainStore:
         )
         if semantic_errors:
             raise ValueError(
-                "review_ready audit requires evidence_support semantic review: "
-                + "; ".join(semantic_errors)
+                "review_ready audit requires evidence_support semantic review: " + "; ".join(semantic_errors)
             )
 
     def validate_demand_report_reference_gate(
@@ -585,26 +543,20 @@ class DomainStore:
         if audit is None:
             raise ValueError(f"unknown audit_id: {audit_id}")
         if audit.candidate_id != candidate_id:
-            raise ValueError(
-                f"audit {audit_id} does not belong to candidate {candidate_id}"
-            )
+            raise ValueError(f"audit {audit_id} does not belong to candidate {candidate_id}")
         if not evidence_ids:
             raise ValueError("at least one evidence_id is required")
         self._validate_evidence_ids(evidence_ids)
         candidate = self.candidates[candidate_id]
         missing_from_candidate = [
-            evidence_id
-            for evidence_id in evidence_ids
-            if evidence_id not in candidate.evidence_ids
+            evidence_id for evidence_id in evidence_ids if evidence_id not in candidate.evidence_ids
         ]
         if missing_from_candidate:
             raise ValueError(
-                "report evidence_id "
-                f"{missing_from_candidate[0]} is not attached to candidate {candidate_id}"
+                f"report evidence_id {missing_from_candidate[0]} is not attached to candidate {candidate_id}"
             )
         if require_minimum_supported_evidence and not any(
-            self._evidence_satisfies_minimum_report_gate(evidence_id)
-            for evidence_id in evidence_ids
+            self._evidence_satisfies_minimum_report_gate(evidence_id) for evidence_id in evidence_ids
         ):
             raise ValueError(
                 "report requires at least one EvidenceCard from an article body "
@@ -621,20 +573,14 @@ class DomainStore:
             return candidates
         return [candidate for candidate in candidates if candidate.status == status]
 
-    def list_signals(
-        self, statuses: set[str] | None = None
-    ) -> list[CandidateDemand]:
+    def list_signals(self, statuses: set[str] | None = None) -> list[CandidateDemand]:
         signal_statuses = statuses or {
             "raw_signal",
             "researchable_signal",
             "weak_signal",
             "discarded_signal",
         }
-        return [
-            candidate
-            for candidate in self.candidates.values()
-            if candidate.status in signal_statuses
-        ]
+        return [candidate for candidate in self.candidates.values() if candidate.status in signal_statuses]
 
     def watchlist_view(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -647,9 +593,7 @@ class DomainStore:
                     "candidate_id": candidate.candidate_id,
                     "title": candidate.title,
                     "status": candidate.status,
-                    "recheck_conditions": list(
-                        parked.payload.get("recheck_conditions", [])
-                    ),
+                    "recheck_conditions": list(parked.payload.get("recheck_conditions", [])),
                     "trace_event_id": parked.domain_trace_id,
                     "summary": parked.summary,
                 }
@@ -736,7 +680,7 @@ class DomainStore:
         self.trace_events.append(event)
         return event
 
-    def clone(self) -> "DomainStore":
+    def clone(self) -> DomainStore:
         staged = DomainStore()
         staged.sources = deepcopy(self.sources)
         staged.evidence = deepcopy(self.evidence)
@@ -762,7 +706,7 @@ class DomainStore:
         staged._tier_status_cap = self._tier_status_cap
         return staged
 
-    def replace_from(self, other: "DomainStore") -> None:
+    def replace_from(self, other: DomainStore) -> None:
         jsonl_path = self._jsonl_path
         self.sources = deepcopy(other.sources)
         self.evidence = deepcopy(other.evidence)
@@ -835,9 +779,7 @@ class DomainStore:
                     evidence_assessment=str(payload.get("evidence_assessment", "")),
                     created_by=str(payload.get("created_by", "")),
                     created_at=_parse_datetime(payload.get("created_at")),
-                    source_quality_assessment_id=payload.get(
-                        "source_quality_assessment_id"
-                    ),
+                    source_quality_assessment_id=payload.get("source_quality_assessment_id"),
                 )
             )
         if proposal.object_type == "CandidateDemand" and proposal.action == "upsert":
@@ -877,18 +819,14 @@ class DomainStore:
                 )
             )
         if proposal.object_type == "DemandReport" and proposal.action == "append":
-            return self.append_demand_report(
-                _demand_report_from_dict(payload)
-            )
+            return self.append_demand_report(_demand_report_from_dict(payload))
         if proposal.object_type == "DemandReport" and proposal.action == "upsert":
             report = _demand_report_from_dict(payload)
             self._validate_report_review_status(report.review_status)
             self.demand_reports[report.report_id] = report
             return report
         if proposal.object_type == "ReportContextBundle" and proposal.action == "upsert":
-            return self.upsert_report_context_bundle(
-                report_context_bundle_from_dict(payload)
-            )
+            return self.upsert_report_context_bundle(report_context_bundle_from_dict(payload))
         if proposal.object_type == "SourceStrategy" and proposal.action == "upsert":
             return self.upsert_source_strategy(source_strategy_from_dict(payload))
         if proposal.object_type == "ResearchLead" and proposal.action == "upsert":
@@ -904,30 +842,18 @@ class DomainStore:
         if proposal.object_type == "OpenSourceLead" and proposal.action == "upsert":
             return self.upsert_open_source_lead(open_source_lead_from_dict(payload))
         if proposal.object_type == "OpenSourceBodyArtifact" and proposal.action == "upsert":
-            return self.upsert_open_source_body_artifact(
-                open_source_body_artifact_from_dict(payload)
-            )
+            return self.upsert_open_source_body_artifact(open_source_body_artifact_from_dict(payload))
         if proposal.object_type == "SourceQualityAssessment" and proposal.action == "upsert":
-            return self.upsert_source_quality_assessment(
-                source_quality_assessment_from_dict(payload)
-            )
+            return self.upsert_source_quality_assessment(source_quality_assessment_from_dict(payload))
         if proposal.object_type == "BrowserRecipeDraft" and proposal.action == "upsert":
-            return self.upsert_browser_recipe_draft(
-                browser_recipe_draft_from_dict(payload)
-            )
+            return self.upsert_browser_recipe_draft(browser_recipe_draft_from_dict(payload))
         if proposal.object_type == "WebResearchSession" and proposal.action == "upsert":
-            return self.upsert_web_research_session(
-                web_research_session_from_dict(payload)
-            )
+            return self.upsert_web_research_session(web_research_session_from_dict(payload))
         if proposal.object_type == "WorkerSelfCheck" and proposal.action == "upsert":
             return self.upsert_worker_self_check(worker_self_check_from_dict(payload))
         if proposal.object_type == "FollowUpInstruction" and proposal.action == "upsert":
-            return self.upsert_follow_up_instruction(
-                follow_up_instruction_from_dict(payload)
-            )
-        raise ValueError(
-            f"unsupported domain proposal: {proposal.action} {proposal.object_type}"
-        )
+            return self.upsert_follow_up_instruction(follow_up_instruction_from_dict(payload))
+        raise ValueError(f"unsupported domain proposal: {proposal.action} {proposal.object_type}")
 
     def append_trace_from_proposal(
         self,
@@ -963,70 +889,25 @@ class DomainStore:
         rows = []
         rows.extend(("SourceRecord", item.to_dict()) for item in self.sources.values())
         rows.extend(("EvidenceCard", item.to_dict()) for item in self.evidence.values())
-        rows.extend(
-            ("CandidateDemand", item.to_dict()) for item in self.candidates.values()
-        )
-        rows.extend(
-            ("AuditReport", item.to_dict()) for item in self.audit_reports.values()
-        )
-        rows.extend(
-            ("DemandReport", item.to_dict()) for item in self.demand_reports.values()
-        )
-        rows.extend(
-            ("ReportContextBundle", item.to_dict())
-            for item in self.report_context_bundles.values()
-        )
-        rows.extend(
-            ("HumanReviewRecord", item.to_dict()) for item in self.human_reviews.values()
-        )
-        rows.extend(
-            ("SourceStrategy", item.to_dict()) for item in self.source_strategies.values()
-        )
-        rows.extend(
-            ("ResearchLead", item.to_dict()) for item in self.research_leads.values()
-        )
-        rows.extend(
-            ("ReadingQueue", item.to_dict()) for item in self.reading_queues.values()
-        )
-        rows.extend(
-            ("ResearchRound", item.to_dict()) for item in self.research_rounds.values()
-        )
-        rows.extend(
-            ("JudgementReport", item.to_dict()) for item in self.judgement_reports.values()
-        )
-        rows.extend(
-            ("OpenSearchPlan", item.to_dict()) for item in self.open_search_plans.values()
-        )
-        rows.extend(
-            ("OpenSourceLead", item.to_dict()) for item in self.open_source_leads.values()
-        )
-        rows.extend(
-            ("OpenSourceBodyArtifact", item.to_dict())
-            for item in self.open_source_body_artifacts.values()
-        )
-        rows.extend(
-            ("SourceQualityAssessment", item.to_dict())
-            for item in self.source_quality_assessments.values()
-        )
-        rows.extend(
-            ("BrowserRecipeDraft", item.to_dict())
-            for item in self.browser_recipe_drafts.values()
-        )
-        rows.extend(
-            ("WebResearchSession", item.to_dict())
-            for item in self.web_research_sessions.values()
-        )
-        rows.extend(
-            ("WorkerSelfCheck", item.to_dict())
-            for item in self.worker_self_checks.values()
-        )
-        rows.extend(
-            ("FollowUpInstruction", item.to_dict())
-            for item in self.follow_up_instructions.values()
-        )
-        rows.extend(
-            ("DomainTraceEvent", item.to_dict()) for item in self.trace_events
-        )
+        rows.extend(("CandidateDemand", item.to_dict()) for item in self.candidates.values())
+        rows.extend(("AuditReport", item.to_dict()) for item in self.audit_reports.values())
+        rows.extend(("DemandReport", item.to_dict()) for item in self.demand_reports.values())
+        rows.extend(("ReportContextBundle", item.to_dict()) for item in self.report_context_bundles.values())
+        rows.extend(("HumanReviewRecord", item.to_dict()) for item in self.human_reviews.values())
+        rows.extend(("SourceStrategy", item.to_dict()) for item in self.source_strategies.values())
+        rows.extend(("ResearchLead", item.to_dict()) for item in self.research_leads.values())
+        rows.extend(("ReadingQueue", item.to_dict()) for item in self.reading_queues.values())
+        rows.extend(("ResearchRound", item.to_dict()) for item in self.research_rounds.values())
+        rows.extend(("JudgementReport", item.to_dict()) for item in self.judgement_reports.values())
+        rows.extend(("OpenSearchPlan", item.to_dict()) for item in self.open_search_plans.values())
+        rows.extend(("OpenSourceLead", item.to_dict()) for item in self.open_source_leads.values())
+        rows.extend(("OpenSourceBodyArtifact", item.to_dict()) for item in self.open_source_body_artifacts.values())
+        rows.extend(("SourceQualityAssessment", item.to_dict()) for item in self.source_quality_assessments.values())
+        rows.extend(("BrowserRecipeDraft", item.to_dict()) for item in self.browser_recipe_drafts.values())
+        rows.extend(("WebResearchSession", item.to_dict()) for item in self.web_research_sessions.values())
+        rows.extend(("WorkerSelfCheck", item.to_dict()) for item in self.worker_self_checks.values())
+        rows.extend(("FollowUpInstruction", item.to_dict()) for item in self.follow_up_instructions.values())
+        rows.extend(("DomainTraceEvent", item.to_dict()) for item in self.trace_events)
         with output.open("w", encoding="utf-8") as handle:
             for row_type, payload in rows:
                 handle.write(
@@ -1232,36 +1113,20 @@ class DomainStore:
             "audits": [item.to_dict() for item in self.audit_reports.values()],
             "reports": [item.to_dict() for item in self.demand_reports.values()],
             "human_reviews": [item.to_dict() for item in self.human_reviews.values()],
-            "source_strategies": [
-                item.to_dict() for item in self.source_strategies.values()
-            ],
+            "source_strategies": [item.to_dict() for item in self.source_strategies.values()],
             "research_leads": [item.to_dict() for item in self.research_leads.values()],
             "reading_queues": [item.to_dict() for item in self.reading_queues.values()],
             "research_rounds": [item.to_dict() for item in self.research_rounds.values()],
             "judgement_reports": [item.to_dict() for item in self.judgement_reports.values()],
-            "report_context_bundles": [
-                item.to_dict() for item in self.report_context_bundles.values()
-            ],
+            "report_context_bundles": [item.to_dict() for item in self.report_context_bundles.values()],
             "open_search_plans": [item.to_dict() for item in self.open_search_plans.values()],
             "open_source_leads": [item.to_dict() for item in self.open_source_leads.values()],
-            "open_source_body_artifacts": [
-                item.to_dict() for item in self.open_source_body_artifacts.values()
-            ],
-            "source_quality_assessments": [
-                item.to_dict() for item in self.source_quality_assessments.values()
-            ],
-            "browser_recipe_drafts": [
-                item.to_dict() for item in self.browser_recipe_drafts.values()
-            ],
-            "web_research_sessions": [
-                item.to_dict() for item in self.web_research_sessions.values()
-            ],
-            "worker_self_checks": [
-                item.to_dict() for item in self.worker_self_checks.values()
-            ],
-            "follow_up_instructions": [
-                item.to_dict() for item in self.follow_up_instructions.values()
-            ],
+            "open_source_body_artifacts": [item.to_dict() for item in self.open_source_body_artifacts.values()],
+            "source_quality_assessments": [item.to_dict() for item in self.source_quality_assessments.values()],
+            "browser_recipe_drafts": [item.to_dict() for item in self.browser_recipe_drafts.values()],
+            "web_research_sessions": [item.to_dict() for item in self.web_research_sessions.values()],
+            "worker_self_checks": [item.to_dict() for item in self.worker_self_checks.values()],
+            "follow_up_instructions": [item.to_dict() for item in self.follow_up_instructions.values()],
             "trace_events": [item.to_dict() for item in self.trace_events],
         }
 
@@ -1415,13 +1280,9 @@ class DomainStore:
         elif row_type == "OpenSourceLead":
             self.upsert_open_source_lead(open_source_lead_from_dict(payload))
         elif row_type == "OpenSourceBodyArtifact":
-            self.upsert_open_source_body_artifact(
-                open_source_body_artifact_from_dict(payload)
-            )
+            self.upsert_open_source_body_artifact(open_source_body_artifact_from_dict(payload))
         elif row_type == "SourceQualityAssessment":
-            self.upsert_source_quality_assessment(
-                source_quality_assessment_from_dict(payload)
-            )
+            self.upsert_source_quality_assessment(source_quality_assessment_from_dict(payload))
         elif row_type == "BrowserRecipeDraft":
             self.upsert_browser_recipe_draft(browser_recipe_draft_from_dict(payload))
         elif row_type == "WebResearchSession":
@@ -1463,9 +1324,7 @@ class DomainStore:
             return None
         return max(caps, key=status_rank)
 
-    def _latest_trace_for(
-        self, target_id: str, event_type: str
-    ) -> DomainTraceEvent | None:
+    def _latest_trace_for(self, target_id: str, event_type: str) -> DomainTraceEvent | None:
         for event in reversed(self.trace_events):
             if event.target_id == target_id and event.event_type == event_type:
                 return event
@@ -1520,7 +1379,7 @@ class DomainStore:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _looks_like_legacy_paragraph_ref(value: str) -> bool:

@@ -83,11 +83,14 @@ class SkillRepository:
         item.version = version
         item.content_hash = content_hash
         item.source_type = "builtin"
+        allowed_roles = (item.share_config or {}).get("allowed_roles")
         item.share_config = {
             "version": 2,
             "read_scope": {"access_level": "global", "department_ids": [], "user_uids": []},
             "manage_scope": None,
         }
+        if allowed_roles is not None:
+            item.share_config = {**item.share_config, "allowed_roles": list(allowed_roles)}
         item.updated_by = updated_by
         item.updated_at = utc_now_naive()
         await self.db.flush()

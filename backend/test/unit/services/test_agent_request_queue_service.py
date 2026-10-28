@@ -25,7 +25,13 @@ from platform_core.services.agent_request_queue_service import (
 )
 from platform_core.services.input_message_service import build_chat_input_message
 from platform_core.services.workdir_service import WorkdirBinding
-from platform_core.storage.postgres.models_business import AgentRunRequest, Base, Message
+from platform_core.storage.postgres.models_business import (
+    SUPERSEDED_MESSAGE_TYPE,
+    AgentRunRequest,
+    Base,
+    Message,
+    MessageFeedback,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 
 pytestmark = [pytest.mark.unit]
@@ -560,6 +566,63 @@ async def _seed_active_run(session, *, source="chat", status="running", run_type
         )
     )
     await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_edit_latest_question_supersedes_branch_and_deletes_feedback(session):
+    """编辑最新问题后，旧问题、旧回答及反馈不再进入普通历史。"""
+    await _seed_thread(session)
+    target = await session.get(Message, 100)
+    target.extra_metadata = {"raw_message": {"id": "human-source-1"}}
+    reply = Message(
+        id=101,
+        conversation_id=10,
+        role="assistant",
+        content="old answer",
+    )
+    session.add(reply)
+    await session.flush()
+    session.add(MessageFeedback(message_id=reply.id, uid="user-1", rating="like"))
+    await session.commit()
+
+    replacement = await agent_request_service._supersede_latest_question(
+        db=session,
+        conversation_id=10,
+        message_id=100,
+        replacement_request_id="replacement-request",
+    )
+    await session.commit()
+
+    assert replacement == {
+        "message_id": 100,
+        "source_id": "human-source-1",
+        "content": "hi",
+    }
+    assert (await session.get(Message, 100)).message_type == SUPERSEDED_MESSAGE_TYPE
+    assert (await session.get(Message, 101)).message_type == SUPERSEDED_MESSAGE_TYPE
+    assert await session.scalar(select(sa_func.count()).select_from(MessageFeedback)) == 0
+    assert await agent_request_service.ConversationRepository(session).get_messages(10) == []
+
+
+@pytest.mark.asyncio
+async def test_edit_non_latest_question_is_rejected_without_mutation(session):
+    """后端拒绝绕过前端直接替换较早的问题。"""
+    from fastapi import HTTPException
+
+    await _seed_thread(session)
+    session.add(Message(id=101, conversation_id=10, role="user", content="newer"))
+    await session.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await agent_request_service._supersede_latest_question(
+            db=session,
+            conversation_id=10,
+            message_id=100,
+            replacement_request_id="replacement-request",
+        )
+
+    assert exc_info.value.status_code == 409
+    assert (await session.get(Message, 100)).message_type != SUPERSEDED_MESSAGE_TYPE
 
 
 async def _create_request(session, *, request_id, uid="user-1", msg_id=100, queue_policy="enqueue"):

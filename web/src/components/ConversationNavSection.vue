@@ -350,12 +350,10 @@ const confirmDeleteProject = (project) => {
   min-height: 0;
   flex-direction: column;
   margin-top: 12px;
-  overflow: hidden;
 }
 .history-panel {
   display: flex;
   min-height: 0;
-  flex: 1;
   flex-direction: column;
 }
 .history-label {
@@ -446,10 +444,7 @@ const confirmDeleteProject = (project) => {
 }
 .conversation-list {
   min-height: 0;
-  flex: 1;
-  overflow-y: auto;
   padding: 0 2px 8px 0;
-  scrollbar-width: thin;
 }
 .project-history-group {
   margin-bottom: 10px;

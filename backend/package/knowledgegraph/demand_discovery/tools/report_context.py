@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from knowledgegraph.demand_discovery.domain.report_context import (
     CuratedReportItem,
@@ -38,12 +39,7 @@ def create_record_report_context_curation_tool(
         except ValueError as exc:
             return ToolResult(call.id, call.name, str(exc), {}, is_error=True)
         known = {material.material_id for material in pool.materials}
-        missing = [
-            material_id
-            for item in items
-            for material_id in item.material_ids
-            if material_id not in known
-        ]
+        missing = [material_id for item in items for material_id in item.material_ids if material_id not in known]
         if missing:
             return ToolResult(
                 call.id,

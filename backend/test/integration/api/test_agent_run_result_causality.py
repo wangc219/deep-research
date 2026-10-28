@@ -81,7 +81,7 @@ async def test_run_observability_api_never_reads_another_runs_assistant_message(
                 username=other_uid,
                 uid=other_uid,
                 password_hash="integration-api-key-only",
-                role="superadmin",
+                role="user",
                 department_id=department.id,
             )
             db.add(other_user)
@@ -245,7 +245,7 @@ async def test_run_observability_api_never_reads_another_runs_assistant_message(
             "available": False,
             "reason": "trace_not_available",
         }
-        assert other_user_response.status_code == 404, other_user_response.text
+        assert other_user_response.status_code == 403, other_user_response.text
         assert "trace" not in other_user_response.text.lower()
     finally:
         async with session_factory() as db:

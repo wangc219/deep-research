@@ -65,7 +65,7 @@ def test_resilient_web_search_emits_only_the_model_declared_tool_lifecycle(monke
         description="test provider",
         func=lambda query, count=10, **_kwargs: {
             "query": query,
-            "results": [{"title": "High Q resonator paper"}][:count],
+            "results": [{"title": "High Q resonator paper", "url": "https://example.edu/paper"}][:count],
         },
     )
     monkeypatch.setitem(
@@ -261,11 +261,14 @@ def test_open_websearch_normalizes_daemon_results(monkeypatch):
         "http://open-websearch:3210/search",
         json={
             "query": "radar (site:ieee.org)",
-            "limit": 5,
+            "limit": 20,
             "engines": ["bing", "startpage"],
         },
     )
     assert result["provider"] == "open-websearch"
+    for item in result["results"]:
+        assert len(item.pop("source_id")) == 16
+        assert item.pop("citation").startswith('<cite source="https://ieee.org/paper"')
     assert result["results"] == [
         {
             "title": "IEEE radar paper",
@@ -273,8 +276,10 @@ def test_open_websearch_normalizes_daemon_results(monkeypatch):
             "content": "citable abstract",
             "site_name": "ieee.org",
             "search_engine": "bing",
+            "source_tier": "authoritative",
         }
     ]
+    assert result["source_quality"] == {"authoritative": 1, "other": 0}
     assert result["partial_failures"][0]["engine"] == "startpage"
 
 
@@ -311,6 +316,80 @@ def test_open_websearch_distinguishes_no_hits_from_all_engine_failures():
         "specific query", {"engines": ["bing"], "partialFailures": [{"engine": "bing"}]}, count=5
     )
     assert failed["error"]
+
+
+def test_open_websearch_challenges_are_not_empty_results():
+    result = search_module._parse_open_websearch_response(
+        "radar",
+        {
+            "engines": ["bing", "duckduckgo"],
+            "results": [],
+            "partialFailures": [
+                {"engine": "bing", "message": "CAPTCHA required"},
+                {"engine": "duckduckgo", "message": "403 anti-spider"},
+            ],
+        },
+        count=5,
+    )
+    assert result["status"] == "blocked"
+    assert result["retry_after_seconds"] == 300
+
+
+@pytest.mark.parametrize("status_code", [200, 403])
+def test_daemon_http_challenge_cools_engines_even_without_json(monkeypatch, status_code):
+    monkeypatch.setenv("OPEN_WEBSEARCH_URL", "http://search.test")
+    monkeypatch.setenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")
+    coordinator = MagicMock()
+    coordinator.engine_remaining.return_value = 0
+    monkeypatch.setattr(search_module, "get_active_search_coordinator", lambda: coordinator)
+    response = MagicMock(status_code=status_code, text="<html><title>CAPTCHA required</title></html>")
+    response.json.side_effect = ValueError("not JSON")
+    with patch("httpx.Client.post", return_value=response):
+        result = search_module._open_websearch.func(query="radar signal lookup")
+    assert result["status"] == "blocked"
+    assert result["retry_after_seconds"] == 300
+    if status_code == 200:
+        assert coordinator.cool_engine.call_count == 2
+    else:
+        assert [item["engine"] for item in result["partial_failures"]] == ["bing", "duckduckgo"]
+
+
+def test_partial_challenge_does_not_hide_healthy_engine_empty_result():
+    result = search_module._parse_open_websearch_response(
+        "radar",
+        {
+            "engines": ["bing", "duckduckgo"],
+            "results": [],
+            "partialFailures": [{"engine": "bing", "message": "CAPTCHA required"}],
+        },
+        count=5,
+    )
+    assert result["status"] == "empty"
+    assert "error" not in result
+
+
+def test_public_http_200_challenge_is_blocked_and_cooled(monkeypatch):
+    coordinator = MagicMock()
+    coordinator.engine_remaining.return_value = 0
+    monkeypatch.setattr(search_module, "get_active_search_coordinator", lambda: coordinator)
+    response = MagicMock(status_code=200, text="<html><title>Verify you are human</title></html>")
+    with patch("httpx.Client.get", return_value=response) as get:
+        result = search_module._public_search.func(query="radar signal lookup")
+    assert get.call_count == 3
+    assert result["status"] == "blocked"
+    assert coordinator.cool_engine.call_count == 3
+
+
+def test_challenge_fails_over_once_and_finishes_with_other_evidence(monkeypatch):
+    _reset_web_search_runtime_state()
+    monkeypatch.setattr(search_module, "_web_search_provider_order", lambda _: ["open-websearch", "public"])
+    invoke = MagicMock(return_value={"status": "blocked", "results": [], "error": "CAPTCHA"})
+    monkeypatch.setattr(search_module, "_invoke_search_provider", invoke)
+    result = _resilient_web_search("open-websearch", {"query": "radar signal lookup"})
+    assert invoke.call_count == 2
+    assert result["status"] == "degraded"
+    assert result["reason"] == "antibot_challenge"
+    assert "AMiner" in result["next_action"]
 
 
 def test_open_websearch_filters_unrelated_bing_results_and_ranks_relevant_sources(monkeypatch):
@@ -382,6 +461,12 @@ def test_public_search_parses_original_urls_and_blocks_hosts():
         block_hosts=["blocked.example"],
     )
 
+    assert result["distinct_domains"] == 1
+    assert result["results"][0]["citation"] == '<cite source="https://example.edu/paper" type="url">1</cite>'
+    result.pop("distinct_domains")
+    for item in result["results"]:
+        assert len(item.pop("source_id")) == 16
+        item.pop("citation")
     assert result == {
         "query": "公开论文",
         "provider": "public",
@@ -391,8 +476,10 @@ def test_public_search_parses_original_urls_and_blocks_hosts():
                 "url": "https://example.edu/paper",
                 "content": "公开论文摘要",
                 "site_name": "example.edu",
+                "source_tier": "authoritative",
             }
         ],
+        "source_quality": {"authoritative": 1, "other": 0},
     }
 
 
@@ -485,12 +572,16 @@ def test_public_search_reaches_bing_when_sogou_and_duckduckgo_are_blocked():
 
     assert mock_get.call_count == 3
     assert result["search_endpoint"] == "bing"
+    for item in result["results"]:
+        assert len(item.pop("source_id")) == 16
+        assert item.pop("citation").startswith('<cite source="https://ieee.example/paper"')
     assert result["results"] == [
         {
             "title": "IEEE paper",
             "url": "https://ieee.example/paper",
             "content": "Micro-Doppler radar signal classification evidence.",
             "site_name": "ieee.example",
+            "source_tier": "other",
         }
     ]
 
@@ -595,6 +686,124 @@ def test_generic_words_years_and_term_fragments_do_not_establish_topic_relevance
 def test_chinese_compound_word_reordering_keeps_relevant_paper():
     result = {"title": "蜂群无人机自主协同技术", "content": "集群规划"}
     assert search_module._rank_search_results("无人机蜂群 自主协同", [result]) == [result]
+
+
+def test_required_terms_keep_results_on_the_parent_topic():
+    """核心锚点阻止同一技术词把检索带到错误对象。"""
+    radar = {
+        "title": "复杂电磁环境下雷达目标识别",
+        "content": "稀疏注意力降低识别计算量",
+        "url": "https://example.org/radar",
+    }
+    language_model = {
+        "title": "稀疏注意力语言模型",
+        "content": "降低长文本计算量并提高推理效率",
+        "url": "https://example.org/llm",
+    }
+    assert search_module._rank_search_results(
+        "稀疏注意力 计算量",
+        [language_model, radar],
+        required_terms=["雷达"],
+    ) == [radar]
+
+
+def test_hyphenated_required_terms_match_space_separated_source_text():
+    result = {
+        "title": "High Power Microwave Counter UAS Test",
+        "content": "A counter-UAS field demonstration against a drone swarm.",
+        "url": "https://example.org/hpm",
+    }
+    assert search_module._rank_search_results(
+        "high-power microwave counter-UAS",
+        [result],
+        required_terms=["high-power microwave", "counter-UAS"],
+    ) == [result]
+
+
+def test_title_matches_rank_ahead_of_summary_only_matches():
+    title_match = {"title": "无人机蜂群自主协同试验", "content": "公开报告"}
+    summary_match = {"title": "自主系统试验", "content": "无人机蜂群采用自主协同"}
+    assert search_module._rank_search_results("无人机蜂群 自主协同", [summary_match, title_match]) == [
+        title_match,
+        summary_match,
+    ]
+
+
+def test_authoritative_publication_page_ranks_ahead_of_matching_aggregator():
+    aggregator = {
+        "title": "High-power Microwave Damage Assessment Method for UAV",
+        "content": "high power microwave UAV damage assessment",
+        "url": "https://www.researchgate.net/publication/123",
+    }
+    publisher = {
+        "title": "High-power Microwave Damage Assessment Method for UAV",
+        "content": "high power microwave UAV damage assessment",
+        "url": "https://iopscience.iop.org/article/10.1088/example",
+    }
+    ranked = search_module._rank_search_results("high power microwave UAV damage", [aggregator, publisher])
+    assert ranked == [publisher]
+
+
+def test_filtered_results_expose_source_quality_summary():
+    result = search_module._filter_search_results(
+        {
+            "results": [
+                {
+                    "title": "DARPA counter UAV program",
+                    "content": "counter UAV field test",
+                    "url": "https://www.darpa.mil/program/example",
+                },
+                {
+                    "title": "Counter UAV overview",
+                    "content": "counter UAV field test",
+                    "url": "https://news.example/overview",
+                },
+            ]
+        },
+        "counter UAV field test",
+    )
+    assert result["source_quality"] == {"authoritative": 1, "other": 1}
+    assert [item["source_tier"] for item in result["results"]] == ["authoritative", "other"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.81.cn/wj_208604/16449511.html",
+        "https://www.mod.gov.cn/gfbw/qwfb/16302036.html",
+        "https://www.gov.cn/zhengce/example.htm",
+        "https://www.cas.cn/syky/202501/example.html",
+        "https://www.cetc.com.cn/zgdk/example/index.html",
+        "https://www.engineering.org.cn/sscae/CN/example.html",
+        "https://www.avic.com/cn/xwzx/example.html",
+        "https://www.norinco.com/GB/example/index.html",
+        "https://www.spacechina.com/n25/n2014789/example.html",
+    ],
+)
+def test_domestic_official_and_original_manufacturer_sources_are_authoritative(url):
+    """国内政府、军队、科研机构和军工原厂原文属于权威来源。"""
+    assert search_module._search_source_tier({"url": url}) == "authoritative"
+
+
+def test_open_websearch_does_not_trust_baidu_display_host_as_verified_authority():
+    result = search_module._parse_open_websearch_response(
+        "counter UAV field test",
+        {
+            "results": [
+                {
+                    "title": "Army counter UAV field test",
+                    "description": "counter UAV field test results",
+                    "url": "http://www.baidu.com/link?url=opaque",
+                    "source": "www.army.mil/article/...",
+                    "engine": "baidu",
+                }
+            ]
+        },
+        count=5,
+    )
+    assert result["results"][0]["source_host"] == "www.army.mil"
+    assert result["results"][0]["source_tier"] == "other"
+    assert result["source_quality"] == {"authoritative": 0, "other": 1}
 
 
 @pytest.mark.parametrize("query", ["无", "资料 数据 发展", "2026 site:example.org"])

@@ -1,5 +1,6 @@
 """真实 HTTP 验证原生深研会话的全局只读查看与用户隔离。"""
 
+import os
 from uuid import uuid4
 
 import httpx
@@ -46,7 +47,7 @@ async def test_native_deep_session_owner_and_global_read_access():
                 payload={"runtime": "agent", "thread_id": thread_id, "title": marker},
             ))
             await db.commit()
-        async with httpx.AsyncClient(base_url="http://web", timeout=30) as client:
+        async with httpx.AsyncClient(base_url=os.getenv("TEST_BASE_URL", "http://web"), timeout=30) as client:
             path = f"/api/equipment/deep-thinking/{session_id}"
             for index in (0, 2):
                 response = await client.get(path, headers=headers[index])

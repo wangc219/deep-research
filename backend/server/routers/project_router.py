@@ -54,6 +54,7 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
 ):
     """列出当前用户可选择的 Project。"""
+    await ensure_equipment_project_view(uid=str(current_user.uid), username=current_user.username, db=db)
     return await list_projects_view(uid=str(current_user.uid), db=db, actor=current_user)
 
 
@@ -88,7 +89,7 @@ async def ensure_equipment_project(
     db: AsyncSession = Depends(get_db),
 ):
     """确保当前用户首次进入装备深研时拥有默认 Project。"""
-    return await ensure_equipment_project_view(uid=str(current_user.uid), db=db)
+    return await ensure_equipment_project_view(uid=str(current_user.uid), username=current_user.username, db=db)
 
 
 @projects.get("/history-candidates")

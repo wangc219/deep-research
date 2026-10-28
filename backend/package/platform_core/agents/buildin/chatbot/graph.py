@@ -14,6 +14,7 @@ from platform_core.agents.context import (
 )
 from platform_core.agents.middlewares import (
     ImageInputCompatibilityMiddleware,
+    ModelCallSupervisorMiddleware,
     NetworkRetryMiddleware,
     SearchResilienceMiddleware,
     SteerMiddleware,
@@ -22,6 +23,9 @@ from platform_core.agents.middlewares import (
     create_summary_middleware_from_context,
 )
 from platform_core.agents.middlewares.skills import SkillsMiddleware
+from platform_core.agents.middlewares.academic_evidence import AcademicEvidenceMiddleware
+from platform_core.agents.middlewares.model_output import ModelOutputMiddleware
+from platform_core.agents.middlewares.mcp_tools import McpToolsMiddleware
 from platform_core.agents.middlewares.artifacts import ArtifactDeliveryMiddleware
 from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
 from platform_core.agents.middlewares.subagent_task import create_subagent_task_middleware
@@ -45,6 +49,8 @@ async def _build_middlewares(context, backend):
         SkillsMiddleware(),
         ArtifactDeliveryMiddleware(),
     ]
+    if getattr(context, "mcp_tool_loading", "eager") == "on_demand" and context.mcps:
+        middlewares.append(McpToolsMiddleware())
     memory_middleware = await create_memory_middleware(context)
     if memory_middleware:
         middlewares.append(memory_middleware)
@@ -58,6 +64,7 @@ async def _build_middlewares(context, backend):
             PatchToolCallsMiddleware(),
             SearchResilienceMiddleware(),
             KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
+            ModelCallSupervisorMiddleware(),
             # 网络类错误(断网/连接抖动)按预算(默认600s)持续重试，非网络错误按 max_retries
             # 次数重试——两者合并进 NetworkRetryMiddleware，避免拆成两个中间件后因装配顺序
             # 或外层重试网络错误而放大预算。
@@ -65,6 +72,8 @@ async def _build_middlewares(context, backend):
                 max_retries=getattr(context, "model_retry_times", 2),
             ),
             ImageInputCompatibilityMiddleware(),
+            AcademicEvidenceMiddleware(),
+            ModelOutputMiddleware(),
             TokenUsageMiddleware(),
         ]
     )

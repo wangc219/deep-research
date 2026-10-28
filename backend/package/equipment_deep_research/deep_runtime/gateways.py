@@ -48,9 +48,7 @@ class GatewayIdentity:
 class GatewaySessionResolver(Protocol):
     """Host boundary that maps authenticated platform identity to a session."""
 
-    def resolve_session(
-        self, identity: GatewayIdentity, payload: Mapping[str, Any]
-    ) -> str | None:
+    def resolve_session(self, identity: GatewayIdentity, payload: Mapping[str, Any]) -> str | None:
         """Return a server-owned session key, or ``None`` to reject."""
 
 
@@ -124,9 +122,7 @@ class WebhookSignaturePolicy:
 
     def sign(self, body: bytes | str, *, timestamp: str, nonce: str) -> str:
         body_bytes = body.encode("utf-8") if isinstance(body, str) else bytes(body)
-        message = b".".join(
-            [timestamp.encode("utf-8"), nonce.encode("utf-8"), body_bytes]
-        )
+        message = b".".join([timestamp.encode("utf-8"), nonce.encode("utf-8"), body_bytes])
         digest = hmac.new(self.secret, message, hashlib.sha256).hexdigest()
         return f"sha256={digest}"
 
@@ -136,7 +132,7 @@ class WebhookSignaturePolicy:
         headers: Mapping[str, Any],
         *,
         now: float | None = None,
-        replay_cache: "WebhookReplayCache | None" = None,
+        replay_cache: WebhookReplayCache | None = None,
     ) -> None:
         signature = _header(headers, self.signature_header)
         timestamp = _header(headers, self.timestamp_header)
@@ -157,7 +153,9 @@ class WebhookSignaturePolicy:
             raise ChannelPayloadRejected("webhook signature is invalid")
         if replay_cache is not None:
             replay_cache.check_and_store(
-                nonce, signed_at=signed_at, now=current,
+                nonce,
+                signed_at=signed_at,
+                now=current,
                 ttl_seconds=self.tolerance_seconds,
             )
 
@@ -246,9 +244,7 @@ class GatewayDeliveryCache:
                 # Evict the oldest completed entry. Never evict an in-flight
                 # request, because doing so would re-enable duplicate work.
                 completed = [
-                    (item.expires_at, item_key)
-                    for item_key, item in self._entries.items()
-                    if item.completion.done()
+                    (item.expires_at, item_key) for item_key, item in self._entries.items() if item.completion.done()
                 ]
                 if not completed:
                     raise ChannelPayloadRejected("gateway delivery cache is busy")
@@ -297,7 +293,7 @@ class GatewayDeliveryCache:
         self,
         key: str,
         entry: _GatewayDeliveryEntry,
-        result: "GatewayDispatchResult",
+        result: GatewayDispatchResult,
         *,
         now: float | None = None,
     ) -> None:
@@ -330,22 +326,21 @@ class GatewayDeliveryCache:
                 self._entries.pop(normalized_key, None)
                 entry.completion.set_result(None)
 
-    async def wait(self, entry: _GatewayDeliveryEntry) -> "GatewayDispatchResult | None":
+    async def wait(self, entry: _GatewayDeliveryEntry) -> GatewayDispatchResult | None:
         # A hung first delivery must not hold a retry forever. The entry is
         # removed by the first request's failure path; a timeout leaves the
         # duplicate caller with a bounded rejection instead of executing a
         # second turn concurrently.
         if not entry.remote_pending or self.store is None:
             try:
-                return await asyncio.wait_for(
-                    asyncio.shield(asyncio.wrap_future(entry.completion)), timeout=30
-                )
+                return await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(entry.completion)), timeout=30)
             except TimeoutError:
                 return None
         deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             durable = await asyncio.to_thread(
-                self.store.get, entry.delivery_key,
+                self.store.get,
+                entry.delivery_key,
                 fingerprint=entry.fingerprint,
             )
             if durable and str(durable.get("status", "")).lower() == "completed":
@@ -457,9 +452,7 @@ class TelegramGatewayAdapter:
         object.__setattr__(self, "allowed_chats", frozenset(str(item) for item in allowed_chats))
         object.__setattr__(self, "channel", "telegram")
 
-    def _parts(
-        self, payload: Mapping[str, Any]
-    ) -> tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]:
+    def _parts(self, payload: Mapping[str, Any]) -> tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]:
         if not isinstance(payload, Mapping):
             raise ChannelPayloadRejected("Telegram update must be an object")
         raw = payload.get("message") or payload.get("edited_message")
@@ -486,10 +479,7 @@ class TelegramGatewayAdapter:
             sender_id=sender_id,
             chat_id=chat_id,
             message_id=f"telegram:{_identifier(raw.get('message_id'), field='Telegram message')}",
-            thread_id=(
-                str(raw.get("message_thread_id"))
-                if raw.get("message_thread_id") is not None else None
-            ),
+            thread_id=(str(raw.get("message_thread_id")) if raw.get("message_thread_id") is not None else None),
         )
 
     def parse(self, payload: Mapping[str, Any], *, session_key: str) -> InboundMessage:
@@ -683,18 +673,13 @@ def _gateway_result_from_plain(value: Any) -> Any:
             sender_id=_identifier(identity_raw.get("sender_id"), field="gateway sender"),
             chat_id=_identifier(identity_raw.get("chat_id"), field="gateway chat"),
             message_id=_identifier(identity_raw.get("message_id"), field="gateway message"),
-            thread_id=(
-                str(identity_raw.get("thread_id"))
-                if identity_raw.get("thread_id") is not None else None
-            ),
+            thread_id=(str(identity_raw.get("thread_id")) if identity_raw.get("thread_id") is not None else None),
         )
         outbound: list[OutboundMessage] = []
         for raw in value.get("outbound", ()):
             if isinstance(raw, Mapping):
                 outbound.append(OutboundMessage(**dict(raw)))
-        deliveries = tuple(
-            dict(item) for item in value.get("deliveries", ()) if isinstance(item, Mapping)
-        )
+        deliveries = tuple(dict(item) for item in value.get("deliveries", ()) if isinstance(item, Mapping))
         return GatewayDispatchResult(
             identity=identity,
             session_key=_identifier(value.get("session_key"), field="gateway session"),
@@ -741,31 +726,38 @@ class VerifiedChannelGateway:
     ) -> GatewayDispatchResult:
         if not isinstance(payload, Mapping):
             raise ChannelPayloadRejected("gateway payload must be an object")
-        self.signature_policy.verify(
-            body, headers, replay_cache=self.replay_cache, now=now
-        )
+        self.signature_policy.verify(body, headers, replay_cache=self.replay_cache, now=now)
         payload = _signed_payload(body, payload)
         identity = self.adapter.identity(payload)
         trusted_session = _resolve_session(self.session_resolver, identity, payload)
         # Telegram message ids are unique only within a chat. Include the
         # authenticated sender and resolved session so retries can never
         # replay another chat's result or an old session binding's result.
-        delivery_key = hashlib.sha256(json.dumps([
-            identity.channel, identity.chat_id, identity.sender_id,
-            identity.thread_id, trusted_session, identity.message_id,
-        ], ensure_ascii=False).encode()).hexdigest()
-        fingerprint = hashlib.sha256(json.dumps(
-            dict(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode()).hexdigest()
+        delivery_key = hashlib.sha256(
+            json.dumps(
+                [
+                    identity.channel,
+                    identity.chat_id,
+                    identity.sender_id,
+                    identity.thread_id,
+                    trusted_session,
+                    identity.message_id,
+                ],
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+        fingerprint = hashlib.sha256(
+            json.dumps(dict(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
         owner, delivery_entry = self.delivery_cache.claim(delivery_key, fingerprint=fingerprint)
         if not owner:
             cached = await self.delivery_cache.wait(delivery_entry)
             if cached is None:
                 raise ChannelPayloadRejected("gateway delivery is still processing")
             return cached
-        task = asyncio.create_task(self._dispatch_owned(
-            identity, payload, trusted_session, host_payload, delivery_key, delivery_entry
-        ))
+        task = asyncio.create_task(
+            self._dispatch_owned(identity, payload, trusted_session, host_payload, delivery_key, delivery_entry)
+        )
         self._dispatch_tasks.add(task)
 
         def finished(completed: asyncio.Task) -> None:
@@ -847,8 +839,7 @@ async def dispatch_verified_gateway_payload(
     body: bytes | str,
     headers: Mapping[str, Any],
     signature_policy: WebhookSignaturePolicy,
-    session_resolver: GatewaySessionResolver
-    | Callable[[GatewayIdentity, Mapping[str, Any]], str | None],
+    session_resolver: GatewaySessionResolver | Callable[[GatewayIdentity, Mapping[str, Any]], str | None],
     execute: Callable[[Mapping[str, Any]], Any],
     host_payload: Mapping[str, Any],
     replay_cache: WebhookReplayCache | None = None,

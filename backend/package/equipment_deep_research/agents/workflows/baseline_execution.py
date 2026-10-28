@@ -3,15 +3,21 @@
 
 from __future__ import annotations
 
+import httpx
+import os
+import re
+
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_contract,
+)
+
 from equipment_deep_research.agents.workflows import coordinator as _legacy
 from equipment_deep_research.harness.context import (
     sanitize_handoff_summary,
     sanitize_open_questions,
 )
 
-globals().update(
-    {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
-)
+globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
 def _parse_confidence(value: object, fallback: float = 0.45) -> float:
@@ -23,10 +29,17 @@ def _parse_confidence(value: object, fallback: float = 0.45) -> float:
     else:
         text = str(value or "").strip().lower()
         qualitative = {
-            "高": 0.85, "较高": 0.75, "中高": 0.75,
-            "中": 0.60, "中等": 0.60, "中低": 0.45,
-            "低": 0.30, "较低": 0.30,
-            "high": 0.85, "medium": 0.60, "low": 0.30,
+            "高": 0.85,
+            "较高": 0.75,
+            "中高": 0.75,
+            "中": 0.60,
+            "中等": 0.60,
+            "中低": 0.45,
+            "低": 0.30,
+            "较低": 0.30,
+            "high": 0.85,
+            "medium": 0.60,
+            "low": 0.30,
         }
         if text in qualitative:
             return qualitative[text]
@@ -97,15 +110,107 @@ def _provider_neutral_source_anchor_rows(
     return _interleave_source_regions(rows, limit=max(1, limit))
 
 
+def _provider_neutral_live_search_rows(
+    request: AgentRunRequest,
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Use the deployed public-search daemon when the model has no web tool.
+
+    A provider without hosted search must not silently reuse unrelated global
+    military anchors for a rescue/inspection Query.  Keep this fallback
+    deliberately narrow: it activates only for ``mission_equipment`` and its
+    results still pass through the normal fetch/materialization quality gate.
+    """
+
+    brief = request.context.get("structured_query_brief", {})
+    contract = query_domain_contract(
+        request.topic,
+        structured_query_brief=brief if isinstance(brief, Mapping) else {},
+    )
+    if contract["mode"] != "mission_equipment":
+        return []
+
+    topic = str(request.topic or "")
+    rescue_communications = bool(
+        re.search(r"(?:灾害|救援|搜救|应急|消防|公网中断)", topic)
+        and re.search(r"(?:通信|中继|自组网|链路|公网)", topic)
+    )
+    query = (
+        "UAV relay emergency communication disaster rescue public safety mesh network"
+        if rescue_communications
+        else "mission equipment public evidence " + " ".join(topic.split())[:120]
+    )
+    endpoint = str(os.environ.get("OPEN_WEBSEARCH_URL", "")).strip().rstrip("/")
+    if not endpoint.startswith(("http://", "https://")):
+        return []
+    engines = [
+        value.strip().lower()
+        for value in str(os.environ.get("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")).split(",")
+        if value.strip()
+    ][:4]
+    try:
+        response = httpx.post(
+            f"{endpoint}/search",
+            json={"query": query, "limit": max(8, min(20, limit * 3)), "engines": engines},
+            timeout=min(
+                20.0,
+                max(
+                    3.0,
+                    float(os.environ.get("OPEN_WEBSEARCH_TIMEOUT_SECONDS", "15")),
+                ),
+            ),
+        )
+        response.raise_for_status()
+        envelope = response.json()
+    except (httpx.HTTPError, ValueError, TypeError):
+        return []
+    data = envelope.get("data", {}) if isinstance(envelope, Mapping) else {}
+    raw_results = data.get("results", []) if isinstance(data, Mapping) else []
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw_results:
+        if not isinstance(item, Mapping):
+            continue
+        url = _without_tracking_parameters(str(item.get("url", "")).strip())
+        title = " ".join(str(item.get("title", "")).split())
+        snippet = " ".join(str(item.get("description", "")).split())
+        haystack = f"{title} {snippet}".casefold()
+        if rescue_communications and not (
+            any(token in haystack for token in ("emergency", "disaster", "rescue", "应急", "救援", "灾害"))
+            and any(
+                token in haystack for token in ("communication", "relay", "mesh", "network", "通信", "中继", "自组网")
+            )
+        ):
+            continue
+        if not url or url in seen:
+            continue
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            continue
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            continue
+        seen.add(url)
+        rows.append(
+            {
+                "url": url,
+                "title": title or url,
+                "snippet": snippet,
+                "source_region": _source_region(item, url),
+                "retrieval_lane": "provider_neutral_live_search",
+                "required_source_anchor": False,
+            }
+        )
+        if len(rows) >= max(1, limit):
+            break
+    return rows
+
+
 def _source_region(item: Mapping[str, Any], url: str = "") -> str:
     """Classify a source for bounded domestic/international balancing."""
 
-    declared = str(
-        item.get("source_region")
-        or item.get("region")
-        or item.get("locale")
-        or ""
-    ).strip().lower()
+    declared = str(item.get("source_region") or item.get("region") or item.get("locale") or "").strip().lower()
     if declared in {"domestic", "cn", "china", "中国", "国内"}:
         return "domestic"
     if declared in {
@@ -143,16 +248,10 @@ def _interleave_source_regions(
     for row in rows:
         region = _source_region(row, str(row.get("url", "")))
         buckets[region].append(row)
-    first_region = (
-        _source_region(rows[0], str(rows[0].get("url", "")))
-        if rows
-        else "international"
-    )
+    first_region = _source_region(rows[0], str(rows[0].get("url", ""))) if rows else "international"
     other_region = "international" if first_region == "domestic" else "domestic"
     result: list[dict[str, Any]] = []
-    while len(result) < bounded_limit and (
-        buckets[first_region] or buckets[other_region]
-    ):
+    while len(result) < bounded_limit and (buckets[first_region] or buckets[other_region]):
         for region in (first_region, other_region):
             if buckets[region] and len(result) < bounded_limit:
                 result.append(dict(buckets[region].pop(0)))
@@ -177,9 +276,7 @@ def _provider_has_hosted_web_search(provider: Any, *, host: Any = None) -> bool:
     # dedicated Responses backend could be built. Lightweight legacy adapters
     # expose the same method but do not carry the field, so they should retain
     # their primary provider capability for compatibility.
-    has_coordinator_discovery_slot = bool(
-        host is not None and hasattr(host, "discovery_provider")
-    )
+    has_coordinator_discovery_slot = bool(host is not None and hasattr(host, "discovery_provider"))
     discovery_backend = str(getattr(host, "discovery_backend", "")).strip()
     capabilities_fn = getattr(provider, "capabilities", None)
     explicit = getattr(provider, "hosted_web_search", None)
@@ -212,8 +309,7 @@ def _provider_has_hosted_web_search(provider: Any, *, host: Any = None) -> bool:
             # ``codex_cli`` backend and therefore remains source-anchor only.
             if (
                 provider_kind == "codex_cli"
-                and str(getattr(host, "discovery_backend", "")).strip()
-                not in {"", provider_kind}
+                and str(getattr(host, "discovery_backend", "")).strip() not in {"", provider_kind}
                 and bool(getattr(host, "uses_hosted_web_search", False))
             ):
                 return True
@@ -228,8 +324,7 @@ def _provider_has_hosted_web_search(provider: Any, *, host: Any = None) -> bool:
         # their established Codex/Responses behavior unless the coordinator
         # explicitly has no discovery backend (handled above).
         return bool(
-            getattr(host, "uses_hosted_web_search", False)
-            or provider_kind in {"responses", "codex", "codex_cli"}
+            getattr(host, "uses_hosted_web_search", False) or provider_kind in {"responses", "codex", "codex_cli"}
         )
     return bool(getattr(host, "uses_hosted_web_search", False))
 
@@ -237,9 +332,7 @@ def _provider_has_hosted_web_search(provider: Any, *, host: Any = None) -> bool:
 def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     text, metadata = asyncio.run(host._run(request))
     payload = _parse_baseline_payload(text)
-    findings = [
-        str(item) for item in payload.get("findings", []) if str(item).strip()
-    ]
+    findings = [str(item) for item in payload.get("findings", []) if str(item).strip()]
     if not findings:
         findings = [f"{request.agent.display_name}未返回可采纳的结构化发现。"]
     confidence = _parse_confidence(payload.get("confidence", 0.45))
@@ -251,22 +344,17 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     # authoritative fetch/materialization and evidence quality gate. Model-
     # claimed URLs are deliberately ignored.
     if provider_kind in {"chat_completions", "codex_cli"} and not metadata.get("web_sources"):
-        anchor_rows = _provider_neutral_source_anchor_rows(
-            request,
-            limit=max(
-                4,
-                int(
-                    os.environ.get(
-                        "EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8"
-                    )
-                ),
-            ),
+        anchor_limit = max(
+            4,
+            int(os.environ.get("EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8")),
         )
+        anchor_rows = _provider_neutral_live_search_rows(
+            request,
+            limit=anchor_limit,
+        ) or _provider_neutral_source_anchor_rows(request, limit=anchor_limit)
         if anchor_rows:
             metadata["web_sources"] = anchor_rows
-            metadata["source_anchor_fallback"] = (
-                "provider_neutral_source_anchor_fallback"
-            )
+            metadata["source_anchor_fallback"] = str(anchor_rows[0].get("retrieval_lane", ""))
             metadata["source_anchor_count"] = len(anchor_rows)
     evidence = _evidence_from_web_sources(
         request=request,
@@ -276,9 +364,7 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     )
     search_queries = [str(item) for item in metadata.get("search_queries", [])]
     analysis_sections = {
-        str(name): payload.get("analysis_sections", {}).get(
-            str(name), payload.get(str(name), "")
-        )
+        str(name): payload.get("analysis_sections", {}).get(str(name), payload.get(str(name), ""))
         for name in (
             request.agent.output_contract.get("properties", [])
             if isinstance(request.agent.output_contract, dict)
@@ -297,9 +383,7 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     ][:3]
     if frontier_inspirations:
         analysis_sections["frontier_inspirations"] = frontier_inspirations
-    payload_type, typed_payload, packet_version = _typed_packet_payload(
-        request.agent.agent_id, analysis_sections
-    )
+    payload_type, typed_payload, packet_version = _typed_packet_payload(request.agent.agent_id, analysis_sections)
     open_questions = sanitize_open_questions(payload.get("open_questions", []))
     handoff_summary = sanitize_handoff_summary(
         payload.get("handoff_summary", ""),
@@ -330,9 +414,7 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
             else ["本轮模型未返回可材料化公开来源，结论必须降级并进入补证或再调。"]
         ),
         claim_ids=[
-            "claim-"
-            + sha256(f"{request.agent.agent_id}:{item}".encode()).hexdigest()[:12]
-            for item in findings
+            "claim-" + sha256(f"{request.agent.agent_id}:{item}".encode()).hexdigest()[:12] for item in findings
         ],
         analysis_sections=analysis_sections,
         payload_type=payload_type,
@@ -343,11 +425,7 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
         packet=packet,
         evidence=evidence,
         raw_message=text,
-        model_calls=[
-            dict(item)
-            for item in metadata.get("call_metrics", [])
-            if isinstance(item, Mapping)
-        ],
+        model_calls=[dict(item) for item in metadata.get("call_metrics", []) if isinstance(item, Mapping)],
         metadata={
             key: value
             for key, value in metadata.items()
@@ -370,11 +448,7 @@ def prefetch_baseline_agent(host, request: AgentRunRequest) -> dict[str, Any]:
         "search_batch_count": metadata.get("search_batch_count", 0),
         "source_count": len(metadata.get("web_sources", [])),
         "lane_counts": dict(metadata.get("lane_counts", {})),
-        "web_sources": [
-            dict(item)
-            for item in metadata.get("web_sources", [])
-            if isinstance(item, Mapping)
-        ],
+        "web_sources": [dict(item) for item in metadata.get("web_sources", []) if isinstance(item, Mapping)],
     }
 
 
@@ -392,11 +466,7 @@ def _baseline_frontier_inspiration_instruction() -> str:
 
 
 def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
-    properties = (
-        agent.output_contract.get("properties", [])
-        if isinstance(agent.output_contract, dict)
-        else []
-    )
+    properties = agent.output_contract.get("properties", []) if isinstance(agent.output_contract, dict) else []
     schema = {
         "findings": ["string"],
         "confidence": "0..1",
@@ -407,12 +477,8 @@ def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
             "completed findings and evidence boundary only; do not prescribe what a later agent should do"
         ),
         "search_plan": [{"track": "string", "queries": ["string"]}],
-        "contradictions": [
-            "conflicting evidence, alternative hypothesis, or uncertainty"
-        ],
-        "confidence_basis": (
-            "explain evidence diversity, freshness, directness and remaining uncertainty"
-        ),
+        "contradictions": ["conflicting evidence, alternative hypothesis, or uncertainty"],
+        "confidence_basis": ("explain evidence diversity, freshness, directness and remaining uncertainty"),
         "source_claims": [
             {
                 "url": "cited public source URL",
@@ -430,9 +496,7 @@ def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
                 "downstream_question": "an open question for later Codex reasoning, not an equipment answer",
             }
         ],
-        "analysis_sections": {
-            str(name): "string | object | array" for name in properties
-        },
+        "analysis_sections": {str(name): "string | object | array" for name in properties},
     }
     return schema
 
@@ -452,13 +516,9 @@ def _limited_baseline_payload(
     """
     return json.dumps(
         {
-            "findings": [
-                f"{request.agent.display_name}本轮检索受限，保留已登记来源并进入后续定向补证。"
-            ],
+            "findings": [f"{request.agent.display_name}本轮检索受限，保留已登记来源并进入后续定向补证。"],
             "confidence": 0.25,
-            "open_questions": [
-                f"{reason[:220]}；已有来源数={int(source_count)}，需在候选级核验。"
-            ],
+            "open_questions": [f"{reason[:220]}；已有来源数={int(source_count)}，需在候选级核验。"],
             "handoff_summary": "本轮模型调用受限但未阻塞基线交接",
             "contradictions": [reason[:300]],
             "source_claims": [],
@@ -471,10 +531,7 @@ def _limited_baseline_payload(
 async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
     design = host.baseline_workflow.design_for(request.agent)
     recall_request = request.context.get("recall_request", {})
-    targeted_supplement = bool(
-        isinstance(recall_request, Mapping)
-        and recall_request.get("targeted_supplement")
-    )
+    targeted_supplement = bool(isinstance(recall_request, Mapping) and recall_request.get("targeted_supplement"))
     schema = _baseline_output_schema(request.agent)
     schema = host.baseline_workflow.output_schema(request.agent, schema)
     prompt = BaselinePromptBuilder().build(
@@ -489,21 +546,14 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
     specialized_evidence_channels = (
         _weapon_specialized_evidence_channels(
             request.topic,
-            structured_query_brief=request.context.get(
-                "structured_query_brief", {}
-            ),
+            structured_query_brief=request.context.get("structured_query_brief", {}),
         )
         if deep_equipment_search
         else []
     )
-    optimized_v2 = (
-        isinstance(request.context.get("discovery_blueprint", {}), Mapping)
-        and is_quality_execution_profile_id(
-            request.context.get("discovery_blueprint", {}).get(
-                "execution_profile_id"
-            )
-        )
-    )
+    optimized_v2 = isinstance(
+        request.context.get("discovery_blueprint", {}), Mapping
+    ) and is_quality_execution_profile_id(request.context.get("discovery_blueprint", {}).get("execution_profile_id"))
     plan_mode = _agent_plan_mode(request.context)
     compact_reference = optimized_v2 and plan_mode == "reference"
     single_pass_equipment_boundary = bool(
@@ -512,9 +562,7 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
         and str(getattr(host, "provider_kind", "responses")) != "chat_completions"
         and not targeted_supplement
     )
-    analysis_specialization = design.analysis_specialization(
-        optimized=optimized_v2
-    )
+    analysis_specialization = design.analysis_specialization(optimized=optimized_v2)
     discovery_text, discovery_metadata = await host._discovery_for_request(request)
     # The one-call equipment boundary snapshot relies on a hosted Responses
     # search result.  Chat Completions providers (DeepSeek/OpenLux) have no
@@ -523,32 +571,23 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
     # the scheduler.  This keeps DeepSeek useful without pretending it has
     # hosted web search.
     if single_pass_equipment_boundary:
-        single_pass_text = str(
-            discovery_metadata.get("single_pass_baseline_text", "")
-        ).strip()
-        single_pass_error = str(
-            discovery_metadata.get("single_pass_baseline_error", "")
-        ).strip()
+        single_pass_text = str(discovery_metadata.get("single_pass_baseline_text", "")).strip()
+        single_pass_error = str(discovery_metadata.get("single_pass_baseline_error", "")).strip()
         if single_pass_error:
             single_pass_text = _limited_baseline_payload(
                 request,
-                reason="weapon_equipment boundary snapshot unavailable: "
-                + single_pass_error,
+                reason="weapon_equipment boundary snapshot unavailable: " + single_pass_error,
                 source_count=len(discovery_metadata.get("web_sources", [])),
             )
             discovery_metadata["single_pass_degraded"] = True
         single_pass_payload = _parse_json_object(single_pass_text)
         substantive_findings = [
-            str(item).strip()
-            for item in single_pass_payload.get("findings", [])
-            if str(item).strip()
+            str(item).strip() for item in single_pass_payload.get("findings", []) if str(item).strip()
         ]
         if not substantive_findings:
             single_pass_text = _limited_baseline_payload(
                 request,
-                reason=(
-                    "weapon_equipment model turn returned no substantive findings"
-                ),
+                reason=("weapon_equipment model turn returned no substantive findings"),
                 source_count=len(discovery_metadata.get("web_sources", [])),
             )
             discovery_metadata["single_pass_degraded"] = True
@@ -597,11 +636,7 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
                 else "输出严格JSON；findings最多5条，每条写清判断、军事任务价值、证据边界和失效条件。"
             )
             + "source_claims只引用来源目录中的URL。不要复述检索过程、角色定义、Harness、Skill或执行步骤。"
-            + (
-                _baseline_frontier_inspiration_instruction()
-                if not targeted_supplement
-                else ""
-            )
+            + (_baseline_frontier_inspiration_instruction() if not targeted_supplement else "")
             + role_focus
             + analysis_specialization
         )
@@ -617,21 +652,15 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
             ),
             "specialized_evidence_channels": specialized_evidence_channels,
             "query_led_combat_equipment_themes": (
-                _query_led_combat_equipment_theme_contract()
-                if deep_equipment_search
-                else {}
+                _query_led_combat_equipment_theme_contract() if deep_equipment_search else {}
             ),
             "query_combat_equipment_divergence_brief": (
                 _query_combat_equipment_divergence_brief(
                     request.topic,
-                    structured_query_brief=request.context.get(
-                        "structured_query_brief", {}
-                    ),
+                    structured_query_brief=request.context.get("structured_query_brief", {}),
                 )
             ),
-            "discovery_blueprint": _compact_discovery_blueprint(
-                request.context.get("discovery_blueprint", {})
-            ),
+            "discovery_blueprint": _compact_discovery_blueprint(request.context.get("discovery_blueprint", {})),
             "recall_request": recall_request,
         }
     else:
@@ -653,8 +682,7 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
                 "主题场景压力—防御性反制功能—现役升级或新研需求—成熟度—验证方法—证据’闭环输出。"
                 "findings最多8条、open_questions最多5条、source_claims最多18条；"
                 if deep_equipment_search
-                else "交接包必须高信息密度且完整闭合：findings 最多6条、open_questions最多4条、"
-                "source_claims最多12条；"
+                else "交接包必须高信息密度且完整闭合：findings 最多6条、open_questions最多4条、source_claims最多12条；"
             )
             + (
                 _query_led_combat_equipment_theme_instruction(
@@ -665,11 +693,7 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
                 else ""
             )
             + analysis_specialization
-            + (
-                _baseline_frontier_inspiration_instruction()
-                if not targeted_supplement
-                else ""
-            )
+            + (_baseline_frontier_inspiration_instruction() if not targeted_supplement else "")
             + "每个analysis_sections字段只保留结论、关键参数、证据边界和适用条件，"
             + "不得复制长篇原文、完整搜索过程或大表格，也不得输出具体攻击步骤或武器制造参数。"
         )
@@ -680,16 +704,12 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
             "search_queries": discovery_metadata.get("search_queries", []),
             "specialized_evidence_channels": specialized_evidence_channels,
             "query_led_combat_equipment_themes": (
-                _query_led_combat_equipment_theme_contract()
-                if deep_equipment_search
-                else {}
+                _query_led_combat_equipment_theme_contract() if deep_equipment_search else {}
             ),
             "query_combat_equipment_divergence_brief": (
                 _query_combat_equipment_divergence_brief(
                     request.topic,
-                    structured_query_brief=request.context.get(
-                        "structured_query_brief", {}
-                    ),
+                    structured_query_brief=request.context.get("structured_query_brief", {}),
                 )
             ),
             "discovery_blueprint": request.context.get("discovery_blueprint", {}),
@@ -740,15 +760,11 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
         )
     if targeted_supplement:
         options["reasoning_effort"] = "medium"
-        options["max_output_tokens"] = min(
-            int(options.get("max_output_tokens", 1800)), 1800
-        )
+        options["max_output_tokens"] = min(int(options.get("max_output_tokens", 1800)), 1800)
         options["model_verbosity"] = "low"
     elif compact_reference:
         options["reasoning_effort"] = "medium"
-        options["max_output_tokens"] = min(
-            int(options.get("max_output_tokens", 1800)), 1800
-        )
+        options["max_output_tokens"] = min(int(options.get("max_output_tokens", 1800)), 1800)
         options["model_verbosity"] = "low"
     options = _apply_codex_performance_options(options, host.provider_kind)
     if optimized_v2 and host.provider_kind == "chat_completions" and not targeted_supplement:
@@ -766,18 +782,14 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
         )
     if optimized_v2 and deep_equipment_search and not targeted_supplement:
         options["reasoning_effort"] = "medium"
-        options["_provider_timeout_seconds"] = min(
-            int(options.get("_provider_timeout_seconds", 150)), 150
-        )
+        options["_provider_timeout_seconds"] = min(int(options.get("_provider_timeout_seconds", 150)), 150)
         options["_disable_provider_timeout"] = False
         options["_provider_retry_attempts"] = 1
     elif optimized_v2 and not targeted_supplement:
         # Baseline synthesis is a bounded first-pass handoff. Keep it below
         # the legacy 900s CLI ceiling; the exception path emits a valid
         # limited Packet and S3-S6 can still reason over shared evidence.
-        options["_provider_timeout_seconds"] = min(
-            int(options.get("_provider_timeout_seconds", 90)), 90
-        )
+        options["_provider_timeout_seconds"] = min(int(options.get("_provider_timeout_seconds", 90)), 90)
         options["_disable_provider_timeout"] = False
         options["_provider_retry_attempts"] = 1
     options["output_schema"] = schema
@@ -887,55 +899,33 @@ async def discover(
     request: AgentRunRequest,
 ) -> tuple[str, dict[str, Any]]:
     recall_request = request.context.get("recall_request", {})
-    targeted_supplement = bool(
-        isinstance(recall_request, Mapping)
-        and recall_request.get("targeted_supplement")
-    )
+    targeted_supplement = bool(isinstance(recall_request, Mapping) and recall_request.get("targeted_supplement"))
     targeted_questions = (
-        [
-            str(item)
-            for item in recall_request.get("required_data", [])
-            if str(item).strip()
-        ][:2]
+        [str(item) for item in recall_request.get("required_data", []) if str(item).strip()][:2]
         if targeted_supplement
         else []
     )
-    search_tracks = [
-        str(item)
-        for item in request.agent.research_policy.get("search_tracks", [])
-        if str(item).strip()
-    ]
+    search_tracks = [str(item) for item in request.agent.research_policy.get("search_tracks", []) if str(item).strip()]
     if targeted_questions:
         search_tracks = targeted_questions
     deep_equipment_search = request.agent.agent_id == "weapon_equipment"
     specialized_evidence_channels = (
         _weapon_specialized_evidence_channels(
             request.topic,
-            structured_query_brief=request.context.get(
-                "structured_query_brief", {}
-            ),
+            structured_query_brief=request.context.get("structured_query_brief", {}),
         )
         if deep_equipment_search and not targeted_supplement
         else []
     )
     if specialized_evidence_channels:
-        specialized_tracks = [
-            f"{item['name']}：{item['focus']}"
-            for item in specialized_evidence_channels
-        ]
-        search_tracks = list(
-            dict.fromkeys([*specialized_tracks, *search_tracks])
-        )
+        specialized_tracks = [f"{item['name']}：{item['focus']}" for item in specialized_evidence_channels]
+        search_tracks = list(dict.fromkeys([*specialized_tracks, *search_tracks]))
     target_source_count = (
         max(
             2,
             min(
                 4,
-                int(
-                    os.environ.get(
-                        "EQUIPMENT_DR_TARGETED_EVIDENCE_SOURCE_TARGET", "3"
-                    )
-                ),
+                int(os.environ.get("EQUIPMENT_DR_TARGETED_EVIDENCE_SOURCE_TARGET", "3")),
             ),
         )
         if targeted_supplement
@@ -944,11 +934,7 @@ async def discover(
                 14,
                 min(
                     18,
-                    int(
-                        request.agent.research_policy.get(
-                            "target_source_count", 8
-                        )
-                    ),
+                    int(request.agent.research_policy.get("target_source_count", 8)),
                 ),
             )
             if deep_equipment_search
@@ -967,9 +953,7 @@ async def discover(
         if isinstance(item, Mapping)
     ]
     incremental_knowledge = [
-        dict(item)
-        for item in request.context.get("incremental_knowledge", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in request.context.get("incremental_knowledge", []) if isinstance(item, Mapping)
     ]
     memory_urls = [
         str(url)
@@ -980,14 +964,10 @@ async def discover(
     blueprint_context = request.context.get("discovery_blueprint", {})
     use_specialized_anchors = bool(
         isinstance(blueprint_context, Mapping)
-        and is_quality_execution_profile_id(
-            blueprint_context.get("execution_profile_id")
-        )
+        and is_quality_execution_profile_id(blueprint_context.get("execution_profile_id"))
     )
     specialized_anchor_urls = (
-        _prioritize_specialized_anchor_urls(specialized_evidence_channels)
-        if use_specialized_anchors
-        else []
+        _prioritize_specialized_anchor_urls(specialized_evidence_channels) if use_specialized_anchors else []
     )
     known_urls = list(
         dict.fromkeys(
@@ -998,20 +978,19 @@ async def discover(
             ]
         )
     )
-    search_intensity = str(
-        request.context.get(
-            "_search_intensity",
-            request.agent.research_policy.get("search_intensity", "standard"),
-        )
-    ).strip().lower()
-    optimized_v2 = (
-        isinstance(request.context.get("discovery_blueprint", {}), Mapping)
-        and is_quality_execution_profile_id(
-            request.context.get("discovery_blueprint", {}).get(
-                "execution_profile_id"
+    search_intensity = (
+        str(
+            request.context.get(
+                "_search_intensity",
+                request.agent.research_policy.get("search_intensity", "standard"),
             )
         )
+        .strip()
+        .lower()
     )
+    optimized_v2 = isinstance(
+        request.context.get("discovery_blueprint", {}), Mapping
+    ) and is_quality_execution_profile_id(request.context.get("discovery_blueprint", {}).get("execution_profile_id"))
     single_pass_equipment_boundary = bool(
         optimized_v2
         and deep_equipment_search
@@ -1051,9 +1030,7 @@ async def discover(
             )
             target_source_count = min(
                 target_source_count,
-                3
-                if compact_reference or compact_callback
-                else quality_lead_cap,
+                3 if compact_reference or compact_callback else quality_lead_cap,
             )
     max_batches = (
         1
@@ -1077,9 +1054,7 @@ async def discover(
     except (AttributeError, RuntimeError, TypeError):
         # Keep lightweight embedders and unit-test hosts compatible with the
         # production coordinator seam.
-        discovery_provider = getattr(host, "discovery_provider", None) or getattr(
-            host, "provider", None
-        )
+        discovery_provider = getattr(host, "discovery_provider", None) or getattr(host, "provider", None)
     hosted_search_available = _provider_has_hosted_web_search(
         discovery_provider,
         host=host,
@@ -1092,19 +1067,13 @@ async def discover(
                 "tracks": search_tracks,
                 "source_priorities": source_priorities,
                 "known_urls": known_urls[:12],
-                "reasoning_effort": (
-                    "low" if optimized_v2 and deep_equipment_search else "medium"
-                ),
+                "reasoning_effort": ("low" if optimized_v2 and deep_equipment_search else "medium"),
                 "max_output_tokens": (
                     1200
                     if targeted_supplement
                     else 1000
                     if compact_reference or compact_callback
-                    else (
-                        1400
-                        if optimized_v2
-                        else 2600
-                    )
+                    else (1400 if optimized_v2 else 2600)
                     if deep_equipment_search
                     else 1400
                 ),
@@ -1131,13 +1100,7 @@ async def discover(
                 "source_priorities": [],
                 "known_urls": [],
                 "reasoning_effort": "medium",
-                "max_output_tokens": (
-                    1200
-                    if targeted_supplement
-                    else 2200
-                    if deep_equipment_search
-                    else 1600
-                ),
+                "max_output_tokens": (1200 if targeted_supplement else 2200 if deep_equipment_search else 1600),
             }
             for tracks in open_batches
         )
@@ -1214,23 +1177,23 @@ async def discover(
         )
     else:
         # Use original logic for non-winning agents
-        search_context_size = (
-            "medium" if request.agent.agent_id in medium_context_agents else "high"
-        )
+        search_context_size = "medium" if request.agent.agent_id in medium_context_agents else "high"
     if compact_reference or compact_callback:
         search_context_size = "medium"
     elif optimized_v2 and deep_equipment_search:
-        search_context_size = str(
-            os.environ.get(
-                "EQUIPMENT_DR_QUALITY_EQUIPMENT_SEARCH_CONTEXT_SIZE",
-                "medium",
+        search_context_size = (
+            str(
+                os.environ.get(
+                    "EQUIPMENT_DR_QUALITY_EQUIPMENT_SEARCH_CONTEXT_SIZE",
+                    "medium",
+                )
             )
-        ).strip().lower()
+            .strip()
+            .lower()
+        )
         if search_context_size not in {"low", "medium", "high"}:
             search_context_size = "medium"
-    discovery_system = host.baseline_workflow.discovery_system_prompt(
-        request.agent
-    )
+    discovery_system = host.baseline_workflow.discovery_system_prompt(request.agent)
     if single_pass_equipment_boundary:
         discovery_system = (
             "你是公开武器装备边界快照Agent。只用一次模型调用完成Query定向检索与结构化研判。"
@@ -1298,11 +1261,7 @@ async def discover(
                 "60" if optimized_v2 else "150",
             )
         )
-        bounded_timeout = (
-            min(configured_timeout, 20)
-            if not hosted_search_available
-            else max(60, configured_timeout)
-        )
+        bounded_timeout = min(configured_timeout, 20) if not hosted_search_available else max(60, configured_timeout)
         options = _apply_codex_performance_options(
             {
                 "reasoning_effort": str(lane["reasoning_effort"]),
@@ -1339,11 +1298,7 @@ async def discover(
                         "_provider_timeout_seconds": bounded_timeout,
                     }
                 ),
-                **(
-                    {}
-                    if single_pass_equipment_boundary
-                    else {"_disable_provider_timeout": False}
-                ),
+                **({} if single_pass_equipment_boundary else {"_disable_provider_timeout": False}),
                 "_provider_retry_attempts": 1,
                 "web_search": {
                     "search_context_size": search_context_size,
@@ -1388,15 +1343,11 @@ async def discover(
                     discovery_system,
                     {
                         "topic": request.topic,
-                        "structured_query_brief": request.context.get(
-                            "structured_query_brief", {}
-                        ),
+                        "structured_query_brief": request.context.get("structured_query_brief", {}),
                         "query_combat_equipment_divergence_brief": (
                             _query_combat_equipment_divergence_brief(
                                 request.topic,
-                                structured_query_brief=request.context.get(
-                                    "structured_query_brief", {}
-                                ),
+                                structured_query_brief=request.context.get("structured_query_brief", {}),
                             )
                         ),
                         "research_route": request.research_route,
@@ -1414,9 +1365,7 @@ async def discover(
                         "known_urls": list(lane.get("known_urls", [])),
                         "shared_discovery_sources": list(shared_sources_for_lane),
                         "incremental_knowledge": incremental_knowledge,
-                        "discovery_blueprint": request.context.get(
-                            "discovery_blueprint", {}
-                        ),
+                        "discovery_blueprint": request.context.get("discovery_blueprint", {}),
                         "recall_request": recall_request,
                         "output_contract": (
                             "single_pass_public_boundary_snapshot"
@@ -1429,11 +1378,7 @@ async def discover(
                     harness_profile=host._harness_for(request.agent),
                 ),
                 options,
-                priority=(
-                    "critical"
-                    if len(lanes) > 1
-                    else str(request.context.get("_execution_priority", "normal"))
-                ),
+                priority=("critical" if len(lanes) > 1 else str(request.context.get("_execution_priority", "normal"))),
                 progress={
                     "run_id": request.run_id,
                     "agent_id": request.agent.agent_id,
@@ -1454,8 +1399,7 @@ async def discover(
                 "elapsed_seconds": elapsed_seconds,
             }
             text = (
-                "本检索通道在有界时限内未返回；后续只复用Run内共享来源、"
-                "显式来源锚点并降低相关事实置信度，不重试扩搜。"
+                "本检索通道在有界时限内未返回；后续只复用Run内共享来源、显式来源锚点并降低相关事实置信度，不重试扩搜。"
             )
             metric = {
                 "agent_id": request.agent.agent_id,
@@ -1504,21 +1448,12 @@ async def discover(
 
     indexed_lanes = list(enumerate(lanes, start=1))
     with host._discovery_lock:
-        shared_sources = list(
-            host._shared_discovery_sources.get(request.run_id, {}).values()
-        )[:18]
+        shared_sources = list(host._shared_discovery_sources.get(request.run_id, {}).values())[:18]
     # The known-source and open-web lanes are complementary, not dependent.
     # Launch them speculatively in the same wave and merge their evidence
     # before analysis.  This preserves both coverage tracks while removing
     # the sum of their gateway latencies from the critical path.
-    lane_results = list(
-        await asyncio.gather(
-            *(
-                run_lane(index, lane, shared_sources)
-                for index, lane in indexed_lanes
-            )
-        )
-    )
+    lane_results = list(await asyncio.gather(*(run_lane(index, lane, shared_sources) for index, lane in indexed_lanes)))
     fragments: list[str] = []
     sources: list[dict[str, Any]] = []
     queries: list[str] = []
@@ -1528,12 +1463,8 @@ async def discover(
     for lane_index, lane, text, metadata, metric in lane_results:
         lane_name = str(lane.get("lane", "open_web"))
         metrics.append(metric)
-        fragments.append(
-            f"## {lane_name} {lane_index}: {'；'.join(lane.get('tracks', []))}\n{text}"
-        )
-        batch_sources = metadata.get(
-            "web_sources"
-        ) or _source_rows_from_discovery_text(text)
+        fragments.append(f"## {lane_name} {lane_index}: {'；'.join(lane.get('tracks', []))}\n{text}")
+        batch_sources = metadata.get("web_sources") or _source_rows_from_discovery_text(text)
         accepted_in_lane = 0
         for source in batch_sources:
             if not isinstance(source, Mapping):
@@ -1546,11 +1477,7 @@ async def discover(
             sources.append(row)
             accepted_in_lane += 1
         lane_counts[lane_name] = lane_counts.get(lane_name, 0) + accepted_in_lane
-        queries.extend(
-            str(item)
-            for item in metadata.get("search_queries", [])
-            if str(item).strip()
-        )
+        queries.extend(str(item) for item in metadata.get("search_queries", []) if str(item).strip())
     selected_sources = (
         _merge_required_source_anchors(
             sources,
@@ -1568,17 +1495,14 @@ async def discover(
         # URLs as *leads*. They are still fetched, materialized, assessed and
         # accepted by the scheduler; this branch never promotes a
         # model-claimed URL directly to evidence.
-        selected_sources = _provider_neutral_source_anchor_rows(
-            request,
-            limit=max(
-                4,
-                int(
-                    os.environ.get(
-                        "EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8"
-                    )
-                ),
-            ),
+        fallback_limit = max(
+            4,
+            int(os.environ.get("EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8")),
         )
+        selected_sources = _provider_neutral_live_search_rows(
+            request,
+            limit=fallback_limit,
+        ) or _provider_neutral_source_anchor_rows(request, limit=fallback_limit)
         if selected_sources:
             host._emit_baseline_progress(
                 {
@@ -1613,8 +1537,7 @@ async def discover(
             if provider_kind in {"chat_completions", "codex_cli"}
             and bool(selected_sources)
             and all(
-                str(item.get("retrieval_lane", ""))
-                == "provider_neutral_source_anchor_fallback"
+                str(item.get("retrieval_lane", "")) == "provider_neutral_source_anchor_fallback"
                 for item in selected_sources
             )
             else ""
@@ -1622,8 +1545,7 @@ async def discover(
         "source_anchor_count": sum(
             1
             for item in selected_sources
-            if str(item.get("retrieval_lane", ""))
-            == "provider_neutral_source_anchor_fallback"
+            if str(item.get("retrieval_lane", "")) == "provider_neutral_source_anchor_fallback"
         ),
     }
     if single_pass_equipment_boundary and lane_results:
@@ -1635,14 +1557,8 @@ async def discover(
                 single_pass_metric.get("error_message", "bounded snapshot failed")
             )
         metadata["execution_mode"] = "single_pass_public_boundary_snapshot"
-    if (
-        host.supports_agent_runtime
-        and selected_sources
-        and not metadata["search_queries"]
-    ):
-        metadata["search_queries"] = [
-            f"Codex public-source discovery: {request.topic}"
-        ]
+    if host.supports_agent_runtime and selected_sources and not metadata["search_queries"]:
+        metadata["search_queries"] = [f"Codex public-source discovery: {request.topic}"]
     host._emit_baseline_progress(
         {
             "event_type": "baseline_discovery_completed",
@@ -1673,17 +1589,14 @@ async def repair_baseline_output(
     # baseline packet and the outer scheduler marked all DeepSeek agents
     # limited.
     supports_structured_output = bool(
-        getattr(host, "supports_capability", lambda *_args, **_kwargs: False)(
-            "structured_output"
-        )
+        getattr(host, "supports_capability", lambda *_args, **_kwargs: False)("structured_output")
     )
     # Keep the legacy fake/smoke adapters' call contract unchanged.  The
     # additional repair path is specifically for provider-neutral Chat
     # Completions gateways, whose structured output is real but which do not
     # advertise the Codex Agent Runtime.
     chat_gateway_repair = (
-        str(getattr(host, "provider_kind", "")).strip() == "chat_completions"
-        and supports_structured_output
+        str(getattr(host, "provider_kind", "")).strip() == "chat_completions" and supports_structured_output
     )
     if not host.supports_agent_runtime and not chat_gateway_repair:
         return text, None

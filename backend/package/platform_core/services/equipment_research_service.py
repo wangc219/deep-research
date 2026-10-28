@@ -13,6 +13,11 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import HTTPException
+from equipment_deep_research.domain.capability_portrait import (
+    assemble_capability_portrait_modules,
+    normalize_capability_portrait_modules,
+    normalize_capability_portrait_text,
+)
 from platform_core.permissions import (
     ResourcePermission,
     has_global_business_access,
@@ -42,7 +47,7 @@ from platform_core.storage.postgres.models_equipment import (
     EquipmentResearchRun,
 )
 from platform_core.storage.redis import get_async_redis_client
-from platform_core.utils.datetime_utils import utc_now_naive
+from platform_core.utils.datetime_utils import format_utc_datetime, utc_now_naive
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -178,7 +183,7 @@ async def _require_run(
     return run
 
 
-def _run_payload_for_user(run: EquipmentResearchRun, user: User) -> dict[str, Any]:
+def _run_payload_for_user(run: EquipmentResearchRun, user: User, *, compact: bool = False) -> dict[str, Any]:
     """保留历史来源标识，但由当前用户的真实权限决定是否只读。"""
 
     payload = run.to_dict()
@@ -193,6 +198,14 @@ def _run_payload_for_user(run: EquipmentResearchRun, user: User) -> dict[str, An
         or getattr(run, "import_batch_id", None)
     )
     payload["readonly"] = permission != ResourcePermission.MANAGE
+    if compact:
+        # 列表只需要模型标签；完整研究摘要与正文通过详情接口按需读取。
+        payload["payload"] = {"model_spec": (run.payload or {}).get("model_spec", "")}
+        payload["result"] = {
+            key: value
+            for key, value in payload.get("result", {}).items()
+            if key.endswith("_count") or key in {"artifact_counts", "report_available"}
+        }
     return payload
 
 
@@ -217,10 +230,8 @@ async def _require_query(
     )
     if permission == ResourcePermission.NONE:
         raise HTTPException(status_code=404, detail="Query 不存在")
-    if mutation and permission != ResourcePermission.MANAGE:
+    if mutation and permission != ResourcePermission.MANAGE and not is_shared_legacy_resource(query):
         raise HTTPException(status_code=403, detail="无权修改该 Query")
-    if mutation and bool(getattr(query, "legacy_source_id", None) or getattr(query, "import_batch_id", None)):
-        raise HTTPException(status_code=409, detail="历史 Query 为只读数据")
     return query
 
 
@@ -228,7 +239,7 @@ async def create_run(
     *,
     db: AsyncSession,
     user: User,
-    project_id: str,
+    project_id: str | None = None,
     topic: str,
     research_route: str = "auto",
     model_spec: str | None = None,
@@ -239,7 +250,8 @@ async def create_run(
 ) -> dict[str, Any]:
     if not topic.strip():
         raise HTTPException(status_code=422, detail="研究主题不能为空")
-    project = await _require_project(db, user=user, project_id=project_id)
+    project = await _equipment_project(db, user=user, project_id=project_id)
+    project_id = project.id
     normalized_idempotency_key = str(idempotency_key or "").strip()
     request_fingerprint = hashlib.sha256(
         json.dumps(
@@ -283,10 +295,9 @@ async def create_run(
             user=user,
             query_id=normalized_source_query_id,
         )
-        # A Query may only seed a Run in the same owner/project domain.  This
-        # keeps a superadmin operation global without ever transferring the
-        # source owner's resource scope to another user.
-        if str(source_query.owner_uid) != str(project.uid) or str(source_query.project_id) != str(project.id):
+        # 同一所有者可以跨项目使用 Query；共享历史 Query 保留原始归属。
+        # 私人 Query 仍不得跨所有者域转移。
+        if not is_shared_legacy_resource(source_query) and str(source_query.owner_uid) != str(project.uid):
             raise HTTPException(status_code=422, detail="来源 Query 不属于目标项目")
         if source_query.status != "published":
             raise HTTPException(status_code=409, detail="来源 Query 必须先发布")
@@ -307,6 +318,7 @@ async def create_run(
             "query_id": source_query.id,
             "version": int(source_query.version),
             "source_type": source_query.source_type,
+            "snapshot": source_query.to_dict(),
         }
     run_payload = _canonical_knowledge_scope(run_payload)
     from platform_core.services.equipment_model_adapter import default_chat_model_spec
@@ -350,7 +362,9 @@ async def create_run(
     return _run_payload_for_user(run, user)
 
 
-async def list_runs(*, db: AsyncSession, user: User, project_id: str | None = None, status: str | None = None):
+async def list_runs(
+    *, db: AsyncSession, user: User, project_id: str | None = None, status: str | None = None, compact: bool = False
+):
     repo = EquipmentResearchRepository(db)
     runs = await repo.list_runs_for_user(
         owner_uid=None if has_global_business_access(user) else user.uid,
@@ -358,7 +372,7 @@ async def list_runs(*, db: AsyncSession, user: User, project_id: str | None = No
         status=status,
         include_legacy=True,
     )
-    return [_run_payload_for_user(item, user) for item in runs]
+    return [_run_payload_for_user(item, user, compact=compact) for item in runs]
 
 
 async def get_run(*, db: AsyncSession, user: User, run_id: str) -> dict[str, Any]:
@@ -754,6 +768,11 @@ async def portal_snapshot(*, db: AsyncSession, user: User) -> dict[str, Any]:
         live.get("queries", []),
         "query_id",
     )[:8]
+    # 门户只呈现名称、状态与时间，避免重复传输历史任务的多兆字节摘要。
+    recent_runs = [
+        {key: item.get(key) for key in ("run_id", "topic", "status", "research_route", "updated_at", "readonly")}
+        for item in recent_runs
+    ]
     shortcuts = [
         {"name": "文档知识库", "path": "/extensions"},
         {"name": "智能对话", "path": "/agent"},
@@ -820,11 +839,47 @@ def _merge_by_id(
     )
 
 
+async def _equipment_project(db: AsyncSession, *, user: User, project_id: str | None) -> Any:
+    """未选项目时复用当前用户的研究工作台。"""
+    if project_id:
+        return await _require_project(db, user=user, project_id=project_id)
+    from platform_core.services.project_service import ensure_equipment_project_record
+
+    return await ensure_equipment_project_record(uid=str(user.uid), username=user.username, db=db)
+
+
+async def _prepare_query_write(db: AsyncSession, query: EquipmentQuery, user: User) -> None:
+    """首次变更保留历史原貌，每次共享写入记录操作者与来源。"""
+    payload = dict(query.payload or {})
+    if is_shared_legacy_resource(query) and "original_snapshot" not in payload:
+        payload["original_snapshot"] = query.to_dict()
+    payload["last_modified_by"] = str(user.uid)
+    query.payload = payload
+    if is_shared_legacy_resource(query):
+        from platform_core.services.operation_log_service import log_operation
+
+        await log_operation(
+            db,
+            user.id,
+            "共享历史 Query 修改",
+            json.dumps(
+                {
+                    "query_id": query.id,
+                    "owner_uid": query.owner_uid,
+                    "actor_uid": user.uid,
+                    "version": query.version,
+                    "snapshot": query.to_dict(),
+                },
+                ensure_ascii=False,
+            ),
+        )
+
+
 async def create_query(
     *,
     db: AsyncSession,
     user: User,
-    project_id: str,
+    project_id: str | None = None,
     query_text: str,
     supplemental_information: str = "",
     generation_rationale: str = "",
@@ -835,7 +890,7 @@ async def create_query(
 ) -> dict[str, Any]:
     if not query_text.strip():
         raise HTTPException(status_code=422, detail="Query 不能为空")
-    project = await _require_project(db, user=user, project_id=project_id)
+    project = await _equipment_project(db, user=user, project_id=project_id)
     if status not in {"draft", "published"}:
         raise HTTPException(status_code=422, detail="Query 初始状态只能是 draft 或 published")
     owner_uid = str(project.uid)
@@ -851,7 +906,7 @@ async def create_query(
     repo = EquipmentResearchRepository(db)
     query = EquipmentQuery(
         id=_new_id("query"),
-        project_id=project_id,
+        project_id=project.id,
         owner_uid=owner_uid,
         query_text=query_text.strip(),
         query_fingerprint=fingerprint,
@@ -943,6 +998,7 @@ async def update_query(*, db: AsyncSession, user: User, query_id: str, changes: 
     if duplicate is not None and duplicate.id != query.id:
         raise HTTPException(status_code=409, detail="相同 Query 已存在")
 
+    await _prepare_query_write(db, query, user)
     query.query_text = next_text
     query.query_fingerprint = next_fingerprint
     if "supplemental_information" in changes:
@@ -997,12 +1053,15 @@ async def set_query_status(
         raise HTTPException(status_code=422, detail="Query 状态无效")
     repo = EquipmentResearchRepository(db)
     query = await _require_query(db, user=user, query_id=query_id, mutation=True, lock=True)
-    if expected_version is not None and int(expected_version) != int(query.version):
+    if expected_version is None:
+        raise HTTPException(status_code=422, detail="修改 Query 状态必须提供 expected_version")
+    if int(expected_version) != int(query.version):
         raise HTTPException(status_code=409, detail="Query 已被其他操作更新，请刷新后重试")
     if status == "published" and query.status not in {"draft", "published"}:
         raise HTTPException(status_code=409, detail="只有草稿 Query 可以发布")
     if status == query.status:
         return query.to_dict()
+    await _prepare_query_write(db, query, user)
     query.status = status
     query.version += 1
     query.updated_at = utc_now_naive()
@@ -1017,7 +1076,7 @@ async def set_query_status(
     await audit_superadmin_personal_resource_write(
         db,
         actor=user,
-        action=status,
+        action={"published": "publish", "archived": "archive"}.get(status, status),
         resource_type="query",
         resource_id=query.id,
         owner_uid=str(query.owner_uid),
@@ -1078,9 +1137,12 @@ async def bulk_set_query_status(
     return {"items": items, "count": len(items)}
 
 
-async def delete_query(*, db: AsyncSession, user: User, query_id: str) -> dict[str, Any]:
+async def delete_query(*, db: AsyncSession, user: User, query_id: str, expected_version: int) -> dict[str, Any]:
     repo = EquipmentResearchRepository(db)
     query = await _require_query(db, user=user, query_id=query_id, mutation=True, lock=True)
+    if expected_version != query.version:
+        raise HTTPException(status_code=409, detail="Query 已被其他操作更新，请刷新后重试")
+    await _prepare_query_write(db, query, user)
     await repo.delete_query(query.id)
     await audit_superadmin_personal_resource_write(
         db,
@@ -1094,14 +1156,14 @@ async def delete_query(*, db: AsyncSession, user: User, query_id: str) -> dict[s
     return {"deleted": True, "query_id": query.id}
 
 
-async def list_capabilities(*, db: AsyncSession, user: User):
+async def list_capabilities(*, db: AsyncSession, user: User, compact: bool = False):
     repo = EquipmentResearchRepository(db)
     persisted = await repo.list_capability_versions(
         None if has_global_business_access(user) else user.uid,
         include_legacy=True,
     )
     payloads = [
-        item.snapshot | {"id": item.id, "run_id": item.run_id}
+        item.snapshot | {"id": item.id, "version_id": item.id, "run_id": item.run_id}
         for item in persisted
         if str((item.snapshot or {}).get("status") or "").lower() != "deleted"
     ]
@@ -1120,7 +1182,11 @@ async def list_capabilities(*, db: AsyncSession, user: User):
         if run.id in covered_run_ids:
             continue
         counts = run.to_dict().get("artifact_counts") or {}
-        if int(counts.get("capabilities") or 0) <= 0:
+        # S6 可先于报告落盘，此时最终产物计数尚未回写。
+        if (
+            int(counts.get("capabilities") or 0) <= 0
+            and getattr(run, "status", "") not in EQUIPMENT_RUN_ACTIVE_STATUSES
+        ):
             continue
         payloads.extend(await asyncio.to_thread(_artifact_capability_payloads, run))
     run_by_id = {str(run.id): run for run in runs}
@@ -1133,6 +1199,13 @@ async def list_capabilities(*, db: AsyncSession, user: User):
             continue
         summary = await asyncio.to_thread(_load_run_json, run, "round_summary.json")
         enriched.extend(enrich_capabilities_with_s5_scores(rows, summary))
+    enriched = [_normalize_capability_delivery_payload(item) for item in enriched]
+    if compact:
+        # 历史卡片在顶层和 snapshot 下重复存放同一正文；合并后保留全部业务字段。
+        return [
+            {key: value for key, value in (dict(item.get("snapshot") or {}) | item).items() if key != "snapshot"}
+            for item in enriched
+        ]
     return enriched
 
 
@@ -1214,7 +1287,34 @@ async def list_capability_versions_for_run(*, db: AsyncSession, user: User, run_
     else:
         summary = await asyncio.to_thread(_load_run_json, run, "round_summary.json")
         versions = enrich_capabilities_with_s5_scores(versions, summary)
+    versions = [_normalize_capability_delivery_payload(item) for item in versions]
     return {"run_id": run.id, "versions": versions}
+
+
+def _normalize_capability_delivery_payload(card: dict[str, Any]) -> dict[str, Any]:
+    """Project current and historical portrait prose through one read boundary."""
+
+    result = dict(card)
+    modules = result.get("capability_portrait_modules")
+    if isinstance(modules, dict):
+        normalized_modules = normalize_capability_portrait_modules(
+            modules,
+            allow_structured_salvage=True,
+        )
+        result["capability_portrait_modules"] = normalized_modules
+        assembled = assemble_capability_portrait_modules(
+            {
+                **normalized_modules,
+                "capability_classification": result.get("capability_classification", {}),
+            }
+        )
+        if assembled:
+            result["deep_capability_portrait"] = assembled
+            result["capability_image"] = assembled
+    for field in ("deep_capability_portrait", "capability_image"):
+        if result.get(field):
+            result[field] = normalize_capability_portrait_text(result[field])
+    return result
 
 
 async def mutate_capability_version(
@@ -1275,25 +1375,83 @@ def _feedback_payload(item: EquipmentExpertFeedback) -> dict[str, Any]:
     return dict(item.feedback or {}) | {
         "feedback_id": item.id,
         "run_id": item.run_id,
-        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "created_at": format_utc_datetime(item.created_at),
     }
 
 
-async def list_expert_feedback(*, db: AsyncSession, user: User, run_id: str):
+async def list_expert_feedback(*, db: AsyncSession, user: User, run_id: str, include_rolled_back: bool = False):
     run = await _require_run(db, user=user, run_id=run_id)
     rows = await EquipmentResearchRepository(db).list_expert_feedback(
         owner_uid=str(run.owner_uid), run_id=run.id, limit=200
     )
-    return [_feedback_payload(item) for item in rows if (item.feedback or {}).get("status") != "rolled_back"]
+    return [
+        _feedback_payload(item)
+        for item in rows
+        if include_rolled_back or (item.feedback or {}).get("status") != "rolled_back"
+    ]
 
 
 async def create_expert_feedback(*, db: AsyncSession, user: User, run_id: str, feedback: dict[str, Any]):
+    from equipment_deep_research.expert_feedback import normalize_feedback, process_feedback_memory
+
     run = await _require_run(db, user=user, run_id=run_id, mutation=True)
     comment = str(feedback.get("comment") or "").strip()
     if not comment:
         raise HTTPException(status_code=422, detail="反馈意见不能为空")
     payload = dict(feedback)
     payload["comment"] = comment
+    capability_id = str(payload.get("capability_id") or "").strip()
+    version_id = str(payload.get("capability_version_id") or "").strip()
+    hypothesis_id = str(payload.get("hypothesis_id") or "").strip()
+    if capability_id or version_id or hypothesis_id:
+        versions = (await list_capability_versions_for_run(db=db, user=user, run_id=run.id))["versions"]
+        matches = [
+            row
+            for row in versions
+            if (not version_id or str(row.get("version_id") or row.get("id") or "") == version_id)
+            and (not capability_id or capability_id in {str(row.get("id") or ""), str(row.get("capability_id") or "")})
+            and (not hypothesis_id or str(row.get("hypothesis_id") or "") == hypothesis_id)
+        ]
+        if not matches:
+            raise HTTPException(status_code=422, detail="反馈画像或版本不属于当前任务")
+        card = matches[0]
+        snapshot = dict(card)
+        payload.update(
+            {
+                "capability_id": str(snapshot.get("capability_id") or snapshot.get("id") or ""),
+                "capability_version_id": str(snapshot.get("version_id") or snapshot.get("id") or ""),
+                "capability_version_no": snapshot.get("version_no") or 1,
+                "capability_name": str(snapshot.get("name") or payload.get("capability_name") or ""),
+                "hypothesis_id": str(snapshot.get("hypothesis_id") or ""),
+                "model_dimension_scores": snapshot.get("s5_dimension_scores") or {},
+            }
+        )
+    try:
+        memory = process_feedback_memory(
+            normalize_feedback(
+                run_id=run.id,
+                capability_id=str(payload.get("capability_id") or ""),
+                capability_name=str(payload.get("capability_name") or "本任务整体能力画像"),
+                hypothesis_id=str(payload.get("hypothesis_id") or ""),
+                comment=comment,
+                verdict=str(payload.get("verdict") or "needs_revision"),
+                rating=payload.get("rating"),
+                dimensions=payload.get("dimensions"),
+                target_agent_ids=payload.get("target_agent_ids"),
+                stage_scope=payload.get("stage_scope"),
+                reviewer_name=str(getattr(user, "username", None) or user.uid),
+                reviewer_role=str(payload.get("reviewer_role") or "expert"),
+                project_id=run.project_id,
+                workspace_id=str(run.owner_uid),
+                route=run.research_route,
+                model_dimension_scores=payload.get("model_dimension_scores"),
+                expert_dimension_scores=payload.get("expert_dimension_scores"),
+            )
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    payload.update(memory)
+    payload["reviewer_uid"] = str(user.uid)
     allowed_score_dimensions = {
         "innovation",
         "demand",
@@ -1314,6 +1472,7 @@ async def create_expert_feedback(*, db: AsyncSession, user: User, run_id: str, f
         run_id=run.id,
         feedback=payload,
     )
+    payload["feedback_id"] = item.id
     await EquipmentResearchRepository(db).add_expert_feedback(item)
     await audit_superadmin_personal_resource_write(
         db,
@@ -1336,6 +1495,10 @@ async def rollback_expert_feedback(*, db: AsyncSession, user: User, run_id: str,
         raise HTTPException(status_code=404, detail="专家反馈不存在")
     payload = dict(item.feedback or {})
     payload["status"] = "rolled_back"
+    payload["learning_status"] = "rolled_back"
+    payload["memory_status"] = "retired"
+    payload["rolled_back_at"] = format_utc_datetime(utc_now_naive())
+    payload["rolled_back_by"] = str(user.uid)
     payload["rollback_reason"] = str(reason or "").strip()
     item.feedback = payload
     await audit_superadmin_personal_resource_write(
@@ -2751,7 +2914,7 @@ async def submit_query_generation(
     *,
     db: AsyncSession,
     user: User,
-    project_id: str,
+    project_id: str | None = None,
     topic: str,
     supplemental_information: str = "",
     reference_urls: list[str] | None = None,
@@ -2763,7 +2926,7 @@ async def submit_query_generation(
 ) -> dict[str, Any]:
     if not topic.strip():
         raise HTTPException(status_code=422, detail="生成主题不能为空")
-    project = await _require_project(db, user=user, project_id=project_id)
+    project = await _equipment_project(db, user=user, project_id=project_id)
     from equipment_deep_research.query_library.quality import sanitize_reference_urls
 
     try:
@@ -2809,7 +2972,7 @@ async def submit_query_generation(
     )
     generation = EquipmentQueryGeneration(
         id=generation_id,
-        project_id=project_id,
+        project_id=project.id,
         owner_uid=str(project.uid),
         topic=topic.strip()[:500],
         status="queued",
@@ -2903,7 +3066,7 @@ async def cancel_query_generation(*, db: AsyncSession, user: User, generation_id
         user=user,
         generation_id=generation_id,
         mutation=True,
-        lock=True,
+        lock=False,
     )
     if job.status in {"completed", "failed", "cancelled"}:
         if job.status == "cancelled":
@@ -2919,6 +3082,9 @@ async def cancel_query_generation(*, db: AsyncSession, user: User, generation_id
     )
     if task is not None:
         await tasker.cancel_task(task.id)
+    job = await EquipmentResearchRepository(db).lock_generation(generation_id)
+    if job.status == "completed":
+        return job.to_dict()
     payload = dict(job.payload or {})
     payload["stage"] = "cancelled"
     payload["error"] = ""
@@ -2954,7 +3120,6 @@ async def retry_query_generation(*, db: AsyncSession, user: User, generation_id:
         {
             "stage": "queued",
             "error": "",
-            "query_ids": [],
             "attempts": int(payload.get("attempts") or 0) + 1,
         }
     )
@@ -3033,7 +3198,7 @@ async def create_deep_session(
     *,
     db: AsyncSession,
     user: User,
-    project_id: str,
+    project_id: str | None = None,
     title: str = "",
     topic: str = "",
     focus: str = "",
@@ -3052,7 +3217,8 @@ async def create_deep_session(
     capability_sections: list[dict[str, Any]] | None = None,
     reference_weapons: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    project = await _require_project(db, user=user, project_id=project_id)
+    project = await _equipment_project(db, user=user, project_id=project_id)
+    project_id = project.id
     execution_user = await _deep_execution_user(db, actor=user, owner_uid=str(project.uid))
     try:
         runtime = await _resolve_requested_model(db, model_spec)
@@ -3074,8 +3240,8 @@ async def create_deep_session(
     )
     if run_id:
         run = await _require_run(db, user=user, run_id=run_id, mutation=True)
-        if str(run.project_id) != str(project.id) or str(run.owner_uid) != str(project.uid):
-            raise HTTPException(status_code=422, detail="研究任务不属于所选项目")
+        if str(run.owner_uid) != str(project.uid) and not has_global_business_access(user):
+            raise HTTPException(status_code=422, detail="研究任务与深研工作台不属于同一用户")
         resolved_run_id = run.id
         topic = topic or run.topic
         run_payload = dict(getattr(run, "payload", None) or {})

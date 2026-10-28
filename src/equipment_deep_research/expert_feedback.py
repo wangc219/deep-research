@@ -22,11 +22,11 @@ RUN_FEEDBACK_FILENAME = "expert_feedback.json"
 KNOWLEDGE_FEEDBACK_FILENAME = "expert-review-feedback.json"
 ALL_AGENT_IDS = ("S1", "S2", "S3", "S4", "S5", "S6")
 S5_SCORE_WEIGHTS = {
-    "innovation": 0.30,
-    "demand": 0.30,
-    "feasibility": 0.20,
-    "effectiveness": 0.10,
-    "development": 0.10,
+    "innovation": 0.45,
+    "demand": 0.15,
+    "feasibility": 0.10,
+    "effectiveness": 0.25,
+    "development": 0.05,
 }
 MEMORY_PROCESSOR_AGENT_ID = "expert_feedback_memory"
 MAX_MEMORY_ITEMS = 8

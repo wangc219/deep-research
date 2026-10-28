@@ -99,7 +99,6 @@ def test_workspace_root_rejects_symlink_root(tmp_path: Path, monkeypatch) -> Non
     ("filename", "content"),
     [
         ("bad.txt", b"\xff\xfe\x00"),
-        ("sheet.xlsx", b"PK\x03\x04excel"),
     ],
 )
 @pytest.mark.asyncio
@@ -152,7 +151,7 @@ async def test_read_workspace_file_content_returns_pdf_preview_for_office_file(
 
 
 @pytest.mark.asyncio
-async def test_read_workspace_file_content_rejects_xlsx_preview(
+async def test_read_workspace_file_content_reports_invalid_xlsx_conversion(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -162,11 +161,19 @@ async def test_read_workspace_file_content_rejects_xlsx_preview(
     target = root / "sheet.xlsx"
     target.write_bytes(b"PK\x03\x04excel")
 
-    result = await svc.read_workspace_file_content(path="/sheet.xlsx", current_user=user)
+    async def invalid_office(filename, content):
+        assert filename == "sheet.xlsx"
+        assert content == b"PK\x03\x04excel"
+        from platform_core.utils.filepreview import OfficePreviewConversionError
 
-    assert result["content"] is None
-    assert result["preview_type"] == "unsupported"
-    assert result["supported"] is False
+        raise OfficePreviewConversionError("文件无法转换为 PDF")
+
+    monkeypatch.setenv("DEEP_RESEARCH_RUNTIME_DIR", str(tmp_path / "runtime"))
+    monkeypatch.setattr(file_preview, "convert_office_to_pdf", invalid_office)
+    with pytest.raises(HTTPException) as exc_info:
+        await svc.read_workspace_file_content(path="/sheet.xlsx", current_user=user)
+    assert exc_info.value.status_code == 400
+    assert "无法转换" in exc_info.value.detail
 
 
 @pytest.mark.parametrize(
@@ -174,6 +181,7 @@ async def test_read_workspace_file_content_rejects_xlsx_preview(
     [
         ("demo.docx", b"office"),
         ("slides.pptx", b"presentation"),
+        ("sheet.xlsx", b"spreadsheet"),
     ],
 )
 @pytest.mark.asyncio
@@ -414,6 +422,27 @@ async def test_search_workspace_files_matches_filenames(tmp_path: Path, monkeypa
 
     empty = await svc.search_workspace_files(query="   ", current_user=_user())
     assert empty["entries"] == []
+
+
+@pytest.mark.asyncio
+async def test_search_workspace_files_matches_directories(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("DEEP_RESEARCH_USER_DATA_DIR", str(tmp_path / "threads"))
+    root = _workspace_root(_user())
+    (root / "sidebar-project-qa-20261015").mkdir(parents=True, exist_ok=True)
+    (root / "sidebar-project-qa-20261015" / "report.md").write_text("报告", encoding="utf-8")
+
+    response = await svc.search_workspace_files(query="sidebar", current_user=_user())
+
+    assert response["entries"] == [
+        {
+            "name": "sidebar-project-qa-20261015",
+            "path": "/sidebar-project-qa-20261015/",
+            "virtual_path": "/home/gem/user-data/sidebar-project-qa-20261015/",
+            "is_dir": True,
+            "size": 0,
+            "modified_at": response["entries"][0]["modified_at"],
+        }
+    ]
 
 
 def test_workspace_entry_preserves_v071_virtual_path_contract() -> None:

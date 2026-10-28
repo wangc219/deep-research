@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
+from unicodedata import normalize
 
 from platform_core.knowledge.graphs.graph_utils import normalize_entity_name
 
@@ -25,6 +26,9 @@ class GraphExtractor(ABC):
 
     def validate_options(self) -> None:
         return None
+
+    async def aclose(self) -> None:
+        """构建结束后释放抽取器资源。"""
 
 
 # 与 knowledge_graph_entities / knowledge_graph_triples 的列长度对齐（见 storage/postgres/models_knowledge.py，
@@ -185,6 +189,31 @@ def normalize_extraction_result(
         "relations": governed_relations,
         "metadata": metadata,
     }
+
+
+def verify_extraction_evidence(result: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """核对事实引用；未匹配的关系保留为待复核推断，不冒充事实。"""
+    source = "".join(normalize("NFKC", source_text).split())
+    verified = 0
+    reclassified = 0
+    for relation in result["relations"]:
+        if relation["claim_level"] != "Fact":
+            continue
+        quote = "".join(normalize("NFKC", relation["evidence_quote"]).split())
+        if quote and quote in source:
+            verified += 1
+            continue
+        relation["claim_level"] = "Inference"
+        relation["confidence"] = min(relation["confidence"], 0.5)
+        relation["expert_review_required"] = True
+        uncertainty = relation["uncertainty"]
+        relation["uncertainty"] = f"{uncertainty}；原文引用未匹配当前分块，需复核".lstrip("；")
+        reclassified += 1
+    result["metadata"]["evidence_verification"] = {
+        "verified_facts": verified,
+        "reclassified_facts": reclassified,
+    }
+    return result
 
 
 def _normalize_relation_endpoint(

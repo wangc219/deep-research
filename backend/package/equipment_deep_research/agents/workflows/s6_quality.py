@@ -33,13 +33,7 @@ def _sync_legacy_globals() -> None:
         finally:
             _legacy_syncing = False
     if _legacy is not None:
-        globals().update(
-            {
-                name: value
-                for name, value in vars(_legacy).items()
-                if not name.startswith("__")
-            }
-        )
+        globals().update({name: value for name, value in vars(_legacy).items() if not name.startswith("__")})
 
 
 def _clip_complete_report_phrase(text: str, maximum: int) -> str:
@@ -103,22 +97,14 @@ def _equipment_semantic_assessment(
     raw = direction.get("equipment_semantic_assessment", {})
     assessment = dict(raw) if isinstance(raw, Mapping) else {}
     classification = (
-        str(
-            assessment.get("classification")
-            or direction.get("equipment_classification")
-            or ""
-        )
-        .strip()
-        .lower()
+        str(assessment.get("classification") or direction.get("equipment_classification") or "").strip().lower()
     )
     if classification in _S6_EQUIPMENT_CLASSIFICATIONS:
         assessment["classification"] = classification
     else:
         assessment.pop("classification", None)
 
-    if "direct_combat_effect" not in assessment and isinstance(
-        direction.get("direct_combat_equipment"), bool
-    ):
+    if "direct_combat_effect" not in assessment and isinstance(direction.get("direct_combat_equipment"), bool):
         assessment["direct_combat_effect"] = direction["direct_combat_equipment"]
     if classification:
         assessment.setdefault(
@@ -155,9 +141,7 @@ def _direction_name_has_equipment_object(direction: Mapping[str, Any]) -> bool:
 
     name = str(direction.get("name", "") or "").strip()
     semantic_check = direction.get("semantic_consistency_check")
-    primary_identity = str(
-        direction.get("primary_equipment_identity", "") or ""
-    ).strip()
+    primary_identity = str(direction.get("primary_equipment_identity", "") or "").strip()
     assessment = _equipment_semantic_assessment(direction)
     return bool(
         name
@@ -172,10 +156,7 @@ def _is_ancillary_support_equipment_direction(
     direction: Mapping[str, Any],
 ) -> bool:
     assessment = _equipment_semantic_assessment(direction)
-    return bool(
-        assessment.get("support_only") is True
-        and assessment.get("ancillary_support") is True
-    )
+    return bool(assessment.get("support_only") is True and assessment.get("ancillary_support") is True)
 
 
 def _query_explicitly_requests_support_equipment(value: Any) -> bool:
@@ -189,18 +170,13 @@ def _query_explicitly_requests_support_equipment(value: Any) -> bool:
     return bool(
         brief.get("support_equipment_requested") is True
         or brief.get("allow_standalone_support_equipment") is True
-        or str(brief.get("primary_equipment_focus", "")).strip().lower()
-        == "support_equipment"
+        or str(brief.get("primary_equipment_focus", "")).strip().lower() == "support_equipment"
     )
 
 
 def _weapon_equipment_identity(direction: Mapping[str, Any]) -> str:
     package = direction.get("upgrade_package", [])
-    package_text = (
-        " ".join(str(item) for item in package)
-        if isinstance(package, list)
-        else str(package)
-    )
+    package_text = " ".join(str(item) for item in package) if isinstance(package, list) else str(package)
     return " ".join(
         (
             str(direction.get("name", "")),
@@ -269,9 +245,7 @@ def _s6_title_requires_structural_repair(
     """Require a non-empty title and a passed structured identity contract."""
 
     normalized = _dedupe_capability_title(title)
-    return not normalized or not _direction_name_has_equipment_object(
-        {**direction, "name": normalized}
-    )
+    return not normalized or not _direction_name_has_equipment_object({**direction, "name": normalized})
 
 
 def _capability_title_equipment_anchor(value: Any) -> str:
@@ -387,15 +361,9 @@ def _normalize_effect_chain_references(
     if effect_chain_count <= 0:
         return value
     if isinstance(value, Mapping):
-        return {
-            str(key): _normalize_effect_chain_references(item, effect_chain_count)
-            for key, item in value.items()
-        }
+        return {str(key): _normalize_effect_chain_references(item, effect_chain_count) for key, item in value.items()}
     if isinstance(value, list):
-        return [
-            _normalize_effect_chain_references(item, effect_chain_count)
-            for item in value
-        ]
+        return [_normalize_effect_chain_references(item, effect_chain_count) for item in value]
     if not isinstance(value, str):
         return value
 
@@ -441,10 +409,7 @@ def _normalize_priority_references(value: Any, maximum: int) -> Any:
     if maximum <= 0:
         return value
     if isinstance(value, Mapping):
-        return {
-            str(key): _normalize_priority_references(item, maximum)
-            for key, item in value.items()
-        }
+        return {str(key): _normalize_priority_references(item, maximum) for key, item in value.items()}
     if isinstance(value, list):
         return [_normalize_priority_references(item, maximum) for item in value]
     if not isinstance(value, str):
@@ -487,10 +452,7 @@ def _compact_s6_prior_outputs(value: Mapping[str, Any]) -> dict[str, Any]:
         rows = value.get(key, [])
         if not isinstance(rows, list):
             return []
-        return [
-            _compact_prompt_value(item, max_string_chars=chars, max_list_items=8)
-            for item in rows[:limit]
-        ]
+        return [_compact_prompt_value(item, max_string_chars=chars, max_list_items=8) for item in rows[:limit]]
 
     def object_rows(
         key: str,
@@ -605,10 +567,7 @@ def _query_relevance_issues(
     if assessment.get("query_alignment_confirmed") is False:
         return [f"S6第{position}项结构化Query关联合同未通过"]
     semantic_check = direction.get("semantic_consistency_check", {})
-    if (
-        isinstance(semantic_check, Mapping)
-        and semantic_check.get("consistent") is False
-    ):
+    if isinstance(semantic_check, Mapping) and semantic_check.get("consistent") is False:
         return [f"S6第{position}项结构化语义一致性合同未通过"]
     return []
 
@@ -630,9 +589,7 @@ def _clean_capability_handoff_text(value: Any, *, limit: int | None = 360) -> st
 
     text = " ".join(str(value or "").replace("\n", " ").split())
     text = _CAPABILITY_HANDOFF_INTERNAL_PATTERN.sub("", text)
-    text = re.sub(
-        r"(?:packet|claim|reasoning|trace)-[A-Za-z0-9_.:-]+", "", text, flags=re.I
-    )
+    text = re.sub(r"(?:packet|claim|reasoning|trace)-[A-Za-z0-9_.:-]+", "", text, flags=re.I)
     text = re.sub(r"\s{2,}", " ", text).strip(" ；,，")
     return text if limit is None else _truncate_complete_text(text, limit=limit)
 
@@ -661,14 +618,10 @@ def _capability_handoff_statement(value: Any, *, limit: int = 360) -> str:
             for field in preferred
             if value.get(field) not in (None, "", [], {})
         ]
-        return _clean_capability_handoff_text(
-            "；".join(dict.fromkeys(parts)), limit=limit
-        )
+        return _clean_capability_handoff_text("；".join(dict.fromkeys(parts)), limit=limit)
     if isinstance(value, list):
         parts = [_capability_handoff_statement(item, limit=180) for item in value[:3]]
-        return _clean_capability_handoff_text(
-            "；".join(filter(None, parts)), limit=limit
-        )
+        return _clean_capability_handoff_text("；".join(filter(None, parts)), limit=limit)
     return _clean_capability_handoff_text(value, limit=limit)
 
 
@@ -756,16 +709,10 @@ def _capability_synthesis_handoff(
         if not isinstance(item, Mapping):
             continue
         row = {
-            "capability": _clean_capability_handoff_text(
-                item.get("capability"), limit=100
-            ),
+            "capability": _clean_capability_handoff_text(item.get("capability"), limit=100),
             "grade": _clean_capability_handoff_text(item.get("grade"), limit=40),
-            "gap": _clean_capability_handoff_text(
-                item.get("gap_statement") or item.get("basis"), limit=260
-            ),
-            "verification": _clean_capability_handoff_text(
-                item.get("verification"), limit=160
-            ),
+            "gap": _clean_capability_handoff_text(item.get("gap_statement") or item.get("basis"), limit=260),
+            "verification": _clean_capability_handoff_text(item.get("verification"), limit=160),
             "evidence_refs": [str(ref) for ref in item.get("evidence_refs", [])[:4]],
         }
         gaps.append({key: value for key, value in row.items() if value not in ("", [])})
@@ -776,14 +723,10 @@ def _capability_synthesis_handoff(
         {
             "effect_chain": prior_step_outputs.get("effect_chain", []),
             "gap_assessment": prior_step_outputs.get("gap_assessment", []),
-            "s4_concept_directions": prior_step_outputs.get(
-                "s4_concept_directions", []
-            ),
+            "s4_concept_directions": prior_step_outputs.get("s4_concept_directions", []),
         }
     )
-    raw_evidence_rows = [
-        dict(item) for item in evidence_index if isinstance(item, Mapping)
-    ]
+    raw_evidence_rows = [dict(item) for item in evidence_index if isinstance(item, Mapping)]
     direct_weapon_rows = [
         item
         for item in raw_evidence_rows
@@ -800,11 +743,7 @@ def _capability_synthesis_handoff(
     if len(evidence_rows) < 14:
         evidence_rows.extend(
             _prioritized_evidence_index(
-                [
-                    item
-                    for item in raw_evidence_rows
-                    if str(item.get("evidence_id", "")) not in selected_evidence_ids
-                ],
+                [item for item in raw_evidence_rows if str(item.get("evidence_id", "")) not in selected_evidence_ids],
                 preferred_ids=preferred_ids,
                 allowed_agents=set(),
                 limit=14 - len(evidence_rows),
@@ -814,9 +753,7 @@ def _capability_synthesis_handoff(
     for item in evidence_rows:
         row = {
             "evidence_id": str(item.get("evidence_id", "")),
-            "title": _clean_capability_handoff_text(
-                item.get("source_title"), limit=120
-            ),
+            "title": _clean_capability_handoff_text(item.get("source_title"), limit=120),
             "url": str(item.get("source_url", "")).strip(),
             "claim": _clean_capability_handoff_text(item.get("claim"), limit=220),
             "excerpt": _clean_capability_handoff_text(item.get("excerpt"), limit=260),
@@ -839,37 +776,21 @@ def _capability_synthesis_handoff(
             row = {
                 "category": category,
                 "ready": item.get("ready") is True,
-                "query_relevance": _clean_capability_handoff_text(
-                    item.get("query_relevance"), limit=220
-                ),
-                "baseline_system": _clean_capability_handoff_text(
-                    item.get("baseline_system"), limit=180
-                ),
-                "capability_gap": _clean_capability_handoff_text(
-                    item.get("capability_gap"), limit=220
-                ),
-                "candidate_equipment": _clean_capability_handoff_text(
-                    item.get("candidate_equipment"), limit=160
-                ),
-                "evidence_refs": [
-                    str(ref) for ref in item.get("evidence_refs", [])[:4]
-                ],
-                "blocking_reason": _clean_capability_handoff_text(
-                    item.get("blocking_reason"), limit=180
-                ),
+                "query_relevance": _clean_capability_handoff_text(item.get("query_relevance"), limit=220),
+                "baseline_system": _clean_capability_handoff_text(item.get("baseline_system"), limit=180),
+                "capability_gap": _clean_capability_handoff_text(item.get("capability_gap"), limit=220),
+                "candidate_equipment": _clean_capability_handoff_text(item.get("candidate_equipment"), limit=160),
+                "evidence_refs": [str(ref) for ref in item.get("evidence_refs", [])[:4]],
+                "blocking_reason": _clean_capability_handoff_text(item.get("blocking_reason"), limit=180),
             }
-            preflight_rows.append(
-                {key: value for key, value in row.items() if value not in ("", [])}
-            )
+            preflight_rows.append({key: value for key, value in row.items() if value not in ("", [])})
 
     dynamic_swarm = prior_step_outputs.get("winning_swarm", {})
     dynamic_swarm = dynamic_swarm if isinstance(dynamic_swarm, Mapping) else {}
     dynamic_policy = dynamic_swarm.get("policy", {})
     dynamic_policy = dynamic_policy if isinstance(dynamic_policy, Mapping) else {}
     hypothesis_ledger = dynamic_swarm.get("hypothesis_ledger", {})
-    hypothesis_ledger = (
-        hypothesis_ledger if isinstance(hypothesis_ledger, Mapping) else {}
-    )
+    hypothesis_ledger = hypothesis_ledger if isinstance(hypothesis_ledger, Mapping) else {}
     source_titles_by_id = {
         str(item.get("hypothesis_id", "")): str(item.get("title", "")).strip()
         for item in hypothesis_ledger.get("hypotheses", [])
@@ -891,10 +812,7 @@ def _capability_synthesis_handoff(
         for item in raw_selected_portfolio:
             if (
                 not isinstance(item, Mapping)
-                or (
-                    item.get("direct_combat_equipment") is False
-                    and domain_contract["requires_direct_combat_weapon"]
-                )
+                or (item.get("direct_combat_equipment") is False and domain_contract["requires_direct_combat_weapon"])
                 or not str(item.get("name") or item.get("equipment_form") or "").strip()
             ):
                 continue
@@ -963,9 +881,7 @@ def _capability_synthesis_handoff(
                         limit=None,
                     )
                     if field == "evidence_boundary" and (
-                        _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(
-                            str(raw_value or "")
-                        )
+                        _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(str(raw_value or ""))
                         or not _evidence_boundary_is_public_semantic(cleaned_value)
                     ):
                         # This is optional traceability context.  Dropping a
@@ -1004,9 +920,7 @@ def _capability_synthesis_handoff(
             else {}
         ),
         "branch": str(branch),
-        "decisive_task_chain_breaks": statements(
-            "effect_chain", "winning_paths", limit=2
-        ),
+        "decisive_task_chain_breaks": statements("effect_chain", "winning_paths", limit=2),
         "opponent_adaptation_and_failure_pressure": statements(
             "defense_decomposition",
             "operational_review",
@@ -1084,11 +998,7 @@ def _s6_card_is_reusable(direction: Mapping[str, Any]) -> bool:
         portrait_modules = dict(portrait_modules)
     process = direction.get("operational_process", [])
     consistency = direction.get("semantic_consistency_check", {})
-    consistent = (
-        consistency.get("consistent") is True
-        if isinstance(consistency, Mapping)
-        else False
-    )
+    consistent = consistency.get("consistent") is True if isinstance(consistency, Mapping) else False
     return bool(
         str(direction.get("name", "")).strip()
         and direction.get("s6_authoring_status")
@@ -1135,19 +1045,13 @@ def _s6_first_pass_quality_contract(
     )
     preflight_issues: list[str] = []
     relevant_preflights: list[tuple[str, dict[str, Any]]] = [
-        (str(item.get("category", "query专属装备")), dict(item))
-        for item in preflight_rows
-        if item.get("ready") is True
+        (str(item.get("category", "query专属装备")), dict(item)) for item in preflight_rows if item.get("ready") is True
     ][:5]
     if not relevant_preflights:
-        preflight_issues.append(
-            "前置S3-S5尚未形成任何与query直接对应的具体打击杀伤武器候选、对象证据和军事效果闭环"
-        )
+        preflight_issues.append("前置S3-S5尚未形成任何与query直接对应的具体打击杀伤武器候选、对象证据和军事效果闭环")
     for label, row in relevant_preflights:
         if row.get("ready") is not True:
-            preflight_issues.append(
-                f"{label}前置装备桶尚未ready，首次S6必须从query和公开证据补齐因果映射"
-            )
+            preflight_issues.append(f"{label}前置装备桶尚未ready，首次S6必须从query和公开证据补齐因果映射")
         missing = [
             field
             for field in (
@@ -1172,16 +1076,12 @@ def _s6_first_pass_quality_contract(
             if isinstance(handoff.get("structured_query_brief", {}), Mapping)
             else {}
         ),
-        "query_led_combat_equipment_themes": (
-            _query_led_combat_equipment_theme_contract()
-        ),
+        "query_led_combat_equipment_themes": (_query_led_combat_equipment_theme_contract()),
         "query_combat_equipment_divergence_brief": (
             _query_combat_equipment_divergence_brief(
                 topic,
                 structured_query_brief=(
-                    handoff.get("structured_query_brief", {})
-                    if isinstance(handoff, Mapping)
-                    else {}
+                    handoff.get("structured_query_brief", {}) if isinstance(handoff, Mapping) else {}
                 ),
             )
         ),
@@ -1208,21 +1108,13 @@ def _s6_first_pass_quality_contract(
                 "query_specific_direct_weapon_families",
                 "query_led_OTHER_architectures_compete_without_reserved_slot",
             ],
-            "missile_and_unmanned_must_be_separate_cards": (
-                "only_when_both_are_query_aligned_and_selected"
-            ),
+            "missile_and_unmanned_must_be_separate_cards": ("only_when_both_are_query_aligned_and_selected"),
             "direct_weapon_portfolio_rule": (
                 "具体打击、歼灭、杀伤或反杀伤武器必须构成组合主体；动态蜂群按6项组合交付，但不设置固定武器类别配额"
             ),
-            "maximum_standalone_support_directions": (
-                "由S5模型依据结构化Query语义决定，不由本地Query字符串分类"
-            ),
-            "type_rule": (
-                "升级或新研由query差距和对象证据决定，不为覆盖类型机械各生成一项"
-            ),
-            "named_public_equipment_anchor_rule": (
-                "具名时逐卡引用对象证据，不按固定数量配额"
-            ),
+            "maximum_standalone_support_directions": ("由S5模型依据结构化Query语义决定，不由本地Query字符串分类"),
+            "type_rule": ("升级或新研由query差距和对象证据决定，不为覆盖类型机械各生成一项"),
+            "named_public_equipment_anchor_rule": ("具名时逐卡引用对象证据，不按固定数量配额"),
             "each_card_one_primary_equipment_family": True,
             "per_card_confidence_must_reflect_evidence_and_inference_span": True,
             "support_mission_exclusion": (
@@ -1234,15 +1126,11 @@ def _s6_first_pass_quality_contract(
         "query_specific_preflight_directions": preflight_rows,
         "disruptive_dimension_use": {
             "internal_query_causal_lenses": "2..3",
-            "relationship_diversity_policy": (
-                "由前置Codex发散提升，不作为固定数量后置阻断门"
-            ),
+            "relationship_diversity_policy": ("由前置Codex发散提升，不作为固定数量后置阻断门"),
             "do_not_publish_methodology_checklist": True,
             "seed_is_not_title_or_evidence": True,
             "final_direction_must_name_concrete_equipment": True,
-            "rule": (
-                "只保留与query任务对象、作战阶段和证据直接相关的镜头；不得为了覆盖维度生成无关方向。"
-            ),
+            "rule": ("只保留与query任务对象、作战阶段和证据直接相关的镜头；不得为了覆盖维度生成无关方向。"),
         },
         "per_card_submission_check": [
             "标题由S3提出、S4装备化收敛并由S5冻结；S6必须逐字继承，不得清理、压缩、扩写、同义替换、换装或由公开基线反向改名",
@@ -1291,11 +1179,7 @@ def _capability_text_similarity(left: str, right: str) -> float:
 def _capability_primary_equipment_family(direction: Mapping[str, Any]) -> str:
     """Return only an explicit model-governed semantic identity."""
 
-    return str(
-        direction.get("equipment_semantic_identity")
-        or direction.get("hypothesis_id")
-        or ""
-    ).strip()
+    return str(direction.get("equipment_semantic_identity") or direction.get("hypothesis_id") or "").strip()
 
 
 def _s6_primary_equipment_object_kind(value: Any) -> str:
@@ -1383,34 +1267,26 @@ def _build_direction_capability_portrait(
     return build_agent_led_capability_portrait(
         name=direction.get("name"),
         scenario=direction.get("target_scenario") or topic or "典型作战场景",
-        problem=direction.get("capability_gap")
-        or direction.get("problem_statement")
-        or source,
+        problem=direction.get("capability_gap") or direction.get("problem_statement") or source,
         principle=direction.get("scientific_principle")
         or direction.get("novelty")
         or direction.get("operational_mechanism"),
         technologies=direction.get("enabling_technologies")
         or direction.get("upgrade_package")
         or direction.get("equipment_form"),
-        operational_concept=direction.get("operational_concept")
-        or direction.get("operational_mechanism"),
-        operational_steps=direction.get("operational_process")
-        or direction.get("strike_chain_contribution"),
-        capability=direction.get("capability_outcome")
-        or direction.get("function")
-        or direction.get("equipment_form"),
+        operational_concept=direction.get("operational_concept") or direction.get("operational_mechanism"),
+        operational_steps=direction.get("operational_process") or direction.get("strike_chain_contribution"),
+        capability=direction.get("capability_outcome") or direction.get("function") or direction.get("equipment_form"),
         effect=direction.get("military_value")
         or direction.get("combat_effect_uplift")
         or direction.get("strike_countermeasure_value"),
         winning_mechanism=direction.get("winning_mechanism")
         or direction.get("novelty")
         or direction.get("operational_mechanism"),
-        equipment_form=direction.get("equipment_form")
-        or direction.get("equipment_category"),
+        equipment_form=direction.get("equipment_form") or direction.get("equipment_category"),
         baseline=direction.get("baseline_system") or direction.get("equipment_form"),
         development_path=direction.get("development_path"),
-        verification_plan=direction.get("verification")
-        or direction.get("feasibility_basis"),
+        verification_plan=direction.get("verification") or direction.get("feasibility_basis"),
     )
 
 
@@ -1543,9 +1419,7 @@ def _normalize_s6_deterministic_format(
                 direction["capability_gap"] = inherited_gap
         equipment_form_text = str(direction.get("equipment_form", "")).strip()
         if equipment_form_text:
-            direction["equipment_form"] = _equipment_form_identity_text(
-                equipment_form_text
-            )
+            direction["equipment_form"] = _equipment_form_identity_text(equipment_form_text)
         # Equipment naming is owned by the query-aware S3/S5 Codex Agents.
         # Normalization preserves their semantic decision and performs only
         # whitespace/repetition cleanup; it never promotes equipment_form,
@@ -1569,11 +1443,7 @@ def _normalize_s6_deterministic_format(
             direction_confidence = portfolio_confidence
         confidence, confidence_components = calibrate_capability_confidence(
             direction,
-            prior=(
-                direction_confidence
-                if 0.0 <= direction_confidence <= 1.0
-                else portfolio_confidence
-            ),
+            prior=(direction_confidence if 0.0 <= direction_confidence <= 1.0 else portfolio_confidence),
         )
         direction["confidence"] = confidence
         direction["confidence_components"] = confidence_components
@@ -1584,8 +1454,7 @@ def _normalize_s6_deterministic_format(
         directions.append(direction)
 
     names_before_uniquify = [
-        str(direction.get("name", "")).strip() if isinstance(direction, Mapping) else ""
-        for direction in directions
+        str(direction.get("name", "")).strip() if isinstance(direction, Mapping) else "" for direction in directions
     ]
     unique_directions = _uniquify_compacted_capability_titles(directions)
     for position, unique_direction in enumerate(unique_directions, start=1):
@@ -1596,10 +1465,7 @@ def _normalize_s6_deterministic_format(
         # single-munition finite-area search versus salvo coordination), rebuild
         # once with that final identity so the portrait is as distinct as the
         # name and remains independently testable.
-        title_changed = (
-            str(unique_direction.get("name", "")).strip()
-            != names_before_uniquify[position - 1]
-        )
+        title_changed = str(unique_direction.get("name", "")).strip() != names_before_uniquify[position - 1]
         # A deterministic title cleanup must not trigger a second semantic
         # authoring path.  The Codex-authored card remains authoritative; any
         # substantive identity conflict is handled by its structured semantic
@@ -1617,10 +1483,7 @@ def _equipment_form_identity_text(value: Any) -> str:
 
 
 def _direction_is_defensive_only(direction: Mapping[str, Any]) -> bool:
-    return (
-        bool(direction.get("defensive_only"))
-        or str(direction.get("combat_posture", "")).strip() == "defensive_only"
-    )
+    return bool(direction.get("defensive_only")) or str(direction.get("combat_posture", "")).strip() == "defensive_only"
 
 
 def _s6_frontier_evidence_allowance(direction: Mapping[str, Any]) -> bool:
@@ -1628,9 +1491,7 @@ def _s6_frontier_evidence_allowance(direction: Mapping[str, Any]) -> bool:
 
     status = str(direction.get("foresight_evidence_status", "")).strip()
     refs = direction.get("direct_evidence_refs", [])
-    has_traceable_evidence = isinstance(refs, list) and any(
-        str(item).strip() for item in refs
-    )
+    has_traceable_evidence = isinstance(refs, list) and any(str(item).strip() for item in refs)
     return bool(
         str(direction.get("type", "")).strip() == "new_capability"
         and status in {"analogous_project_evidence", "component_mechanism_evidence"}
@@ -1681,9 +1542,7 @@ def _prepare_pre_s6_card_contract(
     else:
         card.pop("evidence_boundary", None)
         evidence_boundary_status = (
-            "omitted_internal_or_non_epistemic_boundary"
-            if raw_evidence_boundary
-            else "omitted_not_supplied"
+            "omitted_internal_or_non_epistemic_boundary" if raw_evidence_boundary else "omitted_not_supplied"
         )
 
     def first_text(*fields: str, fallback: str = "") -> str:
@@ -1726,28 +1585,20 @@ def _prepare_pre_s6_card_contract(
     del query, name
 
     identity_contract = card.get("portfolio_identity_contract", {})
-    identity_contract = (
-        dict(identity_contract) if isinstance(identity_contract, Mapping) else {}
-    )
+    identity_contract = dict(identity_contract) if isinstance(identity_contract, Mapping) else {}
     existing_quality_contract = identity_contract.get("pre_s6_quality_contract", {})
     existing_quality_contract = (
-        dict(existing_quality_contract)
-        if isinstance(existing_quality_contract, Mapping)
-        else {}
+        dict(existing_quality_contract) if isinstance(existing_quality_contract, Mapping) else {}
     )
     capability_classification = card.get("capability_classification", {})
     capability_classification = (
-        dict(capability_classification)
-        if isinstance(capability_classification, Mapping)
-        else {}
+        dict(capability_classification) if isinstance(capability_classification, Mapping) else {}
     )
     identity_contract["pre_s6_quality_contract"] = {
         "indicator_portrait": str(card.get("indicator_portrait", "") or "").strip(),
         "query_relevance": str(card.get("query_relevance", "") or "").strip(),
         "capability_classification": capability_classification,
-        "equipment_semantic_assessment": dict(
-            card.get("equipment_semantic_assessment", {})
-        )
+        "equipment_semantic_assessment": dict(card.get("equipment_semantic_assessment", {}))
         if isinstance(card.get("equipment_semantic_assessment", {}), Mapping)
         else {},
         "evidence_boundary_status": evidence_boundary_status,
@@ -1778,9 +1629,7 @@ def _capability_direction_quality_issues(
     if not directions:
         return ["S6必须形成至少一项结构化装备方向"]
 
-    semantic_contract_required = bool(
-        handoff and "equipment_portfolio_preflight" in handoff
-    )
+    semantic_contract_required = bool(handoff and "equipment_portfolio_preflight" in handoff)
     hypothesis_ids: list[str] = []
     direction_names: list[str] = []
     for position, direction in enumerate(directions, start=1):
@@ -1797,11 +1646,7 @@ def _capability_direction_quality_issues(
         ]
         if semantic_contract_required:
             required.extend(("hypothesis_id", "target_and_direct_effect"))
-        missing = [
-            field
-            for field in required
-            if not str(direction.get(field, "") or "").strip()
-        ]
+        missing = [field for field in required if not str(direction.get(field, "") or "").strip()]
         if missing:
             issues.append(f"S6第{position}项缺少{','.join(missing)}")
 
@@ -1813,9 +1658,7 @@ def _capability_direction_quality_issues(
             direction_names.append(name)
 
         process = direction.get("operational_process", [])
-        if not isinstance(process, list) or not any(
-            str(item).strip() for item in process
-        ):
+        if not isinstance(process, list) or not any(str(item).strip() for item in process):
             issues.append(f"S6第{position}项operational_process缺失")
 
         classification = direction.get("capability_classification", {})
@@ -1838,23 +1681,17 @@ def _capability_direction_quality_issues(
         )
         if semantic_contract_required:
             missing_flags = [
-                field
-                for field in required_assessment_flags
-                if not isinstance(assessment.get(field), bool)
+                field for field in required_assessment_flags if not isinstance(assessment.get(field), bool)
             ]
             if missing_flags:
-                issues.append(
-                    f"S6第{position}项模型装备语义合同缺少" + ",".join(missing_flags)
-                )
+                issues.append(f"S6第{position}项模型装备语义合同缺少" + ",".join(missing_flags))
         if assessment.get("query_alignment_confirmed") is False:
             issues.append(f"S6第{position}项模型判定与当前Query不一致")
         if assessment.get("concrete_equipment") is False:
             issues.append(f"S6第{position}项模型判定不是具体装备对象")
 
         semantic_check = direction.get("semantic_consistency_check", {})
-        if not isinstance(semantic_check, Mapping) or (
-            semantic_check.get("consistent") is not True
-        ):
+        if not isinstance(semantic_check, Mapping) or (semantic_check.get("consistent") is not True):
             issues.append(f"S6第{position}项语义一致性合同未通过")
         elif semantic_contract_required:
             missing_semantic_fields = [
@@ -1868,10 +1705,7 @@ def _capability_direction_quality_issues(
                 if not str(semantic_check.get(field, "") or "").strip()
             ]
             if missing_semantic_fields:
-                issues.append(
-                    f"S6第{position}项语义一致性合同缺少"
-                    + ",".join(missing_semantic_fields)
-                )
+                issues.append(f"S6第{position}项语义一致性合同缺少" + ",".join(missing_semantic_fields))
 
         try:
             confidence = float(direction.get("confidence"))
@@ -1883,9 +1717,7 @@ def _capability_direction_quality_issues(
         issues.extend(_capability_portrait_alignment_issues(position, direction))
         portrait_modules = direction.get("capability_portrait_modules", {})
         if not isinstance(portrait_modules, Mapping):
-            portrait_modules = parse_capability_portrait_modules(
-                direction.get("capability_portrait", "")
-            )
+            portrait_modules = parse_capability_portrait_modules(direction.get("capability_portrait", ""))
         for portrait_issue in capability_portrait_quality_issues(portrait_modules):
             issues.append(f"S6第{position}项{portrait_issue}")
         issues.extend(
@@ -1912,9 +1744,7 @@ def _capability_direction_quality_issues(
         leaked = [
             field
             for field in public_fields
-            if _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(
-                str(direction.get(field, "") or "")
-            )
+            if _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(str(direction.get(field, "") or ""))
         ]
         if leaked:
             issues.append(f"S6第{position}项{','.join(leaked[:4])}混入内部执行语言")
@@ -1926,27 +1756,16 @@ def _capability_direction_quality_issues(
                 "strike_chain_contribution",
                 "upgrade_boundary",
             )
-            upgrade_missing = [
-                field
-                for field in upgrade_required
-                if not str(direction.get(field, "") or "").strip()
-            ]
+            upgrade_missing = [field for field in upgrade_required if not str(direction.get(field, "") or "").strip()]
             package = direction.get("upgrade_package", [])
-            if (
-                not isinstance(package, list)
-                or len([item for item in package if str(item).strip()]) < 2
-            ):
+            if not isinstance(package, list) or len([item for item in package if str(item).strip()]) < 2:
                 upgrade_missing.append("upgrade_package>=2")
             if upgrade_missing:
-                issues.append(
-                    f"S6第{position}项现役升级论证缺少" + ",".join(upgrade_missing)
-                )
+                issues.append(f"S6第{position}项现役升级论证缺少" + ",".join(upgrade_missing))
 
     if len(hypothesis_ids) != len(set(hypothesis_ids)):
         issues.append("S6存在重复hypothesis_id")
-    duplicate_names = [
-        name for name, count in Counter(direction_names).items() if count > 1
-    ]
+    duplicate_names = [name for name, count in Counter(direction_names).items() if count > 1]
     if duplicate_names:
         issues.append("S6最终方向名称必须互异：" + "、".join(duplicate_names[:3]))
     return list(dict.fromkeys(issues))[:64]
@@ -1981,11 +1800,7 @@ def _s6_portrait_repair_issues(issues: Sequence[Any]) -> list[str]:
         "装备能力画像泄露内部执行标签",
     )
     return list(
-        dict.fromkeys(
-            str(issue)
-            for issue in issues
-            if any(marker in str(issue) for marker in repairable_markers)
-        )
+        dict.fromkeys(str(issue) for issue in issues if any(marker in str(issue) for marker in repairable_markers))
     )[:16]
 
 
@@ -2037,9 +1852,7 @@ def _recover_invalid_s6_result(
     for item in result.get("concept_directions", []):
         if not isinstance(item, Mapping):
             continue
-        evidence_ids.extend(
-            str(ref).strip() for ref in item.get("direct_evidence_refs", [])
-        )
+        evidence_ids.extend(str(ref).strip() for ref in item.get("direct_evidence_refs", []))
         gap = str(item.get("capability_gap", "")).strip()
         if gap:
             gap_rows.append(gap)
@@ -2051,30 +1864,16 @@ def _recover_invalid_s6_result(
         topic=topic,
         evidence_ids=list(dict.fromkeys(item for item in evidence_ids if item)),
         evidence_index=(
-            [
-                dict(item)
-                for item in handoff.get("public_evidence", [])
-                if isinstance(item, Mapping)
-            ]
-            if handoff
-            else []
+            [dict(item) for item in handoff.get("public_evidence", []) if isinstance(item, Mapping)] if handoff else []
         ),
         confidence=max(0.62, min(0.72, source_confidence or 0.62)),
         gap_basis="；".join(gap_rows)[:700],
-        candidate_directions=[
-            dict(item)
-            for item in result.get("concept_directions", [])
-            if isinstance(item, Mapping)
-        ],
+        candidate_directions=[dict(item) for item in result.get("concept_directions", []) if isinstance(item, Mapping)],
     )
     recovered = dict(result)
     recovered["concept_directions"] = directions
-    recovered["capability_image_drafts"] = [
-        str(item.get("name", "")) for item in directions
-    ]
-    recovered["capability_synthesis"] = [
-        str(item.get("name", "")) for item in directions
-    ]
+    recovered["capability_image_drafts"] = [str(item.get("name", "")) for item in directions]
+    recovered["capability_synthesis"] = [str(item.get("name", "")) for item in directions]
     recovered["confidence"] = max(0.62, source_confidence)
     recovered["deterministic_quality_recovery"] = True
     issues = _capability_direction_quality_issues(
@@ -2094,11 +1893,7 @@ def _requires_s6_combat_value_rewrite(issues: Sequence[Any]) -> bool:
 def _s6_repair_targets(result: Mapping[str, Any], issues: Sequence[Any]) -> list[int]:
     """Resolve deterministic S6 issues to the smallest card set to rewrite."""
 
-    directions = [
-        item
-        for item in result.get("concept_directions", [])
-        if isinstance(item, Mapping)
-    ]
+    directions = [item for item in result.get("concept_directions", []) if isinstance(item, Mapping)]
     targets: set[int] = set()
     issue_text = " ".join(str(item) for item in issues)
     for issue in issues:
@@ -2122,14 +1917,10 @@ def _s6_repair_targets(result: Mapping[str, Any], issues: Sequence[Any]) -> list
 
     if not targets and issues:
         targets.add(max(1, len(directions)))
-    return sorted(position for position in targets if 1 <= position <= len(directions))[
-        :8
-    ]
+    return sorted(position for position in targets if 1 <= position <= len(directions))[:8]
 
 
-def _s6_portrait_module_repair_targets(
-    result: Mapping[str, Any], issues: Sequence[Any]
-) -> dict[int, list[str]]:
+def _s6_portrait_module_repair_targets(result: Mapping[str, Any], issues: Sequence[Any]) -> dict[int, list[str]]:
     """Map purely portrait-local findings to the smallest authored modules."""
 
     label_to_key = {label: key for key, label in CAPABILITY_PORTRAIT_MODULES}
@@ -2175,16 +1966,11 @@ def _s6_portrait_module_repair_targets(
     }
 
 
-def _merge_s6_portrait_module_repairs(
-    result: Mapping[str, Any], repairs: Mapping[str, Any]
-) -> dict[str, Any]:
+def _merge_s6_portrait_module_repairs(result: Mapping[str, Any], repairs: Mapping[str, Any]) -> dict[str, Any]:
     """Merge only returned portrait modules, preserving card identity and prose."""
 
     merged = dict(result)
-    directions = [
-        dict(item) if isinstance(item, Mapping) else item
-        for item in result.get("concept_directions", [])
-    ]
+    directions = [dict(item) if isinstance(item, Mapping) else item for item in result.get("concept_directions", [])]
     for repair in repairs.get("portrait_module_repairs", []):
         if not isinstance(repair, Mapping):
             continue
@@ -2199,9 +1985,7 @@ def _merge_s6_portrait_module_repairs(
             continue
         modules = dict(current.get("capability_portrait_modules", {}))
         if len(modules) != len(CAPABILITY_PORTRAIT_MODULES):
-            modules = parse_capability_portrait_modules(
-                current.get("capability_portrait", "")
-            )
+            modules = parse_capability_portrait_modules(current.get("capability_portrait", ""))
         rows = repair.get("module_repairs", [])
         if not isinstance(rows, list):
             continue
@@ -2234,11 +2018,7 @@ def _s6_can_use_lightweight_card_repair(
     call. Any residual failure is closed deterministically by the caller.
     """
 
-    directions = [
-        item
-        for item in result.get("concept_directions", [])
-        if isinstance(item, Mapping)
-    ]
+    directions = [item for item in result.get("concept_directions", []) if isinstance(item, Mapping)]
     if not directions:
         return False
     targets = _s6_repair_targets(result, issues)
@@ -2251,14 +2031,9 @@ def _s6_can_use_lightweight_card_repair(
     return True
 
 
-def _merge_s6_direction_repairs(
-    result: Mapping[str, Any], repairs: Mapping[str, Any]
-) -> dict[str, Any]:
+def _merge_s6_direction_repairs(result: Mapping[str, Any], repairs: Mapping[str, Any]) -> dict[str, Any]:
     merged = dict(result)
-    directions = [
-        dict(item) if isinstance(item, Mapping) else item
-        for item in result.get("concept_directions", [])
-    ]
+    directions = [dict(item) if isinstance(item, Mapping) else item for item in result.get("concept_directions", [])]
     for item in repairs.get("direction_repairs", []):
         if not isinstance(item, Mapping):
             continue

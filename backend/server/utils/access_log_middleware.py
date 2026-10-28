@@ -53,10 +53,14 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
         process_time = time.perf_counter() - start_time
         process_time_ms = int(process_time * 1000)  # 转换为毫秒
 
+        query = request.url.query
+        if request.url.path.startswith("/api/wechat-mp/"):
+            query = ""  # RSS 令牌与公众号凭据不进入日志。
+
         # 格式化日志消息，添加处理时间
         log_message = (
             f"{client_ip}:{request.client.port if request.client else 'unknown'} - "
-            f'"{request.method} {request.url.path}{"?" + request.url.query if request.url.query else ""} '
+            f'"{request.method} {request.url.path}{"?" + query if query else ""} '
             f'HTTP/{request.scope["http_version"]}" '
             f"{response.status_code} - {process_time_ms}ms"
         )

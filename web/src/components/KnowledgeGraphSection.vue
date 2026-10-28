@@ -212,6 +212,13 @@
                 </a-tag>
                 <a-tag v-else color="orange" size="small">未配置</a-tag>
               </div>
+              <div v-if="graphBuildStatus?.locked" class="config-summary">
+                <div>
+                  <span class="config-summary-label">抽取配置</span>
+                  <strong>{{ graphConfigSummary }}</strong>
+                </div>
+                <a-button size="small" type="link" @click="openGraphConfig">调整</a-button>
+              </div>
               <a-progress
                 v-if="isBuildActive"
                 :percent="graphBuildStatus?.build_task_progress ?? 0"
@@ -265,6 +272,13 @@
                   <span class="stat-label">关系</span>
                 </div>
               </div>
+              <GraphFailedRetryCard
+                v-if="extractionFailedCount > 0"
+                :count="extractionFailedCount"
+                :loading="retryingFailedChunks"
+                :disabled="isBuildActive"
+                @retry="confirmRetryFailedGraphChunks"
+              />
               <div class="build-actions">
                 <a-button
                   v-if="!graphBuildStatus?.locked"
@@ -323,7 +337,7 @@
     <a-modal
       v-model:open="showGraphConfig"
       :title="graphConfigTitle"
-      width="640px"
+      width="720px"
       @ok="configureGraphBuild"
     >
       <a-form layout="vertical">
@@ -333,6 +347,38 @@
           type="warning"
           show-icon
           message="修改配置仅影响后续构建；已构建的图谱不会自动重算，如需一致请重置后重新抽取。抽取器类型创建后不可修改。"
+        />
+        <a-form-item label="抽取方案">
+          <div class="extraction-presets">
+            <button
+              v-for="preset in GRAPH_EXTRACTION_PRESETS"
+              :key="preset.key"
+              type="button"
+              class="extraction-preset"
+              :class="{ active: activeExtractionPreset === preset.key }"
+              @click="selectExtractionPreset(preset.key)"
+            >
+              <span class="preset-title">
+                {{ preset.label }}
+                <small v-if="preset.key === 'balanced'">推荐</small>
+              </span>
+              <span class="preset-values"
+                >并发 {{ preset.concurrency_count }} · 超时 {{ preset.timeout_seconds }} 秒</span
+              >
+              <span class="preset-description">{{ preset.description }}</span>
+            </button>
+          </div>
+          <div class="form-item-hint">
+            选择方案即可完成常用运行参数；手动修改并发或超时后会显示为“自定义”。
+          </div>
+        </a-form-item>
+        <a-alert
+          v-if="graphConfigRiskMessage"
+          class="config-warning"
+          type="warning"
+          show-icon
+          :message="graphConfigRiskMessage"
+          description="建议直接选择‘均衡’或‘稳定’方案后保存。"
         />
         <a-form-item label="抽取器类型">
           <div class="extractor-type-cards" role="radiogroup" aria-label="抽取器类型">
@@ -431,6 +477,10 @@
               :step="1"
               style="width: 100%"
             />
+            <div class="form-item-hint">
+              推荐 8。SiliconFlow 运行时最多使用 16，其他模型最多使用
+              64，避免大量请求同时排队导致超时。
+            </div>
           </a-form-item>
           <a-form-item label="单次抽取超时（秒）">
             <a-input-number
@@ -441,8 +491,38 @@
               style="width: 100%"
             />
             <div class="form-item-hint">
-              默认 60 秒。推理型抽取模型单块耗时可达数十秒，若日志出现反复超时重试，可调大至
-              180–300。
+              默认 180 秒。复杂 Schema 或推理型模型可选“稳定”方案调大到 300 秒。
+            </div>
+          </a-form-item>
+          <a-form-item label="抽取最大输出（tokens）">
+            <a-input-number
+              v-model:value="graphConfigForm.max_output_tokens"
+              :min="256"
+              :max="32768"
+              :step="512"
+              style="width: 100%"
+            />
+            <div class="form-item-hint">
+              推荐 8192。检测到输出截断时自动扩大预算补跑，避免保存不完整关系。
+            </div>
+          </a-form-item>
+          <a-form-item label="模型深度思考">
+            <a-switch v-model:checked="graphConfigForm.enable_thinking" />
+            <div class="form-item-hint">
+              均衡方案保留受控思考以照顾复杂关系。当前应用于 SiliconFlow；关闭适合简单文本。
+            </div>
+          </a-form-item>
+          <a-form-item label="思考预算（tokens）">
+            <a-input-number
+              v-model:value="graphConfigForm.thinking_budget"
+              :min="128"
+              :max="32768"
+              :step="512"
+              :disabled="!graphConfigForm.enable_thinking"
+              style="width: 100%"
+            />
+            <div class="form-item-hint">
+              均衡 2048，稳定 4096。限制长时间思考，同时保留证据和关系自检。
             </div>
           </a-form-item>
         </div>
@@ -683,8 +763,21 @@ import {
 import GraphCanvas from '@/components/GraphCanvas.vue'
 import GraphDetailPanel from '@/components/GraphDetailPanel.vue'
 import ResourceEmptyState from '@/components/shared/ResourceEmptyState.vue'
+import GraphFailedRetryCard from '@/components/knowledge/GraphFailedRetryCard.vue'
 import { getKbTypeLabel } from '@/utils/kb_utils'
 import { KNOWLEDGE_GRAPH_LAYOUTS } from '@/utils/knowledgeGraphLayout'
+import {
+  DEFAULT_GRAPH_EXTRACTION_CONCURRENCY,
+  DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS,
+  DEFAULT_GRAPH_EXTRACTION_MAX_TOKENS,
+  DEFAULT_GRAPH_THINKING_BUDGET,
+  GRAPH_EXTRACTION_PRESETS,
+  applyGraphExtractionPreset,
+  graphExtractionRiskMessage,
+  graphPerformanceOptions,
+  unmanagedGraphModelParams,
+  matchGraphExtractionPreset
+} from '@/utils/graphExtractionConfig'
 import { unifiedApi } from '@/apis/graph_api'
 import { graphBuildApi } from '@/apis/knowledge_api'
 import { Modal, message } from 'ant-design-vue'
@@ -734,6 +827,7 @@ const subgraphParams = reactive({
 const searchInput = ref('')
 const graphBuildStatus = ref(null)
 const graphBuildLoading = ref(false)
+const retryingFailedChunks = ref(false)
 const showGraphConfig = ref(false)
 const showFailedChunkSamples = ref(false)
 const failedChunkSamplesLoading = ref(false)
@@ -856,7 +950,6 @@ watch(
   },
   { immediate: true }
 )
-const DEFAULT_EXTRACTION_TIMEOUT_SECONDS = 60
 const DEFAULT_CONTEXT_WINDOW_SIZE = 1
 const DEFAULT_CONTEXT_MAX_CHARS = 4000
 const DEFAULT_ENABLE_HYPOTHESIS_EXTRACTION = true
@@ -865,13 +958,41 @@ const graphConfigForm = reactive({
   extractor_type: 'llm',
   model_spec: '',
   schema: '',
-  concurrency_count: 50,
-  timeout_seconds: DEFAULT_EXTRACTION_TIMEOUT_SECONDS,
+  concurrency_count: DEFAULT_GRAPH_EXTRACTION_CONCURRENCY,
+  timeout_seconds: DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS,
+  max_output_tokens: DEFAULT_GRAPH_EXTRACTION_MAX_TOKENS,
+  enable_thinking: true,
+  thinking_budget: DEFAULT_GRAPH_THINKING_BUDGET,
   context_window_size: DEFAULT_CONTEXT_WINDOW_SIZE,
   context_max_chars: DEFAULT_CONTEXT_MAX_CHARS,
   enable_hypothesis_extraction: DEFAULT_ENABLE_HYPOTHESIS_EXTRACTION,
   max_hypotheses_per_chunk: DEFAULT_MAX_HYPOTHESES_PER_CHUNK,
   model_params_text: ''
+})
+
+const activeExtractionPreset = computed(() => matchGraphExtractionPreset(graphConfigForm))
+const graphConfigRiskMessage = computed(() => graphExtractionRiskMessage(graphConfigForm))
+const selectExtractionPreset = (key) => applyGraphExtractionPreset(graphConfigForm, key)
+
+const graphConfigSummary = computed(() => {
+  const options = graphBuildStatus.value?.config?.extractor_options || {}
+  const presetKey = matchGraphExtractionPreset({
+    concurrency_count: options.concurrency_count ?? DEFAULT_GRAPH_EXTRACTION_CONCURRENCY,
+    timeout_seconds: options.timeout_seconds ?? DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS
+  })
+  const preset = GRAPH_EXTRACTION_PRESETS.find((item) => item.key === presetKey)
+  const concurrency = options.concurrency_count ?? DEFAULT_GRAPH_EXTRACTION_CONCURRENCY
+  const timeout = options.timeout_seconds ?? DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS
+  const effectiveConcurrency = graphBuildStatus.value?.runtime?.effective_concurrency_count
+  const concurrencyText =
+    effectiveConcurrency && effectiveConcurrency !== Number(concurrency)
+      ? `并发 ${concurrency}→运行 ${effectiveConcurrency}`
+      : `并发 ${concurrency}`
+  const performance = graphPerformanceOptions(options)
+  const thinkingText = performance.enable_thinking
+    ? `思考预算 ${performance.thinking_budget}`
+    : '关闭思考'
+  return `${preset?.label || '自定义'} · ${concurrencyText} · ${timeout} 秒 · ${thinkingText}`
 })
 
 const graph = reactive(useGraph(graphRef))
@@ -951,9 +1072,11 @@ const fillGraphConfigForm = () => {
   graphConfigForm.extractor_type = 'llm'
   graphConfigForm.model_spec = options.model_spec || configStore.config?.default_model || ''
   graphConfigForm.schema = options.schema || ''
-  graphConfigForm.concurrency_count = Number(options.concurrency_count || 50)
+  graphConfigForm.concurrency_count = Number(
+    options.concurrency_count || DEFAULT_GRAPH_EXTRACTION_CONCURRENCY
+  )
   graphConfigForm.timeout_seconds = Number(
-    options.timeout_seconds || DEFAULT_EXTRACTION_TIMEOUT_SECONDS
+    options.timeout_seconds || DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS
   )
   graphConfigForm.context_window_size = Number(
     options.context_window_size ?? DEFAULT_CONTEXT_WINDOW_SIZE
@@ -964,8 +1087,10 @@ const fillGraphConfigForm = () => {
   graphConfigForm.max_hypotheses_per_chunk = Number(
     options.max_hypotheses_per_chunk ?? DEFAULT_MAX_HYPOTHESES_PER_CHUNK
   )
-  graphConfigForm.model_params_text = options.model_params
-    ? JSON.stringify(options.model_params)
+  Object.assign(graphConfigForm, graphPerformanceOptions(options))
+  const modelParams = unmanagedGraphModelParams(options.model_params)
+  graphConfigForm.model_params_text = Object.keys(modelParams).length
+    ? JSON.stringify(modelParams)
     : ''
 }
 
@@ -983,8 +1108,11 @@ const buildExtractorOptions = () => {
   return {
     model_spec: graphConfigForm.model_spec,
     schema: graphConfigForm.schema.trim(),
-    concurrency_count: graphConfigForm.concurrency_count || 50,
-    timeout_seconds: graphConfigForm.timeout_seconds || DEFAULT_EXTRACTION_TIMEOUT_SECONDS,
+    concurrency_count: graphConfigForm.concurrency_count || DEFAULT_GRAPH_EXTRACTION_CONCURRENCY,
+    timeout_seconds: graphConfigForm.timeout_seconds || DEFAULT_GRAPH_EXTRACTION_TIMEOUT_SECONDS,
+    max_output_tokens: graphConfigForm.max_output_tokens ?? DEFAULT_GRAPH_EXTRACTION_MAX_TOKENS,
+    enable_thinking: graphConfigForm.enable_thinking,
+    thinking_budget: graphConfigForm.thinking_budget ?? DEFAULT_GRAPH_THINKING_BUDGET,
     context_window_size: graphConfigForm.context_window_size ?? DEFAULT_CONTEXT_WINDOW_SIZE,
     context_max_chars: graphConfigForm.context_max_chars || DEFAULT_CONTEXT_MAX_CHARS,
     enable_hypothesis_extraction: graphConfigForm.enable_hypothesis_extraction,
@@ -1049,6 +1177,41 @@ const retryGraphVectors = async () => {
   } catch (e) {
     console.error('Failed to reconcile graph vectors:', e)
     message.error(getErrorDetail(e, '提交图谱向量索引修复任务失败'))
+  }
+}
+
+const confirmRetryFailedGraphChunks = () => {
+  if (!extractionFailedCount.value || isBuildActive.value) return
+  Modal.confirm({
+    title: `重跑 ${extractionFailedCount.value} 个抽取失败项`,
+    content: '仅重新调用模型处理抽取失败的 Chunk，不会清空或重跑已成功数据。',
+    okText: '确认重跑',
+    cancelText: '取消',
+    onOk: retryFailedGraphChunks
+  })
+}
+
+const retryFailedGraphChunks = async () => {
+  const registerTask = taskerStore.createTaskRegistration()
+  retryingFailedChunks.value = true
+  try {
+    const data = await graphBuildApi.retryFailed(kbId.value)
+    message.success(data.message || '抽取失败项重跑任务已提交')
+    if (data.task_id) {
+      registerTask({
+        task_id: data.task_id,
+        name: `重跑图谱抽取失败项 (${kbId.value})`,
+        task_type: GRAPH_BUILD_TASK_TYPE,
+        message: data.message,
+        payload: { kb_id: kbId.value, action: 'retry_failed' }
+      })
+    }
+    await loadGraphBuildStatus()
+  } catch (e) {
+    console.error('Failed to retry graph extraction failures:', e)
+    message.error(getErrorDetail(e, '提交抽取失败项重跑任务失败'))
+  } finally {
+    retryingFailedChunks.value = false
   }
 }
 
@@ -1596,6 +1759,41 @@ onUnmounted(() => {
     }
   }
 
+  .config-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: -2px 0 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--gray-50);
+
+    > div {
+      min-width: 0;
+    }
+
+    .config-summary-label,
+    strong {
+      display: block;
+    }
+
+    .config-summary-label {
+      margin-bottom: 2px;
+      color: var(--gray-500);
+      font-size: 11px;
+    }
+
+    strong {
+      overflow: hidden;
+      color: var(--gray-800);
+      font-size: 12px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1861,6 +2059,76 @@ onUnmounted(() => {
 
 .config-warning {
   margin-bottom: 16px;
+}
+
+.extraction-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.extraction-preset {
+  display: flex;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--gray-150);
+  border-radius: 8px;
+  background: var(--gray-0);
+  color: var(--gray-700);
+  cursor: pointer;
+  flex-direction: column;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--main-color);
+  }
+
+  &.active {
+    border-color: var(--main-color);
+    background: var(--main-10);
+    box-shadow: 0 0 0 1px var(--main-20);
+  }
+
+  .preset-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--gray-900);
+    font-size: 14px;
+    font-weight: 600;
+
+    small {
+      padding: 1px 5px;
+      border-radius: 8px;
+      background: var(--main-100);
+      color: var(--main-color);
+      font-size: 10px;
+      font-weight: 500;
+    }
+  }
+
+  .preset-values {
+    margin-top: 5px;
+    color: var(--main-color);
+    font-size: 12px;
+  }
+
+  .preset-description {
+    margin-top: 5px;
+    color: var(--gray-500);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 640px) {
+  .extraction-presets {
+    grid-template-columns: 1fr;
+  }
 }
 
 .extractor-type-cards {

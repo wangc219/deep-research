@@ -34,6 +34,10 @@ from equipment_deep_research.agents.workflows.s6_quality import (
     _s6_cross_card_identity_issues,
     _s6_portfolio_confidence,
 )
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_contract,
+    query_domain_narrative_instruction,
+)
 from equipment_deep_research.agents.workflows.winning_flows.helpers import (
     S6_PORTRAIT_QUALITY_CONTRACT_VERSION,
     _bounded_s6_parallelism,
@@ -96,19 +100,12 @@ def _validated_s6_shared_innovation_anchors(
     """Return the two card-local S6 anchors or reject an unfrozen spine."""
 
     source = direction if isinstance(direction, Mapping) else {}
-    anchors = {
-        key: str(source.get(key, "") or "").strip()
-        for key in _S6_SHARED_INNOVATION_FIELDS
-    }
+    anchors = {key: str(source.get(key, "") or "").strip() for key in _S6_SHARED_INNOVATION_FIELDS}
     card_label = f"第{position}张装备卡" if position is not None else "装备卡"
-    if any(
-        len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", value)) < 12
-        for value in anchors.values()
-    ):
+    if any(len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", value)) < 12 for value in anchors.values()):
         raise S6QualityError(f"S6{card_label}缺少可冻结的解决思路或核心创新")
-    if (
-        _normalized_s6_anchor_text(anchors["solution_thesis"])
-        == _normalized_s6_anchor_text(anchors["core_innovation_thesis"])
+    if _normalized_s6_anchor_text(anchors["solution_thesis"]) == _normalized_s6_anchor_text(
+        anchors["core_innovation_thesis"]
     ):
         raise S6QualityError(f"S6{card_label}的解决思路与核心创新不得复制为同一句")
     return anchors
@@ -152,9 +149,7 @@ def _clean_s6_technology_prose(value: Any, brief: Mapping[str, Any] | None = Non
 def _dynamic_s6_one_shot_enabled(dynamic_s6_authoring: bool) -> bool:
     if not dynamic_s6_authoring:
         return False
-    configured = os.environ.get(
-        "EQUIPMENT_DR_S6_AUTHORING_MODE", "parallel_modules"
-    )
+    configured = os.environ.get("EQUIPMENT_DR_S6_AUTHORING_MODE", "parallel_modules")
     return configured.strip().lower() in {"one_shot", "oneshot", "single", "card"}
 
 
@@ -234,19 +229,12 @@ def _s6_repair_meets_length_contract(
     required = {key for key, _ in CAPABILITY_PORTRAIT_MODULES}
     if not isinstance(repaired_modules, Mapping):
         return False
-    if not (required <= set(repaired_modules) and all(
-        str(repaired_modules.get(key, "")).strip() for key in required
-    )):
+    if not (required <= set(repaired_modules) and all(str(repaired_modules.get(key, "")).strip() for key in required)):
         return False
-    return not any(
-        portrait_module_has_incomplete_ending(repaired_modules.get(key, ""))
-        for key in required
-    )
+    return not any(portrait_module_has_incomplete_ending(repaired_modules.get(key, "")) for key in required)
 
 
-def _portrait_repair_keys(
-    modules: Mapping[str, Any], issues: Sequence[str]
-) -> list[str]:
+def _portrait_repair_keys(modules: Mapping[str, Any], issues: Sequence[str]) -> list[str]:
     """Scope repairs to diagnosed columns, preserving complete siblings.
 
     A global diagnostic still needs the whole set. A soft length target alone
@@ -256,14 +244,10 @@ def _portrait_repair_keys(
     keys = {
         key
         for key, _ in CAPABILITY_PORTRAIT_MODULES
-        if not str(modules.get(key, "")).strip()
-        or portrait_module_has_incomplete_ending(modules.get(key, ""))
+        if not str(modules.get(key, "")).strip() or portrait_module_has_incomplete_ending(modules.get(key, ""))
     }
     for issue in issues:
-        named = {
-            key for key, label in CAPABILITY_PORTRAIT_MODULES
-            if key in issue or label in issue
-        }
+        named = {key for key, label in CAPABILITY_PORTRAIT_MODULES if key in issue or label in issue}
         if named:
             keys.update(named)
         elif "缺少完整五栏" not in issue or not keys:
@@ -306,74 +290,36 @@ def _parallel_s6_semantic_quality_issues(
     modules: Mapping[str, Any] | object,
     *,
     shared_anchors: Mapping[str, Any] | object | None = None,
+    mission_equipment: bool = False,
 ) -> list[str]:
     """Catch hollow but well-sized columns before publishing a dynamic card."""
 
     if not isinstance(modules, Mapping):
         return capability_portrait_repair_issues(modules)
 
-    # The overview and technology columns must repeat the same two frozen
-    # anchors verbatim. Remove only those mandated phrases before the generic
-    # cross-column duplication detector runs, then validate their presence
-    # explicitly below. All other repeated prose remains a repair issue.
-    generic_quality_modules = dict(modules)
-    if isinstance(shared_anchors, Mapping):
-        for module_key in ("overview", "technology_implementation"):
-            prose = str(generic_quality_modules.get(module_key, "") or "")
-            for anchor_key in _S6_SHARED_INNOVATION_FIELDS:
-                anchor = str(shared_anchors.get(anchor_key, "") or "").strip()
-                if anchor:
-                    prose = prose.replace(anchor, "")
-            generic_quality_modules[module_key] = prose
-    issues = capability_portrait_repair_issues(generic_quality_modules)
+    # The frozen decisions are authoring constraints, not text that every
+    # sibling column must repeat.  Let the generic duplication check see the
+    # actual delivered prose; this rewards information ownership at source.
+    issues = capability_portrait_repair_issues(modules)
 
     short_modules = _s6_short_portrait_modules(modules)
     labels = dict(CAPABILITY_PORTRAIT_MODULES)
     for module_key in short_modules:
-        issue = (
-            f"{labels[module_key]}明显过短，低于约360字软目标；"
-            "请补足本栏独有的作战论证，不得用泛化句凑字"
-        )
+        issue = f"{labels[module_key]}明显过短，低于约360字软目标；请补足本栏独有的作战论证，不得用泛化句凑字"
         if issue not in issues:
             issues.append(issue)
 
     overview = str(modules.get("overview", "") or "")
-    if any(
-        not re.search(rf"{label}\s*[：:]", overview)
-        for label in ("当前背景", "解决思路", "达到效果", "核心创新")
-    ):
+    if any(not re.search(rf"{label}\s*[：:]", overview) for label in ("当前背景", "解决思路", "达到效果", "核心创新")):
         issues.append("概述未按当前背景、解决思路、达到效果、核心创新四项分条")
 
-    technology = str(modules.get("technology_implementation", "") or "")
-    if "解决思路" not in technology or "核心创新" not in technology:
-        issues.append("装备与技术实现未显式承接共享的解决思路和核心创新")
-
     if isinstance(shared_anchors, Mapping):
-        anchors = {
-            key: str(shared_anchors.get(key, "") or "").strip()
-            for key in _S6_SHARED_INNOVATION_FIELDS
-        }
+        anchors = {key: str(shared_anchors.get(key, "") or "").strip() for key in _S6_SHARED_INNOVATION_FIELDS}
         normalized_overview = _normalized_s6_anchor_text(overview)
-        normalized_technology = _normalized_s6_anchor_text(technology)
-        if any(
-            anchor
-            and _normalized_s6_anchor_text(anchor) not in normalized_overview
-            for anchor in anchors.values()
-        ):
+        if any(anchor and _normalized_s6_anchor_text(anchor) not in normalized_overview for anchor in anchors.values()):
             issues.append("概述未逐字承接冻结的解决思路和核心创新")
-        if any(
-            anchor
-            and _normalized_s6_anchor_text(anchor) not in normalized_technology
-            for anchor in anchors.values()
-        ):
-            issues.append("装备与技术实现未逐字追溯冻结的解决思路和核心创新")
 
     marker_rules = {
-        "technology_implementation": (
-            "装备与技术实现未形成路线取舍和主攻链",
-            r"路线|路径|方案|主路径|备选|取舍|瓶颈|攻关|落装|工程|主攻|核心|实现",
-            2,
-        ),
         "operational_process": (
             "关键作战流程未形成条件、动作、状态变化和转段闭环",
             r"条件|授权|进入|行动|发射|释放|部署|确认|切换|转入|拒打|终止|续接|脱离|回传|交给",
@@ -390,11 +336,61 @@ def _parallel_s6_semantic_quality_issues(
             5,
         ),
     }
+    if mission_equipment:
+        marker_rules["operational_process"] = (
+            "关键任务流程未形成条件、动作、状态变化和转段闭环",
+            r"条件|授权|进入|行动|部署|确认|切换|转入|终止|续接|脱离|回传|救援|任务",
+            4,
+        )
+        marker_rules["capability_effects"] = (
+            "形成能力与任务效果未区分新增任务、可观察效果和环境约束",
+            r"过去|原有|无法|不能|新增|现在|直接|效果|任务|形成|约束|边界|成本|时间|空间",
+            4,
+        )
+        marker_rules["winning_logic"] = (
+            "任务价值机理未闭合旧规则、关键关系、失效模式和工程代价",
+            r"规则|假设|关系|约束|失效|缓解|代价|成本|时间|空间|任务|持续|环境|地形|天气",
+            5,
+        )
     for key, (message, pattern, minimum) in marker_rules.items():
         text = str(modules.get(key, "") or "")
         if len(re.findall(pattern, text)) < minimum:
             issues.append(message)
     return list(dict.fromkeys(issues))
+
+
+def _mission_narrative_advisories(modules: Mapping[str, Any] | object) -> list[str]:
+    """Report historical combat-template residue without blocking S6.
+
+    Mission-equipment prose is normalized again at the public artifact
+    boundary. Keeping this diagnostic advisory prevents a wording mismatch
+    from deleting a useful future-equipment concept or failing the research
+    task, while still making the cleanup visible in the authoring audit.
+    """
+
+    if not isinstance(modules, Mapping):
+        return []
+    combined = "\n".join(str(value or "") for value in modules.values())
+    residue = [
+        term
+        for term in (
+            "敌方",
+            "我方",
+            "对手",
+            "击落",
+            "摧毁",
+            "毁伤",
+            "杀伤",
+            "弹药",
+            "战果",
+            "交战",
+            "作战反制",
+        )
+        if term in combined
+    ]
+    if not residue:
+        return []
+    return ["非战斗任务画像含待自动纠偏的历史作战措辞：" + "、".join(residue)]
 
 
 async def generate_parallel_s6_cards(
@@ -429,15 +425,24 @@ async def generate_parallel_s6_cards(
     if one_shot_authoring:
         parallel_portrait_modules = False
     prompt_contract = _s6_authoring_prompt_resource()
+    structured_query_brief = shared.get("structured_query_brief", {})
+    structured_query_brief = structured_query_brief if isinstance(structured_query_brief, Mapping) else {}
+    query_topic = str(shared.get("topic") or step_input.get("query") or "")
+    query_domain = query_domain_contract(
+        query_topic,
+        structured_query_brief=structured_query_brief,
+    )
+    mission_equipment = query_domain["mode"] == "mission_equipment"
+    mission_narrative_instruction = query_domain_narrative_instruction(
+        query_topic,
+        structured_query_brief=structured_query_brief,
+    )
 
     direction_schema = schema["concept_directions"][0]
     # Per-column prose is owned by the Markdown S6 prompt resource.  Keep the
     # Python schema limited to field shape so concurrent authoring can evolve
     # wording without changing orchestration code.
-    portrait_modules_schema = {
-        key: _dynamic_s6_module_guidance(key)
-        for key, _ in CAPABILITY_PORTRAIT_MODULES
-    }
+    portrait_modules_schema = {key: _dynamic_s6_module_guidance(key) for key, _ in CAPABILITY_PORTRAIT_MODULES}
     card_direction_schema = {
         key: direction_schema[key]
         for key in (
@@ -465,24 +470,12 @@ async def generate_parallel_s6_cards(
         if key in direction_schema
     }
     card_direction_schema.pop("capability_portrait", None)
-    card_direction_schema["card_binding_id"] = prompt_contract[
-        "card_binding_id_strict"
-    ]
-    card_direction_schema["hypothesis_id"] = prompt_contract[
-        "hypothesis_id_strict"
-    ]
-    card_direction_schema["system_contribution_thesis"] = prompt_contract[
-        "system_contribution_thesis"
-    ]
-    card_direction_schema["indicator_portrait"] = prompt_contract[
-        "indicator_portrait"
-    ]
-    card_direction_schema["operational_concept"] = prompt_contract[
-        "operational_concept"
-    ]
-    card_direction_schema["adversary_adaptation"] = prompt_contract[
-        "adversary_adaptation"
-    ]
+    card_direction_schema["card_binding_id"] = prompt_contract["card_binding_id_strict"]
+    card_direction_schema["hypothesis_id"] = prompt_contract["hypothesis_id_strict"]
+    card_direction_schema["system_contribution_thesis"] = prompt_contract["system_contribution_thesis"]
+    card_direction_schema["indicator_portrait"] = prompt_contract["indicator_portrait"]
+    card_direction_schema["operational_concept"] = prompt_contract["operational_concept"]
+    card_direction_schema["adversary_adaptation"] = prompt_contract["adversary_adaptation"]
     card_direction_schema["solution_thesis"] = (
         "S5入选后在S6只生成一次并冻结的卡片级解决思路；说明改变哪个核心断点、作用于哪个关键对象或关系、为何可能奏效"
     )
@@ -491,9 +484,7 @@ async def generate_parallel_s6_cards(
     )
     # Keep all model-visible field guidance in the reviewed Markdown resource;
     # only the structural keys come from the caller's schema.
-    direction_guidance = load_dynamic_winning_json(
-        "common", section="s6_authoring.direction_schema"
-    )
+    direction_guidance = load_dynamic_winning_json("common", section="s6_authoring.direction_schema")
     if isinstance(direction_guidance, Mapping):
         for key, guidance in direction_guidance.items():
             if key in card_direction_schema:
@@ -524,9 +515,7 @@ async def generate_parallel_s6_cards(
         )
         if key in card_direction_schema
     }
-    active_card_direction_schema = (
-        dynamic_card_direction_schema if dynamic_s6_authoring else card_direction_schema
-    )
+    active_card_direction_schema = dynamic_card_direction_schema if dynamic_s6_authoring else card_direction_schema
     handoff = step_input.get("capability_synthesis_handoff", {})
     handoff = handoff if isinstance(handoff, Mapping) else {}
     selected_portfolio = handoff.get("selected_equipment_portfolio", [])
@@ -544,9 +533,7 @@ async def generate_parallel_s6_cards(
         accumulated.get("winning_swarm", {}).get("final_equipment_portfolio", [])
         if isinstance(accumulated.get("winning_swarm", {}), Mapping)
         else [],
-        shared.get("prior_winning_analysis", {})
-        .get("winning_swarm", {})
-        .get("final_equipment_portfolio", [])
+        shared.get("prior_winning_analysis", {}).get("winning_swarm", {}).get("final_equipment_portfolio", [])
         if isinstance(shared.get("prior_winning_analysis", {}), Mapping)
         and isinstance(
             shared.get("prior_winning_analysis", {}).get("winning_swarm", {}),
@@ -559,9 +546,7 @@ async def generate_parallel_s6_cards(
     ):
         if not isinstance(source, list):
             continue
-        authoritative_portfolio_rows.extend(
-            dict(item) for item in source if isinstance(item, Mapping)
-        )
+        authoritative_portfolio_rows.extend(dict(item) for item in source if isinstance(item, Mapping))
     authoritative_by_id = {
         str(item.get("hypothesis_id", "")).strip(): item
         for item in authoritative_portfolio_rows
@@ -592,45 +577,29 @@ async def generate_parallel_s6_cards(
         min(12, int(handoff.get("s6_card_capacity", 12) or 12)),
     )
     planner_schema = {
-        key: value
-        for key, value in schema.items()
-        if key not in {"concept_directions", "capability_image_drafts"}
+        key: value for key, value in schema.items() if key not in {"concept_directions", "capability_image_drafts"}
     }
     planner_brief_contract = {
         "position": 1,
         "name": prompt_contract["planner_name"],
         "type": "new_capability|upgrade",
-        "primary_equipment_identity": prompt_contract[
-            "planner_primary_equipment_identity"
-        ],
+        "primary_equipment_identity": prompt_contract["planner_primary_equipment_identity"],
         "equipment_form": prompt_contract["planner_equipment_form"],
-        "unique_operational_role": prompt_contract[
-            "planner_unique_operational_role"
-        ],
-        "launch_or_release_domain": prompt_contract[
-            "planner_launch_or_release_domain"
-        ],
-        "target_and_direct_effect": prompt_contract[
-            "planner_target_and_direct_effect"
-        ],
-        "non_substitutable_difference": prompt_contract[
-            "planner_non_substitutable_difference"
-        ],
+        "unique_operational_role": prompt_contract["planner_unique_operational_role"],
+        "launch_or_release_domain": prompt_contract["planner_launch_or_release_domain"],
+        "target_and_direct_effect": prompt_contract["planner_target_and_direct_effect"],
+        "non_substitutable_difference": prompt_contract["planner_non_substitutable_difference"],
         "baseline_system": prompt_contract["planner_baseline_system"],
         "capability_gap": prompt_contract["planner_capability_gap"],
         "direct_evidence_refs": prompt_contract["planner_direct_evidence_refs"],
-        "foresight_evidence_status": prompt_contract[
-            "planner_foresight_evidence_status"
-        ],
+        "foresight_evidence_status": prompt_contract["planner_foresight_evidence_status"],
         "evidence_boundary": prompt_contract["planner_evidence_boundary"],
         "validation_plan": prompt_contract["planner_validation_plan"],
         "indicator_portrait": prompt_contract["planner_indicator_portrait"],
         "query_relevance": prompt_contract["planner_query_relevance"],
         "concise_winning_summary": prompt_contract["planner_summary"],
     }
-    planner_schema["card_briefs"] = [
-        planner_brief_contract
-    ]
+    planner_schema["card_briefs"] = [planner_brief_contract]
     # The dynamic swarm has already selected these candidates through
     # its independent evidence and portfolio review.  Do not make S6
     # discard them merely to satisfy a fixed card count: turn every
@@ -638,9 +607,7 @@ async def generate_parallel_s6_cards(
     pre_s6_candidate_names = [
         str(item.get("candidate_equipment", "")).strip()
         for item in handoff.get("equipment_portfolio_preflight", [])
-        if isinstance(item, Mapping)
-        and item.get("ready") is True
-        and str(item.get("candidate_equipment", "")).strip()
+        if isinstance(item, Mapping) and item.get("ready") is True and str(item.get("candidate_equipment", "")).strip()
     ]
     if selected_portfolio:
         plan = {"portfolio_source": "winning_swarm_selected_candidates"}
@@ -650,15 +617,13 @@ async def generate_parallel_s6_cards(
             plan = {
                 "portfolio_source": "s5_handoff_empty_limited",
                 "s6_card_authoring_limited": True,
-                "s6_card_authoring_warnings": [
-                    "S3–S5未传入可写卡装备；S6保留上游结果并受限交付"
-                ],
+                "s6_card_authoring_warnings": ["S3–S5未传入可写卡装备；S6保留上游结果并受限交付"],
             }
             briefs = []
         else:
             planner_text = await host._run_core_json(
                 agent_id,
-                system + prompt_contract["portfolio_planner"],
+                system + prompt_contract["portfolio_planner"] + mission_narrative_instruction,
                 {
                     **dict(step_input),
                     "locked_pre_s6_candidate_names": pre_s6_candidate_names,
@@ -668,11 +633,7 @@ async def generate_parallel_s6_cards(
                 phase="winning_s6_portfolio_plan",
             )
             plan = _parse_json_object(planner_text)
-            briefs = [
-                dict(item)
-                for item in plan.get("card_briefs", [])
-                if isinstance(item, Mapping)
-            ][:card_capacity]
+            briefs = [dict(item) for item in plan.get("card_briefs", []) if isinstance(item, Mapping)][:card_capacity]
             for position, brief in enumerate(briefs):
                 if position < len(pre_s6_candidate_names):
                     brief["name"] = pre_s6_candidate_names[position]
@@ -688,12 +649,7 @@ async def generate_parallel_s6_cards(
         hypothesis_id = str(brief.get("hypothesis_id") or "").strip()
         if not hypothesis_id:
             continue
-        brief["card_binding_id"] = (
-            "s6-card-"
-            + sha256(f"{binding_scope}:{hypothesis_id}".encode("utf-8")).hexdigest()[
-                :20
-            ]
-        )
+        brief["card_binding_id"] = "s6-card-" + sha256(f"{binding_scope}:{hypothesis_id}".encode()).hexdigest()[:20]
     if not briefs:
         # A targeted S6 resume still needs one governed diagnostic pass even
         # when the checkpoint omitted the card handoff.  This occurs for old
@@ -704,7 +660,7 @@ async def generate_parallel_s6_cards(
         if requested_resume_steps == [6]:
             text = await host._run_core_json(
                 agent_id,
-                system,
+                system + mission_narrative_instruction,
                 dict(step_input),
                 schema,
                 5200,
@@ -713,15 +669,13 @@ async def generate_parallel_s6_cards(
             recovered = _parse_json_object(text)
             if recovered:
                 return recovered
-        limited_result = {
-            key: [] if isinstance(value, list) else "" for key, value in schema.items()
-        }
+        limited_result = {key: [] if isinstance(value, list) else "" for key, value in schema.items()}
         limited_result["concept_directions"] = []
         limited_result["capability_image_drafts"] = []
         limited_result["s6_card_authoring_limited"] = True
-        limited_result["s6_card_authoring_warnings"] = list(
-            plan.get("s6_card_authoring_warnings", [])
-        ) or ["S6没有收到可写卡的冻结装备，已保留S1–S5结果"]
+        limited_result["s6_card_authoring_warnings"] = list(plan.get("s6_card_authoring_warnings", [])) or [
+            "S6没有收到可写卡的冻结装备，已保留S1–S5结果"
+        ]
         emit_swarm_event(
             "winning_s6_card_authoring_limited",
             actor=agent_id,
@@ -739,18 +693,12 @@ async def generate_parallel_s6_cards(
     if not dynamic_s6_authoring:
         for position, brief in enumerate(briefs, start=1):
             if not _indicator_portrait_is_specific(brief.get("indicator_portrait")):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项指标画像未闭合测量轴、对照基线与判退条件"
-                )
+                pre_s6_contract_issues.append(f"S5第{position}项指标画像未闭合测量轴、对照基线与判退条件")
             if not _query_relevance_is_specific(brief.get("query_relevance")):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项未闭合任务对象、作战阶段、威胁压力和直接战果关联"
-                )
+                pre_s6_contract_issues.append(f"S5第{position}项未闭合任务对象、作战阶段、威胁压力和直接战果关联")
             boundary = str(brief.get("evidence_boundary", "") or "").strip()
             if boundary and not _evidence_boundary_is_public_semantic(boundary):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项证据边界不是公开证据支持/不支持的语义陈述"
-                )
+                pre_s6_contract_issues.append(f"S5第{position}项证据边界不是公开证据支持/不支持的语义陈述")
     if pre_s6_contract_issues:
         emit_swarm_event(
             "winning_s6_card_authoring_limited",
@@ -784,8 +732,7 @@ async def generate_parallel_s6_cards(
     # cannot silently serialize the columns.
     try:
         handoff_parallelism = int(
-            handoff.get("s6_parallelism", S6_DEFAULT_CODEX_CONCURRENCY)
-            or S6_DEFAULT_CODEX_CONCURRENCY
+            handoff.get("s6_parallelism", S6_DEFAULT_CODEX_CONCURRENCY) or S6_DEFAULT_CODEX_CONCURRENCY
         )
     except (TypeError, ValueError):
         handoff_parallelism = S6_DEFAULT_CODEX_CONCURRENCY
@@ -795,9 +742,7 @@ async def generate_parallel_s6_cards(
     configured_s6_parallelism = min(
         handoff_parallelism,
         _bounded_s6_parallelism(
-            shared.get("runtime_budgets", {})
-            if isinstance(shared.get("runtime_budgets", {}), Mapping)
-            else {}
+            shared.get("runtime_budgets", {}) if isinstance(shared.get("runtime_budgets", {}), Mapping) else {}
         ),
     )
     s6_parallelism = max(
@@ -812,16 +757,11 @@ async def generate_parallel_s6_cards(
         card_concurrency=s6_parallelism,
         portrait_modules=[key for key, _ in CAPABILITY_PORTRAIT_MODULES],
         portrait_module_prompts={
-            key: f"S6_{index}"
-            for index, (key, _label) in enumerate(CAPABILITY_PORTRAIT_MODULES, start=1)
+            key: f"S6_{index}" for index, (key, _label) in enumerate(CAPABILITY_PORTRAIT_MODULES, start=1)
         },
-        process_isolation=(
-            "new_process_per_turn" if parallel_portrait_modules else "card_scoped"
-        ),
+        process_isolation=("new_process_per_turn" if parallel_portrait_modules else "card_scoped"),
     )
-    resume_s6_only = requested_resume_steps == [6] and bool(
-        shared.get("prior_winning_analysis")
-    )
+    resume_s6_only = requested_resume_steps == [6] and bool(shared.get("prior_winning_analysis"))
     card_cache_scope = str(shared.get("run_id") or shared.get("topic") or "winning-s6")
 
     def dynamic_card_payload(brief: Mapping[str, Any]) -> dict[str, Any]:
@@ -877,12 +817,8 @@ async def generate_parallel_s6_cards(
         # The binding/hypothesis pair is intentionally repeated in every
         # process payload.  Runtime uses parallel_card_id for the process
         # scope; the model uses these values to prevent cross-card leakage.
-        candidate_weapon["card_binding_id"] = str(
-            brief.get("card_binding_id", "")
-        ).strip()
-        candidate_weapon["hypothesis_id"] = str(
-            brief.get("hypothesis_id", "")
-        ).strip()
+        candidate_weapon["card_binding_id"] = str(brief.get("card_binding_id", "")).strip()
+        candidate_weapon["hypothesis_id"] = str(brief.get("hypothesis_id", "")).strip()
         payload["candidate_weapon"] = candidate_weapon
         # Preserve the quality-profile runtime card while still using the
         # compact three-part envelope.  The dynamic runtime detector uses this
@@ -894,9 +830,7 @@ async def generate_parallel_s6_cards(
     def card_cache_key(brief: Mapping[str, Any]) -> tuple[str, str]:
         identity = str(brief.get("hypothesis_id") or brief.get("name") or "").strip()
         if dynamic_s6_authoring:
-            fingerprint = _dynamic_s6_input_fingerprint(
-                dynamic_card_payload(brief)
-            )
+            fingerprint = _dynamic_s6_input_fingerprint(dynamic_card_payload(brief))
             identity = f"{identity}:{fingerprint[:20]}"
         return card_cache_scope, identity
 
@@ -917,13 +851,9 @@ async def generate_parallel_s6_cards(
 
         direction = dict(brief)
         identity_contract = direction.get("portfolio_identity_contract", {})
-        identity_contract = (
-            dict(identity_contract) if isinstance(identity_contract, Mapping) else {}
-        )
+        identity_contract = dict(identity_contract) if isinstance(identity_contract, Mapping) else {}
         operational_axes = identity_contract.get("operational_axes", {})
-        operational_axes = (
-            dict(operational_axes) if isinstance(operational_axes, Mapping) else {}
-        )
+        operational_axes = dict(operational_axes) if isinstance(operational_axes, Mapping) else {}
         process = direction.get("operational_process", [])
         if not isinstance(process, list) or not process:
             process = operational_axes.get("mechanism_and_timing", [])
@@ -961,16 +891,12 @@ async def generate_parallel_s6_cards(
             direction["capability_outcome"] = direct_effect
         if not str(direction.get("winning_mechanism", "")).strip():
             direction["winning_mechanism"] = mechanism
-        for singular, plural in (
-            ("adversary_adaptation", "adversary_adaptations"),
-        ):
+        for singular, plural in (("adversary_adaptation", "adversary_adaptations"),):
             if str(direction.get(singular, "")).strip():
                 continue
             plural_value = direction.get(plural, [])
             if isinstance(plural_value, list):
-                direction[singular] = "；".join(
-                    str(item).strip() for item in plural_value[:3] if str(item).strip()
-                )
+                direction[singular] = "；".join(str(item).strip() for item in plural_value[:3] if str(item).strip())
             elif str(plural_value or "").strip():
                 direction[singular] = str(plural_value).strip()
         # A provider-limited card is not a capability portrait.  Do not turn
@@ -979,17 +905,11 @@ async def generate_parallel_s6_cards(
         direction["capability_portrait_modules"] = {}
         direction["capability_portrait"] = ""
         direction["portrait_module_character_counts"] = {}
-        direction["portrait_quality_contract_version"] = (
-            S6_PORTRAIT_QUALITY_CONTRACT_VERSION
-        )
+        direction["portrait_quality_contract_version"] = S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         direction["semantic_consistency_check"] = {
             "process_actor": equipment_form,
-            "launch_or_release_mode": str(
-                direction.get("launch_or_release_domain", "")
-            ),
-            "target_and_direct_effect": str(
-                direction.get("target_and_direct_effect") or direct_effect
-            ),
+            "launch_or_release_mode": str(direction.get("launch_or_release_domain", "")),
+            "target_and_direct_effect": str(direction.get("target_and_direct_effect") or direct_effect),
             "checked_fields": [
                 "name",
                 "primary_equipment_identity",
@@ -998,10 +918,7 @@ async def generate_parallel_s6_cards(
                 "capability_portrait",
             ],
             "consistent": True,
-            "resolution_note": (
-                "主装备、发射域、目标、作战流程和直接战果均沿用同一冻结候选，"
-                "未发生换装或跨卡吸收。"
-            ),
+            "resolution_note": ("主装备、发射域、目标、作战流程和直接战果均沿用同一冻结候选，未发生换装或跨卡吸收。"),
         }
         direction["s6_authoring_status"] = "limited_provider_failure"
         direction["s6_authoring_failure_type"] = type(failure).__name__
@@ -1021,11 +938,7 @@ async def generate_parallel_s6_cards(
     # Rehydrate it from the persisted S6 checkpoint so a resume never
     # reauthors cards that already completed successfully.
     prior_analysis = shared.get("prior_winning_analysis", {})
-    prior_directions = (
-        prior_analysis.get("concept_directions", [])
-        if isinstance(prior_analysis, Mapping)
-        else []
-    )
+    prior_directions = prior_analysis.get("concept_directions", []) if isinstance(prior_analysis, Mapping) else []
     if isinstance(prior_directions, list):
         prior_by_identity: dict[str, Mapping[str, Any]] = {}
         for item in prior_directions:
@@ -1038,9 +951,7 @@ async def generate_parallel_s6_cards(
                 if identity:
                     prior_by_identity[identity] = item
         for brief in briefs:
-            identity = str(
-                brief.get("hypothesis_id") or brief.get("name") or ""
-            ).strip()
+            identity = str(brief.get("hypothesis_id") or brief.get("name") or "").strip()
             prior = prior_by_identity.get(identity)
             if prior is None:
                 prior = prior_by_identity.get(str(brief.get("name", "")).strip())
@@ -1048,21 +959,12 @@ async def generate_parallel_s6_cards(
                 continue
             prior_direction = dict(prior)
             if dynamic_s6_authoring:
-                expected_fingerprint = _dynamic_s6_input_fingerprint(
-                    dynamic_card_payload(brief)
-                )
-                if (
-                    str(prior_direction.get("_s6_authoring_input_fingerprint", ""))
-                    != expected_fingerprint
-                ):
+                expected_fingerprint = _dynamic_s6_input_fingerprint(dynamic_card_payload(brief))
+                if str(prior_direction.get("_s6_authoring_input_fingerprint", "")) != expected_fingerprint:
                     continue
             host._s6_card_result_cache[card_cache_key(brief)] = (
                 prior_direction,
-                str(
-                    prior_direction.get("capability_outcome")
-                    or prior_direction.get("name")
-                    or ""
-                ).strip(),
+                str(prior_direction.get("capability_outcome") or prior_direction.get("name") or "").strip(),
             )
 
     async def author_card(
@@ -1081,14 +983,10 @@ async def generate_parallel_s6_cards(
             status="running",
             attempt=attempt,
             provider_timeout_seconds=_s6_card_timeout_threshold(resume=resume_s6_only),
-            provider_timeout_mode=(
-                "hard" if _s6_hard_timeout_is_enabled() else "soft_observation"
-            ),
+            provider_timeout_mode=("hard" if _s6_hard_timeout_is_enabled() else "soft_observation"),
             concurrent_modules=bool(parallel_portrait_modules),
             s6_concurrency_limit=s6_parallelism,
-            process_isolation=(
-                "new_process_per_turn" if parallel_portrait_modules else "card_scoped"
-            ),
+            process_isolation=("new_process_per_turn" if parallel_portrait_modules else "card_scoped"),
         )
         card_payload = (
             dynamic_card_payload(brief)
@@ -1121,28 +1019,17 @@ async def generate_parallel_s6_cards(
                 max_list_items=8,
             )
         authoring_input_fingerprint = (
-            _dynamic_s6_input_fingerprint(dynamic_card_payload(brief))
-            if dynamic_s6_authoring
-            else ""
+            _dynamic_s6_input_fingerprint(dynamic_card_payload(brief)) if dynamic_s6_authoring else ""
         )
         retry_suffix = (
-            " "
-            + str(prompt_contract["retry_suffix"]).format(
-                reason=retry_reason[:240]
-            )
-            if retry_reason
-            else ""
+            " " + str(prompt_contract["retry_suffix"]).format(reason=retry_reason[:240]) if retry_reason else ""
         )
         phase_prefix = (
             f"winning_s6_parallel_card_resume_{position:02d}"
             if resume_s6_only
             else f"winning_s6_parallel_card_{position:02d}"
         )
-        card_phase = (
-            f"{phase_prefix}_one_shot"
-            if one_shot_authoring
-            else phase_prefix
-        )
+        card_phase = f"{phase_prefix}_one_shot" if one_shot_authoring else phase_prefix
         binding_id = str(
             brief.get("card_binding_id")
             or (card_payload.get("candidate_weapon") or {}).get("card_binding_id")
@@ -1165,19 +1052,18 @@ async def generate_parallel_s6_cards(
                 }
             }
             spine_schema["solution_thesis"] = (
-                "S5入选后形成的一条创新解决思路；说明如何改变核心断点，供概述和技术实现共同引用"
+                "S5入选后形成的一条创新解决思路；以60至90个有效中文字的一个完整句说明如何改变核心断点，供概述和技术实现共同引用"
             )
             spine_schema["core_innovation_thesis"] = (
-                "S5入选后形成的一条不可替代核心创新；说明改变的关键前提或关系，供概述和技术实现共同引用"
+                "S5入选后形成的一条不可替代核心创新；以50至80个有效中文字的一个完整句说明改变的关键前提或关系，供概述和技术实现共同引用"
             )
             spine_instruction = _dynamic_s6_spine_instruction()
+            spine_instruction += mission_narrative_instruction
             if not dynamic_s6_authoring:
                 # Keep the legacy/optimized schema, but use the same isolated
                 # spine contract as dynamic-v2.  The five prose columns are
                 # owned by sibling calls and must never be regenerated here.
-                spine_instruction += " " + str(
-                    prompt_contract["quality_parallel_spine_suffix"]
-                )
+                spine_instruction += " " + str(prompt_contract["quality_parallel_spine_suffix"])
             module_schema = {
                 "module_key": prompt_contract["module_key"],
                 "module_content": prompt_contract["module_content"],
@@ -1194,39 +1080,152 @@ async def generate_parallel_s6_cards(
                 )
             }
             module_exclusive_contract = {
-                "overview": "只按当前背景、解决思路、达到效果、核心创新四项分条简述；解决思路与核心创新逐字承接共享创新锚点，但不展开工程路线、组件、参数、试验或逐步流程。",
-                "technology_implementation": "与概述并列，显式承接同一solution_thesis与core_innovation_thesis；只围绕该创新的原理假设、依据、关键约束、可选路径、验证判据和可行性结论研究，不复述作战流程或泛化效果。",
-                "operational_process": "只负责行动主体、进入条件、关键动作、状态变化、授权/拒打和终止/续接；不重新论证技术路线。",
-                "capability_effects": "只负责过去不能执行的任务、新增能力、可观察战果、指标边界和对手约束；不复述旧规则推演。",
-                "winning_logic": "只负责旧规则、被逆转假设、新交换关系、对手新增代价和成立边界；不重复技术落装或流程步骤。",
+                "overview": (
+                    "只按当前背景、解决思路、达到效果、核心创新四项分条简述；"
+                    "解决思路说明改变断点的高层作用逻辑，达到效果只写可观察的任务状态变化，"
+                    "核心创新只写被改变的旧前提或关键关系；不展开工程路线、组件、参数、试验或逐步流程。"
+                ),
+                "technology_implementation": (
+                    "与概述并列，静默遵守同一解决思路与核心创新，不复述概述；"
+                    "围绕核心创新发散实质不同的新质技术原理路线，说明各路线攻克什么断点，"
+                    "深挖主攻路线的研发卡点、突破方法及其对决定性约束的影响；材料特性、成熟度与耦合关系"
+                    "仅在影响路线选择时写入，功能单元、接口、落装位置和任务状态变化不设必答项。"
+                ),
+                "operational_process": (
+                    "只负责行动主体、进入条件、关键动作、状态变化、授权/拒打和终止/续接；不重新论证技术路线。"
+                ),
+                "capability_effects": (
+                    "只负责过去不能执行的任务、新增能力、可观察战果、指标边界和对手约束；不复述旧规则推演。"
+                ),
+                "winning_logic": (
+                    "只负责旧规则、被逆转假设、新交换关系、对手新增代价和成立边界；不重复技术落装或流程步骤。"
+                ),
             }
             module_completion_contract = {
                 "overview": {
-                    "objective": "用四项短条目让决策者一眼看清背景、解决思路、预期效果和核心创新，并把后两项固定为技术栏的共享研究输入。",
+                    "objective": (
+                        "用四项短条目让决策者一眼看清背景、解决思路、预期效果和核心创新，"
+                        "先围绕为什么值得研究发散多组候选判断，再收敛到一条最强因果主线；"
+                        "四项分别回答场景断点、改变办法、可观察结果和被改变的旧前提，不相互复述。"
+                    ),
+                    "length_plan": (
+                        "事前信息预算：背景约80字，解决思路约90至110字，效果约80至100字，"
+                        "核心创新约70至90字；整栏常规360至400字。"
+                    ),
                     "must_deliver": ["当前背景：", "解决思路：", "达到效果：", "核心创新："],
                     "avoid": ["工程路线", "组件或参数", "试验方案", "多条次要创新", "功能清单", "颠覆性口号"],
+                    "与全卡主线衔接": (
+                        "冻结本卡唯一的任务断点、解决思路和核心创新；为技术栏限定研发问题，"
+                        "为流程、效果与制胜逻辑提供同一因果起点。"
+                    ),
                 },
                 "technology_implementation": {
-                    "objective": "验证共享解决思路和核心创新是否可行，并说明哪些路径、条件和证据支持继续或否定。",
-                    "must_deliver": ["承接解决思路", "围绕核心创新", "原理假设与公开依据", "关键约束", "可选路线比较", "验证判据", "可行性结论"],
-                    "avoid": ["另起技术主题", "无关后阶段配套问题", "零部件清单", "无关技术趋势", "作战流程复述"],
+                    "objective": (
+                        "从共享核心创新发散可落地的新质技术原理路线，找出真正改变核心约束的"
+                        "研发突破，解释该突破为何能使核心创新成立。"
+                    ),
+                    "length_plan": (
+                        "事前信息预算：必要原理边界约30至50字，核心技术、技术瓶颈与突破方法"
+                        "合计约280至320字，路线比较与取舍结论约30至50字；"
+                        "通常只比较2条、最多3条路线。"
+                    ),
+                    "focus": [
+                        "不同原理路线及其创新断点",
+                        "主攻路线为何卡住及应突破什么",
+                        "突破方法改变哪个决定性约束及为何可能有效",
+                        "其他信息仅在改变路线取舍时选写",
+                    ],
+                    "avoid": [
+                        "另起技术主题",
+                        "无关后阶段配套问题",
+                        "零部件清单",
+                        "不改变约束的新技术名词堆砌",
+                        "通用样机阶段或项目进度表",
+                        "作战流程复述",
+                    ],
+                    "与全卡主线衔接": (
+                        "逐项追溯概述解决思路中的作用机理和核心创新：明确支撑它的核心技术、"
+                        "当前技术瓶颈和针对瓶颈的突破方法；功能单元、接口、落装位置与任务状态"
+                        "不是必答项，不得研究与概述主线无直接因果关系的技术。"
+                    ),
                 },
                 "operational_process": {
                     "objective": "说明本装备如何在真实交战条件下进入、改变并交付一个作战窗口。",
+                    "length_plan": (
+                        "事前信息预算：进入条件、三至四个关键状态转移、拒打/终止/续接三部分；整栏常规360至400字。"
+                    ),
                     "must_deliver": ["行动主体", "进入条件", "关键动作", "状态变化", "拒打或续接条件"],
                     "avoid": ["通用五步模板", "技术路线论证", "抽象效果口号"],
+                    "与全卡主线衔接": "把概述中的解决思路转成任务动作与状态转移，并只使用技术栏能够形成的装备能力。",
                 },
                 "capability_effects": {
                     "objective": "区分性能提升与本装备过去无法执行的新任务，并落到可观察战果。",
+                    "length_plan": (
+                        "事前信息预算：过去限制、新增任务与直接效果、后续影响与对方代价、"
+                        "成立边界四部分；整栏常规360至400字。"
+                    ),
                     "must_deliver": ["新增任务", "直接战果", "后续影响", "敌方约束", "我方新作战空间"],
                     "avoid": ["重复旧规则", "泛化指标堆叠", "技术实现细节"],
+                    "与全卡主线衔接": "只写关键流程能够直接造成的状态变化与战果，不新增概述和技术栏未支持的能力。",
                 },
                 "winning_logic": {
                     "objective": "解释本装备如何重写敌我交换关系并形成持续优势。",
+                    "length_plan": (
+                        "事前信息预算：旧规则、新交换关系、经济反制与调整、新增代价与持续优势四部分；"
+                        "整栏常规360至400字。"
+                    ),
                     "must_deliver": ["旧规则", "被逆转假设", "新交换关系", "经济反制", "敌方新增代价"],
                     "avoid": ["技术落装细节", "逐步流程复述", "颠覆性口号"],
+                    "与全卡主线衔接": "用前四栏已经形成的任务动作和直接效果解释关系变化，不另起装备机理或战果。",
                 },
             }
+            if mission_equipment:
+                module_exclusive_contract.update(
+                    {
+                        "operational_process": (
+                            "只负责真实任务中的行动主体、进入条件、部署动作、状态变化、"
+                            "降级与终止/续接；不使用作战或交战叙事。"
+                        ),
+                        "capability_effects": (
+                            "只负责过去不能完成的任务、新增能力、可观察任务效果、指标边界和环境约束；不写敌我或战果。"
+                        ),
+                        "winning_logic": (
+                            "只负责旧任务规则、被改变的关键关系、环境失效模式、缓解代价和成立边界；"
+                            "不得把环境或故障拟人化为敌方。"
+                        ),
+                    }
+                )
+                module_completion_contract.update(
+                    {
+                        "operational_process": {
+                            "objective": "说明装备如何在真实救援/检测/保障任务中进入、改变状态并交付任务窗口。",
+                            "length_plan": (
+                                "事前信息预算：进入条件、三至四个关键状态转移、降级/终止/续接三部分；"
+                                "整栏常规360至400字。"
+                            ),
+                            "must_deliver": ["行动主体", "进入条件", "关键动作", "状态变化", "降级或续接条件"],
+                            "avoid": ["敌我叙事", "作战或交战措辞", "通用五步模板", "技术路线复述"],
+                        },
+                        "capability_effects": {
+                            "objective": "区分性能提升与过去无法执行的新任务，并落到可观察任务效果。",
+                            "length_plan": (
+                                "事前信息预算：过去限制、新增任务与直接效果、后续影响与环境约束、"
+                                "成立边界四部分；整栏常规360至400字。"
+                            ),
+                            "must_deliver": ["新增任务", "直接任务效果", "后续影响", "环境约束", "新增任务空间"],
+                            "avoid": ["敌方或我方", "战果", "虚构人为干扰", "泛化指标堆叠"],
+                        },
+                        "winning_logic": {
+                            "objective": "解释装备如何改变任务关系、降低环境失效风险并形成持续任务价值。",
+                            "length_plan": (
+                                "事前信息预算：旧规则、新任务关系、失效模式与缓解、"
+                                "新增工程代价与持续价值四部分；整栏常规360至400字。"
+                            ),
+                            "must_deliver": ["旧规则", "被改变的假设", "新任务关系", "失效模式", "缓解措施与工程代价"],
+                            "avoid": ["敌我交换", "对手反制", "击落毁伤弹药", "把灾害拟人化"],
+                        },
+                    }
+                )
             spine_context: dict[str, Any] = {}
 
             async def run_scoped_json(
@@ -1262,9 +1261,7 @@ async def generate_parallel_s6_cards(
                     instruction=spine_instruction,
                     schema={
                         "direction": spine_schema,
-                        "capability_image_draft": prompt_contract[
-                            "spine_image_draft"
-                        ],
+                        "capability_image_draft": prompt_contract["spine_image_draft"],
                     },
                     # The spine is structured routing context, not five-column
                     # prose. Keep its dynamic turn bounded so the column wave
@@ -1280,9 +1277,7 @@ async def generate_parallel_s6_cards(
                     capability_image_draft = draft
                 direction_spine = _extract_s6_direction(parsed_spine)
                 if not direction_spine:
-                    raise S6QualityError(
-                        f"S6并行第{position}张装备卡决策脊柱未返回结构化方向"
-                    )
+                    raise S6QualityError(f"S6并行第{position}张装备卡决策脊柱未返回结构化方向")
                 stabilized_spine = _stabilize_s6_direction_structure(
                     direction_spine,
                     brief,
@@ -1302,6 +1297,10 @@ async def generate_parallel_s6_cards(
                         "winning_mechanism",
                         "displaced_operational_mode",
                         "new_operational_mode",
+                        "target_scenario",
+                        "scientific_principle",
+                        "operational_concept",
+                        "capability_outcome",
                         "winning_relation_shift",
                         "solution_thesis",
                         "core_innovation_thesis",
@@ -1310,66 +1309,97 @@ async def generate_parallel_s6_cards(
                 }
                 return stabilized_spine
 
-            def module_authoring_context(module_key: str) -> dict[str, Any]:
+            def decision_writing_material(module_key: str) -> dict[str, Any]:
                 field_map = {
                     "overview": (
-                        "non_substitutable_difference",
-                        "innovation_basis",
-                        "displaced_operational_mode",
-                        "new_operational_mode",
+                        ("不可替代差异", "non_substitutable_difference"),
+                        ("创新依据", "innovation_basis"),
+                        ("原有方式的决定性断点", "displaced_operational_mode"),
+                        ("新的任务方式", "new_operational_mode"),
                     ),
                     "technology_implementation": (
-                        "non_substitutable_difference",
-                        "frontier_principle",
-                        "technology_discontinuity",
-                        "engineering_bottleneck",
+                        ("不可替代差异", "non_substitutable_difference"),
+                        ("前沿作用原理", "frontier_principle"),
+                        ("技术非连续变化", "technology_discontinuity"),
+                        ("核心工程瓶颈", "engineering_bottleneck"),
                     ),
                     "operational_process": (
-                        "unique_operational_role",
-                        "launch_or_release_domain",
-                        "new_operational_mode",
+                        ("装备独有任务角色", "unique_operational_role"),
+                        ("进入或释放域", "launch_or_release_domain"),
+                        ("新的任务方式", "new_operational_mode"),
                     ),
                     "capability_effects": (
-                        "target_and_direct_effect",
-                        "new_operational_mode",
-                        "winning_relation_shift",
+                        ("作用对象与直接效果", "target_and_direct_effect"),
+                        ("新增任务方式", "new_operational_mode"),
+                        ("关键关系变化", "winning_relation_shift"),
                     ),
                     "winning_logic": (
-                        "displaced_operational_mode",
-                        "new_operational_mode",
-                        "winning_relation_shift",
+                        ("原有方式的决定性断点", "displaced_operational_mode"),
+                        ("新的任务方式", "new_operational_mode"),
+                        ("关键关系变化", "winning_relation_shift"),
                     ),
                 }
+                candidate = card_payload.get("candidate_weapon", {})
+                candidate = candidate if isinstance(candidate, Mapping) else {}
                 context = {
-                    "equipment_identity": {
-                        key: card_payload.get("candidate_weapon", {}).get(key)
-                        for key in (
-                            "name",
-                            "primary_equipment_identity",
-                            "equipment_form",
-                            "target_and_direct_effect",
+                    "装备身份": {
+                        label: candidate.get(key)
+                        for label, key in (
+                            ("装备名称", "name"),
+                            ("主装备身份", "primary_equipment_identity"),
+                            ("装备形态", "equipment_form"),
+                            ("作用对象与直接效果", "target_and_direct_effect"),
                         )
-                        if card_payload.get("candidate_weapon", {}).get(key)
+                        if candidate.get(key)
                     },
-                    "overview": card_payload.get("winning_logic_overview", ""),
+                    "入选主线": card_payload.get("winning_logic_overview", ""),
                 }
-                if module_key in {"overview", "technology_implementation"}:
-                    for shared_key in ("solution_thesis", "core_innovation_thesis"):
-                        value = spine_context.get(shared_key)
-                        if value not in (None, "", [], {}):
-                            context[shared_key] = _compact_prompt_value(
-                                value,
-                                max_string_chars=520,
-                                max_list_items=3,
-                            )
-                for field in field_map.get(module_key, ()):
+                context["全卡共同因果主线"] = {
+                    label: _compact_prompt_value(
+                        spine_context.get(key),
+                        max_string_chars=520,
+                        max_list_items=3,
+                    )
+                    for label, key in (
+                        ("核心任务场景", "target_scenario"),
+                        ("解决思路", "solution_thesis"),
+                        ("核心创新", "core_innovation_thesis"),
+                        ("新的任务方式", "new_operational_mode"),
+                        ("作用对象与直接结果", "target_and_direct_effect"),
+                        ("关键关系变化", "winning_relation_shift"),
+                        ("制胜机理", "winning_mechanism"),
+                    )
+                    if spine_context.get(key) not in (None, "", [], {})
+                }
+                if module_key == "overview":
+                    context["概述决策素材"] = {
+                        label: _compact_prompt_value(
+                            spine_context.get(key),
+                            max_string_chars=520,
+                            max_list_items=3,
+                        )
+                        for label, key in (
+                            ("核心任务场景", "target_scenario"),
+                            ("作用对象与直接结果", "target_and_direct_effect"),
+                            ("原有方式的失效点", "displaced_operational_mode"),
+                            ("新的作用方式", "new_operational_mode"),
+                            ("关键关系变化", "winning_relation_shift"),
+                            ("预期能力结果", "capability_outcome"),
+                            ("价值成立机理", "winning_mechanism"),
+                        )
+                        if spine_context.get(key) not in (None, "", [], {})
+                    }
+                exclusive_material: dict[str, Any] = {}
+                for label, field in field_map.get(module_key, ()):
                     value = brief.get(field)
                     if value not in (None, "", [], {}):
-                        context[field] = _compact_prompt_value(
+                        exclusive_material[label] = _compact_prompt_value(
                             value,
                             max_string_chars=520,
                             max_list_items=3,
                         )
+                if exclusive_material:
+                    context["栏目专属素材"] = exclusive_material
                 return context
 
             async def author_module(
@@ -1393,21 +1423,16 @@ async def generate_parallel_s6_cards(
                 if module_key == "technology_implementation" and module_attempt > 1:
                     retry_instruction += (
                         " 本次是检索失败后的模型能力恢复，不要等待联网工具或重复检索；"
-                        "直接依据已锁定的装备构型与作用机理完成路线取舍、核心瓶颈、落装位置、"
-                        "迁移断点和验证条件。必须返回完整正文，不得把检索状态当作正文，也不得编造引用。"
+                        "直接依据已锁定的作用机理完成路线取舍、核心瓶颈、突破方法、"
+                        "技术成立边界和验证条件。必须返回完整正文，不得把检索状态当作正文，也不得编造引用。"
                     )
                 text = await run_scoped_json(
-                    scope=(
-                        module_key
-                        if module_attempt == 1
-                        else f"{module_key}:retry{module_attempt}"
-                    ),
+                    scope=(module_key if module_attempt == 1 else f"{module_key}:retry{module_attempt}"),
                     instruction=_dynamic_s6_module_instruction(
                         module_key,
-                        module_guidance=str(
-                            portrait_modules_schema.get(module_key, "")
-                        ),
+                        module_guidance=str(portrait_modules_schema.get(module_key, "")),
                     )
+                    + mission_narrative_instruction
                     + retry_instruction,
                     schema=module_schema,
                     # A governed portrait column is a ~380-character prose
@@ -1428,12 +1453,21 @@ async def generate_parallel_s6_cards(
                         "portrait_module_label": label,
                         "portrait_module_prompt_section": prompt_sections[module_key],
                         "portrait_module_attempt": module_attempt,
-                        "module_exclusive_contract": module_exclusive_contract,
-                        "spine_context": spine_context,
-                        "module_authoring_context": module_authoring_context(module_key),
-                        "module_completion_contract": module_completion_contract[module_key],
-                        "parallel_quality_check": (
-                            "提交前静默检查：先确认任务目标、五项必答内容和栏目独占边界；"
+                        "五栏职责边界": {labels[key]: value for key, value in module_exclusive_contract.items()},
+                        "决策写作素材": decision_writing_material(module_key),
+                        "当前栏完成标准": {
+                            {
+                                "objective": "目标",
+                                "length_plan": "信息预算",
+                                "must_deliver": "必须交付",
+                                "focus": "写作重点",
+                                "avoid": "不要写",
+                            }.get(key, key): value
+                            for key, value in module_completion_contract[module_key].items()
+                        },
+                        "提交前静默自检": (
+                            "提交前静默检查：先确认本栏完成目标、写作重点和栏目独占边界；"
+                            "逐句删除不改变装备选择、研发优先级、任务动作、直接效果或成立边界的信息；"
                             "再检查约360至400字、完整句、装备专属事实、与兄弟栏无长句重复。"
                             "任何一项不满足都在本次调用内重写，不输出检查过程。"
                         ),
@@ -1449,9 +1483,7 @@ async def generate_parallel_s6_cards(
                 if module_key == "technology_implementation":
                     content = _clean_s6_technology_prose(content, brief)
                 if not content:
-                    raise S6QualityError(
-                        f"S6并行第{position}张装备卡栏目{label}未返回正文"
-                    )
+                    raise S6QualityError(f"S6并行第{position}张装备卡栏目{label}未返回正文")
                 return module_key, content
 
             # Freeze the card-local decision spine first, then fan out the five
@@ -1464,8 +1496,7 @@ async def generate_parallel_s6_cards(
                 raise
             except BaseException as exc:
                 raise S6SpineAuthoringError(
-                    f"S6并行第{position}张装备卡决策脊柱失败："
-                    f"{type(exc).__name__}: {exc}"
+                    f"S6并行第{position}张装备卡决策脊柱失败：{type(exc).__name__}: {exc}"
                 ) from (exc if isinstance(exc, Exception) else None)
             module_results = await _gather_s6_wave(
                 [author_module(key) for key, _ in CAPABILITY_PORTRAIT_MODULES],
@@ -1503,10 +1534,7 @@ async def generate_parallel_s6_cards(
                         author_module(
                             key,
                             module_attempt=module_attempt,
-                            module_retry_reason=(
-                                f"{type(previous_failures[key]).__name__}: "
-                                f"{previous_failures[key]}"
-                            ),
+                            module_retry_reason=(f"{type(previous_failures[key]).__name__}: {previous_failures[key]}"),
                         )
                         for key in failed_module_keys
                     ],
@@ -1563,8 +1591,7 @@ async def generate_parallel_s6_cards(
                         "technology_implementation",
                         module_attempt=maximum_module_attempts + 1,
                         module_retry_reason=(
-                            "技术检索栏进入错峰恢复："
-                            f"{type(technology_failure).__name__}: {technology_failure}"
+                            f"技术检索栏进入错峰恢复：{type(technology_failure).__name__}: {technology_failure}"
                         ),
                         phase_suffix="_offline_recovery",
                     )
@@ -1572,8 +1599,7 @@ async def generate_parallel_s6_cards(
                     raise
                 except Exception as technology_rescue_error:
                     module_authoring_warnings.append(
-                        "装备与技术实现错峰恢复失败："
-                        f"{type(technology_rescue_error).__name__}"
+                        f"装备与技术实现错峰恢复失败：{type(technology_rescue_error).__name__}"
                     )
                     # Preserve the four independently authored siblings, but
                     # keep this column as an exception so the card-level
@@ -1652,9 +1678,7 @@ async def generate_parallel_s6_cards(
                     "validation_plan",
                     "capability_classification",
                 ):
-                    if direction.get(field) in (None, "", [], {}) and brief.get(
-                        field
-                    ) not in (None, "", [], {}):
+                    if direction.get(field) in (None, "", [], {}) and brief.get(field) not in (None, "", [], {}):
                         direction[field] = brief[field]
             authored_modules = {}
             for row in module_results:
@@ -1671,22 +1695,18 @@ async def generate_parallel_s6_cards(
             async with call_semaphore:
                 card_text = await host._run_core_json(
                     agent_id,
-                    _parallel_s6_card_instruction() + retry_suffix,
+                    _parallel_s6_card_instruction() + mission_narrative_instruction + retry_suffix,
                     card_payload,
                     {
                         "direction": active_card_direction_schema,
-                        "capability_image_draft": prompt_contract[
-                            "spine_image_draft"
-                        ],
+                        "capability_image_draft": prompt_contract["spine_image_draft"],
                     },
                     12000,
                     phase=card_phase,
                 )
             output_length = len(card_text)
             parsed = _parse_json_object(card_text)
-            capability_image_draft = str(
-                parsed.get("capability_image_draft", "")
-            ).strip()
+            capability_image_draft = str(parsed.get("capability_image_draft", "")).strip()
             direction = _extract_s6_direction(parsed)
             if not direction:
                 raise S6QualityError(f"S6并行第{position}张装备卡未返回结构化方向")
@@ -1695,18 +1715,14 @@ async def generate_parallel_s6_cards(
             if isinstance(authored_modules, Mapping):
                 authored_modules = {
                     str(key): coerce_portrait_module_prose(
-                        _clean_s6_technology_prose(value, brief)
-                        if str(key) == "technology_implementation"
-                        else value,
+                        _clean_s6_technology_prose(value, brief) if str(key) == "technology_implementation" else value,
                         module_key=str(key),
                         allow_structured_salvage=False,
                     )
                     for key, value in dict(authored_modules).items()
                 }
             else:
-                authored_modules = parse_capability_portrait_modules(
-                    direction.get("capability_portrait", "")
-                )
+                authored_modules = parse_capability_portrait_modules(direction.get("capability_portrait", ""))
             if isinstance(authored_modules, Mapping):
                 authored_modules = dict(authored_modules)
                 if "technology_implementation" in authored_modules:
@@ -1721,6 +1737,8 @@ async def generate_parallel_s6_cards(
         direction.update(shared_innovation_anchors)
         initial_short_modules = _s6_short_portrait_modules(authored_modules)
         quality_warnings: list[str] = list(module_authoring_warnings)
+        if mission_equipment:
+            quality_warnings.extend(_mission_narrative_advisories(authored_modules))
         authoring_audit_notes: list[str] = []
         enhancement_applied = False
         # Keep the complete diagnostic list for audit.  Every diagnosed cause,
@@ -1731,6 +1749,7 @@ async def generate_parallel_s6_cards(
             _parallel_s6_semantic_quality_issues(
                 authored_modules,
                 shared_anchors=shared_innovation_anchors,
+                mission_equipment=mission_equipment,
             )
             if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_repair_issues(authored_modules)
@@ -1741,12 +1760,9 @@ async def generate_parallel_s6_cards(
                 if parallel_portrait_modules or dynamic_s6_authoring:
                     labels = {key: label for key, label in CAPABILITY_PORTRAIT_MODULES}
                     prompt_sections = {
-                        key: f"S6_{index}"
-                        for index, (key, _) in enumerate(CAPABILITY_PORTRAIT_MODULES, 1)
+                        key: f"S6_{index}" for index, (key, _) in enumerate(CAPABILITY_PORTRAIT_MODULES, 1)
                     }
-                    repair_module_keys = _portrait_repair_keys(
-                        first_pass_modules, repair_issues
-                    )
+                    repair_module_keys = _portrait_repair_keys(first_pass_modules, repair_issues)
                     emit_swarm_event(
                         "winning_s6_targeted_repair_planned",
                         actor=agent_id,
@@ -1754,8 +1770,7 @@ async def generate_parallel_s6_cards(
                         hypothesis_id=str(brief.get("hypothesis_id", "")),
                         repair_module_keys=repair_module_keys,
                         preserved_module_keys=[
-                            key for key, _ in CAPABILITY_PORTRAIT_MODULES
-                            if key not in repair_module_keys
+                            key for key, _ in CAPABILITY_PORTRAIT_MODULES if key not in repair_module_keys
                         ],
                     )
 
@@ -1764,23 +1779,15 @@ async def generate_parallel_s6_cards(
                         async with call_semaphore:
                             repair_call = host._run_core_json(
                                 agent_id,
-                                _dynamic_s6_module_repair_instruction(module_key),
+                                _dynamic_s6_module_repair_instruction(module_key) + mission_narrative_instruction,
                                 {
                                     **card_payload,
-                                    "parallel_card_id": (
-                                        f"{binding_id}:{module_key}:repair"
-                                    ),
+                                    "parallel_card_id": (f"{binding_id}:{module_key}:repair"),
                                     "portrait_module_key": module_key,
                                     "portrait_module_label": label,
-                                    "portrait_module_prompt_section": (
-                                        prompt_sections[module_key]
-                                    ),
-                                    "current_module_content": first_pass_modules.get(
-                                        module_key, ""
-                                    ),
-                                    "shared_innovation_anchors": dict(
-                                        shared_innovation_anchors
-                                    ),
+                                    "portrait_module_prompt_section": (prompt_sections[module_key]),
+                                    "current_module_content": first_pass_modules.get(module_key, ""),
+                                    "shared_innovation_anchors": dict(shared_innovation_anchors),
                                     # Give a repaired column visibility into
                                     # its siblings.  Without this context a
                                     # model can only optimize local length and
@@ -1788,30 +1795,21 @@ async def generate_parallel_s6_cards(
                                     # into overview/effects/logic, producing a
                                     # cross-column duplication advisory.
                                     "existing_sibling_modules": {
-                                        key: value
-                                        for key, value in first_pass_modules.items()
-                                        if key != module_key
+                                        key: value for key, value in first_pass_modules.items() if key != module_key
                                     },
                                     "quality_issues": [
-                                        item
-                                        for item in repair_issues
-                                        if module_key in item or label in item
+                                        item for item in repair_issues if module_key in item or label in item
                                     ][:4]
                                     or repair_issues[:4],
                                 },
                                 {
                                     "module_key": prompt_contract["module_key"],
-                                    "module_content": prompt_contract[
-                                        "module_repair_content"
-                                    ],
+                                    "module_content": prompt_contract["module_repair_content"],
                                     "card_binding_id": prompt_contract["binding_id"],
                                     "hypothesis_id": prompt_contract["hypothesis_id"],
                                 },
                                 1800,
-                                phase=(
-                                    f"winning_s6_parallel_card_repair_{position:02d}"
-                                    f"_module_{module_key}"
-                                ),
+                                phase=(f"winning_s6_parallel_card_repair_{position:02d}_module_{module_key}"),
                             )
                             repair_text = await asyncio.wait_for(
                                 repair_call,
@@ -1828,20 +1826,13 @@ async def generate_parallel_s6_cards(
                             returned = parsed_repair.get(field)
                             if str(returned or "") != expected:
                                 raise S6QualityError(f"S6 repair {field} mismatch")
-                        repaired_content = _extract_s6_module_content(
-                            parsed_repair, module_key
-                        )
+                        repaired_content = _extract_s6_module_content(parsed_repair, module_key)
                         if module_key == "technology_implementation":
-                            repaired_content = _clean_s6_technology_prose(
-                                repaired_content, brief
-                            )
+                            repaired_content = _clean_s6_technology_prose(repaired_content, brief)
                         return module_key, repaired_content
 
                     repaired_rows = await _gather_s6_wave(
-                        [
-                            repair_module(module_key)
-                            for module_key in repair_module_keys
-                        ],
+                        [repair_module(module_key) for module_key in repair_module_keys],
                         wave=f"card-{position:02d}-quality-repair",
                     )
                     repaired_modules = dict(first_pass_modules)
@@ -1849,9 +1840,7 @@ async def generate_parallel_s6_cards(
                         if isinstance(row, asyncio.CancelledError):
                             raise row
                         if isinstance(row, Exception):
-                            quality_warnings.append(
-                                f"栏目修复失败，保留该栏首稿：{type(row).__name__}: {row}"
-                            )
+                            quality_warnings.append(f"栏目修复失败，保留该栏首稿：{type(row).__name__}: {row}")
                             continue
                         module_key, content = row
                         if content:
@@ -1861,21 +1850,17 @@ async def generate_parallel_s6_cards(
                     async with call_semaphore:
                         repair_call = host._run_core_json(
                             agent_id,
-                            _parallel_s6_quality_repair_instruction(repair_issues),
+                            _parallel_s6_quality_repair_instruction(repair_issues) + mission_narrative_instruction,
                             {
                                 **card_payload,
                                 "current_direction": dict(direction),
                                 "quality_issues": repair_issues[:8],
                                 "short_module_keys": initial_short_modules,
-                                "shared_innovation_anchors": dict(
-                                    shared_innovation_anchors
-                                ),
+                                "shared_innovation_anchors": dict(shared_innovation_anchors),
                             },
                             {
                                 "direction": active_card_direction_schema,
-                                "capability_image_draft": prompt_contract[
-                                    "quality_spine_image_draft"
-                                ],
+                                "capability_image_draft": prompt_contract["quality_spine_image_draft"],
                             },
                             12000,
                             phase=f"winning_s6_parallel_card_repair_{position:02d}",
@@ -1888,9 +1873,7 @@ async def generate_parallel_s6_cards(
                     repaired = _stabilize_s6_direction_structure(repaired, brief)
                     repaired_modules = repaired.get("capability_portrait_modules", {})
                     if not isinstance(repaired_modules, Mapping):
-                        repaired_modules = parse_capability_portrait_modules(
-                            repaired.get("capability_portrait", "")
-                        )
+                        repaired_modules = parse_capability_portrait_modules(repaired.get("capability_portrait", ""))
                     repaired_modules = dict(repaired_modules)
                     if "technology_implementation" in repaired_modules:
                         repaired_modules["technology_implementation"] = _clean_s6_technology_prose(
@@ -1903,16 +1886,14 @@ async def generate_parallel_s6_cards(
                     )
                 required_module_keys = {key for key, _ in CAPABILITY_PORTRAIT_MODULES}
                 if required_module_keys <= set(candidate_modules) and all(
-                    str(candidate_modules.get(key, "")).strip()
-                    for key in required_module_keys
+                    str(candidate_modules.get(key, "")).strip() for key in required_module_keys
                 ):
-                    repaired_portrait = assemble_capability_portrait_modules(
-                        candidate_modules
-                    )
+                    repaired_portrait = assemble_capability_portrait_modules(candidate_modules)
                     repaired_issues = (
                         _parallel_s6_semantic_quality_issues(
                             candidate_modules,
                             shared_anchors=shared_innovation_anchors,
+                            mission_equipment=mission_equipment,
                         )
                         if dynamic_s6_authoring or parallel_portrait_modules
                         else capability_portrait_repair_issues(candidate_modules)
@@ -1940,27 +1921,20 @@ async def generate_parallel_s6_cards(
                     else:
                         direction["capability_portrait_modules"] = first_pass_modules
                         authored_modules = first_pass_modules
-                        quality_warnings.append(
-                            "二次增强未减少质量问题或出现身份风险，已回退首稿"
-                        )
+                        quality_warnings.append("二次增强未减少质量问题或出现身份风险，已回退首稿")
                 else:
                     quality_warnings.append("二次增强返回栏目不完整，已回退首稿")
             except asyncio.CancelledError:
                 raise
             except Exception as repair_error:
-                quality_warnings.append(
-                    "二次增强失败，已保留首稿："
-                    f"{type(repair_error).__name__}: {repair_error}"
-                )
+                quality_warnings.append(f"二次增强失败，已保留首稿：{type(repair_error).__name__}: {repair_error}")
             emit_swarm_event(
                 "winning_s6_card_quality_enhancement_completed",
                 actor=agent_id,
                 card_position=position,
                 hypothesis_id=str(brief.get("hypothesis_id", "")),
                 equipment_name=str(brief.get("name", "")),
-                status=(
-                    "enhanced" if enhancement_applied else "completed_with_original_draft"
-                ),
+                status=("enhanced" if enhancement_applied else "completed_with_original_draft"),
                 enhancement_applied=enhancement_applied,
                 module_character_counts=_s6_portrait_module_lengths(authored_modules),
                 warnings=quality_warnings[:4],
@@ -2040,30 +2014,17 @@ async def generate_parallel_s6_cards(
         missing_module_keys = required_module_keys - set(authored_modules)
         if missing_module_keys:
             missing_labels = "、".join(
-                label
-                for key, label in CAPABILITY_PORTRAIT_MODULES
-                if key in missing_module_keys
+                label for key, label in CAPABILITY_PORTRAIT_MODULES if key in missing_module_keys
             )
-            raise S6QualityError(
-                f"S6并行第{position}张装备卡能力画像缺少完整五栏：{missing_labels}"
-            )
-        if any(
-            not str(authored_modules.get(key, "")).strip()
-            for key in required_module_keys
-        ):
+            raise S6QualityError(f"S6并行第{position}张装备卡能力画像缺少完整五栏：{missing_labels}")
+        if any(not str(authored_modules.get(key, "")).strip() for key in required_module_keys):
             empty_labels = "、".join(
-                label
-                for key, label in CAPABILITY_PORTRAIT_MODULES
-                if not str(authored_modules.get(key, "")).strip()
+                label for key, label in CAPABILITY_PORTRAIT_MODULES if not str(authored_modules.get(key, "")).strip()
             )
-            raise S6QualityError(
-                f"S6并行第{position}张装备卡能力画像存在空栏：{empty_labels}"
-            )
+            raise S6QualityError(f"S6并行第{position}张装备卡能力画像存在空栏：{empty_labels}")
         assembled_portrait = assemble_capability_portrait_modules(authored_modules)
         if not assembled_portrait:
-            raise S6QualityError(
-                f"S6并行第{position}张装备卡未完整返回五个能力画像模块"
-            )
+            raise S6QualityError(f"S6并行第{position}张装备卡未完整返回五个能力画像模块")
         direction["capability_portrait_modules"] = authored_modules
         direction["capability_portrait"] = assembled_portrait
         authored_boundary = str(direction.get("evidence_boundary", "") or "").strip()
@@ -2082,17 +2043,12 @@ async def generate_parallel_s6_cards(
             check["consistent"] = False
             check["deterministic_identity_issues"] = identity_issues[:4]
             direction["semantic_consistency_check"] = check
-            raise S6QualityError(
-                f"S6并行第{position}张装备卡发生跨卡装备身份污染："
-                + "；".join(identity_issues[:2])
-            )
+            raise S6QualityError(f"S6并行第{position}张装备卡发生跨卡装备身份污染：" + "；".join(identity_issues[:2]))
         if semantic_check.get("consistent") is not True:
             authoring_audit_notes.append(
                 "模型未显式回传语义一致性通过；运行时已按冻结身份、卡片绑定、目标和画像归属完成确定性复核"
             )
-            semantic_check["author_reported_consistent"] = semantic_check.get(
-                "consistent"
-            )
+            semantic_check["author_reported_consistent"] = semantic_check.get("consistent")
         semantic_check["consistent"] = True
         semantic_check.setdefault(
             "resolution_note",
@@ -2103,13 +2059,12 @@ async def generate_parallel_s6_cards(
             direction["s6_authoring_audit_notes"] = authoring_audit_notes[:4]
         final_module_lengths = _s6_portrait_module_lengths(authored_modules)
         direction["portrait_module_character_counts"] = final_module_lengths
-        direction["portrait_quality_contract_version"] = (
-            S6_PORTRAIT_QUALITY_CONTRACT_VERSION
-        )
+        direction["portrait_quality_contract_version"] = S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         remaining_issues = (
             _parallel_s6_semantic_quality_issues(
                 authored_modules,
                 shared_anchors=shared_innovation_anchors,
+                mission_equipment=mission_equipment,
             )
             if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_quality_issues(authored_modules)
@@ -2122,9 +2077,7 @@ async def generate_parallel_s6_cards(
             direction["s6_authoring_quality_warnings"] = quality_warnings[:8]
         else:
             direction["s6_authoring_status"] = "authored_semantically_consistent"
-        if authored_boundary and not _evidence_boundary_is_public_semantic(
-            authored_boundary
-        ):
+        if authored_boundary and not _evidence_boundary_is_public_semantic(authored_boundary):
             direction.pop("evidence_boundary", None)
         emit_swarm_event(
             "winning_s6_card_authoring_completed",
@@ -2139,9 +2092,7 @@ async def generate_parallel_s6_cards(
             quality_warnings=quality_warnings[:4],
             direction=_compact_s6_authored_card_event(direction),
             concurrent_modules=bool(parallel_portrait_modules),
-            process_isolation=(
-                "new_process_per_turn" if parallel_portrait_modules else "card_scoped"
-            ),
+            process_isolation=("new_process_per_turn" if parallel_portrait_modules else "card_scoped"),
         )
         outcome = (
             position,
@@ -2180,9 +2131,7 @@ async def generate_parallel_s6_cards(
                     brief,
                     attempt=attempt,
                     retry_reason=(
-                        f"{type(previous_error).__name__}: {previous_error}"
-                        if previous_error is not None
-                        else ""
+                        f"{type(previous_error).__name__}: {previous_error}" if previous_error is not None else ""
                     ),
                 )
             except recoverable as error:
@@ -2283,12 +2232,8 @@ async def generate_parallel_s6_cards(
             protected_value = brief.get(protected_field)
             if protected_value not in (None, "", []):
                 cached_direction[protected_field] = protected_value
-        cached_boundary = str(
-            cached_direction.get("evidence_boundary", "") or ""
-        ).strip()
-        if cached_boundary and not _evidence_boundary_is_public_semantic(
-            cached_boundary
-        ):
+        cached_boundary = str(cached_direction.get("evidence_boundary", "") or "").strip()
+        if cached_boundary and not _evidence_boundary_is_public_semantic(cached_boundary):
             cached_direction.pop("evidence_boundary", None)
         source_name = str(brief.get("name", "")).strip()
         if source_name:
@@ -2317,23 +2262,16 @@ async def generate_parallel_s6_cards(
         call_gate = getattr(host, "_call_gate", None)
         configure_concurrency = getattr(call_gate, "configure_concurrency", None)
         previous_gate_limit: int | None = None
-        if callable(configure_concurrency) and callable(
-            getattr(call_gate, "snapshot", None)
-        ):
+        if callable(configure_concurrency) and callable(getattr(call_gate, "snapshot", None)):
             try:
                 snapshot = call_gate.snapshot()
-                previous_gate_limit = int(
-                    snapshot.get("limit", snapshot.get("maximum", s6_parallelism))
-                )
+                previous_gate_limit = int(snapshot.get("limit", snapshot.get("maximum", s6_parallelism)))
                 configure_concurrency(s6_parallelism)
             except Exception:
                 previous_gate_limit = None
         try:
             card_results = await _gather_s6_wave(
-                [
-                    author_card_with_retry(position, brief)
-                    for position, brief in pending_cards
-                ],
+                [author_card_with_retry(position, brief) for position, brief in pending_cards],
                 wave="cards",
             )
         finally:
@@ -2374,8 +2312,7 @@ async def generate_parallel_s6_cards(
                             brief,
                             attempt=_s6_card_attempt_limit() + 1,
                             retry_reason=(
-                                "决策脊柱并发波次已耗尽，转入错峰单卡恢复："
-                                f"{type(card_result).__name__}: {card_result}"
+                                f"决策脊柱并发波次已耗尽，转入错峰单卡恢复：{type(card_result).__name__}: {card_result}"
                             ),
                         )
                     except asyncio.CancelledError:
@@ -2396,8 +2333,7 @@ async def generate_parallel_s6_cards(
                         )
                         continue
                 failure_summary = (
-                    f"第{position}张{str(brief.get('name', '')).strip()}："
-                    f"{type(card_result).__name__}: {card_result}"
+                    f"第{position}张{str(brief.get('name', '')).strip()}：{type(card_result).__name__}: {card_result}"
                 )
                 card_failures.append(failure_summary)
                 limited = limited_card_from_brief(
@@ -2445,9 +2381,7 @@ async def generate_parallel_s6_cards(
     }
     result["concept_directions"] = [item[1] for item in authored]
     result["capability_image_drafts"] = [
-        item[2]
-        or str(item[1].get("capability_outcome", "")).strip()
-        or str(item[1].get("name", "")).strip()
+        item[2] or str(item[1].get("capability_outcome", "")).strip() or str(item[1].get("name", "")).strip()
         for item in authored
     ]
     result["s6_parallel_authoring"] = {
@@ -2462,14 +2396,10 @@ async def generate_parallel_s6_cards(
                 start=1,
             )
         },
-        "process_isolation": (
-            "new_process_per_turn" if parallel_portrait_modules else "card_scoped"
-        ),
+        "process_isolation": ("new_process_per_turn" if parallel_portrait_modules else "card_scoped"),
     }
     if dynamic_s6_authoring:
-        result["s6_parallel_authoring"]["authoring_mode"] = (
-            "one_shot" if one_shot_authoring else "parallel_modules"
-        )
+        result["s6_parallel_authoring"]["authoring_mode"] = "one_shot" if one_shot_authoring else "parallel_modules"
     card_quality_warnings = [
         f"第{position}张{str(direction.get('name', '')).strip()}：{warning}"
         for position, direction, _ in authored
@@ -2478,9 +2408,7 @@ async def generate_parallel_s6_cards(
         if str(warning).strip()
     ]
     if card_quality_warnings:
-        result["s6_card_quality_warnings"] = list(dict.fromkeys(card_quality_warnings))[
-            :16
-        ]
+        result["s6_card_quality_warnings"] = list(dict.fromkeys(card_quality_warnings))[:16]
     if card_failures:
         result["s6_card_authoring_limited"] = True
         result["s6_card_authoring_warnings"] = card_failures[:8]
@@ -2491,13 +2419,11 @@ async def generate_parallel_s6_cards(
                 "selection_status": "selected_limited",
                 "s6_eligible": True,
                 "reference_reason": (
-                    "S6独立成稿暂不可用；仅保留已入选装备及其S5证据作为定向重跑输入，"
-                    "当前不提供能力画像正文。"
+                    "S6独立成稿暂不可用；仅保留已入选装备及其S5证据作为定向重跑输入，当前不提供能力画像正文。"
                 ),
             }
             for item in authored
-            if item[1].get("s6_authoring_status")
-            == "limited_provider_failure"
+            if item[1].get("s6_authoring_status") == "limited_provider_failure"
         ]
         # The selected weapon remains traceable and resumable, but is not a
         # formal S6 capability portrait until independent authoring succeeds.

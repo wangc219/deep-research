@@ -12,6 +12,7 @@ from equipment_deep_research.harness.agent_loop import (
     AgentLoop,
     AgentLoopConfig,
     AgentLoopEvent,
+    AgentLoopRunner,
     TurnSnapshotInput,
 )
 from equipment_deep_research.providers.base import (
@@ -101,13 +102,19 @@ def tool(
     handler: Any,
     *,
     schema: dict[str, Any] | None = None,
+    concurrency: str = "parallel",
 ) -> ToolDefinition:
     return ToolDefinition(
         name=name,
         description=f"{name} test tool",
         input_schema=schema or {"type": "object"},
         handler=handler,
+        concurrency=concurrency,
     )
+
+
+def test_default_loop_satisfies_replaceable_runner_protocol() -> None:
+    assert isinstance(AgentLoop(), AgentLoopRunner)
 
 
 def test_provider_contracts_are_strict_json_values_without_shared_containers() -> None:
@@ -178,6 +185,79 @@ async def test_loop_executes_parallel_calls_but_appends_results_in_call_order() 
     assert [message.tool_call_id for message in tool_messages] == ["c1", "c2"]
     assert result.turn_count == 2
     assert result.status == "completed"
+
+
+@async_test
+async def test_parallel_tool_pool_is_bounded_and_keeps_model_order() -> None:
+    active = 0
+    peak = 0
+
+    async def bounded(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        nonlocal active, peak
+        del context
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0.01)
+        active -= 1
+        return ToolResult(call.call_id, call.call_id)
+
+    calls = [call(f"c{index}", "bounded") for index in range(5)]
+    result = await AgentLoop().run(
+        [user("start")],
+        ScriptedProvider([assistant_with_calls(calls), assistant_text("done")]),
+        [tool("bounded", bounded)],
+        config(max_parallel_tools=2),
+    )
+
+    tool_messages = [message for message in result.messages if message.role == "tool"]
+    assert peak == 2
+    assert [message.tool_call_id for message in tool_messages] == [f"c{index}" for index in range(5)]
+
+
+@async_test
+async def test_exclusive_tool_is_a_barrier_between_parallel_groups() -> None:
+    timeline: list[str] = []
+
+    async def parallel(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        del context
+        timeline.append(f"start:{call.call_id}")
+        await asyncio.sleep(0.01)
+        timeline.append(f"end:{call.call_id}")
+        return ToolResult(call.call_id, "parallel")
+
+    async def exclusive(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        del context
+        timeline.append(f"start:{call.call_id}")
+        await asyncio.sleep(0)
+        timeline.append(f"end:{call.call_id}")
+        return ToolResult(call.call_id, "exclusive")
+
+    result = await AgentLoop().run(
+        [user("start")],
+        ScriptedProvider(
+            [
+                assistant_with_calls(
+                    [
+                        call("p1", "parallel"),
+                        call("p2", "parallel"),
+                        call("x", "exclusive"),
+                        call("p3", "parallel"),
+                    ]
+                ),
+                assistant_text("done"),
+            ]
+        ),
+        [
+            tool("parallel", parallel),
+            tool("exclusive", exclusive, concurrency="exclusive"),
+        ],
+        config(max_parallel_tools=2),
+    )
+
+    assert result.status == "completed"
+    assert timeline.index("start:x") > timeline.index("end:p1")
+    assert timeline.index("start:x") > timeline.index("end:p2")
+    assert timeline.index("start:p3") > timeline.index("end:x")
 
 
 @async_test

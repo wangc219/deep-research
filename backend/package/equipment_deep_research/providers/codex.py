@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import hashlib
 import json
 import logging
@@ -132,9 +132,7 @@ def _archive_codex_attempt(
     if not run_id:
         return ""
     safe_run_id = _safe_audit_component(run_id, "unattributed-run")
-    agent_id = _safe_audit_component(
-        options.get("_audit_agent_id", isolation_id), "unattributed-agent"
-    )
+    agent_id = _safe_audit_component(options.get("_audit_agent_id", isolation_id), "unattributed-agent")
     phase = _safe_audit_component(options.get("_audit_phase", "model-turn"), "model-turn")
     call_dir = (
         workspace_path
@@ -148,7 +146,7 @@ def _archive_codex_attempt(
     stdout = str(result.stdout if result is not None else "")
     stderr = str(result.stderr if result is not None else "")
     final_text, parsed_metadata, usage = _parse_codex_jsonl(stdout)
-    completed_at = datetime.now(timezone.utc).isoformat()
+    completed_at = datetime.now(UTC).isoformat()
     metadata = {
         "schema_version": "1.0",
         "run_id": run_id,
@@ -254,17 +252,11 @@ class CodexCliProvider:
         self.command = resolved
         self.model = model
         self.workspace_path = workspace
-        self.codex_home = Path(
-            codex_home or workspace / "outputs" / "runtime" / "codex-home"
-        ).resolve()
-        self.source_codex_home = (
-            Path(source_codex_home or Path.home() / ".codex").expanduser().resolve()
-        )
+        self.codex_home = Path(codex_home or workspace / "outputs" / "runtime" / "codex-home").resolve()
+        self.source_codex_home = Path(source_codex_home or Path.home() / ".codex").expanduser().resolve()
         self.api_key = str(api_key or "").strip()
         self.base_url = str(base_url or "").strip()
-        self.inherit_user_config = bool(
-            inherit_user_config and not (self.api_key or self.base_url)
-        )
+        self.inherit_user_config = bool(inherit_user_config and not (self.api_key or self.base_url))
         if self.base_url:
             parsed_base_url = urlsplit(self.base_url)
             if (
@@ -276,9 +268,7 @@ class CodexCliProvider:
                 or parsed_base_url.fragment
                 or (parsed_base_url.scheme == "http" and parsed_base_url.hostname not in {"127.0.0.1", "localhost"})
             ):
-                raise ValueError(
-                    "Codex base URL must be HTTPS without credentials, query, or fragment"
-                )
+                raise ValueError("Codex base URL must be HTTPS without credentials, query, or fragment")
         self._prepare_codex_home()
         self.timeout_seconds = timeout_seconds
         self.sandbox_mode = sandbox_mode
@@ -295,11 +285,7 @@ class CodexCliProvider:
             / "SKILL.md"
         )
         configured_skills = [Path(item).expanduser().resolve() for item in skill_paths]
-        if (
-            include_default_skills
-            and default_skill.is_file()
-            and default_skill.resolve() not in configured_skills
-        ):
+        if include_default_skills and default_skill.is_file() and default_skill.resolve() not in configured_skills:
             configured_skills.append(default_skill.resolve())
         shared_winning_skill = (
             self.workspace_path
@@ -311,8 +297,7 @@ class CodexCliProvider:
         )
         if (
             include_default_skills
-            and
-            shared_winning_skill.is_file()
+            and shared_winning_skill.is_file()
             and shared_winning_skill.resolve() not in configured_skills
         ):
             configured_skills.append(shared_winning_skill.resolve())
@@ -409,10 +394,7 @@ class CodexCliProvider:
 
         # Skills 配置
         if self.skill_paths:
-            skills_config = ",".join(
-                "{path=" + json.dumps(str(path)) + ",enabled=true}"
-                for path in self.skill_paths
-            )
+            skills_config = ",".join("{path=" + json.dumps(str(path)) + ",enabled=true}" for path in self.skill_paths)
             command.extend(["--config", f"skills.config=[{skills_config}]"])
 
         # 固定参数
@@ -422,10 +404,7 @@ class CodexCliProvider:
 
     def __repr__(self) -> str:
         model = self.model or "(cli default)"
-        return (
-            f"CodexCliProvider(model={model!r}, command={Path(self.command).name!r}, "
-            f"sandbox={self.sandbox_mode!r})"
-        )
+        return f"CodexCliProvider(model={model!r}, command={Path(self.command).name!r}, sandbox={self.sandbox_mode!r})"
 
     def snapshot(self) -> dict[str, str]:
         return {
@@ -455,10 +434,13 @@ class CodexCliProvider:
         be overridden by the dynamic-swarm environment routing.
         """
 
-        safe_id = "".join(
-            character if character.isalnum() or character in {"-", "_"} else "-"
-            for character in str(isolation_id or "specialist")
-        ).strip("-")[:96] or "specialist"
+        safe_id = (
+            "".join(
+                character if character.isalnum() or character in {"-", "_"} else "-"
+                for character in str(isolation_id or "specialist")
+            ).strip("-")[:96]
+            or "specialist"
+        )
         return CodexCliProvider(
             command=self.command,
             model=str(model or self.model).strip(),
@@ -552,26 +534,18 @@ class CodexCliProvider:
         # 优化：使用优化的 prompt 渲染
         prompt_start = monotonic()
         prompt = render_prompt_optimized(messages, options)
-        self._perf_monitor.record('prompt_render', monotonic() - prompt_start)
+        self._perf_monitor.record("prompt_render", monotonic() - prompt_start)
 
-        audit_call_id = (
-            datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-            + "__"
-            + uuid4().hex
-        )
+        audit_call_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ") + "__" + uuid4().hex
         transcript_paths: list[str] = []
 
         schema_path = self._write_output_schema(options.get("output_schema"))
-        provider_timeout_disabled = bool(
-            options.get("_disable_provider_timeout", False)
-        )
+        provider_timeout_disabled = bool(options.get("_disable_provider_timeout", False))
         requested_timeout_seconds = max(
             30,
             int(options.get("_provider_timeout_seconds", self.timeout_seconds)),
         )
-        extended_timeout_allowed = bool(
-            options.get("_allow_extended_provider_timeout", False)
-        )
+        extended_timeout_allowed = bool(options.get("_allow_extended_provider_timeout", False))
         timeout_ceiling_seconds = self.timeout_seconds
         if extended_timeout_allowed:
             timeout_ceiling_seconds = max(
@@ -582,9 +556,7 @@ class CodexCliProvider:
                 ),
             )
         execution_timeout_seconds = (
-            0
-            if provider_timeout_disabled
-            else min(requested_timeout_seconds, timeout_ceiling_seconds)
+            0 if provider_timeout_disabled else min(requested_timeout_seconds, timeout_ceiling_seconds)
         )
         retry_attempts = min(
             self.retry_attempts,
@@ -615,7 +587,7 @@ class CodexCliProvider:
                 options,
                 output_schema_path=schema_path,
             )
-            self._perf_monitor.record('command_build', monotonic() - cmd_start)
+            self._perf_monitor.record("command_build", monotonic() - cmd_start)
 
             result: subprocess.CompletedProcess[str] | None = None
             failure_detail = ""
@@ -624,12 +596,7 @@ class CodexCliProvider:
             capacity_retry_mode = False
             call_gate = shared_codex_call_gate(
                 self._call_gate_key,
-                lock_root=(
-                    self.workspace_path
-                    / "outputs"
-                    / "runtime"
-                    / "codex-call-gates"
-                ),
+                lock_root=(self.workspace_path / "outputs" / "runtime" / "codex-call-gates"),
             )
             call_priority = options.get(
                 "_codex_call_priority",
@@ -642,7 +609,7 @@ class CodexCliProvider:
 
             for attempt in range(max_attempts):
                 attempts_used = attempt + 1
-                attempt_started_at = datetime.now(timezone.utc).isoformat()
+                attempt_started_at = datetime.now(UTC).isoformat()
                 attempt_started = monotonic()
                 gate_lease = await call_gate.acquire(
                     priority=call_priority,
@@ -687,7 +654,7 @@ class CodexCliProvider:
                         elapsed_seconds=monotonic() - attempt_started,
                     )
                     raise
-                self._perf_monitor.record('process_execute', monotonic() - exec_start)
+                self._perf_monitor.record("process_execute", monotonic() - exec_start)
 
                 archive_path = _archive_codex_attempt(
                     workspace_path=self.workspace_path,
@@ -714,9 +681,7 @@ class CodexCliProvider:
                 capacity_failure = _is_capacity_failure(failure_detail)
                 attempt_capacity_failure = capacity_failure
                 capacity_retry_mode = capacity_retry_mode or capacity_failure
-                retry_limit = (
-                    capacity_retry_attempts if capacity_retry_mode else retry_attempts
-                )
+                retry_limit = capacity_retry_attempts if capacity_retry_mode else retry_attempts
                 if attempt + 1 >= retry_limit or not _is_retryable_failure(failure_detail):
                     await gate_lease.release(
                         success=False,
@@ -724,17 +689,14 @@ class CodexCliProvider:
                         capacity_failure=attempt_capacity_failure,
                     )
                     break
-                retry_reasons.append(
-                    "capacity" if capacity_failure else "transient"
-                )
+                retry_reasons.append("capacity" if capacity_failure else "transient")
                 retry_delay = _codex_retry_delay(
                     attempt,
                     capacity=capacity_failure,
                 )
                 if capacity_failure:
                     logger.warning(
-                        "Codex model capacity refusal; retrying same model in %.1fs "
-                        "(attempt %s/%s)",
+                        "Codex model capacity refusal; retrying same model in %.1fs (attempt %s/%s)",
                         retry_delay,
                         attempt + 2,
                         retry_limit,
@@ -754,25 +716,18 @@ class CodexCliProvider:
         # 优化：记录解析时间
         parse_start = monotonic()
         text, metadata, usage = _parse_codex_jsonl(result.stdout)
-        self._perf_monitor.record('output_parse', monotonic() - parse_start)
+        self._perf_monitor.record("output_parse", monotonic() - parse_start)
 
         elapsed_seconds = monotonic() - started_at
-        self._perf_monitor.record('total', elapsed_seconds)
+        self._perf_monitor.record("total", elapsed_seconds)
 
         if result.returncode != 0:
-            error_type = (
-                ProviderCapacityError
-                if _is_capacity_failure(failure_detail)
-                else ProviderRequestError
-            )
+            error_type = ProviderCapacityError if _is_capacity_failure(failure_detail) else ProviderRequestError
             raise error_type(
-                f"Codex CLI exited with status {result.returncode} "
-                f"after {attempts_used} attempt(s): {failure_detail}"
+                f"Codex CLI exited with status {result.returncode} after {attempts_used} attempt(s): {failure_detail}"
             )
         if not text.strip():
-            raise ProviderRequestError(
-                "Codex CLI completed without a final agent message"
-            )
+            raise ProviderRequestError("Codex CLI completed without a final agent message")
         yield ProviderStreamEvent.final(
             ProviderFinalTurn(
                 text=text,
@@ -791,11 +746,7 @@ class CodexCliProvider:
                     "codex_gate_active_at_start": gate_active[-1] if gate_active else None,
                     "codex_gate": call_gate.snapshot(),
                     "capacity_retry_attempts": capacity_retry_attempts,
-                    "provider_timeout_seconds": (
-                        None
-                        if provider_timeout_disabled
-                        else execution_timeout_seconds
-                    ),
+                    "provider_timeout_seconds": (None if provider_timeout_disabled else execution_timeout_seconds),
                     "provider_timeout_disabled": provider_timeout_disabled,
                     "extended_provider_timeout": extended_timeout_allowed,
                     "prompt_chars": len(prompt),
@@ -813,10 +764,7 @@ class CodexCliProvider:
     ) -> list[str]:
         """优化的命令构建 - 使用缓存"""
         # 构建缓存键
-        cache_key = self._command_cache.get_cache_key(
-            options,
-            has_schema=output_schema_path is not None
-        )
+        cache_key = self._command_cache.get_cache_key(options, has_schema=output_schema_path is not None)
 
         # 尝试从缓存获取
         cached_command = self._command_cache.get(cache_key)
@@ -834,9 +782,7 @@ class CodexCliProvider:
 
         # 添加可变配置
         reasoning_effort = str(options.get("reasoning_effort", "")).strip().lower()
-        configured_reasoning_effort = os.environ.get(
-            "EQUIPMENT_DR_CODEX_REASONING_EFFORT", ""
-        ).strip().lower()
+        configured_reasoning_effort = os.environ.get("EQUIPMENT_DR_CODEX_REASONING_EFFORT", "").strip().lower()
         if configured_reasoning_effort in {"low", "medium", "high", "xhigh"}:
             reasoning_effort = configured_reasoning_effort
         if reasoning_effort in {"low", "medium", "high", "xhigh"}:
@@ -868,9 +814,7 @@ class CodexCliProvider:
             # optional search_context_size field (Kimi documents a 400 for
             # this parameter).  Keep the richer setting by default, but let a
             # deployment omit it without changing the orchestration chain.
-            search_context_mode = os.environ.get(
-                "EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send"
-            ).strip().lower()
+            search_context_mode = os.environ.get("EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send").strip().lower()
             if search_context_mode not in {"omit", "none", "disabled"}:
                 context_size = str(search_options.get("search_context_size", "high"))
                 if context_size not in {"low", "medium", "high"}:
@@ -922,9 +866,7 @@ class CodexCliProvider:
             pass
         return path
 
-    def _execute(
-        self, command: Sequence[str], prompt: str
-    ) -> subprocess.CompletedProcess[str]:
+    def _execute(self, command: Sequence[str], prompt: str) -> subprocess.CompletedProcess[str]:
         # Runtime homes are shared by repeated role calls and may be touched by
         # an older provider instance or Codex CLI migration between turns.
         # Reassert the task-scoped credential immediately before launch so a
@@ -959,9 +901,7 @@ class CodexCliProvider:
                 env=env,
             )
         except subprocess.TimeoutExpired as exc:
-            raise ProviderRequestError(
-                f"Codex CLI timed out after {self.timeout_seconds} seconds"
-            ) from exc
+            raise ProviderRequestError(f"Codex CLI timed out after {self.timeout_seconds} seconds") from exc
         except OSError as exc:
             raise ProviderRequestError(f"Codex CLI could not start: {exc}") from exc
 
@@ -998,11 +938,7 @@ class CodexCliProvider:
         process_group_id = process.pid
         self._register_process_group(process_group_id)
         try:
-            configured_timeout = (
-                self.timeout_seconds
-                if timeout_seconds is None
-                else int(timeout_seconds)
-            )
+            configured_timeout = self.timeout_seconds if timeout_seconds is None else int(timeout_seconds)
             effective_timeout = configured_timeout if configured_timeout > 0 else None
             if effective_timeout is None:
                 stdout, stderr = await process.communicate(prompt.encode("utf-8"))
@@ -1016,9 +952,7 @@ class CodexCliProvider:
             raise
         except TimeoutError as exc:
             await _terminate_process_group(process)
-            raise ProviderRequestError(
-                f"Codex CLI timed out after {effective_timeout} seconds"
-            ) from exc
+            raise ProviderRequestError(f"Codex CLI timed out after {effective_timeout} seconds") from exc
         finally:
             # ``codex exec`` may launch helpers.  A successful leader exit must
             # not allow a detached helper in the same task process group to
@@ -1152,9 +1086,7 @@ def _render_prompt(
 def _contract_to_json_schema(value: object) -> dict[str, Any]:
     """Translate the repository's compact output contracts to JSON Schema."""
     if isinstance(value, Mapping):
-        properties = {
-            str(key): _contract_to_json_schema(item) for key, item in value.items()
-        }
+        properties = {str(key): _contract_to_json_schema(item) for key, item in value.items()}
         return {
             "type": "object",
             "properties": properties,
@@ -1189,9 +1121,7 @@ def _contract_to_json_schema(value: object) -> dict[str, Any]:
                 {"type": "array", "items": {"type": "string"}},
             ]
         }
-    if "|" in descriptor and all(
-        token.strip() and " " not in token.strip() for token in descriptor.split("|")
-    ):
+    if "|" in descriptor and all(token.strip() and " " not in token.strip() for token in descriptor.split("|")):
         return {
             "type": "string",
             "enum": [token.strip() for token in descriptor.split("|")],
@@ -1213,11 +1143,7 @@ def _parse_codex_jsonl(
             continue
         if not isinstance(envelope, Mapping):
             continue
-        event = (
-            envelope.get("msg")
-            if isinstance(envelope.get("msg"), Mapping)
-            else envelope
-        )
+        event = envelope.get("msg") if isinstance(envelope.get("msg"), Mapping) else envelope
         if not isinstance(event, Mapping):
             continue
         event_type = str(event.get("type", ""))
@@ -1225,10 +1151,7 @@ def _parse_codex_jsonl(
             thread_id = str(event.get("thread_id", ""))
         elif event_type in {"item.started", "item.completed"}:
             item = event.get("item")
-            if (
-                not isinstance(item, Mapping)
-                or str(item.get("type", "")) != "agent_message"
-            ):
+            if not isinstance(item, Mapping) or str(item.get("type", "")) != "agent_message":
                 continue
             text = str(item.get("text", "")).strip()
             if text:
@@ -1257,11 +1180,7 @@ def _codex_failure_detail(stdout: str, stderr: str) -> str:
             continue
         if not isinstance(envelope, Mapping):
             continue
-        event = (
-            envelope.get("msg")
-            if isinstance(envelope.get("msg"), Mapping)
-            else envelope
-        )
+        event = envelope.get("msg") if isinstance(envelope.get("msg"), Mapping) else envelope
         if not isinstance(event, Mapping):
             continue
         event_type = str(event.get("type", "")).lower()
@@ -1281,9 +1200,7 @@ def _codex_failure_detail(stdout: str, stderr: str) -> str:
         ]
         response = event.get("response")
         if isinstance(response, Mapping):
-            candidates.extend(
-                [response.get("error"), response.get("incomplete_details")]
-            )
+            candidates.extend([response.get("error"), response.get("incomplete_details")])
         for value in candidates:
             if isinstance(value, Mapping):
                 value = value.get("message") or value.get("reason") or value
@@ -1294,9 +1211,7 @@ def _codex_failure_detail(stdout: str, stderr: str) -> str:
         return _trim(" | ".join(failures), 4000)
 
     warning_free = [
-        line
-        for line in str(stderr or "").splitlines()
-        if " WARN " not in line and "warning" not in line.lower()
+        line for line in str(stderr or "").splitlines() if " WARN " not in line and "warning" not in line.lower()
     ]
     fallback = "\n".join(warning_free).strip() or str(stdout or "").strip()
     if not fallback:
@@ -1311,29 +1226,29 @@ def _is_retryable_failure(detail: str) -> bool:
     # provider-level retry is safe: a genuinely invalid key still fails on the
     # second attempt, while a healthy key is not allowed to invalidate a whole
     # checkpointed research run because of one relay response.
-    transient_relay_auth = (
-        "401" in normalized
-        and "unauthorized" in normalized
-        and "invalid api key" in normalized
-    )
-    return transient_relay_auth or _is_capacity_failure(normalized) or any(
-        signal in normalized
-        for signal in (
-            "429",
-            "500",
-            "502",
-            "503",
-            "504",
-            "connection",
-            "network",
-            "temporarily unavailable",
-            "timeout",
-            "timed out",
-            "stream disconnected",
-            "upstream",
-            "internal server error",
-            "response failed",
-            "no diagnostic output",
+    transient_relay_auth = "401" in normalized and "unauthorized" in normalized and "invalid api key" in normalized
+    return (
+        transient_relay_auth
+        or _is_capacity_failure(normalized)
+        or any(
+            signal in normalized
+            for signal in (
+                "429",
+                "500",
+                "502",
+                "503",
+                "504",
+                "connection",
+                "network",
+                "temporarily unavailable",
+                "timeout",
+                "timed out",
+                "stream disconnected",
+                "upstream",
+                "internal server error",
+                "response failed",
+                "no diagnostic output",
+            )
         )
     )
 
@@ -1403,7 +1318,7 @@ def _codex_retry_delay(attempt: int, *, capacity: bool) -> float:
             0.25,
         )
     ceiling = max(base, ceiling)
-    exponential = min(ceiling, base * (2**max(0, attempt)))
+    exponential = min(ceiling, base * (2 ** max(0, attempt)))
     return exponential + (random.uniform(0.0, jitter) if jitter else 0.0)
 
 

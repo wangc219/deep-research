@@ -69,6 +69,57 @@ async def test_personal_skill_install_list_preview_and_delete_without_database_r
         assert preview_response.status_code == 200, preview_response.text
         assert preview_response.json()["data"]["content"] == skill_md
 
+        tree = await test_client.get(f"/api/skills/personal/{slug}/tree", headers=headers)
+        assert tree.status_code == 200, tree.text
+        assert "SKILL.md" in tree.text
+
+        created = await test_client.post(
+            f"/api/skills/personal/{slug}/file",
+            headers=headers,
+            json={"path": "references/notes.md", "content": "original"},
+        )
+        assert created.status_code == 200, created.text
+        updated = await test_client.put(
+            f"/api/skills/personal/{slug}/file",
+            headers=headers,
+            json={"path": "references/notes.md", "content": "edited online"},
+        )
+        assert updated.status_code == 200, updated.text
+        read = await test_client.get(
+            f"/api/skills/personal/{slug}/file",
+            headers=headers,
+            params={"path": "references/notes.md"},
+        )
+        assert read.json()["data"]["content"] == "edited online"
+
+        dependencies = await test_client.put(
+            f"/api/skills/personal/{slug}/dependencies",
+            headers=headers,
+            json={"tool_dependencies": ["web_search"], "mcp_dependencies": [], "skill_dependencies": []},
+        )
+        assert dependencies.status_code == 200, dependencies.text
+        assert dependencies.json()["data"]["tool_dependencies"] == ["web_search"]
+        refreshed = await test_client.get("/api/skills/accessible", headers=headers)
+        assert next(item for item in refreshed.json()["data"] if item["slug"] == slug)["tool_dependencies"] == [
+            "web_search"
+        ]
+
+        for path in ("../escape.md", "/tmp/escape.md"):
+            denied = await test_client.put(
+                f"/api/skills/personal/{slug}/file",
+                headers=headers,
+                json={"path": path, "content": "escape"},
+            )
+            assert denied.status_code == 400, denied.text
+        invalid = await test_client.put(
+            f"/api/skills/personal/{slug}/file",
+            headers=headers,
+            json={"path": "SKILL.md", "content": "invalid metadata"},
+        )
+        assert invalid.status_code == 400, invalid.text
+        kept = await test_client.get(f"/api/skills/personal/{slug}/file", headers=headers, params={"path": "SKILL.md"})
+        assert "integration personal skill" in kept.json()["data"]["content"]
+
         shared_after = await test_client.get("/api/system/skills", headers=headers)
         assert shared_after.status_code == 200, shared_after.text
         assert len(shared_after.json().get("data") or []) == shared_count

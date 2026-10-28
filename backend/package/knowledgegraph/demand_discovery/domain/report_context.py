@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from knowledgegraph.demand_discovery.domain.models import SerializableDataclass
@@ -103,15 +103,9 @@ class ReportContextBundle(SerializableDataclass):
             raise ValueError(f"unknown report context review_status: {self.review_status}")
         material_ids = {item.material_id for item in self.materials}
         for item in self.curated_items:
-            missing = [
-                material_id
-                for material_id in item.material_ids
-                if material_id not in material_ids
-            ]
+            missing = [material_id for material_id in item.material_ids if material_id not in material_ids]
             if missing:
-                raise ValueError(
-                    f"curated item references unknown material_ids: {missing}"
-                )
+                raise ValueError(f"curated item references unknown material_ids: {missing}")
 
 
 def report_context_bundle_from_dict(data: dict[str, Any]) -> ReportContextBundle:
@@ -125,20 +119,10 @@ def report_context_bundle_from_dict(data: dict[str, Any]) -> ReportContextBundle
         review_status=str(data.get("review_status", "needs_revision")),
         control_brief=dict(data.get("control_brief", {})),
         lineage_trace=[dict(item) for item in data.get("lineage_trace", [])],
-        materials=[
-            report_context_material_from_dict(item)
-            for item in data.get("materials", [])
-        ],
-        curated_items=[
-            curated_report_item_from_dict(item)
-            for item in data.get("curated_items", [])
-        ],
-        verifier_warnings=[
-            str(item) for item in data.get("verifier_warnings", [])
-        ],
-        allowed_evidence_ids=[
-            str(item) for item in data.get("allowed_evidence_ids", [])
-        ],
+        materials=[report_context_material_from_dict(item) for item in data.get("materials", [])],
+        curated_items=[curated_report_item_from_dict(item) for item in data.get("curated_items", [])],
+        verifier_warnings=[str(item) for item in data.get("verifier_warnings", [])],
+        allowed_evidence_ids=[str(item) for item in data.get("allowed_evidence_ids", [])],
         blocked_claims=[str(item) for item in data.get("blocked_claims", [])],
         required_caveats=[str(item) for item in data.get("required_caveats", [])],
         created_at=_parse_datetime(data.get("created_at")),
@@ -153,15 +137,10 @@ def report_context_material_from_dict(
         material_type=str(data.get("material_type", "")),
         title=str(data.get("title", "")),
         summary=str(data.get("summary", "")),
-        refs={
-            str(key): [str(item) for item in value]
-            for key, value in dict(data.get("refs", {})).items()
-        },
+        refs={str(key): [str(item) for item in value] for key, value in dict(data.get("refs", {})).items()},
         window_text=str(data.get("window_text", "")),
         source_location=str(data.get("source_location", "")),
-        allowed_report_uses=[
-            str(item) for item in data.get("allowed_report_uses", [])
-        ],
+        allowed_report_uses=[str(item) for item in data.get("allowed_report_uses", [])],
         risk_flags=[str(item) for item in data.get("risk_flags", [])],
     )
 
@@ -189,4 +168,4 @@ def _parse_datetime(value: Any) -> datetime:
         return value
     if isinstance(value, str) and value:
         return datetime.fromisoformat(value)
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

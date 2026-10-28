@@ -263,10 +263,24 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
         "core_innovation_thesis",
         "逐字复述",
         "原理假设",
-        "验证判据",
-        "可行性结论",
-        "可选实现途径",
-        "推荐主路径",
+        "技术路线研究判断与成立边界",
+        "决定核心创新能否成立",
+        "耦合边界",
+        "唯一技术研究主轴",
+        "核心技术研发",
+        "新原理",
+        "新材料",
+        "新工艺",
+        "新器件",
+        "新算法",
+        "嵌入装备构型",
+        "新的装备功能与构型",
+        "2至4条有实质差异的技术原理路线",
+        "真正卡在哪项机理或方法",
+        "底层机理、关键方法或制备/实现瓶颈",
+        "不得按技术类别凑数",
+        "不得让每个分点套用相同字段和句序",
+        "只在它们直接决定路线选择或研发突破时展开",
         "核心攻关顺序",
         "联网检索能力",
         "新质概念武器研发",
@@ -774,8 +788,12 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
         )
         assert len(s3_done) == 3
         assert s4_started
-        assert boundary and boundary[0]["completed_s3_instance_ids"]
-        assert min(s3_done) < boundary_index < min(s4_started) < max(s3_done)
+        assert boundary
+        assert boundary[0]["parallel_start"] is True
+        assert boundary[0]["completed_s3_instance_ids"] == []
+        assert len(boundary[0]["remaining_s3_instance_ids"]) == 3
+        assert boundary_index < min(s3_done)
+        assert boundary_index < min(s4_started) < max(s3_done)
         assert host.maximum_active_calls <= max_concurrency
         assert (
             accumulated["winning_swarm"]["budget"]["maximum_observed_concurrency"]

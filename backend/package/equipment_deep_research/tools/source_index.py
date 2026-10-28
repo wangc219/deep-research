@@ -10,10 +10,12 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from threading import RLock
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 from urllib.parse import urlsplit
 
 from equipment_deep_research.domain.models import EvidenceCard, now_iso
+from equipment_deep_research.config import ProjectPaths
 
 
 _INDEX_LOCK = RLock()
@@ -77,8 +79,7 @@ class SourcePriorityIndex:
         return {
             str(url)
             for url, row in sources.items()
-            if isinstance(row, Mapping)
-            and str(row.get("last_status", "")).strip().lower() in bad_statuses
+            if isinstance(row, Mapping) and str(row.get("last_status", "")).strip().lower() in bad_statuses
         }
 
     def recommend_shared(
@@ -99,20 +100,14 @@ class SourcePriorityIndex:
                     url,
                     {**raw, "recommended_for": []},
                 )
-                current["recommended_for"] = list(
-                    dict.fromkeys([*current.get("recommended_for", []), agent_id])
-                )
+                current["recommended_for"] = list(dict.fromkeys([*current.get("recommended_for", []), agent_id]))
                 current["priority"] = max(
                     int(current.get("priority", 0)),
                     int(raw.get("priority", 0)),
                 )
         rows.extend(
             sorted(
-                (
-                    row
-                    for row in by_url.values()
-                    if len(row.get("recommended_for", [])) >= 2
-                ),
+                (row for row in by_url.values() if len(row.get("recommended_for", [])) >= 2),
                 key=lambda row: (
                     len(row.get("recommended_for", [])),
                     int(row.get("priority", 0)),
@@ -187,9 +182,7 @@ class SourcePriorityIndex:
                 "url": str(row.get("url", "")),
                 "domain": urlsplit(str(row.get("url", ""))).hostname or "",
                 "source_type": str(row.get("source_type", "curated")),
-                "source_region": str(
-                    row.get("source_region") or row.get("region") or ""
-                ).strip(),
+                "source_region": str(row.get("source_region") or row.get("region") or "").strip(),
                 "search_focus": list(row.get("search_focus", [])),
                 "priority": int(row.get("priority", 50)),
                 "learned": False,
@@ -227,10 +220,7 @@ class SourcePriorityIndex:
             if accepted_count < 1 or success_count <= failure_count:
                 continue
             relevance = max(
-                (
-                    _overlap(topic_terms, _terms(str(item)))
-                    for item in raw.get("topics", [])
-                ),
+                (_overlap(topic_terms, _terms(str(item))) for item in raw.get("topics", [])),
                 default=0,
             )
             rows.append(
@@ -261,11 +251,7 @@ class SourcePriorityIndex:
             payload = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return {"schema_version": "1.0", "sources": {}}
-        return (
-            payload
-            if isinstance(payload, dict)
-            else {"schema_version": "1.0", "sources": {}}
-        )
+        return payload if isinstance(payload, dict) else {"schema_version": "1.0", "sources": {}}
 
     def _write_index(self, payload: Mapping[str, Any]) -> None:
         if self.path is None:
@@ -282,9 +268,7 @@ class SourcePriorityIndex:
                 delete=False,
             ) as temporary:
                 temporary_path = Path(temporary.name)
-                temporary.write(
-                    json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2)
-                )
+                temporary.write(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2))
                 temporary.flush()
                 os.fsync(temporary.fileno())
             os.replace(temporary_path, self.path)
@@ -308,7 +292,7 @@ def _index_file_lock(path: Path, *, exclusive: bool) -> Iterator[None]:
 
 def _default_seed_path() -> Path:
     return (
-        Path(__file__).resolve().parents[3]
+        ProjectPaths.from_environment().root
         / "configs"
         / "equipment_deep_research"
         / "codex_skills"
@@ -319,9 +303,7 @@ def _default_seed_path() -> Path:
 
 
 def _terms(value: str) -> set[str]:
-    normalized = "".join(
-        character.lower() if character.isalnum() else " " for character in value
-    )
+    normalized = "".join(character.lower() if character.isalnum() else " " for character in value)
     return {item for item in normalized.split() if len(item) >= 2}
 
 

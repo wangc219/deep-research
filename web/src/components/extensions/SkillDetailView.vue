@@ -34,7 +34,7 @@
               <FolderTree :size="14" aria-hidden="true" />
             </button>
             <button
-              v-if="isInstalledSkill && canManageCurrentSkill"
+              v-if="isInstalledSkill && canManageCurrentSkill && !isPersonalSkill"
               type="button"
               aria-label="导出 Skill"
               @click="handleExport"
@@ -142,7 +142,8 @@
 
     <template #panel-config>
       <div class="extension-detail-view extension-detail-gray-switches config-view">
-        <section class="config-section extension-detail-section">
+        <a-alert v-if="isPersonalSkill" type="info" message="个人 Skill 仅供当前用户使用；依赖配置会参与主智能体与子智能体的统一运行时解析。" show-icon />
+        <section v-if="!isPersonalSkill" class="config-section extension-detail-section">
           <div class="config-section-header extension-detail-section-header">
             <div class="text extension-detail-section-heading">
               <h3>可用范围</h3>
@@ -192,8 +193,13 @@
               <div v-else-if="isReadOnlySkill" class="readonly-scope-hint">
                 当前 Skill 对你只读，不能修改生效范围。
               </div>
+              <a-form-item v-if="canManageCurrentSkill" label="允许使用的角色（与共享范围同时生效）">
+                <a-select v-model:value="shareConfigForm.allowed_roles" mode="multiple" :options="[
+                  { value: 'user', label: '普通用户' }, { value: 'admin', label: '管理员' }, { value: 'superadmin', label: '超级管理员' }
+                ]" />
+              </a-form-item>
               <ShareConfigForm
-                v-else
+                v-if="!isBuiltinInstalledSkill && !isReadOnlySkill"
                 ref="shareConfigFormRef"
                 v-model="shareConfigForm"
                 :auto-select-user-dept="true"
@@ -386,7 +392,7 @@ import {
   ChevronDown,
   ChevronRight
 } from '@lucide/vue'
-import { skillApi } from '@/apis/skill_api'
+import { skillApi, personalSkillApi } from '@/apis/skill_api'
 import AgentFilePreview from '@/components/AgentFilePreview.vue'
 import ExtensionDetailLayout from '@/components/shared/ExtensionDetailLayout.vue'
 import FileTreeComponent from '@/components/FileTreeComponent.vue'
@@ -441,7 +447,9 @@ const dependencyForm = reactive({
 })
 const dependencySearch = reactive({ tools: '', mcps: '', skills: '' })
 
-const isInstalledSkill = computed(() => !!currentSkill.value?.dir_path)
+const isPersonalSkill = computed(() => route.query.scope === 'personal')
+const fileApi = computed(() => isPersonalSkill.value ? personalSkillApi : skillApi)
+const isInstalledSkill = computed(() => isPersonalSkill.value || !!currentSkill.value?.dir_path)
 
 const isBuiltinInstalledSkill = computed(() => {
   return !!(isInstalledSkill.value && currentSkill.value?.source_type === 'builtin')
@@ -556,6 +564,7 @@ const startEditingCurrentFile = () => {
 
 const cloneShareConfig = (config) => ({
   version: 2,
+  allowed_roles: [...(config?.allowed_roles || ['user', 'admin', 'superadmin'])],
   read_scope:
     config?.version === 2
       ? config.read_scope
@@ -588,11 +597,11 @@ const syncShareConfigFromSkill = (skillRecord) => {
 const fetchSkillDetail = async () => {
   loading.value = true
   try {
-    const skillResult = await skillApi.listSkills()
+    const skillResult = await (isPersonalSkill.value ? skillApi.listSkillCards() : skillApi.listSkills())
     skills.value = skillResult?.data || []
     allowedSkillAccessLevels.value = skillResult?.allowed_access_levels || ['user']
 
-    const found = skills.value.find((s) => s.slug === slug.value)
+    const found = skills.value.find((s) => s.slug === slug.value && (s.source_scope === 'personal') === isPersonalSkill.value)
     if (found) {
       currentSkill.value = found
       syncDependencyFormFromSkill(found)
@@ -648,7 +657,7 @@ const reloadTree = async () => {
   if (!currentSkill.value || !isInstalledSkill.value) return
   loading.value = true
   try {
-    const result = await skillApi.getSkillTree(currentSkill.value.slug)
+    const result = await fileApi.value.getSkillTree(currentSkill.value.slug)
     const normalized = normalizeTree(result?.data || [])
     treeData.value = normalized
     expandedKeys.value = []
@@ -661,7 +670,7 @@ const reloadTree = async () => {
 
 const loadSkillFile = async (skillSlug, path = 'SKILL.md') => {
   try {
-    const fileResult = await skillApi.getSkillFile(skillSlug, path)
+    const fileResult = await fileApi.value.getSkillFile(skillSlug, path)
     const content = fileResult?.data?.content || ''
     fileContent.value = content
     selectedPath.value = path
@@ -688,7 +697,7 @@ const handleTreeSelect = async (keys, info) => {
     return
   }
   try {
-    const result = await skillApi.getSkillFile(currentSkill.value.slug, path)
+    const result = await fileApi.value.getSkillFile(currentSkill.value.slug, path)
     const content = result?.data?.content || ''
     fileContent.value = content
   } catch {
@@ -701,7 +710,7 @@ const saveCurrentFile = async (content = fileContent.value) => {
     return
   savingFile.value = true
   try {
-    await skillApi.updateSkillFile(currentSkill.value.slug, {
+    await fileApi.value.updateSkillFile(currentSkill.value.slug, {
       path: selectedPath.value,
       content
     })
@@ -727,7 +736,7 @@ const confirmDeleteSkill = () => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await skillApi.deleteSkill(target.slug)
+        await fileApi.value.deleteSkill(target.slug)
         message.success(`已${actionText}`)
         router.push({ path: '/extensions', query: { tab: 'skills' } })
       } catch {
@@ -765,7 +774,7 @@ const handleCreateNode = async () => {
   if (!currentSkill.value || !createForm.path.trim() || !canEditSkillFiles.value) return
   creatingNode.value = true
   try {
-    await skillApi.createSkillFile(currentSkill.value.slug, {
+    await fileApi.value.createSkillFile(currentSkill.value.slug, {
       path: createForm.path.trim(),
       is_dir: createForm.isDir,
       content: createForm.content
@@ -792,9 +801,7 @@ const saveShareConfig = async () => {
 
   savingShareConfig.value = true
   try {
-    if (!isBuiltinInstalledSkill.value) {
-      await skillApi.updateSkillShareConfig(currentSkill.value.slug, shareConfigForm.value)
-    }
+    await skillApi.updateSkillShareConfig(currentSkill.value.slug, shareConfigForm.value)
     const result = await skillApi.updateSkillEnabled(currentSkill.value.slug, enabledForm.value)
     if (result?.data) {
       currentSkill.value = result.data
@@ -812,7 +819,7 @@ const saveDependencies = async () => {
   if (!currentSkill.value || !isInstalledSkill.value || !canEditSkillDependencies.value) return
   savingDependencies.value = true
   try {
-    const result = await skillApi.updateSkillDependencies(currentSkill.value.slug, {
+    const result = await fileApi.value.updateSkillDependencies(currentSkill.value.slug, {
       tool_dependencies: dependencyForm.tool_dependencies,
       mcp_dependencies: dependencyForm.mcp_dependencies,
       skill_dependencies: dependencyForm.skill_dependencies
@@ -821,6 +828,9 @@ const saveDependencies = async () => {
     if (updated) {
       currentSkill.value = updated
       syncDependencyFormFromSkill(updated)
+    }
+    if (isPersonalSkill.value && selectedPath.value === 'SKILL.md') {
+      await loadSkillFile(currentSkill.value.slug)
     }
     message.success('依赖已更新')
   } catch {

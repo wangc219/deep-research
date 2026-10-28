@@ -40,7 +40,7 @@ def test_s5_scorecards_recompute_authoritative_weighted_score() -> None:
     scorecards = s5_scorecards_from_summary(_summary())
 
     assert len(scorecards) == 1
-    assert scorecards[0]["weighted_score"] == 0.7882
+    assert scorecards[0]["weighted_score"] == 0.7893
     assert "hyp-1" in scorecards[0]["aliases"]
 
 
@@ -53,6 +53,6 @@ def test_capability_scores_match_identity_without_overwriting_unrelated_cards() 
     enriched = enrich_capabilities_with_s5_scores(cards, _summary())
 
     assert enriched[0]["s5_dimension_scores"]["innovation"] == 0.804
-    assert enriched[0]["s5_weighted_score"] == 0.7882
+    assert enriched[0]["s5_weighted_score"] == 0.7893
     assert enriched[0]["s5_score_schema"] == "s5_five_dimension_v1"
     assert "s5_dimension_scores" not in enriched[1]

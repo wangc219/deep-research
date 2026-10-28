@@ -123,6 +123,16 @@ export const deleteSkillsBatch = async (slugs) => {
   return apiPost(`${BASE_URL}/delete-batch`, { slugs })
 }
 
+export const personalSkillApi = {
+  getSkillTree: (slug) => apiGet(`${USER_BASE_URL}/personal/${encodeURIComponent(slug)}/tree`),
+  getSkillFile: getPersonalSkillFile,
+  updateSkillFile: (slug, payload) => apiPut(`${USER_BASE_URL}/personal/${encodeURIComponent(slug)}/file`, payload),
+  createSkillFile: (slug, payload) => apiPost(`${USER_BASE_URL}/personal/${encodeURIComponent(slug)}/file`, payload),
+  deleteSkillFile: (slug, path) => apiDelete(`${USER_BASE_URL}/personal/${encodeURIComponent(slug)}/file?path=${encodeURIComponent(path)}`),
+  updateSkillDependencies: (slug, payload) => apiPut(`${USER_BASE_URL}/personal/${encodeURIComponent(slug)}/dependencies`, payload),
+  deleteSkill: deletePersonalSkill
+}
+
 export const skillApi = {
   listSkills,
   listSkillCards,

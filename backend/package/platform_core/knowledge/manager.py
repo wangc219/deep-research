@@ -9,7 +9,7 @@ from typing import Any
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from platform_core.knowledge.base import KBNameConflictError, KBNotFoundError, KnowledgeBase
+from platform_core.knowledge.base import KBIndexNotReadyError, KBNameConflictError, KBNotFoundError, KnowledgeBase
 from platform_core.knowledge.cache import (
     cache_kb_config,
     get_cached_kb_config,
@@ -189,6 +189,78 @@ class KnowledgeBaseManager:
         config = await self.get_kb_config(kb_id)
         return await self._get_or_create_kb_instance(config.kb_type)
 
+    async def get_vector_index_health(self, kb_id: str) -> dict[str, Any]:
+        """比较 PostgreSQL 分块事实与 Milvus 实体数，返回可检索性。"""
+        from platform_core.repositories.knowledge_chunk_repository import KnowledgeChunkRepository
+
+        database = await self.get_database_info(kb_id)
+        if database is None:
+            raise KBNotFoundError(f"Database {kb_id} not found")
+        if database.kb_type != "milvus":
+            return {
+                "kb_id": kb_id,
+                "status": "not_applicable",
+                "searchable": True,
+                "consistent": True,
+                "expected_chunk_count": None,
+                "vector_count": None,
+                "indexed_file_count": database.indexed_count,
+                "message": "该知识库由外部检索服务管理索引。",
+            }
+
+        expected_count = await KnowledgeChunkRepository().count_by_kb_id(kb_id)
+        executor = await self.get_kb_executor(kb_id)
+        try:
+            vector_count = await executor.get_vector_index_count(kb_id)
+        except Exception as error:
+            logger.error(f"Read Milvus index health failed: kb_id={kb_id}: {error}")
+            return {
+                "kb_id": kb_id,
+                "status": "unavailable",
+                "searchable": False,
+                "consistent": False,
+                "expected_chunk_count": expected_count,
+                "vector_count": None,
+                "indexed_file_count": database.indexed_count,
+                "message": "暂时无法核验向量索引，请稍后重试。",
+            }
+
+        if expected_count == 0 and vector_count == 0:
+            status = "missing" if database.indexed_count > 0 else "empty"
+        elif expected_count == vector_count:
+            status = "ready"
+        elif vector_count == 0:
+            status = "missing"
+        elif vector_count < expected_count:
+            status = "incomplete"
+        else:
+            status = "stale"
+
+        messages = {
+            "ready": "向量索引与 PostgreSQL 分块一致，可以检索。",
+            "empty": "知识库尚无可检索分块。",
+            "missing": "检测到分块数据，但向量索引缺失，请重建索引。",
+            "incomplete": "向量索引不完整，请重建索引后再检索。",
+            "stale": "向量索引包含过期数据，请重建索引后再检索。",
+        }
+        return {
+            "kb_id": kb_id,
+            "status": status,
+            "searchable": status == "ready",
+            "consistent": status in {"ready", "empty"},
+            "expected_chunk_count": expected_count,
+            "vector_count": vector_count,
+            "indexed_file_count": database.indexed_count,
+            "message": messages[status],
+        }
+
+    async def ensure_vector_index_searchable(self, kb_id: str) -> dict[str, Any]:
+        """在调用模型或向量检索前阻止空索引伪装成零命中。"""
+        health = await self.get_vector_index_health(kb_id)
+        if health["status"] == "not_applicable" or health["searchable"]:
+            return health
+        raise KBIndexNotReadyError(health["message"], health)
+
     # =============================================================================
     # 统一的外部接口
     # =============================================================================
@@ -304,12 +376,12 @@ class KnowledgeBaseManager:
             **normalized_stats,
         }
 
-    async def get_databases(self) -> list[KnowledgeBaseSummary]:
+    async def get_databases(self, *, db=None) -> list[KnowledgeBaseSummary]:
         """获取所有知识库摘要。"""
         from platform_core.repositories.knowledge_base_repository import KnowledgeBaseRepository
 
         kb_repo = KnowledgeBaseRepository()
-        rows = await kb_repo.get_all()
+        rows = await kb_repo.get_all(session=db) if db is not None else await kb_repo.get_all()
         all_databases: list[KnowledgeBaseSummary] = []
         for row in rows:
             kb_type = row.kb_type or "milvus"
@@ -391,7 +463,7 @@ class KnowledgeBaseManager:
             return []
         return await self.get_databases_by_user(user)
 
-    async def get_databases_by_user(self, user: User | dict) -> list[KnowledgeBaseSummary]:
+    async def get_databases_by_user(self, user: User | dict, *, db=None) -> list[KnowledgeBaseSummary]:
         """根据用户权限获取知识库列表"""
 
         # 构建用户信息字典（支持 User 对象或 dict）
@@ -409,7 +481,7 @@ class KnowledgeBaseManager:
         user_dept = user_info.get("department_id")
         logger.info(f"Getting databases for user with role {user_role} and department {user_dept}")
 
-        all_databases = await self.get_databases()
+        all_databases = await self.get_databases(db=db) if db is not None else await self.get_databases()
 
         # 超级管理员可以看到所有知识库
         filtered_databases: list[KnowledgeBaseSummary] = []

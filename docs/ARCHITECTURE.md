@@ -96,4 +96,4 @@ make check
 
 ## 通用文档研发入口的隔离例外
 
-`document_research/` 与 Vue `/document-research` 提供普通文档解析软件的研究计划能力。它不进入上面的领域交付闭环，不共享身份、模型凭据、存储或工具注册；默认平台 Compose 不启动它。此例外用于保持新增知识检索与装备研究、作战推演调用链隔离，不能当作新增共享知识提供商复用。入口、启动方式、数据外发和局限见 [文档解析研发入口](DOCUMENT_RESEARCH.md)。
+`document_research/` 提供普通文档解析软件的研究计划能力。其 Vue 工作界面已并入“知识库 → 文档解析与研究”（`/extensions?tool=document-research`），旧 `/document-research` 仅作兼容跳转；访问该分区遵循平台页面登录要求，专用 API 仍使用原独立令牌。它不进入上面的领域交付闭环，不共享模型凭据、存储或工具注册；默认平台 Compose 不启动它。此次合并的是导航与工作界面，没有迁移专用 SQLite 数据或将其注册为平台知识库提供商。入口、启动方式、数据外发和局限见 [文档解析研发入口](DOCUMENT_RESEARCH.md)。

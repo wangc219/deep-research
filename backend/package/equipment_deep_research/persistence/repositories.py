@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from threading import Lock
 import time
 from typing import Any
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -46,9 +46,29 @@ from equipment_deep_research.runtime_identity import (
 
 metadata = MetaData()
 runs = Table("runs", metadata, Column("run_id", String(128), primary_key=True), Column("payload", Text, nullable=False))
-events = Table("runtime_events", metadata, Column("run_id", String(128), primary_key=True), Column("sequence", Integer, primary_key=True), Column("event_type", String(128), nullable=False), Column("payload", Text, nullable=False))
-queue_items = Table("run_queue", metadata, Column("run_id", String(128), primary_key=True), Column("status", String(32), nullable=False), Column("ordinal", Integer, autoincrement=True, nullable=False, unique=True))
-worker_heartbeats = Table("worker_heartbeats", metadata, Column("worker_id", String(128), primary_key=True), Column("updated_at", String(64), nullable=False), Column("status", String(32), nullable=False), Column("current_run_id", String(128), nullable=False, default=""))
+events = Table(
+    "runtime_events",
+    metadata,
+    Column("run_id", String(128), primary_key=True),
+    Column("sequence", Integer, primary_key=True),
+    Column("event_type", String(128), nullable=False),
+    Column("payload", Text, nullable=False),
+)
+queue_items = Table(
+    "run_queue",
+    metadata,
+    Column("run_id", String(128), primary_key=True),
+    Column("status", String(32), nullable=False),
+    Column("ordinal", Integer, autoincrement=True, nullable=False, unique=True),
+)
+worker_heartbeats = Table(
+    "worker_heartbeats",
+    metadata,
+    Column("worker_id", String(128), primary_key=True),
+    Column("updated_at", String(64), nullable=False),
+    Column("status", String(32), nullable=False),
+    Column("current_run_id", String(128), nullable=False, default=""),
+)
 favorites = Table(
     "favorites",
     metadata,
@@ -91,7 +111,8 @@ Index("ix_favorites_run_id", favorites.c.run_id)
 # non-deterministic.  These append-oriented tables are safe to create on an
 # existing SQLite database and keep the original capability snapshot intact.
 deep_sessions = Table(
-    "deep_sessions", metadata,
+    "deep_sessions",
+    metadata,
     Column("session_id", String(128), primary_key=True),
     Column("parent_run_id", String(128), nullable=False),
     Column("kind", String(64), nullable=False),
@@ -112,7 +133,8 @@ deep_sessions = Table(
 Index("ix_deep_sessions_parent", deep_sessions.c.parent_run_id, deep_sessions.c.updated_at)
 
 deep_messages = Table(
-    "deep_messages", metadata,
+    "deep_messages",
+    metadata,
     Column("session_id", String(128), primary_key=True),
     Column("sequence", Integer, primary_key=True),
     Column("message_id", String(128), nullable=False, unique=True),
@@ -130,7 +152,8 @@ deep_messages = Table(
 )
 
 deep_jobs = Table(
-    "deep_jobs", metadata,
+    "deep_jobs",
+    metadata,
     Column("job_id", String(128), primary_key=True),
     Column("parent_run_id", String(128), nullable=False),
     Column("session_id", String(128), nullable=False, default=""),
@@ -169,7 +192,8 @@ Index(
 )
 
 deep_branches = Table(
-    "deep_branches", metadata,
+    "deep_branches",
+    metadata,
     Column("branch_id", String(128), primary_key=True),
     Column("session_id", String(128), nullable=False),
     Column("parent_branch_id", String(128), nullable=False, default=""),
@@ -182,7 +206,8 @@ deep_branches = Table(
 Index("ix_deep_branches_session", deep_branches.c.session_id, deep_branches.c.created_at)
 
 deep_steers = Table(
-    "deep_steers", metadata,
+    "deep_steers",
+    metadata,
     Column("steer_id", String(128), primary_key=True),
     Column("client_steer_id", String(128), nullable=False),
     Column("job_id", String(128), nullable=False),
@@ -201,7 +226,8 @@ deep_steers = Table(
 Index("ix_deep_steers_job_queue", deep_steers.c.job_id, deep_steers.c.status, deep_steers.c.queue_order)
 
 capability_versions = Table(
-    "capability_versions", metadata,
+    "capability_versions",
+    metadata,
     Column("version_id", String(128), primary_key=True),
     Column("parent_run_id", String(128), nullable=False),
     Column("card_binding_id", String(256), nullable=False),
@@ -232,12 +258,21 @@ capability_versions = Table(
     # Include hypothesis_id in the fence as a guard against an accidentally
     # reused binding; genuinely new hypotheses should still receive a new
     # binding from the canonical candidate resolver.
-    UniqueConstraint("parent_run_id", "card_binding_id", "hypothesis_id", "version_no", name="uq_capability_version_no"),
+    UniqueConstraint(
+        "parent_run_id", "card_binding_id", "hypothesis_id", "version_no", name="uq_capability_version_no"
+    ),
 )
-Index("ix_capability_versions_lineage", capability_versions.c.parent_run_id, capability_versions.c.card_binding_id, capability_versions.c.hypothesis_id, capability_versions.c.version_no)
+Index(
+    "ix_capability_versions_lineage",
+    capability_versions.c.parent_run_id,
+    capability_versions.c.card_binding_id,
+    capability_versions.c.hypothesis_id,
+    capability_versions.c.version_no,
+)
 
 deep_events = Table(
-    "deep_events", metadata,
+    "deep_events",
+    metadata,
     Column("stream_id", String(256), primary_key=True),
     Column("sequence", Integer, primary_key=True),
     Column("event_id", String(128), nullable=False, unique=True),
@@ -259,7 +294,8 @@ deep_events = Table(
 )
 
 deep_idempotency = Table(
-    "deep_idempotency", metadata,
+    "deep_idempotency",
+    metadata,
     Column("scope_key", String(256), primary_key=True),
     Column("operation", String(96), primary_key=True),
     Column("idempotency_key", String(256), primary_key=True),
@@ -274,7 +310,8 @@ deep_idempotency = Table(
 # retry only needs a fingerprint, a short processing lease, and the bounded
 # public response that can be replayed after another worker completes it.
 gateway_deliveries = Table(
-    "gateway_deliveries", metadata,
+    "gateway_deliveries",
+    metadata,
     Column("delivery_key", String(256), primary_key=True),
     Column("fingerprint", String(128), nullable=False),
     Column("status", String(24), nullable=False, default="processing"),
@@ -304,7 +341,8 @@ message_bus = Table(
 Index("ix_message_bus_claim", message_bus.c.direction, message_bus.c.status, message_bus.c.sequence)
 
 deep_run_links = Table(
-    "deep_run_links", metadata,
+    "deep_run_links",
+    metadata,
     Column("parent_run_id", String(128), primary_key=True),
     Column("child_run_id", String(128), primary_key=True),
     Column("job_id", String(128), nullable=False, default=""),
@@ -314,7 +352,7 @@ deep_run_links = Table(
 
 
 def _favorite_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _retryable_sqlite_lock(exc: BaseException) -> bool:
@@ -419,7 +457,7 @@ class SqlGatewayDeliveryStore:
 
     @staticmethod
     def _now() -> datetime:
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @staticmethod
     def _expired(value: Any, now: datetime) -> bool:
@@ -428,7 +466,7 @@ class SqlGatewayDeliveryStore:
         except (TypeError, ValueError):
             return True
         if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
+            parsed = parsed.replace(tzinfo=UTC)
         return parsed <= now
 
     @staticmethod
@@ -476,15 +514,15 @@ class SqlGatewayDeliveryStore:
                     # expired processing leases are safe to reclaim under the
                     # same owner-token fence used for normal completion.
                     connection.execute(
-                        delete(gateway_deliveries).where(
-                            gateway_deliveries.c.expires_at <= now.isoformat()
-                        )
+                        delete(gateway_deliveries).where(gateway_deliveries.c.expires_at <= now.isoformat())
                     )
-                    current = connection.execute(
-                        select(gateway_deliveries).where(
-                            gateway_deliveries.c.delivery_key == normalized_key
+                    current = (
+                        connection.execute(
+                            select(gateway_deliveries).where(gateway_deliveries.c.delivery_key == normalized_key)
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if current is not None:
                         if str(current.get("fingerprint", "")) != normalized_fingerprint:
                             raise ValueError("gateway message id has conflicting content")
@@ -520,11 +558,13 @@ class SqlGatewayDeliveryStore:
                 # Another process won the insert. Read it on a fresh
                 # connection so the failed transaction cannot poison retry.
                 with self.engine.connect() as connection:
-                    current = connection.execute(
-                        select(gateway_deliveries).where(
-                            gateway_deliveries.c.delivery_key == normalized_key
+                    current = (
+                        connection.execute(
+                            select(gateway_deliveries).where(gateway_deliveries.c.delivery_key == normalized_key)
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                 if current is not None:
                     if str(current.get("fingerprint", "")) != normalized_fingerprint:
                         raise ValueError("gateway message id has conflicting content")
@@ -542,11 +582,13 @@ class SqlGatewayDeliveryStore:
         normalized_key, normalized_fingerprint = self._validate(key, fingerprint)
         now = self._now()
         with self.engine.connect() as connection:
-            current = connection.execute(
-                select(gateway_deliveries).where(
-                    gateway_deliveries.c.delivery_key == normalized_key
+            current = (
+                connection.execute(
+                    select(gateway_deliveries).where(gateway_deliveries.c.delivery_key == normalized_key)
                 )
-            ).mappings().one_or_none()
+                .mappings()
+                .one_or_none()
+            )
         if current is None:
             return None
         if str(current.get("fingerprint", "")) != normalized_fingerprint:
@@ -570,12 +612,14 @@ class SqlGatewayDeliveryStore:
         payload = json.dumps(response, ensure_ascii=False, sort_keys=True)
         with self._lock, self.engine.begin() as connection:
             connection.execute(
-                update(gateway_deliveries).where(
+                update(gateway_deliveries)
+                .where(
                     gateway_deliveries.c.delivery_key == normalized_key,
                     gateway_deliveries.c.fingerprint == normalized_fingerprint,
                     gateway_deliveries.c.status == "processing",
                     gateway_deliveries.c.owner_token == str(owner_token),
-                ).values(
+                )
+                .values(
                     status="completed",
                     owner_token="",
                     response_json=payload,
@@ -615,7 +659,7 @@ class SqlMessageBusStore:
 
     @staticmethod
     def _now() -> datetime:
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @staticmethod
     def _direction(value: str) -> str:
@@ -695,14 +739,19 @@ class SqlMessageBusStore:
                         )
                         .values(status="queued", owner="", lease_until="")
                     )
-                    row = connection.execute(
-                        select(message_bus).where(
-                            message_bus.c.direction == direction,
-                            message_bus.c.status == "queued",
+                    row = (
+                        connection.execute(
+                            select(message_bus)
+                            .where(
+                                message_bus.c.direction == direction,
+                                message_bus.c.status == "queued",
+                            )
+                            .order_by(message_bus.c.sequence.asc(), message_bus.c.delivery_id.asc())
+                            .limit(1)
                         )
-                        .order_by(message_bus.c.sequence.asc(), message_bus.c.delivery_id.asc())
-                        .limit(1)
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if row is None:
                         return None
                     result = connection.execute(
@@ -811,10 +860,7 @@ class SqlRunRepository:
         # index on all supported SQLite versions.
         if self.engine.dialect.name == "sqlite":
             try:
-                if not any(
-                    str(item.get("name")) == "ix_deep_jobs_session_branch_order"
-                    for item in indexes
-                ):
+                if not any(str(item.get("name")) == "ix_deep_jobs_session_branch_order" for item in indexes):
                     with self._lock, self.engine.begin() as connection:
                         connection.exec_driver_sql(
                             "CREATE INDEX IF NOT EXISTS ix_deep_jobs_session_branch_order "
@@ -879,10 +925,7 @@ class SqlRunRepository:
         }
         for table_name, table_additions in additions.items():
             try:
-                columns = {
-                    str(column["name"])
-                    for column in sqlalchemy_inspect(self.engine).get_columns(table_name)
-                }
+                columns = {str(column["name"]) for column in sqlalchemy_inspect(self.engine).get_columns(table_name)}
             except (KeyError, OperationalError):
                 continue
             for name, statement in table_additions.items():
@@ -897,8 +940,7 @@ class SqlRunRepository:
                     # that benign race.
                     try:
                         columns = {
-                            str(column["name"])
-                            for column in sqlalchemy_inspect(self.engine).get_columns(table_name)
+                            str(column["name"]) for column in sqlalchemy_inspect(self.engine).get_columns(table_name)
                         }
                     except (KeyError, OperationalError):
                         raise
@@ -909,10 +951,7 @@ class SqlRunRepository:
         """Add mutable favorite metadata to databases created by older builds."""
 
         try:
-            columns = {
-                str(column["name"])
-                for column in sqlalchemy_inspect(self.engine).get_columns("favorites")
-            }
+            columns = {str(column["name"]) for column in sqlalchemy_inspect(self.engine).get_columns("favorites")}
         except (KeyError, OperationalError):
             return
         additions = {
@@ -932,8 +971,7 @@ class SqlRunRepository:
                 # tolerate only that benign race; real schema errors surface.
                 try:
                     columns = {
-                        str(column["name"])
-                        for column in sqlalchemy_inspect(self.engine).get_columns("favorites")
+                        str(column["name"]) for column in sqlalchemy_inspect(self.engine).get_columns("favorites")
                     }
                 except (KeyError, OperationalError):
                     raise
@@ -978,23 +1016,41 @@ class SqlRunRepository:
         except (TypeError, ValueError, json.JSONDecodeError):
             return fallback
 
-    def create_deep_session(self, *, session_id: str, parent_run_id: str, kind: str,
-                            title: str = "", card_binding_id: str = "", hypothesis_id: str = "",
-                            scope: dict | None = None, query_snapshot: dict | None = None,
-                            result_snapshot_hash: str = "", created_by: str = "analyst",
-                            idempotency_key: str = "") -> dict[str, Any]:
+    def create_deep_session(
+        self,
+        *,
+        session_id: str,
+        parent_run_id: str,
+        kind: str,
+        title: str = "",
+        card_binding_id: str = "",
+        hypothesis_id: str = "",
+        scope: dict | None = None,
+        query_snapshot: dict | None = None,
+        result_snapshot_hash: str = "",
+        created_by: str = "analyst",
+        idempotency_key: str = "",
+    ) -> dict[str, Any]:
         now = _favorite_now_iso()
         query = dict(query_snapshot or {})
         query_hash = __import__("hashlib").sha256(self._json(query).encode()).hexdigest()
         values = {
-            "session_id": str(session_id), "parent_run_id": str(parent_run_id),
-            "kind": str(kind), "title": str(title or "")[:240],
-            "card_binding_id": str(card_binding_id or ""), "hypothesis_id": str(hypothesis_id or ""),
-            "scope_json": self._json(scope or {}), "query_snapshot_json": self._json(query),
-            "query_snapshot_hash": query_hash, "result_snapshot_hash": str(result_snapshot_hash or ""),
+            "session_id": str(session_id),
+            "parent_run_id": str(parent_run_id),
+            "kind": str(kind),
+            "title": str(title or "")[:240],
+            "card_binding_id": str(card_binding_id or ""),
+            "hypothesis_id": str(hypothesis_id or ""),
+            "scope_json": self._json(scope or {}),
+            "query_snapshot_json": self._json(query),
+            "query_snapshot_hash": query_hash,
+            "result_snapshot_hash": str(result_snapshot_hash or ""),
             "working_memory_json": "{}",
-            "status": "active", "created_by": str(created_by or "analyst"),
-            "idempotency_key": str(idempotency_key or ""), "created_at": now, "updated_at": now,
+            "status": "active",
+            "created_by": str(created_by or "analyst"),
+            "idempotency_key": str(idempotency_key or ""),
+            "created_at": now,
+            "updated_at": now,
         }
         # Keep the duplicate read outside the failed transaction.  Querying
         # on the same SQLAlchemy connection after an IntegrityError can raise
@@ -1018,11 +1074,11 @@ class SqlRunRepository:
                 return self._deep_session_row(values)
             except IntegrityError:
                 with self.engine.connect() as connection:
-                    row = connection.execute(
-                        select(deep_sessions).where(
-                            deep_sessions.c.session_id == str(session_id)
-                        )
-                    ).mappings().one_or_none()
+                    row = (
+                        connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == str(session_id)))
+                        .mappings()
+                        .one_or_none()
+                    )
                 if row is not None:
                     return self._deep_session_row(row)
                 if attempt >= 7:
@@ -1043,12 +1099,24 @@ class SqlRunRepository:
 
     def get_deep_session(self, session_id: str) -> dict[str, Any] | None:
         with self.engine.connect() as connection:
-            row = connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == str(session_id))).mappings().one_or_none()
+            row = (
+                connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == str(session_id)))
+                .mappings()
+                .one_or_none()
+            )
         return self._deep_session_row(row) if row else None
 
     def list_deep_sessions(self, parent_run_id: str) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(select(deep_sessions).where(deep_sessions.c.parent_run_id == str(parent_run_id)).order_by(deep_sessions.c.updated_at.desc())).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_sessions)
+                    .where(deep_sessions.c.parent_run_id == str(parent_run_id))
+                    .order_by(deep_sessions.c.updated_at.desc())
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_session_row(row) for row in rows]
 
     def list_deep_sessions_history(
@@ -1068,9 +1136,7 @@ class SqlRunRepository:
         bounded_limit = max(1, min(int(limit or 200), 500))
         bounded_offset = max(0, int(offset or 0))
         wanted_kinds = {
-            str(item or "").strip().lower().replace("_", "-")
-            for item in (kinds or ())
-            if str(item or "").strip()
+            str(item or "").strip().lower().replace("_", "-") for item in (kinds or ()) if str(item or "").strip()
         }
         clauses: list[Any] = []
         if wanted_kinds:
@@ -1095,15 +1161,9 @@ class SqlRunRepository:
             row = self._deep_session_row(raw_row)
             item_scope = row.get("scope")
             item_scope = item_scope if isinstance(item_scope, Mapping) else {}
-            normalized_item_scope = {
-                key: str(item_scope.get(key, "") or "").strip()
-                for key in requested_scope
-            }
+            normalized_item_scope = {key: str(item_scope.get(key, "") or "").strip() for key in requested_scope}
             if scope_supplied:
-                if any(
-                    value and normalized_item_scope[key] != value
-                    for key, value in requested_scope.items()
-                ):
+                if any(value and normalized_item_scope[key] != value for key, value in requested_scope.items()):
                     continue
             elif any(normalized_item_scope.values()) and not (
                 platform_identity.get() and platform_identity.get().superadmin
@@ -1125,9 +1185,7 @@ class SqlRunRepository:
         if parent_ids:
             with self.engine.connect() as connection:
                 run_rows = connection.execute(
-                    select(runs.c.run_id, runs.c.payload).where(
-                        runs.c.run_id.in_(parent_ids)
-                    )
+                    select(runs.c.run_id, runs.c.payload).where(runs.c.run_id.in_(parent_ids))
                 ).all()
             for run_id, payload in run_rows:
                 try:
@@ -1140,16 +1198,8 @@ class SqlRunRepository:
         for item in sessions:
             row = dict(item)
             parent_id = str(row.get("parent_run_id", "") or "").strip()
-            snapshot = (
-                row.get("query_snapshot")
-                if isinstance(row.get("query_snapshot"), Mapping)
-                else {}
-            )
-            context = (
-                snapshot.get("context")
-                if isinstance(snapshot.get("context"), Mapping)
-                else {}
-            )
+            snapshot = row.get("query_snapshot") if isinstance(row.get("query_snapshot"), Mapping) else {}
+            context = snapshot.get("context") if isinstance(snapshot.get("context"), Mapping) else {}
             focused = context.get("focused_equipment")
             focused = focused if isinstance(focused, Mapping) else {}
             candidate = context.get("candidate")
@@ -1175,18 +1225,13 @@ class SqlRunRepository:
             row["run_topic"] = run_topic
             row["query"] = query_text or run_topic
             row["query_group_key"] = (
-                __import__("hashlib")
-                .sha256(str(row["query"] or "").strip().encode("utf-8"))
-                .hexdigest()
+                __import__("hashlib").sha256(str(row["query"] or "").strip().encode("utf-8")).hexdigest()
                 if str(row["query"] or "").strip()
                 else str(row.get("query_snapshot_hash", "") or parent_id)
             )
             row["capability_name"] = capability_name
             row["capability_id"] = str(
-                context.get("capability_id")
-                or candidate.get("capability_id")
-                or focused.get("capability_id")
-                or ""
+                context.get("capability_id") or candidate.get("capability_id") or focused.get("capability_id") or ""
             ).strip()
             enriched.append(row)
         return enriched
@@ -1229,11 +1274,11 @@ class SqlRunRepository:
                     # deterministic).  Other statuses remain intentionally
                     # reopenable so an analyst can continue a failed/partial
                     # conversation explicitly.
-                    current = connection.execute(
-                        select(deep_sessions).where(
-                            deep_sessions.c.session_id == str(session_id)
-                        )
-                    ).mappings().one_or_none()
+                    current = (
+                        connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == str(session_id)))
+                        .mappings()
+                        .one_or_none()
+                    )
                     if current is None:
                         return None
                     current_status = str(current.get("status", "")).strip().lower()
@@ -1255,9 +1300,7 @@ class SqlRunRepository:
                     ):
                         return self._deep_session_row(current)
                     result = connection.execute(
-                        update(deep_sessions)
-                        .where(deep_sessions.c.session_id == str(session_id))
-                        .values(**values)
+                        update(deep_sessions).where(deep_sessions.c.session_id == str(session_id)).values(**values)
                     )
                     if not result.rowcount:
                         return None
@@ -1268,9 +1311,7 @@ class SqlRunRepository:
                 time.sleep(0.005 * (attempt + 1))
         return None
 
-    def update_deep_working_memory(
-        self, session_id: str, memory: Mapping[str, Any]
-    ) -> dict[str, Any] | None:
+    def update_deep_working_memory(self, session_id: str, memory: Mapping[str, Any]) -> dict[str, Any] | None:
         """Replace the bounded model-facing checkpoint for one conversation."""
 
         encoded = self._json(dict(memory or {}), "{}")
@@ -1303,11 +1344,11 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    row = connection.execute(
-                        select(deep_sessions).where(
-                            deep_sessions.c.session_id == session_key
-                        )
-                    ).mappings().one_or_none()
+                    row = (
+                        connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == session_key))
+                        .mappings()
+                        .one_or_none()
+                    )
                     if row is None:
                         return None
                     current_encoded = str(row.get("working_memory_json", "{}") or "{}")
@@ -1355,17 +1396,23 @@ class SqlRunRepository:
         storage_branch = f"{session_key}:{logical_branch}"
         now = _favorite_now_iso()
         with self._lock, self.engine.begin() as connection:
-            existing = connection.execute(
-                select(deep_branches).where(deep_branches.c.branch_id == storage_branch)
-            ).mappings().one_or_none()
+            existing = (
+                connection.execute(select(deep_branches).where(deep_branches.c.branch_id == storage_branch))
+                .mappings()
+                .one_or_none()
+            )
             if existing is not None:
                 raise ValueError("deep branch id already exists")
-            source = connection.execute(
-                select(deep_messages).where(
-                    deep_messages.c.session_id == session_key,
-                    deep_messages.c.message_id == str(forked_from_message_id),
+            source = (
+                connection.execute(
+                    select(deep_messages).where(
+                        deep_messages.c.session_id == session_key,
+                        deep_messages.c.message_id == str(forked_from_message_id),
+                    )
                 )
-            ).mappings().one_or_none()
+                .mappings()
+                .one_or_none()
+            )
             if source is None:
                 raise ValueError("fork source message not found")
             parent_branch = normalize_branch_id(source.get("branch_id"))
@@ -1380,13 +1427,13 @@ class SqlRunRepository:
                 "updated_at": now,
             }
             connection.execute(deep_branches.insert().values(**values))
-            session_row = connection.execute(
-                select(deep_sessions).where(deep_sessions.c.session_id == session_key)
-            ).mappings().one_or_none()
+            session_row = (
+                connection.execute(select(deep_sessions).where(deep_sessions.c.session_id == session_key))
+                .mappings()
+                .one_or_none()
+            )
             if session_row is not None:
-                encoded_memory = str(
-                    session_row.get("working_memory_json", "{}") or "{}"
-                )
+                encoded_memory = str(session_row.get("working_memory_json", "{}") or "{}")
                 stored_memory = self._decode(encoded_memory, {})
                 if isinstance(stored_memory, Mapping):
                     branches = stored_memory.get("branches")
@@ -1395,22 +1442,13 @@ class SqlRunRepository:
                     else:
                         parent_checkpoint = (
                             stored_memory
-                            if normalize_branch_id(stored_memory.get("branch_id"))
-                            == parent_branch
+                            if normalize_branch_id(stored_memory.get("branch_id")) == parent_branch
                             else None
                         )
                     if isinstance(parent_checkpoint, Mapping):
-                        checkpoint_source = parent_checkpoint.get(
-                            "source_checkpoint", {}
-                        )
-                        checkpoint_source = (
-                            checkpoint_source
-                            if isinstance(checkpoint_source, Mapping)
-                            else {}
-                        )
-                        checkpoint_sequence = int(
-                            checkpoint_source.get("assistant_sequence", 0) or 0
-                        )
+                        checkpoint_source = parent_checkpoint.get("source_checkpoint", {})
+                        checkpoint_source = checkpoint_source if isinstance(checkpoint_source, Mapping) else {}
+                        checkpoint_sequence = int(checkpoint_source.get("assistant_sequence", 0) or 0)
                         fork_sequence = int(source.get("sequence", 0) or 0)
                         # A latest checkpoint can seed a fork only when it was
                         # produced no later than the selected fork message.
@@ -1431,9 +1469,7 @@ class SqlRunRepository:
                             )
                             next_encoded = self._json(merged, "{}")
                             if len(next_encoded) > 24000:
-                                raise ValueError(
-                                    "deep working memory exceeds 24000 characters"
-                                )
+                                raise ValueError("deep working memory exceeds 24000 characters")
                             connection.execute(
                                 update(deep_sessions)
                                 .where(deep_sessions.c.session_id == session_key)
@@ -1450,30 +1486,34 @@ class SqlRunRepository:
         stored = str(result.get("branch_id", ""))
         prefix = f"{result.get('session_id', '')}:"
         if stored.startswith(prefix):
-            result["branch_id"] = stored[len(prefix):]
+            result["branch_id"] = stored[len(prefix) :]
         return result
 
     def list_deep_branches(self, session_id: str) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                select(deep_branches)
-                .where(deep_branches.c.session_id == str(session_id))
-                .order_by(deep_branches.c.created_at)
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_branches)
+                    .where(deep_branches.c.session_id == str(session_id))
+                    .order_by(deep_branches.c.created_at)
+                )
+                .mappings()
+                .all()
+            )
         if not rows:
-            return [{
-                "branch_id": DEFAULT_BRANCH_ID,
-                "session_id": str(session_id),
-                "parent_branch_id": "",
-                "forked_from_message_id": "",
-                "title": "主线",
-                "status": "active",
-            }]
+            return [
+                {
+                    "branch_id": DEFAULT_BRANCH_ID,
+                    "session_id": str(session_id),
+                    "parent_branch_id": "",
+                    "forked_from_message_id": "",
+                    "title": "主线",
+                    "status": "active",
+                }
+            ]
         return [self._deep_branch_row(row) for row in rows]
 
-    def delete_deep_session(
-        self, session_id: str, *, parent_run_id: str = ""
-    ) -> dict[str, Any] | None:
+    def delete_deep_session(self, session_id: str, *, parent_run_id: str = "") -> dict[str, Any] | None:
         """Permanently remove one idle conversation and its transient ledger.
 
         Capability versions are intentionally retained: deleting a transcript
@@ -1490,76 +1530,45 @@ class SqlRunRepository:
                     clauses = [deep_sessions.c.session_id == session_key]
                     if parent_key:
                         clauses.append(deep_sessions.c.parent_run_id == parent_key)
-                    current = connection.execute(
-                        select(deep_sessions).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(deep_sessions).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
 
-                    jobs = connection.execute(
-                        select(deep_jobs).where(
-                            deep_jobs.c.session_id == session_key
-                        )
-                    ).mappings().all()
+                    jobs = (
+                        connection.execute(select(deep_jobs).where(deep_jobs.c.session_id == session_key))
+                        .mappings()
+                        .all()
+                    )
                     live_jobs = [
                         row
                         for row in jobs
-                        if str(row.get("status", "")).strip().lower()
-                        in {"queued", "running"}
+                        if str(row.get("status", "")).strip().lower() in {"queued", "running"}
                         or (
-                            str(row.get("status", "")).strip().lower()
-                            == "completed"
-                            and str(row.get("stage", "")).strip().lower()
-                            not in {"", "publish"}
+                            str(row.get("status", "")).strip().lower() == "completed"
+                            and str(row.get("stage", "")).strip().lower() not in {"", "publish"}
                         )
                     ]
                     if live_jobs:
-                        raise ValueError(
-                            "deep session has a running job and cannot be deleted"
-                        )
+                        raise ValueError("deep session has a running job and cannot be deleted")
 
                     job_ids = [str(row.get("job_id", "")) for row in jobs]
-                    connection.execute(
-                        delete(deep_messages).where(
-                            deep_messages.c.session_id == session_key
-                        )
-                    )
-                    connection.execute(
-                        delete(deep_branches).where(
-                            deep_branches.c.session_id == session_key
-                        )
-                    )
-                    connection.execute(
-                        delete(deep_steers).where(
-                            deep_steers.c.session_id == session_key
-                        )
-                    )
+                    connection.execute(delete(deep_messages).where(deep_messages.c.session_id == session_key))
+                    connection.execute(delete(deep_branches).where(deep_branches.c.session_id == session_key))
+                    connection.execute(delete(deep_steers).where(deep_steers.c.session_id == session_key))
                     event_filter = deep_events.c.session_id == session_key
                     if job_ids:
                         event_filter = event_filter | deep_events.c.job_id.in_(job_ids)
-                        connection.execute(
-                            delete(deep_run_links).where(
-                                deep_run_links.c.job_id.in_(job_ids)
-                            )
-                        )
+                        connection.execute(delete(deep_run_links).where(deep_run_links.c.job_id.in_(job_ids)))
                     connection.execute(delete(deep_events).where(event_filter))
-                    connection.execute(
-                        delete(deep_jobs).where(deep_jobs.c.session_id == session_key)
-                    )
+                    connection.execute(delete(deep_jobs).where(deep_jobs.c.session_id == session_key))
                     idempotency_resources = [session_key, *job_ids]
                     connection.execute(
                         delete(deep_idempotency).where(
                             (deep_idempotency.c.scope_key == session_key)
-                            | deep_idempotency.c.resource_id.in_(
-                                idempotency_resources
-                            )
+                            | deep_idempotency.c.resource_id.in_(idempotency_resources)
                         )
                     )
-                    connection.execute(
-                        delete(deep_sessions).where(
-                            deep_sessions.c.session_id == session_key
-                        )
-                    )
+                    connection.execute(delete(deep_sessions).where(deep_sessions.c.session_id == session_key))
                 return self._deep_session_row(current)
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
@@ -1577,16 +1586,24 @@ class SqlRunRepository:
     ) -> str:
         """Resolve a parent on the exact visible branch captured by the client."""
 
-        rows = connection.execute(
-            select(deep_messages)
-            .where(deep_messages.c.session_id == str(session_id))
-            .order_by(deep_messages.c.sequence)
-        ).mappings().all()
-        branch_rows = connection.execute(
-            select(deep_branches)
-            .where(deep_branches.c.session_id == str(session_id))
-            .order_by(deep_branches.c.created_at)
-        ).mappings().all()
+        rows = (
+            connection.execute(
+                select(deep_messages)
+                .where(deep_messages.c.session_id == str(session_id))
+                .order_by(deep_messages.c.sequence)
+            )
+            .mappings()
+            .all()
+        )
+        branch_rows = (
+            connection.execute(
+                select(deep_branches)
+                .where(deep_branches.c.session_id == str(session_id))
+                .order_by(deep_branches.c.created_at)
+            )
+            .mappings()
+            .all()
+        )
         logical_branches = [self._deep_branch_row(row) for row in branch_rows]
         visible = branch_message_path(rows, branch_id, logical_branches)
         requested = str(parent_message_id or "").strip()
@@ -1594,19 +1611,11 @@ class SqlRunRepository:
             if not any(str(row.get("message_id", "")) == requested for row in visible):
                 raise ValueError("parent message is not visible on the selected branch")
             return requested
-        same_branch = [
-            row
-            for row in rows
-            if normalize_branch_id(row.get("branch_id")) == branch_id
-        ]
+        same_branch = [row for row in rows if normalize_branch_id(row.get("branch_id")) == branch_id]
         if same_branch:
             return str(same_branch[-1].get("message_id", "") or "")
         branch = next(
-            (
-                row
-                for row in logical_branches
-                if normalize_branch_id(row.get("branch_id")) == branch_id
-            ),
+            (row for row in logical_branches if normalize_branch_id(row.get("branch_id")) == branch_id),
             None,
         )
         return str((branch or {}).get("forked_from_message_id", "") or "")
@@ -1642,23 +1651,26 @@ class SqlRunRepository:
                     turn_key = str(turn_id or "").strip()[:128]
                     message_kind_key = str(message_kind or "message")[:32]
                     if turn_key and normalized_role == "assistant":
-                        existing = connection.execute(
-                            select(deep_messages).where(
-                                deep_messages.c.session_id == str(session_id),
-                                deep_messages.c.turn_id == turn_key,
-                                deep_messages.c.branch_id == normalized_branch,
-                                deep_messages.c.message_kind == message_kind_key,
-                                deep_messages.c.role == normalized_role,
-                            ).order_by(deep_messages.c.sequence).limit(1)
-                        ).mappings().first()
+                        existing = (
+                            connection.execute(
+                                select(deep_messages)
+                                .where(
+                                    deep_messages.c.session_id == str(session_id),
+                                    deep_messages.c.turn_id == turn_key,
+                                    deep_messages.c.branch_id == normalized_branch,
+                                    deep_messages.c.message_kind == message_kind_key,
+                                    deep_messages.c.role == normalized_role,
+                                )
+                                .order_by(deep_messages.c.sequence)
+                                .limit(1)
+                            )
+                            .mappings()
+                            .first()
+                        )
                         if existing is not None:
                             existing_dict = dict(existing)
-                            existing_artifacts = self._decode(
-                                existing_dict.get("artifact_refs_json", "[]"), []
-                            )
-                            existing_versions = self._decode(
-                                existing_dict.get("version_refs_json", "[]"), []
-                            )
+                            existing_artifacts = self._decode(existing_dict.get("artifact_refs_json", "[]"), [])
+                            existing_versions = self._decode(existing_dict.get("version_refs_json", "[]"), [])
                             # Preserve references already published by the
                             # first attempt while allowing a retry to add a
                             # version/artifact that became durable later.
@@ -1672,9 +1684,7 @@ class SqlRunRepository:
                                 if value not in merged_versions:
                                     merged_versions.append(value)
                             merged_versions = merged_versions[:16]
-                            merged_metadata = self._decode(
-                                existing_dict.get("metadata_json", "{}"), {}
-                            )
+                            merged_metadata = self._decode(existing_dict.get("metadata_json", "{}"), {})
                             if not isinstance(merged_metadata, dict):
                                 merged_metadata = {}
                             if isinstance(metadata, Mapping):
@@ -1690,8 +1700,7 @@ class SqlRunRepository:
                                 update(deep_messages)
                                 .where(
                                     deep_messages.c.session_id == str(session_id),
-                                    deep_messages.c.sequence
-                                    == int(existing_dict.get("sequence", 0) or 0),
+                                    deep_messages.c.sequence == int(existing_dict.get("sequence", 0) or 0),
                                 )
                                 .values(**update_values)
                             )
@@ -1703,7 +1712,15 @@ class SqlRunRepository:
                             existing_dict.pop("version_refs_json", None)
                             existing_dict.pop("metadata_json", None)
                             return existing_dict
-                    seq = (connection.execute(select(deep_messages.c.sequence).where(deep_messages.c.session_id == str(session_id)).order_by(deep_messages.c.sequence.desc()).limit(1)).scalar_one_or_none() or 0) + 1
+                    seq = (
+                        connection.execute(
+                            select(deep_messages.c.sequence)
+                            .where(deep_messages.c.session_id == str(session_id))
+                            .order_by(deep_messages.c.sequence.desc())
+                            .limit(1)
+                        ).scalar_one_or_none()
+                        or 0
+                    ) + 1
                     resolved_parent = self._resolve_deep_parent_message(
                         connection,
                         session_id=str(session_id),
@@ -1734,7 +1751,8 @@ class SqlRunRepository:
                     "metadata": self._decode(values["metadata_json"], {}),
                 }
             except IntegrityError:
-                if attempt >= 4: raise
+                if attempt >= 4:
+                    raise
                 time.sleep(0.002 * (attempt + 1))
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 4:
@@ -1744,7 +1762,15 @@ class SqlRunRepository:
 
     def list_deep_messages(self, session_id: str, after: int = 0) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(select(deep_messages).where(deep_messages.c.session_id == str(session_id), deep_messages.c.sequence > int(after)).order_by(deep_messages.c.sequence)).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_messages)
+                    .where(deep_messages.c.session_id == str(session_id), deep_messages.c.sequence > int(after))
+                    .order_by(deep_messages.c.sequence)
+                )
+                .mappings()
+                .all()
+            )
         result = []
         for row in rows:
             item = dict(row)
@@ -1806,21 +1832,32 @@ class SqlRunRepository:
             try:
                 with self._lock, self.engine.begin() as connection:
                     if idem:
-                        existing = connection.execute(
-                            select(deep_jobs).where(
-                                deep_jobs.c.parent_run_id == parent,
-                                deep_jobs.c.idempotency_key == idem,
+                        existing = (
+                            connection.execute(
+                                select(deep_jobs).where(
+                                    deep_jobs.c.parent_run_id == parent,
+                                    deep_jobs.c.idempotency_key == idem,
+                                )
                             )
-                        ).mappings().one_or_none()
+                            .mappings()
+                            .one_or_none()
+                        )
                         if existing:
                             return self._deep_job_row(existing)
                     if fingerprint_value:
-                        existing = connection.execute(
-                            select(deep_jobs).where(
-                                deep_jobs.c.parent_run_id == parent,
-                                deep_jobs.c.fingerprint == fingerprint_value,
-                            ).order_by(deep_jobs.c.created_at, deep_jobs.c.job_id).limit(1)
-                        ).mappings().first()
+                        existing = (
+                            connection.execute(
+                                select(deep_jobs)
+                                .where(
+                                    deep_jobs.c.parent_run_id == parent,
+                                    deep_jobs.c.fingerprint == fingerprint_value,
+                                )
+                                .order_by(deep_jobs.c.created_at, deep_jobs.c.job_id)
+                                .limit(1)
+                            )
+                            .mappings()
+                            .first()
+                        )
                         if existing:
                             return self._deep_job_row(existing)
                     connection.execute(deep_jobs.insert().values(**values))
@@ -1832,16 +1869,22 @@ class SqlRunRepository:
                 with self.engine.connect() as connection:
                     row = None
                     if idem:
-                        row = connection.execute(
-                            select(deep_jobs).where(
-                                deep_jobs.c.parent_run_id == parent,
-                                deep_jobs.c.idempotency_key == idem,
+                        row = (
+                            connection.execute(
+                                select(deep_jobs).where(
+                                    deep_jobs.c.parent_run_id == parent,
+                                    deep_jobs.c.idempotency_key == idem,
+                                )
                             )
-                        ).mappings().one_or_none()
+                            .mappings()
+                            .one_or_none()
+                        )
                     if row is None:
-                        row = connection.execute(
-                            select(deep_jobs).where(deep_jobs.c.job_id == str(job_id))
-                        ).mappings().one_or_none()
+                        row = (
+                            connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == str(job_id)))
+                            .mappings()
+                            .one_or_none()
+                        )
                 if row is not None:
                     return self._deep_job_row(row)
                 if attempt >= 7:
@@ -1853,13 +1896,23 @@ class SqlRunRepository:
                 time.sleep(0.005 * (attempt + 1))
         raise RuntimeError("unable to create deep job")
 
-    def save_deep_run_link(self, *, parent_run_id: str, child_run_id: str, job_id: str = "", relation: str = "deep_research") -> dict[str, Any]:
-        values = {"parent_run_id": str(parent_run_id), "child_run_id": str(child_run_id), "job_id": str(job_id or ""), "relation": str(relation), "created_at": _favorite_now_iso()}
+    def save_deep_run_link(
+        self, *, parent_run_id: str, child_run_id: str, job_id: str = "", relation: str = "deep_research"
+    ) -> dict[str, Any]:
+        values = {
+            "parent_run_id": str(parent_run_id),
+            "child_run_id": str(child_run_id),
+            "job_id": str(job_id or ""),
+            "relation": str(relation),
+            "created_at": _favorite_now_iso(),
+        }
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    try: connection.execute(deep_run_links.insert().values(**values))
-                    except IntegrityError: pass
+                    try:
+                        connection.execute(deep_run_links.insert().values(**values))
+                    except IntegrityError:
+                        pass
                 return values
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
@@ -1869,13 +1922,13 @@ class SqlRunRepository:
 
     def list_deep_run_links(self, parent_run_id: str = "") -> list[dict[str, Any]]:
         stmt = select(deep_run_links)
-        if parent_run_id: stmt = stmt.where(deep_run_links.c.parent_run_id == str(parent_run_id))
-        with self.engine.connect() as connection: rows = connection.execute(stmt.order_by(deep_run_links.c.created_at.desc())).mappings().all()
+        if parent_run_id:
+            stmt = stmt.where(deep_run_links.c.parent_run_id == str(parent_run_id))
+        with self.engine.connect() as connection:
+            rows = connection.execute(stmt.order_by(deep_run_links.c.created_at.desc())).mappings().all()
         return [dict(row) for row in rows]
 
-    def get_deep_job_by_fingerprint(
-        self, parent_run_id: str, fingerprint: str
-    ) -> dict[str, Any] | None:
+    def get_deep_job_by_fingerprint(self, parent_run_id: str, fingerprint: str) -> dict[str, Any] | None:
         """Return the canonical job for a non-empty request fingerprint.
 
         ``first()`` is intentional for compatibility with databases created
@@ -1888,15 +1941,19 @@ class SqlRunRepository:
         if not value:
             return None
         with self.engine.connect() as connection:
-            row = connection.execute(
-                select(deep_jobs)
-                .where(
-                    deep_jobs.c.parent_run_id == str(parent_run_id),
-                    deep_jobs.c.fingerprint == value,
+            row = (
+                connection.execute(
+                    select(deep_jobs)
+                    .where(
+                        deep_jobs.c.parent_run_id == str(parent_run_id),
+                        deep_jobs.c.fingerprint == value,
+                    )
+                    .order_by(deep_jobs.c.created_at, deep_jobs.c.job_id)
+                    .limit(1)
                 )
-                .order_by(deep_jobs.c.created_at, deep_jobs.c.job_id)
-                .limit(1)
-            ).mappings().first()
+                .mappings()
+                .first()
+            )
         return self._deep_job_row(row) if row is not None else None
 
     def _deep_job_row(self, row: Any) -> dict[str, Any]:
@@ -1908,12 +1965,22 @@ class SqlRunRepository:
 
     def get_deep_job(self, job_id: str) -> dict[str, Any] | None:
         with self.engine.connect() as connection:
-            row = connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == str(job_id))).mappings().one_or_none()
+            row = (
+                connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == str(job_id))).mappings().one_or_none()
+            )
         return self._deep_job_row(row) if row else None
 
     def list_deep_jobs(self, parent_run_id: str) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(select(deep_jobs).where(deep_jobs.c.parent_run_id == str(parent_run_id)).order_by(deep_jobs.c.created_at.desc())).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_jobs)
+                    .where(deep_jobs.c.parent_run_id == str(parent_run_id))
+                    .order_by(deep_jobs.c.created_at.desc())
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_job_row(row) for row in rows]
 
     def list_recoverable_deep_jobs(self) -> list[dict[str, Any]]:
@@ -1927,11 +1994,15 @@ class SqlRunRepository:
         """
 
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                select(deep_jobs)
-                .where(deep_jobs.c.status.in_(("queued", "running", "partial")))
-                .order_by(deep_jobs.c.created_at)
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_jobs)
+                    .where(deep_jobs.c.status.in_(("queued", "running", "partial")))
+                    .order_by(deep_jobs.c.created_at)
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_job_row(row) for row in rows]
 
     def touch_deep_job(
@@ -1950,11 +2021,7 @@ class SqlRunRepository:
         refreshes do not flood the SSE stream with duplicate stage summaries.
         """
 
-        statuses = tuple(
-            str(item).strip().lower()
-            for item in expected_statuses
-            if str(item).strip()
-        )
+        statuses = tuple(str(item).strip().lower() for item in expected_statuses if str(item).strip())
         if not statuses:
             return self.get_deep_job(job_id)
         for attempt in range(8):
@@ -1965,13 +2032,9 @@ class SqlRunRepository:
                         deep_jobs.c.status.in_(statuses),
                     ]
                     if str(claim_token or "").strip():
-                        clauses.append(
-                            deep_jobs.c.claim_token == str(claim_token).strip()
-                        )
+                        clauses.append(deep_jobs.c.claim_token == str(claim_token).strip())
                     result = connection.execute(
-                        update(deep_jobs)
-                        .where(*clauses)
-                        .values(updated_at=_favorite_now_iso())
+                        update(deep_jobs).where(*clauses).values(updated_at=_favorite_now_iso())
                     )
                     if not result.rowcount:
                         return self.get_deep_job(job_id)
@@ -2025,7 +2088,8 @@ class SqlRunRepository:
                 raise ValueError("invalid deep job status")
             values["status"] = normalized_status
         for key, value in (("error", error), ("child_run_id", child_run_id)):
-            if value is not None: values[key] = str(value)[:4000]
+            if value is not None:
+                values[key] = str(value)[:4000]
         if session_id is not None:
             values["session_id"] = str(session_id)[:128]
         if checkpoint is not None:
@@ -2042,9 +2106,11 @@ class SqlRunRepository:
                     # never let that late writer resurrect the row.  Reads of
                     # the current row are returned to the caller so it can
                     # still render the authoritative terminal state.
-                    current_row = connection.execute(
-                        select(deep_jobs).where(deep_jobs.c.job_id == str(job_id))
-                    ).mappings().one_or_none()
+                    current_row = (
+                        connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == str(job_id)))
+                        .mappings()
+                        .one_or_none()
+                    )
                     if current_row is None:
                         return None
                     current_status = str(current_row.get("status", "")).strip().lower()
@@ -2052,23 +2118,21 @@ class SqlRunRepository:
                     expected_claim = str(claim_token or "").strip()
                     current_claim = str(current_row.get("claim_token", "") or "").strip()
                     if expected_claim and current_claim != expected_claim:
-                        return self._deep_job_row(
-                            {**dict(current_row), "_claim_rejected": True}
-                        )
+                        return self._deep_job_row({**dict(current_row), "_claim_rejected": True})
                     # ``completed`` is a per-stage status (S3/S4/S6 and
                     # retrieval all emit it), so it is terminal only once the
                     # publish stage is reached.  Cancellation, however, is a
                     # global terminal fence and must not be resurrected by a
                     # late child/dispatcher callback.
-                    terminal_now = current_status in {
-                        "failed",
-                        "blocked",
-                        "cancelled",
-                    } or (
-                        current_status == "partial"
-                        and current_stage in {"validation", "publish"}
-                    ) or (
-                        current_stage == "publish" and current_status == "completed"
+                    terminal_now = (
+                        current_status
+                        in {
+                            "failed",
+                            "blocked",
+                            "cancelled",
+                        }
+                        or (current_status == "partial" and current_stage in {"validation", "publish"})
+                        or (current_stage == "publish" and current_status == "completed")
                     )
                     if terminal_now:
                         # Ordinary worker updates freeze at the first terminal
@@ -2094,40 +2158,31 @@ class SqlRunRepository:
                     if expected_claim:
                         clauses.append(deep_jobs.c.claim_token == expected_claim)
                     result = connection.execute(
-                        update(deep_jobs)
-                        .where(*clauses)
-                        .values(**values, state_version=current_version + 1)
+                        update(deep_jobs).where(*clauses).values(**values, state_version=current_version + 1)
                     )
                     if not result.rowcount:
-                        refreshed = connection.execute(
-                            select(deep_jobs).where(
-                                deep_jobs.c.job_id == str(job_id)
-                            )
-                        ).mappings().one_or_none()
+                        refreshed = (
+                            connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == str(job_id)))
+                            .mappings()
+                            .one_or_none()
+                        )
                         if refreshed is None:
                             return None
-                        rejected = expected_claim and str(
-                            refreshed.get("claim_token", "") or ""
-                        ).strip() != expected_claim
-                        refreshed_row = self._deep_job_row(
-                            {**dict(refreshed), "_claim_rejected": bool(rejected)}
+                        rejected = (
+                            expected_claim and str(refreshed.get("claim_token", "") or "").strip() != expected_claim
                         )
-                        refreshed_status = str(
-                            refreshed_row.get("status", "") or ""
-                        ).strip().lower()
-                        refreshed_stage = str(
-                            refreshed_row.get("stage", "") or ""
-                        ).strip().lower()
-                        refreshed_terminal = refreshed_status in {
-                            "failed",
-                            "blocked",
-                            "cancelled",
-                        } or (
-                            refreshed_status == "partial"
-                            and refreshed_stage in {"validation", "publish"}
-                        ) or (
-                            refreshed_status == "completed"
-                            and refreshed_stage == "publish"
+                        refreshed_row = self._deep_job_row({**dict(refreshed), "_claim_rejected": bool(rejected)})
+                        refreshed_status = str(refreshed_row.get("status", "") or "").strip().lower()
+                        refreshed_stage = str(refreshed_row.get("stage", "") or "").strip().lower()
+                        refreshed_terminal = (
+                            refreshed_status
+                            in {
+                                "failed",
+                                "blocked",
+                                "cancelled",
+                            }
+                            or (refreshed_status == "partial" and refreshed_stage in {"validation", "publish"})
+                            or (refreshed_status == "completed" and refreshed_stage == "publish")
                         )
                         if refreshed_terminal:
                             refreshed_row["_already_terminal"] = True
@@ -2154,28 +2209,34 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(deep_jobs).where(
-                            deep_jobs.c.job_id == job_key,
-                            deep_jobs.c.parent_run_id == parent_key,
+                    current = (
+                        connection.execute(
+                            select(deep_jobs).where(
+                                deep_jobs.c.job_id == job_key,
+                                deep_jobs.c.parent_run_id == parent_key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if current is None:
                         return None
                     existing_session = str(current.get("session_id", "") or "").strip()
                     if existing_session and existing_session != session_key:
                         raise ValueError("deep job is already bound to another session")
-                    session = connection.execute(
-                        select(deep_sessions).where(
-                            deep_sessions.c.session_id == session_key,
-                            deep_sessions.c.parent_run_id == parent_key,
+                    session = (
+                        connection.execute(
+                            select(deep_sessions).where(
+                                deep_sessions.c.session_id == session_key,
+                                deep_sessions.c.parent_run_id == parent_key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if session is None:
                         raise ValueError("deep session not found for job binding")
-                    current_version = max(
-                        1, int(current.get("state_version", 1) or 1)
-                    )
+                    current_version = max(1, int(current.get("state_version", 1) or 1))
                     result = connection.execute(
                         update(deep_jobs)
                         .where(
@@ -2221,11 +2282,12 @@ class SqlRunRepository:
         auditable.
         """
 
-        statuses = tuple(
-            str(item).strip().lower()
-            for item in allowed_statuses
-            if str(item).strip()
-        ) or ("partial", "failed", "blocked", "cancelled")
+        statuses = tuple(str(item).strip().lower() for item in allowed_statuses if str(item).strip()) or (
+            "partial",
+            "failed",
+            "blocked",
+            "cancelled",
+        )
         parent = str(parent_run_id or "").strip()
         for attempt in range(8):
             try:
@@ -2236,9 +2298,7 @@ class SqlRunRepository:
                     ]
                     if parent:
                         clauses.append(deep_jobs.c.parent_run_id == parent)
-                    current = connection.execute(
-                        select(deep_jobs).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(deep_jobs).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
                     current_status = str(current.get("status", "")).strip().lower()
@@ -2268,8 +2328,7 @@ class SqlRunRepository:
                                 update(deep_sessions)
                                 .where(
                                     deep_sessions.c.session_id == session_key,
-                                    deep_sessions.c.parent_run_id
-                                    == str(current.get("parent_run_id", "")),
+                                    deep_sessions.c.parent_run_id == str(current.get("parent_run_id", "")),
                                     deep_sessions.c.status == "cancelled",
                                 )
                                 .values(
@@ -2277,9 +2336,7 @@ class SqlRunRepository:
                                     updated_at=_favorite_now_iso(),
                                 )
                             )
-                    current_version = max(
-                        1, int(current.get("state_version", 1) or 1)
-                    )
+                    current_version = max(1, int(current.get("state_version", 1) or 1))
                     clauses.extend(
                         (
                             deep_jobs.c.state_version == current_version,
@@ -2350,8 +2407,8 @@ class SqlRunRepository:
             try:
                 parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
                 if parsed.tzinfo is None:
-                    parsed = parsed.replace(tzinfo=timezone.utc)
-                age = (datetime.now(timezone.utc) - parsed).total_seconds()
+                    parsed = parsed.replace(tzinfo=UTC)
+                age = (datetime.now(UTC) - parsed).total_seconds()
                 return age >= stale_seconds
             except (TypeError, ValueError, OverflowError):
                 return True
@@ -2359,9 +2416,11 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    row = connection.execute(
-                        select(deep_jobs).where(deep_jobs.c.job_id == job_key)
-                    ).mappings().one_or_none()
+                    row = (
+                        connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == job_key))
+                        .mappings()
+                        .one_or_none()
+                    )
                     if row is None:
                         return None
                     current_status = str(row.get("status", "")).strip().lower()
@@ -2379,41 +2438,37 @@ class SqlRunRepository:
                     session_key = str(row.get("session_id", "") or "").strip()
                     branch_key = normalize_branch_id(row.get("branch_id"))
                     if session_key:
-                        predecessors = connection.execute(
-                            select(
-                                deep_jobs.c.job_id,
-                                deep_jobs.c.status,
-                                deep_jobs.c.stage,
-                                deep_jobs.c.updated_at,
-                                deep_jobs.c.created_at,
+                        predecessors = (
+                            connection.execute(
+                                select(
+                                    deep_jobs.c.job_id,
+                                    deep_jobs.c.status,
+                                    deep_jobs.c.stage,
+                                    deep_jobs.c.updated_at,
+                                    deep_jobs.c.created_at,
+                                ).where(
+                                    deep_jobs.c.session_id == session_key,
+                                    deep_jobs.c.branch_id == branch_key,
+                                    deep_jobs.c.status.in_(("queued", "running", "partial")),
+                                )
                             )
-                            .where(
-                                deep_jobs.c.session_id == session_key,
-                                deep_jobs.c.branch_id == branch_key,
-                                deep_jobs.c.status.in_(("queued", "running", "partial")),
-                            )
-                        ).mappings().all()
+                            .mappings()
+                            .all()
+                        )
                         current_created = str(row.get("created_at", "") or "")
                         current_id = str(row.get("job_id", "") or "")
                         for predecessor in predecessors:
                             predecessor_id = str(predecessor.get("job_id", "") or "")
                             if predecessor_id == current_id:
                                 continue
-                            predecessor_created = str(
-                                predecessor.get("created_at", "") or ""
-                            )
+                            predecessor_created = str(predecessor.get("created_at", "") or "")
                             older = predecessor_created < current_created or (
-                                predecessor_created == current_created
-                                and predecessor_id < current_id
+                                predecessor_created == current_created and predecessor_id < current_id
                             )
                             if not older:
                                 continue
-                            predecessor_status = str(
-                                predecessor.get("status", "") or ""
-                            ).strip().lower()
-                            predecessor_stage = str(
-                                predecessor.get("stage", "") or ""
-                            ).strip().lower()
+                            predecessor_status = str(predecessor.get("status", "") or "").strip().lower()
+                            predecessor_stage = str(predecessor.get("stage", "") or "").strip().lower()
                             if predecessor_status == "queued":
                                 return None
                             if predecessor_status == "partial" and predecessor_stage in {
@@ -2440,9 +2495,7 @@ class SqlRunRepository:
                             status="running",
                             error="",
                             claim_token=f"claim-{uuid4().hex}",
-                            state_version=max(
-                                1, int(row.get("state_version", 1) or 1)
-                            ) + 1,
+                            state_version=max(1, int(row.get("state_version", 1) or 1)) + 1,
                             updated_at=_favorite_now_iso(),
                         )
                     )
@@ -2476,9 +2529,7 @@ class SqlRunRepository:
             return False
         with self.engine.connect() as connection:
             current = connection.execute(
-                select(deep_jobs.c.claim_token).where(
-                    deep_jobs.c.job_id == str(job_id)
-                )
+                select(deep_jobs.c.claim_token).where(deep_jobs.c.job_id == str(job_id))
             ).scalar_one_or_none()
         return str(current or "").strip() == token
 
@@ -2518,18 +2569,24 @@ class SqlRunRepository:
             now = _favorite_now_iso()
             try:
                 with self._lock, self.engine.begin() as connection:
-                    existing = connection.execute(
-                        select(deep_steers).where(
-                            deep_steers.c.job_id == job_key,
-                            deep_steers.c.client_steer_id == client_key,
+                    existing = (
+                        connection.execute(
+                            select(deep_steers).where(
+                                deep_steers.c.job_id == job_key,
+                                deep_steers.c.client_steer_id == client_key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if existing is not None:
                         return self._deep_steer_row(existing)
 
-                    job = connection.execute(
-                        select(deep_jobs).where(deep_jobs.c.job_id == job_key)
-                    ).mappings().one_or_none()
+                    job = (
+                        connection.execute(select(deep_jobs).where(deep_jobs.c.job_id == job_key))
+                        .mappings()
+                        .one_or_none()
+                    )
                     if job is None:
                         raise ValueError("deep job not found")
                     if not self._deep_job_accepts_steers(job):
@@ -2541,22 +2598,26 @@ class SqlRunRepository:
                     if normalized_branch != job_branch:
                         raise ValueError("steering branch does not match the active job")
 
-                    queue_order = int(
-                        connection.execute(
-                            select(func.max(deep_steers.c.queue_order)).where(
-                                deep_steers.c.job_id == job_key
-                            )
-                        ).scalar_one_or_none()
-                        or 0
-                    ) + 1
-                    sequence = int(
-                        connection.execute(
-                            select(func.max(deep_messages.c.sequence)).where(
-                                deep_messages.c.session_id == session_id
-                            )
-                        ).scalar_one_or_none()
-                        or 0
-                    ) + 1
+                    queue_order = (
+                        int(
+                            connection.execute(
+                                select(func.max(deep_steers.c.queue_order)).where(deep_steers.c.job_id == job_key)
+                            ).scalar_one_or_none()
+                            or 0
+                        )
+                        + 1
+                    )
+                    sequence = (
+                        int(
+                            connection.execute(
+                                select(func.max(deep_messages.c.sequence)).where(
+                                    deep_messages.c.session_id == session_id
+                                )
+                            ).scalar_one_or_none()
+                            or 0
+                        )
+                        + 1
+                    )
                     resolved_parent = self._resolve_deep_parent_message(
                         connection,
                         session_id=session_id,
@@ -2601,12 +2662,16 @@ class SqlRunRepository:
                     return self._deep_steer_row(values)
             except IntegrityError:
                 with self.engine.connect() as connection:
-                    existing = connection.execute(
-                        select(deep_steers).where(
-                            deep_steers.c.job_id == job_key,
-                            deep_steers.c.client_steer_id == client_key,
+                    existing = (
+                        connection.execute(
+                            select(deep_steers).where(
+                                deep_steers.c.job_id == job_key,
+                                deep_steers.c.client_steer_id == client_key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                 if existing is not None:
                     return self._deep_steer_row(existing)
                 if attempt >= 7:
@@ -2634,9 +2699,7 @@ class SqlRunRepository:
             expected_claim = str(claim_token or "").strip()
             if expected_claim:
                 owner = connection.execute(
-                    select(deep_jobs.c.claim_token).where(
-                        deep_jobs.c.job_id == job_key
-                    )
+                    select(deep_jobs.c.claim_token).where(deep_jobs.c.job_id == job_key)
                 ).scalar_one_or_none()
                 if str(owner or "").strip() != expected_claim:
                     return []
@@ -2646,12 +2709,16 @@ class SqlRunRepository:
             ]
             if live_only:
                 clauses.append(deep_steers.c.mode.in_(tuple(LIVE_STEER_MODES)))
-            rows = connection.execute(
-                select(deep_steers)
-                .where(*clauses)
-                .order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
-                .limit(capped_limit)
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_steers)
+                    .where(*clauses)
+                    .order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
+                    .limit(capped_limit)
+                )
+                .mappings()
+                .all()
+            )
             steer_ids = [str(row["steer_id"]) for row in rows]
             if not steer_ids:
                 return []
@@ -2664,10 +2731,7 @@ class SqlRunRepository:
                 )
                 .values(status="claimed", updated_at=now)
             )
-            return [
-                self._deep_steer_row({**dict(row), "status": "claimed", "updated_at": now})
-                for row in rows
-            ]
+            return [self._deep_steer_row({**dict(row), "status": "claimed", "updated_at": now}) for row in rows]
 
     def mark_deep_steers_applied(
         self,
@@ -2683,17 +2747,15 @@ class SqlRunRepository:
         with self._lock, self.engine.begin() as connection:
             expected_claim = str(claim_token or "").strip()
             if expected_claim:
-                job_ids = connection.execute(
-                    select(deep_steers.c.job_id).where(
-                        deep_steers.c.steer_id.in_(ids)
-                    )
-                ).scalars().all()
+                job_ids = (
+                    connection.execute(select(deep_steers.c.job_id).where(deep_steers.c.steer_id.in_(ids)))
+                    .scalars()
+                    .all()
+                )
                 if not job_ids or len(set(job_ids)) != 1:
                     return []
                 owner = connection.execute(
-                    select(deep_jobs.c.claim_token).where(
-                        deep_jobs.c.job_id == str(job_ids[0])
-                    )
+                    select(deep_jobs.c.claim_token).where(deep_jobs.c.job_id == str(job_ids[0]))
                 ).scalar_one_or_none()
                 if str(owner or "").strip() != expected_claim:
                     return []
@@ -2709,44 +2771,48 @@ class SqlRunRepository:
                 update(deep_messages)
                 .where(
                     deep_messages.c.message_id.in_(
-                        select(deep_steers.c.message_id).where(
-                            deep_steers.c.steer_id.in_(ids)
-                        )
+                        select(deep_steers.c.message_id).where(deep_steers.c.steer_id.in_(ids))
                     )
                 )
                 .values(status="applied")
             )
-            rows = connection.execute(
-                select(deep_steers)
-                .where(deep_steers.c.steer_id.in_(ids))
-                .order_by(deep_steers.c.queue_order)
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_steers).where(deep_steers.c.steer_id.in_(ids)).order_by(deep_steers.c.queue_order)
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_steer_row(row) for row in rows]
 
-    def list_deep_steers(
-        self, job_id: str, *, statuses: Sequence[str] = ()
-    ) -> list[dict[str, Any]]:
+    def list_deep_steers(self, job_id: str, *, statuses: Sequence[str] = ()) -> list[dict[str, Any]]:
         clauses = [deep_steers.c.job_id == str(job_id)]
         normalized = [str(item).strip().lower() for item in statuses if str(item).strip()]
         if normalized:
             clauses.append(deep_steers.c.status.in_(normalized))
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                select(deep_steers)
-                .where(*clauses)
-                .order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_steers).where(*clauses).order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_steer_row(row) for row in rows]
 
     def cancel_deep_steer(self, job_id: str, steer_id: str) -> dict[str, Any] | None:
         now = _favorite_now_iso()
         with self._lock, self.engine.begin() as connection:
-            row = connection.execute(
-                select(deep_steers).where(
-                    deep_steers.c.job_id == str(job_id),
-                    deep_steers.c.steer_id == str(steer_id),
+            row = (
+                connection.execute(
+                    select(deep_steers).where(
+                        deep_steers.c.job_id == str(job_id),
+                        deep_steers.c.steer_id == str(steer_id),
+                    )
                 )
-            ).mappings().one_or_none()
+                .mappings()
+                .one_or_none()
+            )
             if row is None:
                 return None
             if str(row.get("status", "")) != "pending":
@@ -2763,9 +2829,7 @@ class SqlRunRepository:
             )
         return self._deep_steer_row({**dict(row), "status": "cancelled", "updated_at": now})
 
-    def close_and_park_deep_steers(
-        self, job_id: str, *, claim_token: str = ""
-    ) -> list[dict[str, Any]]:
+    def close_and_park_deep_steers(self, job_id: str, *, claim_token: str = "") -> list[dict[str, Any]]:
         """Close intake before draining unresolved inputs at a terminal boundary."""
 
         job_key = str(job_id)
@@ -2786,14 +2850,18 @@ class SqlRunRepository:
             )
             if not result.rowcount:
                 return []
-            rows = connection.execute(
-                select(deep_steers)
-                .where(
-                    deep_steers.c.job_id == job_key,
-                    deep_steers.c.status.in_(("pending", "claimed")),
+            rows = (
+                connection.execute(
+                    select(deep_steers)
+                    .where(
+                        deep_steers.c.job_id == job_key,
+                        deep_steers.c.status.in_(("pending", "claimed")),
+                    )
+                    .order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
                 )
-                .order_by(deep_steers.c.queue_order, deep_steers.c.created_at)
-            ).mappings().all()
+                .mappings()
+                .all()
+            )
             steer_ids = [str(row["steer_id"]) for row in rows]
             if steer_ids:
                 connection.execute(
@@ -2803,17 +2871,10 @@ class SqlRunRepository:
                 )
                 connection.execute(
                     update(deep_messages)
-                    .where(
-                        deep_messages.c.message_id.in_(
-                            [str(row["message_id"]) for row in rows]
-                        )
-                    )
+                    .where(deep_messages.c.message_id.in_([str(row["message_id"]) for row in rows]))
                     .values(status="parked")
                 )
-        return [
-            self._deep_steer_row({**dict(row), "status": "parked", "updated_at": now})
-            for row in rows
-        ]
+        return [self._deep_steer_row({**dict(row), "status": "parked", "updated_at": now}) for row in rows]
 
     def cancel_deep_jobs(
         self,
@@ -2839,14 +2900,18 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    rows = connection.execute(
-                        select(deep_jobs)
-                        .where(
-                            deep_jobs.c.parent_run_id == parent,
-                            deep_jobs.c.status.in_(active_statuses),
+                    rows = (
+                        connection.execute(
+                            select(deep_jobs)
+                            .where(
+                                deep_jobs.c.parent_run_id == parent,
+                                deep_jobs.c.status.in_(active_statuses),
+                            )
+                            .order_by(deep_jobs.c.created_at, deep_jobs.c.job_id)
                         )
-                        .order_by(deep_jobs.c.created_at, deep_jobs.c.job_id)
-                    ).mappings().all()
+                        .mappings()
+                        .all()
+                    )
                     if not rows:
                         return []
                     now = _favorite_now_iso()
@@ -2866,9 +2931,7 @@ class SqlRunRepository:
                         )
                     )
                     session_ids = {
-                        str(row.get("session_id", "")).strip()
-                        for row in rows
-                        if str(row.get("session_id", "")).strip()
+                        str(row.get("session_id", "")).strip() for row in rows if str(row.get("session_id", "")).strip()
                     }
                     if session_ids:
                         connection.execute(
@@ -2883,7 +2946,25 @@ class SqlRunRepository:
                 time.sleep(0.005 * (attempt + 1))
         return []
 
-    def append_deep_event(self, *, stream_id: str, parent_run_id: str, event_type: str, session_id: str = "", job_id: str = "", stage: str = "queued", status: str = "queued", state_version: int = 0, progress: float = 0.0, delta: dict | None = None, evidence_refs: list[str] | None = None, artifact_refs: list[str] | None = None, version_refs: list[str] | None = None, child_run_id: str = "", error: str = "") -> dict[str, Any]:
+    def append_deep_event(
+        self,
+        *,
+        stream_id: str,
+        parent_run_id: str,
+        event_type: str,
+        session_id: str = "",
+        job_id: str = "",
+        stage: str = "queued",
+        status: str = "queued",
+        state_version: int = 0,
+        progress: float = 0.0,
+        delta: dict | None = None,
+        evidence_refs: list[str] | None = None,
+        artifact_refs: list[str] | None = None,
+        version_refs: list[str] | None = None,
+        child_run_id: str = "",
+        error: str = "",
+    ) -> dict[str, Any]:
         now = _favorite_now_iso()
         # Progress is telemetry supplied by asynchronous workers.  A broken
         # provider/adapter can hand us NaN/Infinity (or a non-numeric value),
@@ -2900,22 +2981,46 @@ class SqlRunRepository:
             0,
             min(
                 100,
-                int(
-                    progress_value * 100
-                    if progress_value <= 1
-                    else progress_value
-                ),
+                int(progress_value * 100 if progress_value <= 1 else progress_value),
             ),
         )
         for attempt in range(5):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    seq = (connection.execute(select(deep_events.c.sequence).where(deep_events.c.stream_id == str(stream_id)).order_by(deep_events.c.sequence.desc()).limit(1)).scalar_one_or_none() or 0) + 1
-                    values = {"stream_id": str(stream_id), "sequence": seq, "event_id": f"deep-event-{uuid4().hex}", "event_type": str(event_type), "session_id": str(session_id or ""), "job_id": str(job_id or ""), "parent_run_id": str(parent_run_id), "child_run_id": str(child_run_id or ""), "stage": str(stage), "status": str(status), "state_version": max(0, int(state_version or 0)), "progress": progress_i, "delta_json": self._json(delta or {}), "evidence_refs_json": self._json(list(evidence_refs or []), "[]"), "artifact_refs_json": self._json(list(artifact_refs or []), "[]"), "version_refs_json": self._json(list(version_refs or []), "[]"), "error": str(error or "")[:1000], "created_at": now}
+                    seq = (
+                        connection.execute(
+                            select(deep_events.c.sequence)
+                            .where(deep_events.c.stream_id == str(stream_id))
+                            .order_by(deep_events.c.sequence.desc())
+                            .limit(1)
+                        ).scalar_one_or_none()
+                        or 0
+                    ) + 1
+                    values = {
+                        "stream_id": str(stream_id),
+                        "sequence": seq,
+                        "event_id": f"deep-event-{uuid4().hex}",
+                        "event_type": str(event_type),
+                        "session_id": str(session_id or ""),
+                        "job_id": str(job_id or ""),
+                        "parent_run_id": str(parent_run_id),
+                        "child_run_id": str(child_run_id or ""),
+                        "stage": str(stage),
+                        "status": str(status),
+                        "state_version": max(0, int(state_version or 0)),
+                        "progress": progress_i,
+                        "delta_json": self._json(delta or {}),
+                        "evidence_refs_json": self._json(list(evidence_refs or []), "[]"),
+                        "artifact_refs_json": self._json(list(artifact_refs or []), "[]"),
+                        "version_refs_json": self._json(list(version_refs or []), "[]"),
+                        "error": str(error or "")[:1000],
+                        "created_at": now,
+                    }
                     connection.execute(deep_events.insert().values(**values))
                 return self._deep_event_row(values)
             except IntegrityError:
-                if attempt >= 4: raise
+                if attempt >= 4:
+                    raise
                 time.sleep(0.002 * (attempt + 1))
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 4:
@@ -2925,22 +3030,31 @@ class SqlRunRepository:
 
     def _deep_event_row(self, row: Any) -> dict[str, Any]:
         raw = dict(row)
-        for column, key, fallback in (("delta_json", "delta", {}), ("evidence_refs_json", "evidence_refs", []), ("artifact_refs_json", "artifact_refs", []), ("version_refs_json", "version_refs", [])):
+        for column, key, fallback in (
+            ("delta_json", "delta", {}),
+            ("evidence_refs_json", "evidence_refs", []),
+            ("artifact_refs_json", "artifact_refs", []),
+            ("version_refs_json", "version_refs", []),
+        ):
             raw[key] = self._decode(raw.pop(column, ""), fallback)
         try:
             progress = float(raw.get("progress", 0))
         except (TypeError, ValueError, OverflowError):
             progress = 0.0
-        raw["progress"] = (
-            max(0.0, min(1.0, progress / 100.0))
-            if math.isfinite(progress)
-            else 0.0
-        )
+        raw["progress"] = max(0.0, min(1.0, progress / 100.0)) if math.isfinite(progress) else 0.0
         return raw
 
     def deep_events_after(self, stream_id: str, after: int = 0) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(select(deep_events).where(deep_events.c.stream_id == str(stream_id), deep_events.c.sequence > int(after)).order_by(deep_events.c.sequence)).mappings().all()
+            rows = (
+                connection.execute(
+                    select(deep_events)
+                    .where(deep_events.c.stream_id == str(stream_id), deep_events.c.sequence > int(after))
+                    .order_by(deep_events.c.sequence)
+                )
+                .mappings()
+                .all()
+            )
         return [self._deep_event_row(row) for row in rows]
 
     def deep_event_sequence_for_id(self, stream_id: str, event_id: str) -> int | None:
@@ -2959,15 +3073,29 @@ class SqlRunRepository:
             return None
         with self.engine.connect() as connection:
             row = connection.execute(
-                select(deep_events.c.sequence)
-                .where(
+                select(deep_events.c.sequence).where(
                     deep_events.c.stream_id == str(stream_id),
                     deep_events.c.event_id == value,
                 )
             ).scalar_one_or_none()
         return int(row) if row is not None else None
 
-    def save_capability_version(self, *, version_id: str, parent_run_id: str, card_binding_id: str, hypothesis_id: str, snapshot: dict, diff: dict | None = None, base_snapshot_hash: str = "", source: str = "deep-thinking", evidence_refs: list[str] | None = None, status: str = "pending_verification", parent_version_id: str = "", base_version_id: str = "") -> dict[str, Any]:
+    def save_capability_version(
+        self,
+        *,
+        version_id: str,
+        parent_run_id: str,
+        card_binding_id: str,
+        hypothesis_id: str,
+        snapshot: dict,
+        diff: dict | None = None,
+        base_snapshot_hash: str = "",
+        source: str = "deep-thinking",
+        evidence_refs: list[str] | None = None,
+        status: str = "pending_verification",
+        parent_version_id: str = "",
+        base_version_id: str = "",
+    ) -> dict[str, Any]:
         now = _favorite_now_iso()
         parent = str(parent_run_id)
         binding = str(card_binding_id)
@@ -2976,11 +3104,13 @@ class SqlRunRepository:
             try:
                 with self._lock, self.engine.begin() as connection:
                     # A retry with the same version id is safe to replay.
-                    existing_by_id = connection.execute(
-                        select(capability_versions).where(
-                            capability_versions.c.version_id == str(version_id)
+                    existing_by_id = (
+                        connection.execute(
+                            select(capability_versions).where(capability_versions.c.version_id == str(version_id))
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if existing_by_id:
                         if (
                             str(existing_by_id.get("parent_run_id", "")) != parent
@@ -2989,16 +3119,20 @@ class SqlRunRepository:
                         ):
                             raise ValueError("version_id already belongs to another capability lineage")
                         return self._capability_version_row(existing_by_id)
-                    existing = connection.execute(
-                        select(capability_versions)
-                        .where(
-                            capability_versions.c.parent_run_id == parent,
-                            capability_versions.c.card_binding_id == binding,
-                            capability_versions.c.hypothesis_id == hypothesis,
+                    existing = (
+                        connection.execute(
+                            select(capability_versions)
+                            .where(
+                                capability_versions.c.parent_run_id == parent,
+                                capability_versions.c.card_binding_id == binding,
+                                capability_versions.c.hypothesis_id == hypothesis,
+                            )
+                            .order_by(capability_versions.c.version_no.desc())
+                            .limit(1)
                         )
-                        .order_by(capability_versions.c.version_no.desc())
-                        .limit(1)
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     version_no = int(existing["version_no"] if existing else 0) + 1
 
                     # Validate explicit lineage references server-side.  A
@@ -3008,16 +3142,21 @@ class SqlRunRepository:
                     # history.
                     parent_ref = str(parent_version_id or (existing["version_id"] if existing else ""))
                     base_ref = str(base_version_id or "")
-                    lineage_rows = connection.execute(
-                        select(capability_versions.c.version_id,
-                               capability_versions.c.version_no,
-                               capability_versions.c.base_version_id)
-                        .where(
-                            capability_versions.c.parent_run_id == parent,
-                            capability_versions.c.card_binding_id == binding,
-                            capability_versions.c.hypothesis_id == hypothesis,
+                    lineage_rows = (
+                        connection.execute(
+                            select(
+                                capability_versions.c.version_id,
+                                capability_versions.c.version_no,
+                                capability_versions.c.base_version_id,
+                            ).where(
+                                capability_versions.c.parent_run_id == parent,
+                                capability_versions.c.card_binding_id == binding,
+                                capability_versions.c.hypothesis_id == hypothesis,
+                            )
                         )
-                    ).mappings().all()
+                        .mappings()
+                        .all()
+                    )
                     lineage_by_id = {str(row["version_id"]): row for row in lineage_rows}
                     if parent_ref and parent_ref not in lineage_by_id:
                         raise ValueError("parent_version_id does not belong to capability lineage")
@@ -3064,11 +3203,13 @@ class SqlRunRepository:
                 # it was the same id, replay it; otherwise retry after the
                 # newly committed row becomes visible and recompute MAX.
                 with self.engine.connect() as connection:
-                    row = connection.execute(
-                        select(capability_versions).where(
-                            capability_versions.c.version_id == str(version_id)
+                    row = (
+                        connection.execute(
+                            select(capability_versions).where(capability_versions.c.version_id == str(version_id))
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                 if row is not None:
                     return self._capability_version_row(row)
                 if attempt >= 7:
@@ -3114,9 +3255,15 @@ class SqlRunRepository:
         result["module_count"] = len(changed)
         return result
 
-    def ensure_capability_baseline(self, *, parent_run_id: str, card_binding_id: str,
-                                   hypothesis_id: str = "", snapshot: dict | None = None,
-                                   evidence_refs: list[str] | None = None) -> dict[str, Any]:
+    def ensure_capability_baseline(
+        self,
+        *,
+        parent_run_id: str,
+        card_binding_id: str,
+        hypothesis_id: str = "",
+        snapshot: dict | None = None,
+        evidence_refs: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Register an immutable formal v1 snapshot exactly once.
 
         Deep-research versions are appended after this baseline when a
@@ -3152,25 +3299,8 @@ class SqlRunRepository:
         # unique (parent, binding, version_no) fence makes this idempotent.
         for attempt in range(8):
             with self.engine.connect() as connection:
-                existing = connection.execute(
-                    select(capability_versions)
-                    .where(
-                        capability_versions.c.parent_run_id == parent,
-                        capability_versions.c.card_binding_id == binding,
-                        capability_versions.c.hypothesis_id == hypothesis,
-                    )
-                    .order_by(capability_versions.c.version_no)
-                    .limit(1)
-                ).mappings().first()
-            if existing:
-                return self._capability_version_row(existing)
-            try:
-                with self._lock, self.engine.begin() as connection:
-                    connection.execute(capability_versions.insert().values(**values))
-                return self._capability_version_row(values)
-            except IntegrityError:
-                with self.engine.connect() as connection:
-                    existing = connection.execute(
+                existing = (
+                    connection.execute(
                         select(capability_versions)
                         .where(
                             capability_versions.c.parent_run_id == parent,
@@ -3179,7 +3309,32 @@ class SqlRunRepository:
                         )
                         .order_by(capability_versions.c.version_no)
                         .limit(1)
-                    ).mappings().first()
+                    )
+                    .mappings()
+                    .first()
+                )
+            if existing:
+                return self._capability_version_row(existing)
+            try:
+                with self._lock, self.engine.begin() as connection:
+                    connection.execute(capability_versions.insert().values(**values))
+                return self._capability_version_row(values)
+            except IntegrityError:
+                with self.engine.connect() as connection:
+                    existing = (
+                        connection.execute(
+                            select(capability_versions)
+                            .where(
+                                capability_versions.c.parent_run_id == parent,
+                                capability_versions.c.card_binding_id == binding,
+                                capability_versions.c.hypothesis_id == hypothesis,
+                            )
+                            .order_by(capability_versions.c.version_no)
+                            .limit(1)
+                        )
+                        .mappings()
+                        .first()
+                    )
                 if existing:
                     return self._capability_version_row(existing)
                 if attempt >= 7:
@@ -3192,7 +3347,11 @@ class SqlRunRepository:
 
     def _capability_version_row(self, row: Any) -> dict[str, Any]:
         raw = dict(row)
-        for column, key, fallback in (("diff_json", "diff", {}), ("evidence_refs_json", "evidence_refs", []), ("snapshot_json", "snapshot", {})):
+        for column, key, fallback in (
+            ("diff_json", "diff", {}),
+            ("evidence_refs_json", "evidence_refs", []),
+            ("snapshot_json", "snapshot", {}),
+        ):
             raw[key] = self._decode(raw.pop(column, ""), fallback)
         # SQLite stores the source-deletion marker as an integer.  Expose a
         # proper boolean in the API projection while remaining compatible
@@ -3202,21 +3361,30 @@ class SqlRunRepository:
 
     def list_capability_versions(self, parent_run_id: str, card_binding_id: str = "") -> list[dict[str, Any]]:
         clauses = [capability_versions.c.parent_run_id == str(parent_run_id)]
-        if card_binding_id: clauses.append(capability_versions.c.card_binding_id == str(card_binding_id))
+        if card_binding_id:
+            clauses.append(capability_versions.c.card_binding_id == str(card_binding_id))
         with self.engine.connect() as connection:
-            rows = connection.execute(select(capability_versions).where(*clauses).order_by(capability_versions.c.card_binding_id, capability_versions.c.hypothesis_id, capability_versions.c.version_no)).mappings().all()
+            rows = (
+                connection.execute(
+                    select(capability_versions)
+                    .where(*clauses)
+                    .order_by(
+                        capability_versions.c.card_binding_id,
+                        capability_versions.c.hypothesis_id,
+                        capability_versions.c.version_no,
+                    )
+                )
+                .mappings()
+                .all()
+            )
         return [self._capability_version_row(row) for row in rows]
 
-    def get_capability_version(
-        self, version_id: str, *, parent_run_id: str = ""
-    ) -> dict[str, Any] | None:
+    def get_capability_version(self, version_id: str, *, parent_run_id: str = "") -> dict[str, Any] | None:
         clauses = [capability_versions.c.version_id == str(version_id)]
         if str(parent_run_id).strip():
             clauses.append(capability_versions.c.parent_run_id == str(parent_run_id))
         with self.engine.connect() as connection:
-            row = connection.execute(
-                select(capability_versions).where(*clauses)
-            ).mappings().one_or_none()
+            row = connection.execute(select(capability_versions).where(*clauses)).mappings().one_or_none()
         return self._capability_version_row(row) if row else None
 
     def verify_capability_version(
@@ -3247,9 +3415,7 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(capability_versions).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(capability_versions).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
                     if str(current.get("status", "")) == "formal":
@@ -3259,18 +3425,14 @@ class SqlRunRepository:
                         .where(*clauses)
                         .values(status=status, updated_at=_favorite_now_iso())
                     )
-                return self.get_capability_version(
-                    version_id, parent_run_id=parent_run_id
-                )
+                return self.get_capability_version(version_id, parent_run_id=parent_run_id)
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
                     raise
                 time.sleep(0.005 * (attempt + 1))
         return None
 
-    def delete_capability_version(
-        self, version_id: str, *, parent_run_id: str = ""
-    ) -> dict[str, Any] | None:
+    def delete_capability_version(self, version_id: str, *, parent_run_id: str = "") -> dict[str, Any] | None:
         """Soft-delete one non-formal version while preserving audit history."""
 
         clauses = [capability_versions.c.version_id == str(version_id)]
@@ -3279,9 +3441,7 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(capability_versions).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(capability_versions).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
                     status = str(current.get("status", "") or "")
@@ -3297,33 +3457,33 @@ class SqlRunRepository:
                                 updated_at=_favorite_now_iso(),
                             )
                         )
-                return self.get_capability_version(
-                    version_id, parent_run_id=parent_run_id
-                )
+                return self.get_capability_version(version_id, parent_run_id=parent_run_id)
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
                     raise
                 time.sleep(0.005 * (attempt + 1))
         return None
 
-    def restore_capability_version(
-        self, version_id: str, *, parent_run_id: str = ""
-    ) -> dict[str, Any] | None:
+    def restore_capability_version(self, version_id: str, *, parent_run_id: str = "") -> dict[str, Any] | None:
         """Restore one soft-deleted version to its previous review state."""
 
         clauses = [capability_versions.c.version_id == str(version_id)]
         if str(parent_run_id).strip():
             clauses.append(capability_versions.c.parent_run_id == str(parent_run_id))
         allowed = {
-            "pending_verification", "verified", "rejected", "rolled_back",
-            "cancelled", "failed", "blocked", "partial",
+            "pending_verification",
+            "verified",
+            "rejected",
+            "rolled_back",
+            "cancelled",
+            "failed",
+            "blocked",
+            "partial",
         }
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(capability_versions).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(capability_versions).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
                     if str(current.get("status", "") or "") != "deleted":
@@ -3339,18 +3499,14 @@ class SqlRunRepository:
                             updated_at=_favorite_now_iso(),
                         )
                     )
-                return self.get_capability_version(
-                    version_id, parent_run_id=parent_run_id
-                )
+                return self.get_capability_version(version_id, parent_run_id=parent_run_id)
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
                     raise
                 time.sleep(0.005 * (attempt + 1))
         return None
 
-    def purge_capability_version(
-        self, version_id: str, *, parent_run_id: str = ""
-    ) -> dict[str, Any] | None:
+    def purge_capability_version(self, version_id: str, *, parent_run_id: str = "") -> dict[str, Any] | None:
         """Permanently remove one soft-deleted deep version from the ledger.
 
         Formal baselines and live (non-deleted) rows are rejected.  Soft-delete
@@ -3364,22 +3520,16 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(capability_versions).where(*clauses)
-                    ).mappings().one_or_none()
+                    current = connection.execute(select(capability_versions).where(*clauses)).mappings().one_or_none()
                     if current is None:
                         return None
                     status = str(current.get("status", "") or "").strip().lower()
                     if status == "formal":
                         raise ValueError("formal capability version is immutable")
                     if status != "deleted":
-                        raise ValueError(
-                            "only soft-deleted capability versions can be purged"
-                        )
+                        raise ValueError("only soft-deleted capability versions can be purged")
                     snapshot = self._capability_version_row(current)
-                    connection.execute(
-                        delete(capability_versions).where(*clauses)
-                    )
+                    connection.execute(delete(capability_versions).where(*clauses))
                 return snapshot
             except OperationalError as exc:
                 if not _retryable_sqlite_lock(exc) or attempt >= 7:
@@ -3387,7 +3537,16 @@ class SqlRunRepository:
                 time.sleep(0.005 * (attempt + 1))
         return None
 
-    def claim_deep_idempotency(self, *, scope_key: str, operation: str, idempotency_key: str, request_hash: str, resource_id: str = "", response: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    def claim_deep_idempotency(
+        self,
+        *,
+        scope_key: str,
+        operation: str,
+        idempotency_key: str,
+        request_hash: str,
+        resource_id: str = "",
+        response: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Return an existing claim or atomically record a new request.
 
         A reused key with a different request fingerprint is rejected by the
@@ -3400,13 +3559,17 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    existing = connection.execute(
-                        select(deep_idempotency).where(
-                            deep_idempotency.c.scope_key == scope,
-                            deep_idempotency.c.operation == op,
-                            deep_idempotency.c.idempotency_key == key,
+                    existing = (
+                        connection.execute(
+                            select(deep_idempotency).where(
+                                deep_idempotency.c.scope_key == scope,
+                                deep_idempotency.c.operation == op,
+                                deep_idempotency.c.idempotency_key == key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if existing:
                         if str(existing["request_hash"]) != str(request_hash):
                             raise ValueError("Idempotency-Key was already used with a different request")
@@ -3428,13 +3591,17 @@ class SqlRunRepository:
                 # Cross-process claim race.  Read the winner and apply the
                 # same request-hash conflict semantics as the fast path.
                 with self.engine.connect() as connection:
-                    existing = connection.execute(
-                        select(deep_idempotency).where(
-                            deep_idempotency.c.scope_key == scope,
-                            deep_idempotency.c.operation == op,
-                            deep_idempotency.c.idempotency_key == key,
+                    existing = (
+                        connection.execute(
+                            select(deep_idempotency).where(
+                                deep_idempotency.c.scope_key == scope,
+                                deep_idempotency.c.operation == op,
+                                deep_idempotency.c.idempotency_key == key,
+                            )
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                 if existing is not None:
                     if str(existing["request_hash"]) != str(request_hash):
                         raise ValueError("Idempotency-Key was already used with a different request")
@@ -3446,9 +3613,25 @@ class SqlRunRepository:
                 time.sleep(0.002 * (attempt + 1))
         raise RuntimeError("unable to claim deep idempotency key")
 
-    def complete_deep_idempotency(self, *, scope_key: str, operation: str, idempotency_key: str, resource_id: str = "", response: dict | None = None) -> None:
+    def complete_deep_idempotency(
+        self,
+        *,
+        scope_key: str,
+        operation: str,
+        idempotency_key: str,
+        resource_id: str = "",
+        response: dict | None = None,
+    ) -> None:
         with self._lock, self.engine.begin() as connection:
-            connection.execute(update(deep_idempotency).where(deep_idempotency.c.scope_key == str(scope_key), deep_idempotency.c.operation == str(operation), deep_idempotency.c.idempotency_key == str(idempotency_key)).values(resource_id=str(resource_id or ""), response_json=self._json(response or {})))
+            connection.execute(
+                update(deep_idempotency)
+                .where(
+                    deep_idempotency.c.scope_key == str(scope_key),
+                    deep_idempotency.c.operation == str(operation),
+                    deep_idempotency.c.idempotency_key == str(idempotency_key),
+                )
+                .values(resource_id=str(resource_id or ""), response_json=self._json(response or {}))
+            )
 
     def release_deep_idempotency(
         self,
@@ -3528,9 +3711,7 @@ class SqlRunRepository:
         # repository callers can omit it and still get an internally
         # generated identifier.
         favorite_id = str(favorite_id or "").strip() or f"favorite-{uuid4().hex}"
-        serialized = json.dumps(
-            dict(snapshot or {}), ensure_ascii=False, sort_keys=True
-        )
+        serialized = json.dumps(dict(snapshot or {}), ensure_ascii=False, sort_keys=True)
         normalized_tags = _normalize_favorite_tags(tags)
         values = {
             "favorite_id": favorite_id,
@@ -3587,9 +3768,11 @@ class SqlRunRepository:
         if not favorite_id:
             return None
         with self.engine.connect() as connection:
-            row = connection.execute(
-                select(favorites).where(favorites.c.favorite_id == favorite_id)
-            ).mappings().one_or_none()
+            row = (
+                connection.execute(select(favorites).where(favorites.c.favorite_id == favorite_id))
+                .mappings()
+                .one_or_none()
+            )
         return _favorite_row_to_dict(row) if row is not None else None
 
     def find_favorite(
@@ -3601,14 +3784,18 @@ class SqlRunRepository:
         card_key: str,
     ) -> dict[str, Any] | None:
         with self.engine.connect() as connection:
-            row = connection.execute(
-                select(favorites).where(
-                    favorites.c.scope == str(scope),
-                    favorites.c.owner_id == str(owner_id),
-                    favorites.c.run_id == str(run_id),
-                    favorites.c.card_key == str(card_key),
+            row = (
+                connection.execute(
+                    select(favorites).where(
+                        favorites.c.scope == str(scope),
+                        favorites.c.owner_id == str(owner_id),
+                        favorites.c.run_id == str(run_id),
+                        favorites.c.card_key == str(card_key),
+                    )
                 )
-            ).mappings().one_or_none()
+                .mappings()
+                .one_or_none()
+            )
         return _favorite_row_to_dict(row) if row is not None else None
 
     def list_favorites(
@@ -3639,11 +3826,15 @@ class SqlRunRepository:
                 conditions = []
             if str(run_id or "").strip():
                 conditions.append(favorites.c.run_id == str(run_id).strip())
-            rows = connection.execute(
-                select(favorites)
-                .where(*conditions)
-                .order_by(favorites.c.created_at.desc(), favorites.c.favorite_id.desc())
-            ).mappings().all()
+            rows = (
+                connection.execute(
+                    select(favorites)
+                    .where(*conditions)
+                    .order_by(favorites.c.created_at.desc(), favorites.c.favorite_id.desc())
+                )
+                .mappings()
+                .all()
+            )
         decoded = [_favorite_row_to_dict(row) for row in rows]
         if search:
             decoded = [
@@ -3665,11 +3856,7 @@ class SqlRunRepository:
                 ).lower()
             ]
         if capability_type:
-            decoded = [
-                row
-                for row in decoded
-                if str(row.get("capability_type", "")).strip() == capability_type
-            ]
+            decoded = [row for row in decoded if str(row.get("capability_type", "")).strip() == capability_type]
         total = len(decoded)
         page = decoded[offset : offset + limit]
         return {
@@ -3687,9 +3874,7 @@ class SqlRunRepository:
         if existing is None:
             return None
         with self._lock, self.engine.begin() as connection:
-            connection.execute(
-                delete(favorites).where(favorites.c.favorite_id == str(favorite_id))
-            )
+            connection.execute(delete(favorites).where(favorites.c.favorite_id == str(favorite_id)))
         return existing
 
     def update_favorite(
@@ -3711,17 +3896,13 @@ class SqlRunRepository:
         if note is not None:
             values["note"] = str(note).strip()[:4000]
         if tags is not None:
-            values["tags_json"] = json.dumps(
-                _normalize_favorite_tags(tags), ensure_ascii=False
-            )
+            values["tags_json"] = json.dumps(_normalize_favorite_tags(tags), ensure_ascii=False)
         if not values:
             return self.get_favorite(favorite_id)
         values["updated_at"] = _favorite_now_iso()
         with self._lock, self.engine.begin() as connection:
             result = connection.execute(
-                update(favorites)
-                .where(favorites.c.favorite_id == favorite_id)
-                .values(**values)
+                update(favorites).where(favorites.c.favorite_id == favorite_id).values(**values)
             )
             if not result.rowcount:
                 return None
@@ -3792,12 +3973,15 @@ class SqlRunRepository:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    current = connection.execute(
-                        select(events.c.sequence)
-                        .where(events.c.run_id == run_id)
-                        .order_by(events.c.sequence.desc())
-                        .limit(1)
-                    ).scalar_one_or_none() or 0
+                    current = (
+                        connection.execute(
+                            select(events.c.sequence)
+                            .where(events.c.run_id == run_id)
+                            .order_by(events.c.sequence.desc())
+                            .limit(1)
+                        ).scalar_one_or_none()
+                        or 0
+                    )
                     sequence = current + 1
                     connection.execute(
                         events.insert().values(
@@ -3819,8 +4003,24 @@ class SqlRunRepository:
 
     def events_after(self, run_id: str, sequence: int) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
-            rows = connection.execute(select(events).where(events.c.run_id == run_id, events.c.sequence > sequence).order_by(events.c.sequence)).mappings().all()
-        return [{"run_id": row["run_id"], "sequence": row["sequence"], "event_type": row["event_type"], "payload": json.loads(row["payload"])} for row in rows]
+            rows = (
+                connection.execute(
+                    select(events)
+                    .where(events.c.run_id == run_id, events.c.sequence > sequence)
+                    .order_by(events.c.sequence)
+                )
+                .mappings()
+                .all()
+            )
+        return [
+            {
+                "run_id": row["run_id"],
+                "sequence": row["sequence"],
+                "event_type": row["event_type"],
+                "payload": json.loads(row["payload"]),
+            }
+            for row in rows
+        ]
 
     def actual_baseline_agent_ids_by_run(
         self,
@@ -3848,18 +4048,22 @@ class SqlRunRepository:
             "baseline_wave_started",
         }
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                select(
-                    events.c.run_id,
-                    events.c.event_type,
-                    events.c.payload,
+            rows = (
+                connection.execute(
+                    select(
+                        events.c.run_id,
+                        events.c.event_type,
+                        events.c.payload,
+                    )
+                    .where(
+                        events.c.run_id.in_(normalized_ids),
+                        events.c.event_type.in_(activity_types | plan_types),
+                    )
+                    .order_by(events.c.run_id, events.c.sequence)
                 )
-                .where(
-                    events.c.run_id.in_(normalized_ids),
-                    events.c.event_type.in_(activity_types | plan_types),
-                )
-                .order_by(events.c.run_id, events.c.sequence)
-            ).mappings().all()
+                .mappings()
+                .all()
+            )
 
         actual: dict[str, list[str]] = {run_id: [] for run_id in normalized_ids}
         planned: dict[str, list[str]] = {run_id: [] for run_id in normalized_ids}
@@ -3871,12 +4075,7 @@ class SqlRunRepository:
             details = event.get("payload", event)
             details = details if isinstance(details, dict) else {}
             if row["event_type"] in activity_types:
-                agent_id = str(
-                    event.get("actor")
-                    or event.get("agent_id")
-                    or details.get("agent_id")
-                    or ""
-                ).strip()
+                agent_id = str(event.get("actor") or event.get("agent_id") or details.get("agent_id") or "").strip()
                 if agent_id and agent_id not in actual[run_id]:
                     actual[run_id].append(agent_id)
                 continue
@@ -3884,15 +4083,16 @@ class SqlRunRepository:
                 normalized = str(agent_id).strip()
                 if normalized and normalized not in planned[run_id]:
                     planned[run_id].append(normalized)
-        return {
-            run_id: actual[run_id] or planned[run_id]
-            for run_id in normalized_ids
-        }
+        return {run_id: actual[run_id] or planned[run_id] for run_id in normalized_ids}
 
     def touch_worker(self, worker_id: str, *, updated_at: str, status: str, current_run_id: str = "") -> None:
         with self._lock, self.engine.begin() as connection:
             connection.execute(delete(worker_heartbeats).where(worker_heartbeats.c.worker_id == worker_id))
-            connection.execute(worker_heartbeats.insert().values(worker_id=worker_id, updated_at=updated_at, status=status, current_run_id=current_run_id))
+            connection.execute(
+                worker_heartbeats.insert().values(
+                    worker_id=worker_id, updated_at=updated_at, status=status, current_run_id=current_run_id
+                )
+            )
 
     def worker_heartbeats(self) -> list[dict[str, str]]:
         with self.engine.connect() as connection:
@@ -3920,7 +4120,8 @@ class SqlRunRepository:
                         payload = {}
                     parent = str((payload.get("execution") or {}).get("parent_run_id", ""))
                     if parent in descendants:
-                        descendants.add(rid); changed = True
+                        descendants.add(rid)
+                        changed = True
                 # Newer deep jobs persist parent/child linkage in the
                 # dedicated table. Include those descendants even when the
                 # child run payload predates the embedded execution marker.
@@ -3929,7 +4130,8 @@ class SqlRunRepository:
                 ).all()
                 for parent_id, child_id in link_rows:
                     if str(parent_id) in descendants and str(child_id) not in descendants:
-                        descendants.add(str(child_id)); changed = True
+                        descendants.add(str(child_id))
+                        changed = True
             # Favorites are independent immutable snapshots.  Detach them in
             # the same transaction as the run-row deletion so callers that
             # delete through the application service (rather than the API
@@ -3950,7 +4152,12 @@ class SqlRunRepository:
                 .where(worker_heartbeats.c.current_run_id.in_(descendants))
                 .values(status="idle", current_run_id="")
             )
-            session_ids = [str(row[0]) for row in connection.execute(select(deep_sessions.c.session_id).where(deep_sessions.c.parent_run_id.in_(descendants))).all()]
+            session_ids = [
+                str(row[0])
+                for row in connection.execute(
+                    select(deep_sessions.c.session_id).where(deep_sessions.c.parent_run_id.in_(descendants))
+                ).all()
+            ]
             if session_ids:
                 connection.execute(delete(deep_messages).where(deep_messages.c.session_id.in_(session_ids)))
             connection.execute(delete(deep_events).where(deep_events.c.parent_run_id.in_(descendants)))
@@ -3966,16 +4173,16 @@ class SqlRunRepository:
             # Preserve lineage ancestors needed by a reviewed descendant.  A
             # verified v3 may legitimately point through a provisional v2;
             # deleting v2 would otherwise leave an auditable chain broken.
-            version_rows = connection.execute(
-                select(capability_versions).where(
-                    capability_versions.c.parent_run_id.in_(descendants)
+            version_rows = (
+                connection.execute(
+                    select(capability_versions).where(capability_versions.c.parent_run_id.in_(descendants))
                 )
-            ).mappings().all()
+                .mappings()
+                .all()
+            )
             by_id = {str(row["version_id"]): row for row in version_rows}
             keep_ids = {
-                str(row["version_id"])
-                for row in version_rows
-                if str(row.get("status", "")) in retained_statuses
+                str(row["version_id"]) for row in version_rows if str(row.get("status", "")) in retained_statuses
             }
             # Before removing provisional rows, reconnect retained descendants
             # to the nearest retained ancestor.  This preserves a traversable
@@ -3992,7 +4199,9 @@ class SqlRunRepository:
                     seen: set[str] = set()
                     while ancestor and ancestor not in keep_ids and ancestor in by_id and ancestor not in seen:
                         seen.add(ancestor)
-                        ancestor = str(by_id[ancestor].get(field if field == "base_version_id" else "parent_version_id", "") or "")
+                        ancestor = str(
+                            by_id[ancestor].get(field if field == "base_version_id" else "parent_version_id", "") or ""
+                        )
                     if ancestor != str(row.get(field, "") or ""):
                         updates[field] = ancestor
                 if updates:
@@ -4015,11 +4224,7 @@ class SqlRunRepository:
                 )
             delete_ids = [str(row["version_id"]) for row in version_rows if str(row["version_id"]) not in keep_ids]
             if delete_ids:
-                connection.execute(
-                    delete(capability_versions).where(
-                        capability_versions.c.version_id.in_(delete_ids)
-                    )
-                )
+                connection.execute(delete(capability_versions).where(capability_versions.c.version_id.in_(delete_ids)))
             # Idempotency claims are scoped either to the parent run (session,
             # reference-research, cancellation and verification operations) or
             # to a deep session (message/merge operations).  Remove both kinds
@@ -4027,15 +4232,10 @@ class SqlRunRepository:
             # or leak an old resource id when the run id is later reused.
             idempotency_scopes = descendants | set(session_ids)
             if idempotency_scopes:
-                connection.execute(
-                    delete(deep_idempotency).where(
-                        deep_idempotency.c.scope_key.in_(idempotency_scopes)
-                    )
-                )
+                connection.execute(delete(deep_idempotency).where(deep_idempotency.c.scope_key.in_(idempotency_scopes)))
             connection.execute(
                 delete(deep_run_links).where(
-                    (deep_run_links.c.parent_run_id.in_(descendants))
-                    | (deep_run_links.c.child_run_id.in_(descendants))
+                    (deep_run_links.c.parent_run_id.in_(descendants)) | (deep_run_links.c.child_run_id.in_(descendants))
                 )
             )
             connection.execute(delete(runs).where(runs.c.run_id.in_(descendants)))
@@ -4044,15 +4244,37 @@ class SqlRunRepository:
         with self.engine.connect() as connection:
             result = {
                 "runs": len(connection.execute(select(runs.c.run_id).where(runs.c.run_id == run_id)).all()),
-                "runtime_events": len(connection.execute(select(events.c.run_id).where(events.c.run_id == run_id)).all()),
-                "run_queue": len(connection.execute(select(queue_items.c.run_id).where(queue_items.c.run_id == run_id)).all()),
-                "worker_heartbeats": len(connection.execute(select(worker_heartbeats.c.worker_id).where(worker_heartbeats.c.current_run_id == run_id)).all()),
+                "runtime_events": len(
+                    connection.execute(select(events.c.run_id).where(events.c.run_id == run_id)).all()
+                ),
+                "run_queue": len(
+                    connection.execute(select(queue_items.c.run_id).where(queue_items.c.run_id == run_id)).all()
+                ),
+                "worker_heartbeats": len(
+                    connection.execute(
+                        select(worker_heartbeats.c.worker_id).where(worker_heartbeats.c.current_run_id == run_id)
+                    ).all()
+                ),
             }
             deep_counts = {
-                "deep_sessions": len(connection.execute(select(deep_sessions.c.session_id).where(deep_sessions.c.parent_run_id == run_id)).all()),
-                "deep_jobs": len(connection.execute(select(deep_jobs.c.job_id).where(deep_jobs.c.parent_run_id == run_id)).all()),
-                "deep_events": len(connection.execute(select(deep_events.c.event_id).where(deep_events.c.parent_run_id == run_id)).all()),
-                "capability_versions": len(connection.execute(select(capability_versions.c.version_id).where(capability_versions.c.parent_run_id == run_id)).all()),
+                "deep_sessions": len(
+                    connection.execute(
+                        select(deep_sessions.c.session_id).where(deep_sessions.c.parent_run_id == run_id)
+                    ).all()
+                ),
+                "deep_jobs": len(
+                    connection.execute(select(deep_jobs.c.job_id).where(deep_jobs.c.parent_run_id == run_id)).all()
+                ),
+                "deep_events": len(
+                    connection.execute(
+                        select(deep_events.c.event_id).where(deep_events.c.parent_run_id == run_id)
+                    ).all()
+                ),
+                "capability_versions": len(
+                    connection.execute(
+                        select(capability_versions.c.version_id).where(capability_versions.c.parent_run_id == run_id)
+                    ).all()
+                ),
             }
             result.update({key: value for key, value in deep_counts.items() if value})
             return result
@@ -4071,17 +4293,17 @@ class SqlRunQueue:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
-                    existing = connection.execute(
-                        select(queue_items.c.status, queue_items.c.ordinal).where(
-                            queue_items.c.run_id == run_id
+                    existing = (
+                        connection.execute(
+                            select(queue_items.c.status, queue_items.c.ordinal).where(queue_items.c.run_id == run_id)
                         )
-                    ).mappings().one_or_none()
+                        .mappings()
+                        .one_or_none()
+                    )
                     if existing is None:
                         next_ordinal = (
                             connection.execute(
-                                select(queue_items.c.ordinal)
-                                .order_by(queue_items.c.ordinal.desc())
-                                .limit(1)
+                                select(queue_items.c.ordinal).order_by(queue_items.c.ordinal.desc()).limit(1)
                             ).scalar_one_or_none()
                             or 0
                         ) + 1
@@ -4103,9 +4325,7 @@ class SqlRunQueue:
                         # owns this run; a stale claim can be reopened.
                         next_ordinal = (
                             connection.execute(
-                                select(queue_items.c.ordinal)
-                                .order_by(queue_items.c.ordinal.desc())
-                                .limit(1)
+                                select(queue_items.c.ordinal).order_by(queue_items.c.ordinal.desc()).limit(1)
                             ).scalar_one_or_none()
                             or 0
                         ) + 1
@@ -4120,9 +4340,7 @@ class SqlRunQueue:
                         # claimable again and place it behind already-pending work.
                         next_ordinal = (
                             connection.execute(
-                                select(queue_items.c.ordinal)
-                                .order_by(queue_items.c.ordinal.desc())
-                                .limit(1)
+                                select(queue_items.c.ordinal).order_by(queue_items.c.ordinal.desc()).limit(1)
                             ).scalar_one_or_none()
                             or 0
                         ) + 1
@@ -4169,7 +4387,9 @@ class SqlRunQueue:
 
     def retry(self, run_id: str) -> None:
         with self.engine.begin() as connection:
-            connection.execute(update(queue_items).where(queue_items.c.run_id == run_id).values(status=self._pending_status))
+            connection.execute(
+                update(queue_items).where(queue_items.c.run_id == run_id).values(status=self._pending_status)
+            )
 
     def remove(self, run_id: str) -> None:
         with self.engine.begin() as connection:
@@ -4177,4 +4397,13 @@ class SqlRunQueue:
 
     def pending_run_ids(self) -> list[str]:
         with self.engine.connect() as connection:
-            return [str(item) for item in connection.execute(select(queue_items.c.run_id).where(queue_items.c.status == self._pending_status).order_by(queue_items.c.ordinal)).scalars().all()]
+            return [
+                str(item)
+                for item in connection.execute(
+                    select(queue_items.c.run_id)
+                    .where(queue_items.c.status == self._pending_status)
+                    .order_by(queue_items.c.ordinal)
+                )
+                .scalars()
+                .all()
+            ]

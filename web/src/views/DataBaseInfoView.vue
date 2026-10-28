@@ -51,6 +51,7 @@
         <div v-if="isMilvus" v-show="activeTab === 'filetable'" class="tab-panel file-panel">
           <KnowledgeWorkflowOverview
             :stats="workflowStats"
+            :index-health="indexHealth"
             :can-manage="canManageDatabase"
             :busy="store.state.chunkLoading"
             :chunk-strategy="chunkStrategyLabel"
@@ -61,6 +62,7 @@
             @upload="onUploadAction"
             @parse="confirmBatchParse"
             @index="confirmBatchIndex"
+            @rebuild="confirmRebuildIndex"
             @navigate="handleActiveTabChange"
             @configure="showEditModal"
           />
@@ -197,12 +199,18 @@
               <strong>{{ queryReadinessIssue.title }}</strong>
               <span>{{ queryReadinessIssue.description }}</span>
             </div>
-            <button type="button" @click="handleActiveTabChange('filetable')">
+            <button type="button" @click="handleReadinessAction">
               {{ queryReadinessIssue.action }}
               <ChevronRight :size="14" />
             </button>
           </div>
-          <QuerySection ref="querySectionRef" :visible="true" @toggle-visible="() => {}" />
+          <QuerySection
+            ref="querySectionRef"
+            :visible="true"
+            :disabled="queryReadinessIssue?.blocking === true"
+            :disabled-reason="queryReadinessIssue?.description"
+            @toggle-visible="() => {}"
+          />
         </div>
       </template>
 
@@ -444,7 +452,7 @@ import {
   Upload
 } from '@lucide/vue'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import ExtensionDetailLayout from '@/components/shared/ExtensionDetailLayout.vue'
 import FileTable from '@/components/FileTable.vue'
 import FileDetailModal from '@/components/FileDetailModal.vue'
@@ -729,45 +737,140 @@ const pendingIndexCount = computed(() => {
   return Number(workflowStats.value.pending_index_count || 0)
 })
 
+const indexHealth = ref(null)
+const indexHealthLoading = ref(false)
+let indexHealthRequest = 0
+
+const loadIndexHealth = async () => {
+  if (!kbId.value || !isMilvus.value) {
+    indexHealth.value = null
+    return
+  }
+
+  const request = ++indexHealthRequest
+  indexHealthLoading.value = true
+  try {
+    const result = await databaseApi.getIndexHealth(kbId.value)
+    if (request === indexHealthRequest) indexHealth.value = result
+  } catch (error) {
+    console.error(error)
+    if (request === indexHealthRequest) {
+      indexHealth.value = {
+        status: 'unavailable',
+        searchable: false,
+        message: '暂时无法核验向量索引，请稍后刷新。'
+      }
+    }
+  } finally {
+    if (request === indexHealthRequest) indexHealthLoading.value = false
+  }
+}
+
+const confirmRebuildIndex = () => {
+  if (!canManageDatabase.value || indexHealthLoading.value) return
+  Modal.confirm({
+    title: '重建向量索引',
+    content: `将使用当前向量模型重新处理 ${workflowStats.value.indexed_count} 个已入库文档，可能产生模型调用费用。是否继续？`,
+    okText: '开始重建',
+    cancelText: '取消',
+    async onOk() {
+      const result = await databaseApi.rebuildIndex(kbId.value)
+      message.success(result.message || '索引重建任务已提交')
+      taskerStore.loadTasks()
+      store.startAutoRefresh()
+    }
+  })
+}
+
 const queryReadinessIssue = computed(() => {
   const stats = workflowStats.value
+  const healthStatus = indexHealth.value?.status
+  if (isMilvus.value && !healthStatus) {
+    return {
+      title: '正在核验向量索引',
+      description: '核对数据库分块与向量索引后即可开始检索。',
+      action: '刷新检查',
+      actionType: 'refresh',
+      blocking: true
+    }
+  }
+  if (['missing', 'incomplete', 'stale'].includes(healthStatus)) {
+    return {
+      title: '向量索引需要重建',
+      description: indexHealth.value.message,
+      action: canManageDatabase.value ? '重建索引' : '联系管理员',
+      actionType: canManageDatabase.value ? 'rebuild' : 'files',
+      blocking: true
+    }
+  }
+  if (healthStatus === 'unavailable') {
+    return {
+      title: '暂时无法核验向量索引',
+      description: indexHealth.value.message,
+      action: '刷新检查',
+      actionType: 'refresh',
+      blocking: true
+    }
+  }
   if (stats.file_count <= 0) {
     return {
       title: '还没有可检索资料',
       description: '请先上传资料并完成解析与向量入库。',
-      action: '去上传'
+      action: '去上传',
+      actionType: 'files',
+      blocking: true
     }
   }
   if (stats.processing_count > 0) {
     return {
       title: '知识正在处理中',
       description: `${stats.processing_count} 个文档尚未完成，当前检索结果可能不完整。`,
-      action: '查看进度'
+      action: '查看进度',
+      actionType: 'files',
+      blocking: false
     }
   }
   if (stats.pending_parse_count > 0) {
     return {
       title: '部分文档尚未解析',
       description: `${stats.pending_parse_count} 个文档需要先提取内容并完成分块。`,
-      action: '去解析'
+      action: '去解析',
+      actionType: 'files',
+      blocking: false
     }
   }
   if (stats.pending_index_count > 0) {
     return {
       title: '文档尚未完成向量入库',
       description: `${stats.pending_index_count} 个文档当前不会参与检索，请先完成入库。`,
-      action: '去入库'
+      action: '去入库',
+      actionType: 'files',
+      blocking: false
     }
   }
   if (stats.indexed_count <= 0) {
     return {
       title: '尚未检测到可用向量索引',
       description: '请在文件管理中检查文档状态，完成入库后再验证召回质量。',
-      action: '检查文件'
+      action: '检查文件',
+      actionType: 'files',
+      blocking: true
     }
   }
   return null
 })
+
+const handleReadinessAction = () => {
+  if (queryReadinessIssue.value?.actionType === 'rebuild') {
+    confirmRebuildIndex()
+    return
+  }
+  if (queryReadinessIssue.value?.actionType === 'refresh') {
+    loadIndexHealth()
+    return
+  }
+  handleActiveTabChange('filetable')
+}
 
 const confirmBatchParse = () => {
   const count = pendingParseCount.value
@@ -884,6 +987,8 @@ watch(
   async (nextKbId) => {
     virtualFolderStreamController.value?.abort()
     virtualFolderTask.value = null
+    indexHealthRequest += 1
+    indexHealth.value = null
     virtualFolderStatus.value = { has_virtual_folders: false, file_count: 0, remaining_steps: 0 }
     isInitialLoad.value = true
     detailLoading.value = true
@@ -900,6 +1005,7 @@ watch(
         await router.replace({ path: '/extensions', query: { tab: 'knowledge' } })
         return
       }
+      await loadIndexHealth()
       await detectVirtualFolders()
       store.startAutoRefresh()
     } finally {
@@ -907,6 +1013,17 @@ watch(
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => [
+    database.value?.stats?.processing_count,
+    database.value?.stats?.chunk_count,
+    database.value?.stats?.indexed_count
+  ],
+  (next, previous) => {
+    if (!previous || next.some((value, index) => value !== previous[index])) loadIndexHealth()
+  }
 )
 
 const previousFileCount = ref(0)

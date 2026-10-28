@@ -126,26 +126,28 @@ export const dashboardApi = {
    * 批量获取系统概览所有统计数据（并行请求）
    * @returns {Promise<Object>} - 所有统计数据
    */
-  getAllStats: async () => {
-    try {
-      const requests = {
-        basic: apiAdminGet('/api/dashboard/stats'),
-        users: apiAdminGet('/api/dashboard/stats/users'),
-        tools: apiAdminGet('/api/dashboard/stats/tools'),
-        agents: apiAdminGet('/api/dashboard/stats/agents'),
-        knowledge: apiAdminGet('/api/dashboard/stats/knowledge'),
-        modelUsage: apiAdminGet('/api/dashboard/stats/model-usage?time_range=30days')
-      }
-
-      const entries = Object.entries(requests)
-      const values = await Promise.all(entries.map(([, request]) => request))
-      return {
-        ...Object.fromEntries(entries.map(([name], index) => [name, values[index]]))
-      }
-    } catch (error) {
-      console.error('批量获取统计数据失败:', error)
-      throw error
+  getAllStats: async ({ onSection } = {}) => {
+    const requests = {
+      basic: dashboardApi.getStats(),
+      users: dashboardApi.getUserStats(),
+      tools: dashboardApi.getToolStats(),
+      agents: dashboardApi.getAgentStats(),
+      knowledge: dashboardApi.getKnowledgeStats(),
+      modelUsage: dashboardApi.getModelUsage()
     }
+    const result = { errors: [] }
+    await Promise.allSettled(
+      Object.entries(requests).map(async ([name, request]) => {
+        try {
+          result[name] = await request
+          onSection?.(name, result[name], null)
+        } catch (error) {
+          result.errors.push(name)
+          onSection?.(name, null, error)
+        }
+      })
+    )
+    return result
   },
 
   /**

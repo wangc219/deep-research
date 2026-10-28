@@ -114,7 +114,9 @@ class ResearchLoop:
             new_high_quality_count=high_quality,
         )
 
-    async def run(self, *, route: str, executor: ResearchRoundExecutor | QueryResearchExecutor, initial_questions: list[str]) -> ResearchLoopResult:
+    async def run(
+        self, *, route: str, executor: ResearchRoundExecutor | QueryResearchExecutor, initial_questions: list[str]
+    ) -> ResearchLoopResult:
         history: list[str] = []
         open_questions = list(initial_questions)
         conflicts: list[str] = []
@@ -154,13 +156,9 @@ class ResearchLoop:
                 queries = [refresh_query]
             history.extend(item.query for item in queries)
             attempted = QueryHistory(history)
-            deferred_questions = [
-                item for item in open_questions
-                if item.strip() and not attempted.seen(item)
-            ]
+            deferred_questions = [item for item in open_questions if item.strip() and not attempted.seen(item)]
             deferred_conflicts = [
-                item for item in conflicts
-                if item.strip() and not attempted.seen(f"争议/反证：{item}")
+                item for item in conflicts if item.strip() and not attempted.seen(f"争议/反证：{item}")
             ]
             result = await self._execute_round(
                 executor=executor,

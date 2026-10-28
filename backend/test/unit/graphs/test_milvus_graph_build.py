@@ -394,10 +394,10 @@ def test_llm_graph_extractor_rejects_custom_prompt():
 
 
 def test_llm_graph_extractor_defaults_extraction_timeout():
-    """不配置时保持历史默认值，避免改变既有部署的行为。"""
+    """不配置时使用适合公网推理模型的安全默认值。"""
     extractor = LLMGraphExtractor({"model_spec": "test/model"})
 
-    assert extractor._resolve_timeout_seconds() == 60.0
+    assert extractor._resolve_timeout_seconds() == 180.0
 
 
 @pytest.mark.asyncio
@@ -428,7 +428,7 @@ async def test_llm_graph_extractor_passes_configured_timeout_to_model(monkeypatc
 
 @pytest.mark.asyncio
 async def test_llm_graph_extractor_defaults_timeout_when_absent(monkeypatch):
-    """不配置超时时，默认值也必须真的传到模型调用上（与硬编码 60s 的旧行为等价）。"""
+    """不配置超时时，安全默认值也必须真的传到模型调用上。"""
     captured = {}
 
     class FakeModel:
@@ -443,7 +443,7 @@ async def test_llm_graph_extractor_defaults_timeout_when_absent(monkeypatch):
 
     await LLMGraphExtractor({"model_spec": "test/model"}).extract("文本")
 
-    assert captured["timeout"] == 60.0
+    assert captured["timeout"] == 180.0
 
 
 @pytest.mark.parametrize("value", [300, "300", 600, 0.5])
@@ -620,8 +620,8 @@ async def test_graph_extraction_retries_twice_before_third_attempt_succeeds(monk
         extractor_type="llm",
         extract=AsyncMock(
             side_effect=[
-                RuntimeError("timeout"),
-                ValueError("invalid json"),
+                TimeoutError("timeout"),
+                ConnectionError("connection interrupted"),
                 {"entities": [], "relations": []},
             ]
         ),
@@ -922,7 +922,7 @@ async def test_graph_build_keeps_extraction_concurrency_full_while_writes_are_bl
             try:
                 await asyncio.sleep(0.01)
                 if text == "content 6":
-                    raise RuntimeError("extract failed")
+                    raise ConnectionError("extract failed")
                 return {"entities": [], "relations": []}
             finally:
                 self.active -= 1
@@ -1186,6 +1186,8 @@ async def test_graph_build_indexes_vectors_after_structure_write(monkeypatch):
         "write_failed": 0,
         "remaining": 0,
         "vector_failed": 0,
+        "verified_facts": 0,
+        "evidence_review_required": 0,
     }
     vector_store.upsert_graph_records.assert_awaited_once()
     assert chunk.graph_structure_indexed is True
@@ -1426,6 +1428,43 @@ async def test_milvus_graph_service_configure_persists_updated_concurrency():
     assert status["config"]["extractor_options"]["concurrency_count"] == 9
     assert status["entity_count"] == 3
     assert status["relationship_count"] == 2
+
+
+def test_graph_extraction_runtime_caps_siliconflow_without_rewriting_saved_config():
+    """SiliconFlow 的历史高并发配置应当安全执行，且保留原值供界面告警。"""
+    config = {
+        "extractor_type": "llm",
+        "extractor_options": {
+            "model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+            "concurrency_count": 200,
+        },
+    }
+
+    runtime = MilvusGraphService._graph_extraction_runtime(config)
+
+    assert runtime == {
+        "configured_concurrency_count": 200,
+        "effective_concurrency_count": 16,
+        "concurrency_limit": 16,
+        "concurrency_capped": True,
+        "provider_id": "siliconflow-cn",
+    }
+    assert MilvusGraphService._get_worker_count(config) == 16
+    assert config["extractor_options"]["concurrency_count"] == 200
+
+
+def test_graph_extraction_runtime_uses_safe_defaults_and_generic_ceiling():
+    default_config = {
+        "extractor_type": "llm",
+        "extractor_options": {"model_spec": "test:model"},
+    }
+    high_config = {
+        "extractor_type": "llm",
+        "extractor_options": {"model_spec": "local:model", "concurrency_count": 200},
+    }
+
+    assert MilvusGraphService._get_worker_count(default_config) == 8
+    assert MilvusGraphService._get_worker_count(high_config) == 64
 
 
 @pytest.mark.asyncio

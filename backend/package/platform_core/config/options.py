@@ -225,7 +225,7 @@ remote_skill_source_policy = Option(
                 "key": "allowed_hosts",
                 "label": "允许的来源域名",
                 "type": "list[str]",
-                "default": ["github.com", "modelscope.cn"],
+                "default": ["github.com", "skills.sh", "modelscope.cn"],
                 "help": "仅精确匹配域名；保存空列表会关闭远程安装。",
             }
         ]
@@ -251,14 +251,14 @@ aminer_api_opts = Option(
                     "maximum": maximum,
                 }
                 for key, label, default, maximum in (
-                    ("chat_budget_cents", "智能对话单轮预算（分）", 20, 1000),
-                    ("deep_budget_cents", "深研对话单轮预算（分）", 50, 5000),
-                    ("chat_search_limit", "智能对话 Pro 搜索次数", 2, 20),
-                    ("chat_detail_limit", "智能对话详情次数", 3, 50),
-                    ("chat_reference_limit", "智能对话参考文献次数", 1, 10),
-                    ("deep_search_limit", "深研 Pro 搜索次数", 6, 50),
-                    ("deep_detail_limit", "深研详情次数", 10, 100),
-                    ("deep_reference_limit", "深研参考文献次数", 2, 20),
+                    ("chat_budget_cents", "智能对话单轮预算（分，0为不限）", 20, 1000),
+                    ("deep_budget_cents", "深研对话单轮预算（分，0为不限）", 50, 5000),
+                    ("chat_search_limit", "智能对话 Pro 搜索次数（0为不限）", 2, 20),
+                    ("chat_detail_limit", "智能对话详情次数（0为不限）", 3, 50),
+                    ("chat_reference_limit", "智能对话参考文献次数（0为不限）", 1, 10),
+                    ("deep_search_limit", "深研 Pro 搜索次数（0为不限）", 6, 50),
+                    ("deep_detail_limit", "深研详情次数（0为不限）", 10, 100),
+                    ("deep_reference_limit", "深研参考文献次数（0为不限）", 2, 20),
                 )
             ],
         ]

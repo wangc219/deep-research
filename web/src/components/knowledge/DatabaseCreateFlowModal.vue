@@ -18,9 +18,9 @@
         </div>
         <div class="header-right">
           <div class="step-indicator-pill">
-            <span class="step-indicator-num">{{ currentStep + 1 }}/{{ stepLabels.length }}</span>
+            <span class="step-indicator-num">{{ zhipuSelected ? '1/1' : `${currentStep + 1}/${stepLabels.length}` }}</span>
             <span class="step-divider">·</span>
-            <span class="step-indicator-label">{{ stepLabels[currentStep] }}</span>
+            <span class="step-indicator-label">{{ zhipuSelected ? '连接' : stepLabels[currentStep] }}</span>
           </div>
           <button
             type="button"
@@ -36,7 +36,7 @@
 
       <main class="create-flow-body">
         <section v-if="currentStep === 0" class="flow-section">
-          <div class="form-section">
+          <div v-if="!zhipuSelected" class="form-section">
             <label for="database-create-name">知识库名称 <b>*</b></label>
             <a-input
               id="database-create-name"
@@ -48,28 +48,29 @@
             <label>知识库类型 <b>*</b></label>
             <div class="type-options" role="radiogroup" aria-label="知识库类型">
               <button
-                v-for="(typeInfo, typeKey) in supportedKbTypes"
+                v-for="(typeInfo, typeKey) in orderedKbTypes"
                 :key="typeKey"
                 type="button"
                 class="type-option"
-                :class="{ selected: form.kb_type === typeKey }"
+                :class="{ selected: typeKey === 'zhipu' ? zhipuSelected : !zhipuSelected && form.kb_type === typeKey }"
                 role="radio"
-                :aria-checked="form.kb_type === typeKey"
-                @click="selectType(typeKey)"
+                :aria-checked="typeKey === 'zhipu' ? zhipuSelected : !zhipuSelected && form.kb_type === typeKey"
+                @click="typeKey === 'zhipu' ? zhipuSelected = true : selectType(typeKey)"
               >
                 <div class="type-header">
-                  <component :is="getKbTypeIcon(typeKey)" :size="20" class="type-icon" />
-                  <strong class="type-title">{{ getKbTypeLabel(typeKey) || typeInfo.name }}</strong>
+                  <component :is="typeKey === 'zhipu' ? FileSearch : getKbTypeIcon(typeKey)" :size="20" class="type-icon" />
+                  <strong class="type-title">{{ typeKey === 'zhipu' ? typeInfo.name : getKbTypeLabel(typeKey) || typeInfo.name }}</strong>
                 </div>
                 <small class="type-desc">{{
                   typeInfo.description || '连接并检索该类型的知识数据。'
                 }}</small>
                 <span class="type-badge">
-                  {{ typeInfo.supports_documents === false ? '只读连接' : '支持文档' }}
+                  {{ typeKey === 'zhipu' ? '连接已有知识库' : typeInfo.supports_documents === false ? '只读连接' : '支持文档' }}
                 </span>
               </button>
             </div>
           </div>
+          <a-alert v-if="zhipuSelected" type="info" show-icon message="连接智谱知识库" description="进入后连接服务并选择已授权的智谱知识库。云端库授权由管理员配置。" />
         </section>
 
         <section v-else-if="currentStep === 1" class="flow-section">
@@ -211,7 +212,8 @@
         <div class="footer-actions">
           <a-button v-if="currentStep === 0" @click="handleCancel">取消</a-button>
           <a-button v-else :disabled="creating" @click="currentStep--">上一步</a-button>
-          <a-button v-if="currentStep < 2" type="primary" @click="goNext">下一步</a-button>
+          <a-button v-if="zhipuSelected" type="primary" @click="emit('connect-zhipu')">进入智谱配置</a-button>
+          <a-button v-else-if="currentStep < 2" type="primary" @click="goNext">下一步</a-button>
           <a-button v-else type="primary" :loading="creating" @click="handleCreate">
             创建知识库
           </a-button>
@@ -224,7 +226,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { DatabaseZap, X } from '@lucide/vue'
+import { DatabaseZap, FileSearch, X } from '@lucide/vue'
 import AiTextarea from '@/components/AiTextarea.vue'
 import EmbeddingModelSelector from '@/components/EmbeddingModelSelector.vue'
 import ShareConfigForm from '@/components/ShareConfigForm.vue'
@@ -245,7 +247,7 @@ const props = defineProps({
   supportedKbTypes: { type: Object, default: () => ({}) },
   personalOnly: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update:open', 'completed'])
+const emit = defineEmits(['update:open', 'completed', 'connect-zhipu'])
 const configStore = useConfigStore()
 const databaseStore = useDatabaseStore()
 const {
@@ -255,8 +257,15 @@ const {
   getChunkPresetDescription
 } = useChunkPresetOptions()
 
+const orderedKbTypes = computed(() => ({
+  ...(props.supportedKbTypes.milvus ? { milvus: props.supportedKbTypes.milvus } : {}),
+  zhipu: { name: '智谱知识库', description: '借助智谱的知识检索能力，连接已授权的云端知识库。' },
+  ...Object.fromEntries(Object.entries(props.supportedKbTypes).filter(([key]) => key !== 'milvus'))
+}))
+
 const stepLabels = ['类型', '配置', '权限']
 const currentStep = ref(0)
+const zhipuSelected = ref(false)
 const form = reactive(createEmptyDatabaseForm(configStore.config?.embed_model))
 const shareConfig = ref(createDefaultShareConfig())
 const shareConfigFormRef = ref(null)
@@ -279,6 +288,7 @@ const configuredParamCount = computed(
     }).length
 )
 const footerSummary = computed(() => {
+  if (zhipuSelected.value) return '智谱知识库 · 连接与检索'
   if (currentStep.value === 0) {
     const typeText = selectedTypeLabel.value
       ? `已选 ${selectedTypeLabel.value}`
@@ -292,6 +302,7 @@ const footerSummary = computed(() => {
 const reset = () => {
   Object.assign(form, createEmptyDatabaseForm(configStore.config?.embed_model))
   const firstType = Object.keys(props.supportedKbTypes)[0] || ''
+  zhipuSelected.value = !firstType
   Object.assign(form, selectDatabaseType(form, firstType, props.supportedKbTypes[firstType]))
   shareConfig.value = props.personalOnly
     ? { version: 2, read_scope: null, manage_scope: null }
@@ -299,8 +310,10 @@ const reset = () => {
   currentStep.value = 0
 }
 
-const selectType = (type) =>
+const selectType = (type) => {
+  zhipuSelected.value = false
   Object.assign(form, selectDatabaseType(form, type, props.supportedKbTypes[type]))
+}
 const handleCancel = () => {
   if (creating.value) return
   emit('update:open', false)
@@ -368,7 +381,7 @@ watch(
 watch(
   () => props.supportedKbTypes,
   () => {
-    if (props.open && !selectedTypeInfo.value) reset()
+    if (props.open && !zhipuSelected.value && !selectedTypeInfo.value) reset()
   },
   { deep: true }
 )

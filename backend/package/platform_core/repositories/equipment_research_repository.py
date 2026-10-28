@@ -43,9 +43,7 @@ def _visible_clause(model, owner_uid: str | None, *, include_legacy: bool = Fals
         return true()
     owner_clause = model.owner_uid == owner_uid
     if hasattr(model, "import_batch_id"):
-        owner_clause = owner_clause & or_(
-            model.import_batch_id.is_(None), model.import_batch_id != "workbench-sync"
-        )
+        owner_clause = owner_clause & or_(model.import_batch_id.is_(None), model.import_batch_id != "workbench-sync")
     if not include_legacy:
         return owner_clause
     legacy_clauses = []
@@ -120,6 +118,27 @@ class EquipmentResearchRepository:
         await self.session.flush()
         return event
 
+    async def append_events(
+        self, run_id: str, events: list[tuple[str, dict[str, Any]]]
+    ) -> list[EquipmentResearchEvent]:
+        """调用方持有 Run 行锁时，一次分配连续序号并批量写入事件。"""
+        if not events:
+            return []
+        first_sequence = await self.next_event_sequence(run_id)
+        rows = [
+            EquipmentResearchEvent(
+                run_id=run_id,
+                sequence=first_sequence + index,
+                event_type=event_type,
+                payload=payload,
+                created_at=utc_now_naive(),
+            )
+            for index, (event_type, payload) in enumerate(events)
+        ]
+        self.session.add_all(rows)
+        await self.session.flush()
+        return rows
+
     async def list_events(self, run_id: str, after_seq: int = 0, limit: int = 200) -> list[EquipmentResearchEvent]:
         stmt = (
             select(EquipmentResearchEvent)
@@ -156,11 +175,7 @@ class EquipmentResearchRepository:
                     EquipmentQuery.supplemental_information.ilike(pattern),
                 )
             )
-        stmt = (
-            stmt.order_by(EquipmentQuery.updated_at.desc())
-            .offset(max(offset, 0))
-            .limit(max(limit, 1))
-        )
+        stmt = stmt.order_by(EquipmentQuery.updated_at.desc()).offset(max(offset, 0)).limit(max(limit, 1))
         return list((await self.session.execute(stmt)).scalars().all())
 
     async def count_queries(
@@ -375,11 +390,7 @@ class EquipmentResearchRepository:
             stmt = stmt.where(EquipmentQueryGeneration.project_id == project_id)
         if status:
             stmt = stmt.where(EquipmentQueryGeneration.status == status)
-        stmt = (
-            stmt.order_by(EquipmentQueryGeneration.updated_at.desc())
-            .offset(max(offset, 0))
-            .limit(max(limit, 1))
-        )
+        stmt = stmt.order_by(EquipmentQueryGeneration.updated_at.desc()).offset(max(offset, 0)).limit(max(limit, 1))
         return list((await self.session.execute(stmt)).scalars().all())
 
     async def count_generations(
@@ -399,9 +410,7 @@ class EquipmentResearchRepository:
         return int(await self.session.scalar(stmt) or 0)
 
     async def delete_generation(self, generation_id: str) -> None:
-        await self.session.execute(
-            delete(EquipmentQueryGeneration).where(EquipmentQueryGeneration.id == generation_id)
-        )
+        await self.session.execute(delete(EquipmentQueryGeneration).where(EquipmentQueryGeneration.id == generation_id))
         await self.session.flush()
 
     async def add_deep_session(self, session: EquipmentDeepSession) -> EquipmentDeepSession:

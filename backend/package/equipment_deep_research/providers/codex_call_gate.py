@@ -60,7 +60,7 @@ class CodexCallLease:
     active_calls: int
     concurrency_limit: int
     priority: str
-    _gate: "CodexCallGate"
+    _gate: CodexCallGate
     _process_slot_fd: int | None = None
     _released: bool = False
 
@@ -110,18 +110,14 @@ class CodexCallGate:
         requested = configured if maximum is None else int(maximum)
         self.key = str(key or "codex")[:240]
         self._lock_root = (
-            Path(lock_root).expanduser().resolve()
-            if lock_root is not None and fcntl is not None
-            else None
+            Path(lock_root).expanduser().resolve() if lock_root is not None and fcntl is not None else None
         )
         self._lock_stem = hashlib.sha256(self.key.encode("utf-8")).hexdigest()[:24]
         self.minimum = max(
             1,
             min(
                 requested,
-                _positive_int("EQUIPMENT_DR_CODEX_MIN_CONCURRENCY", 1)
-                if minimum is None
-                else int(minimum),
+                _positive_int("EQUIPMENT_DR_CODEX_MIN_CONCURRENCY", 1) if minimum is None else int(minimum),
             ),
         )
         self.maximum = max(self.minimum, min(64, requested))
@@ -137,16 +133,12 @@ class CodexCallGate:
         self._cooldown_until = 0.0
         self._capacity_failures = 0
         self._recent: deque[tuple[float, bool, bool]] = deque(maxlen=12)
-        self._base_backoff = _nonnegative_float(
-            "EQUIPMENT_DR_CODEX_GATE_BACKOFF_SECONDS", 1.5
-        )
+        self._base_backoff = _nonnegative_float("EQUIPMENT_DR_CODEX_GATE_BACKOFF_SECONDS", 1.5)
         self._max_backoff = max(
             self._base_backoff,
             _nonnegative_float("EQUIPMENT_DR_CODEX_GATE_BACKOFF_MAX_SECONDS", 30.0),
         )
-        self._jitter = _nonnegative_float(
-            "EQUIPMENT_DR_CODEX_GATE_BACKOFF_JITTER_SECONDS", 0.4
-        )
+        self._jitter = _nonnegative_float("EQUIPMENT_DR_CODEX_GATE_BACKOFF_JITTER_SECONDS", 0.4)
 
     async def acquire(
         self,
@@ -194,11 +186,7 @@ class CodexCallGate:
         )
 
     def _fair_ticket(self, priority_rank: int) -> object | None:
-        candidates = [
-            entry
-            for entry in self._queue
-            if entry[0] == priority_rank
-        ]
+        candidates = [entry for entry in self._queue if entry[0] == priority_rank]
         if not candidates:
             return None
         last_key = self._last_served_by_priority.get(priority_rank, "")
@@ -227,7 +215,7 @@ class CodexCallGate:
             if cooldown > 0 and self._active < self.limit:
                 try:
                     await asyncio.wait_for(self._condition.wait(), cooldown)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass
             else:
                 await self._condition.wait()
@@ -313,8 +301,7 @@ class CodexCallGate:
                 self.limit = max(self.minimum, self.limit - 1)
                 delay = min(
                     self._max_backoff,
-                    self._base_backoff
-                    * (2 ** max(0, self._capacity_failures - 1)),
+                    self._base_backoff * (2 ** max(0, self._capacity_failures - 1)),
                 )
                 self._cooldown_until = max(
                     self._cooldown_until,
@@ -349,9 +336,7 @@ class CodexCallGate:
 
 
 _registry_lock = Lock()
-_registry: WeakKeyDictionary[asyncio.AbstractEventLoop, dict[str, CodexCallGate]] = (
-    WeakKeyDictionary()
-)
+_registry: WeakKeyDictionary[asyncio.AbstractEventLoop, dict[str, CodexCallGate]] = WeakKeyDictionary()
 
 
 def shared_codex_call_gate(

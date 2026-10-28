@@ -74,9 +74,10 @@ async def test_state_view_reads_postgres_snapshot_and_rejects_other_users(test_c
 
             response = await test_client.get(url, params={"include_messages": "true"}, headers=admin_headers)
             assert response.status_code == 200, response.text
+            # 子任务状态以持久化 Run 为准，不使用 checkpoint 中不可验证的旧记录。
             assert response.json()["agent_state"] == {
-                key: value for key, value in payload.items() if key != "messages"
-            } | {"files": {}}
+                key: value for key, value in payload.items() if key not in {"messages", "subagent_runs"}
+            } | {"files": {}, "subagent_runs": []}
             assert response.json()["messages"][0]["content"] == "persisted checkpoint message"
             assert "interrupt" not in response.json()
             assert (await test_client.get(url)).status_code == 401

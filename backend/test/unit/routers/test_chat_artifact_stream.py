@@ -15,6 +15,13 @@ async def test_artifact_route_returns_realtime_workdir_response(monkeypatch):
         return sentinel
 
     monkeypatch.setattr(chat_router, "resolve_thread_artifact_view", fake_resolve)
+
+    async def fake_owner(**kwargs):
+        assert kwargs["thread_id"] == "thread-1"
+        assert kwargs["actor"].uid == "user-1"
+        return "user-1"
+
+    monkeypatch.setattr(chat_router, "_thread_owner_uid", fake_owner)
     user = SimpleNamespace(uid="user-1")
     db = object()
     result = await chat_router.get_thread_artifact(

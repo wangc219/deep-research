@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import HTTPException
@@ -680,6 +681,168 @@ async def test_completed_run_rejects_unmatched_final_state_message(monkeypatch: 
             worker_id="worker-1",
             complete_run=True,
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pending_steer", [False, True])
+async def test_empty_output_completion_requires_owned_pending_steer(monkeypatch, pending_steer):
+    """普通空答复失败，数据库已有同线程 Steer 时允许工具安全点交接。"""
+    audit = SimpleNamespace(
+        id=9,
+        operation_id="final-model",
+        content="",
+        extra_metadata={},
+        execution_status="completed",
+        message_type="model_audit",
+        conversation_id=1,
+    )
+    db = SimpleNamespace(commit=AsyncMock(), rollback=AsyncMock(), flush=AsyncMock())
+    run_repo = SimpleNamespace(
+        lock_output_persistence=AsyncMock(
+            return_value=SimpleNamespace(uid="user-1", agent_slug="agent-1", conversation_thread_id="thread-1")
+        ),
+        set_output_message=AsyncMock(),
+        set_terminal_status=AsyncMock(return_value=(SimpleNamespace(), True)),
+        cancel_active_execution_tree_descendants=AsyncMock(return_value=[]),
+    )
+    request_repo = SimpleNamespace(get_pending_steer=AsyncMock(return_value=object() if pending_steer else None))
+    monkeypatch.setattr(svc, "AgentRunRepository", lambda _: run_repo)
+    monkeypatch.setattr(svc, "AgentRunRequestRepository", lambda _: request_repo)
+    monkeypatch.setattr(
+        svc,
+        "ModelMessageAuditRepository",
+        lambda _: SimpleNamespace(list_for_run=AsyncMock(return_value=[audit]), get=AsyncMock(return_value=audit)),
+    )
+    monkeypatch.setattr(svc, "ToolMessageAuditRepository", _EmptyToolAuditRepo)
+    kwargs = dict(
+        state=SimpleNamespace(values={"messages": [AIMessage("", id="final-model")]}),
+        thread_id="thread-1",
+        conv_repo=_FakeConvRepo(db),
+        run_id="run-1",
+        request_id="request-1",
+        worker_id="worker-1",
+        complete_run=True,
+    )
+    if pending_steer:
+        assert await svc.save_messages_from_langgraph_state(**kwargs) is True
+        db.commit.assert_awaited_once()
+    else:
+        with pytest.raises(ValueError, match="模型没有返回最终正文"):
+            await svc.save_messages_from_langgraph_state(**kwargs)
+        db.rollback.assert_awaited_once()
+    request_repo.get_pending_steer.assert_awaited_once_with(
+        uid="user-1", agent_slug="agent-1", conversation_thread_id="thread-1"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("final_content", ["以上为本轮结论，正文完整如上。", "结论：国内公开证据不足。"])
+async def test_completed_run_only_recovers_substantive_body_for_reference_placeholder(
+    monkeypatch: pytest.MonkeyPatch,
+    final_content: str,
+) -> None:
+    body_content = (
+        "## 装备检索核验结论\n\n"
+        "已部署或在役、公开试验、原型样机和论文概念应分别判断。\n\n"
+        + "国内与国外证据交叉核验。" * 50
+        + "\n\n来源：https://example.mil/evidence"
+    )
+    body_audit = SimpleNamespace(
+        id=41,
+        operation_id="body-message",
+        content="",
+        extra_metadata={},
+        execution_status="running",
+        message_type="model_audit",
+        conversation_id=1,
+    )
+    final_audit = SimpleNamespace(
+        id=42,
+        operation_id="final-message",
+        content="",
+        extra_metadata={},
+        execution_status="running",
+        message_type="model_audit",
+        conversation_id=1,
+    )
+
+    class FakeDB:
+        async def commit(self):
+            pass
+
+        async def rollback(self):
+            pass
+
+        async def flush(self):
+            pass
+
+    class FakeAuditRepo:
+        def __init__(self, _db):
+            pass
+
+        async def list_for_run(self, _run_id):
+            return [body_audit, final_audit]
+
+        async def get(self, *, run_id, operation_id):
+            assert run_id == "run-1"
+            return {"body-message": body_audit, "final-message": final_audit}.get(operation_id)
+
+    output_ids: list[int] = []
+
+    class FakeRunRepo:
+        def __init__(self, _db):
+            pass
+
+        async def lock_output_persistence(self, *_args, **_kwargs):
+            return object()
+
+        async def set_output_message(self, _run_id, message_id, *, worker_id):
+            output_ids.append(message_id)
+
+        async def set_terminal_status(self, *_args, **_kwargs):
+            return SimpleNamespace(status="completed"), True
+
+        async def cancel_active_execution_tree_descendants(self, _run):
+            return []
+
+    state = SimpleNamespace(
+        values={
+            "messages": [
+                AIMessage(
+                    content=body_content,
+                    id="body-message",
+                    tool_calls=[{"id": "rejected-call", "name": "web_search", "args": {}}],
+                ),
+                AIMessage(content=final_content, id="final-message"),
+            ]
+        }
+    )
+    conv_repo = _FakeConvRepo(FakeDB())
+    monkeypatch.setattr(svc, "AgentRunRepository", FakeRunRepo)
+    monkeypatch.setattr(svc, "ModelMessageAuditRepository", FakeAuditRepo)
+    monkeypatch.setattr(svc, "ToolMessageAuditRepository", _EmptyToolAuditRepo)
+
+    committed = await svc.save_messages_from_langgraph_state(
+        state=state,
+        thread_id="thread-1",
+        conv_repo=conv_repo,
+        run_id="run-1",
+        request_id="request-1",
+        worker_id="worker-1",
+        complete_run=True,
+    )
+
+    expected_output = body_audit if "如上" in final_content else final_audit
+    assert committed is True
+    assert output_ids == [expected_output.id]
+    assert conv_repo.published_message_ids == [expected_output.id]
+    assert expected_output.message_type == "text"
+    if expected_output is body_audit:
+        assert body_audit.extra_metadata["terminal_projection_recovered"] is True
+        assert body_audit.extra_metadata["placeholder_message_id"] == final_audit.id
+        assert final_audit.message_type == "model_audit"
+    else:
+        assert "terminal_projection_recovered" not in body_audit.extra_metadata
 
 
 @pytest.mark.asyncio

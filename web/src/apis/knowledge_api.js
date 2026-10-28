@@ -56,6 +56,16 @@ export const databaseApi = {
     return apiAdminPost(`/api/knowledge/databases/${kbId}/stats/repair`, {})
   },
 
+  getIndexHealth: async (kbId) => {
+    return apiAdminGet(`/api/knowledge/databases/${kbId}/index-health`)
+  },
+
+  rebuildIndex: async (kbId, params = {}) => {
+    return apiAdminPost(`/api/knowledge/databases/${kbId}/documents/rebuild-index`, {
+      params
+    })
+  },
+
   detectVirtualFolders: async (kbId) => {
     return apiAdminGet(`/api/knowledge/databases/${kbId}/virtual-folders/detect`)
   },
@@ -350,6 +360,10 @@ export const graphBuildApi = {
 
   startIndex: async (kbId) => {
     return apiAdminPost(graphBuildUrl(kbId, 'index'), {})
+  },
+
+  retryFailed: async (kbId) => {
+    return apiAdminPost(graphBuildUrl(kbId, 'retry-failed'), {})
   },
 
   reset: async (kbId, data) => {

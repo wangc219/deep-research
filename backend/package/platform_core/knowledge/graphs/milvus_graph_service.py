@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 import time
 import weakref
 from typing import Any
 
 from platform_core.knowledge.graphs.extractors import GraphExtractor, GraphExtractorFactory, normalize_extraction_result
+from platform_core.knowledge.graphs.extractors.base import verify_extraction_evidence
 from platform_core.knowledge.graphs.extractors.llm import (
     DEFAULT_CONTEXT_MAX_CHARS,
     DEFAULT_CONTEXT_WINDOW_SIZE,
+    DEFAULT_EXTRACTION_CONCURRENCY,
 )
 from platform_core.knowledge.graphs.graph_utils import (
     build_graph_payload,
@@ -52,10 +55,37 @@ GRAPH_VECTOR_LEASE_SECONDS = 300
 GRAPH_VECTOR_FLUSH_INTERVAL_SECONDS = 0.2
 GRAPH_EXTRACTION_MAX_ATTEMPTS = 3
 GRAPH_EXTRACTION_RETRY_DELAYS_SECONDS = (2.0, 10.0)
+# 用户配置值保留原样，便于本地高并发部署迁移；实际 worker 数在此收敛。
+# SiliconFlow 公网端点在大并发下会排队并触发客户端超时，因此使用更保守的上限。
+GRAPH_EXTRACTION_MAX_RUNTIME_CONCURRENCY = 64
+GRAPH_EXTRACTION_PROVIDER_CONCURRENCY_LIMITS = {
+    "siliconflow": 16,
+    "siliconflow-cn": 16,
+}
 _neo4j_query_offload_semaphore_refs: dict[
     int,
     tuple[weakref.ReferenceType[asyncio.AbstractEventLoop], weakref.ReferenceType[asyncio.Semaphore]],
 ] = {}
+
+
+def is_retryable_extraction_error(error: Exception) -> bool:
+    """仅重试网络中断、超时、限流和供应商暂时故障。"""
+    import httpx
+    from openai import APIConnectionError
+
+    current = error
+    seen = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, (TimeoutError, ConnectionError, httpx.TransportError, APIConnectionError)):
+            return True
+        status = getattr(current, "status_code", None) or getattr(
+            getattr(current, "response", None), "status_code", None
+        )
+        if isinstance(status, int) and (status in {408, 429} or status >= 500):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def _get_neo4j_query_offload_semaphore() -> asyncio.Semaphore:
@@ -184,6 +214,7 @@ class MilvusGraphService:
             "configured": bool(config),
             "locked": bool(config.get("locked")),
             "config": self._public_config(config),
+            "runtime": self._graph_extraction_runtime(config),
             "total_chunks": total_chunks,
             "pending_chunks": pending_chunks,
             "indexed_chunks": indexed_chunks,
@@ -235,13 +266,24 @@ class MilvusGraphService:
         samples = await self.chunk_repo.list_graph_extraction_failed_samples(kb_id, limit)
         return {"kb_id": kb_id, "samples": samples}
 
-    async def build_pending_chunks(self, kb_id: str, *, context=None) -> dict[str, Any]:
+    async def build_pending_chunks(
+        self,
+        kb_id: str,
+        *,
+        context=None,
+        failed_only: bool = False,
+    ) -> dict[str, Any]:
+        """构建待处理 Chunk；可将范围收窄为仅重跑抽取失败项。"""
         kb = await self._get_milvus_kb(kb_id)
         config = self._get_locked_config(kb.additional_params or {})
         extractor_options = self._runtime_extractor_options(config)
         extractor = GraphExtractorFactory.create(config["extractor_type"], extractor_options)
         worker_count = self._get_worker_count(config)
-        total_pending = await self.chunk_repo.count_graph_pending_by_kb_id(kb_id)
+        runtime_policy = self._graph_extraction_runtime(config)
+        if failed_only:
+            total_pending = await self.chunk_repo.count_graph_extraction_failed_by_kb_id(kb_id)
+        else:
+            total_pending = await self.chunk_repo.count_graph_pending_by_kb_id(kb_id)
         initially_indexed = await self.chunk_repo.count_graph_indexed_by_kb_id(kb_id)
         processed = 0
         extraction_failed = 0
@@ -249,6 +291,8 @@ class MilvusGraphService:
         extraction_completed = 0
         write_completed = 0
         active_extractions = 0
+        verified_facts = 0
+        evidence_review_required = 0
         fetch_size = max(GRAPH_BUILD_FETCH_MIN_SIZE, min(worker_count * 2, GRAPH_BUILD_FETCH_MAX_SIZE))
         extraction_queue: asyncio.Queue[Any | None] = asyncio.Queue(maxsize=max(worker_count * 2, 1))
         write_queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=max(worker_count * 2, 1))
@@ -258,9 +302,17 @@ class MilvusGraphService:
         started_at = time.monotonic()
 
         logger.info(
-            f"图谱构建开始 kb_id={kb_id} pending={total_pending} "
+            f"图谱构建开始 kb_id={kb_id} scope={'failed' if failed_only else 'pending'} "
+            f"pending={total_pending} "
             f"extraction_concurrency={worker_count} fetch_size={fetch_size}"
         )
+        if runtime_policy and runtime_policy["concurrency_capped"]:
+            logger.warning(
+                f"图谱抽取并发已自动收敛 kb_id={kb_id} "
+                f"configured={runtime_policy['configured_concurrency_count']} "
+                f"effective={runtime_policy['effective_concurrency_count']} "
+                f"provider={runtime_policy['provider_id'] or 'unknown'}"
+            )
 
         async def put_queue_item(queue: asyncio.Queue, item) -> None:
             while True:
@@ -274,6 +326,7 @@ class MilvusGraphService:
 
         async def extraction_worker(worker_index: int) -> None:
             nonlocal active_extractions, extraction_completed, extraction_failed
+            nonlocal verified_facts, evidence_review_required
             while True:
                 chunk = await extraction_queue.get()
                 try:
@@ -284,7 +337,10 @@ class MilvusGraphService:
                     active_extractions += 1
                     extraction_started_at = time.monotonic()
                     try:
-                        await self._get_chunk_extraction_result(kb_id, chunk, extractor)
+                        result = await self._get_chunk_extraction_result(kb_id, chunk, extractor)
+                        evidence = result.get("metadata", {}).get("evidence_verification", {})
+                        verified_facts += evidence.get("verified_facts", 0)
+                        evidence_review_required += evidence.get("reclassified_facts", 0)
                         await put_queue_item(write_queue, chunk.chunk_id)
                     except Exception as exc:
                         extraction_failed += 1
@@ -427,7 +483,8 @@ class MilvusGraphService:
                     f"(活跃 {active_extractions}/{worker_count})，写入 {write_completed}/{total_pending}，"
                     f"向量待处理 {vector_counts['pending'] + vector_counts['processing']}，"
                     f"向量失败 {vector_counts['failed']}，抽取失败 {extraction_failed}，"
-                    f"写入失败 {write_failed}，抽取吞吐 {extraction_rate:.2f} chunk/s"
+                    f"写入失败 {write_failed}，抽取吞吐 {extraction_rate:.2f} chunk/s，"
+                    f"事实引用已核验 {verified_facts}，证据待复核 {evidence_review_required}"
                 )
                 logger.info(f"kb_id={kb_id} {message}")
                 if context is not None:
@@ -455,11 +512,18 @@ class MilvusGraphService:
             while True:
                 if context is not None:
                     await context.raise_if_cancelled()
-                chunks = await self.chunk_repo.list_graph_pending_by_kb_id(
-                    kb_id,
-                    fetch_size,
-                    after_id=after_id,
-                )
+                if failed_only:
+                    chunks = await self.chunk_repo.list_graph_extraction_failed_by_kb_id(
+                        kb_id,
+                        fetch_size,
+                        after_id=after_id,
+                    )
+                else:
+                    chunks = await self.chunk_repo.list_graph_pending_by_kb_id(
+                        kb_id,
+                        fetch_size,
+                        after_id=after_id,
+                    )
                 if not chunks:
                     break
                 for chunk in chunks:
@@ -490,8 +554,14 @@ class MilvusGraphService:
         finally:
             reporter_stop.set()
             await asyncio.gather(reporter_task, return_exceptions=True)
+            close = getattr(extractor, "aclose", None)
+            if close is not None:
+                await close()
 
-        remaining = await self.chunk_repo.count_graph_pending_by_kb_id(kb_id)
+        if failed_only:
+            remaining = await self.chunk_repo.count_graph_extraction_failed_by_kb_id(kb_id)
+        else:
+            remaining = await self.chunk_repo.count_graph_pending_by_kb_id(kb_id)
         extraction_counts = await self.chunk_repo.count_graph_extraction_statuses_by_kb_id(kb_id)
         vector_counts = await self.graph_repo.count_vector_statuses_by_kb_id(kb_id)
         logger.info(
@@ -508,6 +578,8 @@ class MilvusGraphService:
             "write_failed": write_failed,
             "remaining": remaining,
             "vector_failed": vector_counts["failed"],
+            "verified_facts": verified_facts,
+            "evidence_review_required": evidence_review_required,
         }
         if incomplete or write_failed or vector_counts["failed"]:
             raise RuntimeError(
@@ -516,15 +588,35 @@ class MilvusGraphService:
             )
         return result
 
+    @classmethod
+    def _get_worker_count(cls, config: dict[str, Any]) -> int:
+        runtime = cls._graph_extraction_runtime(config)
+        return int(runtime["effective_concurrency_count"]) if runtime else 1
+
     @staticmethod
-    def _get_worker_count(config: dict[str, Any]) -> int:
+    def _graph_extraction_runtime(config: dict[str, Any]) -> dict[str, Any] | None:
         if (config.get("extractor_type") or "").lower() != "llm":
-            return 1
+            return None
+        options = config.get("extractor_options") or {}
         try:
-            worker_count = int((config.get("extractor_options") or {}).get("concurrency_count") or 1)
+            configured = int(options.get("concurrency_count") or DEFAULT_EXTRACTION_CONCURRENCY)
         except (TypeError, ValueError):
-            return 1
-        return max(1, min(worker_count, 1000))
+            configured = DEFAULT_EXTRACTION_CONCURRENCY
+        configured = max(1, configured)
+        model_spec = str(options.get("model_spec") or "")
+        provider_id = model_spec.partition(":")[0].lower() if ":" in model_spec else ""
+        limit = GRAPH_EXTRACTION_PROVIDER_CONCURRENCY_LIMITS.get(
+            provider_id,
+            GRAPH_EXTRACTION_MAX_RUNTIME_CONCURRENCY,
+        )
+        effective = min(configured, limit)
+        return {
+            "configured_concurrency_count": configured,
+            "effective_concurrency_count": effective,
+            "concurrency_limit": limit,
+            "concurrency_capped": effective < configured,
+            "provider_id": provider_id or None,
+        }
 
     @staticmethod
     def _runtime_extractor_options(config: dict[str, Any]) -> dict[str, Any]:
@@ -553,13 +645,14 @@ class MilvusGraphService:
             try:
                 extraction_result = await extractor.extract(chunk.content, chunk_metadata=metadata)
                 normalized_result = normalize_extraction_result(extraction_result, extractor_type, extractor_options)
+                normalized_result = verify_extraction_evidence(normalized_result, chunk.content)
                 await self.chunk_repo.update_extraction_result(chunk.chunk_id, normalized_result, attempt)
                 return normalized_result
             except Exception as exc:
-                if attempt >= GRAPH_EXTRACTION_MAX_ATTEMPTS:
+                if attempt >= GRAPH_EXTRACTION_MAX_ATTEMPTS or not is_retryable_extraction_error(exc):
                     await self.chunk_repo.mark_graph_extraction_failed(chunk.chunk_id, attempt, str(exc))
                     raise
-                delay = GRAPH_EXTRACTION_RETRY_DELAYS_SECONDS[attempt - 1]
+                delay = GRAPH_EXTRACTION_RETRY_DELAYS_SECONDS[attempt - 1] * random.uniform(1, 1.25)
                 logger.warning(
                     f"Chunk 图谱抽取重试 kb_id={kb_id} chunk_id={chunk.chunk_id} "
                     f"attempt={attempt}/{GRAPH_EXTRACTION_MAX_ATTEMPTS} delay={delay:.1f}s: {exc}"

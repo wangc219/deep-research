@@ -1,0 +1,1678 @@
+{
+  "version": 1,
+  "findings": [
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/deep_divergence_v1.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "6848da12192fb93ab99dd29ab7a7b8ab00dac3e8743e91e941ca99f3db22936f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/combat_scenario.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "e027c755bc6903af1b474803ed3872254e1acb51d53e1af7f8b702c5ae7a616b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/combat_scenario.py",
+      "code": "E501",
+      "message": "Line too long (129 > 120)",
+      "source_sha256": "98f7f11782c2187b174a717b55329dc0707c6e75f516fff39421ef30a4680351",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/international_situation.py",
+      "code": "E501",
+      "message": "Line too long (126 > 120)",
+      "source_sha256": "4114adb499d33dd4bccdd2f4dfff18a379d8bbb625a5b658b5b5e5ed01483340",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/international_situation.py",
+      "code": "E501",
+      "message": "Line too long (155 > 120)",
+      "source_sha256": "3b16b30688128a55ddbd8a54d54479af40b23984b882dcbc3b148306a6df10af",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "3e814dc09f5f7bcbd331acac3cc9108e6e5c7921b60210304db43030c94fcb60",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+      "code": "E501",
+      "message": "Line too long (151 > 120)",
+      "source_sha256": "be3819a1bc40df6e5ac319dd00fc213c5bac0737e3f1fef62cd6f9ceba3fd908",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+      "code": "E501",
+      "message": "Line too long (187 > 120)",
+      "source_sha256": "c0638237efacac9af9951abb4b4e19311f8bbc40cccb4cf61c6551ec3dd881e9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+      "code": "E501",
+      "message": "Line too long (331 > 120)",
+      "source_sha256": "49cb163f8e410932b663c3d6e87115b16f9e7814490dd81182b1148aa8ffe89b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "3e814dc09f5f7bcbd331acac3cc9108e6e5c7921b60210304db43030c94fcb60",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/auditor.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/case_research.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/combat_scenario.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/convergence_fusion.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/cross_domain_fusion.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/international_situation.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/nontraditional_security.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/operational_employment.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/opponent_monitoring.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/reporter.py",
+      "code": "E501",
+      "message": "Line too long (126 > 120)",
+      "source_sha256": "18336eae03ff11c90ddec759ae3e222b47db483b2850e0487c4e04d40376e236",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/reporter.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/scenario_divergence.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/system_confrontation.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/technology_radar.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/weapon_equipment.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_dynamic_specialist.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_mechanism.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_round_critic.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s1_opponent.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s2_operations.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s3_breakthrough.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s4_capability.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s5_gap.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_s6_image.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/runtime/winning_step_critic.py",
+      "code": "E501",
+      "message": "Line too long (170 > 120)",
+      "source_sha256": "27fbd9dc0c16e53fdd533918ec7eede492f520d108573a9dcef7916c677d6648",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/designs/weapon_equipment.py",
+      "code": "E501",
+      "message": "Line too long (586 > 120)",
+      "source_sha256": "979046e21feace8cdf7887c5e52b9afd93c95003863a05019df2e618da1e4c42",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "623fae2ff8fdee97ea6d66f8b57001780b6d739953fc16854a9773ea45c95b52",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "a2efe26d25a8e520e6cfe976183946a490f9a805f00387ed8258838bd9f64d69",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "fa2b1c99e8083188b64784e74eb04307259722e4c39a77ba98ca7ca21caed54c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "07b5adbabac37dde071cf597631d8b1281cbeb6f022cfa58ba04cf6433795427",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (134 > 120)",
+      "source_sha256": "8cd733af72745eaf0c82ab5c42d16ca9f116b5430d8ab65c97a57c2fcb2556bf",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (134 > 120)",
+      "source_sha256": "c8a938c8938728eeb355593c5d87f59e36ba40be24fd4b69c86825f2a2525dfa",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (135 > 120)",
+      "source_sha256": "690edf7925fc2906c09c4625f01207b1f0a9660d892ac80859bf421e210695b1",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (156 > 120)",
+      "source_sha256": "ed40ec7050fb7e83785e81febcd67c7af9afed44cc9e5b9110ca64eecf8e7221",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (168 > 120)",
+      "source_sha256": "0d462ca7d81da74e7fee8ef01181d0a495fff89bbc4e2403496105ddf2dadb2e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (168 > 120)",
+      "source_sha256": "4952285ff7c3598145e848c0b792a1d6d4371bb241c58f0872d4b47c62ec0ab1",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (168 > 120)",
+      "source_sha256": "8280a985f9c549fc1c24ad97af1dd27f8b4063efa79118e9a72c6f7752883286",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (203 > 120)",
+      "source_sha256": "abbfe9400dee4b4ffc156732a74e6ad0f951b508268b72b2e1a999f8be61d23d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (398 > 120)",
+      "source_sha256": "7851dcb6a940f234bd4978af4886fbabc24ddfab9718b990dd281ddefba164b7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+      "code": "E501",
+      "message": "Line too long (472 > 120)",
+      "source_sha256": "1862d111b23659cecf00392cdd3c3ec399b613240ae6ce02fd63219290632167",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/prompts.py",
+      "code": "E501",
+      "message": "Line too long (136 > 120)",
+      "source_sha256": "e7a043cd8b5e426cacfcbc6d1574ee63b81bf1d8df96ec76268187131ca98781",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/prompts.py",
+      "code": "E501",
+      "message": "Line too long (144 > 120)",
+      "source_sha256": "ff75938309219fa770c2e5ff0b1b56d6f8ddbccb5041bdae9368cd80f035240b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/runtime_profiles.py",
+      "code": "E501",
+      "message": "Line too long (158 > 120)",
+      "source_sha256": "4a5e724e3b62de6747d20ed9976a3c4bdde27c52c7ac2d774988f6fbcbbca360",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "4697657f85343c4d2eeee42a7cf4ed5e7013c5690232c40435b4b07066682f7b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "4b886dba69c6621015e3d2aa028d3a1b2665ec01ad61075ce2b097d991841b3c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "d811a410e1efab7f11ac24907d192075d748dcdcda45b9113e1d60836d3b25c5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "12fea0288d3102dacab6dc5b18447326275f55f1d68cfb21ecb49bd0a59c1249",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "bbd376f9c4819a6fe7162b1333512e6c705bec314d8b32c6f79941fcf0fbd89e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "e4f4005eb250086bdacdd3b10f2bcb36c51a504dc84b201e982a2e686ed66746",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "234fb982d1a3ed433fb5f0107d70df210a1bc6304ba44858f6b302d18dfa22ec",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "8a78531ac4499b9f97ab0c4fdeeca4c8eb7a02af65c37e93e09488760c637e97",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "32f8ef43b6d37a7c8a130346f5ee36235110fd156a2fa1de01f0a4e5cd6fde72",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "e9666e70bcb9a00e4113c7868b269f37a5891e16069928d340891c51e24e2076",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "edc4a78777c663e26a567039242449459f198f4fa471c97fa82275a0f50edc2b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (126 > 120)",
+      "source_sha256": "e72574cb08b7d1cd3795e19bd4d5fbfc6ab9f1b6a6b412826a22c918777ff0e5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (132 > 120)",
+      "source_sha256": "b901d9df934c799d830965924f3857227aff14eee3a2dfba39a0274c769ef983",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (133 > 120)",
+      "source_sha256": "2687258b09636cd4cd210642f3b1f4352d9681d40425ca62b65561f990c9e07e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (133 > 120)",
+      "source_sha256": "b035101d22d6a114a79a22190f5bc792d9ef1da4e36bcf625cf9d1b8da22bd26",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (135 > 120)",
+      "source_sha256": "8dc44c5135523cff206f9f654d9441ed9239feee2764c99130704253a4ed7b8d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (136 > 120)",
+      "source_sha256": "ffef12db1b1d4bbbebe530d241d1285e74803d944c5a3cfbfe338f933122263b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (146 > 120)",
+      "source_sha256": "af425d797cb76a06e6cdca72002b6b913958ddce2272391096e826a97b58f33f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (147 > 120)",
+      "source_sha256": "80139ce6d0002f566bf978100f465c5ad829cdc2596b3091223ef3749e18bf1b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (149 > 120)",
+      "source_sha256": "da826ba2a87438414761ac21135833f10dfdfe1d86eaedb16480c76f7ef2b881",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (151 > 120)",
+      "source_sha256": "0673c86bf230f9da184a1e6ef54a1375f5ccdb2ae1cff1a35c52164b05907907",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (155 > 120)",
+      "source_sha256": "1a95c7c38dc544fca0d6118cff5f2367df01994cadb4ac83579d76fa318be753",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (159 > 120)",
+      "source_sha256": "19041b033e8885855338ad04e8bad6e4674ab0312049a0395b906df44eeb5ca0",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (163 > 120)",
+      "source_sha256": "03e5144bd980abccee56f78676202196980fd2d7139b759add2baf0d3c88163f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (188 > 120)",
+      "source_sha256": "2610b397a3511b4885db16d4ff2e24404b26379ce598f4a7f197d178845f47af",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (204 > 120)",
+      "source_sha256": "77022c211af84e66f2ba3e2d180d9bb5a57cf7fb32c3b21979e6eb45f8a560eb",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (237 > 120)",
+      "source_sha256": "37e230e6666c024f5bbb8b701de2b1a16ed6ac4cfc90ad7c387c33f2d54abe19",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (291 > 120)",
+      "source_sha256": "d61851cba359a33e93b429500bb86596147a790a303d610491b1ce9941d0b261",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (293 > 120)",
+      "source_sha256": "fa8ae03f08f4722bac01ab85968edf89ea36481718ec68578ff142394585e63f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (302 > 120)",
+      "source_sha256": "22b35f499e33e51e888c8eda4013dc59dcae5c31f31e9c9c599a1f566ce84c09",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (332 > 120)",
+      "source_sha256": "701a2d76c0caf1f23ed0cf7594c2e6bd8f805843898d7daf06da857adc91a8e7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (402 > 120)",
+      "source_sha256": "2418d19b736014d7106236060033c2d791bac3630e0702caf6f2dea33dfffacf",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (439 > 120)",
+      "source_sha256": "2c33687a557ac9d8163a5cc6cb83f747b3b54b81096fb11c11bafdcbedb39729",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (566 > 120)",
+      "source_sha256": "da0bee775ff7acc61327333eade5f29738cbaa104f08421016c5bb1e522514a9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+      "code": "E501",
+      "message": "Line too long (587 > 120)",
+      "source_sha256": "e4dc9c359d51ce878b7b90e784ecdfed17ded8430754340f6f1d9e7eae246d8f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "2ce8bdf31095e61523bb90b95c8556cb791756b3a4b09fb962a7dfc938dbe079",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "02ccf149d89f1890a03b3236d5833644eaa22d048288ce36ab61482096e48401",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "5b7a85d20ab4ced45a5c57250087c949f86735c266f7f88e70e4e643f45a1985",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "c45e163b861e24ac6c60d3ca12a510f005c3ec9240cebf8d70e71d4965e0757a",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "d3e4ee7e591f771f680387a8937324417765b5f04a5da5d36d1c230fdc60697c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (129 > 120)",
+      "source_sha256": "13cc5432e55f49d49bac9723fb46f0470c571a5a10240fc516276fd6596428d6",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (129 > 120)",
+      "source_sha256": "b1679f8896029ef4d30c042da580c2336ad6592dd103e31c462be0f326730f07",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "2965cc5ec2974fc5105e1a02faf8342a38ecc43a323bbd9e7ecc3939a9424aba",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (142 > 120)",
+      "source_sha256": "cf97a83249505c807e59026882eec5fe2d15d1d27648529a7c5988aaab365715",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (147 > 120)",
+      "source_sha256": "1109f62783f9092f96b5f6877f7cd8fea9ac27c9ac965f0be68b47d1c8e772c0",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (153 > 120)",
+      "source_sha256": "6e6806aec76c90fedff821b1d3eafe2e979a998cb8a40bb9bb010e471fe610f9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (153 > 120)",
+      "source_sha256": "aa6f90d178d3d0549863616b99e03ea250167e073f9fd3f88ce6161ecf25c2e7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (156 > 120)",
+      "source_sha256": "ce3f27338fe26c1e038152059903abe8f295567f63f71575492ec967229d936b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (161 > 120)",
+      "source_sha256": "fb9d5eb4b28c921e6a528390c7627e40e133035665738faf3e33208d5bd68aaa",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (166 > 120)",
+      "source_sha256": "271a5704328f05f9bd1b701cb9e386e9d6f463da15d542ee0fe4ff3df275c0e2",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (167 > 120)",
+      "source_sha256": "a0bd39273b194f2589ec0bacbd4546b202537374ea7a9d03ad37e66f7ffa99cd",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (169 > 120)",
+      "source_sha256": "471cb994b6db5a90b10b20779cfa00ee3dd45f8772716e8a5c239559e0dcf78b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (169 > 120)",
+      "source_sha256": "6054589e0b77b51e14c84ad39003c2756f5e409b53a0a4765452fefed1ad95cd",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (184 > 120)",
+      "source_sha256": "76ff24c8dbda5dff7a89fadecdc8f5d6071b3dd3efd5c2c23dd6984d83fdd535",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (186 > 120)",
+      "source_sha256": "86da2414bddefcdde2bb08a7f534849a1ff1d97ca7f3b692dc09158dff581ad8",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (193 > 120)",
+      "source_sha256": "d612322a8deda9883800b041cb86de3feb4e188679899606b607bd25693ee553",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (198 > 120)",
+      "source_sha256": "febd85d0ff11ce7d09c9178eea06fdbf432a5fc057f679f662b925a4eb1000b9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (208 > 120)",
+      "source_sha256": "36e418906aab8319031943b01217aae4db593e4239cb64eb6f7cbcd3941d0e43",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (213 > 120)",
+      "source_sha256": "643bedf187fd66d738d0aaa15a9c266cdfc38c46f15b262e95bc20c707553297",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (218 > 120)",
+      "source_sha256": "e55efe9ecc761f94cc2bb7899277ef276012b951d25f9b1b0f562162281f99b8",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (231 > 120)",
+      "source_sha256": "c4fe760ea9b85cb7703bf4094cb65ff18686a99ef426fc5882312f5fea6caea4",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (242 > 120)",
+      "source_sha256": "1f204c0ce3e9c77408545e0ad10815a7b98ede5d03cdd1e197b06d24d038da39",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (253 > 120)",
+      "source_sha256": "a560e97566f2b33228bca35331b38b30aea708838a0072a654c838b8b508e5c5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (297 > 120)",
+      "source_sha256": "9dd513de67720c0a83c619aa4cef6f8aa2fb27fd6a9a6f055cb74145cb427950",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (365 > 120)",
+      "source_sha256": "d4692483a86a8afc1b12abc36df1ef2221e87003420429bd1a92fda462d54519",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+      "code": "E501",
+      "message": "Line too long (469 > 120)",
+      "source_sha256": "98090eb85edf2f7f31769273d94af332861bab1179756de184db1286b2d31ca6",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "796484bfa626597b87b43c18788898dc68462a12312afb028ae831a15d3da1fd",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+      "code": "E501",
+      "message": "Line too long (249 > 120)",
+      "source_sha256": "e9ac5f91f978b6ae4fb5a1193b7e47d59057fa4bb33677dbe804262a873501f1",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+      "code": "F841",
+      "message": "Local variable `in_table` is assigned to but never used",
+      "source_sha256": "073a4aafe3f8a54e4e1f59ac35a0f0280d2df0f207f844422d1c236752024ae0",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+      "code": "F841",
+      "message": "Local variable `table_indexes` is assigned to but never used",
+      "source_sha256": "4a2d5f667d061f6e27ff5d134e668ad631a9862ff70386a3589cb657bf82f0df",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "2bdf1b90b865406949edf042a8a83cae6d52a1a65e4d92c99587cca5ff8ca891",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "92734443c182623a1fb3a992d15a19e7b8dc71d08fda15b3ad20e8755875b8de",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "b003b11f2435a831bc03be173473829f3b123130f867f56c88a2548d460f67ff",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "0f3165941b873b46e893ae7aca3b8a21a5e452f7cc416de2104595a4695237d7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "0e83a7fab026fd96350e06623ce93e219245d08560f7c65d5d70715802352e1c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "1a06425ff9bf7d7e838fef146cdc96e2b54753dfd3c14bcc2dbef2dfab08dea6",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "6e999b8ad14092017f0c56366fc3872a98245a7c89f64c5f867ff557ebf7f695",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "f44f77aed1358bf2c6e0697b1354128e7a0f2190f04c5a4857e709e0239be4e5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "180149888ffe7f6a6b9be0c12bd159eada156ea27938a3841ccc1d821d1f21df",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (134 > 120)",
+      "source_sha256": "9f5229546411563af291cadb126e95359e7249277fb8227296fd9620797ce979",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (139 > 120)",
+      "source_sha256": "62f44b104e541b7286ddd7cc48c0a32d408b24e7ceee2a580529822c9950e15e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (144 > 120)",
+      "source_sha256": "fd7d256aa63f1e8df96eff2102756e973de708e4c77f9b776368cbabb8c47116",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (147 > 120)",
+      "source_sha256": "7555bb32bbf8eb3fa6de0af47f7611d054ead64026dba863a0ac9945973b3968",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (150 > 120)",
+      "source_sha256": "15346b4f14a48b7e7cc0be3763f2b43ece03344574640e5347cf924338dfe2b9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (155 > 120)",
+      "source_sha256": "1c509395c2a6db1024a377fc311e40c0810df9fe2d2fe7207c75ef7c11714853",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (161 > 120)",
+      "source_sha256": "72d80f0312ff45f18563a0016fe99812dc0a0b497903357dc8cc0f81f7e4bee4",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning.py",
+      "code": "E501",
+      "message": "Line too long (166 > 120)",
+      "source_sha256": "3d5d9bc8ed7e0c4082fb133e505ab7c6ac5fbec3b950d9eb15cc7062ebdf8b7c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "ab792d4f32db13cc4d00f663f4d2b689b5f0263386db6162a2318a02bfb58c4d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "9a62cea16f766bbd103727c13d1451c24ab6ba8c3076b4f7c7dd1575aa170987",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "f073495b6ca99b19b3a464ab22748b40552b5552a78c81184a8f08a60bd07ece",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (137 > 120)",
+      "source_sha256": "a4fe4bb4f99acffb54ed7730fcdd27b2339c0f4fb955211ef14af8ca61267ccf",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (138 > 120)",
+      "source_sha256": "33dc8ab9e7c44e33943181ae494491afe2d9373a05865d054f2d41d852bf4574",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (140 > 120)",
+      "source_sha256": "16f9fcc478bafb7c05a157729c41b6f1126cd05a9f1bb5578541d25660907176",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (144 > 120)",
+      "source_sha256": "8be3c59902d082ea0416c3982d0620b30a12a1f2fba7a3186cb690c6031b6e25",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (147 > 120)",
+      "source_sha256": "635ab9e330361f99ea24187fb713fdb4d5b30400800f887e7db7e73464b8bde8",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (173 > 120)",
+      "source_sha256": "0fa724de7880aa5966f9f01dbb375cc29d523acf194ea21acbfbb54bd199fbc9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+      "code": "E501",
+      "message": "Line too long (305 > 120)",
+      "source_sha256": "ec1770ee21b7a7c2f12b2c2172e5d48de22a369bb1504a3e5ec12dbe62c32ae0",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "dba73f71e77318d5ad2988036ceb1ff05bdebc5dac49d9cf4469a27a740a3220",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "9555e869a253112c24a2a70b20415e939d65dda8a6c3f8ba049564c9e6f78d0d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "51cb60a4646aec9bb1fba8e5a4db1c9ff5749364781b15741fb1f9def2eec41c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (140 > 120)",
+      "source_sha256": "6da99395354d03b73179ab1f6ca6ca6b24c05f088a7d047ac1476fc96d1e6bfa",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (140 > 120)",
+      "source_sha256": "dec26cfa0eeb431beb84f03845b45a46da0e1bad7cd522e0fa22508ef37f8a31",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/api/app.py",
+      "code": "E501",
+      "message": "Line too long (246 > 120)",
+      "source_sha256": "851c0cfecccffe8f9f684fc7c2eaabfd025794995f4a00456986ac429e466c90",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/capabilities.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "ac2efbeaf53e10989a385f3b330dc235ccbfb367878790292bb145096a0c2b98",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/conductor.py",
+      "code": "E501",
+      "message": "Line too long (178 > 120)",
+      "source_sha256": "f92dae2fa0308513fb3f5cf5d6403aeefbe7f895c0eac318e0820fa9de92c0b5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/identity.py",
+      "code": "E501",
+      "message": "Line too long (249 > 120)",
+      "source_sha256": "3e6a69cfed2eb7d108e3f608aba75406c017377aa92fe3f92c5f976db53973ac",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/subagents.py",
+      "code": "E501",
+      "message": "Line too long (122 > 120)",
+      "source_sha256": "9757bb83e24197d6ee34be32106fe83cb50e0db4ba214db5388d59c5d9ca4f36",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/tools.py",
+      "code": "E501",
+      "message": "Line too long (126 > 120)",
+      "source_sha256": "a3eea1b61ddd7a8737b31cd0d9eb1636a77d4f66bb66447c949df856af284c9b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_runtime/tools.py",
+      "code": "E501",
+      "message": "Line too long (272 > 120)",
+      "source_sha256": "9cd1b185688a240f3fb30d469d86a5ae0263a0bf5b59f67a8da936b3a7e28271",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_thinking.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "38448e264af1c6388f3dba40fd3cdc3afb1238f7a6447bde4f74f4c0951be629",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_thinking.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "899e5f8a30ab7c6ce4707db72d4281fc213176a444af54c81ab97d443c392573",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_thinking.py",
+      "code": "E501",
+      "message": "Line too long (128 > 120)",
+      "source_sha256": "30e4cfab0f8d543d08557d83d413c4166d09d841c8a192b37e978fd17b2e35b4",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_thinking.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "44f73acddd337cb1363874c598bbdc91f95498e5f8ca9eab17fa3269ec398a7e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/deep_thinking.py",
+      "code": "E501",
+      "message": "Line too long (149 > 120)",
+      "source_sha256": "330dd1d6bde3b22b30dd53c22509d071727611dc8f4689bf3beaf90a61255e66",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/domain/models.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "8555a693e2e82d1c5c1b89be7c1ebba63708461bb199ef0cde0dd38d247d5ea7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/harness/scheduler.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "e38b62ce255a18fd1f1899dcd3c7d59e7ffcac1f92dd7f84796ad2913413e5d5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/interfaces/cli.py",
+      "code": "E501",
+      "message": "Line too long (157 > 120)",
+      "source_sha256": "bf6f9f38423689543fa242691d98d484016a38397345e79b8d0d6e9d783cd4cc",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "cccd725b600e1d8362f140a421f1907f716c56f7fa70892a3f3487155fb7c6a7",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "375813aac5bb0bff096bb7f4644b7ea704e8542116dbddfdc781d37be6a58005",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "deff11b920b47ba5bc15adb88464052404df405bce58d059dc8fcc3799d1c928",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "d7d1de06d13a4f2c8f611e9c2567e16e941c08032bd0f4ade25581822bb01f73",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (128 > 120)",
+      "source_sha256": "d4b019bfb633700bd537ece603c4c8ebe051d5c776015e1a15cd46c240e4da94",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (129 > 120)",
+      "source_sha256": "a46f0d1dcb9300e4518f9d9655194c787d3af7e2a74ac0b89e76e0a04f7553a2",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "4f8b5782d1fb03251c44b1e9133354f1caf92cbb108c655445da2950b143f49c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (132 > 120)",
+      "source_sha256": "cf0c91c5e9013fd3dbaf21dc000a351c62538c42e4b97b09ef80d632cc56b278",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (133 > 120)",
+      "source_sha256": "ccc6e48490a4d2f659c8ef5758eae3e351d4a228880635ef6a687e651a091a61",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (136 > 120)",
+      "source_sha256": "1cf45991b8e3b2ac51f4ba199f6ab3425f7f2d5e76c87ee6cbb733e37bc69203",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (145 > 120)",
+      "source_sha256": "129e80dc058697d65055ae3fc33aee261fe837a5f1c543690d888810be86aa7f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (145 > 120)",
+      "source_sha256": "7248b4fcc8dca79645ba68ec5730cb14c3de7947b4f2e931d6547bd65db5c045",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (149 > 120)",
+      "source_sha256": "ae5205c87799f6b8ff5e6f7c631b5d7cd0cc2b64115f6e0063c75c210024d9cf",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (177 > 120)",
+      "source_sha256": "200e589a03c99935110f66cde75782b8ed8a03d23fd0a8ccbc982bd7356fce1c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (211 > 120)",
+      "source_sha256": "64cb1503a91cf536ff666c697481a38f0f3563913d5f45878eb0c348046d1712",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/deliverables.py",
+      "code": "E501",
+      "message": "Line too long (233 > 120)",
+      "source_sha256": "90672f1ae8599a9bf15ce3fbd7b3ff603ed8b228c9498b6ee210f0a701587636",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/dynamic_winning_scheduler.py",
+      "code": "UP042",
+      "message": "Class ExecutionMode inherits from both `str` and `enum.Enum`",
+      "source_sha256": "a5145232e03960e7588902ec5061fb15815c7c478a05d23d1f5b99791895f5d3",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/dynamic_winning_scheduler.py",
+      "code": "UP042",
+      "message": "Class StepAction inherits from both `str` and `enum.Enum`",
+      "source_sha256": "581da064567f2bec461e324df6f3877ce91c393fcf5181a03c883ad0819a3779",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "a434a9b95aa5beec95b4b9a073e9a33f414c0ddcbf8abf8c9492eeb97777fb6b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (122 > 120)",
+      "source_sha256": "f31f76570ca354895c3327bd654e053d5cc0bd2c532ecd54a87413779aafd6b2",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "88a5fa2165ef1b2bf3e7c7480bd226858240e7d48815e3d988ae4e3699997092",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (128 > 120)",
+      "source_sha256": "1f8c31219d0134e3b041a699a3a4502a2293008da1c1b658431d15a9a4b4af52",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (130 > 120)",
+      "source_sha256": "577be4d244c1bddd7a3524ca3b33e2a1f55dab4dd4950ee1f3e2f0b45059ef1d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (131 > 120)",
+      "source_sha256": "d1368520b699d5a661983dc3f7ce0a81dc7d57128b60295d944553b800f1cd15",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (132 > 120)",
+      "source_sha256": "6a20b7c77a3ed8e53036ab43017eeacdee9d2913c66aa57ac12b914fa824e56a",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (141 > 120)",
+      "source_sha256": "770de617dffaaa5b14e26e9b2595daa41741e39eb86f72edc9faad727aac0c63",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (146 > 120)",
+      "source_sha256": "946fe7e3eb4ea3b89283ae88808a2bf6a650e5a28f0d31dc67076156a22cd580",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (147 > 120)",
+      "source_sha256": "f40c1b4a360b891a7af50c019b14bd85c1f814fd6c46693b6e3b74303cdc6814",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/reporting.py",
+      "code": "E501",
+      "message": "Line too long (149 > 120)",
+      "source_sha256": "d28ec4ed847b52a0221d01707e017d1b14cdcc793d2878580948d5a9ab7c03df",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/runner.py",
+      "code": "E501",
+      "message": "Line too long (148 > 120)",
+      "source_sha256": "9296e86ae201833349db90d4a4666971755974ff5fae34d76bbc3b98483f6c76",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/runner.py",
+      "code": "E501",
+      "message": "Line too long (153 > 120)",
+      "source_sha256": "07b6c85444c460fc7cfe9f231cd785dc44c6cad76afb87eb064293d3083100ab",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/winning.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "3cec780274c852c4a22a15f57cea4eb0d2d05dd5291c5e584f2c7fb68dc89bd3",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/winning.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "5a307a49e07340b98542a4c6bdece4310a502529f09efbfcc547bc134c335e0d",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/winning.py",
+      "code": "E501",
+      "message": "Line too long (132 > 120)",
+      "source_sha256": "50cabe0076dea7aec4d27c5927b4989f6a4da86c6bb058661650b24a53b4ab28",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/orchestration/winning.py",
+      "code": "E501",
+      "message": "Line too long (136 > 120)",
+      "source_sha256": "660efccf66d29db071fda36156c44d09efd6695efa6c2d02d679cff5c4c41251",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/persistence/repositories.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "30deb9676ed1b1e53459708ef4690a38275b0592d5acae2774b2fa17894997ab",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/persistence/repositories.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "8671eae92bc9528e82983b0bb3c2033aaa9c9b6b2303a21e0db586500504604c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/persistence/repositories.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "b2d4a5f5249fed0dfc4393c447afa351d421c0edd11cc59cb4957e688fa40348",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/persistence/repositories.py",
+      "code": "E501",
+      "message": "Line too long (125 > 120)",
+      "source_sha256": "5d38b6ec63859fc01e816102cd5083063b1c927592fb69764f6d470531200ecc",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/providers/codex.py",
+      "code": "UP022",
+      "message": "Prefer `capture_output` over sending `stdout` and `stderr` to `PIPE`",
+      "source_sha256": "13ca18bc3a83fc8ca32a3b0c9cfee255553c1003eefa3668574bdf8804e69ad9",
+      "count": 1
+    },
+    {
+      "path": "backend/package/equipment_deep_research/providers/codex_optimizations.py",
+      "code": "E501",
+      "message": "Line too long (203 > 120)",
+      "source_sha256": "45eafc44570d5e5eab6d9144ea16c211bd8e7a2ec7e1d5424f0192c53ce4af54",
+      "count": 1
+    },
+    {
+      "path": "backend/package/knowledgegraph/demand_discovery/manual_source_pack.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "29813dd8feb35af6661b5ab5fcb757a26ebea40f175690976ec5f9bfcaa6ca17",
+      "count": 1
+    },
+    {
+      "path": "backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+      "code": "E501",
+      "message": "Line too long (150 > 120)",
+      "source_sha256": "adfbb41a770c45b9ebd54ad9ceb7cd4fd4cf4dc5a915c74c67d5924b58df1f11",
+      "count": 1
+    },
+    {
+      "path": "backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+      "code": "E501",
+      "message": "Line too long (156 > 120)",
+      "source_sha256": "7c5581ecd0649fac6d6ced2e82b76a0acc3c3047f0779f1038b48aab2717574e",
+      "count": 1
+    },
+    {
+      "path": "backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+      "code": "E501",
+      "message": "Line too long (159 > 120)",
+      "source_sha256": "bdc1f2c5242b23bb4adea10568a7a560c92507e37e820e5e5605af218e4cab7f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/agents/presets/deep_research.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "498a993c4e880e93d09e4d14f9609622d51a8bbfa4c1c6d8c25ba456c473759a",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/agents/presets/deep_research.py",
+      "code": "E501",
+      "message": "Line too long (123 > 120)",
+      "source_sha256": "79fb83c57fa11372f112732581fda95f57e0fb31435c0f84724de792c4f27d41",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/agents/presets/deep_research.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "18ae6ed5341f276e04196f7de278d8708ac1fd6bea1f22695d3717d468b83434",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/agents/presets/deep_research.py",
+      "code": "E501",
+      "message": "Line too long (127 > 120)",
+      "source_sha256": "c8f562c2348f53d8df7363fe14bb7adec46e5ce8c009ecd23d79df2a61537ce0",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/agents/presets/deep_research.py",
+      "code": "E501",
+      "message": "Line too long (132 > 120)",
+      "source_sha256": "3e739090e48ba516ed83311935fad840522fe8cc523aa90d09f02b825926a94c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+      "code": "E501",
+      "message": "Line too long (121 > 120)",
+      "source_sha256": "577d5b6ee254e1ec5b540565048cb2682c1c9a73f654fb8f61e389fbc60349df",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+      "code": "E501",
+      "message": "Line too long (124 > 120)",
+      "source_sha256": "b2737ac11ba8719b74b8f2a42df37527d08b867e0549ee4b7e3f55c137b8417a",
+      "count": 2
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+      "code": "E501",
+      "message": "Line too long (137 > 120)",
+      "source_sha256": "b1d858aea91f2d913cfb5e9167aec25dca3c8a5cb6626ce7c8c052e4a5839bd3",
+      "count": 2
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "F841",
+      "message": "Local variable `abs_path` is assigned to but never used",
+      "source_sha256": "b723938810f96b079914a9216bad9553e6a9a3728e91ec7be27547327fa9a7c1",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class ErrorCode inherits from both `str` and `enum.Enum`",
+      "source_sha256": "8e357ce884fb35772095cc5d198ba5a80abf268e7e30a8319880464d75c54046",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class Language inherits from both `str` and `enum.Enum`",
+      "source_sha256": "a29e22e65ffaef0e4b6e635de84eeb8c54809631a184ba24da840cea9ac9bfef",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class MediaFormat inherits from both `str` and `enum.Enum`",
+      "source_sha256": "624933c2058950d84d79542bf466500b035663d6dee9c322d77c1a13e8ce57bf",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class OutputFormat inherits from both `str` and `enum.Enum`",
+      "source_sha256": "c5a537ec02882ee52f7f3eaf588578561095e337b3953cd55012329b9da2cd2b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class TaskStatus inherits from both `str` and `enum.Enum`",
+      "source_sha256": "8aed29b9fdd5c339dba2208ab3baa976c475864fcf19c2099310bedf684d2ca5",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class TimestampMode inherits from both `str` and `enum.Enum`",
+      "source_sha256": "3fdf86de2399e54e3e7821acd19694de08b3d63e306de0b6cdb0aad58ecc192f",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class TranscriptionMode inherits from both `str` and `enum.Enum`",
+      "source_sha256": "ac7cd6acbea12c9f42a140dc1d0c3a15c58a94b8750d203d19eb9a2e7771f93b",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class TranscriptionModel inherits from both `str` and `enum.Enum`",
+      "source_sha256": "c0cb98a99724a6cdab0e8ae660c26d95cc156f969a2af29921722bab9b539127",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+      "code": "UP042",
+      "message": "Class WSMessageType inherits from both `str` and `enum.Enum`",
+      "source_sha256": "67475d27255c239f1126c84ba42c20cbfc4dc969b9be9a1779b6dac7d139913c",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/utils/text_normalizer.py",
+      "code": "E501",
+      "message": "Line too long (142 > 120)",
+      "source_sha256": "7ec15345d81c40a21226e19c583221578859a6802043e1d8d7740eefbb7fab50",
+      "count": 1
+    },
+    {
+      "path": "backend/package/platform_core/knowledge/video_transcriber/utils/text_normalizer.py",
+      "code": "E501",
+      "message": "Line too long (157 > 120)",
+      "source_sha256": "13c7b0d9074e271d61bfd13a6e5327a8a5ac976224f30a306463d22204ae8c1f",
+      "count": 1
+    },
+    {
+      "path": "backend/server/main.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "e7ad8c451fdca21c687744ec073d9b5c7164a41ac1f7004caa23e366738f0d53",
+      "count": 1
+    },
+    {
+      "path": "backend/server/routers/__init__.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "b3d0e225b3c849a341886e42ebd3f9ea3c0328fd2af4f32947916cce3698f4d6",
+      "count": 1
+    },
+    {
+      "path": "backend/server/routers/__init__.py",
+      "code": "E402",
+      "message": "Module level import not at top of file",
+      "source_sha256": "fba3c380e57086d6a7d239a8079722132f4ac6a6addaba54db00b52a9daec08a",
+      "count": 1
+    }
+  ]
+}

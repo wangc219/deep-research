@@ -10,7 +10,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
-from typing import Any, Literal, Mapping, Sequence
+from typing import Any, Literal
+from collections.abc import Mapping, Sequence
 
 from equipment_deep_research.orchestration.winning_swarm import (
     normalize_winning_swarm_policy,
@@ -21,9 +22,7 @@ from equipment_deep_research.domain.capability_portrait import (
 
 
 StepIntensity = Literal["skip", "light", "standard", "deep"]
-QUALITY_EXECUTION_PROFILE_IDS = frozenset(
-    {"optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"}
-)
+QUALITY_EXECUTION_PROFILE_IDS = frozenset({"optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"})
 
 
 def is_quality_execution_profile_id(value: Any) -> bool:
@@ -70,43 +69,26 @@ class BranchExecutionContract:
             raise ValueError("step_intensity must define S1-S6")
         if not 1 <= self.maximum_rounds <= 3:
             raise ValueError("Harness v2 allows one to three rounds")
-        if self.wall_clock_deadlines_enabled and not (
-            0 < self.soft_deadline_seconds <= self.hard_deadline_seconds
-        ):
-            raise ValueError(
-                "soft deadline must be positive and no later than hard deadline"
-            )
+        if self.wall_clock_deadlines_enabled and not (0 < self.soft_deadline_seconds <= self.hard_deadline_seconds):
+            raise ValueError("soft deadline must be positive and no later than hard deadline")
         if not 0 <= self.delivery_grace_seconds <= 900:
             raise ValueError("delivery grace must be between zero and fifteen minutes")
         if self.wall_clock_deadlines_enabled and self.absolute_deadline_seconds > 2400:
             raise ValueError("absolute deadline may not exceed 40 minutes")
         if self.wall_clock_deadlines_enabled and (
-            self.hard_deadline_seconds + self.delivery_grace_seconds
-            > self.absolute_deadline_seconds
+            self.hard_deadline_seconds + self.delivery_grace_seconds > self.absolute_deadline_seconds
         ):
-            raise ValueError(
-                "hard deadline plus delivery grace exceeds absolute deadline"
-            )
+            raise ValueError("hard deadline plus delivery grace exceeds absolute deadline")
         if not 1 <= self.maximum_delivery_model_calls <= 8:
-            raise ValueError(
-                "delivery lane must cover the selected template's parallel sections"
-            )
+            raise ValueError("delivery lane must cover the selected template's parallel sections")
         if not 30 <= self.deadline_downshift_window_seconds <= 600:
-            raise ValueError(
-                "deadline downshift window must be between 30 and 600 seconds"
-            )
+            raise ValueError("deadline downshift window must be between 30 and 600 seconds")
         if not 0 <= self.critical_fast_finalize_seconds <= self.delivery_grace_seconds:
-            raise ValueError(
-                "critical fast finalize window must fit inside delivery grace"
-            )
+            raise ValueError("critical fast finalize window must fit inside delivery grace")
         if not 0 <= self.delivery_retry_reserve_seconds <= 120:
-            raise ValueError(
-                "delivery retry reserve must be between zero and 120 seconds"
-            )
+            raise ValueError("delivery retry reserve must be between zero and 120 seconds")
         if not 1200 <= self.fast_finalize_output_token_cap <= 6000:
-            raise ValueError(
-                "fast finalize output token cap must be between 1200 and 6000"
-            )
+            raise ValueError("fast finalize output token cap must be between 1200 and 6000")
         seen: set[int] = set()
         for cohort in self.physical_cohorts:
             if len(cohort) < 2:
@@ -118,9 +100,7 @@ class BranchExecutionContract:
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
-        payload["step_intensity"] = {
-            str(key): value for key, value in self.step_intensity.items()
-        }
+        payload["step_intensity"] = {str(key): value for key, value in self.step_intensity.items()}
         return payload
 
 
@@ -143,9 +123,7 @@ class ExecutionProfile:
             "profile_id": self.profile_id,
             "harness_version": self.harness_version,
             "agent_mode": self.agent_mode,
-            "branch_contracts": {
-                key: value.to_dict() for key, value in self.branch_contracts.items()
-            },
+            "branch_contracts": {key: value.to_dict() for key, value in self.branch_contracts.items()},
             "model_tiers": dict(self.model_tiers),
             "prompt_versions": dict(self.prompt_versions),
             "budgets": dict(self.budgets),
@@ -158,22 +136,16 @@ class ExecutionProfile:
 
     def config_hash(self) -> str:
         payload = {
-            key: value
-            for key, value in self.to_dict_without_hash().items()
-            if key not in {"status", "approved"}
+            key: value for key, value in self.to_dict_without_hash().items() if key not in {"status", "approved"}
         }
-        return sha256(
-            json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
-        ).hexdigest()
+        return sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
     def to_dict_without_hash(self) -> dict[str, Any]:
         return {
             "profile_id": self.profile_id,
             "harness_version": self.harness_version,
             "agent_mode": self.agent_mode,
-            "branch_contracts": {
-                key: value.to_dict() for key, value in self.branch_contracts.items()
-            },
+            "branch_contracts": {key: value.to_dict() for key, value in self.branch_contracts.items()},
             "model_tiers": dict(self.model_tiers),
             "prompt_versions": dict(self.prompt_versions),
             "budgets": dict(self.budgets),
@@ -206,16 +178,11 @@ def _contract(
     result = BranchExecutionContract(
         contract_id=f"branch-{branch.lower()}-optimized-v2",
         branch=branch,
-        logical_agent_dag={
-            str(key): tuple(str(item) for item in value) for key, value in dag.items()
-        },
+        logical_agent_dag={str(key): tuple(str(item) for item in value) for key, value in dag.items()},
         step_intensity={index: value for index, value in enumerate(modes, start=1)},
         physical_cohorts=tuple(tuple(int(item) for item in row) for row in cohorts),
         branch_products=tuple(str(item) for item in products),
-        backtrack_map={
-            str(key): tuple(int(item) for item in value)
-            for key, value in backtrack.items()
-        },
+        backtrack_map={str(key): tuple(int(item) for item in value) for key, value in backtrack.items()},
         stop_conditions=_COMMON_STOP_CONDITIONS,
         background_count=background_count,
         scenarios_per_background=scenarios_per_background,
@@ -602,9 +569,7 @@ def apply_execution_profile_to_blueprint(
         return result
     branch = str(result.get("primary_branch", "A"))
     contract = profile.branch_contracts[branch]
-    runtime_codex_concurrency = int(
-        profile.budgets.get("codex_concurrency", contract.codex_concurrency)
-    )
+    runtime_codex_concurrency = int(profile.budgets.get("codex_concurrency", contract.codex_concurrency))
     result["execution_profile_id"] = profile.profile_id
     result["execution_profile_hash"] = profile.config_hash()
     result["execution_contract"] = contract.to_dict()
@@ -620,9 +585,7 @@ def apply_execution_profile_to_blueprint(
     else:
         result["minimum_business_agents"] = 3
         result["maximum_business_agents"] = 4
-    result["adaptive_winning_step_modes"] = {
-        str(step): mode for step, mode in contract.step_intensity.items()
-    }
+    result["adaptive_winning_step_modes"] = {str(step): mode for step, mode in contract.step_intensity.items()}
     result["hard_dependencies"] = {
         node: list(dependencies)
         for node, dependencies in contract.logical_agent_dag.items()
@@ -726,9 +689,7 @@ def apply_execution_profile_to_blueprint(
                 S6_DEFAULT_CODEX_CONCURRENCY,
             )
         ),
-        "reporter_codex_concurrency": int(
-            profile.budgets.get("reporter_codex_concurrency", 12)
-        ),
+        "reporter_codex_concurrency": int(profile.budgets.get("reporter_codex_concurrency", 12)),
         "wall_clock_deadlines_enabled": contract.wall_clock_deadlines_enabled,
         "soft_deadline_seconds": contract.soft_deadline_seconds,
         "hard_deadline_seconds": contract.hard_deadline_seconds,

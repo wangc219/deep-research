@@ -6,7 +6,7 @@ import argparse
 import asyncio
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 import os
 from pathlib import Path
@@ -39,14 +39,12 @@ class ProviderBenchmarkSpec:
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _provider_options(registry: ProviderRegistry) -> dict[str, dict[str, Any]]:
     return {
-        item["id"]: dict(item)
-        for item in registry.public_options().get("providers", [])
-        if isinstance(item, Mapping)
+        item["id"]: dict(item) for item in registry.public_options().get("providers", []) if isinstance(item, Mapping)
     }
 
 

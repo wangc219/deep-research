@@ -33,16 +33,12 @@ SAFETY_BOUNDARY = (
 
 
 _RUNTIME_AGENT_MODULES = {
-    agent_id: import_module(
-        f"equipment_deep_research.agents.designs.runtime.{agent_id}"
-    )
+    agent_id: import_module(f"equipment_deep_research.agents.designs.runtime.{agent_id}")
     for agent_id in DEFAULT_AGENT_IDS
 }
 
 QUERY_DOMINANT_BUSINESS_AGENT_IDS = {
-    agent_id
-    for agent_id, module in _RUNTIME_AGENT_MODULES.items()
-    if module.QUERY_DOMINANT
+    agent_id for agent_id, module in _RUNTIME_AGENT_MODULES.items() if module.QUERY_DOMINANT
 }
 
 
@@ -53,8 +49,7 @@ SWARM_RUNTIME_SKILL_IDS = [
 
 
 MILITARY_MISSION_LENSES: dict[str, str] = {
-    agent_id: module.MISSION_LENS
-    for agent_id, module in _RUNTIME_AGENT_MODULES.items()
+    agent_id: module.MISSION_LENS for agent_id, module in _RUNTIME_AGENT_MODULES.items()
 }
 
 
@@ -218,9 +213,7 @@ def _profile(
 
 
 CODEX_AGENT_RUNTIME_PROFILES: dict[str, dict[str, Any]] = {
-    agent_id: dict(module.PROFILE)
-    for agent_id, module in _RUNTIME_AGENT_MODULES.items()
-    if module.PROFILE
+    agent_id: dict(module.PROFILE) for agent_id, module in _RUNTIME_AGENT_MODULES.items() if module.PROFILE
 }
 
 
@@ -238,23 +231,11 @@ def build_codex_runtime_profile(
     profile: dict[str, Any] = {
         "agent_id": agent_id,
         "phase": phase,
-        "scenario": str(
-            static.get("scenario") or getattr(agent, "description", "通用结构化研究")
-        ),
+        "scenario": str(static.get("scenario") or getattr(agent, "description", "通用结构化研究")),
         "skills": list(static.get("skills", ["深度搜索", "证据治理", "结构化研究"])),
-        "tools": list(
-            static.get(
-                "tools", ["search_sources", "fetch_page", "create_evidence_card"]
-            )
-        ),
-        "methodology": list(
-            static.get(
-                "methodology", ["界定问题", "收集证据", "分析反证", "结构化输出"]
-            )
-        ),
-        "quality_gates": list(
-            static.get("quality_gates", ["事实、推断和假设分离", "结论可追溯"])
-        ),
+        "tools": list(static.get("tools", ["search_sources", "fetch_page", "create_evidence_card"])),
+        "methodology": list(static.get("methodology", ["界定问题", "收集证据", "分析反证", "结构化输出"])),
+        "quality_gates": list(static.get("quality_gates", ["事实、推断和假设分离", "结论可追溯"])),
         "output_focus": list(static.get("output_focus", [])),
         "military_mission_lens": military_mission_lens(agent_id),
         "safety_boundary": str(static.get("safety_boundary", SAFETY_BOUNDARY)),
@@ -270,15 +251,10 @@ def build_codex_runtime_profile(
         research_policy = getattr(agent, "research_policy", {})
         output_contract = getattr(agent, "output_contract", {})
         if registered_skills or shared_skills:
-            profile["skills"] = [
-                _compact_skill(item)
-                for item in [*list(registered_skills), *list(shared_skills)]
-            ]
+            profile["skills"] = [_compact_skill(item) for item in [*list(registered_skills), *list(shared_skills)]]
         knowledge_packs = getattr(agent, "knowledge_packs", [])
         if knowledge_packs:
-            profile["knowledge_packs"] = [
-                _compact_knowledge_pack(item) for item in knowledge_packs
-            ]
+            profile["knowledge_packs"] = [_compact_knowledge_pack(item) for item in knowledge_packs]
         if registered_tools:
             profile["tools"] = list(registered_tools)
         if isinstance(research_policy, Mapping):
@@ -289,9 +265,7 @@ def build_codex_runtime_profile(
                     *research_policy.get("stopping_conditions", []),
                 ]
             )
-            profile["output_focus"] = _unique(
-                [*profile["output_focus"], *research_policy.get("required_outputs", [])]
-            )
+            profile["output_focus"] = _unique([*profile["output_focus"], *research_policy.get("required_outputs", [])])
         if isinstance(output_contract, Mapping):
             profile["output_contract"] = dict(output_contract)
     if harness_profile is not None:
@@ -314,17 +288,14 @@ def build_codex_runtime_profile(
         active_tools = [
             tool
             for tool in profile["tools"]
-            if (not skill_tools or tool in skill_tools)
-            and (not harness_tools or tool in harness_tools)
+            if (not skill_tools or tool in skill_tools) and (not harness_tools or tool in harness_tools)
         ]
         profile["tools"] = active_tools or list(profile["tools"])
         profile["harness"] = {
             "profile_id": str(getattr(harness_profile, "profile_id", "")),
             "budget": dict(getattr(harness_profile, "budget", {})),
             "evidence_policy": dict(getattr(harness_profile, "evidence_policy", {})),
-            "checkpoint_policy": dict(
-                getattr(harness_profile, "checkpoint_policy", {})
-            ),
+            "checkpoint_policy": dict(getattr(harness_profile, "checkpoint_policy", {})),
             "stop_conditions": list(getattr(harness_profile, "stop_conditions", [])),
             "recovery_policy": dict(getattr(harness_profile, "recovery_policy", {})),
             "active_phase_tools": current_phase_tools,
@@ -398,38 +369,22 @@ def build_codex_runtime_profile(
                 "失效条件与验证建议",
             ]
         )
-        profile["military_mission_lens"] = MILITARY_MISSION_LENSES[
-            "winning_dynamic_specialist"
-        ]
+        profile["military_mission_lens"] = MILITARY_MISSION_LENSES["winning_dynamic_specialist"]
     dynamic_spec = _find_dynamic_agent_spec(payload or {})
     if dynamic_spec:
         profile["dynamic_agent_contract"] = dynamic_spec
         profile["scenario"] = str(
-            dynamic_spec.get("purpose")
-            or dynamic_spec.get("display_name")
-            or profile["scenario"]
+            dynamic_spec.get("purpose") or dynamic_spec.get("display_name") or profile["scenario"]
         )
-        selected_skill_ids = [
-            str(item) for item in dynamic_spec.get("skill_ids", []) if str(item)
-        ]
+        selected_skill_ids = [str(item) for item in dynamic_spec.get("skill_ids", []) if str(item)]
         if selected_skill_ids:
             profile["active_dynamic_skill_ids"] = selected_skill_ids
-        selected_pack_ids = [
-            str(item)
-            for item in dynamic_spec.get("knowledge_pack_ids", [])
-            if str(item)
-        ]
+        selected_pack_ids = [str(item) for item in dynamic_spec.get("knowledge_pack_ids", []) if str(item)]
         if selected_pack_ids:
             profile["active_dynamic_knowledge_pack_ids"] = selected_pack_ids
-        profile["methodology"] = _unique(
-            [*profile["methodology"], *dynamic_spec.get("methodology", [])]
-        )
-        profile["quality_gates"] = _unique(
-            [*profile["quality_gates"], *dynamic_spec.get("quality_gates", [])]
-        )
-        profile["output_focus"] = _unique(
-            [*profile["output_focus"], *dynamic_spec.get("output_fields", [])]
-        )
+        profile["methodology"] = _unique([*profile["methodology"], *dynamic_spec.get("methodology", [])])
+        profile["quality_gates"] = _unique([*profile["quality_gates"], *dynamic_spec.get("quality_gates", [])])
+        profile["output_focus"] = _unique([*profile["output_focus"], *dynamic_spec.get("output_fields", [])])
     # Quality-first profiles keep the complete role card.  Expose the same
     # concise role alias used by the throughput-first profile so callers and
     # traces do not need to understand two incompatible runtime shapes.
@@ -477,10 +432,7 @@ def build_codex_runtime_profile(
                 phase=phase,
                 blueprint=blueprint,
             )
-        elif (
-            phase in {"web_discovery", "evidence_analysis"}
-            and not str(agent_id).startswith("winning")
-        ):
+        elif phase in {"web_discovery", "evidence_analysis"} and not str(agent_id).startswith("winning"):
             # Baseline/reference turns are independent research calls. They
             # need a small role card and the target Query, not the complete
             # registry policy or every branch's methodology. Their durable
@@ -517,9 +469,7 @@ def is_dynamic_winning_payload(value: Mapping[str, Any]) -> bool:
         candidate_weapon = candidate.get("candidate_weapon")
         if (
             isinstance(candidate_weapon, Mapping)
-            and str(candidate_weapon.get("card_binding_id", ""))
-            .strip()
-            .startswith("s6-card-")
+            and str(candidate_weapon.get("card_binding_id", "")).strip().startswith("s6-card-")
             and {
                 "query_semantics",
                 "candidate_weapon",
@@ -529,9 +479,7 @@ def is_dynamic_winning_payload(value: Mapping[str, Any]) -> bool:
         ):
             return True
     return any(
-        str(candidate.get("execution_profile_id", "")).strip()
-        == "winning_swarm_dynamic_v2"
-        for candidate in candidates
+        str(candidate.get("execution_profile_id", "")).strip() == "winning_swarm_dynamic_v2" for candidate in candidates
     )
 
 
@@ -548,27 +496,18 @@ def _minimal_dynamic_winning_runtime_profile(
     particular it does not replay methodology, quality_gates, evidence policy,
     TRL, validation or upstream role contracts.
     """
-    node = (
-        str(profile.get("swarm_assignment", {}).get("merge_target", ""))
-        .strip()
-        .upper()
-    )
+    node = str(profile.get("swarm_assignment", {}).get("merge_target", "")).strip().upper()
     if not node:
         phase_match = re.search(r"(?<![A-Z0-9])S([1-6])(?![A-Z0-9])", phase.upper())
         node = f"S{phase_match.group(1)}" if phase_match else ""
-    dynamic_defaults = load_dynamic_winning_json(
-        "common", section="runtime.dynamic_profile_defaults"
-    )
+    dynamic_defaults = load_dynamic_winning_json("common", section="runtime.dynamic_profile_defaults")
     if not isinstance(dynamic_defaults, Mapping):
         raise ValueError("dynamic runtime profile defaults must be an object")
     skill_catalog = dynamic_defaults.get("skills", {})
     if not isinstance(skill_catalog, Mapping):
         skill_catalog = {}
     role = str(profile.get("scenario") or profile.get("role") or agent_id)[:180]
-    skill = str(
-        skill_catalog.get(node)
-        or dynamic_defaults.get("fallback_skill", "")
-    ).strip()
+    skill = str(skill_catalog.get(node) or dynamic_defaults.get("fallback_skill", "")).strip()
     if not skill:
         # A missing reviewed default is a resource/configuration error rather
         # than a reason to reintroduce model-facing prose in execution code.
@@ -580,15 +519,9 @@ def _minimal_dynamic_winning_runtime_profile(
         "skill": skill,
         "tools": [],
         "mission_node": node,
-        "military_mission_lens": str(
-            dynamic_defaults.get("military_mission_lens", "")
-        ).strip(),
-        "safety_boundary": str(
-            dynamic_defaults.get("safety_boundary", "")
-        ).strip(),
-        "handoff_contract": str(
-            dynamic_defaults.get("handoff_contract", "")
-        ).strip(),
+        "military_mission_lens": str(dynamic_defaults.get("military_mission_lens", "")).strip(),
+        "safety_boundary": str(dynamic_defaults.get("safety_boundary", "")).strip(),
+        "handoff_contract": str(dynamic_defaults.get("handoff_contract", "")).strip(),
     }
 
 
@@ -609,10 +542,7 @@ def is_optimized_v2_payload(value: Mapping[str, Any]) -> bool:
             nested = child.get("discovery_blueprint")
             if isinstance(nested, Mapping):
                 candidates.append(nested)
-    return any(
-        is_quality_execution_profile_id(candidate.get("execution_profile_id", ""))
-        for candidate in candidates
-    )
+    return any(is_quality_execution_profile_id(candidate.get("execution_profile_id", "")) for candidate in candidates)
 
 
 def is_aggressive_optimized_v2_payload(value: Mapping[str, Any]) -> bool:
@@ -640,10 +570,7 @@ def is_aggressive_optimized_v2_payload(value: Mapping[str, Any]) -> bool:
             nested = child.get("discovery_blueprint")
             if isinstance(nested, Mapping):
                 candidates.append(nested)
-    return any(
-        str(candidate.get("execution_profile_id", "")).strip() == "optimized_v2"
-        for candidate in candidates
-    )
+    return any(str(candidate.get("execution_profile_id", "")).strip() == "optimized_v2" for candidate in candidates)
 
 
 def _minimal_business_runtime_profile(
@@ -660,34 +587,21 @@ def _minimal_business_runtime_profile(
         phase=phase,
         tools=[str(item) for item in profile.get("tools", [])],
     )
-    branch = str(
-        blueprint.get("primary_branch", "")
-        or blueprint.get("discovery_branch", "")
-    )
+    branch = str(blueprint.get("primary_branch", "") or blueprint.get("discovery_branch", ""))
     result = {
         "agent_id": agent_id,
         "phase": phase,
         "role": str(profile.get("scenario", "结构化业务研究"))[:180],
         "skill": chosen_skill,
         "tools": tools,
-        "method": [
-            str(item)[:120]
-            for item in list(profile.get("methodology", []))[:2]
-        ],
-        "output_focus": [
-            str(item)[:80]
-            for item in list(profile.get("output_focus", []))[:5]
-        ],
+        "method": [str(item)[:120] for item in list(profile.get("methodology", []))[:2]],
+        "output_focus": [str(item)[:80] for item in list(profile.get("output_focus", []))[:5]],
         "reference_expansion_lenses": [
-            str(item)[:100]
-            for item in list(profile.get("reference_expansion_lenses", []))[:3]
+            str(item)[:100] for item in list(profile.get("reference_expansion_lenses", []))[:3]
         ],
         "disruptive_seed_context": profile.get("disruptive_seed_context", {}),
         "quality_gates": [
-            *[
-                str(item)[:120]
-                for item in list(profile.get("quality_gates", []))[:2]
-            ],
+            *[str(item)[:120] for item in list(profile.get("quality_gates", []))[:2]],
             "军事任务效果、作用机理和失效边界不可缺失",
         ],
         "military_mission_lens": military_mission_lens(agent_id),
@@ -707,22 +621,13 @@ def _minimal_business_runtime_profile(
         result.update(
             {
                 "runtime_profile_id": str(profile["runtime_profile_id"]),
-                "role_contract_version": str(
-                    profile.get("role_contract_version", "1.0")
-                ),
-                "swarm_role_contract": dict(
-                    profile.get("swarm_role_contract", {})
-                ),
+                "role_contract_version": str(profile.get("role_contract_version", "1.0")),
+                "swarm_role_contract": dict(profile.get("swarm_role_contract", {})),
                 "swarm_assignment": dict(profile.get("swarm_assignment", {})),
-                "active_dynamic_skill_ids": list(
-                    profile.get("active_dynamic_skill_ids", [])
-                ),
+                "active_dynamic_skill_ids": list(profile.get("active_dynamic_skill_ids", [])),
             }
         )
-        result["military_mission_lens"] = str(
-            profile.get("military_mission_lens")
-            or result["military_mission_lens"]
-        )
+        result["military_mission_lens"] = str(profile.get("military_mission_lens") or result["military_mission_lens"])
     if agent_id in QUERY_DOMINANT_BUSINESS_AGENT_IDS:
         result["analysis_anchor"] = "query_dominant_military_divergence"
         result["query_dominance_rule"] = (
@@ -778,31 +683,14 @@ def _minimal_baseline_runtime_profile(
         "role": str(profile.get("scenario", "结构化业务研究"))[:180],
         "skill": selected_skill,
         "tools": [str(item) for item in list(profile.get("tools", []))[:8]],
-        "method": [
-            str(item)[:140]
-            for item in list(profile.get("methodology", []))[:3]
-        ],
-        "output_focus": [
-            str(item)[:100]
-            for item in list(profile.get("output_focus", []))[:5]
-        ],
-        "quality_gates": [
-            str(item)[:140]
-            for item in list(profile.get("quality_gates", []))[:3]
-        ],
-        "military_mission_lens": str(
-            profile.get("military_mission_lens", "")
-        )[:280],
+        "method": [str(item)[:140] for item in list(profile.get("methodology", []))[:3]],
+        "output_focus": [str(item)[:100] for item in list(profile.get("output_focus", []))[:5]],
+        "quality_gates": [str(item)[:140] for item in list(profile.get("quality_gates", []))[:3]],
+        "military_mission_lens": str(profile.get("military_mission_lens", ""))[:280],
         "branch_focus": {
             "branch": branch,
-            "emphasis": [
-                str(item)[:100]
-                for item in list(blueprint.get("emphasis", []))[:3]
-            ],
-            "required_outputs": [
-                str(item)[:100]
-                for item in list(blueprint.get("required_outputs", []))[:5]
-            ],
+            "emphasis": [str(item)[:100] for item in list(blueprint.get("emphasis", []))[:3]],
+            "required_outputs": [str(item)[:100] for item in list(blueprint.get("required_outputs", []))[:5]],
         },
         "handoff_contract": (
             "只交付本角色新增的事实、判断、证据引用、置信度、限制和开放问题；"
@@ -815,9 +703,7 @@ def _minimal_baseline_runtime_profile(
         result["discovery_branches"] = branch_rows
     expansion = profile.get("reference_expansion_lenses", [])
     if expansion:
-        result["reference_expansion_lenses"] = [
-            str(item)[:100] for item in list(expansion)[:3]
-        ]
+        result["reference_expansion_lenses"] = [str(item)[:100] for item in list(expansion)[:3]]
     if agent_id in QUERY_DOMINANT_BUSINESS_AGENT_IDS:
         result["analysis_anchor"] = "query_dominant_military_divergence"
     return result
@@ -828,9 +714,7 @@ def _choose_single_skill(skills: Sequence[Any], *, phase: str) -> str:
         return "结构化业务判断"
     if phase.startswith("web_discovery"):
         for item in skills:
-            if isinstance(item, Mapping) and "search_sources" in item.get(
-                "allowed_tools", []
-            ):
+            if isinstance(item, Mapping) and "search_sources" in item.get("allowed_tools", []):
                 return str(item.get("name", "公开来源检索"))
     first = skills[0]
     if isinstance(first, Mapping):
@@ -924,19 +808,14 @@ def _find_branch_context(
         blueprint = candidate.get("discovery_blueprint")
         if isinstance(blueprint, Mapping):
             candidate = blueprint
-        primary = str(
-            candidate.get("primary_branch") or candidate.get("discovery_branch") or ""
-        )
+        primary = str(candidate.get("primary_branch") or candidate.get("discovery_branch") or "")
         secondary = candidate.get("secondary_branches", [])
         codes = (
             [primary, *secondary]
-            if isinstance(secondary, Sequence)
-            and not isinstance(secondary, (str, bytes))
+            if isinstance(secondary, Sequence) and not isinstance(secondary, (str, bytes))
             else [primary]
         )
-        resolved = _unique(
-            code for code in codes if str(code) in CODEX_BRANCH_RUNTIME_PROFILES
-        )
+        resolved = _unique(code for code in codes if str(code) in CODEX_BRANCH_RUNTIME_PROFILES)
         if resolved:
             return [str(code) for code in resolved], candidate
     return [], {}
@@ -1013,27 +892,20 @@ def _find_swarm_specialist_contract(
             break
     task_archetype = str(task.get("archetype", archetype))
     if task and task_archetype != archetype:
-        raise ValueError(
-            "winning swarm runtime archetype does not match specialist_task"
-        )
+        raise ValueError("winning swarm runtime archetype does not match specialist_task")
     catalog = role_catalog[archetype]
     catalog_target = str(catalog["merge_target"])
     assigned_target = str(task.get("merge_target", catalog_target))
     dynamic_mission_graph = any(
-        str(candidate.get("execution_profile_id", ""))
-        == "winning_swarm_dynamic_v2"
-        for candidate in candidates
+        str(candidate.get("execution_profile_id", "")) == "winning_swarm_dynamic_v2" for candidate in candidates
     )
     expected_target = (
         assigned_target
-        if dynamic_mission_graph
-        and assigned_target in {"S1", "S2", "S3", "S4", "S5", "S6"}
+        if dynamic_mission_graph and assigned_target in {"S1", "S2", "S3", "S4", "S5", "S6"}
         else catalog_target
     )
     if assigned_target != expected_target:
-        raise ValueError(
-            "winning swarm specialist_task crossed its catalog merge boundary"
-        )
+        raise ValueError("winning swarm specialist_task crossed its catalog merge boundary")
     allow_child_spawn = bool(task.get("allow_child_spawn", False))
     if allow_child_spawn:
         raise ValueError("dynamic specialists may not recruit child agents")
@@ -1045,10 +917,7 @@ def _find_swarm_specialist_contract(
         "purpose": str(catalog["purpose"]),
         "merge_target": expected_target,
         "quality_residuals": list(catalog.get("residuals", [])),
-        "quality_gates": [
-            f"必须实质改善 {residual}"
-            for residual in catalog.get("residuals", [])
-        ],
+        "quality_gates": [f"必须实质改善 {residual}" for residual in catalog.get("residuals", [])],
         "skill_ids": list(SWARM_RUNTIME_SKILL_IDS),
         "allow_child_spawn": False,
     }
@@ -1058,9 +927,7 @@ def _find_swarm_specialist_contract(
         "hypothesis_id": str(task.get("hypothesis_id", "")),
         "wave": task.get("wave", 0),
         "merge_target": assigned_target,
-        "trigger_residuals": [
-            str(item) for item in task.get("trigger_residuals", []) if str(item)
-        ][:8],
+        "trigger_residuals": [str(item) for item in task.get("trigger_residuals", []) if str(item)][:8],
         "expected_quality_gain": task.get("expected_quality_gain", 0),
         "allow_child_spawn": False,
     }

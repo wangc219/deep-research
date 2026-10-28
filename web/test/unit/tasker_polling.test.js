@@ -42,7 +42,8 @@ test('任务请求时序与轮询生命周期', async (t) => {
       const { scriptSetupAst } = compileScript(descriptor, { id: 'graph-task-test' })
       for (const [name, apiMethod] of [
         ['startGraphBuild', 'startIndex'],
-        ['retryGraphVectors', 'reconcile']
+        ['retryGraphVectors', 'reconcile'],
+        ['retryFailedGraphChunks', 'retryFailed']
       ]) {
         const node = scriptSetupAst.find(
           (node) =>
@@ -60,6 +61,7 @@ test('任务请求时序与轮询生命周期', async (t) => {
           'GRAPH_BUILD_TASK_TYPE',
           'loadGraphBuildStatus',
           'getErrorDetail',
+          'retryingFailedChunks',
           descriptor.scriptSetup.content.slice(node.start, node.end) + `; return ${name}`
         )(
           store,
@@ -68,7 +70,8 @@ test('任务请求时序与轮询生命周期', async (t) => {
           { success() {}, error: assert.fail },
           'graph-build',
           async () => {},
-          (error) => error.message
+          (error) => error.message,
+          { value: false }
         )
         const pending = action()
         user.logout()

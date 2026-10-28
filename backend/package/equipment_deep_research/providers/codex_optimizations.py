@@ -125,10 +125,11 @@ def render_prompt_optimized(
 
         parts.append(f"\n[{message.role.upper()}]\n{content_str}")
 
-    return '\n'.join(parts) + '\n'
+    return "\n".join(parts) + "\n"
 
 
 # ========== 2. 命令构建缓存 ==========
+
 
 class CommandCache:
     """缓存 Codex 命令行参数构建结果"""
@@ -143,9 +144,7 @@ class CommandCache:
         # 提取影响命令的关键参数
         search_options = options.get("web_search")
         if isinstance(search_options, Mapping):
-            search_context_size = str(
-                search_options.get("search_context_size", "high")
-            ).strip().lower()
+            search_context_size = str(search_options.get("search_context_size", "high")).strip().lower()
             if search_context_size not in {"low", "medium", "high"}:
                 search_context_size = "high"
             search_key = f"search:{search_context_size}"
@@ -176,14 +175,15 @@ class CommandCache:
         total = self._hits + self._misses
         hit_rate = self._hits / total if total > 0 else 0
         return {
-            'hits': self._hits,
-            'misses': self._misses,
-            'hit_rate': f"{hit_rate:.1%}",
-            'cache_size': len(self._cache),
+            "hits": self._hits,
+            "misses": self._misses,
+            "hit_rate": f"{hit_rate:.1%}",
+            "cache_size": len(self._cache),
         }
 
 
 # ========== 3. 进程预热缓存 ==========
+
 
 class ProcessWarmCache:
     """预热 Codex 进程环境，减少冷启动时间"""
@@ -215,7 +215,8 @@ class ProcessWarmCache:
             env = {
                 str(key): str(value)
                 for key, value in os.environ.items()
-                if str(key).upper() not in {
+                if str(key).upper()
+                not in {
                     "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
                     "CODEX_SANDBOX_NETWORK_DISABLED",
                     "CODEX_THREAD_ID",
@@ -232,18 +233,19 @@ class ProcessWarmCache:
 
 # ========== 4. 性能监控 ==========
 
+
 class CodexPerformanceMonitor:
     """Codex 执行性能监控"""
 
     def __init__(self):
         self._timings: dict[str, list[float]] = {
-            'prompt_render': [],
-            'command_build': [],
-            'process_execute': [],
-            'output_parse': [],
-            'total': [],
+            "prompt_render": [],
+            "command_build": [],
+            "process_execute": [],
+            "output_parse": [],
+            "total": [],
         }
-        self._enabled = os.environ.get('EQUIPMENT_DR_CODEX_PERF', '0') == '1'
+        self._enabled = os.environ.get("EQUIPMENT_DR_CODEX_PERF", "0") == "1"
 
     def record(self, phase: str, elapsed: float):
         """记录执行时间"""
@@ -260,11 +262,11 @@ class CodexPerformanceMonitor:
             if not times:
                 continue
             report[phase] = {
-                'count': len(times),
-                'total': sum(times),
-                'mean': sum(times) / len(times),
-                'min': min(times),
-                'max': max(times),
+                "count": len(times),
+                "total": sum(times),
+                "mean": sum(times) / len(times),
+                "min": min(times),
+                "max": max(times),
             }
         return report
 
@@ -285,14 +287,14 @@ class CodexPerformanceMonitor:
             print(f"\n{phase}:")
             print(f"  调用次数: {stats['count']}")
             print(f"  总时间: {stats['total']:.3f}s")
-            print(f"  平均: {stats['mean']*1000:.1f}ms")
-            print(f"  最小: {stats['min']*1000:.1f}ms")
-            print(f"  最大: {stats['max']*1000:.1f}ms")
+            print(f"  平均: {stats['mean'] * 1000:.1f}ms")
+            print(f"  最小: {stats['min'] * 1000:.1f}ms")
+            print(f"  最大: {stats['max'] * 1000:.1f}ms")
 
         # 计算非模型执行时间占比
-        if 'total' in report and 'process_execute' in report:
-            overhead = report['total']['total'] - report['process_execute']['total']
-            overhead_pct = (overhead / report['total']['total']) * 100
+        if "total" in report and "process_execute" in report:
+            overhead = report["total"]["total"] - report["process_execute"]["total"]
+            overhead_pct = (overhead / report["total"]["total"]) * 100
             print(f"\n非模型执行开销: {overhead:.3f}s ({overhead_pct:.1f}%)")
 
         print("=" * 60 + "\n")
@@ -315,25 +317,26 @@ def get_perf_monitor() -> CodexPerformanceMonitor:
 
 # ========== 5. 优化应用函数 ==========
 
+
 def apply_codex_optimizations():
     """应用 Codex CLI 优化"""
     optimizations_applied = []
 
     # 环境变量优化
-    if os.environ.get('EQUIPMENT_DR_CODEX_PERF', '0') != '1':
-        os.environ['EQUIPMENT_DR_CODEX_PERF'] = '0'  # 默认关闭，避免性能影响
+    if os.environ.get("EQUIPMENT_DR_CODEX_PERF", "0") != "1":
+        os.environ["EQUIPMENT_DR_CODEX_PERF"] = "0"  # 默认关闭，避免性能影响
 
     optimizations_applied.append("prompt_rendering")
     optimizations_applied.append("command_caching")
 
-    if os.environ.get('EQUIPMENT_DR_CODEX_PERF', '0') == '1':
+    if os.environ.get("EQUIPMENT_DR_CODEX_PERF", "0") == "1":
         optimizations_applied.append("performance_monitoring")
 
     return {
-        'applied': optimizations_applied,
-        'command_cache': True,
-        'prompt_optimization': True,
-        'perf_monitoring': os.environ.get('EQUIPMENT_DR_CODEX_PERF', '0') == '1',
+        "applied": optimizations_applied,
+        "command_cache": True,
+        "prompt_optimization": True,
+        "perf_monitoring": os.environ.get("EQUIPMENT_DR_CODEX_PERF", "0") == "1",
     }
 
 
@@ -343,7 +346,7 @@ def print_codex_performance_report():
 
     # 打印命令缓存统计
     cache_stats = _COMMAND_CACHE.stats()
-    if cache_stats['hits'] + cache_stats['misses'] > 0:
+    if cache_stats["hits"] + cache_stats["misses"] > 0:
         print("\n📊 Codex 命令缓存统计:")
         print(f"  命中: {cache_stats['hits']}")
         print(f"  未命中: {cache_stats['misses']}")
@@ -353,12 +356,12 @@ def print_codex_performance_report():
 
 
 __all__ = [
-    'render_prompt_optimized',
-    'CommandCache',
-    'ProcessWarmCache',
-    'CodexPerformanceMonitor',
-    'get_command_cache',
-    'get_perf_monitor',
-    'apply_codex_optimizations',
-    'print_codex_performance_report',
+    "render_prompt_optimized",
+    "CommandCache",
+    "ProcessWarmCache",
+    "CodexPerformanceMonitor",
+    "get_command_cache",
+    "get_perf_monitor",
+    "apply_codex_optimizations",
+    "print_codex_performance_report",
 ]

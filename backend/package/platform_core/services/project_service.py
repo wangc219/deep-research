@@ -16,7 +16,8 @@ from platform_core.workspace.paths import allocate_default_user_workdir_path, no
 from platform_core.workspace.workdir import Workdir
 
 MAX_PROJECT_NAME_LENGTH = 255
-DEFAULT_EQUIPMENT_PROJECT_NAME = "武器装备深研"
+DEFAULT_EQUIPMENT_PROJECT_NAME = "装备深研工作台"
+DEFAULT_EQUIPMENT_PROJECT_KEY = "equipment-default-workbench"
 
 
 async def _lock_project_workdir_changes(*, db, uid: str) -> None:
@@ -103,26 +104,51 @@ async def create_implicit_project(*, uid: str, db, idempotency_key: str | None =
     )
 
 
-async def ensure_equipment_project_view(*, uid: str, db) -> dict:
-    """返回当前用户的首个可选 Project；没有时创建装备深研默认项目。"""
+async def ensure_equipment_project_record(*, uid: str, username: str, db) -> Project:
+    """在调用方事务内复用个人深研工作台；缺失时持用户级锁创建。"""
 
     normalized_uid = str(uid)
+    owner_name = username.strip() or normalized_uid
+    project_name = f"{DEFAULT_EQUIPMENT_PROJECT_NAME} · {owner_name}"
     await db.execute(
         text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
         {"lock_key": f"default-equipment-project:{normalized_uid}"},
     )
     repository = ProjectRepository(db)
+    keyed_project = await repository.get_by_idempotency_key(DEFAULT_EQUIPMENT_PROJECT_KEY, normalized_uid)
+    if keyed_project is not None:
+        if keyed_project.status == "active":
+            if keyed_project.name == f"{DEFAULT_EQUIPMENT_PROJECT_NAME}+{owner_name}":
+                keyed_project.name = project_name
+            return keyed_project
+        keyed_project.idempotency_key = None
+        await db.flush()
     projects = await repository.list_selectable_for_user(normalized_uid)
-    if projects:
-        return projects[0].to_dict()
+    existing = next((project for project in projects if project.name == project_name), None)
+    if existing is not None:
+        existing.idempotency_key = DEFAULT_EQUIPMENT_PROJECT_KEY
+        return existing
+    legacy_name = f"{DEFAULT_EQUIPMENT_PROJECT_NAME}+{owner_name}"
+    legacy = next((project for project in projects if project.name == legacy_name), None)
+    if legacy is not None:
+        legacy.idempotency_key = DEFAULT_EQUIPMENT_PROJECT_KEY
+        legacy.name = project_name
+        legacy.updated_at = utc_now_naive()
+        return legacy
 
-    project = await create_project_record(
+    return await create_project_record(
         uid=normalized_uid,
-        name=DEFAULT_EQUIPMENT_PROJECT_NAME,
+        name=project_name,
+        idempotency_key=DEFAULT_EQUIPMENT_PROJECT_KEY,
         directory_mode="managed",
         selection_status="selectable",
         db=db,
     )
+
+
+async def ensure_equipment_project_view(*, uid: str, username: str, db) -> dict:
+    """提交并返回当前用户唯一复用的默认工作台。"""
+    project = await ensure_equipment_project_record(uid=uid, username=username, db=db)
     await db.commit()
     return project.to_dict()
 

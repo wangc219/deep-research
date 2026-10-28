@@ -133,6 +133,56 @@ describe('旧版能力画像兼容', () => {
     assert.equal(capabilityPortraitComplete(portrait), true)
   })
 
+  it('非战斗任务栏名被改写时仍展示完整 S6 五栏', () => {
+    const portrait = {
+      capability_portrait_modules: {
+        overview: '结构化概述。',
+        technology_implementation: '结构化技术实现。',
+        operational_process: '结构化任务流程。',
+        capability_effects: '结构化任务效果。',
+        winning_logic: '结构化任务价值逻辑。'
+      },
+      deep_capability_portrait: [
+        '概述：公开概述。',
+        '装备与技术实现：公开技术实现。',
+        '关键任务流程：公开任务流程。',
+        '形成能力与任务效果：公开任务效果。',
+        '制胜逻辑机理：公开任务价值逻辑。'
+      ].join('\n')
+    }
+
+    const modules = capabilityPortraitModules(portrait)
+    assert.deepEqual(
+      modules.map((item) => item.label),
+      ['概述', '装备与技术实现', '关键作战流程', '形成能力与作战效果', '制胜逻辑机理']
+    )
+    assert.equal(modules[2].text, '公开任务流程。')
+    assert.equal(modules[3].text, '公开任务效果。')
+    assert.equal(capabilityPortraitComplete(portrait), true)
+  })
+
+  it('旧整段画像只有三栏时用结构化数据补齐另外两栏', () => {
+    const portrait = {
+      capability_portrait_modules: {
+        overview: '概述正文。',
+        technology_implementation: '技术正文。',
+        operational_process: '流程正文。',
+        capability_effects: '效果正文。',
+        winning_logic: '逻辑正文。'
+      },
+      capability_image: [
+        '概述：概述正文。',
+        '装备与技术实现：技术正文。',
+        '制胜逻辑机理：逻辑正文。'
+      ].join('\n')
+    }
+
+    const modules = capabilityPortraitModules(portrait)
+    assert.equal(modules.length, 5)
+    assert.equal(modules[2].text, '流程正文。')
+    assert.equal(modules[3].text, '效果正文。')
+  })
+
   it('置信度显示保留一位小数', () => {
     assert.equal(capabilityConfidence({ confidence: 0.645 }), '64.5%')
     assert.equal(capabilityConfidence({ confidence: 64 }), '64.0%')

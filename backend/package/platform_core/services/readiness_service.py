@@ -22,6 +22,7 @@ from platform_core.services.task_queue_service import (
     TASK_RECONCILIATION_HEALTH_TTL_SECONDS,
 )
 from platform_core.storage.postgres.manager import pg_manager
+from platform_core.services.run_scheduling import AGENT_QUEUES, agent_health_key, split_agent_queues
 
 READINESS_PROBE_TIMEOUT_SECONDS = float(os.getenv("READINESS_PROBE_TIMEOUT_SECONDS", "2"))
 READINESS_CACHE_TTL_SECONDS = float(os.getenv("READINESS_CACHE_TTL_SECONDS", "1"))
@@ -57,6 +58,8 @@ async def _probe_worker() -> None:
         (WORKER_RECONCILIATION_HEALTH_KEY, WORKER_RECONCILIATION_HEALTH_TTL_SECONDS * 1000),
         (TASK_RECONCILIATION_HEALTH_KEY, TASK_RECONCILIATION_HEALTH_TTL_SECONDS * 1000),
     )
+    if split_agent_queues():
+        leases += tuple((agent_health_key(kind), WORKER_HEALTH_MAX_TTL_MS) for kind in AGENT_QUEUES)
     for key, max_ttl_ms in leases:
         value = await redis.get(key)
         ttl_ms = await redis.pttl(key)

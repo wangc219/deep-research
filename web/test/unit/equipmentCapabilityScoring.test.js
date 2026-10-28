@@ -7,15 +7,15 @@ import {
   emptyS5ScoreInput
 } from '../../src/utils/equipmentCapabilityScoring.js'
 
-test('S5 反馈使用领域真实五维口径与 30/30/20/10/10 权重', () => {
+test('S5 反馈使用创新与制胜价值优先的 45/15/10/25/5 权重', () => {
   assert.deepEqual(
     S5_SCORE_DIMENSIONS.map(({ key, label, weight }) => [key, label, weight]),
     [
-      ['innovation', '创新性', 30],
-      ['demand', '需求性', 30],
-      ['feasibility', '科学可行性', 20],
-      ['effectiveness', '效能性', 10],
-      ['development', '发展性', 10]
+      ['innovation', '创新性', 45],
+      ['demand', '需求性', 15],
+      ['feasibility', '科学可行性', 10],
+      ['effectiveness', '制胜效能性', 25],
+      ['development', '发展性', 5]
     ]
   )
   assert.ok(S5_SCORE_DIMENSIONS.every(({ principle }) => principle.length > 30))
@@ -33,7 +33,7 @@ test('能力卡 S5 分数支持 0-1 与百分制并重新计算综合分', () =>
   })
 
   assert.equal(scorecard.complete, true)
-  assert.equal(Math.round(scorecard.weightedScore * 10000) / 10000, 0.7882)
+  assert.equal(Math.round(scorecard.weightedScore * 10000) / 10000, 0.7893)
 })
 
 test('缺失评分不会被空字符串错误计算成 0 分', () => {

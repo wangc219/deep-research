@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { wechatMpApi } from '@/apis/wechat_mp_api'
 import { authApi } from '@/apis/auth_api'
 import { useAgentStore } from './agent'
 import { useProjectsStore } from './projects'
@@ -75,6 +76,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function logout() {
+    void wechatMpApi.closeSession().catch(() => {})
     // 清除状态
     token.value = ''
     userId.value = null

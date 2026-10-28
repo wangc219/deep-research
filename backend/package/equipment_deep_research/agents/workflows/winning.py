@@ -19,6 +19,9 @@ from typing import (
 from urllib.parse import urlsplit
 
 from equipment_deep_research.agents.workflows.errors import S6QualityError
+from equipment_deep_research.agents.workflows.shared_context import (
+    requested_candidate_count_contract,
+)
 from equipment_deep_research.agents.dynamic_prompt_resources import (
     load_dynamic_winning_prompt,
 )
@@ -324,6 +327,18 @@ async def analyze_winning_subagents(
         # winning profiles never populate this field.
         "deep_parent_context": payload.get("deep_parent_context", {}),
     }
+    candidate_count_contract = requested_candidate_count_contract(str(shared.get("topic", "")))
+    explicit_candidate_target = int(candidate_count_contract.get("target", 0) or 0)
+    candidate_count_instruction = ""
+    if candidate_count_contract.get("explicit") and explicit_candidate_target:
+        candidate_count_instruction = (
+            " 用户在Query中明确要求形成"
+            f"{explicit_candidate_target}个候选。S4必须形成至少"
+            f"{candidate_count_contract['minimum']}个彼此不可替代、装备身份不同的候选；"
+            "S5须逐项比较并保留满足证据门的候选；S6须为每个保留候选分别成卡。"
+            "不得用同义改写凑数；若正式证据不足，必须明确返回数量缺口及缺失证据，"
+            "不得把未过证据门的报告方向伪装成正式能力画像。"
+        )
     winning_mode = resolve_winning_mode(shared["execution_profile_id"])
     quality_contract = winning_mode.uses_quality_contract
     aggressive_compaction = winning_mode.optimized
@@ -349,52 +364,33 @@ async def analyze_winning_subagents(
             "military_effects": list(item.get("military_effects", []))[:5],
             "mechanism": str(item.get("mechanism", ""))[:460],
         }
-        for item in (
-            raw_military_handoff.get("claims", [])
-            if isinstance(raw_military_handoff, Mapping)
-            else []
-        )
+        for item in (raw_military_handoff.get("claims", []) if isinstance(raw_military_handoff, Mapping) else [])
         if isinstance(item, Mapping) and str(item.get("mechanism", "")).strip()
     ]
     military_branch_products = (
-        raw_military_handoff.get("branch_products", {})
-        if isinstance(raw_military_handoff, Mapping)
-        else {}
+        raw_military_handoff.get("branch_products", {}) if isinstance(raw_military_handoff, Mapping) else {}
     )
     baseline_boundaries = [
         {
             "packet_id": str(item.get("packet_id", "")),
             "agent_id": str(item.get("agent_id", "")),
             "availability": "unavailable",
-            "limitations": [
-                str(value)[:260] for value in item.get("limitations", [])[:2]
-            ],
-            "open_questions": [
-                str(value)[:260] for value in item.get("open_questions", [])[:2]
-            ],
-            "downstream_obligations": [
-                str(value)[:300] for value in item.get("downstream_obligations", [])[:3]
-            ],
+            "limitations": [str(value)[:260] for value in item.get("limitations", [])[:2]],
+            "open_questions": [str(value)[:260] for value in item.get("open_questions", [])[:2]],
+            "downstream_obligations": [str(value)[:300] for value in item.get("downstream_obligations", [])[:3]],
         }
         for item in (
-            raw_military_handoff.get("baseline_boundaries", [])
-            if isinstance(raw_military_handoff, Mapping)
-            else []
+            raw_military_handoff.get("baseline_boundaries", []) if isinstance(raw_military_handoff, Mapping) else []
         )
-        if isinstance(item, Mapping)
-        and str(item.get("availability", "")) == "unavailable"
+        if isinstance(item, Mapping) and str(item.get("availability", "")) == "unavailable"
     ]
     baseline_frontier_inspirations = [
         {
             "source_agent_id": str(item.get("source_agent_id", "")),
             "packet_id": str(item.get("packet_id", "")),
             "signal": str(item.get("signal", ""))[:220],
-            "conventional_assumption_challenged": str(
-                item.get("conventional_assumption_challenged", "")
-            )[:180],
-            "possible_military_discontinuity": str(
-                item.get("possible_military_discontinuity", "")
-            )[:220],
+            "conventional_assumption_challenged": str(item.get("conventional_assumption_challenged", ""))[:180],
+            "possible_military_discontinuity": str(item.get("possible_military_discontinuity", ""))[:220],
             "query_relevance": str(item.get("query_relevance", ""))[:180],
             "evidence_boundary": str(item.get("evidence_boundary", ""))[:220],
             "downstream_question": str(item.get("downstream_question", ""))[:220],
@@ -402,9 +398,7 @@ async def analyze_winning_subagents(
             "source_urls": list(item.get("source_urls", []))[:2],
         }
         for item in (
-            raw_military_handoff.get("frontier_inspirations", [])
-            if isinstance(raw_military_handoff, Mapping)
-            else []
+            raw_military_handoff.get("frontier_inspirations", []) if isinstance(raw_military_handoff, Mapping) else []
         )
         if isinstance(item, Mapping) and str(item.get("signal", "")).strip()
     ][:6]
@@ -414,8 +408,7 @@ async def analyze_winning_subagents(
         rows = [
             item
             for item in military_value_claims
-            if not item.get("downstream_steps")
-            or targets.intersection(map(str, item.get("downstream_steps", [])))
+            if not item.get("downstream_steps") or targets.intersection(map(str, item.get("downstream_steps", [])))
         ]
         return rows[: min(8, max(4, len(indices) * 3))]
 
@@ -427,11 +420,7 @@ async def analyze_winning_subagents(
     def military_packet_refs_for_claims(
         claims: Sequence[Mapping[str, Any]],
     ) -> list[dict[str, Any]]:
-        packet_ids = {
-            str(item.get("packet_id", ""))
-            for item in claims
-            if str(item.get("packet_id", ""))
-        }
+        packet_ids = {str(item.get("packet_id", "")) for item in claims if str(item.get("packet_id", ""))}
         # The minimal military handoff intentionally omits packet routing
         # metadata. In that mode, retain the independently supplied packet
         # index rather than dropping all baseline context.
@@ -464,17 +453,13 @@ async def analyze_winning_subagents(
         limit: int = 12,
     ) -> list[dict[str, Any]]:
         relevant_ids = {
-            str(evidence_id)
-            for item in claims
-            for evidence_id in item.get("evidence_ids", [])
-            if str(evidence_id)
+            str(evidence_id) for item in claims for evidence_id in item.get("evidence_ids", []) if str(evidence_id)
         }
         relevant_ids.update(_collect_reference_ids(prior_step_outputs or {}))
         return [
             dict(item)
             for item in shared.get("evidence_index", [])
-            if isinstance(item, Mapping)
-            and str(item.get("evidence_id", "")) in relevant_ids
+            if isinstance(item, Mapping) and str(item.get("evidence_id", "")) in relevant_ids
         ][:limit]
 
     packet_index = [
@@ -502,21 +487,13 @@ async def analyze_winning_subagents(
             "summary": str(item.get("summary", "") or item.get("handoff_summary", "")),
             "findings": list(item.get("findings", []))[: (6 if case_packet else 3)],
             "business_payload": payload_value,
-            "evidence_ids": list(item.get("evidence_ids", []))[
-                : (12 if case_packet else 6)
-            ],
+            "evidence_ids": list(item.get("evidence_ids", []))[: (12 if case_packet else 6)],
             "confidence": item.get("confidence"),
             "limits": list(item.get("limits", item.get("limitations", [])))[:1],
-            "next_questions": list(
-                item.get("next_questions", item.get("open_questions", []))
-            )[:1],
+            "next_questions": list(item.get("next_questions", item.get("open_questions", [])))[:1],
         }
         return _compact_prompt_value(
-            {
-                key: value
-                for key, value in projected.items()
-                if value not in (None, "", [], {})
-            },
+            {key: value for key, value in projected.items() if value not in (None, "", [], {})},
             max_string_chars=900 if case_packet else 220,
             max_list_items=10 if case_packet else 3,
         )
@@ -527,9 +504,7 @@ async def analyze_winning_subagents(
         if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
     }
     valid_packet_ids = {
-        str(item.get("packet_id", ""))
-        for item in packet_index
-        if str(item.get("packet_id", "")).strip()
+        str(item.get("packet_id", "")) for item in packet_index if str(item.get("packet_id", "")).strip()
     }
     valid_reference_ids = valid_evidence_ids | valid_packet_ids
     packet_agents_by_step = {
@@ -599,11 +574,7 @@ async def analyze_winning_subagents(
         step_claims = (
             list(creative_military_value_handoff()["claims"])
             if quality_contract and index in {3, 4}
-            else (
-                military_claims_for_steps([index])
-                if quality_contract and index <= 5
-                else []
-            )
+            else (military_claims_for_steps([index]) if quality_contract and index <= 5 else [])
         )
         if quality_contract:
             evidence_rows = (
@@ -616,9 +587,7 @@ async def analyze_winning_subagents(
                 )
             )
             selected_packets: list[Mapping[str, Any]] = []
-            step_packet_index = (
-                [] if index in {3, 4} else military_packet_refs_for_claims(step_claims)
-            )
+            step_packet_index = [] if index in {3, 4} else military_packet_refs_for_claims(step_claims)
         else:
             evidence_rows = _prioritized_evidence_index(
                 shared["evidence_index"],
@@ -629,8 +598,7 @@ async def analyze_winning_subagents(
             selected_packets = [
                 item
                 for item in shared["packets"]
-                if isinstance(item, Mapping)
-                and str(item.get("agent_id", "")) in allowed_agents
+                if isinstance(item, Mapping) and str(item.get("agent_id", "")) in allowed_agents
             ]
             step_packet_index = packet_index
         context = {
@@ -662,18 +630,12 @@ async def analyze_winning_subagents(
                 if quality_contract
                 else _compact_prompt_value(
                     selected_packets,
-                    max_string_chars=1200
-                    if case_projection
-                    else (420 if index in {1, 2} else 280),
-                    max_list_items=14
-                    if case_projection
-                    else (6 if index in {1, 2} else 4),
+                    max_string_chars=1200 if case_projection else (420 if index in {1, 2} else 280),
+                    max_list_items=14 if case_projection else (6 if index in {1, 2} else 4),
                 )
             ),
             "military_value_handoff": (
-                {"claims": step_claims}
-                if quality_contract and index in {3, 4} and step_claims
-                else {}
+                {"claims": step_claims} if quality_contract and index in {3, 4} and step_claims else {}
             ),
             "secondary_cross_agent_constraints": (
                 _compact_prompt_value(
@@ -699,11 +661,7 @@ async def analyze_winning_subagents(
                 max_list_items=len(evidence_rows),
             ),
             "discovery_convergence": _compact_prompt_value(
-                (
-                    shared.get("discovery_convergence", {})
-                    if not aggressive_compaction and index in {1, 2}
-                    else {}
-                ),
+                (shared.get("discovery_convergence", {}) if not aggressive_compaction and index in {1, 2} else {}),
                 max_string_chars=260 if aggressive_compaction else 420,
                 max_list_items=3 if aggressive_compaction else 6,
             ),
@@ -728,9 +686,7 @@ async def analyze_winning_subagents(
             if selected_seed_context:
                 context["disruptive_seed_context"] = selected_seed_context
         if index <= 5:
-            context["military_divergence_contract"] = (
-                _winning_military_divergence_contract(index)
-            )
+            context["military_divergence_contract"] = _winning_military_divergence_contract(index)
         if not quality_contract:
             context.update(
                 {
@@ -740,20 +696,14 @@ async def analyze_winning_subagents(
                 }
             )
         elif index in {1, 2} and shared.get("coverage"):
-            context["coverage"] = _compact_prompt_value(
-                shared["coverage"], max_string_chars=180, max_list_items=3
-            )
+            context["coverage"] = _compact_prompt_value(shared["coverage"], max_string_chars=180, max_list_items=3)
         recall_increment = {
             "new_evidence_ids": list(shared.get("new_evidence_ids", []))[:12],
             "new_packet_ids": list(shared.get("new_packet_ids", []))[:6],
         }
         if any(recall_increment.values()):
             context["recall_increment"] = recall_increment
-        return {
-            key: value
-            for key, value in context.items()
-            if value not in (None, "", [], {})
-        }
+        return {key: value for key, value in context.items() if value not in (None, "", [], {})}
 
     def compact_for_prompt(
         value: Any,
@@ -866,15 +816,11 @@ async def analyze_winning_subagents(
                     "agent_instance_id": str(item.get("agent_instance_id", "")),
                     "hypothesis_id": str(item.get("hypothesis_id", "")),
                     "merge_target": str(item.get("merge_target", "")),
-                    "findings": list(result.get("findings", []))[
+                    "findings": list(result.get("findings", []))[: (2 if aggressive_compaction else 4)],
+                    "contribution_to_steps": list(result.get("contribution_to_steps", []))[
                         : (2 if aggressive_compaction else 4)
                     ],
-                    "contribution_to_steps": list(
-                        result.get("contribution_to_steps", [])
-                    )[: (2 if aggressive_compaction else 4)],
-                    "evidence_refs": list(result.get("evidence_refs", []))[
-                        : (4 if aggressive_compaction else 8)
-                    ],
+                    "evidence_refs": list(result.get("evidence_refs", []))[: (4 if aggressive_compaction else 8)],
                     "open_questions": list(result.get("open_questions", []))[:1],
                     "confidence": result.get("confidence"),
                 }
@@ -904,22 +850,16 @@ async def analyze_winning_subagents(
         cleaned: dict[str, Any] = {}
         removed_refs: list[str] = []
         for key, item in value.items():
-            if key in {"evidence_refs", "direct_evidence_refs"} and isinstance(
-                item, list
-            ):
+            if key in {"evidence_refs", "direct_evidence_refs"} and isinstance(item, list):
                 accepted = [str(ref) for ref in item if str(ref) in valid_reference_ids]
-                removed_refs.extend(
-                    str(ref) for ref in item if str(ref) not in valid_reference_ids
-                )
+                removed_refs.extend(str(ref) for ref in item if str(ref) not in valid_reference_ids)
                 cleaned[key] = list(dict.fromkeys(accepted))
             else:
                 cleaned[str(key)] = sanitize_references(item)
         if removed_refs and "derived_from" in cleaned:
             existing = cleaned.get("derived_from", [])
             existing_rows = list(existing) if isinstance(existing, list) else []
-            cleaned["derived_from"] = list(
-                dict.fromkeys([*map(str, existing_rows), *removed_refs])
-            )
+            cleaned["derived_from"] = list(dict.fromkeys([*map(str, existing_rows), *removed_refs]))
         return cleaned
 
     primary_branch = str(
@@ -934,9 +874,7 @@ async def analyze_winning_subagents(
     branch_product_schema = _branch_product_output_schema(primary_branch)
 
     query_led_combat_rule = _winning_prompt(
-        "legacy_workflow.evidence_closed_rule"
-        if shared["evidence_closed"]
-        else "legacy_workflow.query_led_rule"
+        "legacy_workflow.evidence_closed_rule" if shared["evidence_closed"] else "legacy_workflow.query_led_rule"
     )
     equipment_theme_rule = _query_led_combat_equipment_theme_instruction(
         str(shared.get("topic", "")),
@@ -995,7 +933,8 @@ async def analyze_winning_subagents(
                 "legacy_workflow.s4_system",
                 query_rule=query_led_combat_rule,
                 theme_rule=equipment_theme_rule + SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION,
-            ),
+            )
+            + candidate_count_instruction,
             {
                 "capability_mapping": ["string"],
                 "dotmlpf_matrix": [
@@ -1047,7 +986,8 @@ async def analyze_winning_subagents(
                 "legacy_workflow.s5_system",
                 query_rule=query_led_combat_rule,
                 theme_rule=equipment_theme_rule,
-            ),
+            )
+            + candidate_count_instruction,
             {
                 "gap_assessment": [
                     {
@@ -1104,7 +1044,8 @@ async def analyze_winning_subagents(
                 theme_rule=equipment_theme_rule,
             )
             + "\n"
-            + _s6_markdown_authoring_contract(),
+            + _s6_markdown_authoring_contract()
+            + candidate_count_instruction,
             {
                 "concept_directions": [
                     {
@@ -1162,9 +1103,7 @@ async def analyze_winning_subagents(
                         "development_path": "近期现役武器改装—中期无人/导弹/弹药样机或型号研制—体系集成与实弹/对抗验证闸门",
                         "future_trigger": "3至10年内使该方向变得必要或可行的威胁/技术/体系触发条件",
                         "adversary_adaptation": "对手可能采取的反适应及本方向的再对抗要求",
-                        "validation_plan": [
-                            "前瞻方向的可证伪验证、判退或淘汰条件；暂缺可显式标为后续补全"
-                        ],
+                        "validation_plan": ["前瞻方向的可证伪验证、判退或淘汰条件；暂缺可显式标为后续补全"],
                         "query_relevance": "必填：该装备方向为何与当前query的任务对象、作战阶段、威胁压力和直接作战效果契合",
                         "baseline_system": "所有方向必填：优先写证据支持的公开型号/装备族谱及当前能力基线；证据不足时明确保留类别级，不得虚构型号",
                         "capability_gap": "所有方向必填：该装备对象在当前query下独立、具体且不可复用的能力差距",
@@ -1212,9 +1151,7 @@ async def analyze_winning_subagents(
         agent_id, system, schema = steps[1]
         steps[1] = (
             agent_id,
-            system
-            + " "
-            + _winning_prompt("legacy_workflow.branch_a_tactic_suffix"),
+            system + " " + _winning_prompt("legacy_workflow.branch_a_tactic_suffix"),
             {
                 **schema,
                 "existing_tactic_baseline": ["string"],
@@ -1234,9 +1171,7 @@ async def analyze_winning_subagents(
         agent_id, system, schema = steps[2]
         steps[2] = (
             agent_id,
-            system
-            + " "
-            + _winning_prompt("legacy_workflow.branch_a_pressure_test_suffix"),
+            system + " " + _winning_prompt("legacy_workflow.branch_a_pressure_test_suffix"),
             {
                 **schema,
                 "pressure_test_matrix": [
@@ -1323,15 +1258,11 @@ async def analyze_winning_subagents(
                 3: "兼顾威胁扩散、任务保护和可控反制。",
                 4: "保留法律伦理与军地协同边界。",
             },
-        }.get(primary_branch, {}).get(
-            index, "按当前分支合同完成本步骤，不扩展无关分析。"
-        )
+        }.get(primary_branch, {}).get(index, "按当前分支合同完成本步骤，不扩展无关分析。")
         return {
             **base,
             "branch_focus": branch_focus,
-            "military_divergence_contract": _winning_military_divergence_contract(
-                index
-            ),
+            "military_divergence_contract": _winning_military_divergence_contract(index),
             "quality_gate": "事实/推断/假设分离；结论绑定证据或上游引用；保留反证、置信度和失效边界。",
         }
 
@@ -1343,9 +1274,7 @@ async def analyze_winning_subagents(
         # other profiles, but dynamic v2 must still author the deliverable
         # cards before the final gate can judge them.
         step_modes[6] = "deep"
-    active_steps = [
-        index for index in range(1, len(steps) + 1) if step_modes[index] != "skip"
-    ]
+    active_steps = [index for index in range(1, len(steps) + 1) if step_modes[index] != "skip"]
     requested_resume_steps: list[int] = []
     for item in shared.get("resume_steps", []):
         try:
@@ -1402,6 +1331,7 @@ async def analyze_winning_subagents(
         if isinstance(prior_winning_analysis, Mapping)
         else {}
     )
+    accumulated["candidate_count_contract"] = dict(candidate_count_contract)
     all_assumptions: list[str] = []
     all_open_questions: list[str] = []
     runs: list[dict[str, Any]] = []
@@ -1419,8 +1349,7 @@ async def analyze_winning_subagents(
     blueprint = shared.get("discovery_blueprint", {})
     swarm_policy = (
         blueprint.get("winning_swarm_policy", {})
-        if isinstance(blueprint, Mapping)
-        and isinstance(blueprint.get("winning_swarm_policy", {}), Mapping)
+        if isinstance(blueprint, Mapping) and isinstance(blueprint.get("winning_swarm_policy", {}), Mapping)
         else {}
     )
     if winning_mode.dynamic_swarm:
@@ -1437,20 +1366,17 @@ async def analyze_winning_subagents(
     # general GPT/Kimi policy untouched, but apply a bounded, configurable
     # ceiling for DeepSeek.  The effective value is persisted in the policy
     # snapshot and therefore remains visible in the run trace.
-    provider_id = str(
-        getattr(host.provider, "provider_id", "")
-        or getattr(host.provider, "provider_name", "")
-        or ""
-    ).strip().lower()
-    is_deepseek_codex = (
-        getattr(host, "provider_kind", "") == "codex_cli"
-        and ("deepseek" in provider_id or "deepseek" in str(getattr(host.provider, "model", "")).lower())
+    provider_id = (
+        str(getattr(host.provider, "provider_id", "") or getattr(host.provider, "provider_name", "") or "")
+        .strip()
+        .lower()
+    )
+    is_deepseek_codex = getattr(host, "provider_kind", "") == "codex_cli" and (
+        "deepseek" in provider_id or "deepseek" in str(getattr(host.provider, "model", "")).lower()
     )
     if is_deepseek_codex:
         try:
-            configured_limit = int(
-                os.environ.get("EQUIPMENT_DR_DEEPSEEK_SWARM_CONCURRENCY", "3")
-            )
+            configured_limit = int(os.environ.get("EQUIPMENT_DR_DEEPSEEK_SWARM_CONCURRENCY", "3"))
         except ValueError:
             configured_limit = 3
         deepseek_limit = max(1, min(4, configured_limit))
@@ -1472,29 +1398,19 @@ async def analyze_winning_subagents(
     swarm_enabled = initial_flow == "quality_swarm"
     dynamic_specs = (
         list(blueprint.get("dynamic_subagents", []))
-        if isinstance(blueprint, Mapping)
-        and isinstance(blueprint.get("dynamic_subagents", []), list)
+        if isinstance(blueprint, Mapping) and isinstance(blueprint.get("dynamic_subagents", []), list)
         else []
     )[: (12 if (swarm_enabled or dynamic_swarm_enabled) else 3)]
 
     async def run_dynamic_specialist(spec: Mapping[str, Any]) -> dict[str, Any]:
         instance_id = str(spec.get("agent_instance_id", "dynamic-specialist"))
         hypothesis_id = str(spec.get("hypothesis_id", "")).strip() or (
-            "hypothesis-dynamic-"
-            + sha256(
-                f"{instance_id}:{spec.get('merge_target', 'S3')}".encode("utf-8")
-            ).hexdigest()[:12]
+            "hypothesis-dynamic-" + sha256(f"{instance_id}:{spec.get('merge_target', 'S3')}".encode()).hexdigest()[:12]
         )
         dynamic_steps = [
-            int(item)
-            for item in spec.get("contribution_to_steps", [])
-            if str(item).isdigit() and 1 <= int(item) <= 5
+            int(item) for item in spec.get("contribution_to_steps", []) if str(item).isdigit() and 1 <= int(item) <= 5
         ]
-        dynamic_claims = (
-            military_claims_for_steps(dynamic_steps or [3, 4, 5])
-            if quality_contract
-            else []
-        )
+        dynamic_claims = military_claims_for_steps(dynamic_steps or [3, 4, 5]) if quality_contract else []
         dynamic_evidence = (
             evidence_for_claims(dynamic_claims, limit=10)
             if quality_contract
@@ -1519,9 +1435,7 @@ async def analyze_winning_subagents(
                         max_list_items=10,
                     ),
                     "packet_index": _compact_prompt_value(
-                        military_packet_refs_for_claims(dynamic_claims)
-                        if quality_contract
-                        else packet_index,
+                        military_packet_refs_for_claims(dynamic_claims) if quality_contract else packet_index,
                         max_string_chars=320,
                         max_list_items=8,
                     ),
@@ -1544,8 +1458,7 @@ async def analyze_winning_subagents(
                     "valid_evidence_ids": [
                         str(item.get("evidence_id", ""))
                         for item in dynamic_evidence
-                        if isinstance(item, Mapping)
-                        and str(item.get("evidence_id", "")).strip()
+                        if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
                     ],
                 },
                 {
@@ -1572,9 +1485,7 @@ async def analyze_winning_subagents(
         reported_target = str(result.get("merge_target", ""))
         declared_target = str(spec.get("merge_target", "S3"))
         if reported_target and reported_target != declared_target:
-            raise ValueError(
-                f"{instance_id} crossed merge target {declared_target} -> {reported_target}"
-            )
+            raise ValueError(f"{instance_id} crossed merge target {declared_target} -> {reported_target}")
         result = sanitize_references(result)
         result["merge_target"] = declared_target
         return {
@@ -1599,9 +1510,7 @@ async def analyze_winning_subagents(
     ):
         try:
             state.dynamic_outputs = list(
-                await asyncio.gather(
-                    *(run_dynamic_specialist(spec) for spec in dynamic_specs)
-                )
+                await asyncio.gather(*(run_dynamic_specialist(spec) for spec in dynamic_specs))
             )
         except (RuntimeError, TimeoutError) as exc:
             if not _is_harness_budget_error(exc):
@@ -1626,20 +1535,14 @@ async def analyze_winning_subagents(
                     "status": "completed",
                 }
             )
-    elif (
-        dynamic_specs
-        and not (swarm_enabled or dynamic_swarm_enabled)
-        and not requested_resume_steps
-    ):
+    elif dynamic_specs and not (swarm_enabled or dynamic_swarm_enabled) and not requested_resume_steps:
         accumulated["dynamic_specialists_budget_skipped"] = True
         loop_trace.append(
             {
                 "loop": "dynamic",
                 "event": "deadline_skip",
                 "passed": True,
-                "issues": [
-                    "运行已进入截止收敛区间，跳过可选动态专用分析，保留主链证据。"
-                ],
+                "issues": ["运行已进入截止收敛区间，跳过可选动态专用分析，保留主链证据。"],
             }
         )
 
@@ -1710,9 +1613,7 @@ async def analyze_winning_subagents(
                 # as the quality lane. The spine freezes identity and
                 # mechanism; independent columns then finish concurrently
                 # with their own responsibilities and output budgets.
-                True
-                if dynamic_s6_authoring
-                else s6_parallel_authoring_only
+                True if dynamic_s6_authoring else s6_parallel_authoring_only
             ),
             emit_swarm_event=emit_swarm_event,
             host=host,
@@ -1800,9 +1701,7 @@ async def analyze_winning_subagents(
                 for key, value in schema.items()
             }
             directions = result.get("concept_directions", [])
-            if not result.get("capability_image_drafts") and isinstance(
-                directions, list
-            ):
+            if not result.get("capability_image_drafts") and isinstance(directions, list):
                 result["capability_image_drafts"] = [
                     str(item.get("capability_outcome") or item.get("name") or "")
                     for item in directions
@@ -1824,9 +1723,7 @@ async def analyze_winning_subagents(
                 if key in prior_step_outputs
             }
             if "s4_concept_directions" in prior_step_outputs:
-                result["concept_directions"] = prior_step_outputs[
-                    "s4_concept_directions"
-                ]
+                result["concept_directions"] = prior_step_outputs["s4_concept_directions"]
             prior_node = prior_step_outputs.get("reasoning_nodes", {}).get("4")
             if isinstance(prior_node, Mapping):
                 result["reasoning_node"] = dict(prior_node)
@@ -1835,10 +1732,7 @@ async def analyze_winning_subagents(
         if s6_parallel_authoring_only:
             s6_targeted_repair = False
         reuse_s6_without_model = (
-            index == 6
-            and middle_cycle > 1
-            and bool(result)
-            and (s6_model_repair_used or s6_parallel_authoring_only)
+            index == 6 and middle_cycle > 1 and bool(result) and (s6_model_repair_used or s6_parallel_authoring_only)
         )
         if reuse_s6_without_model:
             s6_targeted_repair = False
@@ -1857,16 +1751,18 @@ async def analyze_winning_subagents(
             # length, keyword, confidence, repetition and similarity checks
             # must never buy a second model call or enter the middle loop.
             max_inner_iterations = 1
+        elif index == 4 and middle_cycle == 1 and explicit_candidate_target and not deadline_pressure:
+            # An explicit user portfolio size is a delivery contract, not a
+            # default quota. Give S4 one focused self-repair turn even when
+            # optional model critics are disabled; this is cheaper and more
+            # reliable than letting an empty S4 handoff reach S6.
+            max_inner_iterations = 2
         elif middle_cycle == 1 and model_loop_critics and not deadline_pressure:
             max_inner_iterations = 2
         else:
             max_inner_iterations = 1
         for inner_iteration in range(1, max_inner_iterations + 1):
-            if (
-                inner_iteration > 1
-                and index != 6
-                and host._deadline_state(priority="critical").get("mode") != "normal"
-            ):
+            if inner_iteration > 1 and index != 6 and host._deadline_state(priority="critical").get("mode") != "normal":
                 loop_trace.append(
                     {
                         "loop": "inner",
@@ -1876,9 +1772,7 @@ async def analyze_winning_subagents(
                         "iteration": inner_iteration,
                         "event": "deadline_skip",
                         "passed": False,
-                        "issues": [
-                            "进入截止收敛区间，停止第二次模型修复并保留首次有效结果。"
-                        ],
+                        "issues": ["进入截止收敛区间，停止第二次模型修复并保留首次有效结果。"],
                         "recommended_action": "stop",
                     }
                 )
@@ -1890,9 +1784,7 @@ async def analyze_winning_subagents(
                     # rebuild the legacy portfolio/evidence contract here;
                     # that contract was the main source of prompt bloat.
                     dynamic_portfolio = (
-                        accumulated.get("winning_swarm", {}).get(
-                            "final_equipment_portfolio", []
-                        )
+                        accumulated.get("winning_swarm", {}).get("final_equipment_portfolio", [])
                         if isinstance(accumulated.get("winning_swarm", {}), Mapping)
                         else []
                     )
@@ -1900,14 +1792,10 @@ async def analyze_winning_subagents(
                         dynamic_portfolio = accumulated.get("concept_directions", [])
                     s6_handoff = {
                         "selected_equipment_portfolio": [
-                            _minimal_s6_card_handoff(item)
-                            for item in dynamic_portfolio
-                            if isinstance(item, Mapping)
+                            _minimal_s6_card_handoff(item) for item in dynamic_portfolio if isinstance(item, Mapping)
                         ],
                         "s6_card_capacity": min(12, len(dynamic_portfolio) or 1),
-                        "s6_parallelism": _bounded_s6_parallelism(
-                            host._runtime_budgets
-                        ),
+                        "s6_parallelism": _bounded_s6_parallelism(host._runtime_budgets),
                         "handoff_mode": "dynamic_s5_decision_spine",
                     }
                 else:
@@ -1922,13 +1810,10 @@ async def analyze_winning_subagents(
                     {
                         str(item.get("evidence_id", ""))
                         for item in s6_handoff.get("public_evidence", [])
-                        if isinstance(item, Mapping)
-                        and str(item.get("evidence_id", "")).strip()
+                        if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
                     }
                 )
-                if resume_s6_checkpoint and not isinstance(
-                    result.get("reasoning_node"), Mapping
-                ):
+                if resume_s6_checkpoint and not isinstance(result.get("reasoning_node"), Mapping):
                     result["reasoning_node"] = {}
                 if resume_s6_checkpoint:
                     reasoning_node = dict(result.get("reasoning_node", {}))
@@ -1939,11 +1824,7 @@ async def analyze_winning_subagents(
                     reasoning_node["evidence_refs"] = list(
                         dict.fromkeys(
                             [
-                                *[
-                                    str(item)
-                                    for item in reasoning_node.get("evidence_refs", [])
-                                    if str(item).strip()
-                                ],
+                                *[str(item) for item in reasoning_node.get("evidence_refs", []) if str(item).strip()],
                                 *s6_valid_evidence_ids[:4],
                             ]
                         )
@@ -1978,6 +1859,7 @@ async def analyze_winning_subagents(
                     "capability_synthesis_handoff": s6_handoff,
                     "first_pass_quality_contract": s6_first_pass_contract,
                     "valid_evidence_ids": s6_valid_evidence_ids,
+                    "candidate_count_contract": candidate_count_contract,
                 }
                 targeted_feedback = _targeted_expert_feedback(
                     shared.get("expert_review_feedback", []),
@@ -1996,12 +1878,12 @@ async def analyze_winning_subagents(
                 )
                 step_input = {
                     **shared_step_context,
+                    "candidate_count_contract": candidate_count_contract,
                     "valid_evidence_ids": sorted(
                         {
                             str(item.get("evidence_id", ""))
                             for item in shared_step_context.get("evidence_index", [])
-                            if isinstance(item, Mapping)
-                            and str(item.get("evidence_id", "")).strip()
+                            if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
                         }
                         if quality_contract
                         else valid_evidence_ids
@@ -2014,20 +1896,24 @@ async def analyze_winning_subagents(
                         "execution_mode": execution_mode,
                     },
                 }
+                if index == 4 and inner_iteration > 1:
+                    step_input["current_candidate_directions"] = compact_for_prompt(
+                        result.get("concept_directions", []),
+                        max_string_chars=520,
+                        max_list_items=max(2, explicit_candidate_target),
+                    )
                 if index in {3, 4} and not (index == 4 and s4_targeted_repair):
-                    step_input["random_naming_style_assignment"] = (
-                        _s3_s4_naming_assignment(
-                            "|".join(
-                                (
-                                    str(shared.get("run_id", "")),
-                                    str(shared.get("topic", "")),
-                                    agent_id,
-                                    str(middle_cycle),
-                                    str(inner_iteration),
-                                )
-                            ),
-                            count=6,
-                        )
+                    step_input["random_naming_style_assignment"] = _s3_s4_naming_assignment(
+                        "|".join(
+                            (
+                                str(shared.get("run_id", "")),
+                                str(shared.get("topic", "")),
+                                agent_id,
+                                str(middle_cycle),
+                                str(inner_iteration),
+                            )
+                        ),
+                        count=6,
                     )
             if reuse_s6_without_model:
                 # A previous inner iteration already spent the one allowed
@@ -2035,11 +1921,7 @@ async def analyze_winning_subagents(
                 # result against the final gate, but never pay for another
                 # repair or full regeneration in a later middle cycle.
                 pass
-            elif (
-                resume_s6_checkpoint
-                and inner_iteration == 1
-                and not s6_parallel_authoring_only
-            ):
+            elif resume_s6_checkpoint and inner_iteration == 1 and not s6_parallel_authoring_only:
                 # The checkpoint is the first-pass candidate. Its
                 # deterministic review below decides the exact per-card
                 # repair targets without another portfolio-planning call.
@@ -2078,8 +1960,7 @@ async def analyze_winning_subagents(
                     middle_cycle == 1
                     and inner_iteration > 1
                     and bool(result)
-                    and host.provider.__class__.__module__
-                    == "equipment_deep_research.providers.codex"
+                    and host.provider.__class__.__module__ == "equipment_deep_research.providers.codex"
                 )
             ):
                 repair_targets = _s6_repair_targets(result, critic_feedback)
@@ -2188,19 +2069,11 @@ async def analyze_winning_subagents(
                         *(repair_target_card(target) for target in target_cards),
                         return_exceptions=True,
                     )
-                    repair = {
-                        "direction_repairs": [
-                            item
-                            for item in repair_outcomes
-                            if isinstance(item, Mapping)
-                        ]
-                    }
+                    repair = {"direction_repairs": [item for item in repair_outcomes if isinstance(item, Mapping)]}
                 else:
                     text = await host._run_core_json(
                         agent_id,
-                        repair_prompt
-                        + " "
-                        + _winning_prompt("legacy_workflow.s6_multi_repair_suffix"),
+                        repair_prompt + " " + _winning_prompt("legacy_workflow.s6_multi_repair_suffix"),
                         {
                             "query": shared["topic"],
                             "branch": primary_branch,
@@ -2208,9 +2081,7 @@ async def analyze_winning_subagents(
                             "capability_synthesis_handoff": s6_handoff,
                             "first_pass_quality_contract": s6_first_pass_contract,
                             "repair_targets": target_cards,
-                            "capability_image_drafts": result.get(
-                                "capability_image_drafts", []
-                            ),
+                            "capability_image_drafts": result.get("capability_image_drafts", []),
                             "protected_cards": protected_cards,
                             "repair_issues": critic_feedback,
                             "valid_evidence_ids": step_input["valid_evidence_ids"],
@@ -2251,17 +2122,10 @@ async def analyze_winning_subagents(
                     text = await host._run_core_json(
                         agent_id,
                         system
-                        + (
-                            " " + _winning_prompt("legacy_workflow.first_pass_suffix")
-                            if index == 6
-                            else ""
-                        )
-                        + (
-                            " " + _winning_prompt("legacy_workflow.naming_suffix")
-                            if index in {3, 4}
-                            else ""
-                        )
-                        + " " + _winning_prompt("legacy_workflow.reasoning_suffix")
+                        + (" " + _winning_prompt("legacy_workflow.first_pass_suffix") if index == 6 else "")
+                        + (" " + _winning_prompt("legacy_workflow.naming_suffix") if index in {3, 4} else "")
+                        + " "
+                        + _winning_prompt("legacy_workflow.reasoning_suffix")
                         + " "
                         + _winning_prompt(
                             "legacy_workflow.execution_mode_suffix",
@@ -2299,9 +2163,7 @@ async def analyze_winning_subagents(
             result = sanitize_references(result)
             if index in {4, 6}:
                 effect_chain_rows = projected_prior.get("effect_chain", [])
-                effect_chain_count = (
-                    len(effect_chain_rows) if isinstance(effect_chain_rows, list) else 0
-                )
+                effect_chain_count = len(effect_chain_rows) if isinstance(effect_chain_rows, list) else 0
                 result = _normalize_effect_chain_references(
                     result,
                     effect_chain_count,
@@ -2314,18 +2176,12 @@ async def analyze_winning_subagents(
                 result = _normalize_concept_direction_priorities(result)
             deterministic_quality_issues: list[str] = []
             deterministic_quality_warnings: list[str] = []
-            if (
-                index == 6
-                and host.provider.__class__.__module__
-                != "equipment_deep_research.providers.fake"
-            ):
+            if index == 6 and host.provider.__class__.__module__ != "equipment_deep_research.providers.fake":
                 deterministic_quality_warnings = _capability_direction_quality_issues(
                     result,
                     handoff=s6_handoff,
                 )
-                deterministic_quality_issues = _s6_delivery_blocking_issues(
-                    deterministic_quality_warnings
-                )
+                deterministic_quality_issues = _s6_delivery_blocking_issues(deterministic_quality_warnings)
                 if deterministic_quality_issues and quality_contract:
                     lightweight_repair = _s6_can_use_lightweight_card_repair(
                         result,
@@ -2369,19 +2225,26 @@ async def analyze_winning_subagents(
                     "review_mode": "s6_advisory_diagnostics_only",
                     "warnings": deterministic_quality_warnings[:8],
                 }
-            elif (
-                not model_loop_critics
-                or fast_profile
-                or deadline_pressure
-                or execution_mode == "light"
-                or index == 4
-            ):
+            elif not model_loop_critics or fast_profile or deadline_pressure or execution_mode == "light" or index == 4:
                 missing_fields = [key for key in schema if key not in result]
-                local_issues = (
-                    [f"缺少结构化字段：{', '.join(missing_fields)}"]
-                    if missing_fields
-                    else []
-                )
+                local_issues = [f"缺少结构化字段：{', '.join(missing_fields)}"] if missing_fields else []
+                if index == 4 and explicit_candidate_target:
+                    concept_directions = result.get("concept_directions", [])
+                    direction_count = len(concept_directions) if isinstance(concept_directions, list) else 0
+                    minimum_count = int(candidate_count_contract["minimum"])
+                    maximum_count = int(candidate_count_contract["maximum"])
+                    if direction_count < minimum_count:
+                        local_issues.append(
+                            "用户明确要求至少"
+                            f"{minimum_count}个候选，"
+                            f"S4仅形成{direction_count}个；须补足不同装备身份或明确证据缺口"
+                        )
+                    elif direction_count > maximum_count:
+                        local_issues.append(
+                            "用户明确要求至多"
+                            f"{maximum_count}个候选，S4形成{direction_count}个；"
+                            "须按任务价值、创新性、证据和可实现性收敛，不得任意截断"
+                        )
                 try:
                     confidence = float(result.get("confidence", 0.0) or 0.0)
                 except (TypeError, ValueError):
@@ -2392,33 +2255,26 @@ async def analyze_winning_subagents(
                 if isinstance(raw_node, Mapping):
                     refs = raw_node.get("evidence_refs", [])
                     if valid_reference_ids and not any(str(item) for item in refs):
-                        local_issues.append(
-                            "reasoning_node缺少有效证据或上游Packet引用"
-                        )
+                        local_issues.append("reasoning_node缺少有效证据或上游Packet引用")
                 review = {
                     "passed": not local_issues,
                     "issues": local_issues,
                     "retry_guidance": [
-                        "仅修复被指出的字段、证据承接或置信度问题，保留有效结论。"
-                    ]
+                        *local_issues,
+                        "仅修复被指出的字段、证据承接或置信度问题，保留有效结论。",
+                    ][:6]
                     if local_issues
                     else [],
                     "recommended_action": "retry" if local_issues else "pass",
                     "backtrack_to_step": 0,
                     "recall_target": "",
-                    "review_mode": (
-                        "harness_structured_gate"
-                        if index in {4, 6}
-                        else "harness_fast_gate"
-                    ),
+                    "review_mode": ("harness_structured_gate" if index in {4, 6} else "harness_fast_gate"),
                 }
             elif inner_iteration == max_inner_iterations:
                 missing_fields = [key for key in schema if key not in result]
                 review = {
                     "passed": not missing_fields,
-                    "issues": [f"重试结果仍缺少结构化字段：{', '.join(missing_fields)}"]
-                    if missing_fields
-                    else [],
+                    "issues": [f"重试结果仍缺少结构化字段：{', '.join(missing_fields)}"] if missing_fields else [],
                     "retry_guidance": [],
                     "recommended_action": ("pass" if not missing_fields else "stop"),
                     "backtrack_to_step": 0,
@@ -2443,9 +2299,7 @@ async def analyze_winning_subagents(
                             "prior_step_outputs": projected_prior,
                             "critic_feedback": critic_feedback,
                             "winning_step_plan": shared["winning_step_plan"],
-                            "contract_note": _winning_prompt(
-                                "legacy_workflow.step_critic_contract_note"
-                            ),
+                            "contract_note": _winning_prompt("legacy_workflow.step_critic_contract_note"),
                         },
                         "step_output": compact_for_prompt(
                             result,
@@ -2476,10 +2330,7 @@ async def analyze_winning_subagents(
                     ][:8],
                     "retry_guidance": deterministic_quality_issues[:6],
                     "recommended_action": (
-                        "stop"
-                        if s6_model_repair_used
-                        or inner_iteration >= max_inner_iterations
-                        else "retry"
+                        "stop" if s6_model_repair_used or inner_iteration >= max_inner_iterations else "retry"
                     ),
                 }
             final_review = dict(review)
@@ -2516,9 +2367,7 @@ async def analyze_winning_subagents(
             # 上下文重跑只会增加耗时并放大不一致，交由中循环统一处理。
             if recommended_action != "retry":
                 break
-            critic_feedback = [str(item) for item in review.get("retry_guidance", [])][
-                :6
-            ]
+            critic_feedback = [str(item) for item in review.get("retry_guidance", [])][:6]
             if index == 6:
                 s6_targeted_repair = False
         # S6 review findings are advisory. Candidate identity and semantic
@@ -2526,19 +2375,11 @@ async def analyze_winning_subagents(
         # request a bounded rewrite but must never convert a completed card
         # into a hard task failure.
         raw_reasoning_node = result.pop("reasoning_node", {})
-        reasoning_node = (
-            dict(raw_reasoning_node) if isinstance(raw_reasoning_node, Mapping) else {}
-        )
+        reasoning_node = dict(raw_reasoning_node) if isinstance(raw_reasoning_node, Mapping) else {}
         return {
             "result": result,
-            "assumptions": [
-                str(item) for item in result.get("assumptions", []) if str(item).strip()
-            ],
-            "open_questions": [
-                str(item)
-                for item in result.get("open_questions", [])
-                if str(item).strip()
-            ],
+            "assumptions": [str(item) for item in result.get("assumptions", []) if str(item).strip()],
+            "open_questions": [str(item) for item in result.get("open_questions", []) if str(item).strip()],
             "reasoning_node": reasoning_node,
             "run": {
                 "step": index,
@@ -2551,20 +2392,14 @@ async def analyze_winning_subagents(
                 "reasoning_node": reasoning_node,
                 "next_action": reasoning_node.get("next_action", {}),
                 "critic_action": str(final_review.get("recommended_action", "pass")),
-                "critic_issues": [
-                    str(item)
-                    for item in final_review.get("issues", [])
-                    if str(item).strip()
-                ][:4],
+                "critic_issues": [str(item) for item in final_review.get("issues", []) if str(item).strip()][:4],
                 "critic_recall_target": str(final_review.get("recall_target", "")),
                 "critic_backtrack_to_step": final_review.get("backtrack_to_step", 0),
             },
         }
 
     execution_contract = (
-        dict(shared.get("execution_contract", {}))
-        if isinstance(shared.get("execution_contract", {}), Mapping)
-        else {}
+        dict(shared.get("execution_contract", {})) if isinstance(shared.get("execution_contract", {}), Mapping) else {}
     )
     core_step_dependency_map = swarm_controller.core_dependencies_from_dag(
         execution_contract.get("logical_agent_dag", {})
@@ -2574,15 +2409,18 @@ async def analyze_winning_subagents(
     physical_cohorts: list[tuple[int, ...]] = []
     if aggressive_compaction:
         for raw_cohort in execution_contract.get("physical_cohorts", []):
-            if not isinstance(raw_cohort, Sequence) or isinstance(
-                raw_cohort, (str, bytes)
-            ):
+            if not isinstance(raw_cohort, Sequence) or isinstance(raw_cohort, (str, bytes)):
                 continue
-            cohort = tuple(
-                int(item)
-                for item in raw_cohort
-                if str(item).isdigit() and int(item) in range(1, 7)
-            )
+            cohort = tuple(int(item) for item in raw_cohort if str(item).isdigit() and int(item) in range(1, 7))
+            if explicit_candidate_target and set(cohort).intersection({3, 4, 5}):
+                # Compact S3-S5 cohorts are effective for open-ended
+                # exploration, but the runtime contract can group either
+                # S3/S4/S5 or the non-contiguous S3/S5 pair.  Both shapes let
+                # S5 run before the focused S4 count repair has been committed.
+                # Run every S3/S4/S5 stage as a dependency-ordered call for an
+                # explicit portfolio size so S4 gets its focused retry and S5
+                # consumes the repaired candidate set.
+                continue
             if len(cohort) >= 2:
                 physical_cohorts.append(cohort)
 
@@ -2636,9 +2474,7 @@ async def analyze_winning_subagents(
             }
             for index in indices
         ]
-        cohort_agents = set().union(
-            *(packet_agents_by_step[index] for index in indices)
-        )
+        cohort_agents = set().union(*(packet_agents_by_step[index] for index in indices))
         cohort_prior = prior_projection(indices[0], prior_step_outputs)
         creative_cohort = quality_contract and set(indices) <= {3, 4}
         cohort_claims = (
@@ -2648,11 +2484,7 @@ async def analyze_winning_subagents(
         )
         if quality_contract:
             cohort_packets: list[Mapping[str, Any]] = []
-            cohort_packet_index = (
-                []
-                if creative_cohort
-                else military_packet_refs_for_claims(cohort_claims)
-            )
+            cohort_packet_index = [] if creative_cohort else military_packet_refs_for_claims(cohort_claims)
             cohort_evidence = (
                 []
                 if creative_cohort
@@ -2666,8 +2498,7 @@ async def analyze_winning_subagents(
             cohort_packets = [
                 item
                 for item in shared.get("packets", [])
-                if isinstance(item, Mapping)
-                and str(item.get("agent_id", "")) in cohort_agents
+                if isinstance(item, Mapping) and str(item.get("agent_id", "")) in cohort_agents
             ]
             cohort_packet_index = packet_index
             cohort_evidence = _prioritized_evidence_index(
@@ -2677,27 +2508,18 @@ async def analyze_winning_subagents(
                 limit=12 if primary_branch_for_packets == "C" else 10,
             )
         cohort_valid_reference_ids = {
-            str(item.get("packet_id", ""))
-            for item in cohort_packet_index
-            if str(item.get("packet_id", ""))
-        } | {
-            str(item.get("evidence_id", ""))
-            for item in cohort_evidence
-            if str(item.get("evidence_id", ""))
-        }
+            str(item.get("packet_id", "")) for item in cohort_packet_index if str(item.get("packet_id", ""))
+        } | {str(item.get("evidence_id", "")) for item in cohort_evidence if str(item.get("evidence_id", ""))}
         cohort_input = {
             "topic": shared["topic"],
             "query": shared["topic"],
+            "candidate_count_contract": candidate_count_contract,
             "research_route": shared["research_route"],
             "execution_profile_id": shared["execution_profile_id"],
             "analysis_priority": analysis_priority_contract,
-            "discovery_blueprint": step_shared_context(indices[0]).get(
-                "discovery_blueprint", {}
-            ),
+            "discovery_blueprint": step_shared_context(indices[0]).get("discovery_blueprint", {}),
             "logical_contracts": logical_contracts,
-            "required_branch_products": list(
-                execution_contract.get("branch_products", [])
-            )[:10],
+            "required_branch_products": list(execution_contract.get("branch_products", []))[:10],
             "prior_step_outputs": (
                 cohort_prior
                 if quality_contract
@@ -2717,15 +2539,11 @@ async def analyze_winning_subagents(
                 if quality_contract
                 else _compact_prompt_value(
                     cohort_packets,
-                    max_string_chars=(
-                        1200 if primary_branch_for_packets == "C" else 520
-                    ),
+                    max_string_chars=(1200 if primary_branch_for_packets == "C" else 520),
                     max_list_items=(14 if primary_branch_for_packets == "C" else 8),
                 )
             ),
-            "military_value_handoff": (
-                {"claims": cohort_claims} if creative_cohort and cohort_claims else {}
-            ),
+            "military_value_handoff": ({"claims": cohort_claims} if creative_cohort and cohort_claims else {}),
             "secondary_cross_agent_constraints": (
                 _compact_prompt_value(
                     cohort_claims,
@@ -2741,9 +2559,7 @@ async def analyze_winning_subagents(
                     max_string_chars=360,
                     max_list_items=8,
                 )
-                if quality_contract
-                and primary_branch_for_packets == "C"
-                and 5 in indices
+                if quality_contract and primary_branch_for_packets == "C" and 5 in indices
                 else {}
             ),
             "evidence_index": _compact_prompt_value(
@@ -2751,18 +2567,12 @@ async def analyze_winning_subagents(
                 max_string_chars=240 if quality_contract else 320,
                 max_list_items=len(cohort_evidence) if quality_contract else 24,
             ),
-            "valid_reference_ids": sorted(
-                cohort_valid_reference_ids if quality_contract else valid_reference_ids
-            ),
+            "valid_reference_ids": sorted(cohort_valid_reference_ids if quality_contract else valid_reference_ids),
             "middle_cycle": middle_cycle,
             "repair_guidance": list(middle_feedback or [])[:8],
             "cohort_rule": (
                 _winning_prompt("legacy_workflow.cohort_review_suffix")
-                + (
-                    "\n" + _winning_prompt("legacy_workflow.cohort_compact_s1_s2")
-                    if set(indices) == {1, 2}
-                    else ""
-                )
+                + ("\n" + _winning_prompt("legacy_workflow.cohort_compact_s1_s2") if set(indices) == {1, 2} else "")
                 + (
                     "\n" + _winning_prompt("legacy_workflow.cohort_compact_s4_s5")
                     if {4, 5}.issubset(set(indices))
@@ -2817,13 +2627,18 @@ async def analyze_winning_subagents(
             except (TypeError, ValueError):
                 confidence = 0.0
             issues = [
-                *(
-                    [f"缺少结构化字段：{', '.join(missing_fields)}"]
-                    if missing_fields
-                    else []
-                ),
+                *([f"缺少结构化字段：{', '.join(missing_fields)}"] if missing_fields else []),
                 *(["步骤置信度低于0.65，需要残差复核"] if confidence < 0.65 else []),
             ]
+            if index == 4 and explicit_candidate_target:
+                directions = result.get("concept_directions", [])
+                direction_count = len(directions) if isinstance(directions, list) else 0
+                minimum_count = int(candidate_count_contract["minimum"])
+                maximum_count = int(candidate_count_contract["maximum"])
+                if not minimum_count <= direction_count <= maximum_count:
+                    issues.append(
+                        f"用户候选数量合同未满足：要求{minimum_count}至{maximum_count}个，S4形成{direction_count}个"
+                    )
             loop_trace.append(
                 {
                     "loop": "inner",
@@ -2842,16 +2657,8 @@ async def analyze_winning_subagents(
             outcomes.append(
                 {
                     "result": result,
-                    "assumptions": [
-                        str(item)
-                        for item in result.get("assumptions", [])
-                        if str(item).strip()
-                    ],
-                    "open_questions": [
-                        str(item)
-                        for item in result.get("open_questions", [])
-                        if str(item).strip()
-                    ],
+                    "assumptions": [str(item) for item in result.get("assumptions", []) if str(item).strip()],
+                    "open_questions": [str(item) for item in result.get("open_questions", []) if str(item).strip()],
                     "reasoning_node": reasoning_node,
                     "run": {
                         "step": index,
@@ -2874,27 +2681,19 @@ async def analyze_winning_subagents(
 
     async def run_tactic_validation_wave() -> None:
         concepts = accumulated.get("tactic_concepts", [])
-        concept_rows = [dict(item) for item in concepts if isinstance(item, Mapping)][
-            :3
-        ]
+        concept_rows = [dict(item) for item in concepts if isinstance(item, Mapping)][:3]
         if aggressive_compaction and len(concept_rows) == 3:
             validations = []
             for index, concept in enumerate(concept_rows, start=1):
                 tactic_id = str(concept.get("tactic_id") or f"T{index}")
-                failure_conditions = [
-                    str(item)
-                    for item in concept.get("failure_conditions", [])
-                    if str(item).strip()
-                ][:3]
+                failure_conditions = [str(item) for item in concept.get("failure_conditions", []) if str(item).strip()][
+                    :3
+                ]
                 evidence_refs = [
-                    str(item)
-                    for item in concept.get("evidence_refs", [])
-                    if str(item) in valid_reference_ids
+                    str(item) for item in concept.get("evidence_refs", []) if str(item) in valid_reference_ids
                 ][:6]
                 applicable_scenarios = [
-                    str(item)
-                    for item in concept.get("applicable_scenarios", [])
-                    if str(item).strip()
+                    str(item) for item in concept.get("applicable_scenarios", []) if str(item).strip()
                 ][:6]
                 validations.append(
                     {
@@ -2902,14 +2701,12 @@ async def analyze_winning_subagents(
                         "tactic_id": tactic_id,
                         "public_evidence": evidence_refs,
                         "feasibility": "medium",
-                        "counter_evidence": failure_conditions
-                        or ["缺少独立反证时不得上调为高可行性"],
+                        "counter_evidence": failure_conditions or ["缺少独立反证时不得上调为高可行性"],
                         "technical_boundaries": [
                             "强电磁、弱网、节点损耗与目标信息过期必须同时进入压力测试",
                             "无校准数据时只比较任务链闭合等级，不给精确效能百分比",
                         ],
-                        "failure_conditions": failure_conditions
-                        or ["关键任务链在代表性对抗条件下不能闭合"],
+                        "failure_conditions": failure_conditions or ["关键任务链在代表性对抗条件下不能闭合"],
                         "applicable_scenarios": applicable_scenarios,
                         "confidence": min(
                             0.76,
@@ -2966,8 +2763,7 @@ async def analyze_winning_subagents(
                 "scenario_packets": [
                     item
                     for item in shared.get("packets", [])
-                    if isinstance(item, Mapping)
-                    and item.get("agent_id") == "combat_scenario"
+                    if isinstance(item, Mapping) and item.get("agent_id") == "combat_scenario"
                 ],
                 "evidence_index": shared.get("evidence_index", []),
                 "valid_reference_ids": sorted(valid_reference_ids),
@@ -2992,9 +2788,7 @@ async def analyze_winning_subagents(
         )
         payload = _parse_json_object(text)
         validations = [
-            sanitize_references(dict(item))
-            for item in payload.get("validations", [])
-            if isinstance(item, Mapping)
+            sanitize_references(dict(item)) for item in payload.get("validations", []) if isinstance(item, Mapping)
         ][:3]
         accumulated["tactic_validation_results"] = validations
         accumulated["tactic_validation_tasks"] = [
@@ -3064,11 +2858,7 @@ async def analyze_winning_subagents(
                 if isinstance(normalized_nodes, Mapping):
                     reasoning_nodes.clear()
                     reasoning_nodes.update(
-                        {
-                            str(key): dict(value)
-                            for key, value in normalized_nodes.items()
-                            if isinstance(value, Mapping)
-                        }
+                        {str(key): dict(value) for key, value in normalized_nodes.items() if isinstance(value, Mapping)}
                     )
         accumulated.update(step_result)
         accumulated["reasoning_nodes"] = dict(reasoning_nodes)
@@ -3091,11 +2881,7 @@ async def analyze_winning_subagents(
         satisfied = {index for index in range(1, 7) if index not in selected}
         waves: list[tuple[int, ...]] = []
         while pending:
-            wave = tuple(
-                index
-                for index in pending
-                if all(dep in satisfied for dep in step_dependency_map[index])
-            )
+            wave = tuple(index for index in pending if all(dep in satisfied for dep in step_dependency_map[index]))
             if not wave:
                 wave = (pending[0],)
             waves.append(wave)
@@ -3180,9 +2966,7 @@ async def analyze_winning_subagents(
         if isinstance(exc, S6QualityError):
             raise
         deadline_state = host._deadline_state(priority="critical")
-        deadline_limited = (
-            _is_harness_budget_error(exc) or deadline_state.get("mode") != "normal"
-        )
+        deadline_limited = _is_harness_budget_error(exc) or deadline_state.get("mode") != "normal"
         if not deadline_limited:
             raise
         accumulated["winning_deadline_limited"] = True
@@ -3193,9 +2977,7 @@ async def analyze_winning_subagents(
                 "cycle": 1,
                 "event": "deadline_finalize",
                 "passed": True,
-                "issues": [
-                    "制胜主链到达收敛时限，保留已完成步骤并停止启动新的深度调用。"
-                ],
+                "issues": ["制胜主链到达收敛时限，保留已完成步骤并停止启动新的深度调用。"],
             }
         )
 
@@ -3207,20 +2989,14 @@ async def analyze_winning_subagents(
             "agent_id": steps[index - 1][0],
             "middle_cycle": 1,
             "execution_mode": (step_modes[index] if requested_resume_steps else "skip"),
-            "status": (
-                "reused_from_prior_analysis"
-                if requested_resume_steps
-                else "skipped_by_branch_blueprint"
-            ),
+            "status": ("reused_from_prior_analysis" if requested_resume_steps else "skipped_by_branch_blueprint"),
         }
         runs.append(skipped_row)
         host._emit_winning_progress(skipped_row)
 
     inner_failures = _latest_inner_loop_failures(loop_trace)
     failed_inner_steps = {
-        int(item.get("step", 0) or 0)
-        for item in inner_failures
-        if int(item.get("step", 0) or 0) in range(1, 7)
+        int(item.get("step", 0) or 0) for item in inner_failures if int(item.get("step", 0) or 0) in range(1, 7)
     }
     deadline_skip_round_critic = not host._optional_work_allowed(
         priority="normal",
@@ -3228,16 +3004,12 @@ async def analyze_winning_subagents(
     )
     exhausted_s6_repair = failed_inner_steps == {6} and s6_model_repair_used
     skip_round_critic = (
-        (not model_loop_critics and not inner_failures)
-        or deadline_skip_round_critic
-        or exhausted_s6_repair
+        (not model_loop_critics and not inner_failures) or deadline_skip_round_critic or exhausted_s6_repair
     )
     deterministic_round_review = {
         "passed": not inner_failures,
         "rerun_from_step": 0,
-        "issues": [
-            str(issue) for item in inner_failures for issue in item.get("issues", [])
-        ][:8],
+        "issues": [str(issue) for item in inner_failures for issue in item.get("issues", [])][:8],
         "affected_fields": [],
         "rerun_guidance": [],
         "rerun_steps": [],
@@ -3257,9 +3029,7 @@ async def analyze_winning_subagents(
                 "cycle": 1,
                 "event": "deadline_skip",
                 "passed": False,
-                "issues": [
-                    "剩余时间不足以启动可选中循环批判；保留最新步骤结果并标记受限。"
-                ],
+                "issues": ["剩余时间不足以启动可选中循环批判；保留最新步骤结果并标记受限。"],
             }
         )
     elif exhausted_s6_repair:
@@ -3271,9 +3041,7 @@ async def analyze_winning_subagents(
                 "cycle": 1,
                 "event": "repair_exhausted",
                 "passed": False,
-                "issues": [
-                    "S6已使用唯一卡片级模型修复，不再启动无新增证据的批判和回跑。"
-                ],
+                "issues": ["S6已使用唯一卡片级模型修复，不再启动无新增证据的批判和回跑。"],
             }
         )
     if not skip_round_critic:
@@ -3284,19 +3052,14 @@ async def analyze_winning_subagents(
                 {
                     "topic": shared["topic"],
                     "research_route": shared["research_route"],
-                    "discovery_blueprint": step_shared_context(6).get(
-                        "discovery_blueprint", {}
-                    ),
+                    "discovery_blueprint": step_shared_context(6).get("discovery_blueprint", {}),
                     "packet_index": (
-                        military_packet_refs_for_claims(military_value_claims)
-                        if quality_contract
-                        else packet_index
+                        military_packet_refs_for_claims(military_value_claims) if quality_contract else packet_index
                     ),
                     "valid_evidence_ids": [
                         str(item.get("evidence_id", ""))
                         for item in shared.get("evidence_index", [])
-                        if isinstance(item, Mapping)
-                        and str(item.get("evidence_id", "")).strip()
+                        if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
                     ],
                     "six_step_outputs": round_review_projection(accumulated),
                     "inner_critic_findings": [
@@ -3308,16 +3071,11 @@ async def analyze_winning_subagents(
                             "recall_target": item.get("recall_target", ""),
                         }
                         for item in loop_trace
-                        if item.get("loop") == "inner"
-                        and item.get("passed") is not True
+                        if item.get("loop") == "inner" and item.get("passed") is not True
                     ],
-                    "allowed_target_agent_ids": list(
-                        shared.get("selected_business_agent_ids", [])
-                    ),
+                    "allowed_target_agent_ids": list(shared.get("selected_business_agent_ids", [])),
                     "winning_step_plan": shared["winning_step_plan"],
-                    "review_contract": _winning_prompt(
-                        "legacy_workflow.round_critic_contract"
-                    ),
+                    "review_contract": _winning_prompt("legacy_workflow.round_critic_contract"),
                 },
                 {
                     "passed": "boolean",
@@ -3336,9 +3094,7 @@ async def analyze_winning_subagents(
                             "question": "single narrow evidence question",
                             "target_agent_id": "one allowed business agent id",
                             "affected_steps": ["1..6"],
-                            "source_preferences": [
-                                "primary or authoritative source type"
-                            ],
+                            "source_preferences": ["primary or authoritative source type"],
                             "reason": "why this evidence can change the conclusion",
                         }
                     ],
@@ -3356,10 +3112,7 @@ async def analyze_winning_subagents(
                     "cycle": 1,
                     "event": "budget_skip",
                     "passed": True,
-                    "issues": [
-                        "可选中循环模型批判因运行预算到达而跳过；"
-                        "已使用步骤内批判结果继续确定性门控。"
-                    ],
+                    "issues": ["可选中循环模型批判因运行预算到达而跳过；已使用步骤内批判结果继续确定性门控。"],
                 }
             )
     round_review = _parse_json_object(round_review_text)
@@ -3383,11 +3136,7 @@ async def analyze_winning_subagents(
     if rerun_from not in active_steps:
         rerun_from = 0
     requires_new_evidence = round_review.get("requires_new_evidence") is True
-    allowed_targets = {
-        str(item)
-        for item in shared.get("selected_business_agent_ids", [])
-        if str(item).strip()
-    }
+    allowed_targets = {str(item) for item in shared.get("selected_business_agent_ids", []) if str(item).strip()}
     targeted_requests: list[dict[str, Any]] = []
     if requires_new_evidence:
         for item in round_review.get("evidence_requests", []):
@@ -3411,9 +3160,7 @@ async def analyze_winning_subagents(
                     "target_agent_id": target_agent_id,
                     "affected_steps": affected_steps or [4, 5, 6],
                     "source_preferences": [
-                        str(value)
-                        for value in item.get("source_preferences", [])
-                        if str(value).strip()
+                        str(value) for value in item.get("source_preferences", []) if str(value).strip()
                     ][:3],
                     "reason": str(item.get("reason", "")).strip(),
                 }
@@ -3438,9 +3185,7 @@ async def analyze_winning_subagents(
                 "cycle": 2,
                 "event": "deadline_skip",
                 "passed": False,
-                "issues": [
-                    "中循环复核结束时已进入截止收敛区间，取消补证与回溯，保留最新检查点。"
-                ],
+                "issues": ["中循环复核结束时已进入截止收敛区间，取消补证与回溯，保留最新检查点。"],
             }
         )
     if targeted_requests:
@@ -3448,11 +3193,7 @@ async def analyze_winning_subagents(
         accumulated["targeted_evidence_requests"] = targeted_requests
         accumulated["suggested_resume_steps"] = sorted(
             {
-                *(
-                    step
-                    for request in targeted_requests
-                    for step in request["affected_steps"]
-                ),
+                *(step for request in targeted_requests for step in request["affected_steps"]),
                 6,
             }
         )
@@ -3467,18 +3208,14 @@ async def analyze_winning_subagents(
             if step in active_steps and step not in requested_steps:
                 requested_steps.append(step)
         failed_inner_steps = {
-            int(item.get("step", 0) or 0)
-            for item in inner_failures
-            if item.get("passed") is not True
+            int(item.get("step", 0) or 0) for item in inner_failures if item.get("passed") is not True
         }
         if failed_inner_steps == {6} and 6 in active_steps:
             # A bounded S6 repair must never drag the stable S4 mapping
             # back into another expensive model call. If the only failed
             # inner gate belongs to S6, the middle-cycle residual is S6.
             requested_steps = [6]
-        issue_text = " ".join(
-            str(item) for item in round_review.get("issues", [])
-        ).lower()
+        issue_text = " ".join(str(item) for item in round_review.get("issues", [])).lower()
         traceability_only = (
             bool(issue_text)
             and any(
@@ -3511,9 +3248,7 @@ async def analyze_winning_subagents(
             # again. Only include S4 when the backtrack genuinely begins
             # at or before the mapping layer.
             repair_candidates = (6,) if rerun_from >= 6 else (4, 6)
-            requested_steps = [
-                step for step in repair_candidates if step in active_steps
-            ]
+            requested_steps = [step for step in repair_candidates if step in active_steps]
         if not requested_steps:
             # 智能回溯：依据 critic 标注的受影响字段，只重跑真正受影响的
             # 下游步骤，而非机械重跑 rerun_from 之后的全部步骤。
@@ -3528,24 +3263,16 @@ async def analyze_winning_subagents(
                 ("dotmlpf_matrix", 4): {6},
                 ("gap_assessment", 5): {6},
             }
-            affected_fields = [
-                str(item)
-                for item in round_review.get("affected_fields", [])
-                if str(item).strip()
-            ]
+            affected_fields = [str(item) for item in round_review.get("affected_fields", []) if str(item).strip()]
             if affected_fields:
                 impacted: set[int] = {rerun_from}
                 for field in affected_fields:
                     impacted.add(rerun_from)
                     impacted.update(field_impact_map.get((field, rerun_from), set()))
-                requested_steps = sorted(
-                    index for index in active_steps if index in impacted
-                )
+                requested_steps = sorted(index for index in active_steps if index in impacted)
             if not requested_steps:
                 # 无字段信息时退回粗粒度：rerun_from 之后的全部激活步骤。
-                requested_steps = [
-                    index for index in active_steps if index >= rerun_from
-                ]
+                requested_steps = [index for index in active_steps if index >= rerun_from]
         loop_trace.append(
             {
                 "loop": "middle",
@@ -3553,9 +3280,7 @@ async def analyze_winning_subagents(
                 "event": "intelligent_backtrack",
                 "rerun_from_step": rerun_from,
                 "rerun_steps": requested_steps,
-                "affected_fields": [
-                    str(item) for item in round_review.get("affected_fields", [])
-                ][:8],
+                "affected_fields": [str(item) for item in round_review.get("affected_fields", [])][:8],
             }
         )
         middle_rerun_completed = True
@@ -3567,9 +3292,7 @@ async def analyze_winning_subagents(
             )
         except (RuntimeError, TimeoutError, ValueError) as exc:
             deadline_state = host._deadline_state(priority="critical")
-            if not (
-                _is_harness_budget_error(exc) or deadline_state.get("mode") != "normal"
-            ):
+            if not (_is_harness_budget_error(exc) or deadline_state.get("mode") != "normal"):
                 raise
             middle_rerun_completed = False
             accumulated["middle_backtrack_budget_skipped"] = True
@@ -3621,16 +3344,12 @@ async def analyze_winning_subagents(
                         "topic": shared["topic"],
                         "research_route": shared["research_route"],
                         "packet_index": (
-                            military_packet_refs_for_claims(military_value_claims)
-                            if quality_contract
-                            else packet_index
+                            military_packet_refs_for_claims(military_value_claims) if quality_contract else packet_index
                         ),
                         "middle_cycle": 2,
                         "six_step_outputs": round_review_projection(accumulated),
                         "winning_step_plan": shared["winning_step_plan"],
-                        "review_contract": _winning_prompt(
-                            "legacy_workflow.round_rereview_contract"
-                        ),
+                        "review_contract": _winning_prompt("legacy_workflow.round_rereview_contract"),
                     },
                     {"passed": "boolean", "issues": ["string"]},
                     1200,
@@ -3701,16 +3420,12 @@ async def analyze_winning_subagents(
         # equipment-specific scenes, processes and capability portraits;
         # replacing them with deterministic merge-stage drafts discards
         # the most valuable user-facing work and reintroduces templates.
-        accumulated["concept_directions"] = (
-            _merge_dynamic_portfolio_with_s6_authored_cards(
-                dynamic_portfolio,
-                accumulated.get("concept_directions", []),
-            )
+        accumulated["concept_directions"] = _merge_dynamic_portfolio_with_s6_authored_cards(
+            dynamic_portfolio,
+            accumulated.get("concept_directions", []),
         )
         accumulated["capability_synthesis"] = [
-            str(item.get("name", ""))
-            for item in accumulated["concept_directions"]
-            if str(item.get("name", "")).strip()
+            str(item.get("name", "")) for item in accumulated["concept_directions"] if str(item.get("name", "")).strip()
         ]
         expert_scores = [
             float(item["expert_score"])
@@ -3727,9 +3442,7 @@ async def analyze_winning_subagents(
             topic=str(shared.get("topic", "")),
         )
         normalized_dynamic = _normalize_concept_direction_priorities(normalized_dynamic)
-        accumulated["concept_directions"] = list(
-            normalized_dynamic.get("concept_directions", [])
-        )
+        accumulated["concept_directions"] = list(normalized_dynamic.get("concept_directions", []))
         accumulated["capability_synthesis"] = [
             str(item.get("name", ""))
             for item in accumulated["concept_directions"]
@@ -3742,17 +3455,14 @@ async def analyze_winning_subagents(
             # pre-normalization titles while capability_images.json and
             # the report consume the compact final names and portraits.
             winning_swarm_summary["final_equipment_portfolio"] = [
-                dict(item)
-                for item in accumulated["concept_directions"]
-                if isinstance(item, Mapping)
+                dict(item) for item in accumulated["concept_directions"] if isinstance(item, Mapping)
             ]
     final_s6_all_issues = (
         _capability_direction_quality_issues(
             accumulated,
             handoff=final_s6_handoff,
         )
-        if host.provider.__class__.__module__
-        != "equipment_deep_research.providers.fake"
+        if host.provider.__class__.__module__ != "equipment_deep_research.providers.fake"
         else []
     )
     # The final deterministic evaluation is authoritative.  Do not append
@@ -3760,9 +3470,7 @@ async def analyze_winning_subagents(
     # bounded card repair has already resolved them; doing so previously
     # made L1-L3 fail on an obsolete title/support diagnosis.
     final_s6_all_issues = list(dict.fromkeys(final_s6_all_issues))[:32]
-    final_s6_issues = (
-        [] if dynamic_swarm_enabled else _s6_portrait_repair_issues(final_s6_all_issues)
-    )
+    final_s6_issues = [] if dynamic_swarm_enabled else _s6_portrait_repair_issues(final_s6_all_issues)
     s6_low_repair_attempted = bool(s6_model_repair_used)
     s6_low_repair_error = ""
     if final_s6_issues and not s6_model_repair_used:
@@ -3782,8 +3490,7 @@ async def analyze_winning_subagents(
                 "direction": current_directions[position - 1],
             }
             for position in repair_targets
-            if isinstance(current_directions, list)
-            and 1 <= position <= len(current_directions)
+            if isinstance(current_directions, list) and 1 <= position <= len(current_directions)
         ]
         protected_cards = [
             {
@@ -3816,11 +3523,7 @@ async def analyze_winning_subagents(
                             "query": shared["topic"],
                             "repair_target": target,
                             "repair_modules": portrait_module_targets[position],
-                            "repair_issues": [
-                                issue
-                                for issue in final_s6_issues
-                                if f"第{position}项" in issue
-                            ],
+                            "repair_issues": [issue for issue in final_s6_issues if f"第{position}项" in issue],
                         },
                         {
                             "portrait_module_repairs": [
@@ -3854,8 +3557,7 @@ async def analyze_winning_subagents(
                                 "module_repairs": [
                                     row
                                     for row in item.get("module_repairs", [])
-                                    if isinstance(row, Mapping)
-                                    and str(row.get("module", "")) in allowed_modules
+                                    if isinstance(row, Mapping) and str(row.get("module", "")) in allowed_modules
                                 ],
                             }
                         )
@@ -3867,10 +3569,7 @@ async def analyze_winning_subagents(
                 )
                 repair = {
                     "portrait_module_repairs": [
-                        row
-                        for outcome in repair_outcomes
-                        if isinstance(outcome, list)
-                        for row in outcome
+                        row for outcome in repair_outcomes if isinstance(outcome, list) for row in outcome
                     ]
                 }
             else:
@@ -3891,8 +3590,7 @@ async def analyze_winning_subagents(
                             {
                                 str(item.get("evidence_id", ""))
                                 for item in final_s6_handoff.get("public_evidence", [])
-                                if isinstance(item, Mapping)
-                                and str(item.get("evidence_id", "")).strip()
+                                if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
                             }
                         ),
                     },
@@ -3919,9 +3617,7 @@ async def analyze_winning_subagents(
                     topic=str(shared.get("topic", "")),
                 )
                 repaired = _normalize_concept_direction_priorities(repaired)
-                accumulated["concept_directions"] = list(
-                    repaired.get("concept_directions", [])
-                )
+                accumulated["concept_directions"] = list(repaired.get("concept_directions", []))
                 accumulated["capability_synthesis"] = [
                     str(item.get("name", ""))
                     for item in accumulated["concept_directions"]
@@ -3930,9 +3626,7 @@ async def analyze_winning_subagents(
                 winning_swarm_summary = accumulated.get("winning_swarm", {})
                 if isinstance(winning_swarm_summary, dict):
                     winning_swarm_summary["final_equipment_portfolio"] = [
-                        dict(item)
-                        for item in accumulated["concept_directions"]
-                        if isinstance(item, Mapping)
+                        dict(item) for item in accumulated["concept_directions"] if isinstance(item, Mapping)
                     ]
             final_s6_all_issues = list(
                 dict.fromkeys(
@@ -3942,11 +3636,7 @@ async def analyze_winning_subagents(
                     )
                 )
             )[:32]
-            final_s6_issues = (
-                []
-                if dynamic_swarm_enabled
-                else _s6_portrait_repair_issues(final_s6_all_issues)
-            )
+            final_s6_issues = [] if dynamic_swarm_enabled else _s6_portrait_repair_issues(final_s6_all_issues)
             emit_swarm_event(
                 "winning_s6_low_repair_completed",
                 repair_targets=repair_targets,
@@ -3980,26 +3670,42 @@ async def analyze_winning_subagents(
             "limited_provider_failure",
         }:
             authored_card_warnings.append(
-                f"{str(direction.get('name', '')).strip() or '未命名装备'}："
-                f"S6写卡状态为{authoring_status}"
+                f"{str(direction.get('name', '')).strip() or '未命名装备'}：S6写卡状态为{authoring_status}"
             )
         authored_card_warnings.extend(
-            str(item).strip()
-            for item in direction.get("s6_authoring_quality_warnings", [])
-            if str(item).strip()
+            str(item).strip() for item in direction.get("s6_authoring_quality_warnings", []) if str(item).strip()
         )
     nonblocking_s6_warnings = list(
         dict.fromkeys(
             [
-                *(
-                    issue
-                    for issue in final_s6_all_issues
-                    if issue not in set(residual_s6_issues)
-                ),
+                *(issue for issue in final_s6_all_issues if issue not in set(residual_s6_issues)),
                 *authored_card_warnings,
             ]
         )
     )[:32]
+    final_candidate_count = len(
+        [
+            item
+            for item in accumulated.get("concept_directions", [])
+            if isinstance(item, Mapping) and str(item.get("name", "")).strip()
+        ]
+    )
+    candidate_count_warnings: list[str] = []
+    if explicit_candidate_target:
+        minimum_count = int(candidate_count_contract["minimum"])
+        maximum_count = int(candidate_count_contract["maximum"])
+        if not minimum_count <= final_candidate_count <= maximum_count:
+            candidate_count_warnings.append(
+                "用户候选数量合同未完全满足："
+                f"要求{minimum_count}至{maximum_count}张正式能力画像，"
+                f"实际形成{final_candidate_count}张；保留证据缺口并按受限交付，不伪造候选。"
+            )
+    nonblocking_s6_warnings = list(dict.fromkeys([*nonblocking_s6_warnings, *candidate_count_warnings]))[:32]
+    accumulated["candidate_count_contract"] = {
+        **dict(candidate_count_contract),
+        "actual": final_candidate_count,
+        "met": not candidate_count_warnings,
+    }
     s6_release_state = _s6_release_gate_state(
         residual_s6_issues,
         nonblocking_s6_warnings,
@@ -4049,9 +3755,7 @@ async def analyze_winning_subagents(
             for step, row in latest_core_runs.items()
             if row.get("status") in {"completed", "reused_from_prior_analysis"}
         )
-        limited_core_steps = sorted(
-            step for step in active_steps if step not in completed_core_steps
-        )
+        limited_core_steps = sorted(step for step in active_steps if step not in completed_core_steps)
         core_gate_passed = (
             set(active_steps) <= set(completed_core_steps)
             and not accumulated.get("middle_loop_limited")
@@ -4081,9 +3785,7 @@ async def analyze_winning_subagents(
             else {}
         )
         swarm_summary.setdefault("policy", dict(swarm_controller.policy))
-        swarm_summary.setdefault(
-            "task_graph", [to_plain(item) for item in state.swarm_tasks]
-        )
+        swarm_summary.setdefault("task_graph", [to_plain(item) for item in state.swarm_tasks])
         swarm_summary.setdefault("finalists", [])
         swarm_summary["core_schedule"] = finalized_core_schedule
         swarm_summary["specialist_execution_batches"] = [
@@ -4113,13 +3815,9 @@ async def analyze_winning_subagents(
         ]
         active_set = set(active_steps)
         finalist_count = len(swarm_summary.get("finalists", []))
-        dynamic_portfolio_ready = bool(
-            swarm_summary.get("final_equipment_portfolio", [])
-        )
+        dynamic_portfolio_ready = bool(swarm_summary.get("final_equipment_portfolio", []))
         raw_portfolio_gate = swarm_summary.get("portfolio_quality_gate", {})
-        raw_portfolio_gate = (
-            raw_portfolio_gate if isinstance(raw_portfolio_gate, Mapping) else {}
-        )
+        raw_portfolio_gate = raw_portfolio_gate if isinstance(raw_portfolio_gate, Mapping) else {}
         diversity_only_warning = bool(
             not bool(raw_portfolio_gate.get("direct_equipment_diversity_passed", True))
             and bool(
@@ -4150,8 +3848,7 @@ async def analyze_winning_subagents(
             swarm_summary["portfolio_quality_gate"] = raw_portfolio_gate
         portfolio_quality_gate_passed = (
             bool(raw_portfolio_gate.get("passed")) or diversity_only_warning
-            if str(swarm_controller.policy.get("policy_id"))
-            == "winning_swarm_dynamic_v2"
+            if str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2"
             else bool(raw_portfolio_gate.get("passed", finalist_count > 0))
         )
         final_merge = {
@@ -4159,19 +3856,13 @@ async def analyze_winning_subagents(
             "candidate_ledger_ready": finalist_count > 0,
             "finalist_count": finalist_count,
             "s4_mapping_ready": (
-                4 not in active_set
-                or bool(accumulated.get("capability_mapping"))
-                or dynamic_portfolio_ready
+                4 not in active_set or bool(accumulated.get("capability_mapping")) or dynamic_portfolio_ready
             ),
             "s5_gap_review_ready": (
-                5 not in active_set
-                or bool(accumulated.get("gap_assessment"))
-                or dynamic_portfolio_ready
+                5 not in active_set or bool(accumulated.get("gap_assessment")) or dynamic_portfolio_ready
             ),
             "s6_portfolio_ready": (
-                6 not in active_set
-                or bool(accumulated.get("concept_directions"))
-                or dynamic_portfolio_ready
+                6 not in active_set or bool(accumulated.get("concept_directions")) or dynamic_portfolio_ready
             ),
             "core_quality_gate_passed": core_gate_passed,
             "portfolio_quality_gate_passed": portfolio_quality_gate_passed,
@@ -4188,9 +3879,7 @@ async def analyze_winning_subagents(
         if not final_merge["passed"]:
             swarm_summary["stop_reason"] = "core_or_portfolio_quality_gate_failed"
         elif diversity_only_warning:
-            swarm_summary["stop_reason"] = (
-                "mission_graph_complete_with_diversity_warning"
-            )
+            swarm_summary["stop_reason"] = "mission_graph_complete_with_diversity_warning"
         accumulated["winning_swarm"] = swarm_summary
         emit_swarm_event(
             "swarm_gate_evaluated",
@@ -4208,9 +3897,7 @@ async def analyze_winning_subagents(
     runs.sort(key=lambda item: (int(item.get("middle_cycle", 1)), int(item["step"])))
     accumulated["subagent_runs"] = runs
     accumulated["dynamic_subagent_runs"] = [
-        item
-        for item in runs
-        if item.get("execution_mode") in {"dynamic", "dynamic_mission_graph"}
+        item for item in runs if item.get("execution_mode") in {"dynamic", "dynamic_mission_graph"}
     ]
     accumulated["loop_trace"] = loop_trace
     accumulated["winning_step_plan"] = shared["winning_step_plan"]
@@ -4268,15 +3955,9 @@ async def _analyze_deep_divergence_subagents(
         if str(item).strip()
     ]
     evidence_rows = payload.get("evidence_index", [])
-    evidence_rows = [
-        visible_context(dict(item))
-        for item in evidence_rows
-        if isinstance(item, Mapping)
-    ]
+    evidence_rows = [visible_context(dict(item)) for item in evidence_rows if isinstance(item, Mapping)]
     valid_evidence_ids = {
-        str(item.get("evidence_id", ""))
-        for item in evidence_rows
-        if str(item.get("evidence_id", "")).strip()
+        str(item.get("evidence_id", "")) for item in evidence_rows if str(item.get("evidence_id", "")).strip()
     }
     # ``valid_evidence_ids`` tracks canonical references that may be shown in
     # a visible draft.  ``evidence_gate_ids`` is stricter: a newly retrieved
@@ -4286,8 +3967,7 @@ async def _analyze_deep_divergence_subagents(
     evidence_gate_ids = {
         str(item.get("evidence_id", ""))
         for item in evidence_rows
-        if str(item.get("evidence_id", "")).strip()
-        and item.get("formal_evidence_allowed", True) is not False
+        if str(item.get("evidence_id", "")).strip() and item.get("formal_evidence_allowed", True) is not False
     }
     # Parent evidence IDs are canonical references even when this isolated
     # child does not duplicate the parent's EvidenceCard rows locally.
@@ -4298,15 +3978,17 @@ async def _analyze_deep_divergence_subagents(
     def emit(stage: str, status: str, *, progress: float, delta: str = "", **extra: Any) -> None:
         callback = getattr(host, "_emit_winning_progress", None)
         if callable(callback):
-            callback({
-                "event_type": "deep_stage",
-                "run_id": run_id,
-                "stage": stage,
-                "status": status,
-                "progress": max(0.0, min(1.0, progress)),
-                "delta": {"kind": "summary", "text": delta} if delta else {},
-                **extra,
-            })
+            callback(
+                {
+                    "event_type": "deep_stage",
+                    "run_id": run_id,
+                    "stage": stage,
+                    "status": status,
+                    "progress": max(0.0, min(1.0, progress)),
+                    "delta": {"kind": "summary", "text": delta} if delta else {},
+                    **extra,
+                }
+            )
 
     def compact(value: Any, limit: int = 1400) -> Any:
         if isinstance(value, str):
@@ -4366,11 +4048,7 @@ async def _analyze_deep_divergence_subagents(
             1800,
             phase="deep_s3_divergence",
         )
-        result = (
-            dict(raw_result)
-            if isinstance(raw_result, Mapping)
-            else _parse_json_object(raw_result)
-        )
+        result = dict(raw_result) if isinstance(raw_result, Mapping) else _parse_json_object(raw_result)
         if not isinstance(result, Mapping) or not str(result.get("direction_name", "")).strip():
             raise ValueError("S3未返回稳定装备方向")
         row = dict(result)
@@ -4378,24 +4056,28 @@ async def _analyze_deep_divergence_subagents(
         row["stage"] = "S3"
         row["status"] = "completed"
         row["direct_evidence_refs"] = [
-            str(ref)
-            for ref in row.get("direct_evidence_refs", [])
-            if str(ref) in evidence_gate_ids
+            str(ref) for ref in row.get("direct_evidence_refs", []) if str(ref) in evidence_gate_ids
         ]
         emit("s3_divergence", "completed", progress=index / 3, delta=f"S3发散槽位{index}完成", candidate=row)
         return row
 
-    s3_results_raw = await asyncio.gather(
-        *(call_s3(index) for index in range(1, 4)), return_exceptions=True
-    )
+    s3_results_raw = await asyncio.gather(*(call_s3(index) for index in range(1, 4)), return_exceptions=True)
     s3_results: list[dict[str, Any]] = []
     s3_failures: list[dict[str, Any]] = []
     for index, item in enumerate(s3_results_raw, start=1):
         if isinstance(item, Mapping):
             s3_results.append(dict(item))
         else:
-            s3_failures.append({"stage": "S3", "slot": index, "status": "failed", "error": f"{type(item).__name__}: {item}"[:500]})
-    emit("s3_divergence", "partial" if s3_failures and s3_results else "failed" if s3_failures else "completed", progress=1 / 3, delta="S3发散阶段已保留成功槽位和失败摘要", failures=s3_failures)
+            s3_failures.append(
+                {"stage": "S3", "slot": index, "status": "failed", "error": f"{type(item).__name__}: {item}"[:500]}
+            )
+    emit(
+        "s3_divergence",
+        "partial" if s3_failures and s3_results else "failed" if s3_failures else "completed",
+        progress=1 / 3,
+        delta="S3发散阶段已保留成功槽位和失败摘要",
+        failures=s3_failures,
+    )
 
     # A deep turn starts from the parent's evidence snapshot, but a stable
     # S3 direction can still expose a concrete evidence gap.  In that case
@@ -4409,11 +4091,7 @@ async def _analyze_deep_divergence_subagents(
     for row in s3_results:
         if not isinstance(row, Mapping):
             continue
-        refs = [
-            str(ref).strip()
-            for ref in row.get("direct_evidence_refs", [])
-            if str(ref).strip()
-        ]
+        refs = [str(ref).strip() for ref in row.get("direct_evidence_refs", []) if str(ref).strip()]
         gaps: list[str] = []
         for value in (
             row.get("evidence_gap", []),
@@ -4476,7 +4154,9 @@ async def _analyze_deep_divergence_subagents(
                     retrieval_payload,
                     phase="deep_retrieval",
                     agent=agent,
-                    harness_profile=(host._harness_for(agent) if callable(getattr(host, "_harness_for", None)) else None),
+                    harness_profile=(
+                        host._harness_for(agent) if callable(getattr(host, "_harness_for", None)) else None
+                    ),
                 )
             else:
                 messages = []
@@ -4560,11 +4240,24 @@ async def _analyze_deep_divergence_subagents(
                     # Materialization is best-effort; the retrieval lead and
                     # its failure boundary remain visible and S6 stays gated.
                     pass
-            emit("retrieval", "completed", progress=0.40, delta=f"按需检索槽位{slot}完成，获得{len(rows)}条来源线索", evidence_refs=[item["evidence_id"] for item in rows])
+            emit(
+                "retrieval",
+                "completed",
+                progress=0.40,
+                delta=f"按需检索槽位{slot}完成，获得{len(rows)}条来源线索",
+                evidence_refs=[item["evidence_id"] for item in rows],
+            )
             return rows, None
         except Exception as exc:
-            failure = {"stage": "retrieval", "slot": slot, "status": "partial", "error": f"{type(exc).__name__}: {exc}"[:500]}
-            emit("retrieval", "partial", progress=0.40, delta=f"按需检索槽位{slot}失败，保留既有草稿", failures=[failure])
+            failure = {
+                "stage": "retrieval",
+                "slot": slot,
+                "status": "partial",
+                "error": f"{type(exc).__name__}: {exc}"[:500],
+            }
+            emit(
+                "retrieval", "partial", progress=0.40, delta=f"按需检索槽位{slot}失败，保留既有草稿", failures=[failure]
+            )
             return [], failure
 
     if retrieval_requests:
@@ -4591,7 +4284,14 @@ async def _analyze_deep_divergence_subagents(
         )
         for request, result in zip(retrieval_requests, retrieval_results):
             if isinstance(result, Exception):
-                retrieval_failures.append({"stage": "retrieval", "slot": request.get("slot"), "status": "partial", "error": f"{type(result).__name__}: {result}"[:500]})
+                retrieval_failures.append(
+                    {
+                        "stage": "retrieval",
+                        "slot": request.get("slot"),
+                        "status": "partial",
+                        "error": f"{type(result).__name__}: {result}"[:500],
+                    }
+                )
                 continue
             rows, failure = result
             retrieved_rows.extend(rows)
@@ -4599,11 +4299,7 @@ async def _analyze_deep_divergence_subagents(
                 retrieval_failures.append(failure)
     # Dedupe and append only canonical public fields to the context consumed
     # by S4/S6.  The original parent evidence rows remain unchanged.
-    existing_ids = {
-        str(item.get("evidence_id", ""))
-        for item in evidence_rows
-        if isinstance(item, Mapping)
-    }
+    existing_ids = {str(item.get("evidence_id", "")) for item in evidence_rows if isinstance(item, Mapping)}
     for row in retrieved_rows:
         evidence_id = str(row.get("evidence_id", ""))
         if evidence_id and evidence_id not in existing_ids:
@@ -4617,7 +4313,13 @@ async def _analyze_deep_divergence_subagents(
         base_context["valid_evidence_ids"] = sorted(valid_evidence_ids)
         base_context["evidence_gate_ids"] = sorted(evidence_gate_ids)
     if retrieval_failures:
-        emit("retrieval", "partial" if retrieved_rows else "failed", progress=0.42, delta="按需检索阶段已保留成功来源和失败摘要", failures=retrieval_failures)
+        emit(
+            "retrieval",
+            "partial" if retrieved_rows else "failed",
+            progress=0.42,
+            delta="按需检索阶段已保留成功来源和失败摘要",
+            failures=retrieval_failures,
+        )
 
     # A source may be cited by multiple focused queries.  Keep one canonical
     # row per evidence id in the public result while retaining every query's
@@ -4670,11 +4372,7 @@ async def _analyze_deep_divergence_subagents(
             2200,
             phase="deep_s4_mapping",
         )
-        result = (
-            dict(raw_result)
-            if isinstance(raw_result, Mapping)
-            else _parse_json_object(raw_result)
-        )
+        result = dict(raw_result) if isinstance(raw_result, Mapping) else _parse_json_object(raw_result)
         if not isinstance(result, Mapping):
             raise ValueError("S4未返回结构化映射")
         row = dict(result)
@@ -4686,15 +4384,21 @@ async def _analyze_deep_divergence_subagents(
             if not isinstance(raw, Mapping) or not str(raw.get("name", "")).strip():
                 continue
             item = dict(raw)
-            item["hypothesis_id"] = str(item.get("hypothesis_id") or s3.get("hypothesis_id") or parent.get("hypothesis_id", ""))
+            item["hypothesis_id"] = str(
+                item.get("hypothesis_id") or s3.get("hypothesis_id") or parent.get("hypothesis_id", "")
+            )
             item["direct_evidence_refs"] = [
-                str(ref)
-                for ref in item.get("direct_evidence_refs", [])
-                if str(ref) in evidence_gate_ids
+                str(ref) for ref in item.get("direct_evidence_refs", []) if str(ref) in evidence_gate_ids
             ]
             directions.append(item)
         row["concept_directions"] = directions[:2]
-        emit("s4_mapping", "completed", progress=index / 3, delta=f"S4映射槽位{index}完成", candidate_count=len(directions))
+        emit(
+            "s4_mapping",
+            "completed",
+            progress=index / 3,
+            delta=f"S4映射槽位{index}完成",
+            candidate_count=len(directions),
+        )
         return row
 
     s4_results_raw = await asyncio.gather(
@@ -4707,7 +4411,9 @@ async def _analyze_deep_divergence_subagents(
         if isinstance(item, Mapping):
             s4_results.append(dict(item))
         else:
-            s4_failures.append({"stage": "S4", "slot": index, "status": "failed", "error": f"{type(item).__name__}: {item}"[:500]})
+            s4_failures.append(
+                {"stage": "S4", "slot": index, "status": "failed", "error": f"{type(item).__name__}: {item}"[:500]}
+            )
 
     # S4 may identify a new, direction-specific evidence gap after mapping
     # the S3 mechanism to a concrete equipment object.  Spend only the
@@ -4729,11 +4435,7 @@ async def _analyze_deep_divergence_subagents(
         for direction in direction_rows[:2]:
             if not isinstance(direction, Mapping):
                 continue
-            refs = [
-                str(ref).strip()
-                for ref in direction.get("direct_evidence_refs", [])
-                if str(ref).strip()
-            ]
+            refs = [str(ref).strip() for ref in direction.get("direct_evidence_refs", []) if str(ref).strip()]
             gaps = list(row_gaps)
             for value in (direction.get("evidence_gap", []), direction.get("failure_boundary", "")):
                 values = value if isinstance(value, (list, tuple)) else [value]
@@ -4744,7 +4446,9 @@ async def _analyze_deep_divergence_subagents(
             s4_retrieval_requests.append(
                 {
                     "slot": slot,
-                    "query": f"{topic} {focus} {direction_name} {'; '.join(gaps[:2]) or '核验装备能力与直接作战效果依据'}"[:1200],
+                    "query": f"{topic} {focus} {direction_name} {'; '.join(gaps[:2]) or '核验装备能力与直接作战效果依据'}"[
+                        :1200
+                    ],
                     "direction": direction_name,
                 }
             )
@@ -4770,7 +4474,14 @@ async def _analyze_deep_divergence_subagents(
         )
         for request, result in zip(s4_retrieval_requests, s4_retrieval_results):
             if isinstance(result, Exception):
-                retrieval_failures.append({"stage": "retrieval", "slot": request.get("slot"), "status": "partial", "error": f"{type(result).__name__}: {result}"[:500]})
+                retrieval_failures.append(
+                    {
+                        "stage": "retrieval",
+                        "slot": request.get("slot"),
+                        "status": "partial",
+                        "error": f"{type(result).__name__}: {result}"[:500],
+                    }
+                )
                 continue
             rows, failure = result
             retrieved_rows.extend(rows)
@@ -4787,7 +4498,13 @@ async def _analyze_deep_divergence_subagents(
         base_context["evidence_index"] = compact(evidence_rows, 3600)
         base_context["valid_evidence_ids"] = sorted(valid_evidence_ids)
         base_context["evidence_gate_ids"] = sorted(evidence_gate_ids)
-        emit("retrieval", "partial" if retrieval_failures else "completed", progress=0.48, delta="S4映射后的补充检索已完成，来源仍待材料化证据门", failures=retrieval_failures)
+        emit(
+            "retrieval",
+            "partial" if retrieval_failures else "completed",
+            progress=0.48,
+            delta="S4映射后的补充检索已完成，来源仍待材料化证据门",
+            failures=retrieval_failures,
+        )
 
     unique_retrieved: dict[str, dict[str, Any]] = {}
     for row in retrieved_rows:
@@ -4804,17 +4521,20 @@ async def _analyze_deep_divergence_subagents(
     s6_candidate_directions = [
         dict(direction)
         for direction in mapped_directions
-        if any(
-            str(ref) in evidence_gate_ids
-            for ref in direction.get("direct_evidence_refs", [])
-        )
+        if any(str(ref) in evidence_gate_ids for ref in direction.get("direct_evidence_refs", []))
     ]
     evidence_blocked_directions = [
-        str(direction.get("name", ""))
-        for direction in mapped_directions
-        if direction not in s6_candidate_directions
+        str(direction.get("name", "")) for direction in mapped_directions if direction not in s6_candidate_directions
     ]
-    emit("s4_mapping", "partial" if s4_failures and s4_results else "failed" if s4_failures else "completed", progress=2 / 3, delta="S4能力映射阶段已保留成功槽位和失败摘要", failures=s4_failures, candidate_count=len(mapped_directions), evidence_gated_candidate_count=len(s6_candidate_directions))
+    emit(
+        "s4_mapping",
+        "partial" if s4_failures and s4_results else "failed" if s4_failures else "completed",
+        progress=2 / 3,
+        delta="S4能力映射阶段已保留成功槽位和失败摘要",
+        failures=s4_failures,
+        candidate_count=len(mapped_directions),
+        evidence_gated_candidate_count=len(s6_candidate_directions),
+    )
 
     s6_result: dict[str, Any] = {}
     s6_failure: dict[str, Any] | None = None
@@ -4867,38 +4587,44 @@ async def _analyze_deep_divergence_subagents(
                 4200,
                 phase="deep_s6_authoring",
             )
-            parsed_raw = (
-                dict(raw)
-                if isinstance(raw, Mapping)
-                else _parse_json_object(raw)
-            )
+            parsed_raw = dict(raw) if isinstance(raw, Mapping) else _parse_json_object(raw)
             if isinstance(parsed_raw, Mapping):
                 s6_result = dict(parsed_raw)
                 cleaned: list[dict[str, Any]] = []
-                for raw_direction in s6_result.get("concept_directions", []) if isinstance(s6_result.get("concept_directions", []), list) else []:
+                for raw_direction in (
+                    s6_result.get("concept_directions", [])
+                    if isinstance(s6_result.get("concept_directions", []), list)
+                    else []
+                ):
                     if not isinstance(raw_direction, Mapping) or not str(raw_direction.get("name", "")).strip():
                         continue
                     item = dict(raw_direction)
                     item["direct_evidence_refs"] = [
-                        str(ref)
-                        for ref in item.get("direct_evidence_refs", [])
-                        if str(ref) in evidence_gate_ids
+                        str(ref) for ref in item.get("direct_evidence_refs", []) if str(ref) in evidence_gate_ids
                     ]
                     if item["direct_evidence_refs"]:
                         cleaned.append(item)
                 s6_result["concept_directions"] = cleaned[:6]
             else:
                 raise ValueError("S6未返回结构化能力卡")
-            emit("s6_authoring", "completed", progress=1.0, delta=f"S6已形成{len(s6_result.get('concept_directions', []))}张候选能力卡", candidate_count=len(s6_result.get("concept_directions", [])))
+            emit(
+                "s6_authoring",
+                "completed",
+                progress=1.0,
+                delta=f"S6已形成{len(s6_result.get('concept_directions', []))}张候选能力卡",
+                candidate_count=len(s6_result.get("concept_directions", [])),
+            )
         except Exception as exc:
             s6_failure = {"stage": "S6", "status": "failed", "error": f"{type(exc).__name__}: {exc}"[:500]}
-            emit("s6_authoring", "partial", progress=1.0, delta="S6失败，保留S3/S4候选草稿但不自动成卡", failures=[s6_failure])
+            emit(
+                "s6_authoring",
+                "partial",
+                progress=1.0,
+                delta="S6失败，保留S3/S4候选草稿但不自动成卡",
+                failures=[s6_failure],
+            )
     else:
-        reason = (
-            "S4候选未通过正式证据门"
-            if mapped_directions
-            else "S4未形成可成卡方向"
-        )
+        reason = "S4候选未通过正式证据门" if mapped_directions else "S4未形成可成卡方向"
         s6_failure = {"stage": "S6", "status": "blocked", "error": reason}
         emit("s6_authoring", "blocked", progress=1.0, delta=f"{reason}，保留可见草稿")
 
@@ -4908,23 +4634,34 @@ async def _analyze_deep_divergence_subagents(
         # while leaving ``concept_directions`` empty for the release gate.
         status = "blocked" if not s3_results else "partial"
     else:
-        status = "completed" if not (s3_failures or s4_failures or retrieval_failures or evidence_blocked_directions) else "partial"
+        status = (
+            "completed"
+            if not (s3_failures or s4_failures or retrieval_failures or evidence_blocked_directions)
+            else "partial"
+        )
     return {
         "execution_profile_id": "deep_divergence_v1",
         "deep_divergence_status": status,
         "deep_stage_scope": ["S3", "S4", "S6"],
         "deep_stage_plan": {
             "S3": {"max_parallel_slots": 3, "completed": len(s3_results), "failed": len(s3_failures)},
-            "retrieval": {"max_searches": 6, "requested": retrieval_request_count, "completed": len(retrieved_rows), "failed": len(retrieval_failures)},
+            "retrieval": {
+                "max_searches": 6,
+                "requested": retrieval_request_count,
+                "completed": len(retrieved_rows),
+                "failed": len(retrieval_failures),
+            },
             "S4": {"max_parallel_slots": 3, "completed": len(s4_results), "failed": len(s4_failures)},
-            "S6": {"max_parallel_slots": 1, "completed": bool(s6_result.get("concept_directions")), "failed": bool(s6_failure)},
+            "S6": {
+                "max_parallel_slots": 1,
+                "completed": bool(s6_result.get("concept_directions")),
+                "failed": bool(s6_failure),
+            },
         },
         "breakthrough_directions": [
             item for row in s3_results for item in row.get("breakthrough_directions", []) if str(item).strip()
         ][:12],
-        "effect_chain": [
-            item for row in s3_results for item in row.get("effect_chain", []) if str(item).strip()
-        ][:12],
+        "effect_chain": [item for row in s3_results for item in row.get("effect_chain", []) if str(item).strip()][:12],
         "capability_mapping": [
             item for row in s4_results for item in row.get("capability_mapping", []) if str(item).strip()
         ][:12],
@@ -4949,7 +4686,15 @@ async def _analyze_deep_divergence_subagents(
                 {"step": 4, "agent_id": "winning_s4_capability", "slot": item.get("slot"), "status": "completed"}
                 for item in s4_results
             ],
-            {"step": 6, "agent_id": "winning_s6_image", "status": "completed" if s6_result.get("concept_directions") else "partial" if s6_failure else "blocked"},
+            {
+                "step": 6,
+                "agent_id": "winning_s6_image",
+                "status": "completed"
+                if s6_result.get("concept_directions")
+                else "partial"
+                if s6_failure
+                else "blocked",
+            },
         ],
         "loop_trace": [],
     }
