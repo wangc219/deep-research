@@ -242,6 +242,8 @@ def test_cloud_workers_share_one_identical_build_graph() -> None:
     assert "type=local,src=${CLOUD_BUILDKIT_CACHE_FROM" in compose
     assert "type=local,dest=${CLOUD_BUILDKIT_CACHE_TO" in compose
     assert "mode=max" in compose
+    assert compose.count("UV_PYTHON_INSTALL_MIRROR: ${CLOUD_UV_PYTHON_INSTALL_MIRROR") == 1
+    assert "https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone" in compose
     assert compose.count("VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL") == 1
     assert compose.count("VIDEO_TORCH_INDEX_URL: ${CLOUD_VIDEO_TORCH_INDEX_URL") == 1
     assert "https://mirror.sjtu.edu.cn/pytorch-wheels/cpu" in compose

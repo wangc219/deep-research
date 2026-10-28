@@ -62,6 +62,7 @@ RUN set -ex \
 
 # 视频号识别引擎使用独立的 Python 3.12，避免污染平台模型依赖。
 ARG INSTALL_VIDEO_TRANSCRIBER=true
+ARG UV_PYTHON_INSTALL_MIRROR
 ARG VIDEO_PIP_INDEX_URL=https://pypi.org/simple
 ARG VIDEO_TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 COPY backend/video-transcriber-requirements.txt /app/video-transcriber-requirements.txt

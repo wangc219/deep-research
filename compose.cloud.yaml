@@ -28,6 +28,7 @@ x-cloud-api-build: &cloud-api-build
     - type=local,dest=${CLOUD_BUILDKIT_CACHE_TO:-/var/cache/deepquest-buildkit/api/next},mode=max
   args:
     GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
+    UV_PYTHON_INSTALL_MIRROR: ${CLOUD_UV_PYTHON_INSTALL_MIRROR:-https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone}
     VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
     # 中国云主机直连 PyTorch 官方 wheel 源通常只有几十 KB/s；默认使用提供相同
     # CPU wheel 与哈希的国内镜像。非中国部署仍可通过环境变量切回官方源。
