@@ -276,6 +276,67 @@ def test_explorer_channel_budgets_stop_parallel_batches_before_execution():
     assert all("tool_budget_reached" in item.content for item in (denied_topic, denied_title, denied_detail))
 
 
+def test_adaptive_long_running_explorer_has_no_fixed_channel_or_total_call_quota():
+    middleware = SearchResilienceMiddleware(
+        research_mode=True,
+        research_budget_mode="adaptive_long_running",
+    )
+
+    for index in range(30):
+        result = middleware.wrap_tool_call(_search_request(f"web-{index}"), lambda _, i=index: _sources(i))
+        assert not isinstance(result, ToolMessage)
+
+    def academic_request(call_id, name="academic_search", **args):
+        return SimpleNamespace(tool_call={"id": call_id, "name": name, "args": args})
+
+    for index in range(12):
+        result = middleware.wrap_tool_call(
+            academic_request(f"topic-{index}", query=f"topic {index}", mode="semantic"),
+            lambda _: '{"status":"ok","results":[]}',
+        )
+        assert "tool_budget_reached" not in getattr(result, "content", "")
+    for index in range(5):
+        middleware.wrap_tool_call(
+            academic_request(f"title-{index}", query=f"Exact Paper Title {index}", mode="title"),
+            lambda _: '{"status":"ok","results":[]}',
+        )
+        middleware.wrap_tool_call(
+            academic_request(f"detail-{index}", "academic_get_papers", paper_ids=[f"p{index}"]),
+            lambda _: '{"status":"ok"}',
+        )
+
+    for index in range(10):
+        request = SimpleNamespace(tool_call={"id": f"kb-{index}", "name": "query_kbs", "args": {"query": str(index)}})
+        assert middleware.wrap_tool_call(request, lambda _: "knowledge") == "knowledge"
+
+    assert middleware.research_calls == 62
+    assert middleware.research_web_calls == 30
+    assert middleware.research_academic_topic_calls == 12
+    assert middleware.research_academic_title_calls == 5
+    assert middleware.research_academic_detail_calls == 5
+    assert middleware.max_calls is None
+    assert not middleware.research_stop_reason
+    prepared = middleware._prepare_model_request(
+        ModelRequest(
+            model=SimpleNamespace(),
+            messages=[],
+            tools=[SimpleNamespace(name=name) for name in ("web_search", "academic_search", "academic_get_papers")],
+        )
+    )
+    assert [tool.name for tool in prepared.tools] == ["web_search", "academic_search", "academic_get_papers"]
+    assert "不设置网页、论文主题/语义、标题、摘要批次或总工具调用的固定次数上限" in str(prepared.system_message.content)
+
+
+def test_adaptive_long_running_still_rejects_exact_duplicates():
+    middleware = SearchResilienceMiddleware(
+        research_mode=True,
+        research_budget_mode="adaptive_long_running",
+    )
+    middleware.wrap_tool_call(_search_request("RADAR drone"), lambda _: _sources(1))
+    denied = middleware.wrap_tool_call(_search_request("radar   drone"), lambda _: pytest.fail("duplicate bypass"))
+    assert "duplicate_query" in denied.content
+
+
 def test_explorer_allows_four_evidence_tools_per_model_batch_and_rejects_fifth():
     middleware = SearchResilienceMiddleware(research_mode=True)
     calls = [

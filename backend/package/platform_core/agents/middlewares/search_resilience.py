@@ -15,6 +15,10 @@ from langchain.agents.middleware import hook_config
 from langchain.agents.middleware.types import AgentMiddleware, ModelRequest, ModelResponse
 from langchain.tools.tool_node import ToolCallRequest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from platform_core.research_policy import (
+    RESEARCH_BUDGET_ADAPTIVE_LONG_RUNNING,
+    normalize_research_budget_mode,
+)
 from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
 
 
@@ -145,9 +149,23 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
     LangGraph model/tool recursion.
     """
 
-    def __init__(self, max_calls: int | None = None, *, research_mode: bool = False) -> None:
+    def __init__(
+        self,
+        max_calls: int | None = None,
+        *,
+        research_mode: bool = False,
+        research_budget_mode: str = "standard",
+    ) -> None:
+        self.research_budget_mode = normalize_research_budget_mode(research_budget_mode)
+        self.adaptive_long_running = (
+            research_mode and self.research_budget_mode == RESEARCH_BUDGET_ADAPTIVE_LONG_RUNNING
+        )
         self.max_calls = (
-            max_calls if max_calls is not None else (_RESEARCH_WEB_LIMIT if research_mode else _max_web_search_calls())
+            max_calls
+            if max_calls is not None
+            else None
+            if self.adaptive_long_running
+            else (_RESEARCH_WEB_LIMIT if research_mode else _max_web_search_calls())
         )
         self.web_search_calls = 0
         self.search_degraded = False
@@ -175,7 +193,7 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
 
     @property
     def search_blocked(self) -> bool:
-        return self.search_degraded or self.web_search_calls >= self.max_calls
+        return self.search_degraded or (self.max_calls is not None and self.web_search_calls >= self.max_calls)
 
     def _prepare_model_request(self, request: ModelRequest) -> ModelRequest:
         if self.research_mode:
@@ -184,6 +202,12 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
                 reason = self.research_stop_reason
                 limited_tools, limit_note = self._research_limited_tools()
             prompt = _RESEARCH_DELIVERY_PROMPT
+            if self.adaptive_long_running:
+                prompt += (
+                    "\n本轮为长程自适应研究：不设置网页、论文主题/语义、标题、摘要批次或总工具调用的固定次数上限。"
+                    "由覆盖缺口、证据冲突和边际信息增益决定是否继续；完全重复、连续无新增、外部限流、运行取消和"
+                    "平台并发/执行边界仍然有效。不要为了消耗预算而检索，也不要因普通短任务额度主动收敛。"
+                )
             prompt += (
                 f"\n本轮已取得 {len(self.research_sources)} 条去重网页来源、"
                 f"{len(self.research_source_domains)} 个站点；站点数不等于独立证据数。"
@@ -460,6 +484,10 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
 
     def _check_research_deadline(self) -> None:
         """只用真实工具执行时间计算活跃预算，模型推理仅受宽松墙钟兜底约束。"""
+        if self.adaptive_long_running:
+            # 长程模式不在探索员中间件内按次数或局部墙钟截断；总体运行仍由
+            # AgentRun 取消/租约、LangGraph recursion_limit 和外部服务限流控制。
+            return
         if self.research_calls >= 48:
             self.research_stop_reason = self.research_stop_reason or "工具调用达到 48 次"
         if self.research_tool_seconds >= _RESEARCH_ACTIVE_TOOL_LIMIT_SECONDS:
@@ -539,6 +567,8 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         if self.research_web_stop_reason:
             blocked.add("web_search")
             notes.append(self.research_web_stop_reason + "；继续使用授权知识库、论文摘要和已有来源")
+        if self.adaptive_long_running:
+            return blocked, "；".join(notes)
         if self.research_web_calls >= _RESEARCH_WEB_LIMIT:
             blocked.add("web_search")
             notes.append("网页精确检索已完成 24 次，停止新增网页查询")
@@ -559,26 +589,41 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         if name == "web_search":
             if self.research_web_stop_reason:
                 return "web_search 已完成本轮网页发现：" + self.research_web_stop_reason
-            if self.research_web_calls >= _RESEARCH_WEB_LIMIT:
+            if not self.adaptive_long_running and self.research_web_calls >= _RESEARCH_WEB_LIMIT:
                 return "web_search 已完成本子任务最多 24 次精确主题检索；停止新增网页查询并整理已有证据"
             self.research_web_calls += 1
         elif name == "academic_search":
             if _academic_search_mode(arguments) == "title":
-                if self.research_academic_title_calls >= _RESEARCH_ACADEMIC_TITLE_LIMIT:
+                if (
+                    not self.adaptive_long_running
+                    and self.research_academic_title_calls >= _RESEARCH_ACADEMIC_TITLE_LIMIT
+                ):
                     return "academic_search 标题校正已完成 3 次；停止再次改写标题"
                 requested = 1 + min(2, len(arguments.get("related_queries") or []))
-                if self.research_academic_title_calls + requested > _RESEARCH_ACADEMIC_TITLE_LIMIT:
+                if (
+                    not self.adaptive_long_running
+                    and self.research_academic_title_calls + requested > _RESEARCH_ACADEMIC_TITLE_LIMIT
+                ):
                     return "academic_search 补充查询超出剩余标题额度；请缩减 related_queries"
                 self.research_academic_title_calls += requested
             else:
-                if self.research_academic_topic_calls >= _RESEARCH_ACADEMIC_TOPIC_LIMIT:
+                if (
+                    not self.adaptive_long_running
+                    and self.research_academic_topic_calls >= _RESEARCH_ACADEMIC_TOPIC_LIMIT
+                ):
                     return "academic_search 主题/语义发现已完成 8 次；使用准确标题定位或整理已有论文"
                 requested = 1 + min(2, len(arguments.get("related_queries") or []))
-                if self.research_academic_topic_calls + requested > _RESEARCH_ACADEMIC_TOPIC_LIMIT:
+                if (
+                    not self.adaptive_long_running
+                    and self.research_academic_topic_calls + requested > _RESEARCH_ACADEMIC_TOPIC_LIMIT
+                ):
                     return "academic_search 补充查询超出剩余主题额度；请缩减 related_queries"
                 self.research_academic_topic_calls += requested
         elif name == "academic_get_papers":
-            if self.research_academic_detail_calls >= _RESEARCH_ACADEMIC_DETAIL_LIMIT:
+            if (
+                not self.adaptive_long_running
+                and self.research_academic_detail_calls >= _RESEARCH_ACADEMIC_DETAIL_LIMIT
+            ):
                 return "academic_get_papers 已完成 3 批摘要读取；停止重复拉取并使用已有完整摘要"
             self.research_academic_detail_calls += 1
         return ""

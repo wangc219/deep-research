@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from deepagents.middleware._utils import append_to_system_message
 from langchain.agents.middleware.types import AgentMiddleware, ContextT, ModelRequest, ModelResponse, ResponseT
@@ -55,6 +55,13 @@ SUBAGENT_SYSTEM_PROMPT = """## 子智能体
 - 同一 thread_id 不可并发写入；忙碌时返回 busy，不隐藏排队。
 - 父运行结束会取消仍活跃的子 Run，给出最终答复前应 await 所需结果或明确取消。
 - 无需外部证据的简单问题直接处理；研究检索遵循主智能体的默认检索策略，单一事实检索也可委派 research-explorer。
+- 调用 research-explorer 时由你依据任务语义选择 research_budget_mode：聚焦、短时证据问题使用 standard；开放式、
+  附件驱动、海量覆盖、需多轮发现—深挖或预计会超过普通检索轮次的独立分片使用 adaptive_long_running。不要按关键词
+  匹配，也不要为了“保险”一律选择长程模式；长程模式依据信息增益停止，不按固定网页、主题、标题或摘要次数停止。
+- 长程研究按动态波次调度：同一波先并行 start 当前高价值且互不依赖的缺口，再 await；根据返回的覆盖、冲突和剩余
+  不确定性决定下一波增配、续跑或收敛，不预设探索员总数。多个独立缺口仍存在时不得退化为逐个串行。
+- 子运行失败先用 status、结果摘要和共享沙盒产物判断是否为共同故障；共同故障未修复前不要复制相同任务。已有部分
+  成果时优先用原 thread_id 继续，或补派问题真正正交的探索员。
 - 不通过 shell、curl、HTTP API 或命令行间接调用子智能体。
 
 可用子智能体 slug：
@@ -79,6 +86,10 @@ SUBAGENT_AWAIT_DESCRIPTION = """等待子智能体运行结束并返回最终结
 
 SUBAGENT_DESCRIPTION_ARG = "需要子智能体独立完成的任务描述，包含必要上下文和期望输出。"
 SUBAGENT_SLUG_ARG = "要调用的子智能体 slug，必须是工具描述中列出的可用项之一。"
+SUBAGENT_RESEARCH_BUDGET_ARG = (
+    "研究执行模式。standard 用于聚焦证据问题；adaptive_long_running 用于开放式、海量或需多轮补证的长程研究，"
+    "取消固定检索次数上限并按信息增益收敛。仅 research-explorer 使用该参数。"
+)
 ASYNC_THREAD_ID_ARG = "可选。要继续的后台子智能体线程 ID，来自之前 subagent_start 返回的 thread_id；新任务不要填写。"
 SUBAGENT_RUN_ID_ARG = "子智能体运行 ID，由 subagent_start 返回。"
 
@@ -151,6 +162,9 @@ class PlatformSubAgentMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
             description: Annotated[str, SUBAGENT_DESCRIPTION_ARG],
             subagent_slug: Annotated[str, SUBAGENT_SLUG_ARG],
             runtime: ToolRuntime,
+            research_budget_mode: Annotated[
+                Literal["standard", "adaptive_long_running"], SUBAGENT_RESEARCH_BUDGET_ARG
+            ] = "standard",
             thread_id: Annotated[str | None, ASYNC_THREAD_ID_ARG] = None,
         ) -> str | Command:
             if subagent_slug not in self.subagents:
@@ -175,6 +189,9 @@ class PlatformSubAgentMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
                         input_message=input_message,
                         tool_call_id=runtime.tool_call_id,
                         requested_thread_id=thread_id,
+                        research_budget_mode=research_budget_mode
+                        if subagent_slug == "research-explorer"
+                        else "standard",
                     )
             except subagent_service.SubagentRunBusy as exc:
                 payload = exc.to_payload()
@@ -187,6 +204,7 @@ class PlatformSubAgentMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
                 "thread_id": result.relation.child_thread_id,
                 "subagent_slug": subagent_slug,
                 "subagent_name": agent_item.name,
+                "research_budget_mode": research_budget_mode if subagent_slug == "research-explorer" else "standard",
                 "created_by_run_id": result.run.created_by_run_id,
                 "run_status": result.run.status,
                 "continuing": result.continuing,

@@ -10,6 +10,7 @@ from itertools import zip_longest
 from typing import Any
 
 from platform_core.config.options import aminer_api_opts
+from platform_core.research_policy import RESEARCH_BUDGET_ADAPTIVE_LONG_RUNNING
 from platform_core.repositories.academic_retrieval_repository import AcademicRetrievalRepository
 from platform_core.services.aminer_client import (
     AMinerClient,
@@ -473,6 +474,9 @@ class AcademicRetrievalService:
                     request_key=request_key,
                     attempt_no=attempt_no,
                     credential_scope=scope,
+                    adaptive_long_running=(
+                        getattr(self.context, "research_budget_mode", None) == RESEARCH_BUDGET_ADAPTIVE_LONG_RUNNING
+                    ),
                 )
                 await db.commit()
             if reservation.result is not None:

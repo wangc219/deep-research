@@ -770,6 +770,7 @@ async def test_subagent_run_service_create_run_record_persists_subagent_context(
             "tool_call_id": "tool-1",
             "subagent_name": "Worker",
             "parent_thread_id": "parent-thread",
+            "research_budget_mode": "standard",
         },
     }
     assert db.committed is False
@@ -800,6 +801,7 @@ async def test_subagent_run_service_create_run_record_uses_creator_runtime_scope
 
     assert db.created_run_kwargs["created_by_run_id"] == "parent-run"
     assert db.created_run_kwargs["input_payload"]["runtime"]["parent_thread_id"] == "current-parent-thread"
+    assert db.created_run_kwargs["input_payload"]["runtime"]["research_budget_mode"] == "standard"
     assert db.created_run_kwargs["input_payload"]["tool_approval_mode"] == "always_trust"
 
 

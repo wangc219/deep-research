@@ -111,7 +111,10 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
         create_summary_middleware_from_context(context, backend=backend),
         TodoListMiddleware(system_prompt=TODO_MID_PROMPT),
         PatchToolCallsMiddleware(),
-        SearchResilienceMiddleware(research_mode=getattr(context, "agent_slug", "") == "research-explorer"),
+        SearchResilienceMiddleware(
+            research_mode=getattr(context, "agent_slug", "") == "research-explorer",
+            research_budget_mode=getattr(context, "research_budget_mode", "standard"),
+        ),
         _SubAgentToolFilterMiddleware(tool_approval_mode),
         ToolExecutionGovernorMiddleware(
             max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
@@ -120,7 +123,7 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
         ModelCallSupervisorMiddleware(),
         NetworkRetryMiddleware(),
         ImageInputCompatibilityMiddleware(),
-        AcademicEvidenceMiddleware(),
+        AcademicEvidenceMiddleware(graceful_fallback=True),
         ModelOutputMiddleware(),
         TokenUsageMiddleware(),
     ]

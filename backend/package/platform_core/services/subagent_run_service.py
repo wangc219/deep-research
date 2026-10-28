@@ -20,6 +20,7 @@ import platform_core.services.agent_run_service as agent_run_service
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core.agents.tool_approval import DEFAULT_TOOL_APPROVAL_MODE
+from platform_core.research_policy import RESEARCH_BUDGET_STANDARD, normalize_research_budget_mode
 from platform_core.repositories.agent_run_repository import AgentRunRepository
 from platform_core.repositories.conversation_repository import ConversationRepository
 from platform_core.repositories.project_repository import ProjectRepository
@@ -156,9 +157,13 @@ class SubagentRunService:
         input_message: AgentRunInputMessage,
         tool_call_id: str,
         requested_thread_id: str | None = None,
+        research_budget_mode: str = RESEARCH_BUDGET_STANDARD,
     ) -> SubagentStartResult:
         """启动或继续一个后台子智能体 run，并在新建时入队 worker。"""
 
+        research_budget_mode = normalize_research_budget_mode(research_budget_mode)
+        if agent_item.slug != "research-explorer":
+            research_budget_mode = RESEARCH_BUDGET_STANDARD
         creator_run = await self.run_repo.lock_run_for_user(created_by_run_id, uid)
         if not creator_run:
             raise ValueError("父运行任务不存在")
@@ -196,6 +201,7 @@ class SubagentRunService:
                 creator_run=creator_run,
                 relation=relation,
                 tool_call_id=tool_call_id,
+                research_budget_mode=research_budget_mode,
             )
         except HTTPException as exc:
             detail = exc.detail
@@ -241,6 +247,7 @@ class SubagentRunService:
         creator_run: AgentRun,
         relation: SubagentThread,
         tool_call_id: str,
+        research_budget_mode: str = RESEARCH_BUDGET_STANDARD,
     ) -> tuple[Any, bool]:
         """创建后台子智能体 run，并把规范化输入消息保存为该 run 的输入。"""
         if not input_message.content:
@@ -275,6 +282,7 @@ class SubagentRunService:
             "tool_call_id": tool_call_id,
             "subagent_name": scope.agent_item.name,
             "parent_thread_id": creator_run.conversation_thread_id,
+            "research_budget_mode": normalize_research_budget_mode(research_budget_mode),
         }
         input_payload = {
             "model_spec": resolved_model_spec,

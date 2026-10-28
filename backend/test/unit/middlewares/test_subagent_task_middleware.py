@@ -304,11 +304,40 @@ async def test_subagent_start_invokes_subagent_with_child_scope(monkeypatch) -> 
     assert captured["start"]["uid"] == "user-1"
     assert captured["start"]["created_by_run_id"] == "parent-run"
     assert captured["start"]["requested_thread_id"] is None
+    assert captured["start"]["research_budget_mode"] == "standard"
     assert "model_spec" not in captured["start"]
     assert "await" not in captured
     assert result.update["subagent_runs"][0]["run_id"] == "child-run"
     assert result.update["subagent_runs"][0]["child_thread_id"] == "child-thread"
     assert result.update["subagent_runs"][0]["status"] == "pending"
+
+
+@pytest.mark.asyncio
+async def test_subagent_start_passes_model_selected_adaptive_research_mode(monkeypatch) -> None:
+    captured = {}
+    _patch_start(monkeypatch, captured)
+    middleware = PlatformSubAgentMiddleware(
+        parent_context=SimpleNamespace(uid="user-1", run_id="parent-run"),
+        subagents=[
+            SimpleNamespace(
+                slug="research-explorer",
+                name="Research Explorer",
+                description="research",
+                backend_id=SUB_AGENT_BACKEND_ID,
+                config_json={},
+            )
+        ],
+    )
+
+    result = await middleware.tools[0].coroutine(
+        description="对附件要求做开放式、多轮技术证据扫描",
+        subagent_slug="research-explorer",
+        research_budget_mode="adaptive_long_running",
+        runtime=SimpleNamespace(tool_call_id="tool-long", state={}, config={}),
+    )
+
+    assert captured["start"]["research_budget_mode"] == "adaptive_long_running"
+    assert json.loads(result.update["messages"][0].content)["research_budget_mode"] == "adaptive_long_running"
 
 
 @pytest.mark.asyncio

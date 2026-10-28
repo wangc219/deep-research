@@ -126,10 +126,17 @@ async def academic_db():
         await _drop_isolated_schema(schema, admin, engine)
 
 
-def service(factory, run, transport):
+def service(factory, run, transport, *, research_budget_mode="standard"):
     """使用真实事务与模拟供应商 HTTP。"""
     return AcademicRetrievalService(
-        SimpleNamespace(uid=run.uid, run_id=run.id, worker_id="owner"), session_factory=factory, transport=transport
+        SimpleNamespace(
+            uid=run.uid,
+            run_id=run.id,
+            worker_id="owner",
+            research_budget_mode=research_budget_mode,
+        ),
+        session_factory=factory,
+        transport=transport,
     )
 
 
@@ -338,6 +345,32 @@ async def test_deep_research_uses_parent_six_search_limit(academic_db):
     )
     assert sum(result["status"] == "ok" for result in results) == 6
     assert sum(result["status"] == "limit_reached" for result in results) == 1
+
+
+async def test_adaptive_long_running_skips_call_count_but_keeps_cost_budget(academic_db):
+    """长程模式不受固定检索次数限制，仍受父 Run 共享费用预算约束。"""
+    factory, _, _, root, child, _ = academic_db
+    async with factory.begin() as db:
+        await update_option_value(
+            db,
+            aminer_api_opts.key,
+            {"chat_budget_cents": 10, "chat_search_limit": 2},
+            "tester",
+        )
+    transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"code": 200, "success": True, "data": []}))
+    results = []
+    for index in range(11):
+        results.append(
+            await service(
+                factory,
+                child,
+                transport,
+                research_budget_mode="adaptive_long_running",
+            )._request("search", {"keyword": f"adaptive-{index}"})
+        )
+
+    assert all(result["status"] == "ok" for result in results[:10])
+    assert results[10]["status"] == "budget_exhausted"
 
 
 async def test_zero_budget_and_limits_disable_application_quota(academic_db):

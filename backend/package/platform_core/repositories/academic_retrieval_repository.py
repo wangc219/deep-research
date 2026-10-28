@@ -66,6 +66,7 @@ class AcademicRetrievalRepository:
         request_key: str,
         attempt_no: int,
         credential_scope: str,
+        adaptive_long_running: bool = False,
     ) -> AcademicReservation:
         """锁定配置与父 Run 后预占预算；调用方提交后才能发送 HTTP。"""
         await self.db.scalar(select(ConfigOption).where(ConfigOption.key == aminer_api_opts.key).with_for_update())
@@ -124,7 +125,7 @@ class AcademicRetrievalRepository:
             )
         # 0 表示不设置应用侧额度；供应商限流、重复查询保护和 Agent
         # 总工具预算仍负责阻止失控请求。免费接口无需另设隐藏硬上限。
-        limit = 0 if kind == "free" else int(config[f"{prefix}_{kind}_limit"])
+        limit = 0 if kind == "free" or adaptive_long_running else int(config[f"{prefix}_{kind}_limit"])
         count = sum(int(row[1]) for row in used if ENDPOINTS[row[0]][3] == kind)
         if limit > 0 and count >= limit:
             return AcademicReservation(

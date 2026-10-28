@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core.agents.backends.paths import runtime_workdir_path
 from platform_core.agents.buildin import get_agent_backend
 from platform_core.agents.context import BaseContext, prepare_agent_runtime_context
+from platform_core.research_policy import normalize_research_budget_mode
 from platform_core.agents.middlewares.knowledge_opt_in import apply_knowledge_retrieval_policy, has_knowledge_mention
 from platform_core.agents.skills.service import PERSONAL_SKILL_SOURCE_TYPE
 from platform_core.config.environment import deep_research_env
@@ -198,11 +199,17 @@ async def prepare_run_execution(
     if payload.get("tool_approval_mode"):
         context.tool_approval_mode = payload["tool_approval_mode"]
     if run.run_type == "subagent":
-        parent_thread_id = str((payload.get("runtime") or {}).get("parent_thread_id") or "").strip()
+        runtime_payload = payload.get("runtime") or {}
+        parent_thread_id = str(runtime_payload.get("parent_thread_id") or "").strip()
         if not parent_thread_id:
             raise ValueError("子智能体运行缺少必需的 parent_thread_id")
         context.update(
-            {"parent_thread_id": parent_thread_id, "is_subagent_runtime": True, "agent_slug": run.agent_slug}
+            {
+                "parent_thread_id": parent_thread_id,
+                "is_subagent_runtime": True,
+                "agent_slug": run.agent_slug,
+                "research_budget_mode": normalize_research_budget_mode(runtime_payload.get("research_budget_mode")),
+            }
         )
     knowledge_enabled = await resolve_run_knowledge_opt_in(run, db)
     apply_knowledge_retrieval_policy(context, enabled=knowledge_enabled)
@@ -214,6 +221,9 @@ async def prepare_run_execution(
 
     # 身份、租约与路径不属于可配置字段；完整 prompt 仅通过摘要进入 manifest。
     effective_config = {name: getattr(context, name) for name in configurable_fields}
+    limits = {name: getattr(context, name, None) for name in MANIFEST_LIMIT_FIELDS}
+    if run.run_type == "subagent":
+        limits["research_budget_mode"] = getattr(context, "research_budget_mode", None)
     manifest = build_manifest_payload(
         run_type=run.run_type,
         agent_slug=run.agent_slug,
@@ -221,7 +231,7 @@ async def prepare_run_execution(
         model_spec=context.model,
         tool_approval_mode=context.tool_approval_mode,
         normalized_context=effective_config,
-        limits={name: getattr(context, name, None) for name in MANIFEST_LIMIT_FIELDS},
+        limits=limits,
         skill_entries=build_skill_manifest_entries(effective_config, context._skill_runtime_snapshot),
         code_revision=resolve_code_revision(),
     )

@@ -120,7 +120,11 @@ def test_conversation_presets_default_to_research_explorer_for_external_evidence
     assert "简单问题可以直接检索或只委派一个探索员" in prompt
     assert "分片数量、先后关系和并行度" in prompt
     assert "动态决定" in prompt
+    assert "动态波次" in prompt
+    assert "多个互不依赖且会改变结论的缺口，就保持并行推进" in prompt
+    assert "共同故障未消除前不得复制同类失败" in prompt
     assert "单一事实检索也可委派 research-explorer" in SUBAGENT_SYSTEM_PROMPT
+    assert "多个独立缺口仍存在时不得退化为逐个串行" in SUBAGENT_SYSTEM_PROMPT
 
 
 @pytest.mark.parametrize("slug", ["default-chatbot", "deep-research"])
@@ -485,7 +489,9 @@ def test_generic_deep_research_has_no_fixed_winning_lens_count():
     for requirement in (
         "正交问题",
         "并行度根据任务规模",
-        "先小规模探索查询质量",
+        "动态波次",
+        "只要多个独立缺口仍会改变结论，就继续并发",
+        "共同故障未消除前，不复制相同失败",
         "空结果或低相关分支及时停止",
     ):
         assert requirement in content

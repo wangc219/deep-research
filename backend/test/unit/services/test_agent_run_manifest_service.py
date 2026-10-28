@@ -292,6 +292,9 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
     assert result.context.is_subagent_runtime is (run_type == "subagent")
     assert result.context.parent_thread_id == ("parent" if run_type == "subagent" else None)
     assert result.context.agent_slug == ("agent" if run_type == "subagent" else "")
+    assert result.context.research_budget_mode == "standard"
+    if run_type == "subagent":
+        assert result.manifest["limits"]["research_budget_mode"] == "standard"
     assert result.context.uid == "user"
     assert (result.context.run_id, result.context.request_id, result.context.worker_id) == ("run", "request", "owner")
 
