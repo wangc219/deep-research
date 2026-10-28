@@ -132,6 +132,7 @@ def test_explorer_gracefully_delivers_after_repeated_citation_format_failure():
     )
     replacement = result["messages"][-1]
     assert replacement.additional_kwargs["academic_evidence_graceful_fallback"] is True
+    assert replacement.id == answer.id
     assert "invented.invalid" not in replacement.text
     assert "降级交付" in replacement.text
 

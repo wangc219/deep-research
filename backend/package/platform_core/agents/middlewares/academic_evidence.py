@@ -10,7 +10,7 @@ from urllib.parse import unquote, urlsplit, urlunsplit
 
 from langchain.agents.middleware.types import AgentMiddleware, hook_config
 from langchain.tools.tool_node import ToolCallRequest
-from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
 
@@ -255,14 +255,19 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
             if missing:
                 fallback += "\n\n[证据边界：部分论文仅取得题录或部分摘要，相关结论作为待核验线索，不视为全文证实。]"
             fallback += "\n\n[引用校验已降级交付：未能确认的引用不作为本证据包的事实依据。]"
-            replacement = AIMessage(
-                content=fallback,
-                additional_kwargs={"academic_evidence_graceful_fallback": True},
+            # 保留供应商 Model lifecycle 的 message id 与响应元数据。Run 终态持久化
+            # 依靠该 id 将最终 State 投影回本次模型调用；生成一个无 id 的新消息会让
+            # 已完成的探索员在最后一步被误判为“最终输出无法关联”。
+            replacement = answer.model_copy(
+                update={
+                    "content": fallback,
+                    "additional_kwargs": {
+                        **dict(answer.additional_kwargs or {}),
+                        "academic_evidence_graceful_fallback": True,
+                    },
+                }
             )
-            messages = [replacement]
-            if answer.id:
-                messages.insert(0, RemoveMessage(id=answer.id))
-            return {"messages": messages}
+            return {"messages": [replacement]}
         if recoveries >= 2:
             raise RuntimeError("学术证据校验未通过，本轮回答未完成：" + "；".join(problems))
         allowed = "\n".join(
