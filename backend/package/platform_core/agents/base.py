@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from abc import abstractmethod
 from contextlib import aclosing, suppress
-from typing import Any
+from typing import Any, Protocol
 
 from langchain_core.messages import RemoveMessage, ToolMessage
 from langgraph.graph.state import CompiledStateGraph
@@ -15,6 +15,12 @@ from platform_core.storage.postgres.manager import pg_manager
 from platform_core.utils import logger
 from platform_core.utils.hash_utils import subagent_child_thread_id
 from platform_core.utils.thread_utils import extract_thread_id as _metadata_thread_id
+
+
+class AgentLoopFactory(Protocol):
+    """构建可执行 Agent loop 的最小可替换接口。"""
+
+    def __call__(self, **kwargs: Any) -> CompiledStateGraph: ...
 
 
 def _json_safe(value: Any) -> Any:
@@ -136,8 +142,7 @@ async def _replace_checkpoint_message_branch(
         matching_humans = [
             index
             for index, message in enumerate(existing_messages)
-            if _message_identity(message)[1] in {"human", "user"}
-            and _message_identity(message)[2] == original_content
+            if _message_identity(message)[1] in {"human", "user"} and _message_identity(message)[2] == original_content
         ]
         target_index = matching_humans[-1] if matching_humans else None
     if target_index is None:
@@ -176,6 +181,13 @@ class BaseAgent:
     description = "base_agent"
     capabilities: list[str] = []  # 智能体能力列表，如 ["file_upload", "web_search"] 等
     context_schema: type[BaseContext] = BaseContext  # 智能体上下文 schema
+    agent_loop_factory: AgentLoopFactory | None = None
+
+    def create_agent_loop(self, default_factory: AgentLoopFactory, **kwargs: Any) -> CompiledStateGraph:
+        """通过可替换工厂构建本次运行的 Agent loop。"""
+
+        factory = self.agent_loop_factory or default_factory
+        return factory(**kwargs)
 
     @property
     def module_name(self) -> str:

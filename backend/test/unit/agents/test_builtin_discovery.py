@@ -61,19 +61,17 @@ def test_preset_discovery_includes_shipping_roles():
     assert found["default-chatbot"].context["subagents"] == ["research-explorer", "fact-verifier"]
     assert found["fact-verifier"].backend_id == "SubAgentBackend"
     explorer = found["research-explorer"]
-    assert "服务主智能体" in explorer.context["system_prompt"]
+    assert "主智能体" in explorer.context["system_prompt"]
     assert "required_terms" in explorer.context["system_prompt"]
     assert "academic_search" in explorer.context["system_prompt"]
-    assert "必须解决的作战矛盾" in explorer.context["system_prompt"]
-    assert "能够颠覆或重写的作战方式" in explorer.context["system_prompt"]
-    assert "前瞻创新制胜机理" in explorer.context["system_prompt"]
-    assert "不得把网页案例、国外装备或论文数量本身当作交付目标" in explorer.context["system_prompt"].replace("\n", "")
-    assert "可追溯判断" in explorer.description
+    assert "信息增益循环" in explorer.context["system_prompt"]
+    assert "紧凑证据包" in explorer.context["system_prompt"]
+    assert "单个证据问题" in explorer.description
 
 
-@pytest.mark.parametrize("slug", ["default-chatbot", "deep-research", "weapon-equipment-scheme"])
+@pytest.mark.parametrize("slug", ["weapon-equipment-scheme"])
 def test_smart_chat_equipment_schemes_use_the_seven_chapter_r_and_d_template(slug):
-    """智能与深研对话形成完整装备技术方案时使用统一的研发报告模板。"""
+    """专用方案角色保留原有七章研发报告能力。"""
     found = {preset.slug: preset for preset in presets.discover_agent_presets()}
     prompt = found[slug].context["system_prompt"]
 
@@ -99,23 +97,18 @@ def test_technical_solutions_form_weapons_through_the_s3_s4_winning_gate(slug):
     prompt = found[slug].context["system_prompt"]
 
     for requirement in (
-        "S3/S4",
-        "技术方案",
-        "形成、重构或替换武器装备",
-        "具体作战制胜新质武器",
-        "战场矛盾",
+        "物理武器实体",
         "接敌关系",
         "作用载体与机理",
         "可观察直接战果",
-        "敌方原有应对失配原因",
-        "不得先形成抽象技术方案",
+        "分系统或支撑条件",
     ):
         assert requirement in prompt
 
 
 @pytest.mark.parametrize("slug", ["default-chatbot", "deep-research"])
 def test_conversation_presets_default_to_research_explorer_for_external_evidence(slug):
-    """两个入口预加载研究能力，普通事实检索也默认走探索员并等待交付。"""
+    """两个入口预加载研究能力，并由模型动态决定直接检索或委派。"""
     found = {preset.slug: preset for preset in presets.discover_agent_presets()}
     context = found[slug].context
     prompt = context["system_prompt"]
@@ -124,12 +117,10 @@ def test_conversation_presets_default_to_research_explorer_for_external_evidence
     assert "deep-research" in context["preload_skills"]
     assert presets.DEFAULT_RESEARCH_POLICY in prompt
     assert "subagent_start" in prompt and "subagent_await" in prompt
-    assert "不要求用户额外说“调研”或“深度研究”" in prompt
-    assert "单一事实或范围明确的问题默认委派 1 个探索员" in prompt
-    assert "复杂研究默认委派 2 个正交子问题" in prompt
-    assert "运行时禁用或无权使用子智能体时不得委派" in prompt
+    assert "简单问题可以直接检索或只委派一个探索员" in prompt
+    assert "分片数量、先后关系和并行度" in prompt
+    assert "动态决定" in prompt
     assert "单一事实检索也可委派 research-explorer" in SUBAGENT_SYSTEM_PROMPT
-    assert "简单问题或少量直接工具调用不要委派" not in SUBAGENT_SYSTEM_PROMPT
 
 
 @pytest.mark.parametrize("slug", ["default-chatbot", "deep-research"])
@@ -138,15 +129,7 @@ def test_conversation_presets_use_chinese_for_visible_execution_feedback(slug):
     found = {preset.slug: preset for preset in presets.discover_agent_presets()}
     prompt = found[slug].context["system_prompt"]
 
-    for requirement in (
-        "默认使用简体中文反馈执行过程与最终结果",
-        "思考摘要",
-        "进度更新",
-        "工具调用说明",
-        "检索状态",
-        "子智能体委派与等待",
-        "用户明确指定其他语言时从其要求",
-    ):
+    for requirement in ("默认使用简体中文反馈执行过程与最终结果", "用户明确指定其他语言时从其要求"):
         assert requirement in prompt
 
 
@@ -157,23 +140,23 @@ def test_conversation_presets_require_combat_equipment_outputs(slug):
     prompt = found[slug].context["system_prompt"]
 
     for requirement in (
-        "可单独指认",
-        "研制",
-        "部署",
-        "试验",
-        "物理武器实体",
-        "直接打击、毁伤、压制、拦截或拒止具体作战对象",
-        "具体装备本体",
-        "接敌关系",
+        "可单独指认、研制、部署和试验",
+        "具体物理武器实体",
+        "装备名称与身份",
+        "场景和作用对象",
+        "部署与接敌方式",
+        "总体构型与关键分系统",
         "作用载体与机理",
         "可观察直接战果",
         "敌方原有应对为何失配",
-        "具体武器身份",
+        "工程瓶颈",
+        "可证伪验证路径",
     ):
         assert requirement in prompt
-    assert "只能作为装备分系统或支撑条件" in prompt
-    assert "至少三种不同装备架构" in prompt
-    assert "1至3个" in prompt
+    assert "只能作为分系统或支撑条件" in prompt
+    assert "默认一次并行委派3个" not in prompt
+    assert "6至8次" not in prompt
+    assert "1至3个" not in prompt
 
 
 def test_weapon_assistant_turns_future_equipment_discussion_into_concrete_candidates():
@@ -182,164 +165,93 @@ def test_weapon_assistant_turns_future_equipment_discussion_into_concrete_candid
     prompt = found["default-chatbot"].context["system_prompt"]
 
     for requirement in (
-        "凡用户讨论未来作战需求、能力缺口、作战矛盾、装备创新、技术赋能",
-        "即使用户只说‘方向’‘思路’‘能力’或‘技术应用’",
-        "只有用户明确只问现有装备事实、历史、术语解释、材料翻译或已有方案评审时",
-        "装备名称与主装备身份",
-        "未来作战场景和具体对象",
+        "未来作战需求、能力缺口、装备创新、技术赋能",
+        "现有装备事实",
+        "装备名称与身份",
+        "场景和作用对象",
         "部署与接敌方式",
-        "总体构型和关键分系统",
-        "作用载体与制胜机理",
-        "直接作战效果",
-        "关键工程瓶颈",
-        "原理样机或试验验证路径",
-        "不得把‘智能化、无人化、集群化、多域协同’等形容词本身当作创新",
+        "总体构型与关键分系统",
+        "可证伪验证路径",
+        "智能化、无人化、集群化、多域协同",
     ):
         assert requirement in prompt
 
 
 def test_deep_research_skill_defaults_future_equipment_topics_to_concrete_equipment():
-    """预加载深研技能不能把助手的具体装备生成合同弱化成抽象方向。"""
+    """预加载深研技能提供通用长程编排而不固化业务阶段。"""
     specs = {spec["slug"]: spec for spec in skill_service.list_builtin_skill_specs()}
     content = (specs["deep-research"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
 
-    assert "默认把研究收敛为具体的新质武器装备" in content
-    assert "即使用户只说“方向”“思路”“能力”或“技术应用”" in content
-    assert "装备名称与主装备身份" in content
-    assert "原理样机或试验验证路径" in content
+    assert "智能对话是唯一入口和总控" in content
+    assert "动态规划" in content
+    assert "正交问题" in content
+    assert "进展.md" in content
+    assert "模型已有知识" in content
+    assert "创新假设" in content
 
 
 @pytest.mark.parametrize("slug", ["default-chatbot", "deep-research"])
-def test_conversation_presets_require_evidence_led_s3_s4_generation(slug):
-    """形成新质装备时由检索结果前置塑形，不依赖末端检查表修补。"""
+def test_conversation_presets_use_adaptive_evidence_led_generation(slug):
+    """装备研究由证据塑形，但不固化 Agent 数量或检索配额。"""
     found = {preset.slug: preset for preset in presets.discover_agent_presets()}
     preset = found[slug]
     prompt = preset.context["system_prompt"]
-    compact_prompt = "".join(prompt.split())
-
     assert preset.context["subagents"] == ["research-explorer", "fact-verifier"]
-    assert "默认一次并行委派3个正交" in prompt
-    assert "再追加第4个" in prompt
-    assert "探索员" in prompt
-    assert "不得退化成按网页、论文、国内外等资料类型分工" in prompt or "不按网页、论文、国内外等资料类型机械分工" in prompt
-    assert "每次检索" in prompt
-    assert "实现" in prompt
+    assert "而不是按网页、论文、地区等资料渠道机械分工" in prompt
+    assert "分片数量、先后关系和并行度" in prompt
+    assert "广度发现—缺口识别—定向深挖" in prompt
     assert "required_terms" in prompt
     assert "AMiner" in prompt
     assert "完整摘要" in prompt
-    assert "高价值发现" in prompt
     assert "主智能体" in prompt
-    assert "不创建或更新待办" in prompt
-    assert "以上正文" in prompt
-    assert "academic_get_papers(full_abstract=True)" in prompt
-    assert "机械拼接" in prompt
-    assert "创作输入" in prompt
-    assert "事后" in prompt or "末端" in prompt
-    assert "非军事问题" in prompt
-    assert "未来作战需求" in compact_prompt
-    assert "制衡对手" in prompt
-    assert "制胜优势" in prompt
-    for winning_lens in (
-        "对手作战体系",
-        "任务链断点",
-        "接敌关系",
-        "直接战果",
-        "成本交换",
-        "前沿原理",
-        "工程可行性",
-        "成熟度边界",
-        "对手反制",
-        "反反制",
-        "环境适应",
-        "体系韧性",
-    ):
-        assert winning_lens in prompt
-    assert "不得用同义问题凑数量" in prompt
-    assert "什么发现会改变装备身份、总体构型或技术路线" in prompt
-    assert "高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界" in prompt
+    assert "让证据塑造构想" in prompt
+    assert "默认一次并行委派3个" not in prompt
+    assert "6至8次" not in prompt
 
 
 @pytest.mark.parametrize("slug", ["default-chatbot", "deep-research", "research-explorer"])
-def test_equipment_websearch_covers_domestic_foreign_and_recent_progress(slug):
-    """装备公网检索同时覆盖国内、国外与近期前沿，并披露覆盖缺口。"""
+def test_research_prompts_choose_sources_by_information_gain(slug):
+    """检索按证据缺口自适应，不再强制固定地域和调用次数。"""
     found = {preset.slug: preset for preset in presets.discover_agent_presets()}
     prompt = found[slug].context["system_prompt"]
 
-    for requirement in (
-        "国内角度",
-        "国外角度",
-        "前沿角度",
-        "中文装备名或技术名",
-        "英文标准术语或具体装备名",
-        "近2至3年" if slug != "research-explorer" else "近 2-3 年",
-        "国内和国外结果互不替代" if slug != "research-explorer" else "国内与国外都必须有独立有效结果",
-        "地域证据缺口",
-        "发布日期或年份",
-        "公开试验",
-        "原型样机",
-        "论文概念",
-        "sites参数" if slug == "default-chatbot" else "sites 参数",
-        "81.cn",
-        "只有百科",
-        "官方站点定向检索",
-        "6至8次" if slug == "default-chatbot" else ("6 至 8 次" if slug == "deep-research" else "最多 8 次"),
-        "交叉核验或补缺",
-        "不计入有效证据",
-    ):
-        assert requirement in prompt
+    assert "required_terms" in prompt
+    assert "固定" in prompt
+    assert "信息增益" in prompt or "改变结论" in prompt
+    for rigid_rule in ("国内角度", "国外角度", "6至8次", "6 至 8 次", "81.cn"):
+        assert rigid_rule not in prompt
 
 
-def test_public_search_tool_teaches_equipment_geography_and_freshness_plan():
-    """工具说明要求装备检索分次覆盖地域和近年成熟度证据。"""
+def test_public_search_tool_teaches_adaptive_evidence_queries():
+    """工具说明只约束相关性和证据质量，不规定业务检索流水线。"""
     for requirement in (
-        "国内中文来源",
-        "国外英文来源",
-        "近 2-3 年前沿进展",
-        "多次互补调用",
-        "国内和国外结果互不替代",
-        "发布日期或年份",
-        "已部署或在役",
-        "公开试验",
-        "原型样机",
-        "论文概念",
-        "披露缺口",
-        "sites 限定",
-        "81.cn",
-        "只返回百科",
-        "官方站点定向检索",
-        "6-8 次精确检索",
-        "交叉核验或补缺",
-        "不计入有效证据",
+        "明确证据缺口",
+        "required_terms",
+        "required_term_groups",
+        "一手或高权威来源",
+        "信息饱和",
+        "status=degraded",
     ):
         assert requirement in PUBLIC_SEARCH_DESCRIPTION
+    assert "6-8 次" not in PUBLIC_SEARCH_DESCRIPTION
+    assert "81.cn" not in PUBLIC_SEARCH_DESCRIPTION
 
 
-def test_deep_research_skill_matches_equipment_websearch_coverage_rules():
-    """深研技能文本与持久化 Agent 的装备检索约束保持一致。"""
+def test_deep_research_skill_uses_adaptive_multi_source_research():
+    """深研技能支持广度、深挖和来源降级，不绑定固定地域配额。"""
     specs = {spec["slug"]: spec for spec in skill_service.list_builtin_skill_specs()}
     content = (specs["deep-research"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
 
     for requirement in (
-        "国内角度",
-        "国外角度",
-        "前沿角度",
-        "近 2–3 年进展",
-        "国内和国外结果互不替代",
-        "地域证据缺口",
-        "发布日期或年份",
-        "已部署或在役",
-        "公开试验",
-        "原型样机",
-        "论文概念",
-        "`sites` 参数",
-        "`81.cn`",
-        "只有百科",
-        "官方站点定向检索",
-        "最多 8 次网页检索",
-        "交叉核验或补缺",
-        "不计入有效证据",
+        "广度发现—缺口识别—定向深挖",
+        "AMiner",
+        "Open Websearch",
+        "模型知识",
+        "信息饱和",
+        "覆盖缺口",
     ):
         assert requirement in content
+    assert "最多 8 次网页检索" not in content
 
 
 def test_new_preset_file_is_discovered_without_registry(tmp_path, monkeypatch):
@@ -542,18 +454,18 @@ def test_equipment_evidence_guidance_reaches_smart_and_deep_chat():
     assert "deep-research" in found["deep-research"].context["preload_skills"]
     assert "academic-evidence" in specs["deep-research"]["skill_dependencies"]
     content = (specs["deep-research"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
-    assert "不规定对话步骤、章节或固定推演链条" in content
-    assert "取得或引用摘要不等于研究完成" in content
-    assert "形成新质装备时的强研究触发" in content
-    assert "academic_get_papers(full_abstract=True)" in content
-    assert "20 次工具调用只是硬安全上限" in content
+    assert "任务未明确要求固定过程时，不套用固定章节" in content
+    assert "优先通过 `subagent_start`" in content
+    assert "Project 沙盒" in content
+    assert "取消、检查点" in content
+    assert "恢复依据" in content
+    assert "固定业务流水线" not in content
 
 
-@pytest.mark.parametrize("slug", ["deep-research", "equipment-deep-conversation"])
-def test_research_skills_share_s3_s4_equipmentization_gate(slug):
-    """研究技能与 S3/S4 共用从生成起点聚焦具体作战装备的方式。"""
+def test_specialized_equipment_skill_keeps_equipment_identity_gate():
+    """专用装备技能保留装备身份约束，通用深研技能不复制该流程。"""
     specs = {spec["slug"]: spec for spec in skill_service.list_builtin_skill_specs()}
-    content = (specs[slug]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
+    content = (specs["equipment-deep-conversation"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
 
     assert "S3/S4" in content
     assert "物理武器实体" in content
@@ -565,29 +477,20 @@ def test_research_skills_share_s3_s4_equipmentization_gate(slug):
     assert "不得先形成抽象技术方案" in content
 
 
-@pytest.mark.parametrize("slug", ["deep-research", "equipment-deep-conversation"])
-def test_equipment_generation_research_uses_multiple_winning_lenses(slug):
-    """装备生成默认从三个正交制胜视角深检，复杂跨域问题可增加第四视角。"""
+def test_generic_deep_research_has_no_fixed_winning_lens_count():
+    """通用深研根据证据缺口决定分片，不固化三加一制胜视角。"""
     specs = {spec["slug"]: spec for spec in skill_service.list_builtin_skill_specs()}
-    content = (specs[slug]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
+    content = (specs["deep-research"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
 
     for requirement in (
-        "3 个正交",
-        "任务链断点",
-        "接敌关系",
-        "直接战果",
-        "成本交换",
-        "前沿原理",
-        "工程可行性",
-        "成熟度边界",
-        "第 4 个",
-        "对手反制",
-        "反反制",
-        "体系韧性",
-        "不得用同义问题凑数量",
-        "高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界",
+        "正交问题",
+        "并行度根据任务规模",
+        "先小规模探索查询质量",
+        "空结果或低相关分支及时停止",
     ):
         assert requirement in content
+    assert "3 个正交" not in content
+    assert "第 4 个" not in content
 
 
 @pytest.mark.parametrize(

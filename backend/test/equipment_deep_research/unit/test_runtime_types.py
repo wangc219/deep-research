@@ -470,6 +470,7 @@ def test_tool_definition_requires_async_handler_and_excludes_it_from_plain_data(
         "name": "echo",
         "description": "Echo one value.",
         "input_schema": {"type": "object"},
+        "concurrency": "parallel",
     }
     json.dumps(definition.to_plain(), ensure_ascii=False, sort_keys=True)
 

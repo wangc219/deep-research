@@ -16,17 +16,21 @@ from platform_core.services import chat_service as svc
 from platform_core.services.input_message_service import build_chat_input_message
 
 
-@pytest.mark.parametrize("message", [
-    HumanMessage("内部恢复指令", additional_kwargs={"model_output_recovery": True}),
-    SystemMessage("内部执行约束"),
-    ToolMessage("tool result", tool_call_id="call1"),
-    {"role": "user", "content": "user input"},
-])
+@pytest.mark.parametrize(
+    "message",
+    [
+        HumanMessage("内部恢复指令", additional_kwargs={"model_output_recovery": True}),
+        SystemMessage("内部执行约束"),
+        ToolMessage("tool result", tool_call_id="call1"),
+        {"role": "user", "content": "user input"},
+    ],
+)
 def test_non_assistant_messages_are_not_projected_as_assistant_output(message):
     """图内纠错消息与工具结果不能混入流式正文及失败任务输出。"""
-    assert svc._message_payload_platform_events(
-        message, metadata={}, namespace=[], thread_id="t", protocol_message_ids={}
-    ) == []
+    assert (
+        svc._message_payload_platform_events(message, metadata={}, namespace=[], thread_id="t", protocol_message_ids={})
+        == []
+    )
 
 
 @pytest.mark.parametrize("mode", ["chat", "resume"])
@@ -1118,6 +1122,90 @@ async def test_stream_agent_chat_maps_custom_compression_event_to_context_compre
     assert compression_chunks[1]["compression"]["status"] == "completed"
     assert compression_chunks[1]["compression"]["cutoff_index"] == 5
     assert compression_chunks[1]["compression"]["file_path"] == "/conv/x.md"
+
+
+@pytest.mark.parametrize("mode", ["chat", "resume"])
+@pytest.mark.asyncio
+async def test_stream_projects_harness_events_to_visible_agent_progress(
+    monkeypatch: pytest.MonkeyPatch,
+    mode: str,
+):
+    """主对话与恢复执行都把追加式 Harness 事件投影为用户可见进度。"""
+
+    events = [
+        {
+            "type": "platform_core.agent_harness",
+            "event_type": "tool_queued",
+            "status": "waiting",
+            "message": "工具执行排队中：web_search",
+            "tool_name": "web_search",
+        },
+        {
+            "type": "platform_core.agent_harness",
+            "event_type": "tool_started",
+            "status": "working",
+            "message": "正在执行工具：web_search",
+            "tool_name": "web_search",
+        },
+        {
+            "type": "platform_core.agent_harness",
+            "event_type": "tool_finished",
+            "status": "completed",
+            "message": "工具批次已完成：1/1",
+            "tool_name": "web_search",
+        },
+    ]
+
+    class FakeGraph:
+        async def aget_state(self, _config):
+            return SimpleNamespace(values={"messages": []})
+
+    class FakeAgent:
+        context_schema = _FakeContext
+
+        async def stream_messages_with_state(self, messages, input_context=None, **kwargs):
+            del messages, input_context, kwargs
+            for event in events:
+                yield "custom", event
+            yield "messages", (AIMessageChunk(content="done"), {"node": "llm"})
+
+        async def stream_resume_with_state(self, resume_command, context=None, **kwargs):
+            del resume_command, context, kwargs
+            for event in events:
+                yield "custom", event
+            yield "messages", (AIMessageChunk(content="done"), {"node": "llm"})
+
+        async def get_graph(self, *, context=None):
+            del context
+            return FakeGraph()
+
+    _patch_stream_scaffolding(monkeypatch, agent=FakeAgent())
+    kwargs = {
+        "prepared_execution": prepared_execution(),
+        "thread_id": "thread-1",
+        "meta": {"request_id": "req-1"},
+        "current_user": SimpleNamespace(id=1, uid="user-1", role="user", department_id="dept-1"),
+        "db": _FakeSession(),
+    }
+    stream = (
+        svc.stream_agent_chat(
+            **kwargs,
+            agent_slug="test-agent",
+            input_message=build_chat_input_message("hello"),
+        )
+        if mode == "chat"
+        else svc.stream_agent_resume(**kwargs, resume_input={"answer": "ok"})
+    )
+
+    chunks = [json.loads(chunk.decode("utf-8")) async for chunk in stream]
+    progress = [chunk["progress"] for chunk in chunks if chunk.get("status") == "agent_progress"]
+
+    assert [item["event_type"] for item in progress] == [
+        "tool_queued",
+        "tool_started",
+        "tool_finished",
+    ]
+    assert [item["message"] for item in progress] == [event["message"] for event in events]
 
 
 @pytest.mark.parametrize("mode", ["chat", "resume"])

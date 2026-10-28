@@ -29,6 +29,7 @@ from platform_core.agents.middlewares.mcp_tools import McpToolsMiddleware
 from platform_core.agents.middlewares.artifacts import ArtifactDeliveryMiddleware
 from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
 from platform_core.agents.middlewares.subagent_task import create_subagent_task_middleware
+from platform_core.agents.harness.tool_execution import ToolExecutionGovernorMiddleware, scope_tools
 from platform_core.agents.tool_approval import create_tool_approval_middleware, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
@@ -83,6 +84,11 @@ async def _build_middlewares(context, backend):
     )
     if approval_middleware:
         middlewares.append(approval_middleware)
+    middlewares.append(
+        ToolExecutionGovernorMiddleware(
+            max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
+        )
+    )
     return middlewares
 
 
@@ -102,9 +108,17 @@ class ChatbotAgent(BaseAgent):
         # CompositeBackend，filesystem 与 summary middleware 共用同一实例。
         backend = create_agent_composite_backend(context)
         model_spec = resolve_chat_model_spec(context.model)
-        graph = create_agent(
+        runtime_tools = await resolve_configured_runtime_tools(context)
+        root_scope_id = str(getattr(context, "runtime_scope_id", None) or context.thread_id)
+        runtime_tools = scope_tools(
+            runtime_tools,
+            root_scope_id=root_scope_id,
+            scope_id=f"{context.thread_id}:main",
+        )
+        graph = self.create_agent_loop(
+            create_agent,
             model=load_chat_model(fully_specified_name=model_spec, session_id=context.thread_id),
-            tools=await resolve_configured_runtime_tools(context),
+            tools=runtime_tools,
             system_prompt=build_prompt_with_context(context),
             middleware=await _build_middlewares(context, backend),
             state_schema=ChatBotState,

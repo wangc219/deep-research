@@ -14,7 +14,7 @@ from typing import Any
 from langchain.agents.middleware.types import AgentMiddleware, ModelRequest, ModelResponse
 from langgraph.config import get_stream_writer
 
-from equipment_deep_research.harness.model_calls import ModelCallEvent, ModelCallPolicy, ModelCallSupervisor
+from platform_core.agents.harness.model_calls import ModelCallEvent, ModelCallPolicy, ModelCallSupervisor
 from platform_core.config import get_int_env
 
 
@@ -27,11 +27,13 @@ class ModelCallSupervisorMiddleware(AgentMiddleware):
         timeout_seconds: int | None = None,
         feedback_interval_seconds: int | None = None,
     ) -> None:
-        self.timeout_seconds = timeout_seconds or get_int_env(
-            "AGENT_MODEL_CALL_TIMEOUT_SECONDS", 1800, minimum=60, maximum=3600
+        self.timeout_seconds = timeout_seconds or min(
+            3600,
+            get_int_env("AGENT_MODEL_CALL_TIMEOUT_SECONDS", 1800, minimum=60),
         )
-        self.feedback_interval_seconds = feedback_interval_seconds or get_int_env(
-            "AGENT_MODEL_WAIT_FEEDBACK_SECONDS", 30, minimum=10, maximum=120
+        self.feedback_interval_seconds = feedback_interval_seconds or min(
+            120,
+            get_int_env("AGENT_MODEL_WAIT_FEEDBACK_SECONDS", 30, minimum=10),
         )
 
     def wrap_model_call(

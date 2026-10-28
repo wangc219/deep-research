@@ -30,57 +30,20 @@ _ACADEMIC_STOP_PROMPT = """# AMiner 检索降级（本轮运行）
 已不可用或达到调用上限的学术工具已从本轮移除。停止对这些工具的重试、同义改写和等待。
 继续使用仍可用的网页搜索、授权知识库或已有来源完成当前任务，必要时注明具体证据缺口。"""
 
-_RESEARCH_DELIVERY_PROMPT = """# 调研探索员检索与交付规则
-当子问题服务新质武器装备研究时，三源共同支撑创新启发，按互补性、新颖性和对装备构想的启发价值筛选信息。
-其他问题保持调用方范围，按其研究目标综合三源，不引入装备创作要求。
-网页提供新进展、案例与反常现象，AMiner 提供新原理、方法和实验发现，本地知识库提供研究积累、领域联系与未解问题；
-各源都可提出启发和反例。已授权启用知识库时应实际用 query_kbs 取得其独立视角，不必等待网页故障。
-围绕同一子问题综合各源不同认识、互补发现和矛盾，探索相关的跨领域联系与新的可能性。
-不要求每个启发都已有现成装备对应，也不强求三源得出同样结论；已有文献和成熟案例不能成为创新方向的上限。
-明确什么新发现带来何种启发，将创新联想、跨域类比和待验证假设与实际取得的事实分开，说明适用条件与证据缺口。
-知识库片段核对对象、方法、条件和出处；关键数字和事实按需用 open_kb_document / find_kb_document 查看上下文。
-保留 kb_id、file_id、文件名和定位；低相关片段只算线索。内部原文和项目名称不得发到外部服务。
-同一论文跨渠道只算一项原始研究，重复命中不增加新颖性；冲突核对时间、对象和实验条件，不以渠道投票决定事实。
-只围绕调用方的单个子问题检索，先明确最多三个需要证据的要点，并为每个要点建立“核心对象/实体 + 作用或指标 +
-场景/约束”的主题检索式。
-每次 web_search 只查一个明确证据缺口，使用 2-5 个有区分度的词；容易同名或漂移时用 required_terms 固定 1-2
-个核心实体/技术身份锚点。
-不要把待证明的结论或三个不同子问题同时塞进 required_terms；只有三者确实必须同页共现时才使用 3 个锚点。
-每次模型响应最多发起 2 个互补检索工具调用，以受控小批减少模型往返；同一批不得发起两个同渠道同义查询，
-也不得为了凑满 2 个调用而搜索。
-运行时会拒绝同一响应中的第 3 个检索调用，并继续原子控制各渠道总次数。禁止把 DSML、XML 或其他工具协议写进可见文本。
-不要把整段任务、空泛问题或“技术/研究/发展/数据”单独作为查询。每个子任务至少争取 2
-个直接相关的一手或高权威网页来源，
-优先原始试验、标准、政府/军队、论文出版页和厂商一手资料；已有原始来源时不得用聚合媒体、转载页或 ResearchGate
-页面代替。
-工具返回的 source_tier=authoritative 可辅助识别权威入口，但仍需根据标题与摘要核验它是否直接回答证据点。
-子问题涉及技术原理、材料/器件、算法、工程可行性、性能边界或成熟度时，除非已有充分论文证据或用户明确禁用，先用
-AMiner 做一次主题发现，
-标准主题词首次用 2-6 个术语；新命名/跨学科问题用 semantic 保留关键约束，不携带 related_queries；同一批若还调用网页检索，
-必须解决不同且互补的证据缺口。首次主题检索为空时，先从网页命中中提取一篇相关论文的准确标题，
-再用 academic_search(mode="title") 定位，不连续堆叠同义词消耗额度。筛选 1-3 篇直接研究当前对象的候选，必须再用
-academic_get_papers(full_abstract=True) 补证；
-论文题录或宽泛关键词重合不算技术证据。
-单个子任务上限为：24 次网页检索、8 次论文主题或语义发现（related_queries 每项单独计数）、3 次准确标题定位，
-完整摘要分最多 3 批按需读取。总工具安全上限 48 次，活跃工具执行预算 480 秒，墙钟兜底 1800 秒。
-这些是上限而非最低用量。不同探索员独立计数；父子 AMiner 费用/账户额度仍共享原子账本，不绕过预算。
-罕见术语、新命名和跨学科问题可用 academic_search(mode="semantic")，不能因受控关键词无命中就判不存在。
-先查精确新名称，再依据实际来源提取英文、旧称与相关领域术语；网页可用 required_term_groups 表达同一实体别名的 OR。
-围绕同一证据缺口分别覆盖原始研究、独立验证、近期进展、反例/边界；按问题选取出版物、机构、标准与官方资料。
-不同搜索引擎命中同一网页、同题转载、同 DOI 均不是独立来源；不要为来源数量收集低相关材料。
-不因来源总数达到 12 条就自动停止；只有判断所需证据充分、连续三次网页无增量或达到安全预算才收敛。
-每轮先判断已有三源证据是否覆盖要点；关键判断已有直接证据即可交付，网页只补时效和公开事实缺口，不必用满预算。
-若确实找不到 2 个，应明确写成来源质量缺口而不是拿低质量页面凑数。摘要只支持摘要中实际出现的论断。
-只有明确证据缺口才继续检索，禁止重复相同查询或无目的更换同义词。
-运行时按独立来源、无增量次数、工具调用与耗时控制检索。资料整理阈值不代表事实已证实。
-停止后必须返回：能直接回答子问题、改变主智能体判断或暴露关键风险的高价值发现及就近引用，
-并说明每项发现对主研究为何有用；
-同时列出来源、冲突和仍影响判断的具体证据缺口。默认只交付 4-6 条发现，正文不得超过 2500 个中文字符；不要写检索过程、
-堆砌通用背景、重复文献清单或低相关事实，也不要输出继续尝试的承诺。
-每个约定证据点都要给出可供主智能体合并的结果；即使部分检索限流也不能只返回限流说明，
-按要点区分已核实发现与待核验缺口。
-暂时限流已由工具内部共享排队和冷却恢复，不能推断本轮检索永久不可用；不得通过不断改写查询制造重试风暴。
-本子任务不创建或更新待办，工具调用本身就是执行过程；不要调用 write_todos。"""
+_RESEARCH_DELIVERY_PROMPT = """# 调研探索员运行边界
+只处理调用方交给你的一个明确证据问题。先判断什么发现会改变主智能体结论，再自主选择网页、AMiner 与
+已授权知识库；来源职责和调用顺序由问题决定，不按固定地区、数量或渠道配额机械检索。
+
+每次查询解决一个证据缺口。容易同名或漂移时使用 required_terms 或 required_term_groups 保留核心身份，
+不要把待证明结论或多个独立问题设为锚点。互补调用可小批并发，同义查询不要并发或重复。
+
+优先直接相关的一手或高权威来源，核对对象、时间、条件、反例和适用边界。同 DOI、转载和跨渠道重复命中
+只算一项证据。技术问题可用 AMiner 发现论文并按需读取拟引用论文完整摘要；渠道为空或降级时继续其他来源，
+披露覆盖缺口，不把缺失解释为事实不存在。
+
+新增检索不再改变判断、补齐因果链或降低关键不确定性时立即停止。运行时预算只用于防止失控，不是最低用量。
+交付紧凑证据包：高价值发现、对主研究判断的影响、真实引用、冲突、边界和仍影响结论的缺口。区分公开事实、
+论文结论、本地材料、跨域类比、工程推断和创新假设；不要输出检索过程或继续尝试的承诺，也不要调用 write_todos。"""
 
 _TOOL_PROTOCOL_CORRECTION_PROMPT = """# 工具协议纠错
 上一响应把工具调用写成了可见的 DSML/XML 文本，因此没有被执行。禁止输出、解释或复述任何工具协议标记。
@@ -94,7 +57,7 @@ _RESEARCH_WEB_LIMIT = 24
 _RESEARCH_ACADEMIC_TOPIC_LIMIT = 8
 _RESEARCH_ACADEMIC_TITLE_LIMIT = 3
 _RESEARCH_ACADEMIC_DETAIL_LIMIT = 3
-_RESEARCH_BATCH_TOOL_LIMIT = 2
+_RESEARCH_BATCH_TOOL_LIMIT = 4
 _RESEARCH_ACTIVE_TOOL_LIMIT_SECONDS = 480
 _RESEARCH_WALL_LIMIT_SECONDS = 1800
 _RESEARCH_EVIDENCE_TOOLS = frozenset(
@@ -238,6 +201,17 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
                     if _tool_name(tool) not in limited_tools and _tool_name(tool) != "write_todos"
                 ],
                 system_message=append_to_system_message(request.system_message, prompt),
+            )
+            if not self.search_blocked and not self.blocked_academic_tools:
+                return request
+            blocked = self.blocked_academic_tools | ({"web_search"} if self.search_blocked else set())
+            tools = [item for item in (request.tools or []) if _tool_name(item) not in blocked]
+            stop_prompt = _SEARCH_STOP_PROMPT if self.search_blocked else ""
+            if self.blocked_academic_tools:
+                stop_prompt += "\n" + _ACADEMIC_STOP_PROMPT
+            return request.override(
+                tools=tools,
+                system_message=append_to_system_message(request.system_message, stop_prompt),
             )
         if not self.search_blocked and not self.blocked_academic_tools:
             return self._require_requested_academic_search(self._require_knowledge_search(request))
@@ -536,7 +510,7 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
             self.research_tool_seconds += max(0.0, elapsed - queue_wait)
 
     def _batch_tool_limit_reason(self, request: ToolCallRequest) -> str:
-        """拒绝同一个模型响应里排在第 3 位及之后的证据检索调用。"""
+        """限制单个模型响应的检索扇出，保留有界并发与中途重规划能力。"""
         name = _tool_name(request.tool_call)
         if name not in _RESEARCH_EVIDENCE_TOOLS:
             return ""
@@ -555,7 +529,7 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
             None,
         )
         if position is not None and position >= _RESEARCH_BATCH_TOOL_LIMIT:
-            return "同一模型响应最多执行 2 个互补检索调用；第 3 个及后续调用已拒绝，请先评估本批结果再决定是否继续"
+            return "同一模型响应最多执行 4 个互补检索调用；后续调用已拒绝，请先评估本批结果再决定是否继续"
         return ""
 
     def _research_limited_tools(self) -> tuple[set[str], str]:
@@ -622,27 +596,6 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
                 name=name,
             )
         arguments = dict(request.tool_call.get("args") or {})
-        if name == "web_search":
-            required_terms = [
-                " ".join(str(term or "").split())
-                for term in (arguments.get("required_terms") or [])[:3]
-                if len(" ".join(str(term or "").split())) >= 2
-            ]
-            if not required_terms and not arguments.get("required_term_groups"):
-                return ToolMessage(
-                    content=json.dumps(
-                        {
-                            "status": "missing_required_terms",
-                            "message": (
-                                "本次网页检索未执行。请从查询中选择 1-2 个不可丢失的核心实体或技术身份作为 "
-                                "required_terms 后重试；不要把待证明结论或三个不同子问题设为必选锚点。"
-                            ),
-                        },
-                        ensure_ascii=False,
-                    ),
-                    tool_call_id=str(request.tool_call.get("id") or ""),
-                    name=name,
-                )
         with self._research_lock:
             if self.research_started_at is None:
                 self.research_started_at = time.monotonic()

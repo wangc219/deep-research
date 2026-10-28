@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Literal
 
 
 @dataclass
@@ -11,6 +12,7 @@ class ToolExtraMetadata:
     display_name: str = ""  # 显示名称（给人看的名字）
     icon: str = ""
     config_guide: str = ""  # 配置说明（给人看的使用前配置提示）
+    concurrency: Literal["parallel", "exclusive"] = "parallel"
 
 
 # 全局注册表: tool_name -> ToolExtraMetadata
@@ -46,6 +48,7 @@ def tool(
     description: str | None = None,
     args_schema: type | None = None,
     return_direct: bool = False,
+    concurrency: Literal["parallel", "exclusive"] = "parallel",
 ):
     """基于 langchain.tool 的拓展装饰器，同时注册元数据
 
@@ -58,6 +61,9 @@ def tool(
     """
     from langchain.tools import tool as langchain_tool
 
+    if concurrency not in {"parallel", "exclusive"}:
+        raise ValueError("tool concurrency must be 'parallel' or 'exclusive'")
+
     # 先应用 langchain tool 装饰器
     langchain_decorator = langchain_tool(
         name_or_callable=name_or_callable,
@@ -69,6 +75,7 @@ def tool(
     def decorator(func: Callable) -> Callable:
         # 应用 langchain 装饰器
         tool_obj = langchain_decorator(func)
+        tool_obj.metadata = {**(tool_obj.metadata or {}), "concurrency": concurrency}
 
         # 注册附加元数据
         tool_name = tool_obj.name
@@ -78,6 +85,7 @@ def tool(
             display_name=display_name,
             icon=icon,
             config_guide=config_guide,
+            concurrency=concurrency,
         )
 
         # 自动收集工具实例

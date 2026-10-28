@@ -30,6 +30,7 @@ from platform_core.agents.middlewares.academic_evidence import AcademicEvidenceM
 from platform_core.agents.middlewares.model_output import ModelOutputMiddleware
 from platform_core.agents.middlewares.mcp_tools import McpToolsMiddleware
 from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
+from platform_core.agents.harness.tool_execution import ToolExecutionGovernorMiddleware, scope_tools
 from platform_core.agents.tool_approval import SENSITIVE_BACKEND_TOOLS, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
@@ -112,6 +113,9 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
         PatchToolCallsMiddleware(),
         SearchResilienceMiddleware(research_mode=getattr(context, "agent_slug", "") == "research-explorer"),
         _SubAgentToolFilterMiddleware(tool_approval_mode),
+        ToolExecutionGovernorMiddleware(
+            max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
+        ),
         KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
         ModelCallSupervisorMiddleware(),
         NetworkRetryMiddleware(),
@@ -160,9 +164,16 @@ class SubAgentBackend(BaseAgent):
         disabled_tools = _disabled_tools_for(tool_approval_mode)
         backend = create_agent_composite_backend(context)
 
-        return create_agent(
+        runtime_tools = scope_tools(
+            await resolve_configured_runtime_tools(context),
+            root_scope_id=str(getattr(context, "runtime_scope_id", None) or context.thread_id),
+            scope_id=f"{context.thread_id}:{getattr(context, 'agent_slug', 'subagent')}",
+            hidden=disabled_tools,
+        )
+        return self.create_agent_loop(
+            create_agent,
             model=load_chat_model(fully_specified_name=model_spec, session_id=context.thread_id),
-            tools=_filter_disabled_tools(await resolve_configured_runtime_tools(context), disabled_tools),
+            tools=runtime_tools,
             system_prompt=build_prompt_with_context(context),
             middleware=await _build_middlewares(context, backend, tool_approval_mode),
             state_schema=BaseState,

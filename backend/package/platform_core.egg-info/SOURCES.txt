@@ -1,6 +1,9 @@
 MANIFEST.in
 README.md
 pyproject.toml
+agent_harness_core/__init__.py
+agent_harness_core/model_calls.py
+agent_harness_core/scoped_registry.py
 equipment_deep_research/__init__.py
 equipment_deep_research/architecture.py
 equipment_deep_research/deep_conversation.py
@@ -185,10 +188,12 @@ equipment_deep_research/harness/context.py
 equipment_deep_research/harness/event_bus.py
 equipment_deep_research/harness/events.py
 equipment_deep_research/harness/evolution_trace.py
+equipment_deep_research/harness/model_calls.py
 equipment_deep_research/harness/optimizations.py
 equipment_deep_research/harness/profiles.py
 equipment_deep_research/harness/recovery.py
 equipment_deep_research/harness/scheduler.py
+equipment_deep_research/harness/scoped_registry.py
 equipment_deep_research/harness/session.py
 equipment_deep_research/harness/stop_policy.py
 equipment_deep_research/harness/winning_core.py
@@ -390,6 +395,10 @@ platform_core/agents/buildin/subagent/context.py
 platform_core/agents/buildin/subagent/graph.py
 platform_core/agents/callbacks/__init__.py
 platform_core/agents/callbacks/model_request_timing.py
+platform_core/agents/harness/__init__.py
+platform_core/agents/harness/model_calls.py
+platform_core/agents/harness/scoped_registry.py
+platform_core/agents/harness/tool_execution.py
 platform_core/agents/mcp/__init__.py
 platform_core/agents/mcp/builtin.py
 platform_core/agents/mcp/permissions.py
@@ -402,6 +411,7 @@ platform_core/agents/middlewares/dynamic_tool.py
 platform_core/agents/middlewares/knowledge_opt_in.py
 platform_core/agents/middlewares/mcp_tools.py
 platform_core/agents/middlewares/memory.py
+platform_core/agents/middlewares/model_call_supervisor.py
 platform_core/agents/middlewares/model_input.py
 platform_core/agents/middlewares/model_output.py
 platform_core/agents/middlewares/network_retry.py

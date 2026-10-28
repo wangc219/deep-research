@@ -52,7 +52,13 @@ class SaveEquipmentCapabilityDraftInput(BaseModel):
     )
 
 
-@tool(category="equipment", tags=["装备研究"], display_name="启动装备研究任务", args_schema=StartEquipmentResearchInput)
+@tool(
+    category="equipment",
+    tags=["装备研究"],
+    display_name="启动装备研究任务",
+    args_schema=StartEquipmentResearchInput,
+    concurrency="exclusive",
+)
 async def start_equipment_research(
     project_id: str,
     topic: str,
@@ -124,6 +130,7 @@ async def equipment_deep_context(
     tags=["装备研究", "能力画像"],
     display_name="保存能力画像草案",
     args_schema=SaveEquipmentCapabilityDraftInput,
+    concurrency="exclusive",
 )
 async def save_equipment_capability_draft(
     name: str,

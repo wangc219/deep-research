@@ -374,6 +374,14 @@ def _model_call_progress_payload(payload: Any) -> dict | None:
     return None
 
 
+def _agent_harness_progress_payload(payload: Any) -> dict | None:
+    """把通用 Harness 事件投影为现有智能对话进度协议。"""
+
+    if isinstance(payload, dict) and payload.get("type") == "platform_core.agent_harness":
+        return payload
+    return None
+
+
 def _stream_event_response(event: dict[str, Any]) -> str:
     if event.get("type") != "message_delta":
         return ""
@@ -408,7 +416,10 @@ def _message_payload_platform_events(
         msg_dict = {"content": str(msg)}
 
     if msg_dict.get("type") not in {None, "ai", "AIMessageChunk"} or msg_dict.get("role") in {
-        "user", "human", "system", "tool"
+        "user",
+        "human",
+        "system",
+        "tool",
     }:
         return []
 
@@ -1232,6 +1243,10 @@ async def stream_agent_chat(
                     model_progress = _model_call_progress_payload(payload)
                     if model_progress is not None:
                         yield make_chunk(status="agent_progress", progress=model_progress, meta=meta)
+                        continue
+                    harness_progress = _agent_harness_progress_payload(payload)
+                    if harness_progress is not None:
+                        yield make_chunk(status="agent_progress", progress=harness_progress, meta=meta)
                     continue
 
                 if mode == "stream_event":
@@ -1494,6 +1509,10 @@ async def stream_agent_resume(
                     model_progress = _model_call_progress_payload(payload)
                     if model_progress is not None:
                         yield make_resume_chunk(status="agent_progress", progress=model_progress, meta=meta)
+                        continue
+                    harness_progress = _agent_harness_progress_payload(payload)
+                    if harness_progress is not None:
+                        yield make_resume_chunk(status="agent_progress", progress=harness_progress, meta=meta)
                     continue
 
                 if mode != "messages":
@@ -1653,9 +1672,8 @@ async def get_agent_state_view(
     run_repo = AgentRunRepository(db)
     conversation = await conv_repo.get_conversation_by_thread_id(thread_id)
     if conversation:
-        if (
-            conversation.status == "deleted"
-            or (conversation.uid != actor_uid and not has_global_business_access(current_user))
+        if conversation.status == "deleted" or (
+            conversation.uid != actor_uid and not has_global_business_access(current_user)
         ):
             raise HTTPException(status_code=404, detail="对话线程不存在")
 

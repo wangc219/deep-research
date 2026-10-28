@@ -37,6 +37,24 @@ class _RaisingAsyncIter:
         """模拟可关闭的执行流。"""
 
 
+def test_harness_progress_uses_append_only_custom_run_event() -> None:
+    """Harness 类型事件经对话投影后继续进入既有追加式 Run 事件流。"""
+
+    chunk = {
+        "status": "agent_progress",
+        "progress": {
+            "type": "platform_core.agent_harness",
+            "event_type": "tool_started",
+            "message": "正在执行工具：web_search",
+        },
+    }
+
+    event_type, payload = run_worker._map_chunk_to_run_event(chunk)
+
+    assert event_type == "custom"
+    assert payload == {"name": "platform_core.agent_progress", "chunk": chunk}
+
+
 @pytest.mark.parametrize("cancellation", ["signal", "outer", "consumer_body"])
 async def test_stream_cancellation_closes_execution_before_owner_cleanup(cancellation):
     """用户信号、基础设施取消及消费侧取消均不得留下旧执行副作用。"""

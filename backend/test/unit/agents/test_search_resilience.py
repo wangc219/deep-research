@@ -57,15 +57,16 @@ def test_first_search_guard_does_not_restore_blocked_academic_tool():
     assert prepared.tools == [] and prepared.tool_choice is None
 
 
-def test_research_explorer_technical_subproblem_uses_aminer_first():
+def test_research_explorer_keeps_source_choice_with_the_model():
     middleware = SearchResilienceMiddleware(research_mode=True)
     request = ModelRequest(
         model=SimpleNamespace(),
         tools=[SimpleNamespace(name="web_search"), SimpleNamespace(name="academic_search")],
         messages=[HumanMessage(content="核验稀疏阵列雷达的作用机理与工程可行性，为主智能体判断提供证据。")],
     )
-    assert middleware._prepare_model_request(request).tool_choice == "academic_search"
-    assert middleware._prepare_model_request(request).tool_choice is None
+    prepared = middleware._prepare_model_request(request)
+    assert prepared.tool_choice is None
+    assert "自主选择网页、AMiner" in str(prepared.system_message.content)
 
 
 def test_research_explorer_technical_subproblem_respects_aminer_opt_out():
@@ -138,7 +139,7 @@ async def test_explorer_does_not_stop_on_twelve_sources(use_async):
     request = ModelRequest(model=SimpleNamespace(), messages=[], tools=[SimpleNamespace(name="web_search")])
     prepared = middleware._prepare_model_request(request)
     assert [tool.name for tool in prepared.tools] == ["web_search"]
-    assert "不因来源总数达到 12 条就自动停止" in str(prepared.system_message.content)
+    assert "不再改变判断" in str(prepared.system_message.content)
     assert not middleware.research_web_stop_reason
 
 
@@ -191,14 +192,14 @@ def test_explorer_removes_todo_tool_from_research_loop():
     assert [tool.name for tool in prepared.tools] == ["web_search"]
 
 
-def test_explorer_rejects_unanchored_web_search_without_charging_budget():
+def test_explorer_allows_clear_unanchored_web_search():
     middleware = SearchResilienceMiddleware(research_mode=True)
     request = SimpleNamespace(tool_call={"id": "search", "name": "web_search", "args": {"query": "drone swarm"}})
     executed = []
-    result = middleware.wrap_tool_call(request, lambda _: executed.append(True))
-    assert "missing_required_terms" in result.content
-    assert middleware.research_web_calls == 0
-    assert executed == []
+    result = middleware.wrap_tool_call(request, lambda _: executed.append(True) or _sources(1))
+    assert result == _sources(1)
+    assert middleware.research_web_calls == 1
+    assert executed == [True]
 
 
 def test_explorer_intercepts_repeated_query_without_searching_again():
@@ -275,12 +276,14 @@ def test_explorer_channel_budgets_stop_parallel_batches_before_execution():
     assert all("tool_budget_reached" in item.content for item in (denied_topic, denied_title, denied_detail))
 
 
-def test_explorer_allows_two_evidence_tools_per_model_batch_and_rejects_third():
+def test_explorer_allows_four_evidence_tools_per_model_batch_and_rejects_fifth():
     middleware = SearchResilienceMiddleware(research_mode=True)
     calls = [
         {"id": "one", "name": "web_search", "args": {"query": "one", "required_terms": ["one"]}},
         {"id": "two", "name": "academic_search", "args": {"query": "two"}},
         {"id": "three", "name": "web_search", "args": {"query": "three", "required_terms": ["three"]}},
+        {"id": "four", "name": "academic_search", "args": {"query": "four"}},
+        {"id": "five", "name": "web_search", "args": {"query": "five"}},
     ]
     state = {"messages": [AIMessage(content="", tool_calls=calls)]}
     executed = []
@@ -288,14 +291,14 @@ def test_explorer_allows_two_evidence_tools_per_model_batch_and_rejects_third():
     def request(call):
         return SimpleNamespace(tool_call=call, state=state)
 
-    for call in calls[:2]:
+    for call in calls[:4]:
         middleware.wrap_tool_call(
             request(call),
             lambda item: executed.append(item.tool_call["id"]) or '{"status":"ok","results":[]}',
         )
-    denied = middleware.wrap_tool_call(request(calls[2]), lambda _: pytest.fail("batch limit bypass"))
+    denied = middleware.wrap_tool_call(request(calls[4]), lambda _: pytest.fail("batch limit bypass"))
 
-    assert executed == ["one", "two"]
+    assert executed == ["one", "two", "three", "four"]
     assert "tool_batch_limit" in denied.content
 
 
@@ -544,25 +547,24 @@ def test_free_metadata_limit_keeps_topic_search_and_details_available():
     assert not middleware.blocked_academic_tools
 
 
-def test_explorer_uses_authorized_local_evidence_then_aminer():
+def test_explorer_does_not_force_authorized_sources_in_a_fixed_order():
     middleware = SearchResilienceMiddleware(research_mode=True)
     request = ModelRequest(
         model=SimpleNamespace(),
         tools=[SimpleNamespace(name=name) for name in ("query_kbs", "academic_search", "web_search")],
         messages=[HumanMessage(content="核验材料的工程可行性，融合三源证据")],
     )
-    assert middleware._prepare_model_request(request).tool_choice == "query_kbs"
+    assert middleware._prepare_model_request(request).tool_choice is None
     request = request.override(
         messages=[
             *request.messages,
             ToolMessage(content="local constraints and public paper title", name="query_kbs", tool_call_id="kb"),
         ]
     )
-    assert middleware._prepare_model_request(request).tool_choice == "academic_search"
     assert middleware._prepare_model_request(request).tool_choice is None
 
 
-def test_explorer_does_not_skip_aminer_because_web_was_searched():
+def test_explorer_can_decide_whether_web_evidence_needs_aminer():
     request = ModelRequest(
         model=SimpleNamespace(),
         tools=[SimpleNamespace(name="academic_search")],
@@ -571,9 +573,7 @@ def test_explorer_does_not_skip_aminer_because_web_was_searched():
             ToolMessage(content="web evidence", name="web_search", tool_call_id="web"),
         ],
     )
-    assert (
-        SearchResilienceMiddleware(research_mode=True)._prepare_model_request(request).tool_choice == "academic_search"
-    )
+    assert SearchResilienceMiddleware(research_mode=True)._prepare_model_request(request).tool_choice is None
 
 
 @pytest.mark.parametrize(

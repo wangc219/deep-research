@@ -89,7 +89,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["platform_core*", "equipment_deep_research*", "knowledgegraph*"]
+include = ["agent_harness_core*", "platform_core*", "equipment_deep_research*", "knowledgegraph*"]
 
 
 [tool.uv]

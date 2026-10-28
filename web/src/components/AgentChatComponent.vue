@@ -2538,6 +2538,7 @@ const isReplyLoading = computed(() => {
 const replyLoadingText = computed(() => {
   const threadState = currentThreadState.value
   if (threadState?.contextCompressing) return '正在压缩上下文...'
+  if (threadState?.agentProgress?.message) return `${threadState.agentProgress.message}...`
   if (threadState?.agentProgress?.status === 'waiting') {
     const seconds = Math.max(0, Math.round(Number(threadState.agentProgress.elapsed_seconds) || 0))
     return `模型正在处理当前步骤（已等待 ${seconds}s）...`

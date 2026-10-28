@@ -68,6 +68,9 @@ async def test_graph_uses_shared_summary_middleware_factory(
     assert middleware_names.index("NetworkRetryMiddleware") < middleware_names.index(
         "ImageInputCompatibilityMiddleware"
     )
+    assert middleware_names[-1] == "ToolExecutionGovernorMiddleware" or (
+        graph_module is subagent_graph and "ToolExecutionGovernorMiddleware" in middleware_names
+    )
 
 
 @pytest.mark.unit
@@ -129,6 +132,33 @@ async def test_graph_passes_conversation_session_to_model(monkeypatch, graph_mod
     monkeypatch.setattr(graph_module, "create_agent", lambda **kwargs: kwargs)
     graph = await agent_class().get_graph(context=context)
     assert graph["model"] == {"spec": context.model, "session_id": context.thread_id}
+
+
+@pytest.mark.asyncio
+async def test_chatbot_graph_uses_replaceable_agent_loop_factory(monkeypatch):
+    """默认智能对话真实构图路径允许替换 loop，而无需改业务 Agent。"""
+
+    context = _context()
+    context.thread_id = "graph-thread"
+    context._runtime_prepared = True
+    monkeypatch.setattr(chatbot_graph, "sync_agent_context_skills", AsyncMock())
+    monkeypatch.setattr(chatbot_graph, "resolve_configured_runtime_tools", AsyncMock(return_value=[]))
+    monkeypatch.setattr(chatbot_graph, "create_agent_composite_backend", lambda _context: object())
+    monkeypatch.setattr(chatbot_graph, "build_prompt_with_context", lambda _context: "test")
+    monkeypatch.setattr(chatbot_graph, "_build_middlewares", AsyncMock(return_value=[]))
+    monkeypatch.setattr(chatbot_graph, "load_chat_model", lambda **_kwargs: object())
+    monkeypatch.setattr(chatbot_graph.ChatbotAgent, "_get_checkpointer", AsyncMock(return_value=None))
+    captured = {}
+
+    def replacement_loop(**kwargs):
+        captured.update(kwargs)
+        return "replacement-graph"
+
+    agent = chatbot_graph.ChatbotAgent()
+    agent.agent_loop_factory = replacement_loop
+
+    assert await agent.get_graph(context=context) == "replacement-graph"
+    assert captured["tools"] == []
 
 
 @pytest.mark.parametrize("agent_class", [chatbot_graph.ChatbotAgent, subagent_graph.SubAgentBackend])

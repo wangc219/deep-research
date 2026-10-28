@@ -16,6 +16,7 @@ DEFAULT_SUMMARY_THRESHOLD_K = 100  # 100K tokens
 DEFAULT_SUMMARY_KEEP_MESSAGES = 10
 DEFAULT_SUMMARY_TOOL_RESULT_TOKEN_LIMIT = 300
 DEFAULT_MAX_EXECUTION_STEPS = 300
+DEFAULT_MAX_PARALLEL_TOOL_CALLS = 4
 DEFAULT_TOOL_RESULT_EVICTION_K_TOKENS = 3
 DEFAULT_PLATFORM_SUMMARY_PROMPT = """你是对话上下文压缩助手。
 你的任务是把下面的对话历史压缩成后续智能体继续工作所需的高价值上下文。
@@ -370,6 +371,19 @@ class BaseContext:
             "description": (
                 "单次 Agent 运行允许的最大 LangGraph 执行步数，对应 recursion_limit，默认 "
                 f"{DEFAULT_MAX_EXECUTION_STEPS}。"
+            ),
+            "type": "number",
+            "auth": "admin",
+        },
+    )
+
+    max_parallel_tool_calls: int = field(
+        default=DEFAULT_MAX_PARALLEL_TOOL_CALLS,
+        metadata={
+            "name": "最大并行工具调用数",
+            "description": (
+                "单个模型工具批次允许同时执行的调用数；工具自身可声明 exclusive 形成顺序屏障，"
+                f"默认 {DEFAULT_MAX_PARALLEL_TOOL_CALLS}。"
             ),
             "type": "number",
             "auth": "admin",
