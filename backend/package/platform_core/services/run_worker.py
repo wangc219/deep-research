@@ -411,7 +411,9 @@ async def mark_run_running(run_id: str, worker_id: str) -> bool:
             run = await repo.get_run(run_id)
             if run is None:
                 return False
-            capacity["max_user_running"] = user_run_limit(run_lane(run))
+            max_user_running = user_run_limit(run_lane(run))
+            if max_user_running is not None:
+                capacity["max_user_running"] = max_user_running
         _, acquired = await repo.mark_running(
             run_id,
             worker_id=worker_id,

@@ -50,3 +50,18 @@ async def test_readiness_requires_every_enabled_pool(monkeypatch):
     monkeypatch.setattr(readiness_service, "get_redis_client", AsyncMock(return_value=redis))
     with pytest.raises(readiness_service.WorkerUnavailableError):
         await readiness_service._probe_worker()
+
+
+@pytest.mark.parametrize("configured", ["auto", "0", "none", "unlimited"])
+def test_subagent_user_capacity_can_follow_worker_backpressure(monkeypatch, configured):
+    """长程分片不设固定每用户数量时，Worker 总槽位仍提供真实容量边界。"""
+    monkeypatch.setenv("AGENT_USER_SUBAGENT_MAX_RUNNING", configured)
+
+    assert scheduling.user_run_limit("subagent") is None
+
+
+def test_explicit_user_capacity_is_still_supported(monkeypatch):
+    """管理员仍可为共享环境配置公平性配额。"""
+    monkeypatch.setenv("AGENT_USER_SUBAGENT_MAX_RUNNING", "7")
+
+    assert scheduling.user_run_limit("subagent") == 7

@@ -35,9 +35,13 @@ def run_lane(run) -> str:
     return "chat"
 
 
-def user_run_limit(lane: str) -> int:
-    """配额按用户与业务池分别计算，避免同一用户独占所有执行槽。"""
-    return get_int_env(f"AGENT_USER_{lane.upper()}_MAX_RUNNING", {"chat": 2, "deep": 1, "subagent": 2}[lane])
+def user_run_limit(lane: str) -> int | None:
+    """读取每用户执行配额；auto/0 表示交给对应 Worker 的实时空闲槽背压。"""
+    env_name = f"AGENT_USER_{lane.upper()}_MAX_RUNNING"
+    raw_value = os.getenv(env_name, {"chat": "2", "deep": "1", "subagent": "auto"}[lane]).strip().casefold()
+    if raw_value in {"auto", "none", "unlimited", "0"}:
+        return None
+    return get_int_env(env_name, {"chat": 2, "deep": 1, "subagent": 2}[lane])
 
 
 def agent_health_key(kind: str) -> str:
