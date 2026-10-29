@@ -1,5 +1,6 @@
 MANIFEST.in
 README.md
+public_web_search_gateway.py
 pyproject.toml
 agent_harness_core/__init__.py
 agent_harness_core/model_calls.py
@@ -364,6 +365,7 @@ knowledgegraph/demand_discovery/workers/prompts.py
 knowledgegraph/demand_discovery/workers/roles.py
 platform_core/__init__.py
 platform_core/main.py
+platform_core/research_policy.py
 platform_core/storage_migration.py
 platform_core.egg-info/PKG-INFO
 platform_core.egg-info/SOURCES.txt
@@ -594,6 +596,7 @@ platform_core/repositories/task_repository.py
 platform_core/repositories/tool_message_audit_repository.py
 platform_core/repositories/user_repository.py
 platform_core/repositories/video_collector_repository.py
+platform_core/repositories/wechat_channel_repository.py
 platform_core/services/academic_retrieval_service.py
 platform_core/services/agent_config_service.py
 platform_core/services/agent_request_queue_service.py
@@ -618,6 +621,7 @@ platform_core/services/equipment_deep_task.py
 platform_core/services/equipment_model_adapter.py
 platform_core/services/equipment_model_usage.py
 platform_core/services/equipment_query_task.py
+platform_core/services/equipment_research_config.py
 platform_core/services/equipment_research_knowledge.py
 platform_core/services/equipment_research_service.py
 platform_core/services/equipment_research_task.py
@@ -642,9 +646,12 @@ platform_core/services/operation_log_service.py
 platform_core/services/personal_resource_audit_service.py
 platform_core/services/project_service.py
 platform_core/services/readiness_service.py
+platform_core/services/resource_budget.py
 platform_core/services/run_queue_service.py
+platform_core/services/run_scheduling.py
 platform_core/services/run_worker.py
 platform_core/services/scheduled_agent_service.py
+platform_core/services/searxng_service.py
 platform_core/services/subagent_run_service.py
 platform_core/services/task_queue_service.py
 platform_core/services/task_registry.py

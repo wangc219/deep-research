@@ -49,11 +49,14 @@ def test_portal_counts_and_history_do_not_leak():
         "favorites": [{"owner_id": "alice"}, {"owner_id": "workspace"}],
     }
     result = user_workbench_snapshot(snapshot, SimpleNamespace(uid="alice", role="user"))
-    assert [r["run_id"] for r in result["runs"]] == ["a", "legacy"]
-    assert [q["query_id"] for q in result["queries"]] == ["a", "legacy"]
-    assert result["stats"] == {"runs": 2, "queries": 2, "completed_runs": 1, "deep_sessions": 1, "capabilities": 2}
+    assert [r["run_id"] for r in result["runs"]] == ["a"]
+    assert [q["query_id"] for q in result["queries"]] == ["a"]
+    assert result["stats"] == {"runs": 1, "queries": 1, "completed_runs": 1, "deep_sessions": 1, "capabilities": 2}
     assert len(result["favorites"]) == 1
-    assert user_workbench_snapshot(snapshot, SimpleNamespace(uid="admin", role="admin")) is snapshot
+    admin_result = user_workbench_snapshot(snapshot, SimpleNamespace(uid="admin", role="admin"))
+    assert admin_result["runs"] == []
+    assert admin_result["queries"] == []
+    assert admin_result["deep_sessions"] == []
     assert user_workbench_snapshot(snapshot, SimpleNamespace(uid="root", role="superadmin")) is snapshot
 
 
@@ -65,8 +68,11 @@ def test_personal_resources_are_owner_only_except_for_global_admins():
     assert resolve_personal_resource_permission(owner, "alice") == ResourcePermission.MANAGE
     assert (
         resolve_personal_resource_permission(owner, "legacy-owner", shared_legacy=True)
-        == ResourcePermission.READ
+        == ResourcePermission.NONE
     )
+    assert resolve_personal_resource_permission(owner, "alice", shared_legacy=True) == ResourcePermission.NONE
+    assert resolve_personal_resource_permission(tenant_admin, "alice", shared_legacy=True) == ResourcePermission.NONE
+    assert resolve_personal_resource_permission(root, "alice", shared_legacy=True) == ResourcePermission.MANAGE
     assert resolve_personal_resource_permission(tenant_admin, "alice") == ResourcePermission.MANAGE
     assert resolve_personal_resource_permission(root, "alice") == ResourcePermission.MANAGE
 

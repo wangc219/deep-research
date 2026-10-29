@@ -1,0 +1,175 @@
+{
+  "validated_at": "2026-10-29T21:16:16.287684+08:00",
+  "based_on_commit": "33e5d9742c72f18c70bc4e4facaac67e83f9b112",
+  "before": {
+    "passed": 3087,
+    "failed": 21
+  },
+  "after": {
+    "passed": 3118,
+    "failed": 0,
+    "warnings": 17,
+    "new_role_cases": 10,
+    "command": "backend/.venv/bin/python -m pytest -q backend/test/unit -m 'not slow'"
+  },
+  "root_causes": {
+    "packaging": {
+      "count": 4,
+      "cause": "顶层 public_web_search_gateway 模块遗漏了 setuptools py-modules 声明，独立启动的 Python 进程无法导入。",
+      "fix": "补充打包声明并重建安装包，在项目目录外使用隔离 Python 从实际 wheel 导入验证。"
+    },
+    "legacy_permissions": {
+      "count": 11,
+      "cause": "测试仍假设普通用户或管理员可访问公共旧历史；当前权限已将导入历史限定为超级管理员可见。",
+      "fix": "按现有权限修正访问、列表和草稿删除测试，补充三种角色的拒绝与成功用例；保留现有业务权限实现。"
+    },
+    "fixtures_and_projection": {
+      "count": 5,
+      "cause": "取消任务的模拟对象缺少 payload，产物测试缺少 PostgreSQL 事件 mock，断言仍使用旧事件上限或遗漏新增 artifact_counts 字段。",
+      "fix": "补齐模拟对象与仓库，校验当前回放上限和返回字段，并保留事务提交顺序、凭据脱敏等原有断言。"
+    },
+    "agent_preset": {
+      "count": 1,
+      "cause": "默认 Agent 已改为通用研究策略，测试仍硬编码旧的装备专用提示词片段。",
+      "fix": "保留完整预设同步断言，验证证据诚实、主智能体综合判断及 equipment-research 衔接要求。"
+    }
+  },
+  "original_failures": [
+    {
+      "original_failed_test": "backend/test/unit/agents/test_builtin_discovery.py::test_backend_import_does_not_scan_or_create_instances",
+      "category": "packaging",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/permissions/test_enterprise_permission.py::test_portal_counts_and_history_do_not_leak",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/permissions/test_enterprise_permission.py::test_personal_resources_are_owner_only_except_for_global_admins",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/repositories/test_agent_repository.py::test_ensure_default_agent_backfills_missing_description",
+      "category": "agent_preset",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_compact_reads.py::test_compact_runs_exclude_large_summary_without_mutating_detail",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_query_service.py::test_query_list_returns_server_pagination_and_filters",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_query_service.py::test_shared_history_query_can_be_changed_without_transferring_owner",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_query_service.py::test_historical_query_is_readable_by_other_users_but_future_query_is_not",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_owner_can_mutate_imported_historical_run",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_cancel_run_commits_business_state_before_cancelling_durable_task[pending]",
+      "category": "fixtures_and_projection",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_cancel_run_commits_business_state_before_cancelling_durable_task[running]",
+      "category": "fixtures_and_projection",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_legacy_deep_session_projects_imported_branches",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_run_projection_endpoints_read_legacy_artifacts_and_remove_credentials",
+      "category": "fixtures_and_projection",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_run_interactions_fall_back_to_postgres_events",
+      "category": "fixtures_and_projection",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_research_service.py::test_list_deep_sessions_reads_two_hundred_rows",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_superadmin_delegation.py::test_superadmin_updates_run_scope_without_changing_owner",
+      "category": "fixtures_and_projection",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_workbench_sync_delete.py::test_owner_can_delete_legacy_draft",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_equipment_workbench_sync_delete.py::test_completed_legacy_run_remains_read_only",
+      "category": "legacy_permissions",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_run_worker.py::test_durable_task_shipping_worker_accepts_default_above_24_hours",
+      "category": "packaging",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_run_worker.py::test_worker_settings_reject_invalid_redis_dsn_instead_of_using_arq_default",
+      "category": "packaging",
+      "status": "resolved"
+    },
+    {
+      "original_failed_test": "backend/test/unit/services/test_skill_service.py::test_sync_user_accessible_skills_serializes_multiple_processes",
+      "category": "packaging",
+      "status": "resolved"
+    }
+  ],
+  "verification": {
+    "targeted_files": {
+      "files": 10,
+      "passed": 264,
+      "failed": 0
+    },
+    "make_check": {
+      "passed": 13,
+      "architecture": "passed",
+      "compile": "passed"
+    },
+    "lint_ratchet": {
+      "legacy_findings": 217,
+      "new_findings": 0,
+      "resolved_findings": 0
+    },
+    "changed_test_ruff": "passed",
+    "diff_whitespace": "passed",
+    "wheel": {
+      "wheel": "platform_core-0.7.3-py3-none-any.whl",
+      "module_in_wheel": true,
+      "isolated_import_from_wheel": true,
+      "unregistered_executor_contract": "unavailable"
+    },
+    "dependency_lock_check": "passed: uv lock --project backend --check --offline"
+  },
+  "limitations": [
+    "The full run covers backend unit tests, not full-stack integration or end-to-end tests.",
+    "17 existing dependency deprecation and serialization warnings remain; they are not failures."
+  ],
+  "production_changes": false
+}

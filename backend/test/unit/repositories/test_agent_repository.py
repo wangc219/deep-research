@@ -206,9 +206,9 @@ async def test_ensure_default_agent_backfills_missing_description(monkeypatch):
     assert agent.name == DEFAULT_AGENT_PRESET.name
     assert agent.config_json["context"]["system_prompt"] == DEFAULT_AGENT_PRESET.context["system_prompt"]
     assert agent.config_json["context"]["skills"] == DEFAULT_AGENT_PRESET.context["skills"]
-    assert "本轮没有成功调用网页或学术检索" in agent.config_json["context"]["system_prompt"]
-    assert "纯算法、软件层、数据平台" in agent.config_json["context"]["system_prompt"]
-    assert "量子纠缠可在没有经典信道时" in agent.config_json["context"]["system_prompt"]
+    assert "不能冒充已经检索到的证据" in agent.config_json["context"]["system_prompt"]
+    assert "主智能体保留全局判断" in agent.config_json["context"]["system_prompt"]
+    assert "equipment-research" in agent.config_json["context"]["system_prompt"]
     assert agent.config_json["context"]["model"] == "provider:model"
     assert agent.config_json["context"]["knowledges"] == ["knowledge-1"]
     assert agent.updated_by == "admin"

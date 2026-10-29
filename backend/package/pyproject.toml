@@ -86,6 +86,7 @@ dependencies = [
 
 [tool.setuptools]
 include-package-data = true
+py-modules = ["public_web_search_gateway"]
 
 [tool.setuptools.packages.find]
 where = ["."]

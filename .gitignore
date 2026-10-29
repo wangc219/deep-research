@@ -29,6 +29,7 @@ __pycache__/
 htmlcov/
 .venv/
 venv/
+/backend/package/build/
 
 # Frontend
 node_modules/

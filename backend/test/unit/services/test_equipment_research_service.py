@@ -34,7 +34,8 @@ def test_capability_delivery_projection_removes_legacy_authoring_narration() -> 
 
 
 @pytest.mark.asyncio
-async def test_owner_can_mutate_imported_historical_run() -> None:
+@pytest.mark.parametrize("role", ["user", "admin", "superadmin"])
+async def test_only_superadmin_can_mutate_imported_historical_run(role) -> None:
     run = EquipmentResearchRun(
         id="historical-run",
         project_id="project-1",
@@ -47,7 +48,13 @@ async def test_owner_can_mutate_imported_historical_run() -> None:
         readonly=1,
     )
     db = SimpleNamespace(get=AsyncMock(return_value=run))
-    user = SimpleNamespace(uid="owner", role="user")
+    user = SimpleNamespace(uid="owner", role=role)
+
+    if role != "superadmin":
+        with pytest.raises(HTTPException) as error:
+            await service._require_run(db, user=user, run_id=run.id, mutation=True)
+        assert error.value.status_code == 404
+        return
 
     resolved = await service._require_run(
         db,
@@ -70,6 +77,7 @@ async def test_cancel_run_commits_business_state_before_cancelling_durable_task(
         id="run-1",
         owner_uid="owner",
         status="researching",
+        payload={},
         updated_at=None,
         to_dict=lambda: {"id": "run-1", "status": run.status},
     )
@@ -445,7 +453,8 @@ async def test_native_deep_session_reads_use_verified_owner(monkeypatch, viewer_
 
 
 @pytest.mark.asyncio
-async def test_legacy_deep_session_projects_imported_branches(monkeypatch) -> None:
+@pytest.mark.parametrize("role", ["user", "admin", "superadmin"])
+async def test_legacy_deep_session_projects_imported_branches_only_for_superadmin(monkeypatch, role) -> None:
     """旧 SQLite 分支导入 PostgreSQL 后必须随会话详情返回。"""
 
     session = SimpleNamespace(
@@ -464,9 +473,19 @@ async def test_legacy_deep_session_projects_imported_branches(monkeypatch) -> No
     )
     monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
 
+    if role != "superadmin":
+        with pytest.raises(HTTPException) as error:
+            await service.get_deep_session(
+                db=object(), user=SimpleNamespace(uid="owner", role=role), session_id="legacy-session"
+            )
+        assert error.value.status_code == 404
+        repository.list_deep_messages.assert_not_awaited()
+        repository.list_deep_branches.assert_not_awaited()
+        return
+
     result = await service.get_deep_session(
         db=object(),
-        user=SimpleNamespace(uid="owner", role="user"),
+        user=SimpleNamespace(uid="owner", role=role),
         session_id="legacy-session",
     )
 
@@ -791,6 +810,8 @@ async def test_run_projection_endpoints_read_legacy_artifacts_and_remove_credent
     run = _artifact_test_run(run_id)
     require_run = AsyncMock(return_value=run)
     monkeypatch.setattr(service, "_require_run", require_run)
+    repository = SimpleNamespace(list_events=AsyncMock(return_value=[]))
+    monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
     monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path))
     user = SimpleNamespace(uid="user-1", role="user")
 
@@ -889,7 +910,7 @@ async def test_run_interactions_fall_back_to_postgres_events(monkeypatch, tmp_pa
     assert result["events"][0]["sequence"] == 7
     assert result["events"][0]["details"] == {"actor": "orchestrator", "status": "researching"}
     assert result["workflow"]["status"] == "completed"
-    repository.list_events.assert_awaited_once_with(run_id, after_seq=0, limit=200)
+    repository.list_events.assert_awaited_once_with(run_id, after_seq=0, limit=50000)
     require_run.assert_awaited_once()
 
 
@@ -998,7 +1019,7 @@ async def test_list_deep_sessions_reads_two_hundred_rows(monkeypatch) -> None:
     repository.list_deep_sessions.assert_awaited_once_with(
         "owner",
         limit=200,
-        include_legacy=True,
+        include_legacy=False,
     )
 
 

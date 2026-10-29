@@ -33,7 +33,7 @@ async def test_compact_runs_exclude_large_summary_without_mutating_detail(monkey
     )
     repository = SimpleNamespace(list_runs_for_user=AsyncMock(return_value=[run]))
     monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
-    user = SimpleNamespace(uid="owner", role="user")
+    user = SimpleNamespace(uid="root", role="superadmin")
     full = (await service.list_runs(db=object(), user=user))[0]
     compact = (await service.list_runs(db=object(), user=user, compact=True))[0]
     for key in (

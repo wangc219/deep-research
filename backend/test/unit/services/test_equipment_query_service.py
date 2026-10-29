@@ -34,7 +34,8 @@ def _query(**overrides):
 
 
 @pytest.mark.asyncio
-async def test_query_list_returns_server_pagination_and_filters(monkeypatch):
+@pytest.mark.parametrize("role", ["user", "admin", "superadmin"])
+async def test_query_list_returns_server_pagination_and_filters(monkeypatch, role):
     row = _query()
     repository = SimpleNamespace(
         list_queries=AsyncMock(return_value=[row]),
@@ -44,7 +45,7 @@ async def test_query_list_returns_server_pagination_and_filters(monkeypatch):
 
     result = await service.list_queries(
         db=object(),
-        user=_user(),
+        user=SimpleNamespace(uid="owner", role=role),
         project_id="project-1",
         status="draft",
         source_type="manual",
@@ -56,14 +57,14 @@ async def test_query_list_returns_server_pagination_and_filters(monkeypatch):
     assert result["items"][0]["query_id"] == "query-1"
     assert result | {"items": []} == {"items": [], "total": 23, "limit": 10, "offset": 20}
     repository.list_queries.assert_awaited_once_with(
-        "owner",
+        "owner" if role == "user" else None,
         project_id="project-1",
         status="draft",
         source_type="manual",
         search="研究",
         limit=10,
         offset=20,
-        include_legacy=True,
+        include_legacy=role == "superadmin",
     )
 
 
@@ -100,13 +101,22 @@ async def test_query_update_uses_optimistic_version_and_revision(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_shared_history_query_can_be_changed_without_transferring_owner(monkeypatch):
+@pytest.mark.parametrize("role", ["user", "admin", "superadmin"])
+async def test_only_superadmin_can_change_historical_query_without_transferring_owner(monkeypatch, role):
     row = _query(owner_uid="legacy-owner", legacy_source_id="legacy-query-1", import_batch_id="workbench-sync")
     repository = SimpleNamespace(lock_query=AsyncMock(return_value=row), add_query_revision=AsyncMock())
     db = SimpleNamespace(commit=AsyncMock(), add=lambda _row: None, flush=AsyncMock())
     monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
     monkeypatch.setattr(service, "audit_superadmin_personal_resource_write", AsyncMock())
-    user = SimpleNamespace(uid="other-user", id=1, role="user")
+    user = SimpleNamespace(uid="other-user", id=1, role=role)
+    if role != "superadmin":
+        with pytest.raises(HTTPException) as error:
+            await service.publish_query(db=db, user=user, query_id=row.id, expected_version=1)
+        assert error.value.status_code == 404
+        repository.add_query_revision.assert_not_awaited()
+        db.commit.assert_not_awaited()
+        assert row.status == "draft" and row.version == 1
+        return
     result = await service.publish_query(db=db, user=user, query_id=row.id, expected_version=1)
     assert result["version"] == 2
     assert result["owner_uid"] == "legacy-owner"
@@ -115,19 +125,22 @@ async def test_shared_history_query_can_be_changed_without_transferring_owner(mo
 
 
 @pytest.mark.asyncio
-async def test_historical_query_is_readable_by_other_users_but_future_query_is_not(monkeypatch):
+@pytest.mark.parametrize("role", ["user", "admin", "superadmin"])
+async def test_historical_query_is_superadmin_only_and_native_query_stays_private(monkeypatch, role):
     historical = _query(owner_uid="legacy-owner", legacy_source_id="legacy-query-1")
     repository = SimpleNamespace(get_query=AsyncMock(return_value=historical))
     monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
 
-    visible = await service.get_query(
-        db=object(),
-        user=_user(),
-        query_id=historical.id,
-        include_revisions=False,
-    )
-    assert visible["query_id"] == historical.id
-    assert visible["readonly"] is False
+    user = SimpleNamespace(uid="owner", role=role)
+    if role == "superadmin":
+        visible = await service.get_query(
+            db=object(), user=user, query_id=historical.id, include_revisions=False
+        )
+        assert visible["query_id"] == historical.id
+    else:
+        with pytest.raises(HTTPException) as error:
+            await service.get_query(db=object(), user=user, query_id=historical.id, include_revisions=False)
+        assert error.value.status_code == 404
 
     future = _query(owner_uid="another-user")
     repository.get_query.return_value = future

@@ -2,3 +2,4 @@ agent_harness_core
 equipment_deep_research
 knowledgegraph
 platform_core
+public_web_search_gateway

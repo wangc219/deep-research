@@ -25,7 +25,7 @@ def _exists(path, run_id: str) -> bool:
         ).fetchone() is not None
 
 
-def test_owner_can_delete_legacy_draft(monkeypatch, tmp_path) -> None:
+def test_owner_cannot_discover_or_delete_legacy_draft(monkeypatch, tmp_path) -> None:
     app_db = tmp_path / "application.db"
     _create_runs(
         app_db,
@@ -41,15 +41,8 @@ def test_owner_can_delete_legacy_draft(monkeypatch, tmp_path) -> None:
         "draft-1", SimpleNamespace(uid="owner", role="user")
     )
 
-    assert result == {
-        "deleted": True,
-        "run_id": "draft-1",
-        "status": "draft",
-        "workspace_id": "owner",
-        "owner_uid": "owner",
-    }
-    assert not _exists(app_db, "draft-1")
-    assert service.load_workbench_snapshot()["runs"] == []
+    assert result is None
+    assert _exists(app_db, "draft-1")
 
 
 def test_foreign_user_cannot_discover_or_delete_legacy_draft(monkeypatch, tmp_path) -> None:
@@ -94,7 +87,7 @@ def test_completed_legacy_run_remains_read_only(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_APP_DB", f"sqlite:///{app_db}")
 
     result = service.delete_workbench_draft(
-        "completed-1", SimpleNamespace(uid="owner", role="user")
+        "completed-1", SimpleNamespace(uid="root", role="superadmin")
     )
 
     assert result is not None and result["deleted"] is False

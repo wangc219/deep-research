@@ -280,6 +280,7 @@ async def test_superadmin_updates_run_scope_without_changing_owner(monkeypatch, 
         "knowledge_ids": None,
         "historical_snapshot": False,
         "readonly": False,
+        "artifact_counts": {},
     }
 
     none_visible = await service.update_run(
