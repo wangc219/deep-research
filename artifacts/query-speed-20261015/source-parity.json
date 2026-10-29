@@ -1,0 +1,11 @@
+{
+  "files": 527,
+  "cloud_source_matches_snapshot": true,
+  "different_cloud_source": [],
+  "local_changes_since_snapshot": [
+    "backend/package/equipment_deep_research/query_library/generator.py",
+    "web/test/unit/equipmentStore.test.js",
+    "web/test/unit/equipmentQueries.test.js",
+    "web/src/stores/equipment.js"
+  ]
+}

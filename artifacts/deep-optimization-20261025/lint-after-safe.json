@@ -1,0 +1,7300 @@
+[
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 78,
+      "row": 15
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/deep_divergence_v1.py",
+    "fix": null,
+    "location": {
+      "column": 72,
+      "row": 15
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 15,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 84,
+      "row": 4
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/combat_scenario.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 4
+    },
+    "message": "Line too long (129 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 83,
+      "row": 23
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/combat_scenario.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 23
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 23,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 4
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/international_situation.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 4
+    },
+    "message": "Line too long (126 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 100,
+      "row": 10
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/international_situation.py",
+    "fix": null,
+    "location": {
+      "column": 81,
+      "row": 10
+    },
+    "message": "Line too long (155 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 10,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 4
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 4
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 100,
+      "row": 10
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+    "fix": null,
+    "location": {
+      "column": 81,
+      "row": 10
+    },
+    "message": "Line too long (151 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 10,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 110,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+    "fix": null,
+    "location": {
+      "column": 76,
+      "row": 11
+    },
+    "message": "Line too long (187 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 183,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/guidance/weapon_equipment.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 12
+    },
+    "message": "Line too long (331 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 7
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 22
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/auditor.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 22
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 22,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 19
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/case_research.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 19
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 26
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/combat_scenario.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 26
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/convergence_fusion.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 12
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/cross_domain_fusion.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 12
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 20
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/international_situation.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 20
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 20,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 25
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/nontraditional_security.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 25
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 25,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 26
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/operational_employment.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 26
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 19
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/opponent_monitoring.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 19
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 44
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 44
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 44,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/reporter.py",
+    "fix": null,
+    "location": {
+      "column": 72,
+      "row": 6
+    },
+    "message": "Line too long (126 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 48
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/reporter.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 48
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 48,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 19
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/scenario_divergence.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 19
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 24
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/system_confrontation.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 24
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 24,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 25
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/technology_radar.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 25
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 25,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 54
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/weapon_equipment.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 54
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 54,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 17
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_dynamic_specialist.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 17
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 17,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 26
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_mechanism.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 26
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_round_critic.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 12
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 27
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s1_opponent.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 27
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 27,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 28
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s2_operations.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 28
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 28,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 29
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s3_breakthrough.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 29
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 29,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 27
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s4_capability.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 27
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 27,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 27
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s5_gap.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 27
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 27,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 25
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_s6_image.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 25
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 25,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 99,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/runtime/winning_step_critic.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 12
+    },
+    "message": "Line too long (170 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 318,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/designs/weapon_equipment.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 7
+    },
+    "message": "Line too long (586 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 32,
+      "row": 8
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/dynamic_prompt_resources.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from functools import cache",
+          "end_location": {
+            "column": 39,
+            "row": 8
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Remove unused import: `functools.lru_cache`"
+    },
+    "location": {
+      "column": 23,
+      "row": 8
+    },
+    "message": "`functools.lru_cache` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 8,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 43
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 43
+    },
+    "message": "Line too long (168 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 86,
+      "row": 44
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 44
+    },
+    "message": "Line too long (156 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 135,
+      "row": 45
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 45
+    },
+    "message": "Line too long (203 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 245,
+      "row": 46
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 46
+    },
+    "message": "Line too long (398 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 93,
+      "row": 47
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 69,
+      "row": 47
+    },
+    "message": "Line too long (168 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 95,
+      "row": 52
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 52
+    },
+    "message": "Line too long (168 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 68,
+      "row": 53
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 66,
+      "row": 53
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 69,
+      "row": 58
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 62,
+      "row": 58
+    },
+    "message": "Line too long (134 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 108,
+      "row": 78
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 101,
+      "row": 78
+    },
+    "message": "Line too long (134 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 264,
+      "row": 79
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 79
+    },
+    "message": "Line too long (472 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 80,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 114
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 114
+    },
+    "message": "Line too long (135 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 115,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 97,
+      "row": 119
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 92,
+      "row": 119
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 121,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 107,
+      "row": 139
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 107,
+      "row": 139
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 154,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 107,
+      "row": 142
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/orchestrator_prompt.py",
+    "fix": null,
+    "location": {
+      "column": 107,
+      "row": 142
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 154,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 87,
+      "row": 70
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/prompts.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 70
+    },
+    "message": "Line too long (136 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 70,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 92,
+      "row": 71
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/prompts.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 71
+    },
+    "message": "Line too long (144 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 71,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 103,
+      "row": 242
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/runtime_profiles.py",
+    "fix": null,
+    "location": {
+      "column": 83,
+      "row": 242
+    },
+    "message": "Line too long (158 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 242,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 131,
+      "row": 492
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 492
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 492,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 493
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 493
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 493,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 124,
+      "row": 494
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/baseline_execution.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 494
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 494,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 111,
+      "row": 2988
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 106,
+      "row": 2988
+    },
+    "message": "Line too long (126 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2988,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 106,
+      "row": 2991
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 105,
+      "row": 2991
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2991,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 120,
+      "row": 2994
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 112,
+      "row": 2994
+    },
+    "message": "Line too long (133 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2994,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 144,
+      "row": 2997
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 120,
+      "row": 2997
+    },
+    "message": "Line too long (159 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2997,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 117,
+      "row": 3000
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 109,
+      "row": 3000
+    },
+    "message": "Line too long (132 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3000,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 116,
+      "row": 3007
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 115,
+      "row": 3007
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3007,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 127,
+      "row": 3015
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 117,
+      "row": 3015
+    },
+    "message": "Line too long (135 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3015,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 92,
+      "row": 3068
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 3068
+    },
+    "message": "Line too long (155 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3159,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 91,
+      "row": 3106
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 3106
+    },
+    "message": "Line too long (136 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3159,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 113,
+      "row": 3255
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 105,
+      "row": 3255
+    },
+    "message": "Line too long (133 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3255,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 95,
+      "row": 3306
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 3306
+    },
+    "message": "Line too long (147 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3396,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 3310
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 77,
+      "row": 3310
+    },
+    "message": "Line too long (204 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3396,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 3314
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 3314
+    },
+    "message": "Line too long (149 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3396,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 114,
+      "row": 3396
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 63,
+      "row": 3396
+    },
+    "message": "Line too long (188 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3396,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 3563
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 3563
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3563,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 77,
+      "row": 3564
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 3564
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3564,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 3565
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 3565
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3565,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 3566
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 3566
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3566,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 78,
+      "row": 3567
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 3567
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3567,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 249,
+      "row": 3576
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 3576
+    },
+    "message": "Line too long (439 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 214,
+      "row": 3578
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 3578
+    },
+    "message": "Line too long (402 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 324,
+      "row": 3582
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 72,
+      "row": 3582
+    },
+    "message": "Line too long (566 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 132,
+      "row": 3584
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 62,
+      "row": 3584
+    },
+    "message": "Line too long (237 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 334,
+      "row": 3588
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 69,
+      "row": 3588
+    },
+    "message": "Line too long (587 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 186,
+      "row": 3594
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 3594
+    },
+    "message": "Line too long (332 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 167,
+      "row": 3598
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 3598
+    },
+    "message": "Line too long (293 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 160,
+      "row": 3608
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 3608
+    },
+    "message": "Line too long (291 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 166,
+      "row": 3612
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 3612
+    },
+    "message": "Line too long (302 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3693,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 120,
+      "row": 3821
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 117,
+      "row": 3821
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3821,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 91,
+      "row": 3891
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 69,
+      "row": 3891
+    },
+    "message": "Line too long (163 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3891,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 101,
+      "row": 4650
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 87,
+      "row": 4650
+    },
+    "message": "Line too long (146 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4650,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 104,
+      "row": 4651
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 4651
+    },
+    "message": "Line too long (151 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4651,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 193,
+      "row": 383
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 70,
+      "row": 383
+    },
+    "message": "Line too long (365 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 385,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 125,
+      "row": 931
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 70,
+      "row": 931
+    },
+    "message": "Line too long (231 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 939,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 83,
+      "row": 932
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 70,
+      "row": 932
+    },
+    "message": "Line too long (147 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 939,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 90,
+      "row": 2315
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 2315
+    },
+    "message": "Line too long (153 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 69,
+      "row": 2318
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 2318
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 113,
+      "row": 2320
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 2320
+    },
+    "message": "Line too long (218 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 171,
+      "row": 2321
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 87,
+      "row": 2321
+    },
+    "message": "Line too long (242 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 67,
+      "row": 2322
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 63,
+      "row": 2322
+    },
+    "message": "Line too long (129 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 77,
+      "row": 2405
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 76,
+      "row": 2405
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2405,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 199,
+      "row": 2554
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 86,
+      "row": 2554
+    },
+    "message": "Line too long (297 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 97,
+      "row": 2555
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 2555
+    },
+    "message": "Line too long (167 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 66,
+      "row": 2559
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 2559
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 129,
+      "row": 2560
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 91,
+      "row": 2560
+    },
+    "message": "Line too long (184 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 101,
+      "row": 2564
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 90,
+      "row": 2564
+    },
+    "message": "Line too long (142 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 116,
+      "row": 2565
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 70,
+      "row": 2565
+    },
+    "message": "Line too long (213 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 91,
+      "row": 2567
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 89,
+      "row": 2567
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 104,
+      "row": 2570
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 2570
+    },
+    "message": "Line too long (193 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2570,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 87,
+      "row": 2788
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 2788
+    },
+    "message": "Line too long (161 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2813,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 98,
+      "row": 2789
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 72,
+      "row": 2789
+    },
+    "message": "Line too long (169 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2813,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 69,
+      "row": 2798
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 2798
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2813,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 147,
+      "row": 2800
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 97,
+      "row": 2800
+    },
+    "message": "Line too long (186 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2813,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 95,
+      "row": 2809
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 77,
+      "row": 2809
+    },
+    "message": "Line too long (156 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2813,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 82,
+      "row": 2965
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 66,
+      "row": 2965
+    },
+    "message": "Line too long (153 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 154,
+      "row": 2967
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 102,
+      "row": 2967
+    },
+    "message": "Line too long (208 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 131,
+      "row": 2970
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 2970
+    },
+    "message": "Line too long (253 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 73,
+      "row": 2971
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 69,
+      "row": 2971
+    },
+    "message": "Line too long (129 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 294,
+      "row": 2972
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 2972
+    },
+    "message": "Line too long (469 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 86,
+      "row": 2975
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 63,
+      "row": 2975
+    },
+    "message": "Line too long (166 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 106,
+      "row": 2976
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 2976
+    },
+    "message": "Line too long (169 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2983,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 112,
+      "row": 3017
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 70,
+      "row": 3017
+    },
+    "message": "Line too long (198 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3024,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 128,
+      "row": 3612
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 3612
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3612,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 84,
+      "row": 445
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+    "fix": null,
+    "location": {
+      "column": 77,
+      "row": 445
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 445,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F841",
+    "end_location": {
+      "column": 22,
+      "row": 891
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 25,
+            "row": 891
+          },
+          "location": {
+            "column": 9,
+            "row": 891
+          }
+        }
+      ],
+      "message": "Remove assignment to unused variable `table_indexes`"
+    },
+    "location": {
+      "column": 9,
+      "row": 891
+    },
+    "message": "Local variable `table_indexes` is assigned to but never used",
+    "name": "unused-variable",
+    "noqa_row": 891,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-variable"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 136,
+      "row": 1377
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 1377
+    },
+    "message": "Line too long (249 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1377,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F841",
+    "end_location": {
+      "column": 17,
+      "row": 2998
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 2999
+          },
+          "location": {
+            "column": 1,
+            "row": 2998
+          }
+        }
+      ],
+      "message": "Remove assignment to unused variable `in_table`"
+    },
+    "location": {
+      "column": 9,
+      "row": 2998
+    },
+    "message": "Local variable `in_table` is assigned to but never used",
+    "name": "unused-variable",
+    "noqa_row": 2998,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-variable"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 58
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 49
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 49,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 61
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 59
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 59,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 64
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/s6_quality.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 62
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 62,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 104,
+      "row": 1052
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 1052
+    },
+    "message": "Line too long (166 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1052,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 135,
+      "row": 1059
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 1059
+    },
+    "message": "Line too long (134 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1059,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 90,
+      "row": 1067
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 84,
+      "row": 1067
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1067,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 126,
+      "row": 1076
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 1076
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1076,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 89,
+      "row": 1103
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 86,
+      "row": 1103
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1103,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 89,
+      "row": 1107
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 86,
+      "row": 1107
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1107,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 98,
+      "row": 1108
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 84,
+      "row": 1108
+    },
+    "message": "Line too long (147 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1108,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 101,
+      "row": 1116
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 85,
+      "row": 1116
+    },
+    "message": "Line too long (150 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1116,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 110,
+      "row": 1124
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 89,
+      "row": 1124
+    },
+    "message": "Line too long (161 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1124,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 103,
+      "row": 1125
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 85,
+      "row": 1125
+    },
+    "message": "Line too long (155 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1125,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 98,
+      "row": 1126
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 1126
+    },
+    "message": "Line too long (139 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1126,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 145,
+      "row": 3534
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 3534
+    },
+    "message": "Line too long (144 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3534,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 92,
+      "row": 3535
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 89,
+      "row": 3535
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 3535,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 109,
+      "row": 4449
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning.py",
+    "fix": null,
+    "location": {
+      "column": 106,
+      "row": 4449
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 4449,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 103,
+      "row": 1102
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 76,
+      "row": 1102
+    },
+    "message": "Line too long (173 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1102,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 196,
+      "row": 1103
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 103,
+      "row": 1103
+    },
+    "message": "Line too long (305 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1103,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 1104
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 1104
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1104,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 85,
+      "row": 1105
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 81,
+      "row": 1105
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1105,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 1106
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 1106
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1106,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 1110
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 1110
+    },
+    "message": "Line too long (138 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1110,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 89,
+      "row": 1115
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 1115
+    },
+    "message": "Line too long (140 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1115,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 100,
+      "row": 1150
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 86,
+      "row": 1150
+    },
+    "message": "Line too long (147 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1150,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 94,
+      "row": 1151
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 85,
+      "row": 1151
+    },
+    "message": "Line too long (137 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1151,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 95,
+      "row": 1152
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/agents/workflows/winning_flows/s6_authoring.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 1152
+    },
+    "message": "Line too long (144 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1152,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 15
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 15
+          },
+          "location": {
+            "column": 1,
+            "row": 15
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 15
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 15,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 247,
+      "row": 11219
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 11219
+    },
+    "message": "Line too long (246 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 11219,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 141,
+      "row": 12441
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 12441
+    },
+    "message": "Line too long (140 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 12441,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 141,
+      "row": 13145
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 13145
+    },
+    "message": "Line too long (140 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 13145,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 80,
+      "row": 19532
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 77,
+      "row": 19532
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19532,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 90,
+      "row": 19578
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 19578
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19578,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 92,
+      "row": 19595
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/api/app.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 19595
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 19595,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/application/run_service.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 41,
+      "row": 19
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/agent_spec.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from dataclasses import dataclass",
+          "end_location": {
+            "column": 41,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 19
+          }
+        }
+      ],
+      "message": "Remove unused import: `dataclasses.field`"
+    },
+    "location": {
+      "column": 36,
+      "row": 19
+    },
+    "message": "`dataclasses.field` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 19,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 931
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/capabilities.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 931
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 931,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 20
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/channel.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 20
+          },
+          "location": {
+            "column": 1,
+            "row": 20
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 20
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 20,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 179,
+      "row": 181
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/conductor.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 181
+    },
+    "message": "Line too long (178 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 198,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 127,
+      "row": 17
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/identity.py",
+    "fix": null,
+    "location": {
+      "column": 63,
+      "row": 17
+    },
+    "message": "Line too long (249 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 18,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 495
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/subagents.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 495
+    },
+    "message": "Line too long (122 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 495,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 26
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/tool_registry.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 26
+          },
+          "location": {
+            "column": 1,
+            "row": 26
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 26
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 232,
+      "row": 1122
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/tools.py",
+    "fix": null,
+    "location": {
+      "column": 100,
+      "row": 1122
+    },
+    "message": "Line too long (272 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1129,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 82,
+      "row": 1123
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/tools.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 1123
+    },
+    "message": "Line too long (126 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1129,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 34
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_runtime/workspace.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 34
+          },
+          "location": {
+            "column": 1,
+            "row": 34
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 34
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 34,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 18
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 18
+          },
+          "location": {
+            "column": 1,
+            "row": 18
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 18
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 18,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 103,
+      "row": 1237
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": null,
+    "location": {
+      "column": 97,
+      "row": 1237
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1237,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 124,
+      "row": 1542
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": null,
+    "location": {
+      "column": 117,
+      "row": 1542
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1542,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 127,
+      "row": 1553
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": null,
+    "location": {
+      "column": 119,
+      "row": 1553
+    },
+    "message": "Line too long (128 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1553,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 149,
+      "row": 1566
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": null,
+    "location": {
+      "column": 120,
+      "row": 1566
+    },
+    "message": "Line too long (149 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1566,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 128,
+      "row": 1593
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/deep_thinking.py",
+    "fix": null,
+    "location": {
+      "column": 118,
+      "row": 1593
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1593,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/domain/models.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 5
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 90,
+      "row": 199
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/domain/models.py",
+    "fix": null,
+    "location": {
+      "column": 87,
+      "row": 199
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 199,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 51,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/expert_feedback.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, UTC",
+          "end_location": {
+            "column": 56,
+            "row": 11
+          },
+          "location": {
+            "column": 1,
+            "row": 11
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 43,
+      "row": 11
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 132,
+      "row": 710
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/harness/scheduler.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 710
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 710,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 158,
+      "row": 89
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/interfaces/cli.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 89
+    },
+    "message": "Line too long (157 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 89,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 101,
+      "row": 114
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 114
+    },
+    "message": "Line too long (177 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 114,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 115
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 66,
+      "row": 115
+    },
+    "message": "Line too long (145 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 115,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 86,
+      "row": 124
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 124
+    },
+    "message": "Line too long (149 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 124,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 83,
+      "row": 125
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 125
+    },
+    "message": "Line too long (136 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 125,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 129
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 129
+    },
+    "message": "Line too long (129 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 129,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 130
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 130
+    },
+    "message": "Line too long (132 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 130,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 78,
+      "row": 134
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 134
+    },
+    "message": "Line too long (133 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 134,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 79,
+      "row": 135
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 135
+    },
+    "message": "Line too long (128 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 135,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 84,
+      "row": 139
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 139
+    },
+    "message": "Line too long (145 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 139,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 73,
+      "row": 144
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 144
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 144,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 74,
+      "row": 149
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 149
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 149,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 80,
+      "row": 150
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 74,
+      "row": 150
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 150,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 73,
+      "row": 154
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 154
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 154,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 72,
+      "row": 159
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 159
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 159,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 173,
+      "row": 531
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 531
+    },
+    "message": "Line too long (233 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 531,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 155,
+      "row": 535
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/deliverables.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 535
+    },
+    "message": "Line too long (211 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 535,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 17,
+      "row": 61
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/dynamic_winning_scheduler.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 17
+          },
+          "location": {
+            "column": 1,
+            "row": 17
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 28,
+            "row": 61
+          },
+          "location": {
+            "column": 17,
+            "row": 61
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 61
+    },
+    "message": "Class StepAction inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 61,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 20,
+      "row": 71
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/dynamic_winning_scheduler.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 17
+          },
+          "location": {
+            "column": 1,
+            "row": 17
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 31,
+            "row": 71
+          },
+          "location": {
+            "column": 20,
+            "row": 71
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 71
+    },
+    "message": "Class ExecutionMode inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 71,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 290
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 87,
+      "row": 290
+    },
+    "message": "Line too long (122 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 290,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 128,
+      "row": 668
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 114,
+      "row": 668
+    },
+    "message": "Line too long (146 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 668,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 86,
+      "row": 874
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 79,
+      "row": 874
+    },
+    "message": "Line too long (132 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 874,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 130,
+      "row": 933
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 120,
+      "row": 933
+    },
+    "message": "Line too long (130 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 933,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 145,
+      "row": 934
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 116,
+      "row": 934
+    },
+    "message": "Line too long (149 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 934,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 112,
+      "row": 1113
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 102,
+      "row": 1113
+    },
+    "message": "Line too long (131 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1113,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 133,
+      "row": 1600
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 113,
+      "row": 1600
+    },
+    "message": "Line too long (141 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1600,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 89,
+      "row": 1699
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 1699
+    },
+    "message": "Line too long (147 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1699,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 85,
+      "row": 1720
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 81,
+      "row": 1720
+    },
+    "message": "Line too long (128 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1720,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 78,
+      "row": 1725
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 76,
+      "row": 1725
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1725,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 109,
+      "row": 1756
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/reporting.py",
+    "fix": null,
+    "location": {
+      "column": 108,
+      "row": 1756
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1756,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 129,
+      "row": 1821
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/runner.py",
+    "fix": null,
+    "location": {
+      "column": 103,
+      "row": 1821
+    },
+    "message": "Line too long (153 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1821,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 89,
+      "row": 7940
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/runner.py",
+    "fix": null,
+    "location": {
+      "column": 75,
+      "row": 7940
+    },
+    "message": "Line too long (148 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 7940,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 87,
+      "row": 757
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/winning.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 757
+    },
+    "message": "Line too long (132 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 757,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 759
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/winning.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 759
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 759,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 92,
+      "row": 2067
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/winning.py",
+    "fix": null,
+    "location": {
+      "column": 83,
+      "row": 2067
+    },
+    "message": "Line too long (136 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2067,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 76,
+      "row": 2068
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/orchestration/winning.py",
+    "fix": null,
+    "location": {
+      "column": 73,
+      "row": 2068
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 2068,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 51,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/persistence/repositories.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, UTC",
+          "end_location": {
+            "column": 56,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 43,
+      "row": 9
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 126,
+      "row": 899
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/persistence/repositories.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 899
+    },
+    "message": "Line too long (125 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 899,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 902
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/persistence/repositories.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 902
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 902,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 921
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/persistence/repositories.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 921
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 921,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 923
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/persistence/repositories.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 923
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 923,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/prompt_evolution.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 13
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/provider_benchmark.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 9
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 14
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/providers/codex.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 14
+          },
+          "location": {
+            "column": 1,
+            "row": 14
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 14
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 14,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP022",
+    "end_location": {
+      "column": 14,
+      "row": 902
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/providers/codex.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "capture_output=True",
+          "end_location": {
+            "column": 39,
+            "row": 897
+          },
+          "location": {
+            "column": 17,
+            "row": 897
+          }
+        },
+        {
+          "content": "",
+          "end_location": {
+            "column": 17,
+            "row": 899
+          },
+          "location": {
+            "column": 17,
+            "row": 898
+          }
+        }
+      ],
+      "message": "Replace with `capture_output` keyword argument"
+    },
+    "location": {
+      "column": 20,
+      "row": 892
+    },
+    "message": "Prefer `capture_output` over sending `stdout` and `stderr` to `PIPE`",
+    "name": "replace-stdout-stderr",
+    "noqa_row": 892,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-stdout-stderr"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 204,
+      "row": 26
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/providers/codex_optimizations.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 26
+    },
+    "message": "Line too long (203 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/equipment_deep_research/tools/knowledge_index.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/autonomous_research.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/browser_research.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/candidate_synthesis.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/judgement.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/open_search.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/report_context.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/research_state.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/domain/tools.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 5
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/intervention.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/report_context.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/report_publisher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/research_loop.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/retention.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 57,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/scheduled_runner.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, time, timedelta, UTC",
+          "end_location": {
+            "column": 62,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 49,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 15
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/scheduler.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 15
+          },
+          "location": {
+            "column": 1,
+            "row": 15
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 15
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 15,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 33,
+      "row": 18
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/tools.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 33,
+            "row": 18
+          },
+          "location": {
+            "column": 1,
+            "row": 18
+          }
+        }
+      ],
+      "message": "Remove unused import: `typing.Optional`"
+    },
+    "location": {
+      "column": 25,
+      "row": 18
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 18,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/harness/worker_stop_policy.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/manual_source_pack.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 81,
+      "row": 551
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/manual_source_pack.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 551
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 551,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/browser_actions.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 160,
+      "row": 283
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 283
+    },
+    "message": "Line too long (159 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 462,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 151,
+      "row": 293
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 293
+    },
+    "message": "Line too long (150 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 462,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 157,
+      "row": 347
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/browser_bridge.py",
+    "fix": null,
+    "location": {
+      "column": 121,
+      "row": 347
+    },
+    "message": "Line too long (156 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 462,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/discovery.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/network.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 6
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/open_fetch.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 6
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 7
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/knowledgegraph/demand_discovery/tools/search.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 45,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Remove unused import: `datetime.timezone`"
+    },
+    "location": {
+      "column": 32,
+      "row": 7
+    },
+    "message": "`datetime.timezone` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 72,
+      "row": 47
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/agents/presets/deep_research.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 47
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 67,
+      "row": 57
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/agents/presets/deep_research.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 57
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 58
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/agents/presets/deep_research.py",
+    "fix": null,
+    "location": {
+      "column": 86,
+      "row": 58
+    },
+    "message": "Line too long (123 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 90,
+      "row": 59
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/agents/presets/deep_research.py",
+    "fix": null,
+    "location": {
+      "column": 84,
+      "row": 59
+    },
+    "message": "Line too long (127 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 88,
+      "row": 60
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/agents/presets/deep_research.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 60
+    },
+    "message": "Line too long (132 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 13
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "name": "deprecated-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 13
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 13
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "name": "deprecated-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 28,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 52,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 13
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 34,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 52,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 30,
+      "row": 13
+    },
+    "message": "`typing.Dict` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 45,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 52,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 41,
+      "row": 13
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 52,
+      "row": 13
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 52,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 47,
+      "row": 13
+    },
+    "message": "`typing.Tuple` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 13,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 19,
+      "row": 17
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 18
+          },
+          "location": {
+            "column": 1,
+            "row": 17
+          }
+        }
+      ],
+      "message": "Remove unused import: `numpy`"
+    },
+    "location": {
+      "column": 17,
+      "row": 17
+    },
+    "message": "`numpy` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 17,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 17,
+      "row": 35
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from platform_core.knowledge.video_transcriber.models.schemas import (\n    TranscriptionResult,\n    TranscriptionSegment,\n    CharTimestamp,\n    Language,\n)",
+          "end_location": {
+            "column": 2,
+            "row": 37
+          },
+          "location": {
+            "column": 1,
+            "row": 30
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 5,
+      "row": 35
+    },
+    "message": "`platform_core.knowledge.video_transcriber.models.schemas.OutputFormat` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 35,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 18,
+      "row": 36
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from platform_core.knowledge.video_transcriber.models.schemas import (\n    TranscriptionResult,\n    TranscriptionSegment,\n    CharTimestamp,\n    Language,\n)",
+          "end_location": {
+            "column": 2,
+            "row": 37
+          },
+          "location": {
+            "column": 1,
+            "row": 30
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 5,
+      "row": 36
+    },
+    "message": "`platform_core.knowledge.video_transcriber.models.schemas.TimestampMode` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 36,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E722",
+    "end_location": {
+      "column": 43,
+      "row": 504
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 504
+    },
+    "message": "Do not use bare `except`",
+    "name": "bare-except",
+    "noqa_row": 504,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/bare-except"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 108,
+      "row": 569
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 107,
+      "row": 569
+    },
+    "message": "Line too long (121 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 569,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 1472
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 107,
+      "row": 1472
+    },
+    "message": "Line too long (137 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1472,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 110,
+      "row": 1482
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 106,
+      "row": 1482
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1482,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 122,
+      "row": 1497
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 107,
+      "row": 1497
+    },
+    "message": "Line too long (137 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1497,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 110,
+      "row": 1508
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py",
+    "fix": null,
+    "location": {
+      "column": 106,
+      "row": 1508
+    },
+    "message": "Line too long (124 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 1508,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 45,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 45,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "name": "deprecated-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 24,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 45,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 9
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 34,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 45,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 26,
+      "row": 9
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 40,
+      "row": 9
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from typing import Any",
+          "end_location": {
+            "column": 45,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 36,
+      "row": 9
+    },
+    "message": "`typing.Dict` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 17,
+      "row": 14
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 28,
+            "row": 14
+          },
+          "location": {
+            "column": 17,
+            "row": 14
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 14
+    },
+    "message": "Class TaskStatus inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 14,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 25,
+      "row": 25
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 36,
+            "row": 25
+          },
+          "location": {
+            "column": 25,
+            "row": 25
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 25
+    },
+    "message": "Class TranscriptionModel inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 25,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 19,
+      "row": 41
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 30,
+            "row": 41
+          },
+          "location": {
+            "column": 19,
+            "row": 41
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 41
+    },
+    "message": "Class OutputFormat inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 41,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 20,
+      "row": 56
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 31,
+            "row": 56
+          },
+          "location": {
+            "column": 20,
+            "row": 56
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 56
+    },
+    "message": "Class TimestampMode inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 56,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 24,
+      "row": 64
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 35,
+            "row": 64
+          },
+          "location": {
+            "column": 24,
+            "row": 64
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 64
+    },
+    "message": "Class TranscriptionMode inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 64,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 15,
+      "row": 72
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 26,
+            "row": 72
+          },
+          "location": {
+            "column": 15,
+            "row": 72
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 72
+    },
+    "message": "Class Language inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 72,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 18,
+      "row": 86
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 29,
+            "row": 86
+          },
+          "location": {
+            "column": 18,
+            "row": 86
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 86
+    },
+    "message": "Class MediaFormat inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 86,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "F841",
+    "end_location": {
+      "column": 21,
+      "row": 139
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 24,
+            "row": 139
+          },
+          "location": {
+            "column": 13,
+            "row": 139
+          }
+        }
+      ],
+      "message": "Remove assignment to unused variable `abs_path`"
+    },
+    "location": {
+      "column": 13,
+      "row": 139
+    },
+    "message": "Local variable `abs_path` is assigned to but never used",
+    "name": "unused-variable",
+    "noqa_row": 139,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-variable"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 20,
+      "row": 351
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 31,
+            "row": 351
+          },
+          "location": {
+            "column": 20,
+            "row": 351
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 351
+    },
+    "message": "Class WSMessageType inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 351,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP042",
+    "end_location": {
+      "column": 16,
+      "row": 398
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/models/schemas.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from enum import Enum, StrEnum",
+          "end_location": {
+            "column": 22,
+            "row": 7
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        },
+        {
+          "content": "(StrEnum)",
+          "end_location": {
+            "column": 27,
+            "row": 398
+          },
+          "location": {
+            "column": 16,
+            "row": 398
+          }
+        }
+      ],
+      "message": "Inherit from `enum.StrEnum`"
+    },
+    "location": {
+      "column": 7,
+      "row": 398
+    },
+    "message": "Class ErrorCode inherits from both `str` and `enum.Enum`",
+    "name": "replace-str-enum",
+    "noqa_row": 398,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/replace-str-enum"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/audio/chunking.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 11
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/audio/chunking.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 11
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "name": "deprecated-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 24,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/audio/chunking.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 12
+          },
+          "location": {
+            "column": 1,
+            "row": 11
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 11
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 31,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/audio/chunking.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 12
+          },
+          "location": {
+            "column": 1,
+            "row": 11
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 26,
+      "row": 11
+    },
+    "message": "`typing.Tuple` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 41,
+      "row": 11
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/audio/chunking.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 12
+          },
+          "location": {
+            "column": 1,
+            "row": 11
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 33,
+      "row": 11
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 11,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/forced_aligner.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 12
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/forced_aligner.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 12
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "name": "deprecated-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 24,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/forced_aligner.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 12
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 12
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 34,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/forced_aligner.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 12
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 26,
+      "row": 12
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 41,
+      "row": 12
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/forced_aligner.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 12
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 36,
+      "row": 12
+    },
+    "message": "`typing.Tuple` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 34,
+      "row": 8
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/paragraph_formatter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 8
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 8,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 24,
+      "row": 8
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/paragraph_formatter.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 8
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 8,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 34,
+      "row": 8
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/paragraph_formatter.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 26,
+      "row": 8
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 8,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/subtitle_timing.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 5
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "name": "deprecated-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 41,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/subtitle_timing.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 5
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "name": "deprecated-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 24,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/subtitle_timing.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 20,
+      "row": 5
+    },
+    "message": "`typing.List` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 31,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/subtitle_timing.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 26,
+      "row": 5
+    },
+    "message": "`typing.Tuple` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 41,
+      "row": 5
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/subtitle_timing.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        }
+      ],
+      "message": "Remove unused import"
+    },
+    "location": {
+      "column": 33,
+      "row": 5
+    },
+    "message": "`typing.Optional` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 5,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 108,
+      "row": 16
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/text_normalizer.py",
+    "fix": null,
+    "location": {
+      "column": 91,
+      "row": 16
+    },
+    "message": "Line too long (142 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 16,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E501",
+    "end_location": {
+      "column": 116,
+      "row": 17
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/package/platform_core/knowledge/video_transcriber/utils/text_normalizer.py",
+    "fix": null,
+    "location": {
+      "column": 91,
+      "row": 17
+    },
+    "message": "Line too long (157 > 120)",
+    "name": "line-too-long",
+    "noqa_row": 17,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/line-too-long"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 68,
+      "row": 94
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/server/main.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 94
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 94,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 65
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/server/routers/__init__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 65
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 65,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 64,
+      "row": 69
+    },
+    "filename": "/Users/wangchen/equipment research 3/backend/server/routers/__init__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 69
+    },
+    "message": "Module level import not at top of file",
+    "name": "module-import-not-at-top-of-file",
+    "noqa_row": 69,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  }
+]

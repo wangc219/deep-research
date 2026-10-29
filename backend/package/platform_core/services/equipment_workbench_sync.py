@@ -238,14 +238,66 @@ def _has_report(run_root: Path) -> bool:
     return False
 
 
+def _artifact_counts_for_import(
+    run_root: Path,
+    payload: dict[str, Any],
+    *,
+    capability_count: int,
+    has_report: bool,
+) -> dict[str, int]:
+    """导入旧任务时把小型摘要中的真实产物数量写入统一计数契约。"""
+
+    result = payload.get("result") if isinstance(payload.get("result"), dict) else {}
+    persisted = result.get("artifact_counts") if isinstance(result.get("artifact_counts"), dict) else {}
+    direct = payload.get("artifact_counts") if isinstance(payload.get("artifact_counts"), dict) else {}
+    counts: dict[str, int] = {}
+    for source in (persisted, direct):
+        for key, value in source.items():
+            try:
+                counts[str(key)] = max(0, int(value))
+            except (TypeError, ValueError):
+                continue
+
+    summary: dict[str, Any] = {}
+    summary_path = run_root / "round_summary.json"
+    try:
+        value = json.loads(summary_path.read_text(encoding="utf-8"))
+        if isinstance(value, dict):
+            summary = value
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        pass
+    store_summary = summary.get("store_summary")
+    store_summary = store_summary if isinstance(store_summary, dict) else {}
+
+    projections = {
+        "sources": store_summary.get("baseline_packet_count"),
+        "evidence": store_summary.get("materialized_evidence_count") or store_summary.get("evidence_count"),
+        "capabilities": capability_count or store_summary.get("capability_image_count"),
+        "winning_steps": store_summary.get("stage_output_count"),
+        "reports": 1 if has_report else store_summary.get("report_count"),
+    }
+    for key, value in projections.items():
+        if counts.get(key, 0) > 0:
+            continue
+        try:
+            projected = int(value or 0)
+        except (TypeError, ValueError):
+            continue
+        if projected > 0:
+            counts[key] = projected
+    return counts
+
+
 def delete_workbench_draft(run_id: str, user: User) -> dict[str, Any] | None:
-    """Delete one user-visible draft from the legacy workbench ledger.
+    """Delete one superadmin-visible draft from the legacy workbench ledger.
 
     The compatibility database remains read-only for every non-draft record.
-    Returning ``None`` for both a missing row and a foreign workspace keeps the
-    same non-disclosure contract as the platform repository.
+    Returning ``None`` to every other role keeps the same non-disclosure
+    contract as the platform repository.
     """
 
+    if user.role != "superadmin":
+        return None
     normalized_run_id = str(run_id or "").strip()
     if not normalized_run_id:
         return None
@@ -347,6 +399,13 @@ def load_workbench_snapshot() -> dict[str, Any]:
                     cards = _count_capability_cards(run_root)
                     capability_total += cards
                     has_report = _has_report(run_root)
+                    payload = dict(payload)
+                    payload["artifact_counts"] = _artifact_counts_for_import(
+                        run_root,
+                        payload,
+                        capability_count=cards,
+                        has_report=has_report,
+                    )
                     if status == "completed":
                         completed_reports += 1
                     runs.append(
@@ -409,7 +468,16 @@ def load_workbench_snapshot() -> dict[str, Any]:
                     "topic": str(problem.get("topic") or run_id),
                     "status": "completed",
                     "research_route": str(summary.get("resolved_route") or problem.get("research_route") or "auto"),
-                    "payload": {"historical_artifact": True, "summary": summary},
+                    "payload": {
+                        "historical_artifact": True,
+                        "summary": summary,
+                        "artifact_counts": _artifact_counts_for_import(
+                            child,
+                            {},
+                            capability_count=cards,
+                            has_report=has_report,
+                        ),
+                    },
                     "error": "",
                     "capability_count": cards,
                     "has_report": has_report,
@@ -458,21 +526,20 @@ def load_workbench_snapshot() -> dict[str, Any]:
 
 
 def user_workbench_snapshot(snapshot: dict[str, Any], user: User) -> dict[str, Any]:
-    """普通用户可读融合前的公共历史快照，新数据仍按持久化作者隔离。"""
-    if has_global_business_access(user):
+    """旧工作台历史仅超级管理员可见，其他角色只读取明确归属自己的快照。"""
+    if user.role == "superadmin":
         return snapshot
     uid = str(user.uid)
     runs = [
         row
         for row in snapshot.get("runs", [])
-        if not str((row.get("payload") or {}).get("workspace_id") or "").strip()
-        or (row.get("payload") or {}).get("workspace_id") == uid
+        if (row.get("payload") or {}).get("workspace_id") == uid
     ]
     run_ids = {row["run_id"] for row in runs}
     queries = [
         row
         for row in snapshot.get("queries", [])
-        if not str(row.get("owner_uid") or "").strip() or row.get("owner_uid") == uid
+        if row.get("owner_uid") == uid
     ]
     sessions = [row for row in snapshot.get("deep_sessions", []) if row.get("parent_run_id") in run_ids]
     session_ids = {

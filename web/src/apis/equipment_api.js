@@ -24,7 +24,7 @@ export const equipmentApi = {
     return apiGet(query ? `/api/equipment/runs?${query}` : '/api/equipment/runs')
   },
   createRun: (payload) => apiPost('/api/equipment/runs', payload),
-  getRun: (runId) => apiGet(`/api/equipment/runs/${encodeId(runId)}`),
+  getRun: (runId, options = {}) => apiGet(`/api/equipment/runs/${encodeId(runId)}`, options),
   updateRun: (runId, payload) =>
     apiRequest(`/api/equipment/runs/${encodeId(runId)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   startRun: (runId) => apiPost(`/api/equipment/runs/${encodeId(runId)}/start`, {}),
@@ -33,14 +33,14 @@ export const equipmentApi = {
   cancelRun: (runId) => apiPost(`/api/equipment/runs/${encodeId(runId)}/cancel`, {}),
   archiveRun: (runId) => apiPost(`/api/equipment/runs/${encodeId(runId)}/archive`, {}),
   deleteRun: (runId) => apiDelete(`/api/equipment/runs/${encodeId(runId)}`),
-  listEvents: (runId, afterSeq = 0) =>
-    apiGet(`/api/equipment/runs/${encodeId(runId)}/events?${buildQuery({ after_seq: afterSeq })}`),
-  getRunInteractions: (runId, compact = true) =>
-    apiGet(`/api/equipment/runs/${encodeId(runId)}/interactions?${buildQuery({ compact })}`),
-  listRunEvidence: (runId) =>
-    apiGet(`/api/equipment/runs/${encodeId(runId)}/evidence`),
-  getRunWinningMechanism: (runId) =>
-    apiGet(`/api/equipment/runs/${encodeId(runId)}/winning-mechanism`),
+  listEvents: (runId, afterSeq = 0, options = {}) =>
+    apiGet(`/api/equipment/runs/${encodeId(runId)}/events?${buildQuery({ after_seq: afterSeq })}`, options),
+  getRunInteractions: (runId, compact = true, options = {}) =>
+    apiGet(`/api/equipment/runs/${encodeId(runId)}/interactions?${buildQuery({ compact })}`, options),
+  listRunEvidence: (runId, options = {}) =>
+    apiGet(`/api/equipment/runs/${encodeId(runId)}/evidence`, options),
+  getRunWinningMechanism: (runId, options = {}) =>
+    apiGet(`/api/equipment/runs/${encodeId(runId)}/winning-mechanism`, options),
   // Query 与研究任务共享 /api/equipment、PostgreSQL 所有权和 Durable Task。
   listQueries: (params = {}) => {
     const query = buildQuery(params)

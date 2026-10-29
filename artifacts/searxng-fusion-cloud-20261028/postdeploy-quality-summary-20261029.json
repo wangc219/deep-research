@@ -1,0 +1,59 @@
+{
+  "deployed_at": "2026-10-29T00:19:52+08:00",
+  "api_image": "sha256:9180002572c617b79be566771dca5d1d5fa68de408194cdddbd04160cb0487ce",
+  "web_image": "sha256:8a593e3c77aa329432f5d71ada53930bebf10e5036e520cdbb2f4e7e03e869af",
+  "searxng_image": "sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1",
+  "source_files": 37,
+  "tests": {
+    "passed": 196,
+    "skipped": 7,
+    "warnings": 1
+  },
+  "live_intelligent_dialogue": {
+    "parent_status": "completed",
+    "parent_elapsed_seconds": 363.752,
+    "research_explorer_count": 3,
+    "start_spread_seconds": 0.214,
+    "overlap_seconds_all_children": 85.257,
+    "parallel_search_was_first_tool": true,
+    "all_three_channels_attempted": true,
+    "all_classified_academic": true,
+    "searxng_contributed_every_case": true,
+    "unique_candidates": 64,
+    "cross_channel_matches": 2,
+    "top10_alias_precision": 0.967,
+    "academic_ledger_calls": 15,
+    "academic_ledger_succeeded": 15
+  },
+  "direct_five_case_gate": {
+    "cases": 5,
+    "all_three_channels_attempted": true,
+    "cases_with_three_completed": 3,
+    "total_unique_candidates": 73,
+    "total_cross_channel_matches": 7,
+    "top10_alias_precision": 0.8,
+    "hard_constraint_leaks": 0,
+    "latency_seconds": {
+      "rare_altermagnetism": 5.116,
+      "rare_moire_exciton": 3.659,
+      "hydrodynamic_graphene": 5.067,
+      "rare_photonic_time_crystal": 3.997,
+      "mixed_language_altermagnetism": 3.538
+    }
+  },
+  "known_partial_failures": [
+    "Brave timeout",
+    "Semantic Scholar access denied",
+    "OpenAIRE intermittent timeout",
+    "Baidu CAPTCHA",
+    "Sogou intermittent crash"
+  ],
+  "known_dialogue_issue": "父智能体的学术证据恢复提示未完整展示子智能体来源清单，并暴露了 placeholder 纠错过程；子智能体检索结果和三渠道融合数据本身未受影响。",
+  "postflight": {
+    "public_readiness": "ready",
+    "degraded": false,
+    "active_tasks": 0,
+    "active_research": 0,
+    "active_agents": 0
+  }
+}

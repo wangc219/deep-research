@@ -1,0 +1,15 @@
+{
+  "cloud_deployments_removed": true,
+  "containers_remaining": 0,
+  "compose_projects_remaining": 0,
+  "active_project_directory_exists": false,
+  "nginx_stopped_and_disabled": true,
+  "enabled_sites_remaining": 0,
+  "project_ports_closed": true,
+  "backup_root": "/var/backups/deepquest/offline-before-local-optimization-20261025",
+  "latest_postgres_dump_validated": true,
+  "document_data_archive_validated": true,
+  "persistent_data_and_configuration_retained": true,
+  "historical_backups_retained": true,
+  "postgres_dump_sha256": "66e3ffc6e2971667eafd2343ad61692d90567ded5b050c8fb0a7ad8a6c3349ae"
+}

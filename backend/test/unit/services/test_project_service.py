@@ -164,6 +164,54 @@ async def test_ensure_equipment_project_returns_existing_project(monkeypatch):
     assert db.commits == 1
 
 
+async def test_ensure_equipment_runtime_project_is_hidden_and_reused(monkeypatch):
+    existing = SimpleNamespace(status="active", idempotency_key=svc.EQUIPMENT_RUNTIME_PROJECT_KEY)
+
+    class _ProjectRepository:
+        def __init__(self, _db):
+            pass
+
+        async def get_by_idempotency_key(self, key, uid):
+            assert key == svc.EQUIPMENT_RUNTIME_PROJECT_KEY
+            assert uid == "user-1"
+            return existing
+
+    monkeypatch.setattr(svc, "ProjectRepository", _ProjectRepository)
+
+    result = await svc.ensure_equipment_runtime_project_record(uid="user-1", db=_Db())
+
+    assert result is existing
+
+
+async def test_ensure_equipment_runtime_project_creates_implicit_scope(monkeypatch):
+    captured = {}
+
+    class _ProjectRepository:
+        def __init__(self, _db):
+            pass
+
+        async def get_by_idempotency_key(self, key, uid):
+            assert key == svc.EQUIPMENT_RUNTIME_PROJECT_KEY
+            assert uid == "user-1"
+            return None
+
+    async def create_implicit_project(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(id="runtime-project")
+
+    monkeypatch.setattr(svc, "ProjectRepository", _ProjectRepository)
+    monkeypatch.setattr(svc, "create_implicit_project", create_implicit_project)
+
+    result = await svc.ensure_equipment_runtime_project_record(uid="user-1", db=_Db())
+
+    assert result.id == "runtime-project"
+    assert captured == {
+        "uid": "user-1",
+        "db": captured["db"],
+        "idempotency_key": svc.EQUIPMENT_RUNTIME_PROJECT_KEY,
+    }
+
+
 async def test_ensure_equipment_project_creates_managed_default_when_empty(monkeypatch):
     payload = {
         "id": "default-project",

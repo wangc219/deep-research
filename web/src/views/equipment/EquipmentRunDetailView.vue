@@ -62,17 +62,35 @@ const projectionNote = ref('')
 const connected = ref(true)
 const agentFilter = ref('all')
 const eventSearch = ref('')
+const eventDisplayLimit = ref(80)
 const evidenceSearch = ref('')
 const showAuditRecords = ref(false)
+const expandedEvents = ref(new Set())
+const expandedAuditRecords = ref(new Set())
 const pollEnabled = ref(true)
+const interactionsLoading = ref(false)
+const completeEventsLoading = ref(false)
+const completeEventsLoaded = ref(false)
+const artifactLoading = ref({ evidence: false, winning: false })
+const artifactErrors = ref({ evidence: '', winning: '' })
 let timer = null
 let loadToken = 0
+let refreshRequest = null
+let completeEventsRequest = null
+let requestController = new AbortController()
+const artifactRequests = new Map()
 
 const runId = computed(() => String(route.params.runId || '').trim())
 const activeTab = computed(() => {
   const value = String(route.query.tab || 'overview')
   return ['overview', 'interactions', 'evidence', 'winning'].includes(value) ? value : 'overview'
 })
+const activeArtifactLoading = computed(() =>
+  ['overview', 'interactions'].includes(activeTab.value)
+    ? interactionsLoading.value
+    : artifactLoading.value[activeTab.value]
+)
+const activeArtifactError = computed(() => artifactErrors.value[activeTab.value] || '')
 const terminal = computed(() => ['completed', 'failed', 'cancelled', 'archived'].includes(run.value?.status))
 const canStart = computed(() => run.value?.status === 'draft' && !run.value?.readonly)
 const canPause = computed(() =>
@@ -267,7 +285,7 @@ const eventAgentName = (event) => {
   )
 }
 
-const visibleEvents = computed(() => {
+const filteredEvents = computed(() => {
   const query = eventSearch.value.trim().toLocaleLowerCase()
   return events.value
     .filter((event) => {
@@ -281,8 +299,8 @@ const visibleEvents = computed(() => {
         .toLocaleLowerCase()
         .includes(query)
     })
-    .slice(-80)
 })
+const visibleEvents = computed(() => filteredEvents.value.slice(-eventDisplayLimit.value))
 
 const filteredEvidence = computed(() => {
   const query = evidenceSearch.value.trim().toLocaleLowerCase()
@@ -460,86 +478,142 @@ const resourceBlocks = computed(() => [
   { title: '问题链', rows: arrayValue(winningResources.value?.question_chain), field: 'question' }
 ])
 
-const fetchAllEvents = async (id) => {
-  const rows = []
-  let cursor = 0
-  for (let page = 0; page < 50; page += 1) {
-    const payload = await equipmentApi.listEvents(id, cursor)
-    const chunk = Array.isArray(payload) ? payload : arrayValue(payload?.items)
-    if (!chunk.length) break
-    rows.push(...chunk)
-    const next = Math.max(...chunk.map((item) => Number(item.sequence || 0)))
-    if (!Number.isFinite(next) || next <= cursor || chunk.length < 200) break
-    cursor = next
-  }
-  const uniqueRows = new Map()
-  rows.forEach((item, index) => {
-    const key = item.id || `${item.sequence || index}:${item.event_type || ''}`
-    uniqueRows.set(key, item)
+// 完整审计只在用户请求或摘要服务不可读时下载，默认使用服务端关键事件投影。
+const loadCompleteEvents = () => {
+  if (completeEventsRequest) return completeEventsRequest
+  const id = runId.value
+  const token = loadToken
+  const signal = requestController.signal
+  completeEventsLoading.value = true
+  const request = (async () => {
+    try {
+      // 完整记录也由服务端一次合并去重，避免重新退回十几次公网分页。
+      const payload = await equipmentApi.getRunInteractions(id, false, { signal })
+      if (token !== loadToken) return
+      legacyInteractions.value = payload
+      platformEvents.value = []
+      completeEventsLoaded.value = true
+      projectionNote.value = ''
+      return
+    } catch (error) {
+      if (token !== loadToken || error.name === 'AbortError') return
+      if ([401, 403, 404].includes(error.status)) throw error
+      // 产物投影不可用时仍能恢复 PostgreSQL 审计记录。
+    }
+    const rows = []
+    let cursor = 0
+    for (let page = 0; page < 50; page += 1) {
+      const payload = await equipmentApi.listEvents(id, cursor, { signal })
+      if (token !== loadToken) return
+      const chunk = Array.isArray(payload) ? payload : arrayValue(payload?.items)
+      if (!chunk.length) break
+      rows.push(...chunk)
+      const next = Math.max(...chunk.map((item) => Number(item.sequence || 0)))
+      if (!Number.isFinite(next) || next <= cursor || chunk.length < 200) break
+      cursor = next
+    }
+    if (token !== loadToken) return
+    platformEvents.value = rows
+    completeEventsLoaded.value = true
+  })().catch((error) => {
+    if (token !== loadToken || error.name === 'AbortError') return
+    projectionNote.value = '完整事件暂时无法载入，请重试；已载入的关键事件仍可查看。'
+  }).finally(() => {
+    if (completeEventsRequest === request) completeEventsRequest = null
+    if (token === loadToken) completeEventsLoading.value = false
   })
-  return [...uniqueRows.values()]
+  completeEventsRequest = request
+  return request
 }
 
-const fetchLegacyArtifacts = async (id, token) => {
-  const settled = await Promise.allSettled([
-    equipmentApi.getRunInteractions(id, true),
-    equipmentApi.listRunEvidence(id),
-    equipmentApi.getRunWinningMechanism(id)
-  ])
-  if (token !== loadToken) return
-  legacyInteractions.value = settled[0].status === 'fulfilled' ? settled[0].value : null
-  legacyEvidence.value = settled[1].status === 'fulfilled' ? settled[1].value : null
-  legacyWinning.value = settled[2].status === 'fulfilled' ? settled[2].value : null
-  const unavailable = settled.filter((item) => item.status === 'rejected').length
-  projectionNote.value = unavailable
-    ? '部分研究产物暂不可读，当前视图已从平台权威运行事件恢复。'
-    : ''
+const loadInteractions = async (id, token, signal) => {
+  interactionsLoading.value = !legacyInteractions.value
+  try {
+    const payload = await equipmentApi.getRunInteractions(id, !completeEventsLoaded.value, { signal })
+    if (token !== loadToken) return
+    legacyInteractions.value = payload
+    projectionNote.value = ''
+  } catch (error) {
+    if (token !== loadToken || error.name === 'AbortError') return
+    projectionNote.value = '关键事件暂不可读，正在从平台运行事件恢复。'
+    await loadCompleteEvents()
+  } finally {
+    if (token === loadToken) interactionsLoading.value = false
+  }
 }
 
-const refresh = async ({ silent = false, includeArtifacts = true } = {}) => {
-  if (!runId.value) return
-  const token = ++loadToken
+const loadActiveArtifact = ({ force = false } = {}) => {
+  const tab = activeTab.value
+  if (!['evidence', 'winning'].includes(tab) || !run.value) return Promise.resolve()
+  if (artifactRequests.has(tab)) return artifactRequests.get(tab)
+  const target = tab === 'evidence' ? legacyEvidence : legacyWinning
+  if (!force && target.value !== null) return Promise.resolve()
+  const token = loadToken
+  const id = runId.value
+  const signal = requestController.signal
+  artifactLoading.value = { ...artifactLoading.value, [tab]: true }
+  artifactErrors.value = { ...artifactErrors.value, [tab]: '' }
+  const loader = tab === 'evidence' ? equipmentApi.listRunEvidence : equipmentApi.getRunWinningMechanism
+  const request = loader(id, { signal }).then((payload) => {
+    if (token === loadToken) target.value = payload
+  }).catch((error) => {
+    if (token === loadToken && error.name !== 'AbortError') {
+      artifactErrors.value = { ...artifactErrors.value, [tab]: '当前研究产物暂时无法载入，请重试。' }
+    }
+  }).finally(() => {
+    if (artifactRequests.get(tab) === request) artifactRequests.delete(tab)
+    if (token === loadToken) artifactLoading.value = { ...artifactLoading.value, [tab]: false }
+  })
+  artifactRequests.set(tab, request)
+  return request
+}
+
+const refresh = ({ silent = false } = {}) => {
+  if (!runId.value) return Promise.resolve()
+  if (refreshRequest) return refreshRequest
+  const token = loadToken
+  const id = runId.value
+  const signal = requestController.signal
   if (!silent) {
     if (run.value) refreshing.value = true
     else loading.value = true
     loadError.value = ''
   }
-  try {
-    const artifactPromise = includeArtifacts ? fetchLegacyArtifacts(runId.value, token) : null
-    const [nextRun, nextEvents] = await Promise.all([
-      equipmentApi.getRun(runId.value),
-      fetchAllEvents(runId.value)
-    ])
-    if (token !== loadToken) return
-    run.value = nextRun
-    platformEvents.value = nextEvents
-    connected.value = true
-    if (artifactPromise) await artifactPromise
-  } catch (error) {
-    if (token !== loadToken) return
+  const request = (async () => {
+    // 任务标题和状态先显示；交互摘要与当前选中的产物各自独立到达。
+    const runRequest = equipmentApi.getRun(id, { signal }).then((nextRun) => {
+      if (token !== loadToken) return
+      const statusChanged = run.value?.status !== nextRun.status
+      run.value = nextRun
+      loading.value = false
+      connected.value = true
+      void loadActiveArtifact({ force: !silent || statusChanged })
+    })
+    await Promise.all([runRequest, loadInteractions(id, token, signal)])
+  })().catch((error) => {
+    if (token !== loadToken || error.name === 'AbortError') return
     connected.value = false
     if (!silent) {
       loadError.value = error?.message || '任务详情加载失败'
       message.error(loadError.value)
     }
-  } finally {
+  }).finally(() => {
+    if (refreshRequest === request) refreshRequest = null
     if (token === loadToken) {
       loading.value = false
       refreshing.value = false
     }
-  }
+  })
+  refreshRequest = request
+  return request
 }
 
 const startPolling = () => {
   if (timer) return
   pollEnabled.value = true
   timer = sharedPolling.subscribe(async () => {
-    if (!pollEnabled.value || document.visibilityState === 'hidden' || terminal.value) return
-    const previousStatus = run.value?.status
-    await refresh({ silent: true, includeArtifacts: false })
-    if (terminal.value || previousStatus !== run.value?.status) {
-      await fetchLegacyArtifacts(runId.value, loadToken)
-    }
+    if (!pollEnabled.value || !run.value || document.visibilityState === 'hidden' || terminal.value) return
+    await refresh({ silent: true })
   }, 3500)
 }
 
@@ -582,24 +656,59 @@ const openArtifact = (path) => router.push({ path, query: { run: runId.value } }
 const rawEventText = (event) =>
   JSON.stringify(event.raw?.payload || event.details || {}, null, 2)
 
-onMounted(async () => {
-  await refresh()
+const setEventExpanded = (expanded, eventId, domEvent) => {
+  if (domEvent.target.open) expanded.add(eventId)
+  else expanded.delete(eventId)
+}
+
+const cancelReads = () => {
+  loadToken += 1
+  requestController.abort()
+  requestController = new AbortController()
+  refreshRequest = null
+  completeEventsRequest = null
+  artifactRequests.clear()
+  interactionsLoading.value = false
+  completeEventsLoading.value = false
+  artifactLoading.value = { evidence: false, winning: false }
+}
+
+onMounted(() => {
+  void refresh()
   startPolling()
 })
-onActivated(startPolling)
-onDeactivated(stopPolling)
+onActivated(() => {
+  if (!run.value || !terminal.value) void refresh({ silent: Boolean(run.value) })
+  else void loadActiveArtifact()
+  startPolling()
+})
+onDeactivated(() => {
+  stopPolling()
+  cancelReads()
+})
 onUnmounted(() => {
   stopPolling()
-  loadToken += 1
+  cancelReads()
 })
-watch(runId, async (next, previous) => {
+watch(activeTab, () => { void loadActiveArtifact() })
+watch([agentFilter, eventSearch], () => { eventDisplayLimit.value = 80 })
+watch(runId, (next, previous) => {
   if (!next || next === previous) return
+  cancelReads()
   run.value = null
   platformEvents.value = []
   legacyInteractions.value = null
   legacyEvidence.value = null
   legacyWinning.value = null
-  await refresh()
+  completeEventsLoaded.value = false
+  eventDisplayLimit.value = 80
+  agentFilter.value = 'all'
+  eventSearch.value = ''
+  expandedEvents.value.clear()
+  expandedAuditRecords.value.clear()
+  projectionNote.value = ''
+  artifactErrors.value = { evidence: '', winning: '' }
+  void refresh()
   startPolling()
 })
 </script>
@@ -715,7 +824,7 @@ watch(runId, async (next, previous) => {
       <section class="run-artifact-strip" aria-label="研究产物导航">
         <button type="button" :class="{ active: activeTab === 'interactions' }" @click="selectTab('interactions')">
           <MessageSquare :size="19" />
-          <span><b>交互过程</b><small>{{ artifactCounts.events }} 条事件</small></span>
+          <span><b>交互过程</b><small>{{ interactionsLoading ? '正在读取事件' : `${artifactCounts.events} 条事件` }}</small></span>
           <ChevronRight :size="14" />
         </button>
         <button type="button" :class="{ active: activeTab === 'evidence' }" @click="selectTab('evidence')">
@@ -769,7 +878,14 @@ watch(runId, async (next, previous) => {
           </div>
         </section>
 
-        <template v-if="activeTab === 'overview'">
+        <section v-if="activeArtifactLoading" class="compact-empty" role="status">
+          <RefreshCw :size="20" class="spinning" /><span>正在加载{{ activeTab === 'evidence' ? '证据' : activeTab === 'winning' ? 'S1–S6 产物' : '交互过程' }}…</span>
+        </section>
+        <section v-else-if="activeArtifactError" class="compact-empty" role="alert">
+          <CircleAlert :size="20" /><span>{{ activeArtifactError }}</span>
+          <button type="button" @click="loadActiveArtifact({ force: true })">重试</button>
+        </section>
+        <template v-else-if="activeTab === 'overview'">
           <section class="metric-strip interaction-metrics">
             <article class="metric"><div><span>全部事件</span><b>{{ artifactCounts.events }}</b></div><Activity :size="20" /></article>
             <article class="metric"><div><span>关键事件</span><b>{{ events.length }}</b></div><Layers3 :size="20" /></article>
@@ -966,6 +1082,13 @@ watch(runId, async (next, previous) => {
             </select>
             <label><Search :size="13" /><input v-model="eventSearch" type="search" placeholder="搜索事件" /></label>
             <em>显示 {{ visibleEvents.length }} / {{ artifactCounts.events }}</em>
+            <button
+              v-if="!completeEventsLoaded"
+              class="full-events-button"
+              type="button"
+              :disabled="completeEventsLoading"
+              @click="loadCompleteEvents()"
+            >{{ completeEventsLoading ? '正在加载完整事件…' : '加载完整事件' }}</button>
           </section>
 
           <section v-if="visibleEvents.length" class="event-timeline compact-timeline">
@@ -973,12 +1096,13 @@ watch(runId, async (next, previous) => {
               <span class="event-node"><CheckCircle2 v-if="eventTone(event) === 'completed'" :size="14" /><CircleAlert v-else-if="eventTone(event) === 'failed'" :size="14" /><Activity v-else :size="14" /></span>
               <div class="event-content">
                 <header><div><span>{{ eventAgentName(event) }}</span><b>{{ eventLabel(event.event_type) }}</b></div><time>#{{ event.sequence }} · {{ formatTime(event.created_at) }}</time></header>
-                <details class="event-summary-details"><summary><span>{{ event.summary }}</span><em>展开内容</em></summary><p>{{ event.summary }}</p></details>
-                <details v-if="showAuditRecords" class="event-key-details"><summary>查看原始审计记录</summary><pre>{{ rawEventText(event) }}</pre></details>
+                <details class="event-summary-details" @toggle="setEventExpanded(expandedEvents, event.event_id, $event)"><summary><span>{{ event.summary }}</span><em>展开内容</em></summary><p v-if="expandedEvents.has(event.event_id)">{{ event.summary }}</p></details>
+                <details v-if="showAuditRecords" class="event-key-details" @toggle="setEventExpanded(expandedAuditRecords, event.event_id, $event)"><summary>查看原始审计记录</summary><pre v-if="expandedAuditRecords.has(event.event_id)">{{ rawEventText(event) }}</pre></details>
               </div>
             </article>
           </section>
           <div v-else class="workspace-empty"><Clock3 :size="28" /><b>当前筛选下暂无运行事件</b><p>调整 Agent 或搜索条件后重试。</p></div>
+          <button v-if="filteredEvents.length > eventDisplayLimit" class="audit-toggle" type="button" @click="eventDisplayLimit += 80">显示更早的事件（剩余 {{ filteredEvents.length - eventDisplayLimit }} 条）</button>
           <button class="audit-toggle" type="button" @click="showAuditRecords = !showAuditRecords"><ShieldCheck :size="14" />{{ showAuditRecords ? '隐藏原始审计记录' : '允许展开原始审计记录' }}</button>
         </template>
 
@@ -1612,6 +1736,21 @@ button {
   color: #43516a;
   font-size: 11px;
   font-weight: 700;
+}
+
+.full-events-button,
+.compact-empty > button {
+  padding: 6px 10px;
+  border: 1px solid var(--main-200);
+  border-radius: 6px;
+  color: var(--main-700);
+  background: var(--main-50);
+  font-size: 11px;
+}
+
+.full-events-button {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 
 .event-filter select,

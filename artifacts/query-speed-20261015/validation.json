@@ -1,0 +1,159 @@
+{
+  "verified_at": "2026-10-15T15:40:07.229696+00:00",
+  "site": "https://www.deepquest.space",
+  "changes": [
+    "Default platform Query profile efficient; explicit balanced/deep choices retained",
+    "Skip serial grounding when provider lacks hosted search and skip redundant independent divergence in efficient mode",
+    "Disable hidden reasoning and automatic structured output expansion for efficient Query calls",
+    "Bound each entire model stage to 60 seconds, including adapter retries",
+    "Keep validation, source evidence and partial-result persistence protections",
+    "Display Chinese stages and saved-result progress"
+  ],
+  "root_causes": {
+    "grounding_seconds": 84.191,
+    "divergence_timeout_seconds": 180.001,
+    "worker_heartbeat": "healthy",
+    "additional_delay": "hidden reasoning, output expansion and quality repair calls"
+  },
+  "cloud_task": {
+    "generation_id": "qgen-c6a940888d4af32beea05861d4b5931b",
+    "status": "completed",
+    "stage": "completed",
+    "saved_count": 6,
+    "query_ids": [
+      "query-af6bebd6-8d21-4c8c-b72d-73452b1d66df",
+      "query-70b97dc8-ae45-47e0-857e-0cdad69fbee1",
+      "query-47b452de-ae44-4af6-8414-28426d3e46ed",
+      "query-ea999cd9-cc41-4d3b-9e4d-12b248552da3",
+      "query-25c9f1e3-9989-4910-93f0-5c590349a054",
+      "query-11fa6e15-3490-488e-bcdc-41249dfb0338"
+    ],
+    "original_five_preserved": true,
+    "all_six_exist": true,
+    "progress": {
+      "total": 6,
+      "attempt": 1,
+      "completed": 6,
+      "remaining": 0,
+      "rejections": [],
+      "model_seconds": 15.802,
+      "rejected_count": 0,
+      "repair_batches": 0,
+      "restored_count": 5,
+      "elapsed_seconds": 15.842,
+      "planning_reused": false,
+      "request_batches": 1
+    },
+    "error": "",
+    "latest_model_call": [
+      "query_generation",
+      "completed",
+      15767.12,
+      2144,
+      531
+    ]
+  },
+  "verification": {
+    "backend_query_tests": 53,
+    "provider_registry_tests": 36,
+    "frontend_tests": 547,
+    "frontend_lint": "passed",
+    "frontend_production_build": "passed",
+    "runtime_backend_matches_current_source": true,
+    "frontend_assets": {
+      "local_files": 781,
+      "cloud_files": 782,
+      "only_local": [],
+      "only_cloud": [
+        "50x.html"
+      ],
+      "different": [],
+      "identical": true
+    },
+    "deployed_source": {
+      "source_files": 527,
+      "identical": true,
+      "different": []
+    },
+    "readiness": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    }
+  },
+  "actual_model_probes": {
+    "neutral_first": {
+      "seconds": 29.611,
+      "accepted": 2,
+      "requested": 3,
+      "rejected_reason": "equipment subject anchor mismatch"
+    },
+    "neutral_second": {
+      "seconds": 75.959,
+      "accepted": 3,
+      "requested": 3,
+      "first_call_timeout_seconds": 60
+    },
+    "production_resume": {
+      "seconds": 15.842,
+      "restored": 5,
+      "new": 1,
+      "repair_batches": 0
+    }
+  },
+  "measurement_scope": "The 15.842-second production measurement covers only the missing candidate; it is not a measurement for generating six new candidates.",
+  "backup": {
+    "source": "/var/backups/deepquest/query-speed-20261015/source-before.tar.gz",
+    "api_image": "deepquest-api:before-query-speed-20261015",
+    "web_image": "deepquest-web:before-query-speed-20261015"
+  },
+  "screenshot": "cloud-completed.png"
+}

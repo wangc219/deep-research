@@ -1,0 +1,8 @@
+{
+  "final_public_https": "passed",
+  "tls_verified": true,
+  "readiness": "ready",
+  "degraded": false,
+  "index_status": 200,
+  "unauthenticated_admin_logs_status": 401
+}

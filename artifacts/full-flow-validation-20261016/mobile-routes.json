@@ -1,0 +1,57 @@
+[
+  {
+    "path": "/knowledge",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/equipment/runs",
+    "width": 320,
+    "documentWidth": 309
+  },
+  {
+    "path": "/equipment/queries",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/equipment/capabilities",
+    "width": 320,
+    "documentWidth": 309
+  },
+  {
+    "path": "/equipment/favorites",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/workspace",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/models",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/extensions",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/dashboard",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/enterprise",
+    "width": 320,
+    "documentWidth": 320
+  },
+  {
+    "path": "/agent-manage",
+    "width": 320,
+    "documentWidth": 320
+  }
+]

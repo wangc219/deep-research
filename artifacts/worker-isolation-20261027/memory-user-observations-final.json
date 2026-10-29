@@ -1,0 +1,18 @@
+{
+  "maximum_running_per_user": {
+    "deep": 2,
+    "chat": 3
+  },
+  "maximum_total_running": {
+    "deep": 4,
+    "chat": 16
+  },
+  "execution_owners_per_lane": {
+    "deep": [
+      "worker-5310b973ec42409796a89370c734e1bb"
+    ],
+    "chat": [
+      "worker-f7281f9ccd804baf8bb831df120ddfe0"
+    ]
+  }
+}

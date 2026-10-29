@@ -1,0 +1,20 @@
+{
+  "backend/package/platform_core/services/run_scheduling.py": "f7e0d0a5f4f855e382c4a2b8c5e94a42e5797c3ba598cb909f51c2265a6a8ab2",
+  "backend/package/platform_core/services/run_worker.py": "0ca3eb39087ce276b2cc4bc4af04a1d2bc29b4688ffcebc85a9f6e36d582b0bf",
+  "backend/package/platform_core/services/agent_run_service.py": "d89fd1ed98d28810d8cc708ce6ef1f19be0a29a5ab0fcdb9fe9bfbeb1eecd61a",
+  "backend/package/platform_core/services/agent_run_manifest_service.py": "fd3734e10274b9e0dc3d9ca521c742460fd03bb51404982f81069c5b987067dd",
+  "backend/package/platform_core/services/agent_request_queue_service.py": "e29c491e86a94517e34c9ea3b889687ef6b200e5341969ab8b8b9893a6d4d186",
+  "backend/package/platform_core/services/readiness_service.py": "30fc44c921d386929f0a75e6799f5567e85bc6b4098b32ea029f30debb16dedc",
+  "backend/package/platform_core/repositories/agent_run_repository.py": "14f69b90e9b1ba8011782cfbd4a295384d1e28248eccbd386d8f4073ded4d836",
+  "backend/package/platform_core/agents/context.py": "5ea8494a457933e4d9b18c15240aaf5e8c94f116861ea8853b79196169d8b15a",
+  "compose.cloud.yaml": "1b759def5386a3a0ada4b01fd22820838fac4704d4429e4f168270b801875aa4",
+  "configs/cloud/4c16g.env.example": "ad5bf5ca5f3dc132c1644c0b8c245208793f0a8b9c24336d507ec12252780c1a",
+  "backend/test/unit/services/test_run_scheduling.py": "92c4296717156bf27a14c3cf1ef1d00d1184b41e53d57a34c229aed3493ed1af",
+  "backend/test/integration/services/test_agent_user_capacity.py": "b572787b5c5fa7be3ee9d5bc12261b120e5ec97d497e60671ae4cf66087f3318",
+  "backend/test/unit/services/test_agent_run_manifest_service.py": "e5844fe844f5bc937f3f0385728ca4dd9267cb395b0e5133b0a2961557774fc8",
+  "backend/test/unit/agents/test_context_auth.py": "562d7dfe5fd6247b7b9416953261a06ad3f611f2a71b1cee500f5a81ab25f1e2",
+  "docs/CLOUD_CAPACITY.md": "922880b10f9c38cb7e51a22701452ee174563ce4fff667f83be6fca275ac041a",
+  "backend/package/platform_core/knowledge/manager.py": "38f61734825b22724044b886857a178ed7fb10cc2c09a1673f9354fdc73b4530",
+  "backend/package/platform_core/repositories/knowledge_base_repository.py": "168285237da0ae6586f5f58b69483434833e0a6dd666c0f717d04af304e70fed",
+  "backend/test/integration/services/test_resource_connection_reuse.py": "d876123d8cfa452f8b731f96154a9cdc66c39707007db44207a68e77f9b441d8"
+}

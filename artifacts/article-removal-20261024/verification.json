@@ -1,0 +1,24 @@
+{
+  "frontend_tests": {
+    "passed": 586,
+    "failed": 0
+  },
+  "backend_related_tests": {
+    "passed": 49,
+    "failed": 0
+  },
+  "frontend_build": "passed",
+  "frontend_lint": "passed",
+  "changed_backend_lint": "passed",
+  "runtime_health": "ready, not degraded",
+  "retired_api_routes": 0,
+  "retired_database_tables": 0,
+  "retired_tasks": 0,
+  "knowledge_schema_version": 6,
+  "existing_issues": [
+    "Business schema test expects 13 while existing implementation is 14",
+    "Full backend package ruff check reports 1078 issues outside changed code",
+    "General storage migrator requires legacy-data quiescence proof; targeted knowledge migration completed and API/worker restored"
+  ],
+  "screenshot": "extensions.png"
+}

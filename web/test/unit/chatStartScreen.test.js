@@ -46,7 +46,7 @@ test('路由决定新建布局，已有线程的加载和空消息不显示居�
 })
 
 test('所有主导航页面共用淡蓝装备背景，智能对话与研究任务共用主题标题样式', () => {
-  assert.match(appLayout, /url\('\/equipment-login-hero\.png'\) center \/ cover no-repeat/)
+  assert.match(appLayout, /url\('@\/assets\/defaults\/login-hero\.webp'\) center \/ cover no-repeat/)
   assert.match(appLayout, /rgba\(242, 248, 255, 0\.86\)/)
   assert.equal(appLayout.match(/class="app-navigation-page"/g)?.length, 2)
   assert.match(mainStyles, /\.app-navigation-page\s*\{[\s\S]*?background:\s*transparent !important/)

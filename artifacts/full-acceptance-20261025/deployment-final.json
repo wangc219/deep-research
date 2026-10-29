@@ -1,0 +1,162 @@
+{
+  "checked_at": "2026-10-25T11:22:53.254747+00:00",
+  "services": {
+    "api": {
+      "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+      "image": "deepquest-api:acceptance-20261025",
+      "running": true,
+      "health": "healthy"
+    },
+    "worker": {
+      "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+      "image": "deepquest-api:acceptance-20261025",
+      "running": true,
+      "health": "healthy"
+    },
+    "equipment-worker": {
+      "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+      "image": "deepquest-api:acceptance-20261025",
+      "running": true,
+      "health": "not_configured"
+    },
+    "equipment-query-worker": {
+      "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+      "image": "deepquest-api:acceptance-20261025",
+      "running": true,
+      "health": "not_configured"
+    },
+    "web": {
+      "image_id": "sha256:e7de15d7dd2ef7fcfe81fdb37b7d7660f67127f44501edb21c5c3772dc9f8aec",
+      "image": "deepquest-web-document-research:local",
+      "running": true,
+      "health": "not_configured"
+    },
+    "sandbox-provisioner": {
+      "image_id": "sha256:0fe1357022f255364916f11e9189ecac439240c0ae4d39b399920fe9df49dba5",
+      "image": "deepquest-sandbox-provisioner:acceptance-20261025",
+      "running": true,
+      "health": "healthy"
+    },
+    "document-research": {
+      "image_id": "sha256:694903dc954b9da9b8be4d0c1d8e5d5366dce27e1f36b5aae35c26894c468704",
+      "image": "deepquest-document-research:local",
+      "running": true,
+      "health": "healthy"
+    },
+    "document-websearch": {
+      "image_id": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+      "image": "ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+      "running": true,
+      "health": "not_configured"
+    },
+    "graph": {
+      "image_id": "sha256:89d577f2e49606de76441eca8cf7a0fe88e594cbaac4d2a3d86c6e59676e2b1e",
+      "image": "neo4j:5.26.29",
+      "running": true,
+      "health": "healthy"
+    },
+    "postgres": {
+      "image_id": "sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d",
+      "image": "postgres:16",
+      "running": true,
+      "health": "healthy"
+    },
+    "open-websearch": {
+      "image_id": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+      "image": "ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+      "running": true,
+      "health": "healthy"
+    },
+    "milvus": {
+      "image_id": "sha256:fe39aa0fa006be4825a177b6b41393465deece910351c33a58170444265c63d8",
+      "image": "milvusdb/milvus:v2.5.6",
+      "running": true,
+      "health": "healthy"
+    },
+    "redis": {
+      "image_id": "sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2",
+      "image": "redis:7.4.10-alpine",
+      "running": true,
+      "health": "healthy"
+    },
+    "etcd": {
+      "image_id": "sha256:89b6debd43502d1088f3e02f39442fd3e951aa52bee846ed601cf4477114b89e",
+      "image": "quay.io/coreos/etcd:v3.5.5",
+      "running": true,
+      "health": "healthy"
+    },
+    "minio": {
+      "image_id": "sha256:6d770d7f255cda1f18d841ffc4365cb7e0d237f6af6a15fcdb587480cd7c3b93",
+      "image": "minio/minio:RELEASE.2023-03-20T20-16-18Z",
+      "running": true,
+      "health": "healthy"
+    }
+  },
+  "api_image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+  "source_sha256": "6fbaf01e49af8fb4d2896b3ab873e29aef7b2448037dee9ff558ed94388bbeb3",
+  "ready": {
+    "status": "ready",
+    "degraded": false,
+    "checks": {
+      "startup": {
+        "status": "ok"
+      },
+      "postgres": {
+        "status": "ok"
+      },
+      "redis": {
+        "status": "ok"
+      },
+      "worker": {
+        "status": "ok"
+      }
+    },
+    "components": {
+      "builtin_mcp_servers": {
+        "status": "ok",
+        "required": false
+      },
+      "builtin_skills": {
+        "status": "ok",
+        "required": true
+      },
+      "default_agents": {
+        "status": "ok",
+        "required": true
+      },
+      "knowledge_base": {
+        "status": "ok",
+        "required": true
+      },
+      "model_cache": {
+        "status": "ok",
+        "required": true
+      },
+      "model_providers": {
+        "status": "ok",
+        "required": true
+      },
+      "sandbox_provider": {
+        "status": "ok",
+        "required": true
+      },
+      "security_secrets": {
+        "status": "ok",
+        "required": true
+      }
+    },
+    "version": "0.7.3"
+  },
+  "maintenance": false,
+  "old_active_version_removed": true,
+  "backup_files_verified": [
+    "postgres-before-cutover.dump",
+    "preflight-postgres.dump",
+    "persistent-data-before.tar.gz",
+    "document-research-before.tar.gz",
+    "nginx-before.conf"
+  ],
+  "backup_root": "/var/backups/deepquest/full-acceptance-20261025",
+  "staging_removed": true,
+  "persistence_private_state_removed": true
+}

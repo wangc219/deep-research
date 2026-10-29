@@ -1,4 +1,4 @@
-/** 多个页面共享一个调度器；隐藏标签页暂停请求，每个订阅等待上次刷新完成。 */
+/** 多个页面共享计时器；隐藏时暂停，每个订阅独立等待自己的刷新完成。 */
 export function createPollingScheduler({
   schedule = setTimeout,
   cancel = clearTimeout,
@@ -7,38 +7,54 @@ export function createPollingScheduler({
 } = {}) {
   const subscriptions = new Map()
   let timer = null
-  let running = false
+  let timerAt = null
 
   const arm = () => {
-    if (timer !== null || running || !subscriptions.size) return
-    const delay = Math.max(50, Math.min(...[...subscriptions.values()].map((entry) => entry.nextAt - now())))
-    timer = schedule(tick, visible() ? delay : 1000)
+    const idle = [...subscriptions.values()].filter((entry) => !entry.running)
+    if (!idle.length) return
+    const delay = visible()
+      ? Math.max(50, Math.min(...idle.map((entry) => entry.nextAt - now())))
+      : 1000
+    const nextAt = now() + delay
+    if (timer !== null && timerAt <= nextAt) return
+    if (timer !== null) cancel(timer)
+    timerAt = nextAt
+    timer = schedule(tick, delay)
   }
   const tick = async () => {
     timer = null
-    running = true
+    timerAt = null
+    const requests = []
     if (visible()) {
-      const due = [...subscriptions.values()].filter((entry) => entry.nextAt <= now())
-      await Promise.allSettled(due.map(async (entry) => {
-        try {
-          await entry.callback()
-        } finally {
-          entry.nextAt = now() + entry.interval
-        }
-      }))
+      const due = [...subscriptions.entries()].filter(([, entry]) => !entry.running && entry.nextAt <= now())
+      for (const [key, entry] of due) {
+        if (!subscriptions.has(key)) continue
+        entry.running = true
+        requests.push((async () => {
+          try {
+            await entry.callback()
+          } finally {
+            entry.running = false
+            entry.nextAt = now() + entry.interval
+            // 慢查询只暂停自己的订阅，不阻塞其他页面的状态刷新。
+            if (subscriptions.has(key)) arm()
+          }
+        })())
+      }
     }
-    running = false
     arm()
+    await Promise.allSettled(requests)
   }
   const subscribe = (callback, interval) => {
     const key = Symbol('polling')
-    subscriptions.set(key, { callback, interval, nextAt: now() + interval })
+    subscriptions.set(key, { callback, interval, nextAt: now() + interval, running: false })
     arm()
     return () => {
       subscriptions.delete(key)
       if (!subscriptions.size && timer !== null) {
         cancel(timer)
         timer = null
+        timerAt = null
       }
     }
   }

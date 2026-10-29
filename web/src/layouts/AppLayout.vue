@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, provide, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, provide, watch, nextTick, defineAsyncComponent } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
@@ -35,13 +35,14 @@ import { useTaskerStore } from '@/stores/tasker'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import UserInfoComponent from '@/components/UserInfoComponent.vue'
-import TaskCenterDrawer from '@/components/TaskCenterDrawer.vue'
-import SettingsModal from '@/components/SettingsModal.vue'
 import ConversationNavSection from '@/components/ConversationNavSection.vue'
-import GlobalSearchModal from '@/components/GlobalSearchModal.vue'
 import EquipmentWorkflowNav from '@/components/equipment/EquipmentWorkflowNav.vue'
 import { searchWorkspaceFiles } from '@/apis/workspace_api'
 import { projectApi } from '@/apis/project_api'
+
+const TaskCenterDrawer = defineAsyncComponent(() => import('@/components/TaskCenterDrawer.vue'))
+const SettingsModal = defineAsyncComponent(() => import('@/components/SettingsModal.vue'))
+const GlobalSearchModal = defineAsyncComponent(() => import('@/components/GlobalSearchModal.vue'))
 
 // Route chunks are shared with vue-router. Warming the likely destination while
 // the pointer is already over a navigation item removes the code-download pause
@@ -389,9 +390,7 @@ const openConversationSearch = () => {
 
 const initAgentNavigation = async () => {
   try {
-    if (!agentStore.isInitialized) {
-      await agentStore.initialize()
-    }
+    // 侧栏只需要会话与项目摘要，不应等待工具、技能和智能体完整配置。
     await Promise.all([chatThreadsStore.loadThreads(), loadProjects()])
   } catch (error) {
     console.warn('加载对话导航失败:', error)
@@ -738,6 +737,7 @@ provide('settingsModal', {
     </div>
 
     <GlobalSearchModal
+      v-if="conversationSearchOpen"
       v-model:open="conversationSearchOpen"
       :modes="['conversation', 'file']"
       default-mode="conversation"
@@ -750,8 +750,9 @@ provide('settingsModal', {
       @select-file="handleSearchSelectFile"
     />
 
-    <TaskCenterDrawer v-if="userStore.isLoggedIn" />
+    <TaskCenterDrawer v-if="userStore.isLoggedIn && isDrawerOpen" />
     <SettingsModal
+      v-if="showSettingsModal"
       v-model:visible="showSettingsModal"
       :initial-tab="settingsInitialTab"
       @close="() => (showSettingsModal = false)"
@@ -808,7 +809,7 @@ div.header,
   overflow: hidden;
   background:
     linear-gradient(rgba(242, 248, 255, 0.86), rgba(242, 248, 255, 0.86)),
-    url('/equipment-login-hero.png') center / cover no-repeat;
+    url('@/assets/defaults/login-hero.webp') center / cover no-repeat;
 }
 
 .app-route-stage {

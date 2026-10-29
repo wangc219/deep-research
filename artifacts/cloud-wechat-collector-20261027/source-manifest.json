@@ -1,0 +1,18 @@
+{
+  "scripts/cloud.sh": "2799507a121d9e6a731d08d1bdf3547e4981f06603dc6be69b9d0304e5a1e3bb",
+  "compose.wx-collector.yaml": "7cf190b6d3801aec04a1f81535d0e5e96c4932276ae1b8f388ab1090967f7f6a",
+  "docker/wx-collector/Dockerfile": "aacdebbb701fe09c40fa82a1f3658c2387b2158690464788eae04283510a40f6",
+  "docker/wx-collector/config.yaml": "19dc7a40bde5def5662b52927dae8c7b4ee210907f3233304a323a6446cbd465",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-stop-wechat": "047c8703feba13d18446a68ad83e88d875ec0d0b4c2c50eeeb6256b548acf685",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-start-downloader": "e7a12fb633c4b1337c9afca50f085b9d2c918b39d5d980d1e73d64bb8d95bad2",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-start-wechat": "5ddd38911e2bd16b99d577d9ee3ad9b7611bdf00ec80aa6713c733b339fb4c79",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-session-start": "a88c9072cfa984da702b1514276727ce557e4871de9ee4b9ef3e5732363412af",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-stop-downloader": "0e822f78b3e8c26324e16c38dfa98de75c8832746fe636beeaef6d52b449e0eb",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-run-downloader": "7041d80430321f12ad035d16df4e82a1fb35e6ce7aed898841643414fd13e71f",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-open-downloader-terminal": "f90874c2a4a31911f5914a484e8fbe957000bc1870f7d11b6fe16eae2551cc69",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-status": "28afaef42fd5b1e40ff78f80fe466985a279af994f623d6a5b85cb4ad3f64001",
+  "docker/wx-collector/rootfs/etc/xdg/autostart/wx-download.desktop": "04194b600909cabf9ea7da7130228b6398a6ce9ea5799bb73723d40e0813511f",
+  "docker/wx-collector/rootfs/custom-cont-init.d/40-wx-private-certificate": "7730bc722b5af08eb1cdd23a8e638233246ed24855c6662f5464bd146a4cbc99",
+  "docker/wx-collector/rootfs/custom-cont-init.d/50-wx-download-init": "e35e65bc0b1ef075501383e119c7e6509c45f1bad4560c2e56c6531989a554b5",
+  "docker/wx-collector/rootfs/custom-cont-init.d/00-wx-stable-identity": "81374ce61888e90d313ab42cfa7b0a278f3c861ef41ec2a5c0b6f60278e1a633"
+}

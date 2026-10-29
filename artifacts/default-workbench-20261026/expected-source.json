@@ -1,0 +1,13 @@
+{
+  "backend/package/platform_core/services/project_service.py": "15f11d1508e586c938b9f08173443d31d9daa2874bc8359c98e23450244821a5",
+  "backend/package/platform_core/services/equipment_research_service.py": "910ea7b2be4686fd27f17057be1b04cd7ef7e41e6bd52e54968894dee4e41715",
+  "backend/package/platform_core/services/conversation_service.py": "ad5ff23ca42943ba45d253dc0e1f22ea5503ff08224cdd61a7c2e83c0b7f4251",
+  "backend/server/routers/project_router.py": "b8230e756af532411a89aed19dd278150f3c75f250648a696d1fb951575c4232",
+  "backend/server/routers/equipment_router.py": "51dc5665879c2a274e96ae5867da6a98cf613d121dfb9a3834d93adfaa76fc39",
+  "web/src/views/equipment/EquipmentRunsView.vue": "be2d6386a5ab9d041e7692604a77c7c8ffcbe5a9e689040a393be09453c6d14c",
+  "web/src/views/equipment/EquipmentQueriesView.vue": "b6fb581be485c1b1ea9e157141d022f1aa27cb844f7d9b5d1e64061066ce84e5",
+  "web/src/views/equipment/EquipmentDeepThinkingView.vue": "cd335be3a022c0b4cc86b893035b5b3496e889252420511f36e56db5005179cb",
+  "web/src/components/AgentChatComponent.vue": "14b1a84534b8f146dd59757100902a13fb9dc87e4fc68f7df8f911deede65557",
+  "web/src/components/ProjectSelectionSection.vue": "e8a4873ad885878f0d72bcc717ea50ec7d960c12020f0a249497185e24e9366b",
+  "web/src/layouts/AppLayout.vue": "c9691d0b72982418f6b3b9d82fce85084227d2461b9545a94cf50550e3c68fa9"
+}

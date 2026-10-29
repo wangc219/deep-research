@@ -121,10 +121,11 @@ ensure_security_secret() {
 }
 
 validate_security_env() {
-    local jwt_secret api_key_secret sandbox_secret
+    local jwt_secret api_key_secret sandbox_secret searxng_secret
     jwt_secret=$(get_env_value "JWT_SECRET_KEY")
     api_key_secret=$(get_env_value "API_KEY_DERIVATION_SECRET")
     sandbox_secret=$(get_env_value "SANDBOX_PROVISIONER_TOKEN")
+    searxng_secret=$(get_env_value "SEARXNG_SECRET")
 
     security_secret_is_valid "$jwt_secret" || {
         echo "JWT_SECRET_KEY must contain at least 32 non-whitespace characters." >&2
@@ -136,6 +137,10 @@ validate_security_env() {
     }
     security_secret_is_valid "$sandbox_secret" "$jwt_secret" "$api_key_secret" || {
         echo "SANDBOX_PROVISIONER_TOKEN must be at least 32 characters and independent from other security secrets." >&2
+        return 1
+    }
+    security_secret_is_valid "$searxng_secret" "$jwt_secret" "$api_key_secret" "$sandbox_secret" || {
+        echo "SEARXNG_SECRET must be at least 32 characters and independent from other security secrets." >&2
         return 1
     }
 }
@@ -158,6 +163,10 @@ ensure_jwt_env() {
 
 ensure_sandbox_env() {
     ensure_security_secret "SANDBOX_PROVISIONER_TOKEN" "JWT_SECRET_KEY" "API_KEY_DERIVATION_SECRET"
+}
+
+ensure_searxng_env() {
+    ensure_security_secret "SEARXNG_SECRET" "JWT_SECRET_KEY" "API_KEY_DERIVATION_SECRET" "SANDBOX_PROVISIONER_TOKEN"
 }
 
 bash scripts/migrate-environment.sh "$TASK_ENV_FILE"
@@ -190,6 +199,7 @@ if [ -f "$TASK_ENV_FILE" ]; then
     echo "✅ 已发现 .env，正在检查必需配置。"
     ensure_jwt_env
     ensure_sandbox_env
+    ensure_searxng_env
     validate_security_env
     chmod 600 "$TASK_ENV_FILE"
 else
@@ -243,6 +253,8 @@ else
     read_security_secret "SANDBOX_PROVISIONER_TOKEN" "$JWT_SECRET_KEY" "$API_KEY_DERIVATION_SECRET"
     SANDBOX_PROVISIONER_TOKEN="$SECURITY_SECRET_VALUE"
 
+    SEARXNG_SECRET=$(generate_hex 32)
+
     # Create .env file
     cat > "$TASK_ENV_FILE" << EOF
 # 模型与 API Key 统一在 /models 配置；此文件只保存基础设施配置。
@@ -271,6 +283,7 @@ JWT_SECRET_KEY=${JWT_SECRET_KEY}
 API_KEY_DERIVATION_SECRET=${API_KEY_DERIVATION_SECRET}
 DEEP_RESEARCH_INSTANCE_ID=${DEEP_RESEARCH_INSTANCE_ID}
 SANDBOX_PROVISIONER_TOKEN=${SANDBOX_PROVISIONER_TOKEN}
+SEARXNG_SECRET=${SEARXNG_SECRET}
 EOF
 
     validate_security_env

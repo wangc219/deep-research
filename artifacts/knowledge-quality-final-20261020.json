@@ -1,0 +1,1395 @@
+{
+  "graph": [
+    {
+      "chunk_id": "file_95593a_chunk_2",
+      "input_chars": 723,
+      "seconds": 40.25,
+      "entities": 9,
+      "relations": 8,
+      "original_relations": 14,
+      "original_result": {
+        "entities": [
+          {
+            "text": "ADRV9009射频收发器件",
+            "label": "Component",
+            "attributes": [
+              {
+                "text": "射频收发前端",
+                "label": "subtype"
+              },
+              {
+                "text": "负责将雷达干扰信号从基带变频到射频发射出去，并将接收的射频信号变频到基带",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "雷达干扰系统",
+            "label": "Application",
+            "attributes": [
+              {
+                "text": "装备系统",
+                "label": "subtype"
+              },
+              {
+                "text": "基于ADRV9009的雷达干扰系统",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "AD9528时钟芯片",
+            "label": "Component",
+            "attributes": [
+              {
+                "text": "时钟源",
+                "label": "subtype"
+              },
+              {
+                "text": "为FPGA和ADRV9009提供时钟",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "FPGA开发板",
+            "label": "Component",
+            "attributes": [
+              {
+                "text": "FPGA XC7Z100-2FFG900",
+                "label": "description"
+              },
+              {
+                "text": "用于数字基带信号处理和算法控制",
+                "label": "description"
+              },
+              {
+                "text": "数字信号处理平台",
+                "label": "subtype"
+              },
+              {
+                "text": "使用XC7Z100-2FFG900 FPGA",
+                "label": "description"
+              },
+              {
+                "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "计算机控制终端",
+            "label": "Component",
+            "attributes": [
+              {
+                "text": "控制终端",
+                "label": "subtype"
+              },
+              {
+                "text": "通过串口命令生成初始配置信息并解析配置信息",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "串口通信",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "通信方式",
+                "label": "subtype"
+              },
+              {
+                "text": "用于控制实时配置雷达干扰参数",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "System Generator开发工具",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "开发工具",
+                "label": "subtype"
+              },
+              {
+                "text": "用于开发雷达干扰系统，可缩短系统开发周期并提高系统可维护性",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "有源诱偏信号模拟方法",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "方法",
+                "label": "subtype"
+              },
+              {
+                "text": "基于FPGA的有源诱偏信号模拟方法，用于对反辐射导弹的电子干扰",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "小型化雷达侦察干扰系统",
+            "label": "Application",
+            "attributes": [
+              {
+                "text": "系统",
+                "label": "subtype"
+              },
+              {
+                "text": "基于ADRV9009设计，可实现多目标欺骗干扰、密集压制干扰和噪声调制干扰",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "干扰参数实时配置",
+            "label": "Capability",
+            "attributes": [
+              {
+                "text": "配置能力",
+                "label": "subtype"
+              },
+              {
+                "text": "通过串口命令和FPGA逻辑实现干扰参数的实时配置",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "射频信号收发能力",
+            "label": "Capability",
+            "attributes": [
+              {
+                "text": "信号收发",
+                "label": "subtype"
+              },
+              {
+                "text": "实现射频信号到基带的转换和基带到射频的转换",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "软件定义无线电原理",
+            "label": "Principle",
+            "attributes": [
+              {
+                "text": "工程机理",
+                "label": "subtype"
+              },
+              {
+                "text": "通过射频前端数字化和可编程逻辑实现灵活信号处理",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "多目标欺骗干扰",
+            "label": "Capability",
+            "attributes": [
+              {
+                "text": "干扰样式",
+                "label": "subtype"
+              },
+              {
+                "text": "对多个目标产生欺骗干扰",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "密集压制干扰",
+            "label": "Capability",
+            "attributes": [
+              {
+                "text": "干扰样式",
+                "label": "subtype"
+              },
+              {
+                "text": "对敌方雷达实施密集压制性干扰",
+                "label": "description"
+              }
+            ]
+          },
+          {
+            "text": "噪声调制干扰",
+            "label": "Capability",
+            "attributes": [
+              {
+                "text": "干扰样式",
+                "label": "subtype"
+              },
+              {
+                "text": "通过噪声调制实施干扰",
+                "label": "description"
+              }
+            ]
+          }
+        ],
+        "metadata": {
+          "weak_signals": [
+            "有源诱偏信号模拟方法可作为干扰功能扩展参考",
+            "小型化雷达侦察干扰系统的多种干扰样式可能被当前系统借鉴"
+          ],
+          "extractor_type": "llm",
+          "schema_version": 1,
+          "discarded_noise": [
+            "作者和单位信息",
+            "参考文献列表",
+            "收稿日期等编辑信息"
+          ],
+          "dropped_entities": 0,
+          "dropped_relations": 4,
+          "military_value_basis": "原文明确该系统用于雷达对抗，提升干扰系统灵活性和集成度，但具体干扰效果和战术性能未给出实验验证。",
+          "military_value_level": "medium",
+          "primary_contribution": "设计了一种基于ADRV9009和FPGA的雷达干扰系统，采用射频收发前端与数字基带处理相结合的架构，通过串口实现干扰参数实时配置，提高系统灵活性和集成度，缩短开发周期。"
+        },
+        "relations": [
+          {
+            "text": "ADRV9009射频收发器件是雷达干扰系统的组成部分",
+            "label": "应用于",
+            "source": {
+              "text": "ADRV9009射频收发器件",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "subtype"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射出去，并将接收的射频信号变频到基带",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "原文未给出具体性能指标，集成度提升需结合上下文",
+            "evidence_quote": "整个雷达干扰系统的硬件平台主要由以下四个部分组成：ADRV9009射频收发器件、时钟AD9528、FPGA开发板和计算机控制终端。",
+            "reasoning_basis": "原文明确列出硬件组成，ADRV9009作为核心收发器件属于系统硬件平台。",
+            "application_direction": "雷达干扰装备",
+            "expert_review_required": false,
+            "expected_capability_gain": "提高雷达干扰系统的集成度和射频收发性能",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "AD9528时钟芯片是雷达干扰系统的组成部分",
+            "label": "应用于",
+            "source": {
+              "text": "AD9528时钟芯片",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "时钟源",
+                  "label": "subtype"
+                },
+                {
+                  "text": "为FPGA和ADRV9009提供时钟",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "整个雷达干扰系统的硬件平台主要由以下四个部分组成：ADRV9009射频收发器件、时钟AD9528、FPGA开发板和计算机控制终端。",
+            "reasoning_basis": "原文明确列出硬件组成，AD9528作为时钟源属于系统组成部分。",
+            "application_direction": "雷达干扰装备",
+            "expert_review_required": false,
+            "expected_capability_gain": "保证系统时钟同步稳定性",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "FPGA开发板是雷达干扰系统的组成部分",
+            "label": "应用于",
+            "source": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "整个雷达干扰系统的硬件平台主要由以下四个部分组成：ADRV9009射频收发器件、时钟AD9528、FPGA开发板和计算机控制终端。",
+            "reasoning_basis": "原文明确列出硬件组成，FPGA负责基带处理。",
+            "application_direction": "雷达干扰装备",
+            "expert_review_required": false,
+            "expected_capability_gain": "实现灵活的实时信号处理和干扰参数配置",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "计算机控制终端是雷达干扰系统的组成部分",
+            "label": "应用于",
+            "source": {
+              "text": "计算机控制终端",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "控制终端",
+                  "label": "subtype"
+                },
+                {
+                  "text": "通过串口命令生成初始配置信息并解析配置信息",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "整个雷达干扰系统的硬件平台主要由以下四个部分组成：ADRV9009射频收发器件、时钟AD9528、FPGA开发板和计算机控制终端。",
+            "reasoning_basis": "原文明确列出硬件组成，计算机控制终端用于配置和监控。",
+            "application_direction": "雷达干扰装备",
+            "expert_review_required": false,
+            "expected_capability_gain": "提供人机交互接口实现干扰参数配置",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "ADRV9009与FPGA通过JESD204B接口连接",
+            "label": "组合",
+            "source": {
+              "text": "ADRV9009射频收发器件",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "subtype"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射出去，并将接收的射频信号变频到基带",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "具体接口配置未详述",
+            "evidence_quote": "JESD204B 时钟",
+            "reasoning_basis": "图中显示ADRV9009与FPGA之间有JESD204B接口，用于数据交换。",
+            "application_direction": "雷达干扰系统信号链路",
+            "expert_review_required": false,
+            "expected_capability_gain": "实现高速数字基带信号传输和处理",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "AD9528为FPGA提供时钟",
+            "label": "组合",
+            "source": {
+              "text": "AD9528时钟芯片",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "时钟源",
+                  "label": "subtype"
+                },
+                {
+                  "text": "为FPGA和ADRV9009提供时钟",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "AD9528 时钟",
+            "reasoning_basis": "图1显示AD9528时钟连接到FPGA和ADRV9009，用于系统时钟同步。",
+            "application_direction": "雷达干扰系统",
+            "expert_review_required": false,
+            "expected_capability_gain": "确保系统时钟同步",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "AD9528为ADRV9009提供时钟",
+            "label": "组合",
+            "source": {
+              "text": "AD9528时钟芯片",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "时钟源",
+                  "label": "subtype"
+                },
+                {
+                  "text": "为FPGA和ADRV9009提供时钟",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "ADRV9009射频收发器件",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "subtype"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射出去，并将接收的射频信号变频到基带",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "AD9528 时钟",
+            "reasoning_basis": "图1显示AD9528时钟输出到ADRV9009。",
+            "application_direction": "雷达干扰系统",
+            "expert_review_required": false,
+            "expected_capability_gain": "保证射频收发时钟同步",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          },
+          {
+            "text": "FPGA处理数字基带信号以生成干扰信号",
+            "label": "应用于",
+            "source": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "未说明具体算法",
+            "evidence_quote": "由FPGA进行数字基带信号处理。",
+            "reasoning_basis": "原文指出FPGA承担数字基带信号处理，是干扰信号生成的核心。",
+            "application_direction": "雷达干扰信号生成",
+            "expert_review_required": false,
+            "expected_capability_gain": "实现灵活可配置的干扰信号生成",
+            "military_value_dimensions": [
+              "任务效能与精确性"
+            ]
+          },
+          {
+            "text": "串口通信用于控制雷达干扰系统参数配置",
+            "label": "应用于",
+            "source": {
+              "text": "串口通信",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "通信方式",
+                  "label": "subtype"
+                },
+                {
+                  "text": "用于控制实时配置雷达干扰参数",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "串行通信用于控制实时配置雷达干扰参数",
+            "reasoning_basis": "前文明确提到串行通信用于控制雷达干扰参数配置，当前文本中的串口命令生成也基于此。",
+            "application_direction": "雷达干扰系统控制链路",
+            "expert_review_required": false,
+            "expected_capability_gain": "提高干扰参数配置的灵活性和实时性",
+            "military_value_dimensions": [
+              "体系集成与互操作性",
+              "任务效能与精确性"
+            ]
+          },
+          {
+            "text": "System Generator用于开发雷达干扰系统",
+            "label": "应用于",
+            "source": {
+              "text": "System Generator开发工具",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "开发工具",
+                  "label": "subtype"
+                },
+                {
+                  "text": "用于开发雷达干扰系统，可缩短系统开发周期并提高系统可维护性",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "The System Generator development tool is used to develop radar jamming systems, which can shorten system development cycle and improve system maintainability.",
+            "reasoning_basis": "前文原文明确表述，当前文本未重复但已上下文支持。",
+            "application_direction": "雷达干扰系统研发",
+            "expert_review_required": false,
+            "expected_capability_gain": "缩短开发周期，提高可维护性",
+            "military_value_dimensions": [
+              "成本能耗与供应链可控性",
+              "战备保障与全寿命可靠性"
+            ]
+          },
+          {
+            "text": "有源诱偏信号模拟方法可用于雷达干扰系统中",
+            "label": "可迁移至",
+            "source": {
+              "text": "有源诱偏信号模拟方法",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "方法",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于FPGA的有源诱偏信号模拟方法，用于对反辐射导弹的电子干扰",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "装备系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009的雷达干扰系统",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.7,
+            "claim_level": "Inference",
+            "uncertainty": "该方法未在当前系统中实现，仅作为技术参考",
+            "evidence_quote": "种基于FPGA的有源诱偏信号模拟方法[4]，使用FPGA完成了有源诱偏信号的产生，可以实现对反辐射导弹的电子干扰，从而可以达到对目标雷达的保护效果，但是该系统的功能过于单一化，无法满足现代电子对抗的多元化需求。",
+            "reasoning_basis": "该方法属于干扰信号生成方法，与本系统FPGA处理架构相似，但本系统旨在更灵活多功能，可借鉴其信号生成技术。",
+            "application_direction": "雷达干扰系统功能扩展",
+            "expert_review_required": true,
+            "expected_capability_gain": "增加有源诱偏干扰能力",
+            "military_value_dimensions": [
+              "任务效能与精确性",
+              "复杂对抗环境适应性"
+            ]
+          },
+          {
+            "text": "FPGA实现干扰参数实时配置",
+            "label": "形成能力",
+            "source": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "干扰参数实时配置",
+              "label": "Capability",
+              "attributes": [
+                {
+                  "text": "配置能力",
+                  "label": "subtype"
+                },
+                {
+                  "text": "通过串口命令和FPGA逻辑实现干扰参数的实时配置",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.9,
+            "claim_level": "Fact",
+            "uncertainty": "未给出具体响应时间指标",
+            "evidence_quote": "串行通信用于控制实时配置雷达干扰参数，提高了干扰系统的灵活性和可配置性；PL部分处理SPI等协议。",
+            "reasoning_basis": "FPGA负责协议解析和信号处理，通过串口接收配置命令实现参数实时调整。",
+            "application_direction": "雷达干扰系统",
+            "expert_review_required": false,
+            "expected_capability_gain": "实现干扰参数实时动态配置",
+            "military_value_dimensions": [
+              "任务效能与精确性"
+            ]
+          },
+          {
+            "text": "ADRV9009提供射频收发能力",
+            "label": "形成能力",
+            "source": {
+              "text": "ADRV9009射频收发器件",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "subtype"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射出去，并将接收的射频信号变频到基带",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "射频信号收发能力",
+              "label": "Capability",
+              "attributes": [
+                {
+                  "text": "信号收发",
+                  "label": "subtype"
+                },
+                {
+                  "text": "实现射频信号到基带的转换和基带到射频的转换",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.95,
+            "claim_level": "Fact",
+            "uncertainty": "无",
+            "evidence_quote": "ADRV9009射频收发芯片作为整个雷达干扰系统的射频收发前端，其射频信号发射链路主要负责将雷达干扰系统中所需要发射的雷达干扰信号从基带变频到射频发射出去，射频信号接收链路则将接收到的射频信号经过与ADRV9009本振混频，从射频变频到基带",
+            "reasoning_basis": "原文明确描述ADRV9009实现射频收发和变频功能。",
+            "application_direction": "雷达干扰信号收发",
+            "expert_review_required": false,
+            "expected_capability_gain": "宽带射频信号收发和变频处理",
+            "military_value_dimensions": [
+              "信息获取与认知决策"
+            ]
+          },
+          {
+            "text": "FPGA开发板基于软件定义无线电原理",
+            "label": "基于",
+            "source": {
+              "text": "软件定义无线电原理",
+              "label": "Principle",
+              "attributes": [
+                {
+                  "text": "工程机理",
+                  "label": "subtype"
+                },
+                {
+                  "text": "通过射频前端数字化和可编程逻辑实现灵活信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "FPGA开发板",
+              "label": "Component",
+              "attributes": [
+                {
+                  "text": "FPGA XC7Z100-2FFG900",
+                  "label": "description"
+                },
+                {
+                  "text": "用于数字基带信号处理和算法控制",
+                  "label": "description"
+                },
+                {
+                  "text": "数字信号处理平台",
+                  "label": "subtype"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA",
+                  "label": "description"
+                },
+                {
+                  "text": "使用XC7Z100-2FFG900 FPGA，进行数字基带信号处理",
+                  "label": "description"
+                }
+              ]
+            },
+            "confidence": 0.8,
+            "claim_level": "Inference",
+            "uncertainty": "原文未明确提软件定义无线电，此为推断",
+            "evidence_quote": "ADRV9009射频收发芯片作为整个雷达干扰系统的射频收发前端...由FPGA进行数字基带信号处理",
+            "reasoning_basis": "系统采用射频前端+FPGA数字处理架构，符合软件定义无线电的基本结构。",
+            "application_direction": "雷达干扰系统",
+            "expert_review_required": false,
+            "expected_capability_gain": "提高系统灵活性和可重构性",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ]
+          }
+        ]
+      },
+      "optimized_result": {
+        "entities": [
+          {
+            "text": "ADRV9009射频收发芯片",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "射频收发前端",
+                "label": "技术实质"
+              },
+              {
+                "text": "负责将雷达干扰信号从基带变频到射频发射，接收链路将射频信号变频到基带",
+                "label": "作用机理"
+              }
+            ]
+          },
+          {
+            "text": "雷达干扰系统",
+            "label": "Application",
+            "attributes": [
+              {
+                "text": "系统",
+                "label": "subtype"
+              }
+            ]
+          },
+          {
+            "text": "AD9528时钟",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "时钟源",
+                "label": "技术实质"
+              },
+              {
+                "text": "为FPGA提供时钟",
+                "label": "作用"
+              }
+            ]
+          },
+          {
+            "text": "FPGA",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "数字基带信号处理",
+                "label": "技术实质"
+              },
+              {
+                "text": "FPGAXC7Z100-2FFG900",
+                "label": "型号"
+              }
+            ]
+          },
+          {
+            "text": "计算机控制终端",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "控制终端",
+                "label": "技术实质"
+              },
+              {
+                "text": "通过UART串口生成命令和初始配置信息",
+                "label": "作用"
+              }
+            ]
+          },
+          {
+            "text": "基于FPGA的有源诱偏信号模拟方法",
+            "label": "Technology",
+            "attributes": [
+              {
+                "text": "信号模拟方法",
+                "label": "技术实质"
+              },
+              {
+                "text": "使用FPGAXC7Z100-2FFG900产生有源诱偏信号",
+                "label": "技术指标"
+              }
+            ]
+          },
+          {
+            "text": "反辐射导弹",
+            "label": "Concept",
+            "attributes": [
+              {
+                "text": "威胁",
+                "label": "subtype"
+              }
+            ]
+          },
+          {
+            "text": "现代电子对抗的多元化需求",
+            "label": "Concept",
+            "attributes": [
+              {
+                "text": "需求",
+                "label": "subtype"
+              }
+            ]
+          },
+          {
+            "text": "小型化雷达侦察干扰系统",
+            "label": "Application",
+            "attributes": [
+              {
+                "text": "系统",
+                "label": "subtype"
+              },
+              {
+                "text": "基于ADRV9009设计",
+                "label": "description"
+              }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "source": {
+              "text": "ADRV9009射频收发芯片",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射，接收链路将射频信号变频到基带",
+                  "label": "作用机理"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "ADRV9009射频收发芯片作为雷达干扰系统的射频收发前端",
+            "label": "应用于",
+            "claim_level": "Inference",
+            "confidence": 0.5,
+            "evidence_quote": "ADRV9009射频收发芯片作为整个雷达干扰系统的射频收发前端",
+            "reasoning_basis": "原文明确指出ADRV9009作为系统组成部分",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ],
+            "expected_capability_gain": "提高雷达干扰系统射频信号发射与接收的集成度和灵活性",
+            "application_direction": "雷达干扰系统射频前端",
+            "uncertainty": "无；原文引用未匹配当前分块，需复核",
+            "expert_review_required": true
+          },
+          {
+            "source": {
+              "text": "AD9528时钟",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "时钟源",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "为FPGA提供时钟",
+                  "label": "作用"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "AD9528是雷达干扰系统的时钟源",
+            "label": "应用于",
+            "claim_level": "Fact",
+            "confidence": 0.95,
+            "evidence_quote": "AD9528是雷达干扰系统的时钟源",
+            "reasoning_basis": "原文直接陈述",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ],
+            "expected_capability_gain": "保障系统时钟同步与稳定性",
+            "application_direction": "雷达干扰系统时钟分配",
+            "uncertainty": "无",
+            "expert_review_required": false
+          },
+          {
+            "source": {
+              "text": "FPGA",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "数字基带信号处理",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "FPGAXC7Z100-2FFG900",
+                  "label": "型号"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "由FPGA进行数字基带信号处理",
+            "label": "应用于",
+            "claim_level": "Inference",
+            "confidence": 0.5,
+            "evidence_quote": "由FPGA进行数字基带信号处理",
+            "reasoning_basis": "原文描述FPGA处理数字基带信号",
+            "military_value_dimensions": [
+              "自主智能与人机协同"
+            ],
+            "expected_capability_gain": "实现灵活的数字干扰信号生成与处理",
+            "application_direction": "雷达干扰系统基带信号处理",
+            "uncertainty": "无；原文引用未匹配当前分块，需复核",
+            "expert_review_required": true
+          },
+          {
+            "source": {
+              "text": "计算机控制终端",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "控制终端",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "通过UART串口生成命令和初始配置信息",
+                  "label": "作用"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "计算机控制终端用于串口命令生成和初始配置",
+            "label": "应用于",
+            "claim_level": "Fact",
+            "confidence": 0.9,
+            "evidence_quote": "串口命令生成 初始配置信息",
+            "reasoning_basis": "前端图中显示计算机控制终端通过UART连接，且文本提及初始配置信息",
+            "military_value_dimensions": [
+              "战备保障与全寿命可靠性"
+            ],
+            "expected_capability_gain": "提高干扰参数配置灵活性",
+            "application_direction": "雷达干扰系统控制与配置",
+            "uncertainty": "未详细描述控制流程",
+            "expert_review_required": false
+          },
+          {
+            "source": {
+              "text": "基于FPGA的有源诱偏信号模拟方法",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "信号模拟方法",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "使用FPGAXC7Z100-2FFG900产生有源诱偏信号",
+                  "label": "技术指标"
+                }
+              ]
+            },
+            "target": {
+              "text": "反辐射导弹",
+              "label": "Concept",
+              "attributes": [
+                {
+                  "text": "威胁",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "基于FPGA的有源诱偏信号模拟方法可以实现对反辐射导弹的电子干扰",
+            "label": "解决",
+            "claim_level": "Inference",
+            "confidence": 0.5,
+            "evidence_quote": "可以实现对反辐射导弹的电子干扰",
+            "reasoning_basis": "原文直接陈述该方法能干扰反辐射导弹",
+            "military_value_dimensions": [
+              "生存性与防护韧性"
+            ],
+            "expected_capability_gain": "保护目标雷达免受反辐射导弹攻击",
+            "application_direction": "雷达防护",
+            "uncertainty": "该方法功能单一化，不能满足多元化需求；原文引用未匹配当前分块，需复核",
+            "expert_review_required": true
+          },
+          {
+            "source": {
+              "text": "现代电子对抗的多元化需求",
+              "label": "Concept",
+              "attributes": [
+                {
+                  "text": "需求",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "target": {
+              "text": "基于FPGA的有源诱偏信号模拟方法",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "信号模拟方法",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "使用FPGAXC7Z100-2FFG900产生有源诱偏信号",
+                  "label": "技术指标"
+                }
+              ]
+            },
+            "text": "现代电子对抗的多元化需求无法被功能单一的有源诱偏方法满足",
+            "label": "约束",
+            "claim_level": "Inference",
+            "confidence": 0.5,
+            "evidence_quote": "无法满足现代电子对抗的多元化需求",
+            "reasoning_basis": "原文指出该方法功能过于单一化，无法满足多元化需求",
+            "military_value_dimensions": [
+              "复杂对抗环境适应性"
+            ],
+            "expected_capability_gain": "促使系统具备多种干扰能力",
+            "application_direction": "电子对抗装备发展",
+            "uncertainty": "无；原文引用未匹配当前分块，需复核",
+            "expert_review_required": true
+          },
+          {
+            "source": {
+              "text": "小型化雷达侦察干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009设计",
+                  "label": "description"
+                }
+              ]
+            },
+            "target": {
+              "text": "雷达干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                }
+              ]
+            },
+            "text": "小型化雷达侦察干扰系统存在开发难度大、周期长、参数配置不灵活问题，与当前系统形成对比",
+            "label": "替代",
+            "claim_level": "Inference",
+            "confidence": 0.8,
+            "evidence_quote": "但是该系统存在开发难度大，开发周期长，干扰参数配置不灵活等问题",
+            "reasoning_basis": "原文指出已有系统的问题，暗示新系统需克服这些问题",
+            "military_value_dimensions": [
+              "任务效能与精确性",
+              "战备保障与全寿命可靠性"
+            ],
+            "expected_capability_gain": "提高开发效率和干扰参数配置灵活性",
+            "application_direction": "雷达干扰装备设计",
+            "uncertainty": "新系统的具体实现与性能未直接给出",
+            "expert_review_required": true
+          },
+          {
+            "source": {
+              "text": "ADRV9009射频收发芯片",
+              "label": "Technology",
+              "attributes": [
+                {
+                  "text": "射频收发前端",
+                  "label": "技术实质"
+                },
+                {
+                  "text": "负责将雷达干扰信号从基带变频到射频发射，接收链路将射频信号变频到基带",
+                  "label": "作用机理"
+                }
+              ]
+            },
+            "target": {
+              "text": "小型化雷达侦察干扰系统",
+              "label": "Application",
+              "attributes": [
+                {
+                  "text": "系统",
+                  "label": "subtype"
+                },
+                {
+                  "text": "基于ADRV9009设计",
+                  "label": "description"
+                }
+              ]
+            },
+            "text": "刘俊杰等人基于ADRV9009设计了小型化雷达侦察干扰系统",
+            "label": "应用于",
+            "claim_level": "Inference",
+            "confidence": 0.5,
+            "evidence_quote": "刘俊杰等人基于ADRV9009设计了一种小型化雷达侦察干扰系统",
+            "reasoning_basis": "原文明确陈述",
+            "military_value_dimensions": [
+              "体系集成与互操作性"
+            ],
+            "expected_capability_gain": "实现多目标欺骗干扰、密集压制干扰和噪声调制干扰",
+            "application_direction": "雷达侦察干扰",
+            "uncertainty": "该系统存在开发难度大等问题；原文引用未匹配当前分块，需复核",
+            "expert_review_required": true
+          }
+        ],
+        "metadata": {
+          "primary_contribution": "设计了一种基于ADRV9009的雷达干扰系统，由ADRV9009、AD9528、FPGA和计算机控制终端组成，旨在解决现有干扰系统功能单一、参数配置不灵活、开发难度大等问题。",
+          "military_value_level": "medium",
+          "military_value_basis": "原文描述了系统组成和信号处理链路，并对比了现有系统的不足，但未给出系统具体的性能指标和验证结果，因此价值为medium。",
+          "weak_signals": [
+            "系统集成度提高",
+            "缩短开发周期",
+            "提高系统可维护性（来自前文）"
+          ],
+          "discarded_noise": [
+            "作者介绍",
+            "收稿日期",
+            "图注文字",
+            "参考文献编号"
+          ],
+          "extractor_type": "llm",
+          "schema_version": 1,
+          "evidence_verification": {
+            "verified_facts": 2,
+            "reclassified_facts": 5
+          }
+        }
+      }
+    }
+  ],
+  "graph_wall_seconds": 40.25
+}

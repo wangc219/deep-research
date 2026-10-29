@@ -1,0 +1,10 @@
+{
+  "consistent_snapshot": "completed",
+  "data_source": "local",
+  "files": 215,
+  "bytes": 2516907496,
+  "postgres_logical_dump_validated": true,
+  "graph_format": "neo4j-admin dump",
+  "application_files": "outputs + active threads + skills",
+  "private_location": "/Users/wangchen/.codex/private-migrations/local-to-cloud-20261026/snapshot"
+}

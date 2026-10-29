@@ -190,3 +190,53 @@ async def test_aminer_secret_preserve_replace_clear_and_disabled_defaults(db_ses
     assert record.value["api_key"] == ""
     with pytest.raises(ValueError):
         await options.update_option_value(db_session, key, {"enabled": True}, "admin")
+
+
+def test_web_search_option_defaults_match_adaptive_fusion_policy():
+    resolved = options.web_search_opts.resolve({})
+
+    assert resolved["adaptive_fusion_enabled"] is True
+    assert resolved["searxng_enabled"] is True
+    assert resolved["general_engines"] == ["sogou wechat"]
+    assert resolved["min_relevant_results"] == 6
+    assert resolved["total_timeout_seconds"] == 10
+    assert resolved["rrf_k"] == 60
+
+
+@pytest.mark.asyncio
+async def test_web_search_option_validates_engine_catalog_timeout_and_deduplicates(db_session):
+    await options.ensure_options_in_db(db_session)
+    key = options.web_search_opts.key
+
+    record = await options.update_option_value(
+        db_session,
+        key,
+        {"general_engines": ["Brave", "brave", "github"], "total_timeout_seconds": 9},
+        "admin",
+    )
+    assert record.value["general_engines"] == ["brave", "github"]
+
+    with pytest.raises(ValueError, match="不支持"):
+        await options.update_option_value(db_session, key, {"general_engines": ["google"]}, "admin")
+    with pytest.raises(ValueError, match="不能超过"):
+        await options.update_option_value(
+            db_session,
+            key,
+            {"total_timeout_seconds": 5, "searxng_timeout_seconds": 8},
+            "admin",
+        )
+
+
+@pytest.mark.asyncio
+async def test_web_search_runtime_snapshot_publishes_resolved_configuration(monkeypatch):
+    fake_redis = FakeRedis()
+    monkeypatch.setattr(options, "get_async_redis_client", lambda: _async_value(fake_redis))
+
+    resolved = await options.publish_web_search_runtime_options(
+        {"adaptive_fusion_enabled": False, "general_engines": ["brave", "github"]}
+    )
+
+    published = json.loads(fake_redis.values[options.WEB_SEARCH_RUNTIME_OPTIONS_KEY])
+    assert resolved["adaptive_fusion_enabled"] is False
+    assert published == resolved
+    assert published["total_timeout_seconds"] == 10

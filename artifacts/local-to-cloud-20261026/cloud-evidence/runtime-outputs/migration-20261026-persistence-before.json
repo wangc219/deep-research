@@ -1,0 +1,34 @@
+{
+  "projects": {
+    "rows": 104,
+    "sha256": "97592163869556bc4e1b9e3f7f2930662a9784e0e3cee0c9c8b4b902a025392f"
+  },
+  "equipment_research_runs": {
+    "rows": 25,
+    "sha256": "8dd09ec33fb776d5e7e1938d222208fa889a9333b200c407ccf0b929492e394c"
+  },
+  "equipment_capability_versions": {
+    "rows": 60,
+    "sha256": "0be08a7c13ac80e803703e5a169b4d8864113a8e88841abcb9d253178cb9bdc1"
+  },
+  "equipment_expert_feedback": {
+    "rows": 4,
+    "sha256": "1c42c8517823fc8c269a114b0e32fcf9324c0da24c4333b98d39855bb85b758b"
+  },
+  "equipment_deep_sessions": {
+    "rows": 36,
+    "sha256": "64de8517e07afbb674496ad9ecf969bfa0c6c950564a5786ce584265e745a1ac"
+  },
+  "equipment_queries": {
+    "rows": 182,
+    "sha256": "a00c833aaf9f3ca989d215794178bdabd100e43feaef84c416952541d8b9649d"
+  },
+  "knowledge_files": {
+    "rows": 95,
+    "sha256": "2381c83d7faa0cdee275d093e48e0614969e7251fec4b5999444e91bac0c4fdc"
+  },
+  "knowledge_chunks": {
+    "rows": 2387,
+    "sha256": "ad1ebd5d3b6dabb4a45ed7debfb1124e5f659f48a8ae8bf9e2eeffc32b8dc0aa"
+  }
+}

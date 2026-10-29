@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="0" skipped="0" tests="4" time="6.957" timestamp="2026-10-25T15:18:43.085634+08:00" hostname="60a5356f1608"><testcase classname="" name="test.unit.knowledge.eval.test_benchmark_generation" time="0.000"><error message="collection failure">ImportError while importing test module '/app/test/unit/knowledge/eval/test_benchmark_generation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Users/wangchen/equipment research 3/backend/test/unit/knowledge/eval/test_benchmark_generation.py:7: in &lt;module&gt;
+    ???
+E   ModuleNotFoundError: No module named 'conftest'</error></testcase><testcase classname="" name="test.unit.knowledge.eval.test_dataset_generation_resume" time="0.000"><error message="collection failure">ImportError while importing test module '/app/test/unit/knowledge/eval/test_dataset_generation_resume.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Users/wangchen/equipment research 3/backend/test/unit/knowledge/eval/test_dataset_generation_resume.py:7: in &lt;module&gt;
+    ???
+E   ModuleNotFoundError: No module named 'conftest'</error></testcase><testcase classname="" name="test.equipment_deep_research.unit.test_api_evolution_governance" time="0.000"><error message="collection failure">ImportError while importing test module '/app/test/equipment_deep_research/unit/test_api_evolution_governance.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Users/wangchen/equipment research 3/backend/test/equipment_deep_research/unit/test_api_evolution_governance.py:10: in &lt;module&gt;
+    ???
+E   ModuleNotFoundError: No module named 'evals'</error></testcase><testcase classname="" name="test.equipment_deep_research.unit.test_prompt_evolution" time="0.000"><error message="collection failure">ImportError while importing test module '/app/test/equipment_deep_research/unit/test_prompt_evolution.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Users/wangchen/equipment research 3/backend/test/equipment_deep_research/unit/test_prompt_evolution.py:11: in &lt;module&gt;
+    ???
+E   ModuleNotFoundError: No module named 'evals'</error></testcase></testsuite></testsuites>

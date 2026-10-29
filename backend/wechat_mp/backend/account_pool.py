@@ -4,20 +4,27 @@
 支持长效 Token (refreshToken) 纯 Python 毫秒级自动静默续期。
 """
 
-import os
 import json
+import os
 import time
 import uuid
 import hashlib
 import logging
+import tempfile
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 
 from backend.config import (
-    ACCOUNT_POOL_FILE, CONFIG_FILE, DATA_DIR,
-    load_json, save_json, get_proxies_dict
+    ACCOUNT_POOL_FILE, DATA_DIR,
+    load_json, get_proxies_dict
 )
 from backend.weread_signer import refresh_access_token
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows 桌面版保留进程内锁兼容。
+    fcntl = None
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +86,25 @@ class AccountPool:
 
     # ── 存储与加载 ─────────────────────────────────────
 
+    @contextmanager
+    def _locked(self):
+        """串行化进程内及多个用户 Worker 对共享账号池的读改写。"""
+        with self._lock:
+            ACCOUNT_POOL_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            lock_path = ACCOUNT_POOL_FILE.with_name(ACCOUNT_POOL_FILE.name + ".lock")
+            with lock_path.open("a+") as lock_file:
+                try:
+                    os.chmod(lock_path, 0o600)
+                except OSError:
+                    pass
+                if fcntl is not None:
+                    fcntl.flock(lock_file, fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    if fcntl is not None:
+                        fcntl.flock(lock_file, fcntl.LOCK_UN)
+
     def _load(self) -> list:
         accounts = load_json(ACCOUNT_POOL_FILE, [])
         if not isinstance(accounts, list):
@@ -88,19 +114,37 @@ class AccountPool:
         weread_accounts = [a for a in accounts if isinstance(a, dict) and (a.get("vid") or a.get("refreshToken"))]
         if len(weread_accounts) != len(accounts):
             accounts = weread_accounts
-            save_json(ACCOUNT_POOL_FILE, accounts)
+            self._save(accounts)
 
         # 检查是否需要从本地 weread_web/.session.json 自动初始化导入已有登录会话
         if not accounts:
             weread_session = self._try_find_local_session()
             if weread_session:
                 accounts.append(weread_session)
-                save_json(ACCOUNT_POOL_FILE, accounts)
+                self._save(accounts)
 
         return accounts
 
     def _save(self, accounts: list):
-        save_json(ACCOUNT_POOL_FILE, accounts)
+        """在同目录原子替换凭据文件，避免进程中断留下半份 JSON。"""
+        ACCOUNT_POOL_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        descriptor, temporary = tempfile.mkstemp(
+            dir=ACCOUNT_POOL_FILE.parent,
+            prefix=ACCOUNT_POOL_FILE.name + ".",
+            suffix=".tmp",
+        )
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8", errors="replace") as stream:
+                json.dump(accounts, stream, ensure_ascii=False, indent=2)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, ACCOUNT_POOL_FILE)
+        finally:
+            try:
+                Path(temporary).unlink()
+            except FileNotFoundError:
+                pass
 
     def _try_find_local_session(self) -> dict | None:
         """尝试读取用户本地破甲一键通 weread_web 的 session 文件快速导入"""
@@ -147,7 +191,7 @@ class AccountPool:
         支持冷却自愈与自动静默刷新。
         """
         now = time.time()
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             changed = False
 
@@ -205,7 +249,7 @@ class AccountPool:
         上报账号使用结果。遇到 401 自动触发静默刷新。
         """
         now = time.time()
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             acc = next((a for a in accounts if a.get("id") == account_id), None)
             if not acc:
@@ -361,7 +405,7 @@ class AccountPool:
 
     def try_refresh_account(self, account_id: str) -> bool:
         """对外接口：刷新指定账号"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             acc = next((a for a in accounts if a.get("id") == account_id), None)
             if not acc:
@@ -373,7 +417,7 @@ class AccountPool:
 
     def verify_account(self, account_id: str) -> dict:
         """验证并更新单个账号状态"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             acc = next((a for a in accounts if a.get("id") == account_id), None)
             if not acc:
@@ -427,7 +471,7 @@ class AccountPool:
 
     def verify_all(self) -> list:
         """批量检测并刷新所有账号"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             results = []
             for acc in accounts:
@@ -441,7 +485,7 @@ class AccountPool:
 
     def add_or_update(self, cred: dict) -> dict:
         """添加或更新微信读书账号"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             vid = str(cred.get("vid", "")).strip()
             token = cred.get("accessToken") or cred.get("token") or cred.get("skey", "")
@@ -524,13 +568,13 @@ class AccountPool:
 
     def list_accounts(self) -> list:
         """获取所有账号（脱敏输出）"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             return [self._desensitize(a) for a in accounts]
 
     def remove(self, account_id: str) -> bool:
         """删除指定账号"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             before_len = len(accounts)
             accounts = [a for a in accounts if a.get("id") != account_id]
@@ -542,7 +586,7 @@ class AccountPool:
 
     def revive(self, account_id: str) -> bool:
         """重新激活账号"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             acc = next((a for a in accounts if a.get("id") == account_id), None)
             if not acc:
@@ -556,7 +600,7 @@ class AccountPool:
 
     def update_account_info(self, account_id: str, data: dict) -> dict | None:
         """更新账号备注名等信息"""
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             acc = next((a for a in accounts if a.get("id") == account_id), None)
             if not acc:
@@ -567,17 +611,17 @@ class AccountPool:
             return self._desensitize(acc)
 
     def get_active_count(self) -> int:
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             return sum(1 for a in accounts if a.get("status") == "active")
 
     def get_active_accounts(self) -> list:
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             return [a for a in accounts if a.get("status") == "active"]
 
     def get_summary(self) -> dict:
-        with self._lock:
+        with self._locked():
             accounts = self._load()
             total = len(accounts)
             active = sum(1 for a in accounts if a.get("status") == "active")
@@ -592,7 +636,7 @@ class AccountPool:
             }
 
     def pop_kick_events(self) -> list:
-        with self._lock:
+        with self._locked():
             events = list(self._kick_events)
             self._kick_events.clear()
             return events
@@ -676,11 +720,12 @@ def borrow_session() -> tuple[str, str, str]:
 def migrate_legacy_config():
     """应用启动时执行一次：检查是否已有微信读书账号，若无则尝试迁移本地会话"""
     try:
-        pool = account_pool._load()
-        if not pool:
-            imported = account_pool._try_find_local_session()
-            if imported:
-                logger.info("已自动载入本地微信读书会话 (VID: %s)", imported.get("vid"))
+        with account_pool._locked():
+            pool = account_pool._load()
+            if not pool:
+                imported = account_pool._try_find_local_session()
+                if imported:
+                    logger.info("已自动载入本地微信读书会话 (VID: %s)", imported.get("vid"))
     except Exception as e:
         logger.debug("迁移旧配置异常: %s", e)
 

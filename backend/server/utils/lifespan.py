@@ -70,13 +70,20 @@ async def _startup(app: FastAPI) -> None:
     from platform_core.config.options import (
         ensure_options_in_db,
         invalidate_option_cache,
+        publish_web_search_runtime_options,
         system_options,
+        web_search_opts,
     )
 
     async with pg_manager.get_async_session_context() as session:
-        await ensure_options_in_db(session)
+        synced_options = await ensure_options_in_db(session)
+        web_search_stored = next(
+            (dict(record.value or {}) for record in (synced_options or []) if record.key == web_search_opts.key),
+            {},
+        )
         await session.commit()
     await invalidate_option_cache(system_options.key)
+    await publish_web_search_runtime_options(web_search_stored)
 
     await _initialize_startup_component(
         app,

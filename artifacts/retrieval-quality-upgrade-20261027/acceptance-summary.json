@@ -1,0 +1,140 @@
+{
+  "verified_at": "2026-10-27T21:54:10+08:00",
+  "status": "deployed_and_healthy",
+  "release": {
+    "deployed_services": [
+      "api",
+      "worker",
+      "chat-worker",
+      "deep-worker",
+      "subagent-worker",
+      "equipment-worker",
+      "equipment-query-worker"
+    ],
+    "verified_source_files": 24,
+    "image": "sha256:ce5069800145d0643a6092c04912582e135b2ff15cf0a9b85203a8a46523351e"
+  },
+  "tests": {
+    "passed": 208,
+    "skipped": 10,
+    "skipped_reason": "Explicit opt-in live-model routing probes were not enabled; PostgreSQL and Redis integration tests ran."
+  },
+  "limits": {
+    "per_explorer_web": 24,
+    "per_explorer_academic_topic_or_semantic": 8,
+    "per_explorer_academic_title": 3,
+    "per_explorer_abstract_batches": 3,
+    "total_tools": 48,
+    "active_tool_seconds": 480,
+    "wall_seconds": 1800,
+    "parallel_evidence_tools_per_model_response": 2
+  },
+  "cleanup": {
+    "explorer_prompt_synced": true,
+    "explorer_web_limit": 24,
+    "semantic_mode_registered": true,
+    "alias_groups_registered": true,
+    "remaining_acceptance_schemas": 0,
+    "remaining_private_search_keys": 0,
+    "created_public_acceptance_accounts": 0,
+    "wechat_ready": true,
+    "shared_cloud_wechat": true
+  },
+  "web_samples": [
+    {
+      "case": "rare-new-name",
+      "query": "Altermagnetism experimental spin splitting",
+      "required_term_groups": [
+        [
+          "altermagnetism",
+          "altermagnetic",
+          "altermagnets"
+        ]
+      ],
+      "status": "ok",
+      "seconds": 1.93,
+      "returned": 10,
+      "distinct_domains": 3,
+      "filtered_irrelevant_count": 13,
+      "attempted_providers": [
+        "open-websearch"
+      ]
+    },
+    {
+      "case": "new-interdisciplinary",
+      "query": "Moiré excitons semiconductor heterobilayers",
+      "required_term_groups": [
+        [
+          "moiré",
+          "moire"
+        ],
+        [
+          "exciton",
+          "excitons",
+          "激子"
+        ]
+      ],
+      "status": "ok",
+      "seconds": 1.62,
+      "returned": 7,
+      "distinct_domains": 1,
+      "filtered_irrelevant_count": 18,
+      "attempted_providers": [
+        "open-websearch"
+      ]
+    },
+    {
+      "case": "cross-disciplinary",
+      "query": "Hydrodynamic electron flow in graphene",
+      "required_term_groups": [
+        [
+          "hydrodynamic",
+          "viscous"
+        ],
+        [
+          "electron",
+          "electronic"
+        ],
+        [
+          "graphene"
+        ]
+      ],
+      "status": "ok",
+      "seconds": 2.53,
+      "returned": 7,
+      "distinct_domains": 6,
+      "filtered_irrelevant_count": 3,
+      "attempted_providers": [
+        "open-websearch",
+        "public"
+      ]
+    }
+  ],
+  "academic_samples": [
+    {
+      "case": "rare-new-name",
+      "query": "Experimental evidence for altermagnetism and spin splitting",
+      "semantic_returned": 10,
+      "semantic_seconds": 8.34,
+      "controlled_keyword_returned": 10,
+      "free_title_returned": 10
+    },
+    {
+      "case": "new-interdisciplinary",
+      "query": "Moiré excitons in semiconductor heterobilayers",
+      "semantic_returned": 10,
+      "semantic_seconds": 8.38,
+      "controlled_keyword_returned": 6,
+      "free_title_returned": 10
+    },
+    {
+      "case": "cross-disciplinary",
+      "query": "Hydrodynamic electron flow in graphene",
+      "semantic_returned": 10,
+      "semantic_seconds": 8.38,
+      "controlled_keyword_returned": 1,
+      "free_title_returned": 10
+    }
+  ],
+  "scope": "Three public scientific samples; candidate discovery and metadata review, not proof of every claim or a general retrieval precision benchmark. No public acceptance accounts or conversations were created."
+}

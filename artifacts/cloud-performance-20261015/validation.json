@@ -1,0 +1,84 @@
+{
+  "verified_at": "2026-10-15T22:05:59.874452+08:00",
+  "site": "https://www.deepquest.space",
+  "root_causes": [
+    "Research list embedded multi-megabyte historical summary JSON",
+    "Portal returned full payload for recent research records",
+    "Capability rows duplicated text in snapshot and at top level",
+    "Neither Nginx hop compressed JavaScript or JSON; content-hashed assets lacked immutable caching"
+  ],
+  "changes": [
+    "Opt-in compact run/capability API responses, used by web",
+    "Portal recent-run metadata projection",
+    "gzip enabled at container and public TLS gateway",
+    "Immutable asset caching and revalidated HTML",
+    "Static missing assets return 404"
+  ],
+  "verification": {
+    "backend_unit_tests": 40,
+    "nginx_existing_config_tests": 3,
+    "cloud_built_image_compact_tests": 2,
+    "frontend_unit_tests": 545,
+    "frontend_lint": "passed",
+    "frontend_build": "passed; existing chunk-size warnings remain",
+    "ruff": "passed using ruff >= 0.12.1",
+    "cloud_nginx_config": "passed",
+    "public_gzip": "passed",
+    "public_asset_cache": "public, max-age=31536000, immutable",
+    "public_html_cache": "no-cache",
+    "missing_asset": 404,
+    "live_http_roles": [
+      "admin",
+      "user",
+      "superadmin"
+    ],
+    "live_http_users_checked": 3,
+    "live_http_list_order_counts_and_permissions": "full and compact responses identical",
+    "live_http_detail_payload": "unchanged",
+    "live_http_capabilities": "full snapshot merged with top-level fields exactly equals compact response",
+    "live_http_unauthenticated_reads": 401,
+    "browser": [
+      "portal counts and recent links",
+      "18 research runs with model labels and counts",
+      "15 portrait card modules rendered for selected task"
+    ],
+    "readiness": "ready, degraded=false",
+    "browser_session_note": "Cloud API was replaced again by an external deployment during the last browser checks. Transient 502s were observed; the session subsequently required sign-in. Public readiness and authenticated HTTP measurements were checked again after services recovered.",
+    "final_services": "API and platform worker healthy; both domain workers running; infrastructure healthy"
+  },
+  "backup": {
+    "directory": "/var/backups/deepquest/performance-20261015",
+    "source_archive": "source-before.tar.gz",
+    "api_image": "deepquest-api:performance-before-20261015",
+    "web_image": "deepquest-web:performance-before-20261015"
+  },
+  "limitations": [
+    "Single-request latency samples are sensitive to network and warm-up",
+    "No production concurrency load test",
+    "Existing large JS chunks remain; transport compressed and repeat downloads cached"
+  ],
+  "scope": "Only this task performance diff was applied to cloud; unrelated local Query changes were excluded from this deployment.",
+  "public_measurements": [
+    {
+      "endpoint": "/api/equipment/runs",
+      "before_wire_bytes": 5092390,
+      "after_wire_bytes": 4991,
+      "reduction_percent": 99.9,
+      "after_total_s": 0.231
+    },
+    {
+      "endpoint": "/api/equipment/portal",
+      "before_wire_bytes": 4631521,
+      "after_wire_bytes": 7817,
+      "reduction_percent": 99.83,
+      "after_total_s": 0.327
+    },
+    {
+      "endpoint": "/api/equipment/capabilities",
+      "before_wire_bytes": 6898637,
+      "after_wire_bytes": 820809,
+      "reduction_percent": 88.1,
+      "after_total_s": 0.974
+    }
+  ]
+}

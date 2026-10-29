@@ -1,0 +1,241 @@
+{
+  "url": "https://www.deepquest.space",
+  "deployed_at": "2026-10-29T14:55:28+08:00",
+  "measurements": [
+    {
+      "label": "before",
+      "fcp_ms": 1928,
+      "lcp_ms": 4936,
+      "resource_transfer_bytes": 1490093,
+      "requests": 21,
+      "page_errors": [],
+      "api_requests": [
+        {
+          "url": "https://www.deepquest.space/api/system/info",
+          "type": "fetch",
+          "start": 1906,
+          "duration": 81,
+          "ttfb": 80,
+          "transfer": 1074,
+          "decoded": 774,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/system/health",
+          "type": "fetch",
+          "start": 2020,
+          "duration": 1141,
+          "ttfb": 1140,
+          "transfer": 364,
+          "decoded": 64,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/check-first-run",
+          "type": "fetch",
+          "start": 3161,
+          "duration": 1538,
+          "ttfb": 1203,
+          "transfer": 319,
+          "decoded": 19,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/registration-config",
+          "type": "fetch",
+          "start": 4702,
+          "duration": 204,
+          "ttfb": 203,
+          "transfer": 334,
+          "decoded": 34,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/oidc/config",
+          "type": "fetch",
+          "start": 4908,
+          "duration": 135,
+          "ttfb": 132,
+          "transfer": 363,
+          "decoded": 63,
+          "protocol": "h2"
+        }
+      ]
+    },
+    {
+      "label": "after",
+      "fcp_ms": 1224,
+      "lcp_ms": 1704,
+      "resource_transfer_bytes": 307855,
+      "requests": 42,
+      "page_errors": [],
+      "api_requests": [
+        {
+          "url": "https://www.deepquest.space/api/system/info",
+          "type": "fetch",
+          "start": 1202,
+          "duration": 100,
+          "ttfb": 99,
+          "transfer": 1074,
+          "decoded": 774,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/system/health",
+          "type": "fetch",
+          "start": 1488,
+          "duration": 225,
+          "ttfb": 224,
+          "transfer": 364,
+          "decoded": 64,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/registration-config",
+          "type": "fetch",
+          "start": 1488,
+          "duration": 225,
+          "ttfb": 224,
+          "transfer": 334,
+          "decoded": 34,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/check-first-run",
+          "type": "fetch",
+          "start": 1488,
+          "duration": 225,
+          "ttfb": 224,
+          "transfer": 319,
+          "decoded": 19,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/oidc/config",
+          "type": "fetch",
+          "start": 1488,
+          "duration": 224,
+          "ttfb": 224,
+          "transfer": 363,
+          "decoded": 63,
+          "protocol": "h2"
+        }
+      ]
+    },
+    {
+      "label": "after-repeat",
+      "fcp_ms": 2068,
+      "lcp_ms": 3148,
+      "resource_transfer_bytes": 307855,
+      "requests": 42,
+      "page_errors": [],
+      "api_requests": [
+        {
+          "url": "https://www.deepquest.space/api/system/info",
+          "type": "fetch",
+          "start": 2046,
+          "duration": 1016,
+          "ttfb": 1016,
+          "transfer": 1074,
+          "decoded": 774,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/system/health",
+          "type": "fetch",
+          "start": 3102,
+          "duration": 161,
+          "ttfb": 161,
+          "transfer": 364,
+          "decoded": 64,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/check-first-run",
+          "type": "fetch",
+          "start": 3102,
+          "duration": 162,
+          "ttfb": 162,
+          "transfer": 319,
+          "decoded": 19,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/oidc/config",
+          "type": "fetch",
+          "start": 3103,
+          "duration": 161,
+          "ttfb": 161,
+          "transfer": 363,
+          "decoded": 63,
+          "protocol": "h2"
+        },
+        {
+          "url": "https://www.deepquest.space/api/auth/registration-config",
+          "type": "fetch",
+          "start": 3103,
+          "duration": 162,
+          "ttfb": 161,
+          "transfer": 334,
+          "decoded": 34,
+          "protocol": "h2"
+        }
+      ]
+    }
+  ],
+  "scope": "Cold login-page loads on the same local machine, isolated browser contexts, HTTP/2. The before result is one sample and the after results are two samples, not an SLA or a production percentile.",
+  "resource_reduction": {
+    "hero_bytes_before": 975343,
+    "hero_bytes_after": 52994,
+    "entry_js_bytes_before": 1242305,
+    "entry_js_bytes_after": 56387,
+    "entry_js_gzip_before": 375559,
+    "entry_js_gzip_after": 22023,
+    "total_transfer_reduction_percent": 79.34
+  },
+  "changes": [
+    "Template-driven Ant Design Vue component imports",
+    "Hashed and preloaded WebP hero with preserved dimensions and alpha",
+    "Parallel independent public login checks",
+    "Agent configuration initialization owned by chat pages",
+    "Lazy settings, search and task-center panels",
+    "Build-time gzip static assets",
+    "Nginx upstream keepalive pools and request timing logs"
+  ],
+  "validation": {
+    "frontend_unit_tests_passed": 610,
+    "startup_tests_passed": 7,
+    "nginx_contract_tests_passed": 3,
+    "changed_files_eslint": "passed",
+    "local_build": "passed",
+    "cloud_source_build": "passed",
+    "candidate_http_assets": "passed, compression, MIME, immutable cache, 404 for missing assets, retained old assets",
+    "browser_qa": [
+      "Login page",
+      "Agent management (19 agents)",
+      "Knowledge portal (19 runs, 146 queries, 114 capabilities)",
+      "Chat composer with model selector",
+      "Task center",
+      "Conversation search",
+      "Account settings"
+    ],
+    "browser_console_errors": 0,
+    "untouched_containers": 19
+  },
+  "limitations": [
+    "Full local ESLint is blocked by an existing unrelated no-unused-vars error at web/src/stores/equipment.js:43 (_options). This file was not included in this release.",
+    "Responsive browser viewport automation timed out; mobile and dark-mode QA were not completed.",
+    "Nominal bandwidth was not verified through the cloud provider console. Observed single-file downloads were 0.13-0.29 MB/s and vary by network path.",
+    "Splitting components increased cold-page request count from 21 to 42 while reducing transfer volume by 79.34%; cold rendering remains sensitive to network latency."
+  ],
+  "rollback": {
+    "server_directory": "/opt/backups/deepquest-page-performance-20261029-145346",
+    "command": "sudo bash /opt/backups/deepquest-page-performance-20261029-145346/rollback.sh"
+  },
+  "screenshots": [
+    "before.png",
+    "after.png",
+    "after-repeat.png",
+    "workbench-after.png"
+  ]
+}

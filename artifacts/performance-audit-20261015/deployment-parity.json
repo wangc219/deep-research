@@ -1,0 +1,35 @@
+{
+  "backend_containers": {
+    "api": {
+      "matches": true,
+      "different": []
+    },
+    "worker": {
+      "matches": true,
+      "different": []
+    },
+    "equipment-worker": {
+      "matches": true,
+      "different": []
+    },
+    "equipment-query-worker": {
+      "matches": true,
+      "different": []
+    }
+  },
+  "frontend": {
+    "local_files": 781,
+    "cloud_files": 782,
+    "different": [],
+    "extra_cloud": [
+      "./50x.html"
+    ]
+  },
+  "source_sha256": {
+    "package/equipment_deep_research/query_library/generator.py": "f4e49927bd003fd85f7e71b8f89f278d685235c0a778f3ae0f5e63eb7a397b1c",
+    "package/platform_core/services/equipment_query_task.py": "b146ef8847f220d77a419b0c5097708e2f58afd3ad9b5e332a278031b3ea9022",
+    "package/platform_core/services/equipment_research_task.py": "066952f6263dd332a034ae353acb0e30ece0ebe8bf9ae399820a4deb7a45ebf2",
+    "package/platform_core/repositories/equipment_research_repository.py": "008645330114af951b9276995a3edffe7a5dd9a65a9f7d41a56229cd7718206d",
+    "package/platform_core/storage/postgres/models_equipment.py": "37d542bc38f7388547994d4680ee603fa01acc7e3fb822235ab6241ae74d5418"
+  }
+}

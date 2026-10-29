@@ -1,0 +1,17 @@
+[
+  "web/vite.config.js",
+  "web/package.json",
+  "web/pnpm-lock.yaml",
+  "web/index.html",
+  "web/src/main.js",
+  "web/src/App.vue",
+  "web/src/layouts/AppLayout.vue",
+  "web/src/views/LoginView.vue",
+  "web/src/assets/css/main.css",
+  "web/src/assets/defaults/login-hero.webp",
+  "web/scripts/precompress.mjs",
+  "docker/nginx/default.conf",
+  "docker/nginx/nginx.conf",
+  "docker/nginx/cloud.conf",
+  "web/src/router/index.js"
+]

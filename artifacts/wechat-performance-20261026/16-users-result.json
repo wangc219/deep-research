@@ -1,0 +1,34 @@
+{
+  "ordinary_accounts": 16,
+  "origin": "https://www.deepquest.space",
+  "real_password_logins": "16/16 passed",
+  "isolated_mp_sessions": "16/16 passed",
+  "private_knowledge_libraries": "16/16 created",
+  "warm_concurrent_requests": {
+    "count": 384,
+    "p50_ms": 172.4,
+    "p95_ms": 288.5,
+    "max_ms": 336.2
+  },
+  "warm_success_rate": "100%",
+  "cross_account_access": "80/80 rejected",
+  "parallel_upload_download_word": "16/16 passed",
+  "real_knowledge_ingest_and_retrieval": "16/16 passed",
+  "ingest_completion": {
+    "count": 16,
+    "p50_ms": 8164.4,
+    "p95_ms": 11331.5,
+    "max_ms": 11331.5
+  },
+  "passed": true,
+  "cleanup": {
+    "accounts_remaining": 0,
+    "tasks_remaining": 0,
+    "libraries_remaining": 0,
+    "operation_logs_remaining": 0,
+    "profiles_remaining": 0,
+    "agent_env_remaining": 0,
+    "private_directories_remaining": 0,
+    "errors": []
+  }
+}

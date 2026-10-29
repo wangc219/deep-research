@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="17.449" timestamp="2026-10-25T16:17:03.054219+08:00" hostname="3a6250d2430a"><testcase classname="test.e2e.test_provider_reasoning_e2e" name="test_reasoning_stream_matches_persisted_history" time="2.589"><failure message="AssertionError: unexpected_error&#10;assert 'failed' == 'completed'&#10;  &#10;  - completed&#10;  + failed">test/e2e/test_provider_reasoning_e2e.py:93: in test_reasoning_stream_matches_persisted_history
+    assert run["status"] == "completed", run.get("error_type")
+E   AssertionError: unexpected_error
+E   assert 'failed' == 'completed'
+E     
+E     - completed
+E     + failed</failure></testcase><testcase classname="test.e2e.test_read_file_multimodal_e2e" name="test_read_file_image_and_document_real_agent_runs" time="2.208"><failure message="AssertionError: {'status': 'failed', 'output': '', 'agent_slug': 'e2e-read-file-21f63374', 'thread_id': 'b5b31275-71a9-48d1-ac67-835653fe39cf', ...}&#10;assert 'failed' == 'completed'&#10;  &#10;  - completed&#10;  + failed">test/e2e/test_read_file_multimodal_e2e.py:185: in test_read_file_image_and_document_real_agent_runs
+    image_output = await _run(
+test/e2e/test_read_file_multimodal_e2e.py:146: in _run
+    assert status == "completed", payload
+E   AssertionError: {'status': 'failed', 'output': '', 'agent_slug': 'e2e-read-file-21f63374', 'thread_id': 'b5b31275-71a9-48d1-ac67-835653fe39cf', ...}
+E   assert 'failed' == 'completed'
+E     
+E     - completed
+E     + failed</failure></testcase><testcase classname="test.e2e.test_read_file_multimodal_e2e" name="test_non_vision_model_uses_ocr_fallback" time="12.590" /></testsuite></testsuites>

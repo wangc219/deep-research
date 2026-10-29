@@ -1,0 +1,410 @@
+{
+  "case": "technology_preloaded",
+  "model": "deepseek:deepseek-flash",
+  "question": "围绕长序列推理的显存瓶颈开展技术攻关，仅讨论公开技术的解决路径，比较稀疏注意力与 FlashAttention。结合论文证据，仅在聊天正文回答，200字内，无需平台任务或文件。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "long sequence inference KV cache memory bottleneck",
+        "related_queries": [
+          "sparse attention long context efficient transformer",
+          "FlashAttention IO-aware exact attention memory"
+        ],
+        "limit": 10
+      },
+      "id": "call_00_YPX4Ph69KwjJrTIxsF938086",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "长序列推理 显存瓶颈 稀疏注意力",
+        "limit": 10
+      },
+      "id": "call_01_tRu8UThTjo3a0JFxmIxq4931",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_get_papers",
+      "args": {
+        "paper_ids": [
+          "probe-flash",
+          "probe-sparse",
+          "probe-attention"
+        ],
+        "full_abstract": true
+      },
+      "id": "call_00_DscOY7HoQ7MieXYZ1JF58307",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "长序列推理 显存瓶颈 稀疏注意力"
+      }
+    },
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "long sequence inference KV cache memory bottleneck"
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      }
+    },
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "sparse attention long context efficient transformer"
+      }
+    },
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "FlashAttention IO-aware exact attention memory"
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-flash",
+          "probe-sparse",
+          "probe-attention"
+        ]
+      }
+    },
+    {
+      "path": "detail",
+      "payload": {
+        "id": "probe-flash"
+      }
+    },
+    {
+      "path": "detail",
+      "payload": {
+        "id": "probe-sparse"
+      }
+    },
+    {
+      "path": "detail",
+      "payload": {
+        "id": "probe-attention"
+      }
+    }
+  ],
+  "model_requests": 3,
+  "web_calls": 0,
+  "cost_cents": 7,
+  "root_budget_shared": true,
+  "seconds": 10.74,
+  "answer": "长序列推理显存瓶颈主要来自 KV 缓存线性增长与注意力访存的二次增长。两条公开路径定位不同：FlashAttention 是 IO 感知的精确注意力，靠分块与重排计算顺序减少显存读写，不改变数学结果<cite source=\"https://doi.org/10.48550/arXiv.2205.14135\" type=\"url\">1</cite>；稀疏注意力（Sparse Transformers）以因子化稀疏模式改变 token 连通性，压缩有效计算与显存<cite source=\"https://doi.org/10.48550/arXiv.1904.10509\" type=\"url\">2</cite>。前者风险低、兼容现有模型；后者可支撑更长上下文，但可能损失长程依赖。两篇摘要均称结果限于其评测设定，未给统一加速倍率或部署实测。",
+  "tool_results": [
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "long sequence inference KV cache memory bottleneck",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.660819Z",
+          "matched_queries": [
+            "long sequence inference KV cache memory bottleneck",
+            "sparse attention long context efficient transformer",
+            "FlashAttention IO-aware exact attention memory"
+          ]
+        },
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.660819Z",
+          "matched_queries": [
+            "long sequence inference KV cache memory bottleneck",
+            "sparse attention long context efficient transformer",
+            "FlashAttention IO-aware exact attention memory"
+          ]
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.660819Z",
+          "matched_queries": [
+            "long sequence inference KV cache memory bottleneck",
+            "sparse attention long context efficient transformer",
+            "FlashAttention IO-aware exact attention memory"
+          ]
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      },
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "long sequence inference KV cache memory bottleneck",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        },
+        {
+          "query": "sparse attention long context efficient transformer",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        },
+        {
+          "query": "FlashAttention IO-aware exact attention memory",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 3,
+      "omitted_candidates": 0,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "长序列推理 显存瓶颈 稀疏注意力",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.654826Z",
+          "matched_queries": [
+            "长序列推理 显存瓶颈 稀疏注意力"
+          ]
+        },
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.654826Z",
+          "matched_queries": [
+            "长序列推理 显存瓶颈 稀疏注意力"
+          ]
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:17.654826Z",
+          "matched_queries": [
+            "长序列推理 显存瓶颈 稀疏注意力"
+          ]
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      },
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "长序列推理 显存瓶颈 稀疏注意力",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 3,
+      "omitted_candidates": 0,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes. The reported results are bounded to the paper's evaluated settings; hardware and workload affect speedups. This abstract does not establish a universal twofold inference speedup, nor provide deployment measurements.",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:18.776518Z"
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation. The reported results are bounded to the paper's evaluated settings; hardware and workload affect speedups. This abstract does not establish a universal twofold inference speedup, nor provide deployment measurements.",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:18.782071Z"
+        },
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms. The reported results are bounded to the paper's evaluated settings; hardware and workload affect speedups. This abstract does not establish a universal twofold inference speedup, nor provide deployment measurements.",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-16T09:11:18.787399Z"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "requested_paper_ids": [
+        "probe-flash",
+        "probe-sparse",
+        "probe-attention"
+      ],
+      "missing_paper_ids": [],
+      "missing_abstract_ids": []
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

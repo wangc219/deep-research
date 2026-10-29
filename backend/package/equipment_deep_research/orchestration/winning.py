@@ -1264,13 +1264,38 @@ class WinningMechanismEngine:
             limit_suffix = f"（受限：缺少{','.join(coverage['missing_required_tags'])}覆盖）"
         profile = _route_capability_profile(route, topic)
         military_profile = military_capability_profile(topic, route)
-        directions = [
-            item
-            for item in (model_analysis or {}).get("concept_directions", [])
-            if isinstance(item, dict)
-            and item.get("type") in {"new_capability", "upgrade"}
-            and str(item.get("name", "")).strip()
-        ][:7]
+        directions: list[dict[str, Any]] = []
+        for raw_direction in (model_analysis or {}).get("concept_directions", []):
+            if not isinstance(raw_direction, dict) or not str(raw_direction.get("name", "")).strip():
+                continue
+            direction = dict(raw_direction)
+            capability_type = str(direction.get("type", "")).strip()
+            if capability_type not in {"new_capability", "upgrade"}:
+                # Completed S6 cards persisted by older prompt bundles can
+                # predate the explicit ``type`` transport field. They remain
+                # authoritative when the S6 semantic contract and portrait
+                # are present, and must not disappear on a later resume.
+                semantic_check = direction.get("semantic_consistency_check")
+                is_formal_s6_card = (
+                    direction.get("direct_combat_equipment") is True
+                    and isinstance(semantic_check, Mapping)
+                    and semantic_check.get("consistent") is True
+                    and bool(str(direction.get("capability_portrait", "")).strip())
+                )
+                if not is_formal_s6_card:
+                    continue
+                capability_type = (
+                    "upgrade"
+                    if any(
+                        direction.get(field) not in (None, "", [])
+                        for field in ("upgrade_package", "combat_effect_uplift", "upgrade_boundary")
+                    )
+                    else "new_capability"
+                )
+                direction["type"] = capability_type
+            directions.append(direction)
+            if len(directions) >= 7:
+                break
         if directions:
             return self._model_capability_images(
                 topic=topic,

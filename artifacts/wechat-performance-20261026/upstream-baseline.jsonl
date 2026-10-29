@@ -1,0 +1,8 @@
+{"upstream_path": "/healthz", "status": 200, "seconds": 0.005, "bytes": 46}
+{"upstream_path": "/index.html", "status": 200, "seconds": 0.003, "bytes": 11758}
+{"upstream_path": "/css/style.css", "status": 200, "seconds": 0.002, "bytes": 45722}
+{"upstream_path": "/js/components/articles.js", "status": 200, "seconds": 0.002, "bytes": 33421}
+{"upstream_path": "/api/auth/status", "status": 200, "seconds": 0.002, "bytes": 501}
+{"upstream_path": "/api/articles/history", "status": 200, "seconds": 0.003, "bytes": 3069}
+{"upstream_path": "/api/accounts", "status": 200, "seconds": 0.002, "bytes": 1079}
+{"upstream_path": "/api/account-pool", "status": 200, "seconds": 0.002, "bytes": 534}

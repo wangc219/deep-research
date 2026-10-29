@@ -1,0 +1,1 @@
+{"status": "passed", "response": "收到", "usage": {"input_tokens": 11, "output_tokens": 1, "total_tokens": 12, "input_token_details": {"cache_read": 0}, "output_token_details": {"reasoning": 0}}, "chunk_count": 5}

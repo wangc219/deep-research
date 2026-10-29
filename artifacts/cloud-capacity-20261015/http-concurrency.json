@@ -1,0 +1,141 @@
+{
+  "previous_research_capacity": 4,
+  "research_runtime": {
+    "configured_capacity": 6,
+    "capacity_limit": 8,
+    "active_count": 0,
+    "available_slots": 6,
+    "pending_count": 0,
+    "parallel_enabled": true,
+    "can_manage": true,
+    "active_tasks": []
+  },
+  "read_only_http_concurrency": 24,
+  "requests": [
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.51
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 0.737
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.561
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.619
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 0.741
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.618
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.598
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 0.918
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.618
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.685
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 0.918
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.624
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.722
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 0.917
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.728
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.725
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 1.052
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.795
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.817
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 1.052
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.748
+    },
+    {
+      "path": "/api/equipment/runtime",
+      "status": 200,
+      "seconds": 0.927
+    },
+    {
+      "path": "/api/equipment/runs?compact=true",
+      "status": 200,
+      "seconds": 1.051
+    },
+    {
+      "path": "/api/equipment/query-generations?limit=10",
+      "status": 200,
+      "seconds": 0.931
+    }
+  ],
+  "batch_seconds": 1.056,
+  "p50_seconds": 0.739,
+  "max_seconds": 1.052,
+  "postgres_connections_after": 32,
+  "model_calls": 0
+}

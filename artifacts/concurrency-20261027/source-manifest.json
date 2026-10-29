@@ -1,0 +1,7 @@
+{
+  "compose.cloud.yaml": "e25633be0b5ceaebf27d653ed7a04d92f089d7dbc488271838b7b81ffe948330",
+  "scripts/cloud.sh": "de52033a69e072afcdda5e803fc17a8f1cdebe91033e5d6cf632db27507f04f0",
+  "configs/cloud/8c16g.env.example": "a09f9363ccafb45063aa006e38ae77b8e2e75140d916bf45351934182f4f70f4",
+  "docs/CLOUD_CAPACITY.md": "d652f1fde1833aaf57a01a28820633fea7fc473fdf8a63c4dbaec36226e2dd76",
+  "backend/test/integration/services/test_durable_task_repository.py": "3d3e4a2007d0b7cca7edba070ca797b2ac8b2734040c6d65deffe616c4bfca3b"
+}

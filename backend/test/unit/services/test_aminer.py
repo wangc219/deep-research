@@ -1,5 +1,7 @@
 """AMiner 协议、证据和检索策略测试，不发送真实供应商请求。"""
 
+import json
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -25,6 +27,9 @@ def test_equipment_evidence_prompt_preserves_autonomy_and_uncertainty():
         "论文结论、类比迁移、工程推断和待验证假设分开表达",
         "不将论文级结果等同于装备级可用性",
         "不改变纯论文查询的回答范围",
+        "自然语言技术问题、罕见术语和跨学科问题优先",
+        "required_term_groups 表达“组内 OR、组间 AND”",
+        "不因文本里出现“研究、证据门、算法、材料”等词自动检索",
     ):
         assert requirement in ACADEMIC_RETRIEVAL_PROMPT
     assert "论文已支持的机制—当前瓶颈—应用部件或分系统" not in ACADEMIC_RETRIEVAL_PROMPT
@@ -77,7 +82,48 @@ async def test_jwt_and_bulk_post_are_official_rest_protocol():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["search", "title_search", "info", "detail", "references"])
+async def test_official_question_search_uses_documented_post_protocol():
+    """论文问答搜索使用官方非 Pro 地址并保留标准列表响应。"""
+
+    def handler(request):
+        assert request.method == "POST"
+        assert request.url.path.endswith("/paper/qa/search")
+        assert json.loads(request.content) == {
+            "use_topic": True,
+            "topic_high": '[["altermagnetism","交错磁性"]]',
+            "size": 20,
+            "offset": 0,
+        }
+        return httpx.Response(
+            200,
+            json={
+                "code": 200,
+                "success": True,
+                "data": [{"id": "paper-1", "title": "Altermagnetism"}],
+                "total": 1,
+                "log_id": "official-log",
+            },
+        )
+
+    client = AMinerClient(
+        {"user_id": "u", "api_key": "test-key-with-at-least-32-characters"},
+        transport=httpx.MockTransport(handler),
+    )
+    found = await client.request(
+        "question_search",
+        {
+            "use_topic": True,
+            "topic_high": '[["altermagnetism","交错磁性"]]',
+            "size": 20,
+            "offset": 0,
+        },
+    )
+    assert found["data"][0]["id"] == "paper-1"
+    assert found["total"] == 1 and found["log_id"] == "official-log"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["search", "question_search", "title_search", "info", "detail", "references"])
 async def test_success_with_null_data_is_an_empty_result(endpoint):
     """真实供应商的成功空响应不能误触发故障降级。"""
     client = AMinerClient(
@@ -235,6 +281,10 @@ async def test_registered_tool_receives_runtime_without_exposing_identity(monkey
     assert response["messages"][-1].status == "success"
     properties = academic.academic_search.tool_call_schema.model_json_schema()["properties"]
     assert not {"uid", "run_id", "worker_id", "api_key", "runtime"} & properties.keys()
+    assert properties["mode"]["default"] == "precision"
+    assert {"required_term_groups", "boost_terms", "years", "sci_only", "author_terms", "org_terms", "venue_ids"} <= (
+        properties.keys()
+    )
 
 
 def test_smart_and_subagent_prompt_route_academic_questions_conditionally():
@@ -314,6 +364,66 @@ async def test_joint_search_deduplicates_queries_and_papers_and_preserves_each_a
 
 
 @pytest.mark.asyncio
+async def test_precision_search_maps_official_quality_controls_and_completes_metadata():
+    """precision 将联合约束、排序和范围条件交给官方问答搜索，而非拼接模糊关键词。"""
+    service = AcademicRetrievalService(SimpleNamespace())
+    service._request = AsyncMock(
+        side_effect=[
+            {
+                "status": "ok",
+                "total": 2,
+                "data": [
+                    {"id": "p1", "title": "Magneto-ionic control of exchange bias"},
+                    {"id": "p2", "title": "Proton gating in van der Waals magnets"},
+                ],
+            },
+            {
+                "status": "ok",
+                "data": [
+                    {"id": "p1", "doi": "10.1/p1", "abstract_slice": "exchange-bias evidence"},
+                    {"id": "p2", "abstract_slice": "proton gating evidence"},
+                ],
+            },
+        ]
+    )
+
+    result = await service.search(
+        "How does protonation control exchange bias?",
+        mode="precision",
+        required_term_groups=[["protonation", "proton gating"], ["exchange bias"]],
+        boost_terms=["magneto-ionic"],
+        years=[2024, 2023, 2024],
+        sci_only=True,
+        citation_boost=True,
+        author_terms=["Zhang S", "张三"],
+        org_terms=["Tsinghua University"],
+        venue_ids=["venue-1"],
+        order="recent",
+        limit=10,
+    )
+
+    endpoint, payload = service._request.call_args_list[0].args
+    assert endpoint == "question_search"
+    assert payload == {
+        "use_topic": True,
+        "size": 20,
+        "offset": 0,
+        "topic_high": '[["protonation","proton gating"],["exchange bias"]]',
+        "topic_middle": '[["magneto-ionic"]]',
+        "year": [2023, 2024],
+        "sci_flag": True,
+        "n_citation_flag": True,
+        "force_year_sort": True,
+        "author_terms": ["Zhang S", "张三"],
+        "org_terms": ["Tsinghua University"],
+        "venue_ids": ["venue-1"],
+    }
+    assert [paper["id"] for paper in result["results"]] == ["p1", "p2"]
+    assert result["query_coverage"][0]["mode"] == "precision"
+    assert result["results"][0]["doi"] == "10.1/p1"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("status,expected_calls", [("limit_reached", 3), ("auth_failed", 2)])
 async def test_joint_search_stops_on_failure_and_reports_unsearched_queries(status, expected_calls):
     """中途失败保留首个查询的证据，明确哪些角度没有执行。"""
@@ -358,7 +468,7 @@ async def test_empty_search_does_not_claim_the_technology_does_not_exist():
     result = await service.search("rare topic")
     assert result["status"] == "ok" and result["results"] == []
     assert "不代表技术不存在" in result["retrieval_guidance"]
-    assert service._request.await_count == 2
+    assert service._request.await_count == 3
 
 
 @pytest.mark.asyncio
@@ -367,17 +477,20 @@ async def test_empty_topic_uses_concise_free_title_fallback_before_reporting_no_
     service._request = AsyncMock(
         side_effect=[
             {"status": "ok", "data": []},
+            {"status": "ok", "data": []},
             {"status": "ok", "data": [{"id": "p", "title": "Altermagnetism"}]},
             {"status": "ok", "data": [{"id": "p", "abstract_slice": "spin splitting"}]},
         ]
     )
     result = await service.search("altermagnetism")
     assert result["results"][0]["id"] == "p"
-    assert service._request.call_args_list[1].args == (
+    assert service._request.call_args_list[1].args[0] == "question_search"
+    assert service._request.call_args_list[2].args == (
         "title_search",
         {"page": 1, "size": 10, "title": "altermagnetism"},
     )
-    assert result["query_coverage"][1]["mode"] == "title_fallback"
+    assert result["query_coverage"][1]["mode"] == "precision_fallback"
+    assert result["query_coverage"][2]["mode"] == "title_fallback"
 
 
 @pytest.mark.asyncio

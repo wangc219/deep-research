@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-16",
+  "scope": "本地深研对话入口简化及按栏目目标自主研究",
+  "checks": {
+    "frontend_unit": {
+      "passed": 552,
+      "failed": 0
+    },
+    "backend_related_unit": {
+      "passed": 26,
+      "failed": 0
+    },
+    "native_deep_http_visibility": {
+      "passed": 1,
+      "note": "原测试 http://web 在本地无 80 端口服务；临时副本使用 http://127.0.0.1:5050 验证，未修改原测试。"
+    },
+    "frontend_lint": "passed",
+    "frontend_build": "passed (existing chunk-size warning)",
+    "backend_changed_python_ruff": "passed",
+    "api_readiness": "ready"
+  },
+  "browser_checks": [
+    "输入问题后创建会话并自动发送一次原始问题",
+    "关联项目及研究任务后不覆盖已输入的问题",
+    "390px 移动布局无水平溢出",
+    "旧会话恢复并成功追问"
+  ],
+  "live_model_check": {
+    "session_id": "thinking-bd83bdf5-8850-4fad-a90e-f13eece16a59",
+    "status": "completed",
+    "before": {
+      "auto_preloaded_skills": 4,
+      "domain_context_characters": 2039
+    },
+    "after": {
+      "auto_preloaded_skills": 0,
+      "domain_context_characters": 1675,
+      "autonomous_goal_present": true
+    },
+    "result": "一句话的追问得到单句回答，没有工具调用或完整报告"
+  },
+  "screenshots": [
+    "desktop.jpg",
+    "mobile.jpg",
+    "followup.jpg"
+  ],
+  "deployment": "本地 API 已重载，未发布远程环境；已有角色配置未覆盖，当前运行以新的栏目目标约束调整旧方法要求。"
+}

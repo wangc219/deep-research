@@ -1,0 +1,7 @@
+{
+  "exact_aminer_source": "accepted_or_not_checked",
+  "rewritten_url": "correction_requested",
+  "mcp_source_with_aminer_results": "correction_requested",
+  "subagent_source_with_aminer_results": "correction_requested",
+  "mcp_only_without_aminer_results": "accepted_or_not_checked"
+}

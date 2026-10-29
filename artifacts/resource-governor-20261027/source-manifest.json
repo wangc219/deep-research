@@ -1,0 +1,13 @@
+{
+  "backend/package/platform_core/services/resource_budget.py": "d9a4fed233f3285b7da0dd2ee01be8276d749beb89885b684464e8acdfd3115c",
+  "backend/server/worker_health.py": "d85d6d6eb3822238c0292a910abc6f8b11fa7864fbdecf216f2956d395de3ca1",
+  "backend/package/platform_core/services/task_service.py": "584da9e70b98f3b1c36e69419cce386e42de44181778e20c1f5ce27a449913e4",
+  "backend/package/platform_core/services/run_worker.py": "4644db1b87388f954e3afe8067445f8c7de550e23098c63c4c023fab15a769a8",
+  "backend/package/platform_core/services/wxchannels_service.py": "a8fa7ba7913e05e543cc44d382cf9eba01cf081e01ed5e7ddaeb31268d665e9b",
+  "backend/package/platform_core/knowledge/video_transcriber/core/sensevoice_transcriber.py": "d08b66a8bd36394883c3a56f08a79ef74514509a3846e3c144bb8520d09fe0a5",
+  "backend/test/unit/services/test_resource_budget.py": "c625c8324da02415ac480d28632a3021efed5a0cccc88c595541fdfbde73b01e",
+  "backend/test/unit/server/test_worker_health.py": "b3f0269d8d7dcfa56830289027fa36f4d9e1242eb4ce63b234b40afef0fdd723",
+  "compose.prod.yaml": "62e70f7145273c5f39c18ac19a7ad38059b5add72bf150f5780f2a69b3a5be4e",
+  "compose.cloud.yaml": "950463a2f3756d63f88ae7d8f78ac4bcda03f4925b45317e37a080d0e1363b86",
+  "configs/cloud/4c16g.env.example": "13c3e9b514c6cc97367788a8b67f4d3c89461c2f50c6b9cfd784ad8ddcbd1a1d"
+}

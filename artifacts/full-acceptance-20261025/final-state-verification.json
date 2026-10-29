@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-10-25T11:22:53.254747+00:00",
+  "original_data_counts": {
+    "users": 6,
+    "conversations": 82,
+    "messages": 2142,
+    "agent_runs": 77,
+    "tasks": 10,
+    "knowledge_bases": 1,
+    "knowledge_files": 6,
+    "knowledge_chunks": 91
+  },
+  "matches_precutover_backup": true,
+  "active_browser_research_acceptance_identities": 0,
+  "active_work": {
+    "tasks": 0,
+    "research": 0,
+    "agents": 0
+  },
+  "maintenance": false,
+  "temporary_staging_removed": true,
+  "local_browser_private_state_removed": true,
+  "local_source_manifest_matches": true,
+  "all_15_services_running": true,
+  "restart_scope": "all application and storage containers; operating system not rebooted",
+  "wechat_account_after_restart": "1 available",
+  "wechat_retrieval_after_restart_chunks": 3,
+  "document_research_after_restart": {
+    "recorded_completed_tasks": [
+      "6af9c02316d54a5c96a66097b85c0791",
+      "a12a5e77f8a04a819a9b1c2babe6a206",
+      "55f790d1d8fa4784a817433a4e150e9a"
+    ],
+    "configuration_file_mode": "0600",
+    "model_credential_present": true
+  }
+}

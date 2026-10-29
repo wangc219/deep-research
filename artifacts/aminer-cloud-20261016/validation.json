@@ -1,0 +1,121 @@
+{
+  "deployed_at": "2026-10-16T17:26:24+08:00",
+  "deploy_id": "aminer-retrieval-20261016T172341",
+  "server": "49.232.128.56",
+  "site": "https://www.deepquest.space",
+  "remote_root": "/opt/deep-research",
+  "status": "deployed_and_verified",
+  "files": [
+    "backend/package/platform_core/services/aminer_client.py",
+    "backend/package/platform_core/services/academic_retrieval_service.py",
+    "backend/package/platform_core/agents/toolkits/buildin/academic.py",
+    "backend/package/platform_core/agents/middlewares/search_resilience.py",
+    "backend/package/platform_core/agents/middlewares/summary.py",
+    "backend/package/platform_core/services/equipment_deep_integration_service.py",
+    "backend/package/platform_core/models/chat.py",
+    "backend/test/unit/services/test_aminer.py",
+    "backend/test/unit/agents/test_search_resilience.py",
+    "backend/test/unit/agents/test_chat_compat_transport.py",
+    "backend/test/integration/services/test_academic_retrieval.py",
+    "artifacts/aminer-retrieval-20261016/validation.json",
+    "artifacts/aminer-retrieval-20261016/live-validation.json"
+  ],
+  "source_manifest": "13/13 matched",
+  "runtime_backend_manifest": "7/7 matched",
+  "backup": "/var/backups/deepquest/aminer-retrieval-20261016T172341",
+  "previous_image_tag": "deepquest-api:before-aminer-retrieval-20261016T172341",
+  "new_image": "sha256:9e4abfce0f525761efb9d1bae0e8059ac77dc06de197fc9e160cfb9988b5acc8",
+  "services": {
+    "api": "running healthy",
+    "worker": "running healthy",
+    "equipment-worker": "running",
+    "equipment-query-worker": "running"
+  },
+  "cloud_regression": {
+    "passed": 198,
+    "skipped_opt_in_model_cases": 10,
+    "production_image_tested_before_cutover": true,
+    "postgres": "真实隔离 Schema"
+  },
+  "runtime_verification": {
+    "source_hashes_match": true,
+    "source_hashes": {
+      "/app/package/platform_core/services/aminer_client.py": "62c4348bee23e9f85229164c328be7e3abc231eb64c533699851ca04861d075f",
+      "/app/package/platform_core/services/academic_retrieval_service.py": "4b67bfd5f2d91cc2d1d73b09e2fbae0f9b0e7646b9e9bab86d119e2b141d670b",
+      "/app/package/platform_core/agents/toolkits/buildin/academic.py": "a0feb3607fecbdaaf1ff02ca6b6fd6b3f3e179f46aa921112fb57139f6d3a913",
+      "/app/package/platform_core/agents/middlewares/search_resilience.py": "c8c63107e77357ac75e84f2f0ba063346b183b2214cf65ec08987492dfa85c4b",
+      "/app/package/platform_core/agents/middlewares/summary.py": "6bde041de1c93235a128dbe028237c7ff7a7895f3f1bc5356057188f713479d5",
+      "/app/package/platform_core/services/equipment_deep_integration_service.py": "f333b9a20d3d353a6f11bc16d9685e6ec82b56c273c15a605714fe11bf62bbd7",
+      "/app/package/platform_core/models/chat.py": "9d5a1165f4c920bbeda7044d05ae1f8bc0173c5b15995a80dcb5c5063279beed"
+    },
+    "related_queries_available": true,
+    "related_queries_limit": 2,
+    "technical_retrieval_prompt": true,
+    "aminer_enabled": true,
+    "aminer_credentials_present": true,
+    "connection_test": {
+      "status": "ok",
+      "message": "连接正常，免费标题搜索鉴权成功；付费接口权限以实际调用结果为准"
+    }
+  },
+  "public_readiness": {
+    "status": "ready",
+    "degraded": false,
+    "checks": {
+      "startup": {
+        "status": "ok"
+      },
+      "postgres": {
+        "status": "ok"
+      },
+      "redis": {
+        "status": "ok"
+      },
+      "worker": {
+        "status": "ok"
+      }
+    },
+    "components": {
+      "builtin_mcp_servers": {
+        "status": "ok",
+        "required": false
+      },
+      "builtin_skills": {
+        "status": "ok",
+        "required": true
+      },
+      "default_agents": {
+        "status": "ok",
+        "required": true
+      },
+      "knowledge_base": {
+        "status": "ok",
+        "required": true
+      },
+      "model_cache": {
+        "status": "ok",
+        "required": true
+      },
+      "model_providers": {
+        "status": "ok",
+        "required": true
+      },
+      "sandbox_provider": {
+        "status": "ok",
+        "required": true
+      },
+      "security_secrets": {
+        "status": "ok",
+        "required": true
+      }
+    },
+    "version": "0.7.3"
+  },
+  "public_home_http_status": 200,
+  "active_agent_runs_before_cutover": 0,
+  "active_tasks_before_cutover": 0,
+  "deployment_credentials_changed": false,
+  "aminer_configuration_changed": false,
+  "probe_scope": "云端真实 AMiner 免费标题搜索鉴权；本次未额外调用付费接口或重跑真实模型测试",
+  "deploy_log_sha256": "e7cf3074e25a33f45059aa86a1816f26f9d1c7a273135fb92fd59d2f428dfb88"
+}

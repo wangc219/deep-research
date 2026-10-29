@@ -54,6 +54,8 @@ SUBAGENT_SYSTEM_PROMPT = """## 子智能体
 - 新任务不填 thread_id；继续既有子线程时使用之前返回的 thread_id。
 - 同一 thread_id 不可并发写入；忙碌时返回 busy，不隐藏排队。
 - 父运行结束会取消仍活跃的子 Run，给出最终答复前应 await 所需结果或明确取消。
+- 需要用户澄清时必须先调用 ask_user_question，收到回答后再批量 subagent_start；同一轮不得一边提问一边启动。
+  若已有子 Run 活跃，先 await 或明确 cancel，避免提问把父 Run 中断后连带取消正在执行的检索。
 - 无需外部证据的简单问题直接处理；研究检索遵循主智能体的默认检索策略，单一事实检索也可委派 research-explorer。
 - 调用 research-explorer 时由你依据任务语义选择 research_budget_mode：聚焦、短时证据问题使用 standard；开放式、
   附件驱动、海量覆盖、需多轮发现—深挖或预计会超过普通检索轮次的独立分片使用 adaptive_long_running。不要按关键词
@@ -167,6 +169,11 @@ class PlatformSubAgentMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
             ] = "standard",
             thread_id: Annotated[str | None, ASYNC_THREAD_ID_ARG] = None,
         ) -> str | Command:
+            if "ask_user_question" in _current_tool_call_names(runtime):
+                return (
+                    "本轮包含 ask_user_question，已延后启动子智能体。请先让用户完成澄清，"
+                    "收到答案后再调用 subagent_start。"
+                )
             if subagent_slug not in self.subagents:
                 allowed = ", ".join(f"`{slug}`" for slug in self.subagents)
                 return f"无法调用子智能体 {subagent_slug}，可用子智能体只有：{allowed}"
@@ -382,6 +389,27 @@ class PlatformSubAgentMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
 class _ParentRuntime:
     uid: str
     created_by_run_id: str
+
+
+def _current_tool_call_names(runtime: ToolRuntime | Any) -> set[str]:
+    """读取当前 AIMessage 的同批工具名，阻止提问与子任务并发启动。"""
+
+    state = getattr(runtime, "state", None)
+    messages = state.get("messages") if isinstance(state, dict) else getattr(state, "messages", None)
+    if not isinstance(messages, list) or not messages:
+        return set()
+    message = messages[-1]
+    tool_calls = message.get("tool_calls") if isinstance(message, dict) else getattr(message, "tool_calls", None)
+    names = set()
+    for call in tool_calls if isinstance(tool_calls, list) else []:
+        if not isinstance(call, dict):
+            continue
+        name = call.get("name")
+        if not name and isinstance(call.get("function"), dict):
+            name = call["function"].get("name")
+        if isinstance(name, str) and name.strip():
+            names.add(name.strip())
+    return names
 
 
 def _json_tool_command(

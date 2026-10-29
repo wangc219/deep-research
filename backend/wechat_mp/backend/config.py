@@ -28,7 +28,9 @@ OUTPUT_DIR = DATA_DIR / "articles_full"
 CONFIG_FILE = DATA_DIR / "wechat_mp_config.json"
 ACCOUNTS_FILE = DATA_DIR / "accounts.json"
 PROXY_CONFIG_FILE = DATA_DIR / "proxy_config.json"
-ACCOUNT_POOL_FILE = DATA_DIR / "account_pool.json"
+ACCOUNT_POOL_FILE = Path(
+    os.environ.get("WECHAT_MP_ACCOUNT_POOL_FILE", str(DATA_DIR / "account_pool.json"))
+).resolve()
 APP_SETTINGS_FILE = DATA_DIR / "app_settings.json"
 DOWNLOAD_HISTORY_FILE = DATA_DIR / "download_history.json"
 

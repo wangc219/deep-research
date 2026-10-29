@@ -225,8 +225,9 @@ export function useAgentRunStream({
     if (ts.activeRunId !== expectedActiveRunId) {
       return false
     }
-    const isInterrupted =
-      status === RUN_INTERRUPTED_STATUS && hasPendingInterruptInThreads(touchedThreadIds, runId)
+    // interrupted 是权威终态；即使中间 interrupt 事件因断线未到达，
+    // 也要保留 Run 并立即从 checkpoint 回源，不能当作普通终态清空。
+    const isInterrupted = status === RUN_INTERRUPTED_STATUS
     touchedThreadIds.forEach((id) => streamSmoother?.flushThread(id))
     ts.isStreaming = false
     ts.activeRunSteerable = false
@@ -249,19 +250,24 @@ export function useAgentRunStream({
     ts.lastRetryableJobTry = null
     ts.replyLoadingVisible = false
     ts.pendingRequestId = null
-    fetchThreadMessages({ agentId: unref(currentAgentId), threadId, delay }).finally(() => {
-      const latest = getThreadState(threadId)
-      if (!latest?.activeRunId || latest.activeRunId === runId) {
-        resetOnGoingConv(threadId, { preserveRequestStreams: true })
-      }
-      fetchAgentState(unref(currentAgentId), threadId)
-      if (scroll) onScrollToBottom()
-      if (isInterrupted) {
-        notifyInterruptDetected(threadId, runId)
-      } else {
-        notifyTerminalDetected(threadId, runId, touchedThreadIds)
-      }
-    })
+    Promise.resolve()
+      .then(() => fetchThreadMessages({ agentId: unref(currentAgentId), threadId, delay }))
+      .catch((error) => {
+        console.warn('Failed to refresh messages after run terminal event:', threadId, error)
+      })
+      .finally(async () => {
+        const latest = getThreadState(threadId)
+        if (!latest?.activeRunId || latest.activeRunId === runId) {
+          resetOnGoingConv(threadId, { preserveRequestStreams: true })
+        }
+        await fetchAgentState(unref(currentAgentId), threadId)
+        if (scroll) onScrollToBottom()
+        if (isInterrupted) {
+          notifyInterruptDetected(threadId, runId)
+        } else {
+          notifyTerminalDetected(threadId, runId, touchedThreadIds)
+        }
+      })
     return true
   }
 

@@ -1,0 +1,40 @@
+[
+  {
+    "file": "rag_active-smart-aminer.json",
+    "name": "rag_active-smart-aminer",
+    "kind": "smart",
+    "variant": "aminer",
+    "run_id": "d173dc74-f03c-4e9f-8948-4253f52a3bd9",
+    "thread_id": "8d87f83a-73be-424e-8b49-e0c882558445",
+    "session_id": null,
+    "status": "completed",
+    "error": null,
+    "total_latency_ms": 11653,
+    "academic_tools": 3,
+    "web_tools": 0,
+    "ledger_requests": 3,
+    "estimated_aminer_cost_cents": 0,
+    "full_abstract_unique_count": 2,
+    "partial_abstract_unique_count": 2,
+    "empty_search_terms": 0
+  },
+  {
+    "file": "rag_active-deep-aminer.json",
+    "name": "rag_active-deep-aminer",
+    "kind": "deep",
+    "variant": "aminer",
+    "run_id": "2cf4918f-7496-4cf6-a354-960bac7f854a",
+    "thread_id": "equipment-deep-682b2972-b0f0-4488-a8e7-1d4816f28571",
+    "session_id": "thinking-39d1d0ea-3e55-4a32-9745-f6982a60fc35",
+    "status": "completed",
+    "error": null,
+    "total_latency_ms": 10762,
+    "academic_tools": 3,
+    "web_tools": 0,
+    "ledger_requests": 0,
+    "estimated_aminer_cost_cents": 0,
+    "full_abstract_unique_count": 2,
+    "partial_abstract_unique_count": 0,
+    "empty_search_terms": 0
+  }
+]

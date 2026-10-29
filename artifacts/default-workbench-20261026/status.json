@@ -1,0 +1,26 @@
+{
+  "code_edits_complete": true,
+  "scope": "研究任务、Query、深研隐藏项目绑定；智能对话默认个人工作台且保留新建；用户默认项目稳定复用，删除后列表自动补建",
+  "frontend_unit_passed": 591,
+  "backend_related_unit_passed": 73,
+  "postgres_http_default_flow_passed": 3,
+  "local_deployed": true,
+  "cloud_deployed": true,
+  "cloud_http_tests_passed": 3,
+  "cloud_runtime_source_verified": true,
+  "cloud_url": "https://www.deepquest.space/equipment/runs",
+  "cloud_release": "optimized-local-20261026-default-workbench",
+  "backend_chat_and_project_unit_passed": 45,
+  "cloud_ui_verified": [
+    "research_runs_no_project_picker",
+    "queries_no_project_picker",
+    "deep_thinking_no_project_picker",
+    "smart_chat_default_workbench_and_create_project"
+  ],
+  "screenshots": [
+    "cloud-runs.png",
+    "cloud-queries.png",
+    "cloud-deep.png",
+    "cloud-chat-projects.png"
+  ]
+}

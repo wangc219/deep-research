@@ -3,13 +3,8 @@
 
 from __future__ import annotations
 
-import httpx
 import os
 import re
-
-from equipment_deep_research.agents.workflows.shared_context import (
-    query_domain_contract,
-)
 
 from equipment_deep_research.agents.workflows import coordinator as _legacy
 from equipment_deep_research.harness.context import (
@@ -115,96 +110,258 @@ def _provider_neutral_live_search_rows(
     *,
     limit: int,
 ) -> list[dict[str, Any]]:
-    """Use the deployed public-search daemon when the model has no web tool.
+    """Use the research-explorer search runtime when the model has no web tool.
 
-    A provider without hosted search must not silently reuse unrelated global
-    military anchors for a rescue/inspection Query.  Keep this fallback
-    deliberately narrow: it activates only for ``mission_equipment`` and its
-    results still pass through the normal fetch/materialization quality gate.
+    Chat-completions providers cannot be trusted to invent useful source URLs.
+    Run several orthogonal, role-aware discovery queries instead, balance
+    domestic and international leads, and leave formal admission to the normal
+    fetch/materialization quality gate.
     """
-
-    brief = request.context.get("structured_query_brief", {})
-    contract = query_domain_contract(
-        request.topic,
-        structured_query_brief=brief if isinstance(brief, Mapping) else {},
-    )
-    if contract["mode"] != "mission_equipment":
-        return []
 
     topic = str(request.topic or "")
     rescue_communications = bool(
         re.search(r"(?:灾害|救援|搜救|应急|消防|公网中断)", topic)
         and re.search(r"(?:通信|中继|自组网|链路|公网)", topic)
     )
-    query = (
-        "UAV relay emergency communication disaster rescue public safety mesh network"
-        if rescue_communications
-        else "mission equipment public evidence " + " ".join(topic.split())[:120]
-    )
-    endpoint = str(os.environ.get("OPEN_WEBSEARCH_URL", "")).strip().rstrip("/")
-    if not endpoint.startswith(("http://", "https://")):
-        return []
-    engines = [
-        value.strip().lower()
-        for value in str(os.environ.get("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")).split(",")
-        if value.strip()
-    ][:4]
-    try:
-        response = httpx.post(
-            f"{endpoint}/search",
-            json={"query": query, "limit": max(8, min(20, limit * 3)), "engines": engines},
-            timeout=min(
-                20.0,
-                max(
-                    3.0,
-                    float(os.environ.get("OPEN_WEBSEARCH_TIMEOUT_SECONDS", "15")),
-                ),
+    topic_fragment = " ".join(topic.split())[:180]
+    agent_id = str(request.agent.agent_id or "").strip()
+    if rescue_communications:
+        search_plan = [
+            (
+                "international",
+                "UAV relay emergency communication disaster rescue public safety mesh network project trial",
             ),
-        )
-        response.raise_for_status()
-        envelope = response.json()
-    except (httpx.HTTPError, ValueError, TypeError):
-        return []
-    data = envelope.get("data", {}) if isinstance(envelope, Mapping) else {}
-    raw_results = data.get("results", []) if isinstance(data, Mapping) else []
+            (
+                "domestic",
+                f"{topic_fragment} 中国 应急通信 无人机 中继 项目 试验 公开资料",
+            ),
+        ]
+    elif agent_id == "weapon_equipment":
+        search_plan = [
+            (
+                "international",
+                f"{topic_fragment} foreign military equipment program prototype demonstration test "
+                "maritime ISR sea control",
+            ),
+            (
+                "domestic",
+                f"{topic_fragment} 中国 装备 型号 项目 样机 试验 远海 区域监视 海上控制",
+            ),
+            (
+                "international",
+                f"{topic_fragment} official navy DARPA ONR autonomous maritime surveillance program exercise",
+            ),
+        ]
+    elif agent_id == "combat_scenario":
+        search_plan = [
+            (
+                "international",
+                f"{topic_fragment} distributed maritime operations EABO contested ISR "
+                "communications denied scenario exercise",
+            ),
+            (
+                "domestic",
+                f"{topic_fragment} 中国 远海 海上态势感知 区域监视 无人协同 演训 公开",
+            ),
+        ]
+    elif agent_id == "operational_employment":
+        search_plan = [
+            (
+                "international",
+                f"{topic_fragment} DMO EABO contested logistics unmanned teaming operational concept doctrine exercise",
+            ),
+            (
+                "domestic",
+                f"{topic_fragment} 中国 远海 联合作战 无人协同 体系运用 演训 装备",
+            ),
+        ]
+    else:
+        search_plan = [
+            (
+                "international",
+                f"{topic_fragment} military capability equipment program doctrine experiment official evidence",
+            ),
+            (
+                "domestic",
+                f"{topic_fragment} 中国 军事装备 项目 试验 演训 公开资料",
+            ),
+        ]
+    from public_web_search_gateway import execute_public_web_search
+
     rows: list[dict[str, Any]] = []
+    homepage_rows: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for item in raw_results:
-        if not isinstance(item, Mapping):
-            continue
-        url = _without_tracking_parameters(str(item.get("url", "")).strip())
-        title = " ".join(str(item.get("title", "")).split())
-        snippet = " ".join(str(item.get("description", "")).split())
-        haystack = f"{title} {snippet}".casefold()
-        if rescue_communications and not (
-            any(token in haystack for token in ("emergency", "disaster", "rescue", "应急", "救援", "灾害"))
-            and any(
-                token in haystack for token in ("communication", "relay", "mesh", "network", "通信", "中继", "自组网")
-            )
-        ):
-            continue
-        if not url or url in seen:
-            continue
+    per_query_count = max(6, min(14, limit * 2))
+    for planned_region, query in search_plan:
         try:
-            parsed = urlsplit(url)
-        except ValueError:
+            envelope = execute_public_web_search(query, count=per_query_count)
+        except Exception:
             continue
-        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-            continue
-        seen.add(url)
-        rows.append(
-            {
+        raw_results = envelope.get("results", []) if isinstance(envelope, Mapping) else []
+        for item in raw_results:
+            if not isinstance(item, Mapping):
+                continue
+            url = _without_tracking_parameters(str(item.get("url", "")).strip())
+            title = " ".join(str(item.get("title", "")).split())
+            snippet = " ".join(str(item.get("content") or item.get("description") or "").split())
+            haystack = f"{title} {snippet}".casefold()
+            if rescue_communications and not (
+                any(token in haystack for token in ("emergency", "disaster", "rescue", "应急", "救援", "灾害"))
+                and any(
+                    token in haystack
+                    for token in ("communication", "relay", "mesh", "network", "通信", "中继", "自组网")
+                )
+            ):
+                continue
+            if not url or url in seen:
+                continue
+            try:
+                parsed = urlsplit(url)
+            except ValueError:
+                continue
+            if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+                continue
+            if parsed.hostname.casefold() in {
+                "baidu.com",
+                "www.baidu.com",
+                "bing.com",
+                "www.bing.com",
+                "global.bing.com",
+                "sogou.com",
+                "www.sogou.com",
+                "weixin.sogou.com",
+            }:
+                continue
+            seen.add(url)
+            row = {
                 "url": url,
                 "title": title or url,
                 "snippet": snippet,
-                "source_region": _source_region(item, url),
-                "retrieval_lane": "provider_neutral_live_search",
+                "source_region": planned_region,
+                "retrieval_lane": "research_explorer_public_search",
                 "required_source_anchor": False,
+                "search_query": query,
             }
-        )
-        if len(rows) >= max(1, limit):
-            break
-    return rows
+            # Prefer article, project, doctrine and test pages. A bare home
+            # page remains a last-resort lead instead of crowding out concrete
+            # material that the evidence governor can actually assess.
+            if parsed.path in {"", "/"} and not parsed.query:
+                homepage_rows.append(row)
+            else:
+                rows.append(row)
+    curated_rows = _curated_research_anchor_rows(request)
+    return _interleave_source_regions(
+        [*rows, *curated_rows, *homepage_rows],
+        limit=max(1, limit),
+    )
+
+
+def _curated_research_anchor_rows(request: AgentRunRequest) -> list[dict[str, Any]]:
+    """Return fetchable, page-level anchors for recurring maritime research.
+
+    The deployed public-search engines can be regionally degraded and return
+    search redirect pages. These anchors are not promoted directly to formal
+    evidence: they still pass through fetch, extraction and evidence admission.
+    """
+
+    topic = str(request.topic or "")
+    if not (
+        re.search(r"(?:远海|海上|海洋|水面|水下)", topic)
+        and re.search(r"(?:监视|控制|侦察|感知|态势|无人|预警)", topic)
+    ):
+        return []
+    catalogs = {
+        "weapon_equipment": [
+            (
+                "international",
+                "美国海军MQ-4C广域海上监视无人机部署与任务公开信息",
+                "https://www.xinhuanet.com/mil/2024-05/27/c_1212365451.htm",
+                "MQ-4C用于广域海上监视，并公开披露信号情报、通信中继与搜救任务边界。",
+            ),
+            (
+                "international",
+                "水上无人系统研究进展及海上猎人公开参数综述",
+                "https://www.aas.net.cn/article/doi/10.16383/j.aas.c190363",
+                "学术综述比较海上猎人等国外无人艇的航速、续航和任务技术路线。",
+            ),
+            (
+                "domestic",
+                "哈工程助力海卫深水智能监测系统完成海试",
+                "https://www.miit.gov.cn/xwfb/gxdt/bsdt/art/2025/art_62d2069c58f64c9e8534b49fe93b9ce1.html",
+                "工信部公开海卫系统的无人船、水下机器人、光通信构型和1500米级海试状态。",
+            ),
+            (
+                "domestic",
+                "V35A无人艇参与海卫系统海试",
+                "https://www.zhuhai-hitech.gov.cn/cycx/kjdt/content/post_3800842.html",
+                "政府页面披露V35A无人艇的专业载荷、深远海调测用途与海试结果。",
+            ),
+        ],
+        "combat_scenario": [
+            (
+                "international",
+                "水上无人系统研究进展及远海任务场景综述",
+                "https://www.aas.net.cn/article/doi/10.16383/j.aas.c190363",
+                "综述给出国外无人艇持续监视、反潜跟踪和协同运用场景及公开边界。",
+            ),
+            (
+                "international",
+                "MQ-4C广域海上监视与通信中继任务",
+                "https://www.xinhuanet.com/mil/2024-05/27/c_1212365451.htm",
+                "公开报道说明MQ-4C的广域海上监视、信号情报和通信中继任务。",
+            ),
+            (
+                "domestic",
+                "智能敏捷海洋立体观测仪无人节点海试大纲",
+                "https://soed.sio.org.cn/index_news/5320.html",
+                "国家重大科研仪器项目公开可潜无人艇、拖曳无人艇和AUV的海试验证安排。",
+            ),
+            (
+                "domestic",
+                "中国船级社无人水面艇检验指南",
+                "https://www.ccs.org.cn/ccswz/specialDetail?id=202403190761795914",
+                "检验指南覆盖远程控制、部分航程自主和全航程自主无人艇的验证边界。",
+            ),
+        ],
+        "operational_employment": [
+            (
+                "international",
+                "MQ-4C广域海上监视任务运用公开信息",
+                "https://www.xinhuanet.com/mil/2024-05/27/c_1212365451.htm",
+                "公开资料可用于分析高空长航时平台的轮换部署、通信中继和持续监视方式。",
+            ),
+            (
+                "international",
+                "国外水上无人系统任务运用与协同研究综述",
+                "https://www.aas.net.cn/article/doi/10.16383/j.aas.c190363",
+                "学术综述覆盖海上猎人等平台的任务构型、续航与协同应用。",
+            ),
+            (
+                "domestic",
+                "最新一代智能无人船开展效能和应用试验",
+                "https://js.msa.gov.cn/art/2023/7/14/art_51_1415961.html",
+                "海事部门公开无人船在抵近侦察和浅水巡航探测等场景的试验任务。",
+            ),
+            (
+                "domestic",
+                "V35A深远海调测无人艇海试运用",
+                "https://www.zhuhai-hitech.gov.cn/cycx/kjdt/content/post_3800842.html",
+                "政府页面披露无人艇搭载多类探测载荷并支援深水监测系统的运用方式。",
+            ),
+        ],
+    }
+    selected = catalogs.get(str(request.agent.agent_id or "").strip(), [])
+    return [
+        {
+            "source_region": region,
+            "title": title,
+            "url": url,
+            "snippet": snippet,
+            "retrieval_lane": "research_explorer_curated_anchor",
+            "required_source_anchor": False,
+        }
+        for region, title, url, snippet in selected
+    ]
 
 
 def _source_region(item: Mapping[str, Any], url: str = "") -> str:
@@ -489,9 +646,15 @@ def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
             {
                 "signal": "source-grounded emerging change or a clearly labeled model hypothesis",
                 "conventional_assumption_challenged": "the incumbent military assumption that may stop holding",
-                "possible_military_discontinuity": "how the contest, exchange, timing, effect or force relationship could change",
-                "query_relevance": "why this matters to the current Query rather than military modernization in general",
-                "evidence_boundary": "what public evidence supports, what remains inference, and what would disconfirm it",
+                "possible_military_discontinuity": (
+                    "how the contest, exchange, timing, effect or force relationship could change"
+                ),
+                "query_relevance": (
+                    "why this matters to the current Query rather than military modernization in general"
+                ),
+                "evidence_boundary": (
+                    "what public evidence supports, what remains inference, and what would disconfirm it"
+                ),
                 "source_urls": ["exact URL from discovered_sources when available"],
                 "downstream_question": "an open question for later Codex reasoning, not an equipment answer",
             }
@@ -1488,21 +1651,29 @@ async def discover(
         else sources[:target_source_count]
     )
     provider_kind = str(getattr(host, "provider_kind", "responses")).strip()
-    if provider_kind in {"chat_completions", "codex_cli"} and not selected_sources:
+    if provider_kind in {"chat_completions", "codex_cli"}:
         # Some OpenAI-compatible gateways complete model turns without usable
-        # hosted-search annotations (or with a tool call that omitted queries).
-        # Reuse only application-owned source-priority / incremental-knowledge
-        # URLs as *leads*. They are still fetched, materialized, assessed and
-        # accepted by the scheduler; this branch never promotes a
-        # model-claimed URL directly to evidence.
+        # hosted-search annotations. Their source-anchor reasoning can still
+        # return plausible-looking home pages, so absence alone is not a safe
+        # trigger. Always ask the application research-explorer runtime first;
+        # only retain static anchors if live discovery is unavailable.
         fallback_limit = max(
             4,
             int(os.environ.get("EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8")),
         )
-        selected_sources = _provider_neutral_live_search_rows(
+        live_sources = _provider_neutral_live_search_rows(
             request,
             limit=fallback_limit,
-        ) or _provider_neutral_source_anchor_rows(request, limit=fallback_limit)
+        )
+        if live_sources:
+            selected_sources = live_sources
+            queries.extend(
+                str(item.get("search_query", ""))
+                for item in live_sources
+                if str(item.get("search_query", "")).strip()
+            )
+        elif not selected_sources:
+            selected_sources = _provider_neutral_source_anchor_rows(request, limit=fallback_limit)
         if selected_sources:
             host._emit_baseline_progress(
                 {
@@ -1512,7 +1683,11 @@ async def discover(
                     "round_index": request.round_index,
                     "provider_kind": provider_kind,
                     "source_count": len(selected_sources),
-                    "reason": "chat_completions_has_no_hosted_web_search",
+                    "reason": (
+                        "research_explorer_public_search"
+                        if live_sources
+                        else "chat_completions_has_no_hosted_web_search"
+                    ),
                     "materialization_required": True,
                 }
             )

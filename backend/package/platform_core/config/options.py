@@ -16,13 +16,30 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from platform_core.storage.postgres.models_business import ConfigOption
-from platform_core.storage.redis import get_async_redis_client
+from platform_core.storage.redis import get_async_redis_client, sync_redis_client
 from platform_core.utils.logging_config import logger
 
 OPTION_CACHE_PREFIX = "deep-research:config-option:"
 OPTION_CACHE_VERSION_PREFIX = "deep-research:config-option-version:"
 OPTION_CACHE_TTL_SECONDS = 300
 SYSTEM_OPTIONS_MIGRATION_VERSION_PARAM = "migration_version"
+WEB_SEARCH_RUNTIME_OPTIONS_KEY = "deep-research:web-search:runtime-options:v1"
+SEARXNG_ENGINE_CATALOG = (
+    "brave",
+    "brave.news",
+    "baidu",
+    "sogou",
+    "sogou wechat",
+    "arxiv",
+    "semantic scholar",
+    "openairepublications",
+    "pubmed",
+    "europepmc",
+    "reuters",
+    "github",
+    "wikipedia",
+    "wikidata",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -266,6 +283,73 @@ aminer_api_opts = Option(
 )
 
 
+web_search_opts = Option(
+    key="web_search_opts",
+    name="融合网页检索",
+    description="配置 Open WebSearch 与内部 SearXNG 的自适应融合策略。",
+    params={
+        "fields": [
+            {"key": "adaptive_fusion_enabled", "label": "启用自适应融合", "type": "boolean", "default": True},
+            {"key": "searxng_enabled", "label": "启用 SearXNG", "type": "boolean", "default": True},
+            {
+                "key": "general_engines",
+                "label": "通用引擎",
+                "type": "list[str]",
+                "default": ["sogou wechat"],
+                "options": list(SEARXNG_ENGINE_CATALOG),
+            },
+            {
+                "key": "chinese_engines",
+                "label": "中文引擎",
+                "type": "list[str]",
+                "default": ["sogou wechat"],
+                "options": list(SEARXNG_ENGINE_CATALOG),
+            },
+            {
+                "key": "academic_engines",
+                "label": "学术引擎",
+                "type": "list[str]",
+                "default": ["arxiv", "pubmed"],
+                "options": list(SEARXNG_ENGINE_CATALOG),
+            },
+            {
+                "key": "news_engines",
+                "label": "新闻引擎",
+                "type": "list[str]",
+                "default": [],
+                "options": list(SEARXNG_ENGINE_CATALOG),
+            },
+            {
+                "key": "official_engines",
+                "label": "官方/定向引擎",
+                "type": "list[str]",
+                "default": [],
+                "options": list(SEARXNG_ENGINE_CATALOG),
+            },
+            *[
+                {
+                    "key": key,
+                    "label": label,
+                    "type": "integer",
+                    "default": default,
+                    "minimum": minimum,
+                    "maximum": maximum,
+                }
+                for key, label, default, minimum, maximum in (
+                    ("min_relevant_results", "最少相关结果", 6, 1, 20),
+                    ("min_distinct_domains", "最少独立域名", 4, 1, 10),
+                    ("max_filtered_ratio_percent", "最大过滤比例（%）", 60, 0, 100),
+                    ("total_timeout_seconds", "总截止时间（秒）", 10, 5, 11),
+                    ("searxng_timeout_seconds", "SearXNG 超时（秒）", 8, 3, 10),
+                    ("hedge_delay_seconds", "普通查询补查延迟（秒）", 3, 1, 5),
+                    ("rrf_k", "RRF k", 60, 10, 100),
+                )
+            ],
+        ]
+    },
+)
+
+
 OPTION_DEFINITIONS = {
     option.key: option
     for option in (
@@ -275,6 +359,7 @@ OPTION_DEFINITIONS = {
         paddleocr_api_opts,
         remote_skill_source_policy,
         aminer_api_opts,
+        web_search_opts,
         system_options,
     )
 }
@@ -396,10 +481,68 @@ async def update_option_value(
     if key == aminer_api_opts.key and updated.get("enabled"):
         if not updated.get("user_id") or not updated.get("api_key"):
             raise ValueError("启用 AMiner 前请填写用户 ID 和 API Key")
+    if key == web_search_opts.key:
+        updated = _validate_web_search_option_value(updated)
     record.value = updated
     record.updated_by = updated_by
     await db.flush()
     return record
+
+
+def _validate_web_search_option_value(value: dict[str, Any]) -> dict[str, Any]:
+    """校验并规范化管理员保存的 SearXNG 引擎与超时策略。"""
+    updated = dict(value)
+    engine_fields = {
+        "general_engines",
+        "chinese_engines",
+        "academic_engines",
+        "news_engines",
+        "official_engines",
+    }
+    allowed = set(SEARXNG_ENGINE_CATALOG)
+    for field_key in engine_fields:
+        if field_key not in updated:
+            continue
+        engines = list(dict.fromkeys(str(item).strip().casefold() for item in updated[field_key] if str(item).strip()))
+        unknown = set(engines) - allowed
+        if unknown:
+            raise ValueError(f"不支持的 SearXNG 引擎: {', '.join(sorted(unknown))}")
+        updated[field_key] = engines
+
+    resolved = web_search_opts.resolve(updated)
+    if not resolved["general_engines"]:
+        raise ValueError("通用引擎不能为空")
+    if resolved["searxng_timeout_seconds"] > resolved["total_timeout_seconds"]:
+        raise ValueError("SearXNG 超时不能超过检索总截止时间")
+    return updated
+
+
+async def publish_web_search_runtime_options(stored: dict[str, Any] | None = None) -> dict[str, Any]:
+    """提交后发布可重建的运行时快照，供同步工具跨 worker 热读取。"""
+    if stored is None:
+        resolved = await web_search_opts.get()
+    else:
+        resolved = web_search_opts.resolve(stored)
+    try:
+        redis = await get_async_redis_client()
+        await redis.set(WEB_SEARCH_RUNTIME_OPTIONS_KEY, json.dumps(resolved, ensure_ascii=False, sort_keys=True))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Failed to publish web search runtime options: {exc}")
+    return resolved
+
+
+def load_web_search_runtime_options() -> dict[str, Any]:
+    """同步检索工具读取运行时快照；缺失时安全回退到代码默认值。"""
+    try:
+        with sync_redis_client(ping=False) as redis:
+            raw = redis.get(WEB_SEARCH_RUNTIME_OPTIONS_KEY)
+        if raw:
+            value = json.loads(raw)
+            if isinstance(value, dict):
+                return web_search_opts.resolve(value)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Failed to load web search runtime options: {exc}")
+    return web_search_opts.resolve({})
 
 
 async def invalidate_option_cache(key: str) -> None:

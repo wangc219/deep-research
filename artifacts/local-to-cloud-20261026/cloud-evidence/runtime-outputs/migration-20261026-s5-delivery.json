@@ -1,0 +1,102 @@
+[
+  {
+    "run_id": "run-63cb44f5-53f4-4a04-a52f-6cfc17abd429",
+    "versions": 6,
+    "formal_cards": 6,
+    "s5_selected": 6,
+    "s5_to_formal_identity_and_scores": "passed",
+    "identities": [
+      {
+        "capability_id": "cap-new-001",
+        "hypothesis_id": "hypothesis-e8ccf2e7cfebb8ac",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-002",
+        "hypothesis_id": "hypothesis-8205836049043906",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-003",
+        "hypothesis_id": "hypothesis-877123ea809ba7bd",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-004",
+        "hypothesis_id": "hypothesis-382281829e6303a3",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-005",
+        "hypothesis_id": "hypothesis-ebf82d0bc1feefab",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-006",
+        "hypothesis_id": "hypothesis-13c9a662d77bda79",
+        "version_no": 1,
+        "has_s5_scores": true
+      }
+    ],
+    "stages": [
+      "stage-L1",
+      "stage-L2",
+      "stage-L3"
+    ]
+  },
+  {
+    "run_id": "run-ed464daf-f4af-4e2e-b008-bc0b9bbfeea8",
+    "versions": 6,
+    "formal_cards": 6,
+    "s5_selected": 6,
+    "s5_to_formal_identity_and_scores": "passed",
+    "identities": [
+      {
+        "capability_id": "cap-new-001",
+        "hypothesis_id": "hypothesis-aaf334e35b654373",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-002",
+        "hypothesis_id": "hypothesis-9c36168e28696af3",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-003",
+        "hypothesis_id": "hypothesis-5287b8885e3251d3",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-004",
+        "hypothesis_id": "hypothesis-305991aee4f2cd83",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-005",
+        "hypothesis_id": "hypothesis-fe502aa4b06cf42e",
+        "version_no": 1,
+        "has_s5_scores": true
+      },
+      {
+        "capability_id": "cap-new-006",
+        "hypothesis_id": "hypothesis-174aa6d0b3f404ee",
+        "version_no": 1,
+        "has_s5_scores": true
+      }
+    ],
+    "stages": [
+      "stage-L1",
+      "stage-L2",
+      "stage-L3"
+    ]
+  }
+]

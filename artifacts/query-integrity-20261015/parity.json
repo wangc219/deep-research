@@ -1,0 +1,13 @@
+{
+  "backend_image_matches_source": true,
+  "frontend": {
+    "local_files": 780,
+    "cloud_files": 781,
+    "only_local": [],
+    "only_cloud": [
+      "./50x.html"
+    ],
+    "different": [],
+    "frontend_files_identical": true
+  }
+}

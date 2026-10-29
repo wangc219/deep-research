@@ -1,0 +1,35 @@
+{
+  "release_allowed": true,
+  "source_sha256": "b5b6ff0d15602ad6887014db931212cdd49d34547743344255a33abb31119903",
+  "date": "2026-10-25",
+  "authorized_deferred": [
+    "阿里云模型",
+    "Dify 外部连接",
+    "Notion 外部连接",
+    "智谱云知识库"
+  ],
+  "user_instruction": "先迁移",
+  "checks": {
+    "frontend_tests": 586,
+    "frontend_lint": "passed",
+    "frontend_build": "passed",
+    "backend_unit_passed": 2866,
+    "backend_unit_skipped_not_passed": 58,
+    "domain_regression_passed": 2247,
+    "document_regression_passed": 373,
+    "http_integration_passed": 406,
+    "http_integration_skipped_not_passed": 21,
+    "final_real_e2e_passed": 18,
+    "real_multimodal_passed": 3,
+    "real_knowledge_graph_reranker_eval": "passed",
+    "real_wechat_article_and_video_ui": "passed",
+    "real_document_report_followup_edit_download_revocation": "passed",
+    "cloud_isolated_schema_rehearsal": "passed",
+    "cloud_isolated_x86_asr": "passed"
+  },
+  "limitations": [
+    "全仓后端 lint 有既有告警，未声称全仓 lint 通过",
+    "MiniMax 上游返回 Model disabled，平台失败响应已记录",
+    "跳过项没有计入真实通过数"
+  ]
+}

@@ -72,6 +72,15 @@ export const aminerApi = {
   testConnection: (value = {}) => apiAdminPost('/api/system/aminer/test', value)
 }
 
+export const webSearchApi = {
+  getConfig: async () => {
+    const data = await configOptionsApi.getOptions()
+    return data.options?.find((option) => option.key === 'web_search_opts')
+  },
+  saveConfig: (value) => configOptionsApi.updateOption('web_search_opts', value),
+  testConnection: () => apiAdminPost('/api/system/web-search/test', {})
+}
+
 // =============================================================================
 // === 信息管理分组 ===
 // =============================================================================

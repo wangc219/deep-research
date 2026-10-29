@@ -160,13 +160,11 @@ async def _set_status(run_id: str, status: str, **extra: Any) -> EquipmentResear
         run.updated_at = utc_now_naive()
         if status == "completed":
             await _persist_formal_capability_versions(session, run, capability_images or [])
-            session.add(
-                EquipmentArtifactRef(
-                    id=f"artifact-{run_id}",
-                    run_id=run_id,
-                    relative_path=str(extra.get("artifact_relpath") or ""),
-                    sha256=str(extra.get("artifact_sha256") or ""),
-                )
+            await _upsert_artifact_ref(
+                session,
+                run_id=run_id,
+                relative_path=str(extra.get("artifact_relpath") or ""),
+                sha256=str(extra.get("artifact_sha256") or ""),
             )
         event = await repo.append_event(run_id, "status_changed", {"status": status, **extra})
     client = await get_async_redis_client()
@@ -184,6 +182,33 @@ async def _get_status(run_id: str) -> str | None:
     async with pg_manager.get_async_session_context() as session:
         run = await EquipmentResearchRepository(session).get_run(run_id)
         return str(run.status) if run is not None else None
+
+
+async def _upsert_artifact_ref(
+    session: AsyncSession,
+    *,
+    run_id: str,
+    relative_path: str,
+    sha256: str,
+) -> None:
+    """Create or refresh the stable artifact pointer for a run."""
+    artifact_id = f"artifact-{run_id}"
+    artifact = await session.get(EquipmentArtifactRef, artifact_id)
+    if artifact is None:
+        session.add(
+            EquipmentArtifactRef(
+                id=artifact_id,
+                run_id=run_id,
+                relative_path=relative_path,
+                sha256=sha256,
+            )
+        )
+        return
+    # A failed resume can follow an earlier completed attempt. Keep the stable
+    # artifact identity and refresh its pointer instead of inserting the same
+    # primary key again.
+    artifact.relative_path = relative_path
+    artifact.sha256 = sha256
 
 
 def resolve_research_workdir(run: EquipmentResearchRun) -> Path:
@@ -211,6 +236,15 @@ def _run_domain(
     event_sink: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """在工作线程中调用既有装备研究编排器。"""
+    # Durable research workers do not initialize the interactive Agent tool
+    # registry. Register the same resilient public-search executor explicitly
+    # so provider-neutral baseline recovery can use research-explorer search
+    # instead of silently falling back to static organization home pages.
+    from platform_core.agents.toolkits.buildin.tools import execute_public_web_search
+    from public_web_search_gateway import register_public_web_search
+
+    register_public_web_search(execute_public_web_search)
+
     from equipment_deep_research.application.dto import RunView
     from equipment_deep_research.application.factory import build_application_service
     from equipment_deep_research.orchestration.runner import DeepResearchRunner
@@ -315,6 +349,17 @@ def _run_domain(
                 report_template_mode=view.report_template_mode,
                 project_id=view.project_id,
                 resume=effective_resume,
+                # A platform resume is an explicit request to revalidate and
+                # continue the durable checkpoint with the *current* runtime
+                # contract.  Model/provider defaults, prompt bundles and
+                # execution code can legitimately change between the failed
+                # attempt and the retry.  Keeping the runner's strict default
+                # here strands otherwise healthy checkpoints with
+                # ``resume configuration mismatch`` after every deployment.
+                # Identity fields (run/topic/route/selected agents) are still
+                # validated independently by RecoveryManager, so this does
+                # not allow a checkpoint from another research run to load.
+                allow_resume_config_mismatch=effective_resume,
                 **runner_kwargs,
             )
     finally:

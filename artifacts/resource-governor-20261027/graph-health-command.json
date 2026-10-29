@@ -1,0 +1,1 @@
+"wget -qO- --timeout=5 --tries=1 --auth-no-challenge --user=\"${NEO4J_AUTH%%/*}\" --password=\"${NEO4J_AUTH#*/}\" --header='Content-Type: application/json' --post-data='{\"statements\":[{\"statement\":\"RETURN 1 AS ready\"}]}' http://127.0.0.1:7474/db/neo4j/tx/commit | grep -q '\"errors\":[[:space:]]*\\[\\]'"

@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-20",
+  "environment": "local Compose stack",
+  "backend_tests_passed": 312,
+  "frontend_tests_passed": 581,
+  "http_and_real_model_e2e_passed": 5,
+  "final_mcp_real_model_recheck_passed": true,
+  "eslint_passed": true,
+  "ruff_passed": true,
+  "production_build_passed": true,
+  "remote_sources_verified": [
+    {
+      "source": "https://skills.sh/anthropics/skills/pdf",
+      "discovery": true,
+      "download": true,
+      "metadata_parse": true
+    },
+    {
+      "source": "https://modelscope.cn/skills/@anthropics/skill-creator",
+      "discovery": true,
+      "download": true,
+      "metadata_parse": true
+    }
+  ],
+  "schema": {
+    "business": 14,
+    "knowledge": 2,
+    "mcp_access_migration_idempotent": true
+  },
+  "screenshots": [
+    "personal-skill-editor.png",
+    "personal-skill-dependencies.png",
+    "mcp-access-policy.png"
+  ],
+  "notes": [
+    "Cloud deployment was not performed.",
+    "One existing live conversation entered recovery during service reload; subsequent running state and new subagent execution were verified."
+  ],
+  "live_conversation_latest_status": "cancelled",
+  "live_conversation_latest_error": "conversation cancelled"
+}

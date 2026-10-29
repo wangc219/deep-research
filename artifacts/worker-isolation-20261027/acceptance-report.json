@@ -1,0 +1,95 @@
+{
+  "hardware": "4 vCPU / 16 GB",
+  "ordinary_users": 16,
+  "short_chats_completed": 20,
+  "native_deep_short_turns_completed": 5,
+  "group_elapsed_seconds": 17.643,
+  "actual_completed_model_calls": 25,
+  "page_probe_count": 20,
+  "page_probe_p95_ms": 1065.6,
+  "minimum_available_memory_gib": 9.52,
+  "cpu_peak_percent": 100.0,
+  "swap_peak_mib": 0.0,
+  "local_regressions_passed": 255,
+  "candidate_tests_passed": 7,
+  "candidate_real_postgres_scenarios": 2,
+  "observed_capacity": {
+    "maximum_running_per_user": {
+      "deep": 2,
+      "chat": 3
+    },
+    "maximum_total_running": {
+      "deep": 4,
+      "chat": 16
+    },
+    "execution_owners_per_lane": {
+      "deep": [
+        "worker-5310b973ec42409796a89370c734e1bb"
+      ],
+      "chat": [
+        "worker-f7281f9ccd804baf8bb831df120ddfe0"
+      ]
+    }
+  },
+  "cleanup": {
+    "test_identities": 65,
+    "test_run_ids_checked": 86,
+    "redis_keys_removed": 96,
+    "remaining": {
+      "test_accounts": 0,
+      "test_operation_logs": 0,
+      "test_agent_runs": 0,
+      "test_conversations": 0,
+      "test_projects": 0,
+      "test_deep_sessions": 0,
+      "test_request_metrics": 0,
+      "known_test_model_calls": 0,
+      "isolated_test_schemas": 0,
+      "known_test_redis_events": 0
+    },
+    "active_agent_runs": 0,
+    "postgres_connections": 68,
+    "postgres_max_connections": 160
+  },
+  "deployment": {
+    "source_files_verified": 18,
+    "runtime_files_verified": 10,
+    "same_api_worker_image": true,
+    "containers": [
+      {
+        "name": "/deepquest-api-1",
+        "health": "healthy",
+        "oom": false,
+        "restarts": 0
+      },
+      {
+        "name": "/deepquest-worker-1",
+        "health": "healthy",
+        "oom": false,
+        "restarts": 0
+      },
+      {
+        "name": "/deepquest-chat-worker-1",
+        "health": "healthy",
+        "oom": false,
+        "restarts": 0
+      },
+      {
+        "name": "/deepquest-deep-worker-1",
+        "health": "healthy",
+        "oom": false,
+        "restarts": 0
+      },
+      {
+        "name": "/deepquest-subagent-worker-1",
+        "health": "healthy",
+        "oom": false,
+        "restarts": 0
+      }
+    ],
+    "api_http_5xx_since_resource_fix": 0,
+    "api_http_requests_since_resource_fix": 928
+  },
+  "scope": "Real short chats and native deep turns; not simultaneous full long research reports, large PDF/OCR/ASR or 16 external WeChat sessions.",
+  "subagent_e2e_stage": "Real model/tool/file/SSE E2E passed after pool separation, before the final resource-query connection reuse patch."
+}

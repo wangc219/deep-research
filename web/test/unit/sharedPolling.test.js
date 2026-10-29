@@ -36,3 +36,31 @@ test('共享一个定时器，隐藏时暂停，慢请求完成后再调度，�
   stopOther()
   assert.equal(callback, null)
 })
+
+test('一个慢订阅不阻塞其他订阅，同一订阅不会重叠，取消后不会复活', async () => {
+  let clock = 0, timerId = 0, slowCalls = 0, fastCalls = 0, release
+  const timers = new Map()
+  const scheduler = createPollingScheduler({
+    now: () => clock,
+    schedule: (fn, delay) => { const id=++timerId; timers.set(id,{fn,at:clock+delay}); return id },
+    cancel: id => timers.delete(id)
+  })
+  const runNext = () => {
+    const [id, timer] = [...timers.entries()].sort(([,a],[,b])=>a.at-b.at)[0]
+    timers.delete(id)
+    clock=timer.at
+    return timer.fn()
+  }
+  const stopSlow = scheduler.subscribe(() => { slowCalls++; return new Promise(resolve=>{release=resolve}) },1000)
+  const stopFast = scheduler.subscribe(() => { fastCalls++ },1000)
+  const first = runNext()
+  await Promise.resolve()
+  await runNext()
+  assert.equal(slowCalls,1)
+  assert.equal(fastCalls,2)
+  stopSlow()
+  stopFast()
+  release()
+  await first
+  assert.equal(timers.size,0)
+})

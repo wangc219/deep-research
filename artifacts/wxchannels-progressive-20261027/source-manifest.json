@@ -1,0 +1,8 @@
+{
+  "backend/package/platform_core/services/wxchannels_service.py": "d028b1a8cc2c789d039ba8445a758283154b7250e205c500a564ebab0eeba6ba",
+  "backend/package/platform_core/knowledge/wxchannels.py": "7fdd443ab5c73efef378f959eed0ab577e43ae90ad738ef335697e23678d3d37",
+  "backend/server/routers/wxchannels_router.py": "c915a7c77344069a515ba17380dca01695c46d2f4989c96684ce8678b7b4e37d",
+  "backend/test/unit/services/test_wxchannels_service.py": "4122935520e359a0dd09f3c7d3c59274dbca89f78a7169c8b2815723d4a40123",
+  "web/src/views/WxChannelsView.vue": "079b9c3fd17e3f3d2ca8f9d2147fdcbd38d316e0f2da6df008e8a0498e62b887",
+  "docs/VIDEO_CHANNELS.md": "c4615aa27c4b91397f1e610b38ea9be47f96acf7201338411c2d9058ada41ef8"
+}

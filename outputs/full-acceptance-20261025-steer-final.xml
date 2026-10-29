@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="26.936" timestamp="2026-10-25T17:10:13.011225+08:00" hostname="3a6250d2430a"><testcase classname="test.e2e.test_agent_steer_e2e" name="test_real_tool_steer_runs_next_from_checkpoint" time="26.922" /></testsuite></testsuites>

@@ -1,0 +1,419 @@
+{
+  "scope": "Real full research pipeline and real 121-second SenseVoice/Word/MinIO/index flow; only WeChat audio handoff is a fixture.",
+  "audio_fixture_seconds": 121.403,
+  "identity_ids": [
+    2973,
+    2974
+  ],
+  "knowledge_id": "kb_uazsuvc7rd",
+  "video": {
+    "status": "passed",
+    "seconds": 52.49,
+    "audio_seconds": 121.403,
+    "real_components": [
+      "HTTPS upload",
+      "ARQ",
+      "SenseVoice",
+      "punctuation",
+      "DOCX",
+      "MinIO",
+      "vector index"
+    ],
+    "fixture_component": "WeChat audio handoff only"
+  },
+  "errors": [],
+  "budget_samples": [
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082280.970102,
+      "available_mib": 10527.6,
+      "cpu_busy_percent": 27.3,
+      "cpu_other_percent": 27.3,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 0
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082284.9767957,
+      "available_mib": 10305.7,
+      "cpu_busy_percent": 16.1,
+      "cpu_other_percent": 16.1,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 0
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082286.9808033,
+      "available_mib": 10316.9,
+      "cpu_busy_percent": 13.1,
+      "cpu_other_percent": 13.1,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 0
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082288.985089,
+      "available_mib": 10299.6,
+      "cpu_busy_percent": 38.9,
+      "cpu_other_percent": 38.9,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082290.9918785,
+      "available_mib": 10131.8,
+      "cpu_busy_percent": 64.0,
+      "cpu_other_percent": 39.2,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082292.9963562,
+      "available_mib": 9883.6,
+      "cpu_busy_percent": 81.3,
+      "cpu_other_percent": 59.0,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082295.0004833,
+      "available_mib": 9720.0,
+      "cpu_busy_percent": 82.0,
+      "cpu_other_percent": 61.0,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 2,
+      "bulk_slots": 4,
+      "memory_pressure": false,
+      "observed_at": 1793082299.017001,
+      "available_mib": 8910.2,
+      "cpu_busy_percent": 92.6,
+      "cpu_other_percent": 86.1,
+      "interactive_running": 9,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 2,
+      "bulk_slots": 4,
+      "memory_pressure": false,
+      "observed_at": 1793082301.0354977,
+      "available_mib": 8800.1,
+      "cpu_busy_percent": 99.9,
+      "cpu_other_percent": 85.7,
+      "interactive_running": 9,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 2,
+      "bulk_slots": 4,
+      "memory_pressure": false,
+      "observed_at": 1793082305.0570855,
+      "available_mib": 8644.9,
+      "cpu_busy_percent": 96.5,
+      "cpu_other_percent": 81.9,
+      "interactive_running": 20,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082307.0678926,
+      "available_mib": 8663.4,
+      "cpu_busy_percent": 94.6,
+      "cpu_other_percent": 72.8,
+      "interactive_running": 20,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082309.0862455,
+      "available_mib": 8656.5,
+      "cpu_busy_percent": 94.9,
+      "cpu_other_percent": 74.5,
+      "interactive_running": 18,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082313.1117842,
+      "available_mib": 8571.3,
+      "cpu_busy_percent": 73.7,
+      "cpu_other_percent": 49.4,
+      "interactive_running": 7,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082315.1204488,
+      "available_mib": 8556.2,
+      "cpu_busy_percent": 76.9,
+      "cpu_other_percent": 54.0,
+      "interactive_running": 1,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082317.1258674,
+      "available_mib": 8527.7,
+      "cpu_busy_percent": 60.6,
+      "cpu_other_percent": 35.5,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082319.134247,
+      "available_mib": 8583.0,
+      "cpu_busy_percent": 65.1,
+      "cpu_other_percent": 40.3,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082321.142186,
+      "available_mib": 8551.1,
+      "cpu_busy_percent": 73.6,
+      "cpu_other_percent": 50.2,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082323.146157,
+      "available_mib": 9675.9,
+      "cpu_busy_percent": 78.0,
+      "cpu_other_percent": 78.0,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 1,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082327.1555653,
+      "available_mib": 9659.7,
+      "cpu_busy_percent": 38.4,
+      "cpu_other_percent": 13.5,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 3,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082329.1596835,
+      "available_mib": 9278.3,
+      "cpu_busy_percent": 33.9,
+      "cpu_other_percent": 12.2,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082331.1637654,
+      "available_mib": 9285.1,
+      "cpu_busy_percent": 45.4,
+      "cpu_other_percent": 20.7,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 1
+    },
+    {
+      "asr_threads": 2,
+      "research_slots": 8,
+      "bulk_slots": 1000,
+      "memory_pressure": false,
+      "observed_at": 1793082333.1673427,
+      "available_mib": 9638.9,
+      "cpu_busy_percent": 20.5,
+      "cpu_other_percent": 20.5,
+      "interactive_running": 0,
+      "research_running": 1,
+      "asr_processes": 0
+    }
+  ],
+  "page_probes": [
+    {
+      "status": 200,
+      "ms": 191.8
+    },
+    {
+      "status": 200,
+      "ms": 156.4
+    },
+    {
+      "status": 200,
+      "ms": 147.1
+    },
+    {
+      "status": 200,
+      "ms": 177.8
+    },
+    {
+      "status": 200,
+      "ms": 210.7
+    },
+    {
+      "status": 200,
+      "ms": 283.4
+    },
+    {
+      "status": 200,
+      "ms": 1661.6
+    },
+    {
+      "status": 200,
+      "ms": 1123.8
+    },
+    {
+      "status": 200,
+      "ms": 1156.3
+    },
+    {
+      "status": 200,
+      "ms": 512.2
+    },
+    {
+      "status": 200,
+      "ms": 508.2
+    },
+    {
+      "status": 200,
+      "ms": 857.6
+    },
+    {
+      "status": 200,
+      "ms": 444.9
+    },
+    {
+      "status": 200,
+      "ms": 207.4
+    },
+    {
+      "status": 200,
+      "ms": 198.0
+    },
+    {
+      "status": 200,
+      "ms": 241.9
+    },
+    {
+      "status": 200,
+      "ms": 202.8
+    },
+    {
+      "status": 200,
+      "ms": 202.5
+    },
+    {
+      "status": 200,
+      "ms": 154.8
+    },
+    {
+      "status": 200,
+      "ms": 222.3
+    },
+    {
+      "status": 200,
+      "ms": 141.4
+    },
+    {
+      "status": 200,
+      "ms": 150.0
+    }
+  ],
+  "task_outcomes": [
+    {
+      "type": "wxchannels_discover",
+      "status": "success"
+    },
+    {
+      "type": "wxchannels_transcribe",
+      "status": "success"
+    },
+    {
+      "type": "knowledge_index",
+      "status": "success"
+    }
+  ],
+  "accounts_remaining": 0,
+  "cleanup_errors": []
+}

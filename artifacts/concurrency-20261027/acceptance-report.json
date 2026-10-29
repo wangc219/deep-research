@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-27",
+  "deployed_generic_capacity": {
+    "before": 8,
+    "after": 12,
+    "increase_percent": 50,
+    "arq_total_slots": 16,
+    "cpu_cores": 4
+  },
+  "real_queue_acceptance": {
+    "count": 12,
+    "scope": "12 个生产知识库解析、向量入库任务；使用当前管理员的私有临时知识库，不新增账户。",
+    "fixture_marker": "qa_capacity_c284c70a39b0",
+    "kb_id": "kb_6p4un77ebv",
+    "completion_seconds": 7.32,
+    "tasks_successful": 12,
+    "files_indexed": 12,
+    "retrieval_probes_successful": 3,
+    "passed": true,
+    "monitor_errors": [],
+    "peak_simultaneous_running": 12,
+    "peak_postgres_connections": 51,
+    "dashboard_under_load": {
+      "requests": 19,
+      "p50_ms": 23.9,
+      "p95_ms": 186.9,
+      "max_ms": 186.9
+    },
+    "cleanup_remaining": {
+      "tasks": 0,
+      "knowledge_libraries": 0,
+      "files": 0
+    }
+  },
+  "independent_cleanup_verification": {
+    "remaining": {
+      "tasks": 0,
+      "files": 0,
+      "knowledge_libraries": 0,
+      "isolated_test_schemas": 0,
+      "object_storage_files": 0,
+      "vector_collections": 0
+    },
+    "passed": true
+  },
+  "config_verification": [
+    {
+      "source_files_verified": 5
+    },
+    {
+      "profile": "current",
+      "generic_slots": 12,
+      "arq_slots": 16,
+      "api_workers": 2,
+      "postgres_max_connections": 100,
+      "api_loopback_only": true
+    },
+    {
+      "profile": "configs/cloud/8c16g.env.example",
+      "generic_slots": 24,
+      "arq_slots": 32,
+      "api_workers": 3,
+      "postgres_max_connections": 160,
+      "api_loopback_only": true
+    }
+  ],
+  "isolated_postgres_capacity_tests": "4 passed: shared mixed-type capacity 12/24, single owner and reserved worker slots",
+  "resources_after": {
+    "used_percent": 52.4,
+    "available_memory_mib": 3622,
+    "api_or_worker_oom": false,
+    "api_or_worker_automatic_restarts": 0
+  },
+  "future_upgrade": {
+    "applied": false,
+    "suggested_cpu_cores": 8,
+    "suggested_memory_gib": 16,
+    "generic_slots": 24,
+    "arq_slots": 32,
+    "api_workers": 3,
+    "postgres_max_connections": 160,
+    "capacity_preset": "configs/cloud/8c16g.env.example",
+    "guide": "docs/CLOUD_CAPACITY.md"
+  },
+  "scope": [
+    "Production test used 12 small Markdown documents in a private temporary library, exercising HTTP, the durable queue, workers, parsing, vector indexing and retrieval.",
+    "Peak simultaneous running tasks were sampled from PostgreSQL. Dashboard latency was measured by 19 requests during load; this is not a long-running large-document test.",
+    "Future capacity 24 is only validated through configuration resolution and isolated PostgreSQL capacity tests. Business load tests are required after hardware upgrade."
+  ],
+  "rollback": "/var/backups/deepquest/concurrency-20261027"
+}

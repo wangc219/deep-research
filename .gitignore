@@ -1,5 +1,10 @@
 # macOS and editors
 .DS_Store
+.AppleDouble/
+._*
+.tmp/
+.tmp-docx-qa/
+.vite/
 .tmp-user-manual/
 .idea/
 .vscode/
@@ -93,3 +98,17 @@ backend/video_collector/bin/
 /backend/wechat_mp/data/
 
 /outputs/collection-artifacts/
+
+# 用户工作区和包含账号资料的一次性迁移包仅保留本机。
+/user-data/
+/chuangke-users-*/
+/artifacts/chuangke-cloud-import-*/
+
+# 发布压缩包和编译后的采集器可由已提交源码重建。
+/artifacts/**/*.tar.gz
+/artifacts/**/*.tgz
+/artifacts/**/*.zip
+/artifacts/cloud-wechat-collector-*/wx_video_download
+
+# 历史终端重定向产生的空文件。
+/ .Destination*

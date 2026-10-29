@@ -1,0 +1,22 @@
+{
+  "backend/package/platform_core/services/wechat_mp_service.py": "527fdb9c51ad05b87daf7339d634b3bfc45b382ce2a7f94fbd2f2a2f3ac9dc44",
+  "backend/server/routers/wechat_mp_router.py": "7bb41adc0a6fcb0c5c3a06c8c21648097f35ca0823e9f0be5c553f56981a0a41",
+  "backend/package/platform_core/repositories/task_repository.py": "a3097e3c1a1a7cd8e50839975464d797fe309deefa9e90bdd5a4c7c8d0602f1c",
+  "backend/package/platform_core/services/task_service.py": "c85ba2514a0631029ab8b5c1f6737c356c0e7fdee380bcf50bb275c06488363f",
+  "backend/server/routers/system_task_router.py": "9d6ab33e5be7233a29cee231ff10bd9de40aec7fe2382aefde3afefadeb194fb",
+  "backend/wechat_mp/frontend/index.html": "83af60fca8996a25baffa5a6f22135d2c166cac993c22a4a3c1e449d84cd672e",
+  "web/src/views/ExtensionsView.vue": "3f618fb0db4dc19c4b46055ad5588eceff6b1a425b12c26c1eb3659d5846fbdb",
+  "web/src/views/WechatArticlesView.vue": "4b6c8a81120102d63b85940a70cd04b522b5d9f166720836e4fb7ca60a7592cc",
+  "web/src/layouts/AppLayout.vue": "4ee2415a8fe3fa9a796b693f0be43988a981fa2014a60e2452236d1d0c294f6f",
+  "web/src/stores/tasker.js": "10fd7ccba23c27a48877b0a32014da96a62fc78f7643bea8c2109f1fb5e7645e",
+  "web/src/apis/tasker.js": "20079e92893b8ce335337f910492d8f26e51d07b96c0cf88bf2946417e888bcd",
+  "compose.cloud.yaml": "6113505c922c6e8d0c233050cae349aab4e30469809c8276b01644c9c369ea04",
+  "backend/test/unit/services/test_wechat_mp_assets.py": "fe46d7b371e09348cbe634e38fcc8f14b24ba7db00b9e2d2cb7e37acf7272d63",
+  "backend/test/integration/api/test_wechat_mp_replica.py": "1996e4652fdbdb1b79b2868f564a7048e49909504d1c0fd9fddca96ad44b3b47",
+  "backend/test/integration/api/test_wxchannels_history_actions.py": "007337d34cb1652f1ece81ccc5a6b6db9c686dfc0bd3aa2fafaa4a65ba3c0822",
+  "backend/test/integration/api/test_collection_artifacts.py": "82131c1fffb95c5acc27a5baf16a01b098f0cf371f00630175aa5086db87562b",
+  "backend/server/main.py": "eaa368a00c841ee4f8fca75f95c1d510a0e7e31f479d8f7b8807f25c4afec31a",
+  "backend/server/routers/knowledge_router.py": "3f1f1daca98e7cc8bb9079db847e5e14f9f446bb7bebf544836b357b12c083e7",
+  "backend/test/unit/server/test_login_burst.py": "f1cd99a831dba0ef1a716163cc68b050d4ac07236dc11bc33bb8272e6600d7cc",
+  "backend/test/unit/routers/test_knowledge_router_cleanup.py": "4cdb07e9f099f0569ef6bc62788d7da83c6d9ba6cee51394dd2024382b28c141"
+}

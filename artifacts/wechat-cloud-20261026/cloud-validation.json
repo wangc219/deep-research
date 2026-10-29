@@ -1,0 +1,15 @@
+{
+  "site": "https://www.deepquest.space",
+  "server_audio_and_asr": "passed",
+  "macos_connection_package": "passed",
+  "windows_connection_package": "passed",
+  "downloaded_package_real_wechat_connection": "passed",
+  "real_video_discovery": 15,
+  "real_cloud_asr": "passed",
+  "word_download": "passed",
+  "word_archive": "passed",
+  "markdown_preview": "passed",
+  "workspace_artifact": "passed",
+  "recognized_characters": 93,
+  "task_id": "2b4afa05beb647a0b1cf4771ab929ea2"
+}

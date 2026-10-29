@@ -18,10 +18,30 @@ def _extract_tool_info(tool_obj) -> dict:
         "args": [],
     }
 
-    if hasattr(tool_obj, "args_schema") and tool_obj.args_schema:
-        schema = tool_obj.args_schema
-        if hasattr(schema, "schema"):
-            schema = schema.schema()
+    # LangChain 的 ``tool.args`` 已排除 ToolRuntime 等运行时注入参数。直接对
+    # args_schema 生成 JSON Schema 会在 Pydantic 2.13+ 遇到 CallableSchema 时
+    # 抛错，进而让 Agent 详情接口整体返回 500。
+    schema = None
+    try:
+        tool_args = getattr(tool_obj, "args", None)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Failed to read normalized arguments for tool {tool_obj.name}: {type(exc).__name__}")
+        tool_args = None
+    if isinstance(tool_args, dict):
+        schema = {"properties": tool_args}
+    elif hasattr(tool_obj, "args_schema") and tool_obj.args_schema:
+        raw_schema = tool_obj.args_schema
+        try:
+            if hasattr(raw_schema, "model_json_schema"):
+                schema = raw_schema.model_json_schema()
+            elif hasattr(raw_schema, "schema"):
+                schema = raw_schema.schema()
+            elif isinstance(raw_schema, dict):
+                schema = raw_schema
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"Failed to generate arguments schema for tool {tool_obj.name}: {type(exc).__name__}")
+
+    if isinstance(schema, dict):
         for arg_name, arg_info in schema.get("properties", {}).items():
             info["args"].append(
                 {

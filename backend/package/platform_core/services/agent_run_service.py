@@ -527,11 +527,16 @@ def _same_run_request_scope(
 
 
 def _run_busy_exception(*, active_run, agent_slug: str, conversation_thread_id: str) -> HTTPException:
+    is_interrupted = active_run.status == "interrupted"
     return HTTPException(
         status_code=409,
         detail={
-            "code": "run_busy",
-            "message": "该智能体线程正在运行，请等待、查询或取消当前运行后再继续",
+            "code": "run_interrupted" if is_interrupted else "run_busy",
+            "message": (
+                "线程正在等待用户回答或审批"
+                if is_interrupted
+                else "该智能体线程正在运行，请等待、查询或取消当前运行后再继续"
+            ),
             "active_run_id": active_run.id,
             "active_run_status": active_run.status,
             "agent_slug": agent_slug,

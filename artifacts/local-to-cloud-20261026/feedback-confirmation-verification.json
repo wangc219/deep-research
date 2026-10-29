@@ -1,0 +1,12 @@
+{
+  "site": "https://www.deepquest.space",
+  "in_page_confirmation": true,
+  "cancel_preserved_status": true,
+  "confirmed_via_browser": true,
+  "rolled_back_label_visible": true,
+  "audit_retained": true,
+  "source_sha256": "66d1f7c6d38d315af752b7f8b054eec865f5af82bf932916c843092610b680c1",
+  "records": 4,
+  "rolled_back": 2,
+  "cancel_verified_by_server_count": true
+}

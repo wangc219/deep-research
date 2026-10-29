@@ -1,0 +1,19 @@
+{
+  "backend/package/platform_core/repositories/dashboard_repository.py": "933c180f77d8bac23a9569341b5f704a725142a961995cd65b78dd42743fdf71",
+  "web/src/apis/base.js": "4ae95b0240420965b00145682d62218864a2922fc3e25d64e2dd87a5f8f8e3ab",
+  "web/src/apis/dashboard_api.js": "169c2c3f680ca20f9c5e8a20f6b838ba533d171c505d3965ad419fd47943fe52",
+  "web/src/views/DashboardView.vue": "74af2f81c9fee6a5dbd92c539a42def9cbcdf66eb64c96b619dfe7048a6ad877",
+  "web/src/components/dashboard/CallStatsComponent.vue": "4a6dcaaa391039bc7a51f66c7d9dad7b1d4f1f6be83460b3f5226e89a3efa30f",
+  "web/src/components/dashboard/ThreadStatsComponent.vue": "aa8ba667065da41ca78714f1bd648c76757c44c6873e6437afccb27216eb29c0",
+  "web/src/views/KnowledgePortalView.vue": "0170e9c7cd065e77d73e2970c15e5aaec9d27ff8aed5a1236ab5f82b537ca69a",
+  "web/src/views/DataBaseView.vue": "39bc250baf5a21165d5f0ac204c46b97a5f5c591c81a7e0d3175c529dedb0b92",
+  "web/src/stores/database.js": "e66f075a3a534938d92d0369bb6858dd06b863636783d7111917f7551a9d1218",
+  "web/src/stores/tasker.js": "c224a15f8d8b15aa0349a649ba3704c680366d263ea08af2b699ecf38758b1b0",
+  "compose.cloud.yaml": "0afc3cd49a04ba379e6ce64ddfc22ba21074925701c4bc65e81732f0a892289d",
+  "web/src/views/WorkspaceView.vue": "6f810651be701ff004fcc8e065909b43b332fb2b763a56d9685901684303eb23",
+  "backend/test/unit/services/test_dashboard_service.py": "1360b337484b6d5e312dc08d7f27407df75698205881e09af7be271d7721b4ba",
+  "web/src/utils/dataFreshness.js": "e7a557885ebaefb4612282de0b1ba0e83f3fd49a2661385a840e0d1111320759",
+  "web/src/composables/useLiveRefresh.js": "362dca8f73e3fb310b9a475c8b34ea0d538fa49ae630ecb087736e390749c394",
+  "web/test/unit/dataFreshness.test.js": "593ce4ea92db101ca5b1852532206326f692abba87f7ca706dc11a8f5f3f298d",
+  "web/test/unit/dashboard_thread_stats.test.js": "cbe92b94cdd16df3fbce88dfca65ac5d661421f3c3081257fe320346f93c5a03"
+}

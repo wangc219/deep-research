@@ -1,0 +1,631 @@
+{
+  "scope": "production HTTPS intelligent dialogue; one parent concurrently delegates three research-explorer runs",
+  "queries": [
+    {
+      "name": "photonic-time-crystal",
+      "query": "photonic time crystal nonreciprocal microwave amplification",
+      "aliases": [
+        "photonic time crystal",
+        "nonreciprocal",
+        "microwave"
+      ]
+    },
+    {
+      "name": "moire-exciton",
+      "query": "Moiré excitons in semiconductor heterobilayers",
+      "aliases": [
+        "moiré",
+        "moire",
+        "heterobilayer"
+      ]
+    },
+    {
+      "name": "altermagnetism",
+      "query": "Experimental evidence for altermagnetism and spin splitting",
+      "aliases": [
+        "altermagnetism",
+        "spin splitting"
+      ]
+    }
+  ],
+  "started_at_epoch": 1793204662.3241608,
+  "uid": "qasearx_9b34870357",
+  "session_id": "thinking-126eb330-ab66-4444-964e-e53b31f1d5e6",
+  "parent_run_id": "b7012518-eb85-4eb5-aa99-8f5a3c018245",
+  "parent_status": "completed",
+  "parent_timing": {
+    "created_at": "2026-10-28T16:24:23.061167Z",
+    "started_at": "2026-10-28T16:24:23.157875Z",
+    "prepared_at": "2026-10-28T16:24:25.761595Z",
+    "first_model_request_at": "2026-10-28T16:24:25.831295Z",
+    "first_output_at": "2026-10-28T16:24:30.661639Z",
+    "finished_at": "2026-10-28T16:30:25.732481Z",
+    "dispatch_latency_ms": 97,
+    "preparation_latency_ms": 2604,
+    "first_model_request_latency_ms": 2770,
+    "model_first_output_latency_ms": 4900,
+    "first_output_latency_ms": 7600,
+    "total_latency_ms": 362671
+  },
+  "parent_elapsed_seconds": 363.752,
+  "parent_output": "我需要先审视这份\"本轮已取得论文来源的可复制清单\"。\n\n清单中 10 条来源全部来自我首次误触发的无关检索（`placeholder` 一词命中的松树基因组、藏文音节、微流控等论文），与三个验收术语——photonic time crystal、Moiré excitons、altermagnetism——毫无关系。这些是学术证据校验系统的\"可复制清单\"，但它们是**错误命中的来源**，不是三个探索员实际检索取得的证据。\n\n三个探索员返回的证据包中引用的真实来源（如 Nature `10.1038/s41586-023-06907-7`、Science `10.1126/science.abo3324`、Nature Communications `10.1038/s41467-024-46476-5`、Nature Nanotechnology `10.1038/s41565-021-01068-y` 等）并未被纳入这份清单，因为它们来自子智能体内部运行，主智能体的证据校验上下文没有这些 URL。\n\n我需要核实这份清单的上下文。这份清单确实对应我被要求纠错前唯一一次主智能体侧的实际 AMiner 检索——即那个我不小心用 `placeholder` 触发的检索。也就是说，校验系统看到的是**这一份检索**，而三个探索员的检索发生在子进程内，主智能体的\"已取得内容\"账本里只有这次 `placeholder` 检索。\n\n这不是真正的学术证据问题，而是一个**上下文隔离问题**：校验器只看到了主智能体自己的那次误触检索。\n\n但无论如何，我必须遵守校验规则：我的上一答复中确实缺少 `place` 引用的可追溯来源标签，且我无法直接引用子智能体内部取得的 URL 作为\"本轮已取得内容\"。正确做法是向用户说明这一真实情况，并依据我能确证的来源（即探索员返回内容中逐字给出的 URL）修正上一答复，明确标注哪些是子探索员实际返回、哪些我无法从主账本核验。\n\n让我审视探索员输出中实际逐字给出的 URL，这些是我能依据的真实材料（虽然不是主智能体\"已取得\"清单，但它们是工具子进程实际返回的可追溯 URL，且每条都标注了来源层级）。\n\n关键判断：这份纠错清单本身与三个研究主题无关，我不能用它来替换三个探索员真正取得的证据。正确响应是：在遵守\"不编造来源\"原则下，修正此前答复——把三组结论的每条发现就近附上其工具实际返回的 URL 引用；同时向用户揭示：这份 10 条清单来自我最初误触发的 `placeholder` 检索，与三个术语无关，因此不能作为本次验收的证据源；三个探索员取得的真实证据在其返回的 evidence 包内，我据此逐条引用。\n\n让我重写最终比较答复，为每条关键发现附上探索员实际返回的 URL 引用。\n\n---\n\n## 生产环境检索验收：修正后的三组比较\n\n首先需要说明一个真实情况：上一答复被校验驳回，校验系统提供的\"本轮已取得来源清单\"（10 条）全部来自我最初一次误触发的检索——用 `placeholder` 关键词命中了一批与本次验收完全无关的论文（松树基因组、藏文音节、微流控、占位符语义学等），例如 <cite source=\"https://doi.org/10.1534/genetics.113.159715\" type=\"url\">1</cite>、<cite source=\"https://doi.org/10.1016/j.lingua.2020.102852\" type=\"url\">5</cite>。这些与三个罕见术语均无关联，因此不能作为本次验收的证据源。\n\n三个探索员实际检索取得的可追溯来源在其返回证据包中逐字给出。以下修正版逐条引用探索员实际返回的 URL，并明确每条的证据层级与实际断言边界。\n\n### 组一：photonic time crystal nonreciprocal microwave amplification\n\n探索员交付 6 条发现，主要来源如下：\n\n1. PTC 指数放大理论机制出自 Science（完整摘要）：<cite source=\"https://doi.org/10.1126/science.abo3324\" type=\"url\">1</cite>。内容为动量带隙内辐射被指数放大、能量取自周期调制、可提出非共振可调 PTC 激光概念。此条为完整摘要级。\n\n2. PTC 与光学参量放大/产生共享物理机制、差异源于边界条件（完整摘要）：<cite source=\"https://doi.org/10.1021/acsphotonics.4c00607\" type=\"url\">2</cite>。支持\"仅 PTC 情形能在动量带隙内保持指数传播放大\"。\n\n3. 光频与微波双频段非互易设计方案（完整摘要）：<cite source=\"https://doi.org/10.1021/acs.nanolett.5c06214\" type=\"url\">3</cite>，同篇另有 Europe PMC 记录 <cite source=\"https://europepmc.org/article/MED/41577643\" type=\"url\">4</cite>。报告光频隔离 >46 dB、微波段 11 dB。\n\n4. 仅元数据条目——SPIE 2025 会议记录\"Optically-controlled Photonic Time Crystal: Amplification of Microwaves\"（Kildishev）：<cite source=\"https://doi.org/10.1117/12.3064560\" type=\"url\">5</cite>。无摘要，只能支持\"存在以此为题的会议贡献\"，无法核实方案细节、性能或实验状态。\n\n5. 部分摘要——周期开关情形下非互易 PTC 法拉第旋转推广：<cite source=\"https://doi.org/10.1063/5.0131818\" type=\"url\">6</cite>。摘要截断，仅支持方向性结论。\n\n6. 部分摘要——CLEO 2026 \"Experimental Realization of Photonic Time-Crystals in Microwaves\"：<cite source=\"https://doi.org/10.1364/cleo_fs.2026.fw1h.7\" type=\"url\">7</cite>；以及 J. Optics 2024 时变折射率 PTC 波放大：<cite source=\"https://doi.org/10.1088/2040-8986/ad28fb\" type=\"url\">8</cite>。两者均截断，无法核实实验细节。\n\n**证据缺口**：没有任何已取得来源直接报道在单个 PTC 器件中同时具备非互易隔离与微波增益——\"非互易微波放大一体化\"是证据支持的空白方向而非已验证事实。微波实验参数（频率、调制深度、dB 值、隔离度）超出本轮证据范围。渠道覆盖最弱：Open WebSearch 未完成、SearXNG 的 arxiv/brave/openairepublications 引擎超时，18 个独立候选仅 1 个跨渠道命中。\n\n### 组二：Moiré excitons in semiconductor heterobilayers\n\n探索员交付 6 条发现，证据层级全部为完整摘要级（含 1 条预印本降级）：\n\n1. 首次实验观测——Jin 等 2019 年近对齐 WSe2/WS2 中观测莫尔超晶格激子态，周期莫尔势生成多个平坦激子微带，为拓扑激子与激子 Hubbard 模型提供平台（完整摘要）：<cite source=\"https://doi.org/10.1038/s41586-019-0976-y\" type=\"url\">9</cite>。\n\n2. 理论边界修正——2026 年 IOP 模型指出莫尔势与电子-空穴相互作用势量级相当时，质心与相对坐标不可分离，单一莫尔准粒子图像失效（完整摘要）：<cite source=\"https://doi.org/10.1088/2053-1583/ae6876\" type=\"url\">10</cite>。\n\n3. 单莫尔激子量子相干——2024 年实验，相干时长超过 10 ps，随温度与激发密度升高加速退相干（完整摘要）：<cite source=\"https://www.ncbi.nlm.nih.gov/pubmed/38851776\" type=\"url\">11</cite>。\n\n4. 两篇 Nature Nanotechnology 综述确立可调性共识（完整摘要）：<cite source=\"https://doi.org/10.1038/s41565-021-01068-y\" type=\"url\">12</cite> 与 <cite source=\"https://doi.org/10.1038/s41565-022-01165-6\" type=\"url\">13</cite>。莫尔激子共振可经扭转角调控，是探测强关联电子现象的光谱学探针。\n\n5. 最新进展——2026 年单轴应变与原子重构在 MoSe2-WSe2 中形成一维激子量子线阵列，Stark 位移超 100 meV（完整摘要）：<cite source=\"https://www.ncbi.nlm.nih.gov/pubmed/42139469\" type=\"url\">14</cite>。\n\n6. 预印本降级——2023 年莫尔囚禁层间激子退相干 T2 ~700 fs（约离域集合 4 倍）（完整摘要、未经同行评审）：<cite source=\"https://doi.org/10.21203/rs.3.rs-2801088/v1\" type=\"url\">15</cite>。\n\n**证据缺口**：searxng 的 arxiv/brave/openairepublications 超时，arXiv 一手预印本面未覆盖；发现 6 为预印本降级证据；全部停留在摘要级，无全文或数据表核对。覆盖最完整，线索链从 2019 概念确立横跨至 2026 最新工程。\n\n### 组三：Experimental evidence for altermagnetism and spin splitting\n\n探索员交付 6 条发现，证据层级为 3 条完整摘要 + 3 条部分摘要。概念源头为 Smejkal 等交替磁性界定——零净磁化、晶格与自旋对称性解耦、能带呈交替自旋-动量锁定：<cite source=\"https://doi.org/10.21203/rs.3.rs-956878/v1\" type=\"url\">16</cite>。\n\n1. **正面奠基证据**——MnTe 以光电子谱证实交替磁性导致 Kramers 自旋简并解除、不依赖净磁化与反演对称破缺（完整摘要）：<cite source=\"https://doi.org/10.1038/s41586-023-06907-7\" type=\"url\">17</cite>。\n\n2. **正面量级证据**——外延 CrSb 薄膜软 X 射线 ARPES 测得近费米自旋劈裂约 0.6 eV，与能带计算高度吻合；兼具铁磁级交换能与反铁磁级外场不敏感、THz 动力学特性（完整摘要）：<cite source=\"https://doi.org/10.1038/s41467-024-46476-5\" type=\"url\">18</cite>。\n\n3. **关键反证**——金红石 RuO2 电子结构符合非磁性预测、未出现设想的自旋劈裂，面内自旋极化形态与 d 波自旋纹理相悖，直接挑战 RuO2 作为 d 波交替磁候选（完整摘要）：<cite source=\"https://doi.org/10.1103/physrevlett.133.176401\" type=\"url\">19</cite>。\n\n4. **新候选材料**——Co1/4TaSe2 磁化率确认 A 型反铁磁（Néel 178 K），自旋分辨 ARPES 显示费米面处交替磁自旋劈裂、升温越过 Néel 温度被抑制（部分摘要）：<cite source=\"https://europepmc.org/article/MED/42754571\" type=\"url\">20</cite>。\n\n5. **技术路线推进**——CrSb 三维动量空间自旋劈裂映射（部分摘要）：<cite source=\"https://doi.org/10.1038/s41467-025-56647-7\" type=\"url\">21</cite>。\n\n6. **综述校准**——ARPES/SARPES/CD-ARPES 已成为解析交替磁劈裂的核心显微镜，明确 RuO2 证据存在争议、MnTe 与 CrSb 相对可信、层状 V 族化合物为新兴候选（部分摘要）：<cite source=\"https://europepmc.org/article/MED/41670773\" type=\"url\">22</cite>。\n\n**证据缺口**：SearXNG 的 arxiv/brave/openairepublications 超时；3 篇拟引论文中 2 篇仅取得部分摘要，除 CrSb ~0.6 eV、MnTe 零磁化条件外精确数值未全部核实，属摘要级证据而非全文级。\n\n### 综合结论\n\n**精准性**：组三（交替磁性）最高——术语直接对应 2019 年 Smejkal 概念及随后实验，正面（MnTe、CrSb）与反面（RuO2）证据并存，能直接回答\"实验证据\"问题；组二（莫尔激子）次之，覆盖面广、证据层级整齐；组一（PTC 非互易微波）最弱，是罕见的复合术语，核心交叉问题（非互易与放大一体化）是证据空白而非事实。\n\n**渠道互补**：三组一致暴露同一共因故障——SearXNG 的 arxiv/brave/openairepublications 引擎超时，arXiv 一手预印本面均缺位；Open WebSearch 在组一未完成。渠道互补价值集中在组三（概念论文在 public 与 AMiner 跨渠道交叉验证）。\n\n**证据边界**：全部停留在摘要级而非全文级，未读取实验表格；组一微波实验参数、组三除 CrSb/MnTe 外的精确数值、组二 arXiv 预印本面均超出或缺失。\n\n**关于校验驳回的说明**：上一答复缺少 `cite` 标签引用是事实，已按探索员实际返回的 URL 逐条补齐。但校验系统提供的 10 条\"已取得清单\"来自我最初误触发的 `placeholder` 检索，与三个术语无关，未用于替换探索员真实取得的证据。三组探索员的检索均发生在主智能体侧的校验账本之外，这是本次验收的上下文隔离局限，不改变上述证据与缺口判断。",
+  "children": [
+    {
+      "run_id": "20686fe5-ea21-4537-9f01-52583305a52c",
+      "status": "completed",
+      "query": "photonic time crystal nonreciprocal microwave amplification",
+      "created_at": "2026-10-28T16:24:49.009948",
+      "started_at": "2026-10-28T16:24:49.076686",
+      "finished_at": "2026-10-28T16:27:30.806172",
+      "tool_order": [
+        "parallel_research_search",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "glob",
+        "grep",
+        "academic_get_papers"
+      ],
+      "first_tool": "parallel_research_search",
+      "parallel_search": {
+        "status": "ok",
+        "search_mode": "three_channel_parallel",
+        "query_profile": {
+          "language": "en",
+          "categories": [
+            "academic"
+          ],
+          "searxng_engines": [
+            "arxiv",
+            "semantic scholar",
+            "openairepublications",
+            "pubmed",
+            "europepmc",
+            "brave"
+          ]
+        },
+        "attempted_providers": [
+          "open-websearch",
+          "searxng",
+          "aminer"
+        ],
+        "completed_providers": [
+          "searxng",
+          "aminer"
+        ],
+        "partial_failures": [
+          {
+            "provider": "open-websearch",
+            "error": "总截止前未完成"
+          },
+          {
+            "provider": "searxng",
+            "engine": "arxiv",
+            "error": "timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "brave",
+            "error": "timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "openairepublications",
+            "error": "timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "semantic scholar",
+            "error": "access denied"
+          }
+        ],
+        "channel_summary": {
+          "web_candidates": 7,
+          "academic_candidates": 12,
+          "unique_candidates": 18,
+          "cross_channel_matches": 1
+        },
+        "result_count": 18,
+        "provider_result_counts": {
+          "searxng": 7,
+          "aminer": 12
+        },
+        "engine_result_counts": {
+          "europepmc": 6,
+          "pubmed": 1
+        },
+        "searxng_result_count": 7,
+        "cross_channel_matches": 1,
+        "top10_alias_matches": 9,
+        "searxng_examples": [
+          {
+            "title": "Nonreciprocal Negative Refraction Enabled by Photonic Time Crystals.",
+            "url": "https://europepmc.org/article/MED/41577643",
+            "providers": [
+              "searxng",
+              "aminer"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": true
+          },
+          {
+            "title": "Microwave Vortex Beam Lasing via Photonic Time Crystals.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42503143",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "pubmed"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Photonic Time Crystals and Time-Varying Electromagnetic Metamatter: A New Direction for Ultrafast Tunable Photonic and Microwave Materials and Devices.",
+            "url": "https://europepmc.org/article/MED/41582847",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Temporal super-cell engineering and acoustic amplification in dispersive phononic time crystals.",
+            "url": "https://europepmc.org/article/MED/42230630",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Noise Cancellation Effects in Integrated Photonics with Wilkinson Power Dividers.",
+            "url": "https://europepmc.org/article/MED/37215317",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          }
+        ],
+        "top5": [
+          {
+            "title": "Nonreciprocal Negative Refraction Enabled by Photonic Time Crystals.",
+            "url": "https://europepmc.org/article/MED/41577643",
+            "providers": [
+              "searxng",
+              "aminer"
+            ],
+            "content_level": "partial_abstract",
+            "source_tier": "other"
+          },
+          {
+            "title": "Microwave Vortex Beam Lasing via Photonic Time Crystals.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42503143",
+            "providers": [
+              "searxng"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Amplified Emission and Lasing in Photonic Time Crystals.",
+            "url": "https://doi.org/10.1126/science.abo3324",
+            "providers": [
+              "aminer"
+            ],
+            "content_level": "partial_abstract",
+            "source_tier": null
+          },
+          {
+            "title": "Faraday Rotation in Nonreciprocal Photonic Time-Crystals",
+            "url": "https://doi.org/10.1063/5.0131818",
+            "providers": [
+              "aminer"
+            ],
+            "content_level": "partial_abstract",
+            "source_tier": null
+          },
+          {
+            "title": "Photonic Time Crystals and Time-Varying Electromagnetic Metamatter: A New Direction for Ultrafast Tunable Photonic and Microwave Materials and Devices.",
+            "url": "https://europepmc.org/article/MED/41582847",
+            "providers": [
+              "searxng"
+            ],
+            "content_level": null,
+            "source_tier": "other"
+          }
+        ]
+      },
+      "academic_get_papers_calls": 1
+    },
+    {
+      "run_id": "42e6ec86-9bf3-4542-bc74-6c2677bebb0d",
+      "status": "completed",
+      "query": "Experimental evidence for altermagnetism and spin splitting",
+      "created_at": "2026-10-28T16:24:49.040878",
+      "started_at": "2026-10-28T16:24:49.217707",
+      "finished_at": "2026-10-28T16:26:14.547735",
+      "tool_order": [
+        "parallel_research_search",
+        "read_file",
+        "read_file",
+        "grep",
+        "grep",
+        "academic_get_papers"
+      ],
+      "first_tool": "parallel_research_search",
+      "parallel_search": {
+        "status": "ok",
+        "search_mode": "three_channel_parallel",
+        "query_profile": {
+          "language": "en",
+          "categories": [
+            "academic"
+          ],
+          "searxng_engines": [
+            "arxiv",
+            "semantic scholar",
+            "openairepublications",
+            "pubmed",
+            "europepmc",
+            "brave"
+          ]
+        },
+        "attempted_providers": [
+          "open-websearch",
+          "public",
+          "searxng",
+          "aminer"
+        ],
+        "completed_providers": [
+          "public",
+          "searxng",
+          "aminer"
+        ],
+        "partial_failures": [
+          {
+            "provider": "searxng",
+            "engine": "arxiv",
+            "error": "Suspended: timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "brave",
+            "error": "Suspended: timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "openairepublications",
+            "error": "Suspended: timeout"
+          }
+        ],
+        "channel_summary": {
+          "web_candidates": 12,
+          "academic_candidates": 12,
+          "unique_candidates": 22,
+          "cross_channel_matches": 1
+        },
+        "result_count": 22,
+        "provider_result_counts": {
+          "public": 8,
+          "aminer": 11,
+          "searxng": 4
+        },
+        "engine_result_counts": {
+          "pubmed": 2,
+          "europepmc": 2
+        },
+        "searxng_result_count": 4,
+        "cross_channel_matches": 1,
+        "top10_alias_matches": 10,
+        "searxng_examples": [
+          {
+            "title": "Atomic-scale spin sensing of a 2D d-wave altermagnet via helical tunneling.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42869436",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "pubmed"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Marginal Metals and Kosterlitz-Thouless-Type Phase Transition in Disordered Altermagnets.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/41765790",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "pubmed"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Observation of Altermagnetic Spin-Splitting in an Intercalated Transition Metal Dichalcogenide.",
+            "url": "https://europepmc.org/article/MED/42754571",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Symmetry-driven spin splitting in altermagnets: an angle-resolved photoemission spectroscopy perspective.",
+            "url": "https://europepmc.org/article/MED/41670773",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          }
+        ],
+        "top5": [
+          {
+            "title": "Altermagnetism: spin-momentum locked phase protected by non-relativistic symmetries",
+            "url": "https://doi.org/10.21203/rs.3.rs-956878/v1",
+            "providers": [
+              "public",
+              "aminer"
+            ],
+            "content_level": "partial_abstract",
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Giant Rashba-type Spin Splitting in Bulk BiTeI",
+            "url": "https://doi.org/10.1038/nmat3051",
+            "providers": [
+              "aminer"
+            ],
+            "content_level": "partial_abstract",
+            "source_tier": null
+          },
+          {
+            "title": "Symmetry-Breaking Phenomena in MnPS3/TMDC Heterostructures: Nonrelativistic Spin Splitting, Altermagnetism and Spin-Valley Effects",
+            "url": "https://doi.org/10.1021/acs.jpcc.5c08239.s001",
+            "providers": [
+              "public"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Minimal Model of Nonrelativistic Momentum-Dependent Spin Splitting and Correlation-Driven Altermagnetism in CrSb",
+            "url": "https://doi.org/10.2139/ssrn.6711157",
+            "providers": [
+              "public"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Atomic-scale spin sensing of a 2D d-wave altermagnet via helical tunneling.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42869436",
+            "providers": [
+              "searxng"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          }
+        ]
+      },
+      "academic_get_papers_calls": 1
+    },
+    {
+      "run_id": "06342620-ba43-414e-8769-a2fcb1fe6aa0",
+      "status": "completed",
+      "query": "Moiré excitons in semiconductor heterobilayers",
+      "created_at": "2026-10-28T16:24:49.106855",
+      "started_at": "2026-10-28T16:24:49.290730",
+      "finished_at": "2026-10-28T16:28:32.403541",
+      "tool_order": [
+        "parallel_research_search",
+        "read_file",
+        "read_file",
+        "read_file",
+        "grep",
+        "grep",
+        "academic_get_papers"
+      ],
+      "first_tool": "parallel_research_search",
+      "parallel_search": {
+        "status": "ok",
+        "search_mode": "three_channel_parallel",
+        "query_profile": {
+          "language": "en",
+          "categories": [
+            "academic"
+          ],
+          "searxng_engines": [
+            "arxiv",
+            "semantic scholar",
+            "openairepublications",
+            "pubmed",
+            "europepmc",
+            "brave"
+          ]
+        },
+        "attempted_providers": [
+          "open-websearch",
+          "public",
+          "searxng",
+          "aminer"
+        ],
+        "completed_providers": [
+          "public",
+          "searxng",
+          "aminer"
+        ],
+        "partial_failures": [
+          {
+            "provider": "searxng",
+            "engine": "arxiv",
+            "error": "Suspended: timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "brave",
+            "error": "Suspended: timeout"
+          },
+          {
+            "provider": "searxng",
+            "engine": "openairepublications",
+            "error": "Suspended: timeout"
+          }
+        ],
+        "channel_summary": {
+          "web_candidates": 12,
+          "academic_candidates": 12,
+          "unique_candidates": 24,
+          "cross_channel_matches": 0
+        },
+        "result_count": 24,
+        "provider_result_counts": {
+          "public": 8,
+          "searxng": 4,
+          "aminer": 12
+        },
+        "engine_result_counts": {
+          "pubmed": 2,
+          "europepmc": 2
+        },
+        "searxng_result_count": 4,
+        "cross_channel_matches": 0,
+        "top10_alias_matches": 10,
+        "searxng_examples": [
+          {
+            "title": "Quantum coherence and interference of a single moiré exciton in nano-fabricated twisted monolayer semiconductor heterobilayers.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/38851776",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "pubmed"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Strain-Controlled Atomic Reconstruction and Quasi-1D Excitons in Moiré Heterostructures.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42139469",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "pubmed"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Cathodoluminescence from interlayer excitons in a 2D semiconductor heterobilayer.",
+            "url": "https://europepmc.org/article/MED/39158548",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          },
+          {
+            "title": "Electrically tunable ultrafast dynamics and interactions of hybrid excitons in a 2D semiconductor bilayer.",
+            "url": "https://europepmc.org/article/MED/41315186",
+            "providers": [
+              "searxng"
+            ],
+            "search_engines": [
+              "europepmc"
+            ],
+            "cross_channel_match": false
+          }
+        ],
+        "top5": [
+          {
+            "title": "From moiré electrons and holes to moiré excitons in two-dimensional semiconductor heterobilayers",
+            "url": "https://doi.org/10.1088/2053-1583/ae6876",
+            "providers": [
+              "public"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Quantum coherence and interference of a single moiré exciton in nano-fabricated twisted monolayer semiconductor heterobilayers.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/38851776",
+            "providers": [
+              "searxng"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Moiré superlattices and interlayer excitons in transition metal dichalcogenide heterobilayers",
+            "url": "https://doi.org/10.70675/91801e2bzd1cfz42daz829dz774dad724609",
+            "providers": [
+              "public"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Strain-Controlled Atomic Reconstruction and Quasi-1D Excitons in Moiré Heterostructures.",
+            "url": "https://www.ncbi.nlm.nih.gov/pubmed/42139469",
+            "providers": [
+              "searxng"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          },
+          {
+            "title": "Prolonged dephasing time of ensemble of moiré-trapped interlayer excitons in WSe2-MoSe2 heterobilayers",
+            "url": "https://doi.org/10.21203/rs.3.rs-2801088/v1",
+            "providers": [
+              "public"
+            ],
+            "content_level": null,
+            "source_tier": "authoritative"
+          }
+        ]
+      },
+      "academic_get_papers_calls": 1
+    }
+  ],
+  "concurrency": {
+    "child_count": 3,
+    "overlap_seconds_all_children": 85.257,
+    "start_spread_seconds": 0.214
+  },
+  "academic_ledger": {
+    "calls": 15,
+    "succeeded": 15,
+    "failed": 0
+  },
+  "acceptance": {
+    "three_research_explorers_completed": true,
+    "children_overlapped": true,
+    "parallel_search_was_first_tool": true,
+    "all_three_channels_attempted": true,
+    "all_classified_academic": true,
+    "searxng_contributed_every_case": true,
+    "top10_alias_precision": 0.967,
+    "cross_channel_matches": 2,
+    "unique_candidates": 64,
+    "median_parallel_result_count": 22
+  },
+  "cleanup": {
+    "owned_runs": 4,
+    "account_removed": true
+  }
+}

@@ -163,6 +163,7 @@ async def test_ocr_options_and_config_options_permissions(
         "paddleocr_api_opts",
         "remote_skill_source_policy",
         "aminer_api_opts",
+        "web_search_opts",
     }
     assert all("deepseek" not in item["key"] for item in configs)
     official = next(item for item in configs if item["key"] == "mineru_official_api_opts")

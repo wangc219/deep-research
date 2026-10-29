@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="47.848" timestamp="2026-10-25T15:41:11.217764+08:00" hostname="60a5356f1608"><testcase classname="test.integration.api.test_native_deep_models_live" name="test_native_deep_message_reaches_worker_transcript_and_usage" time="10.630" /><testcase classname="test.integration.api.test_wxchannels_live" name="test_personal_audio_to_docx_download_and_import" time="14.673"><failure message="AssertionError: {'id': 'fdfcfe0844744aec97e33574e101d1b5', 'status': 'failed', 'progress': 100.0, 'message': '任务执行失败', ...}&#10;assert 'failed' == 'success'&#10;  &#10;  - success&#10;  + failed">test/integration/api/test_wxchannels_live.py:139: in test_personal_audio_to_docx_download_and_import
+    assert task["status"] == "success", task
+E   AssertionError: {'id': 'fdfcfe0844744aec97e33574e101d1b5', 'status': 'failed', 'progress': 100.0, 'message': '任务执行失败', ...}
+E   assert 'failed' == 'success'
+E     
+E     - success
+E     + failed</failure></testcase><testcase classname="test.integration.api.test_wxchannels_live" name="test_oneclick_packages_include_pairing_and_platform_programs" time="2.404" /><testcase classname="test.integration.api.test_sandbox_workspace_delivery" name="test_sandbox_to_workspace_preview_edit_and_zip[chat]" time="8.299" /><testcase classname="test.integration.api.test_sandbox_workspace_delivery" name="test_sandbox_to_workspace_preview_edit_and_zip[deep]" time="10.600" /></testsuite></testsuites>

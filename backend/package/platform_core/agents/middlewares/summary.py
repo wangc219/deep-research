@@ -40,7 +40,12 @@ _DEFAULT_SUMMARY_TOOL_RESULT_LIMIT_TOKENS = 300
 _DEFAULT_TOOL_ARG_MAX_LENGTH = 2000
 _TRUNCATED_TOOL_ARG_TEXT = "...(argument truncated for context view)"
 _TOOL_RESULT_SAVED_MARKER = "deep_research_tool_result_saved"
-_ACADEMIC_SEARCH_TOOL_NAMES = {"academic_search", "academic_get_papers", "academic_get_references"}
+_ACADEMIC_SEARCH_TOOL_NAMES = {
+    "parallel_research_search",
+    "academic_search",
+    "academic_get_papers",
+    "academic_get_references",
+}
 _STRUCTURED_SEARCH_TOOL_NAMES = {"query_kb", "web_search", *_ACADEMIC_SEARCH_TOOL_NAMES}
 _SEARCH_CONTENT_KEYS = ("content", "text", "snippet", "summary")
 _SUMMARY_COMPRESSION_STATE: ContextVar[dict[str, bool] | None] = ContextVar(

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ModelProviderManagePanel from '@/components/model-management/ModelProviderManagePanel.vue'
 import AMinerSettingsCard from '@/components/model-management/AMinerSettingsCard.vue'
+import WebSearchSettingsCard from '@/components/model-management/WebSearchSettingsCard.vue'
 import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
 import EmbeddingModelSelector from '@/components/EmbeddingModelSelector.vue'
 import RerankModelSelector from '@/components/RerankModelSelector.vue'
@@ -81,6 +82,7 @@ onMounted(() => {
         </div>
       </section>
       <AMinerSettingsCard v-if="userStore.isAdmin" />
+      <WebSearchSettingsCard v-if="userStore.isAdmin" />
       <ModelProviderManagePanel ref="providerPanelRef" />
     </div>
   </div>

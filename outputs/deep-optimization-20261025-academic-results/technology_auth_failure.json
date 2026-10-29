@@ -1,0 +1,18 @@
+{
+  "case": "technology_auth_failure",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "围绕长序列推理显存瓶颈比较稀疏注意力与 FlashAttention 的解决路径，结合公开证据，200字内。",
+  "tool_calls": [],
+  "http_requests": [],
+  "model_requests": 1,
+  "web_calls": 0,
+  "cost_cents": 0,
+  "root_budget_shared": true,
+  "seconds": 12.7,
+  "answer": "# 长序列推理显存瓶颈：稀疏注意力 vs FlashAttention\n\n**FlashAttention 侧重IO优化而非压缩**：通过分块(tiling)与kernel融合,避免将完整注意力矩阵写入HBM,使显存占用从O(N²)降至O(N),且不牺牲精度,已成为Llama等主流模型标准方案，但注意力分数矩阵的O(N²)计算量仍存在。\n\n**稀疏注意力侧重计算与存储压缩**：通过top-k、局部窗口或模式/学习式稀疏，将O(N²)复杂度降为O(N·logN)或O(N)，可支持超长上下文（如百万token），但动态稀疏索引(如top-k)在推理时难以高效部署，且可能损失长程依赖精度。\n\n**综合判断**：显存层面，FlashAttention的O(N)占用即可缓解主瓶颈，成熟度高、无精度代价；稀疏注意力适用于极端超长上下文场景，但工程与精度开销较大，两者可组合（FlashAttention做稠密基础核+稀疏做超长分段）。",
+  "tool_results": [],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

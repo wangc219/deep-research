@@ -1,0 +1,24 @@
+deepquest-api-1 8.64% 1.599GiB / 7.44GiB
+deepquest-equipment-query-worker-1 0.00% 90.14MiB / 7.44GiB
+deepquest-equipment-worker-1 0.00% 98.02MiB / 7.44GiB
+deepquest-web-1 0.00% 5.156MiB / 7.44GiB
+deepquest-worker-1 1.07% 468.3MiB / 7.44GiB
+deepquest-sandbox-provisioner-1 0.10% 12.32MiB / 7.44GiB
+deepquest-milvus-1 5.59% 283.7MiB / 7.44GiB
+deepquest-document-research-1 0.15% 11.62MiB / 7.44GiB
+deepquest-document-websearch-1 0.00% 7.852MiB / 7.44GiB
+deepquest-open-websearch-1 0.00% 70.23MiB / 7.44GiB
+deepquest-postgres-1 5.82% 185.9MiB / 7.44GiB
+deepquest-redis-1 0.61% 6.898MiB / 7.44GiB
+deepquest-graph-1 0.30% 408.6MiB / 7.44GiB
+deepquest-minio-1 0.00% 116.7MiB / 7.44GiB
+deepquest-etcd-1 0.38% 38.38MiB / 7.44GiB
+               total        used        free      shared  buff/cache   available
+Mem:            7618        4820         388          57        2770        2797
+Swap:           2047        1131         916
+procs -----------memory---------- ---swap-- -----io---- -system-- -------cpu-------
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st gu
+ 0  0 1158412 397928  63492 2773692    7   13   172   255 3313    9  8  1 91  0  0  0
+ 0  0 1158160 410412  63492 2773940   16    0    20   220 4451 5564  5  1 94  0  0  0
+ 3  0 1158060 445788  63548 2774036   72    0   172   412 4898 6292  5  1 93  1  0  0
+false 0 healthy

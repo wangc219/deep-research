@@ -1,0 +1,332 @@
+{
+  "synced_at": "2026-10-29T17:20:31.454983+08:00",
+  "server": "ubuntu@49.232.128.56",
+  "remote_root": "/opt/deep-research",
+  "local_root": "/Users/wangchen/equipment research 3",
+  "server_source_files_verified": 3461,
+  "changed_files": [
+    "backend/package/equipment_deep_research/agents/workflows/coordinator.py",
+    "backend/package/equipment_deep_research/agents/workflows/reporter.py",
+    "backend/package/equipment_deep_research/agents/workflows/reporting_support.py",
+    "backend/test/equipment_deep_research/e2e/test_resume_run.py",
+    "backend/test/equipment_deep_research/unit/test_query_domain_contract.py",
+    "backend/test/equipment_deep_research/unit/test_report_quality_gate.py",
+    "backend/test/equipment_deep_research/unit/test_responses_agent_provider.py",
+    "backend/test/equipment_deep_research/unit/test_winning_reasoning.py",
+    "backend/test/unit/agents/test_web_search_provider.py",
+    "backend/test/unit/agents/toolkits/buildin/test_ask_user_question.py",
+    "backend/test/unit/config/test_options.py",
+    "backend/test/unit/middlewares/test_subagent_task_middleware.py",
+    "backend/test/unit/permissions/test_enterprise_permission.py",
+    "backend/test/unit/services/test_agent_run_service.py",
+    "backend/test/unit/services/test_equipment_compact_reads.py",
+    "backend/test/unit/services/test_equipment_query_service.py",
+    "backend/test/unit/services/test_equipment_research_service.py",
+    "backend/test/unit/services/test_equipment_task_execution_contract.py",
+    "backend/test/unit/services/test_equipment_workbench_sync_delete.py",
+    "backend/test/unit/services/test_model_provider_service.py",
+    "backend/test/unit/services/test_model_selectors.py",
+    "backend/test/unit/services/test_tool_service.py",
+    "backend/test/unit/services/test_web_search_coordinator.py",
+    "backend/test/unit/services/test_wechat_mp_assets.py",
+    "backend/wechat_mp/README.md",
+    "web/src/apis/equipment_api.js",
+    "web/src/stores/equipment.js",
+    "web/src/views/equipment/EquipmentCapabilitiesView.vue",
+    "web/src/views/equipment/EquipmentDeepThinkingView.vue",
+    "web/src/views/equipment/EquipmentReportsView.vue",
+    "web/test/unit/agentRequestQueue.test.js",
+    "web/test/unit/api_boundary.test.js",
+    "web/test/unit/chatStartScreen.test.js",
+    "web/test/unit/equipmentCapabilitiesViewIntegration.test.js",
+    "web/test/unit/equipmentStore.test.js",
+    "web/test/unit/loginRegistration.test.js",
+    "web/test/unit/toolApproval.test.js",
+    "tests/equipment_deep_research/unit/test_winning_reasoning.py"
+  ],
+  "changed_count": 38,
+  "backup": "/Users/wangchen/equipment research 3/.migration-backup/server-sync-20261029-172029",
+  "source_mismatch_count": 0,
+  "policy": "server source authoritative; local-only files retained; no server mutation; secrets and runtime data excluded",
+  "backup_verified_files": 38,
+  "verification": {
+    "checked_at": "2026-10-29T17:22:37.473038+08:00",
+    "source_files_verified": 3461,
+    "source_mismatches": 0,
+    "server_source_unchanged": true,
+    "containers_unchanged": 20,
+    "containers": {
+      "/deepquest-web-1": {
+        "id": "a33f7d9d07db8a951d0f74b5602f55dcef40b84b12de924dcd3efaaa518a520e",
+        "image": "sha256:23861a53e9af7eb05238d3bdfe79c4c942600170dd7cf40d6c7d0a0cbf6b03d4",
+        "started_at": "2026-10-29T08:11:30.456875124Z",
+        "running": true,
+        "health": null
+      },
+      "/deepquest-api-1": {
+        "id": "0e33006d3e5ab653ff70c6f90688e2a8632a271cb1fde32ad5a4786d5d6478f5",
+        "image": "sha256:a5c2bedef693d2776a1d39be976799752be17b60b4c8f82ef2ba1483c932eabd",
+        "started_at": "2026-10-29T08:05:00.940160179Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-worker-1": {
+        "id": "2a1d7981b769b719ceae6a7f2748e41ee68b2efc87991aa3f3fc9799963e457c",
+        "image": "sha256:2280e1128a7dda1302a519853649de25a7d825890a761097b928d7fbe8af5cff",
+        "started_at": "2026-10-29T06:09:52.962454199Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-equipment-worker-1": {
+        "id": "3827614452c640961b9a25f401d2cb28a9073ac47a32802cd8cc2698ca607b7e",
+        "image": "sha256:2280e1128a7dda1302a519853649de25a7d825890a761097b928d7fbe8af5cff",
+        "started_at": "2026-10-29T06:09:52.964742773Z",
+        "running": true,
+        "health": null
+      },
+      "/deepquest-equipment-query-worker-1": {
+        "id": "0bd8e50741a75719de8cc91639024305d4639234f39b33aa865e6f763353fd1b",
+        "image": "sha256:b044d597661028bcce9f8b6d1920dfaf4fa43715545643754951ec3c0bdb2d49",
+        "started_at": "2026-10-29T04:31:49.200989339Z",
+        "running": true,
+        "health": null
+      },
+      "/deepquest-chat-worker-1": {
+        "id": "6f87f380c0aa725cc6963ba827437d14a921d2ae6d4e47b067c34c1c65438d80",
+        "image": "sha256:b044d597661028bcce9f8b6d1920dfaf4fa43715545643754951ec3c0bdb2d49",
+        "started_at": "2026-10-29T04:31:22.907852597Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-subagent-worker-1": {
+        "id": "5043ee9aafb4c64631df73446deccd6a0654b020f312475d748c4a04120863fb",
+        "image": "sha256:b044d597661028bcce9f8b6d1920dfaf4fa43715545643754951ec3c0bdb2d49",
+        "started_at": "2026-10-29T04:31:22.922007Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-deep-worker-1": {
+        "id": "3292c5130f90db8591ddef84a22a6fff73e3439a775e5c9273798f260cf0a13e",
+        "image": "sha256:b044d597661028bcce9f8b6d1920dfaf4fa43715545643754951ec3c0bdb2d49",
+        "started_at": "2026-10-29T04:31:22.9234152Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-sandbox-provisioner-1": {
+        "id": "fc3c45b2e698c8a2373a69e51e0de4afcb4a28d243a68e8dc4e7150e2e727573",
+        "image": "sha256:14f1ba19f20e35d54b94946d26f568d408cf47378ca14278227ba77863a5f13c",
+        "started_at": "2026-10-29T04:01:39.713105354Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-milvus-1": {
+        "id": "39d52f8eac46ebdf01c218343f5f23bb07d05635d86fcf83f874991b4c61d309",
+        "image": "sha256:fe39aa0fa006be4825a177b6b41393465deece910351c33a58170444265c63d8",
+        "started_at": "2026-10-29T04:01:25.808365152Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-postgres-1": {
+        "id": "9320b70726b42d1fb52d88863cf7c0f724aeaa21ba2f7c1c9033f68fbe543ba8",
+        "image": "sha256:1beaa3084eee2676f20a9cd9928f0bf2c5bf674f8e49f81017912183d377c61c",
+        "started_at": "2026-10-29T04:01:25.111378743Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-searxng-1": {
+        "id": "917a01819a01f051ad4a80204a57db0eafe14bdb85289931d820b1bd16e07eea",
+        "image": "sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1",
+        "started_at": "2026-10-29T04:01:25.122194771Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-redis-1": {
+        "id": "03bb25136019455762fecd4f8e859803aea6f6164cc5cc79eaa836fe50997d7f",
+        "image": "sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2",
+        "started_at": "2026-10-29T04:01:25.122817477Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-graph-1": {
+        "id": "fc7023ad7d0dff248a40d040f1f37696ffa1f0b271685a0feefa7a56f32bf5d4",
+        "image": "sha256:89d577f2e49606de76441eca8cf7a0fe88e594cbaac4d2a3d86c6e59676e2b1e",
+        "started_at": "2026-10-29T04:01:25.103257534Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-minio-1": {
+        "id": "fccfcc3ac7edc1c9a1dc83d285443788070c6328aaa6e2c72131e77e7b642471",
+        "image": "sha256:6d770d7f255cda1f18d841ffc4365cb7e0d237f6af6a15fcdb587480cd7c3b93",
+        "started_at": "2026-10-29T04:01:25.088189796Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-document-research-1": {
+        "id": "4b8e7252bbee783ef27856e9f1116c8b0335bd71df87919b9f6b7e78c13aeae9",
+        "image": "sha256:b197ff85d26a39716e920e77c06f4cedfbbff4b40661c03049971d2732322b10",
+        "started_at": "2026-10-29T04:01:25.124919436Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-etcd-1": {
+        "id": "eacf5aa0f775b46c4aac08565c791eb7cebfac561ab94550c340722bec272d1c",
+        "image": "sha256:89b6debd43502d1088f3e02f39442fd3e951aa52bee846ed601cf4477114b89e",
+        "started_at": "2026-10-29T04:01:25.121475181Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-document-websearch-1": {
+        "id": "9a359b2b21987667fb11eb7914ffbdfd34d393006e353df409102312e7321351",
+        "image": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "started_at": "2026-10-29T04:01:25.12381968Z",
+        "running": true,
+        "health": null
+      },
+      "/deepquest-open-websearch-1": {
+        "id": "164d1c5e736f0cd1aa6e4629d291940352e7037bd4c245d611ae500e732b2e2b",
+        "image": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "started_at": "2026-10-29T04:01:25.115153362Z",
+        "running": true,
+        "health": "healthy"
+      },
+      "/deepquest-wx-collector-1": {
+        "id": "de8f31ec6483c1c02151300f50f3b7d3eb56c5b5c35fd6a594981017f45de87f",
+        "image": "sha256:8aba8d0c77e4e3c0d9514ec515ceb3bcc15f77fdaf8be26264384085e98a4669",
+        "started_at": "2026-10-27T10:08:51.677347975Z",
+        "running": true,
+        "health": "healthy"
+      }
+    },
+    "http": {
+      "https://www.deepquest.space/": {
+        "http_status": 200,
+        "bytes": 903
+      },
+      "https://www.deepquest.space/api/system/ready": {
+        "http_status": 200,
+        "bytes": 581,
+        "readiness": {
+          "status": "ready",
+          "degraded": false,
+          "checks": {
+            "startup": {
+              "status": "ok"
+            },
+            "postgres": {
+              "status": "ok"
+            },
+            "redis": {
+              "status": "ok"
+            },
+            "worker": {
+              "status": "ok"
+            }
+          },
+          "components": {
+            "builtin_mcp_servers": {
+              "status": "ok",
+              "required": false
+            },
+            "builtin_skills": {
+              "status": "ok",
+              "required": true
+            },
+            "default_agents": {
+              "status": "ok",
+              "required": true
+            },
+            "knowledge_base": {
+              "status": "ok",
+              "required": true
+            },
+            "model_cache": {
+              "status": "ok",
+              "required": true
+            },
+            "model_providers": {
+              "status": "ok",
+              "required": true
+            },
+            "sandbox_provider": {
+              "status": "ok",
+              "required": true
+            },
+            "security_secrets": {
+              "status": "ok",
+              "required": true
+            }
+          },
+          "version": "0.7.3"
+        }
+      }
+    }
+  },
+  "validation": {
+    "frontend_lint": {
+      "status": "passed",
+      "command": "pnpm run lint:check"
+    },
+    "frontend_build": {
+      "status": "passed",
+      "command": "pnpm run build",
+      "warnings": [
+        "Existing chunks exceed 500 kB"
+      ]
+    },
+    "frontend_unit": {
+      "status": "failed",
+      "passed": 614,
+      "failed": 2,
+      "total": 616,
+      "command": "pnpm run test:unit",
+      "failures": [
+        {
+          "file": "web/test/unit/chatStartScreen.test.js",
+          "line": 49,
+          "reason": "Server test expects a public PNG background URL; server source uses the current asset implementation."
+        },
+        {
+          "file": "web/test/unit/loginRegistration.test.js",
+          "line": 30,
+          "reason": "Server test expects equipment-login-hero.png; server source imports the current WebP asset."
+        }
+      ]
+    },
+    "backend_unit": {
+      "status": "failed",
+      "passed": 88,
+      "failed": 1,
+      "total": 89,
+      "command": ".venv/bin/python -m pytest test/equipment_deep_research/unit/test_query_domain_contract.py test/equipment_deep_research/unit/test_report_quality_gate.py test/equipment_deep_research/unit/test_winning_reasoning.py -q",
+      "failures": [
+        {
+          "file": "backend/test/equipment_deep_research/unit/test_query_domain_contract.py",
+          "line": 278,
+          "expected": "provider_neutral_live_search",
+          "actual": "research_explorer_public_search"
+        }
+      ]
+    },
+    "source_diff_whitespace": {
+      "status": "passed"
+    },
+    "notes": [
+      "All failed test files and the implementation files involved match server source by SHA-256. Tests were recorded without altering the requested server baseline.",
+      "Tests ran locally. No production builds, deployments, writes or restarts were performed."
+    ]
+  },
+  "local_policy_files_added": [
+    "AGENTS.md",
+    "docs/LOCAL_DEVELOPMENT_AND_RELEASE.md"
+  ],
+  "excluded_categories": [
+    "production credentials and environment",
+    "business databases",
+    "user uploads and workspace data",
+    "generated outputs",
+    "dependency and model caches",
+    "build products",
+    "server backups and deployment scratch files",
+    "macOS metadata"
+  ]
+}

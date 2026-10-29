@@ -50,6 +50,15 @@ task_remove_env_key() {
   mv "${TASK_ENV_FILE}.tmp" "$TASK_ENV_FILE"
 }
 
+task_generate_hex() {
+  local length="$1"
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -hex "$length"
+  else
+    od -An -N "$length" -tx1 /dev/urandom | tr -d ' \n'
+  fi
+}
+
 TASK_MIGRATED=0
 for TASK_SUFFIX in "${TASK_MAPPINGS[@]}"; do
   TASK_OLD_NAME="YUXI_${TASK_SUFFIX}"
@@ -62,6 +71,14 @@ for TASK_SUFFIX in "${TASK_MAPPINGS[@]}"; do
     TASK_MIGRATED=$((TASK_MIGRATED + 1))
   fi
 done
+
+# SearXNG 只在内部网络提供 API，但仍使用独立 secret。旧部署通过官方
+# platform.sh 入口启动时在 Compose 解析前自动、幂等补全。
+TASK_SEARXNG_SECRET="$(task_read_env_value SEARXNG_SECRET)"
+if [[ ${#TASK_SEARXNG_SECRET} -lt 32 ]]; then
+  task_set_env_value SEARXNG_SECRET "$(task_generate_hex 32)"
+  TASK_MIGRATED=$((TASK_MIGRATED + 1))
+fi
 
 # The unified platform uses a product-neutral state directory. Preserve an
 # existing deployment in place and retain its historical PostgreSQL database

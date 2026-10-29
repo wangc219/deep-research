@@ -1,0 +1,20 @@
+/var/log/nginx/*.log {
+	daily
+	missingok
+	rotate 14
+	compress
+	delaycompress
+	notifempty
+	create 0640 www-data adm
+	sharedscripts
+	prerotate
+		if [ -d /etc/logrotate.d/httpd-prerotate ]; then \
+			run-parts /etc/logrotate.d/httpd-prerotate; \
+{
+  "status": "deployed",
+  "backup": "/opt/backups/deepquest-page-performance-20261029-145346",
+  "web_image": "sha256:43ba5a7e7873991727baa0b1035a76fa9c88c1c7a3752b3df62e6ae88dc1a4a4",
+  "untouched_containers": 19,
+  "source_files": 15,
+  "public_html_verified": true
+}

@@ -1,0 +1,105 @@
+{
+  "time_zone": "Asia/Shanghai",
+  "test_start": "2026-10-27T14:22:06.673209+08:00",
+  "test_end": "2026-10-27T14:28:43.898366+08:00",
+  "hardware": "4 vCPU / 16 GB",
+  "project_containers": 18,
+  "research": {
+    "seconds": 397.88,
+    "report_characters": 16292,
+    "capability_versions": 6,
+    "model_calls": [
+      {
+        "status": "completed",
+        "n": 86
+      }
+    ],
+    "portfolio_fallback_events": 0
+  },
+  "audio": {
+    "duration_seconds": 121.403,
+    "baseline_total_seconds": 48.88,
+    "mixed_total_seconds": 52.49,
+    "fixture": "7.588-second public speech fixture repeated 16 times; only WeChat audio handoff simulated",
+    "real_steps": [
+      "HTTPS upload",
+      "ARQ",
+      "SenseVoice",
+      "punctuation",
+      "DOCX",
+      "MinIO",
+      "Milvus index"
+    ]
+  },
+  "interactive": {
+    "ordinary_users": 16,
+    "chat_completed": 20,
+    "deep_short_turns_completed": 5,
+    "group_seconds": 19.838,
+    "page_probe_count": 19,
+    "page_p95_ms": 1802.4,
+    "all_page_probes_success": true
+  },
+  "mixed_resources": {
+    "budget_sample_count": 181,
+    "three_workloads_overlapping_samples": 6,
+    "peak_interactive_runs_during_asr_and_research": 20,
+    "asr_thread_budgets_during_run": [
+      1,
+      2,
+      3
+    ],
+    "minimum_available_gib": 8.33,
+    "cpu_busy_peak_percent": 99.9
+  },
+  "health_check_benchmark": {
+    "worker_old_check_seconds": 5.749,
+    "worker_old_check_exit_code": 0,
+    "worker_new_check_seconds_including_container_start": 0.776,
+    "graph_old_query_check_seconds": 2.437,
+    "graph_new_query_check_seconds": 0.829
+  },
+  "api_5xx_during_acceptance": 0,
+  "candidate_tests": {
+    "passed": 14,
+    "real_postgres_capacity_cases": 6
+  },
+  "cleanup": {
+    "test_identities_checked": 20,
+    "remaining": {
+      "accounts": 0,
+      "operation_logs": 0,
+      "agent_runs": 0,
+      "model_calls": 0,
+      "tasks": 0,
+      "knowledge": 0,
+      "knowledge_files": 0,
+      "test_projects": 0,
+      "test_equipment_capability_versions": 0,
+      "test_equipment_research_runs": 0,
+      "test_equipment_deep_sessions": 0,
+      "test_conversations": 0,
+      "test_wechat_collector_devices": 0,
+      "test_platform_request_metrics": 0,
+      "test_schemas": 0,
+      "redis_test_events": 0,
+      "test_objects": 0,
+      "synthetic_video_completion_objects": 0,
+      "test_vector_collections": 0,
+      "test_user_directories": 0,
+      "test_collection_manifests": 0,
+      "test_model_call_outbox": 0,
+      "cloud_test_output_directories": 0
+    },
+    "temporary_output_files_removed": 8,
+    "historical_synthetic_video_pairs_removed": 5,
+    "only_retained": "aggregate metrics without report body, audio, transcript or credentials"
+  },
+  "scope": "One complete research with max_rounds=1 plus real cloud ASR and 16-user short conversation load; not 16 simultaneous full long researches or an all-day soak.",
+  "measurement_notes": [
+    "P95 uses nearest rank ceil(0.95*n).",
+    "Report character count includes Markdown formatting.",
+    "Capability API returns run_id and versions keys; the initial harness counted 2 keys. Final verified capability count is 6 PostgreSQL rows before deletion.",
+    "Deleting a source research preserves capability versions by design; test-owned versions were explicitly deleted and all residual checks passed."
+  ]
+}

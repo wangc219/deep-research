@@ -1000,7 +1000,6 @@ import {
   getFloatingStatePanelMaxHeight
 } from '@/utils/statePanelLayout'
 import { AUTO_PROJECT_ID } from '@/utils/projectSelection'
-import { projectApi } from '@/apis/project_api'
 import { createSingleFlight } from '@/utils/singleFlight'
 import { createThreadForContext } from '@/utils/threadCreation'
 import {
@@ -1012,6 +1011,7 @@ import {
 } from '@/utils/agentPanelSections'
 import {
   isRunInterruptedConflict,
+  isRetryableResumeConflict,
   isThreadWaitingForUserAction,
   isToolApprovalMode,
   readToolApprovalModePreference,
@@ -2951,14 +2951,13 @@ const createThread = async (agentId, title = '新的对话', projectId = '', req
   if (!agentId) return null
 
   try {
-    const resolvedProjectId = projectId || (await projectApi.ensureEquipmentProject()).id
     const thread = await chatThreadsStore.createThread(
       agentId,
       title,
       { tool_approval_mode: currentToolApprovalMode.value },
       {
         requestId,
-        projectId: resolvedProjectId
+        projectId: projectId || undefined
       }
     )
     if (thread) {
@@ -3718,14 +3717,29 @@ const handleApprovalWithStream = async (answer) => {
     threadState.isStreaming = true
     resetOnGoingConv(threadId, { preserveRequestStreams: true })
     const requestId = createClientRequestId()
-    const runResp = await agentApi.createAgentRun({
-      query: null,
-      agent_slug: currentAgentId.value,
-      thread_id: threadId,
-      meta: { request_id: requestId },
-      resume: answer,
-      created_by_run_id: interruptedRunId
-    })
+    let runResp = null
+    const maxCleanupRetries = 5
+    for (let attempt = 0; attempt < maxCleanupRetries; attempt += 1) {
+      try {
+        runResp = await agentApi.createAgentRun({
+          query: null,
+          agent_slug: currentAgentId.value,
+          thread_id: threadId,
+          meta: { request_id: requestId },
+          resume: answer,
+          created_by_run_id: interruptedRunId
+        })
+        break
+      } catch (error) {
+        const canRetry =
+          attempt < maxCleanupRetries - 1 &&
+          isRetryableResumeConflict(error, interruptedRunId)
+        if (!canRetry) throw error
+        // interrupt/end 事件可能比 runtime cleanup 提交早一个网络往返；
+        // 复用同一 request_id 短暂重试，保持 resume 创建幂等。
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)))
+      }
+    }
     const runId = runResp?.run_id
     if (!runId) {
       throw new Error('创建 resume run 失败：缺少 run_id')
@@ -3744,6 +3758,10 @@ const handleApprovalWithStream = async (answer) => {
     }
     threadState.isStreaming = false
     threadState.replyLoadingVisible = false
+    if (isRunInterruptedConflict(error)) {
+      message.warning('当前运行仍在收尾，已恢复提问窗口，请稍后重新提交')
+      return
+    }
     handleChatError(error, 'resume')
   }
 }

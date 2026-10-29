@@ -1,0 +1,125 @@
+[
+  {
+    "path": "/knowledge",
+    "settledMs": 2100,
+    "headings": [
+      "领域知识总门户",
+      "最近研究任务",
+      "最近需求 Query"
+    ]
+  },
+  {
+    "path": "/equipment/queries",
+    "settledMs": 1826,
+    "headings": [
+      "从安全态势发现研究命题",
+      "装备需求短 Query 库"
+    ]
+  },
+  {
+    "path": "/equipment/runs",
+    "settledMs": 2939,
+    "headings": [
+      "创新为帆 探索未至之境",
+      "研究任务与运行记录"
+    ]
+  },
+  {
+    "path": "/equipment/reports",
+    "networkSettled": false,
+    "elapsedMs": 3143,
+    "headings": [
+      "研究报告",
+      "低空无人集群复杂电磁环境闭环反制装备研究",
+      "第一层：需求挖掘层——场景·战法/技术·装备能力特征",
+      "① 典型作战场景"
+    ]
+  },
+  {
+    "path": "/agent",
+    "networkSettled": true,
+    "elapsedMs": 1364,
+    "headings": [
+      "智启新境 · 探索未来"
+    ]
+  },
+  {
+    "path": "/models",
+    "networkSettled": true,
+    "elapsedMs": 2447,
+    "headings": [
+      "模型设置",
+      "系统默认模型",
+      "AMiner 学术检索",
+      "Open WebSearch × SearXNG"
+    ]
+  },
+  {
+    "path": "/agent-manage",
+    "networkSettled": false,
+    "elapsedMs": 3102,
+    "headings": [
+      "智能体管理"
+    ]
+  },
+  {
+    "path": "/workspace",
+    "networkSettled": true,
+    "elapsedMs": 2125,
+    "headings": [
+      "个人空间"
+    ]
+  },
+  {
+    "path": "/extensions",
+    "networkSettled": true,
+    "elapsedMs": 1029,
+    "headings": [
+      "智能体扩展"
+    ]
+  },
+  {
+    "path": "/dashboard",
+    "networkSettled": true,
+    "elapsedMs": 1602,
+    "headings": [
+      "数据总览",
+      "模型分布",
+      "对话 / 运行 / 工具调用分布 (TOP 5)",
+      "最常用工具 TOP 10"
+    ]
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "networkSettled": true,
+    "elapsedMs": 1841,
+    "headings": [
+      "深度追问每一处未知  持续探索每一种可能"
+    ]
+  },
+  {
+    "path": "/enterprise",
+    "networkSettled": true,
+    "elapsedMs": 1017,
+    "headings": [
+      "组织与权限管理",
+      "企业用户",
+      "部门组织架构",
+      "新建部门"
+    ]
+  },
+  {
+    "path": "/equipment/capabilities",
+    "networkSettled": false,
+    "elapsedMs": 3094,
+    "headings": [
+      "能力画像",
+      "瞬域伴航即时拒止拦截器v1",
+      "低耗散布自航拦截网v1",
+      "折叠环翼巡弋弹v1",
+      "稠密金属氢爆轰前出拦截雷v1",
+      "海雾潜跃潜伏攻击雷v1",
+      "跃迁式感知打击同拍拦截弹v1"
+    ]
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "accepted_at": "2026-10-19T20:49:51+08:00",
+  "query_id": "query-30510033-b96d-46e8-8a3a-48ffe2b07e8e",
+  "query": "低空无人集群复杂电磁环境闭环反制装备研究",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "result": "passed",
+  "total_elapsed_seconds": 448.5,
+  "runs": [
+    {
+      "agent_slug": "default-chatbot",
+      "run_id": "8229a806-9f16-4957-8f13-b276a20c6131",
+      "thread_id": "invocation_2cdbdb3a239c454fa7a0c19992bdffc8393c18d6b1afc925a2bc6",
+      "status": "completed",
+      "elapsed_seconds": 218.9,
+      "explorers": 2,
+      "audit": {
+        "web_search": 10,
+        "web_with_required_terms": 9,
+        "required_terms_ratio": 0.9,
+        "web_distinct_sources": 25,
+        "web_authoritative_sources": 9,
+        "academic_search": 3,
+        "academic_topic_hits": 1,
+        "academic_title_hits": 0,
+        "academic_get_papers": 1,
+        "aminer_failed_calls": 0,
+        "full_abstracts": [
+          {
+            "id": "61c74b535244ab9dcbe49e10",
+            "title": "An On-line Evaluation Method of Multi-Functional Radar Jamming Effect",
+            "doi": "10.1109/imcec51613.2021.9482222"
+          }
+        ]
+      },
+      "quality_checks": {
+        "completed": true,
+        "efficient_single_entry": true,
+        "two_focused_explorers": true,
+        "web_evidence_volume": true,
+        "web_source_breadth": true,
+        "authoritative_web_evidence": true,
+        "required_terms_precision": true,
+        "aminer_used": true,
+        "aminer_precise_discovery": true,
+        "full_abstract_chain": true,
+        "full_abstract_relevance": true,
+        "standalone_final_body": true,
+        "no_visible_tool_protocol": true,
+        "concrete_equipment_and_validation": true,
+        "evidence_shapes_generation": true
+      },
+      "quality_passed": true
+    },
+    {
+      "agent_slug": "deep-research",
+      "run_id": "e274c5d7-0a2e-419e-81d3-d44a5faef2d9",
+      "thread_id": "invocation_352bf88356ec78aa0db6b21a21e799a33d2b948bba2f33d10ec52",
+      "status": "completed",
+      "elapsed_seconds": 229.6,
+      "explorers": 2,
+      "audit": {
+        "web_search": 10,
+        "web_with_required_terms": 10,
+        "required_terms_ratio": 1.0,
+        "web_distinct_sources": 13,
+        "web_authoritative_sources": 2,
+        "academic_search": 5,
+        "academic_topic_hits": 0,
+        "academic_title_hits": 1,
+        "academic_get_papers": 1,
+        "aminer_failed_calls": 0,
+        "full_abstracts": [
+          {
+            "id": "627e2e145aee126c0f965fdc",
+            "title": "The Influence of Electromagnetic Interference of HPM on UAV",
+            "doi": "10.1109/icmmt52847.2021.9617977"
+          }
+        ]
+      },
+      "quality_checks": {
+        "completed": true,
+        "efficient_single_entry": true,
+        "two_focused_explorers": true,
+        "web_evidence_volume": true,
+        "web_source_breadth": true,
+        "authoritative_web_evidence": true,
+        "required_terms_precision": true,
+        "aminer_used": true,
+        "aminer_precise_discovery": true,
+        "full_abstract_chain": true,
+        "full_abstract_relevance": true,
+        "standalone_final_body": true,
+        "no_visible_tool_protocol": true,
+        "concrete_equipment_and_validation": true,
+        "evidence_shapes_generation": true
+      },
+      "quality_passed": true
+    }
+  ],
+  "regression": {
+    "related_unit_tests": "245 passed",
+    "postgres_aminer_integration": "10 passed, 10 skipped",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  }
+}

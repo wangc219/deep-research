@@ -1,0 +1,26 @@
+{
+  "window_start_utc": "2026-10-26T11:31:48.301160+00:00",
+  "observed_at_utc": "2026-10-27T11:31:55.226572+00:00",
+  "cloud_source_files_checked": 3472,
+  "cloud_files_touched_last_24h": 98,
+  "recent_files_identical_to_local": 97,
+  "preserved_local_changes": [
+    {
+      "path": "web/src/views/ExtensionsView.vue",
+      "reason": "本地保留更大的入口图标、间距和窄屏网格；运行中的前端与本地构建一致"
+    }
+  ],
+  "older_differences_outside_requested_window": [
+    "backend/server/routers/equipment_router.py",
+    "backend/test/equipment_deep_research/unit/test_responses_agent_provider.py",
+    "web/src/apis/equipment_api.js",
+    "web/src/views/equipment/EquipmentRunsView.vue"
+  ],
+  "api_runtime_files_checked": 771,
+  "api_runtime_recent_missing_changes": [],
+  "web_current_build_files_checked": 805,
+  "web_current_build_missing": [],
+  "web_current_build_mismatch": [],
+  "local_asset_permission": "0o644",
+  "result": "本地已包含近一天云端代码改动；保留本地后续修改"
+}

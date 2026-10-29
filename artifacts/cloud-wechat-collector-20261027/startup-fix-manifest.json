@@ -1,0 +1,6 @@
+{
+  "docker/wx-collector/rootfs/usr/local/bin/wx-ensure-proxy": "7f85deda8fb0ced9e4256e19ae3209b1a8c80b8c9a52903c9c3e41727c88f41d",
+  "docker/wx-collector/rootfs/usr/local/bin/wx-start-wechat": "504df96114dee1e6ed77a0456b48f594acc14492fb6512349d09412ec9195a75",
+  "scripts/build-cloud-wechat.sh": "7c4542f66d91aca205fdce5cfdfffa2d5e85944aab5adc6b78597070dba36ff6",
+  "docs/VIDEO_CHANNELS.md": "ed994eb2062fdd14e6763c343edc6e7b717bd1d3f732c9c45d63975255011ff3"
+}

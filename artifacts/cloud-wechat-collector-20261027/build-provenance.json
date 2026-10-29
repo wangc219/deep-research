@@ -1,0 +1,12 @@
+{
+  "wechat_source": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.deb",
+  "wechat_version": "4.1.13.26",
+  "architecture": "amd64",
+  "base_image": "lscr.io/linuxserver/webtop@sha256:a62457e276e56991f0d8b8c879e2cbce2ac198e4446af2773503470c5ccbd81d",
+  "collector_sha256": "eb3a5816419239b91df272c8e488d0c524fbbd8da1071a1f6e2b9bedb4bd01ac",
+  "CGO_ENABLED": "1",
+  "source_build_tags": [
+    "with_gvisor",
+    "embed_frontend_inject"
+  ]
+}

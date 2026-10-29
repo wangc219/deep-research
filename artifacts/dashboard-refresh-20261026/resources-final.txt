@@ -1,0 +1,30 @@
+2026-10-26 21:37:16 CST
+               total        used        free      shared  buff/cache   available
+Mem:            7618        3787        1041          70        3168        3830
+Swap:           2047        1174         873
+deepquest-api-1 2.07% 1014MiB / 7.44GiB
+deepquest-web-1 0.00% 8.461MiB / 7.44GiB
+deepquest-equipment-worker-1 0.00% 98.05MiB / 7.44GiB
+deepquest-equipment-query-worker-1 0.00% 89.84MiB / 7.44GiB
+deepquest-worker-1 101.68% 381.7MiB / 7.44GiB
+deepquest-sandbox-provisioner-1 0.10% 16.27MiB / 7.44GiB
+deepquest-milvus-1 4.44% 251.6MiB / 7.44GiB
+deepquest-document-research-1 1.35% 16.71MiB / 7.44GiB
+deepquest-document-websearch-1 0.00% 7.727MiB / 7.44GiB
+deepquest-open-websearch-1 0.00% 133.3MiB / 7.44GiB
+deepquest-postgres-1 0.27% 275.5MiB / 7.44GiB
+deepquest-redis-1 0.56% 14.06MiB / 7.44GiB
+deepquest-graph-1 0.37% 314.5MiB / 7.44GiB
+deepquest-minio-1 0.87% 94.85MiB / 7.44GiB
+deepquest-etcd-1 0.41% 42.89MiB / 7.44GiB
+/deepquest-api-1 OOM=false restarts=0
+/deepquest-worker-1 OOM=false restarts=0
+8
+16
+{
+  "fixture_name": "qa_dashboard_refresh_bd2c153546",
+  "before": 3,
+  "created": 4,
+  "after_cleanup": 3,
+  "passed": true
+}

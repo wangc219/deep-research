@@ -40,8 +40,8 @@ def _read_frontend_asset(path: str, modified: int, size: int) -> tuple[bytes, st
     return content, hashlib.sha256(content).hexdigest()[:20]
 
 
-def frontend_document() -> str:
-    """为依赖添加内容版本，浏览器可缓存资源且部署后立即换新。"""
+def frontend_document(*, can_manage_accounts: bool = False) -> str:
+    """为依赖添加内容版本，并注入当前用户的共享账号管理能力。"""
     content, _ = frontend_asset("index.html")
 
     def versioned(match):
@@ -49,16 +49,28 @@ def frontend_document() -> str:
         _, version = frontend_asset(match[2])
         return f'{match[1]}{match[2]}?v={version}"'
 
-    return re.sub(
+    document = re.sub(
         r'((?:src|href)="/api/wechat-mp/app/)((?:js|css)/[^"?]+)"',
         versioned,
         content.decode("utf-8"),
     )
+    capability = (
+        "<script>window.__WECHAT_MP_CAN_MANAGE_ACCOUNTS__ = "
+        f"{'true' if can_manage_accounts else 'false'};</script>"
+    )
+    return document.replace("</head>", capability + "\n</head>", 1)
 
 
 def data_root() -> Path:
     """公众号用户状态使用持久化目录，独立于参考源码。"""
     return Path(os.getenv("WECHAT_MP_DATA_ROOT", "outputs/wechat-mp")).resolve()
+
+
+def shared_account_pool_file() -> Path:
+    """返回所有公众号 Worker 共用的微信读书凭据文件。"""
+    directory = data_root() / "_shared"
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    return directory / "account_pool.json"
 
 
 def owner_key(uid: str) -> str:
@@ -139,6 +151,7 @@ async def ensure_worker(key: str) -> str:
                         }
                     },
                     "WECHAT_MP_DATA_DIR": str(directory),
+                    "WECHAT_MP_ACCOUNT_POOL_FILE": str(shared_account_pool_file()),
                     "WECHAT_MP_SOCKET": socket_path,
                     "WECHAT_MP_DESKTOP": "0",
                     "PYTHONUNBUFFERED": "1",

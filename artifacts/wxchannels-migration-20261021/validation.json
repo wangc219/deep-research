@@ -1,0 +1,28 @@
+{
+  "scope": "视频号转 DOCX 一体化迁移及云部署适配",
+  "verification": {
+    "backend_new_tests": 28,
+    "related_backend_regression_tests": 30,
+    "live_http_tests": 2,
+    "final_oneclick_http_recheck": "passed",
+    "frontend_tests": 587,
+    "frontend_lint_and_build": "passed",
+    "desktop_binary_builds": [
+      "darwin-amd64",
+      "darwin-arm64",
+      "windows-amd64",
+      "windows-arm64"
+    ],
+    "private_ssh_bridge": "passed",
+    "cpu_asr_docx_zip_and_knowledge_index": "passed with test audio at WeChat handoff",
+    "docx_visual_review": "passed"
+  },
+  "boundaries": [
+    "未部署到实际远程云服务器；已验证本地容器集成与部署配置。",
+    "未完成全新云服务器完整冷构建验收。",
+    "真实微信客户端取流、首次系统授权和新设备完整安装仍需目标环境验收。",
+    "无桌面 Linux 云服务器需要连接已登录微信的桌面采集端。"
+  ],
+  "screenshot": "oneclick-final.png",
+  "deployment_document": "docs/VIDEO_CHANNELS.md"
+}

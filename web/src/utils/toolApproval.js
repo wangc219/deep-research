@@ -84,5 +84,19 @@ export const isThreadWaitingForUserAction = (threadState) =>
   hasPendingInterruptPayload(threadState?.pendingInterrupt) ||
   threadState?.queueSnapshot?.status === 'interrupted'
 
-export const isRunInterruptedConflict = (error) =>
-  error?.response?.status === 409 && error?.response?.data?.detail?.code === 'run_interrupted'
+const getRunConflictDetail = (error) => error?.response?.data?.detail
+
+export const isRunInterruptedConflict = (error) => {
+  if (error?.response?.status !== 409) return false
+  const detail = getRunConflictDetail(error)
+  return (
+    detail?.code === 'run_interrupted' ||
+    (detail?.code === 'run_busy' && detail?.active_run_status === 'interrupted')
+  )
+}
+
+export const isRetryableResumeConflict = (error, interruptedRunId) => {
+  if (!isRunInterruptedConflict(error)) return false
+  const activeRunId = getRunConflictDetail(error)?.active_run_id
+  return !activeRunId || activeRunId === interruptedRunId
+}

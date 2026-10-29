@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-19",
+  "changes": [
+    "门户直达两类对话，统一简洁首屏与示例预填聚焦",
+    "深研默认推荐配置，开始按钮前置，可选配置折叠",
+    "深研草稿按用户与来源隔离并在标签页刷新后恢复",
+    "最近一次用户消息支持编辑后重新问答，保留原问答",
+    "鼠标悬停显示消息时间、复制和编辑图标；键盘和触屏可访问",
+    "默认项目为装备深研工作台 · 用户名，同名复用，缺失创建，旧加号名称原地迁移",
+    "服务暂不可用时保留登录状态并提供重连页"
+  ],
+  "verification": {
+    "frontend_unit_tests": 574,
+    "frontend_lint": "passed",
+    "frontend_build": "passed_with_existing_large_chunk_warning",
+    "backend_project_unit_tests": 23,
+    "backend_project_http_integration_tests": 2,
+    "postgres_concurrent_create_requests": 6,
+    "backend_targeted_ruff": "passed",
+    "backend_targeted_format": "passed",
+    "local_chat_and_deep_sandbox": "passed",
+    "cloud_chat_and_deep_sandbox": "passed"
+  },
+  "sandbox_scope": [
+    "真实沙盒文件写入与读取",
+    "命令执行并持久化相对路径文件",
+    "真实HTTP预览、编辑保存及ZIP下载",
+    "无认证和路径穿越拒绝",
+    "重建沙盒后文件保留",
+    "深研分支继承文件"
+  ],
+  "ui_cloud_deployment": "本轮未部署云端界面；云端沙盒检查使用当前在线服务",
+  "browser_verification": {
+    "smart_chat_first_response": "passed",
+    "smart_chat_edit_and_resend": "passed",
+    "cancel_edit_restores_draft": "passed",
+    "deep_prompt_prefill": "passed",
+    "final_hover_and_responsive": "passed",
+    "deep_first_response": "passed",
+    "deep_edit_and_resend": "passed",
+    "deep_default_project": "装备深研工作台 · Hitsz504",
+    "deep_draft_survives_reload_and_login": "passed",
+    "shared_message_hover_hidden_opacity": 0,
+    "shared_message_hover_visible_opacity": 1,
+    "mobile_widths": [
+      320,
+      390
+    ],
+    "mobile_send_button_within_viewport": "passed",
+    "light_and_dark_theme": "passed",
+    "portal_direct_navigation": "passed",
+    "connection_recovery_returns_original_route": "passed",
+    "development_restart_transient_network_errors": "observed; login-preservation regression fixed and tested"
+  },
+  "screenshots": [
+    "chat-dark.jpg",
+    "chat-desktop.jpg",
+    "chat-mobile.jpg",
+    "connection-recovery.jpg",
+    "deep-dark.jpg",
+    "deep-desktop.jpg",
+    "deep-hover.jpg",
+    "deep-mobile.jpg",
+    "portal.jpg",
+    "project-name-fixed.jpg"
+  ]
+}

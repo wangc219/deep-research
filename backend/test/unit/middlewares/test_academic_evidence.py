@@ -56,6 +56,46 @@ def test_topic_citation_needs_abstract_but_title_metadata_does_not(mode):
     )
 
 
+def test_parallel_discovery_paper_citation_still_requires_abstract():
+    """三渠道首轮的论文候选不能绕过摘要级证据门槛。"""
+    messages = [
+        HumanMessage("比较方法并引用论文"),
+        AIMessage(
+            "",
+            tool_calls=[
+                {
+                    "id": "parallel",
+                    "name": "parallel_research_search",
+                    "args": {"query": "radar", "academic_mode": "topic"},
+                }
+            ],
+        ),
+        ToolMessage(
+            json.dumps(
+                {
+                    "status": "ok",
+                    "results": [
+                        {
+                            "id": "paper-a",
+                            "title": "原始论文",
+                            "url": URL,
+                            "content_level": "metadata",
+                            "evidence_type": "academic",
+                        }
+                    ],
+                }
+            ),
+            tool_call_id="parallel",
+            name="parallel_research_search",
+        ),
+        AIMessage(CITE),
+    ]
+
+    update = AcademicEvidenceMiddleware().after_model({"messages": messages}, None)
+
+    assert "academic_get_papers" in update["messages"][0].text
+
+
 def test_actual_failed_abstract_attempt_can_deliver_explicit_evidence_gap():
     """真实详情失败时允许保留已取得来源并说明缺口。"""
     messages = evidence(level="partial_abstract")
@@ -116,6 +156,31 @@ def test_parent_accepts_citations_returned_by_completed_subagent():
         ),
     )
     messages = [*evidence(mode="title"), AIMessage(f'父结论{CITE}<cite source="{child_url}" type="url">2</cite>')]
+    assert middleware.after_model({"messages": messages}, None) is None
+
+
+def test_parent_accepts_citations_from_real_nested_subagent_await_result():
+    """真实 await 结构中的 result.output 来源应进入父智能体证据账本。"""
+    child_url = "https://example.org/nested-child-source"
+    middleware = AcademicEvidenceMiddleware()
+    call = {"id": "await", "name": "subagent_await", "args": {"run_id": "child"}}
+    request = type("Request", (), {"tool_call": call})()
+    middleware.wrap_tool_call(
+        request,
+        lambda _: ToolMessage(
+            json.dumps(
+                {
+                    "result": {
+                        "status": "completed",
+                        "output": f'<cite source="{child_url}" type="url">2</cite>',
+                    }
+                }
+            ),
+            tool_call_id="await",
+        ),
+    )
+    messages = [*evidence(mode="title"), AIMessage(f'父结论{CITE}<cite source="{child_url}" type="url">2</cite>')]
+
     assert middleware.after_model({"messages": messages}, None) is None
 
 

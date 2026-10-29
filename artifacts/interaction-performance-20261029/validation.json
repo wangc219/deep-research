@@ -1,0 +1,232 @@
+{
+  "status": "deployed_and_verified",
+  "scope": [
+    "Shared authenticated read coalescing for ordinary JSON/text GET/HEAD requests",
+    "Native AbortSignal semantics for explicitly cancellable reads",
+    "Independent shared polling subscriptions, no same-subscription overlap, hidden-page pause",
+    "Lazy shared Markdown and PDF rendering with loading and error states",
+    "Run detail independent metadata and tab loading",
+    "Server-side PostgreSQL and file-event merge with complete deduplicated counts",
+    "Single-request complete interaction history, expandable earlier records and lazy audit rendering"
+  ],
+  "target_run": "run-0badd47fc5231bd49a80187718ba6bb9",
+  "root_causes": [
+    "Initial page awaited a full serial scan of up to 50 event pages",
+    "Polling could begin before the initial read completed and invalidate an earlier read",
+    "Unselected evidence and winning-mechanism artifacts were eagerly downloaded",
+    "File trace projection had only 1621 distinct events while PostgreSQL plus trace contained 2480; using the file summary alone was incomplete"
+  ],
+  "browser_measurements": [
+    {
+      "elapsedMs": 2483,
+      "networkSettled": true,
+      "counts": "全部事件\n2480\n关键事件\n120\n动态实例\n19\n保存点\n13"
+    },
+    {
+      "elapsedMs": 2304,
+      "counts": "全部事件\n2480\n关键事件\n120\n动态实例\n19\n保存点\n13"
+    }
+  ],
+  "measurement_scope": "Authenticated in-app browser session, existing static-resource cache, navigation to the target detail page through networkidle and visible event data. These samples are not a universal latency SLA. The >10-second baseline is user-reported and supported by server traces of repeated serial event requests; earlier attempted scripted baseline measurements were interrupted or timed out and are not used as a numeric baseline.",
+  "actual_http_database_validation": {
+    "actual_http_postgres_validation": {
+      "True": {
+        "seconds": 1.139,
+        "events": 2480,
+        "returned_events": 120,
+        "bytes": 626203,
+        "gzip_bytes": 113241,
+        "last_sequence": 4012
+      },
+      "False": {
+        "seconds": 1.356,
+        "events": 2480,
+        "returned_events": 2480,
+        "bytes": 5812190,
+        "gzip_bytes": 816659,
+        "last_sequence": 4012
+      }
+    }
+  },
+  "public_transfer_bytes": {
+    "run_metadata": 1394,
+    "compact_interactions": 120203,
+    "complete_interactions": 878840
+  },
+  "quality": {
+    "deduplicated_event_count": 2480,
+    "latest_sequence": 4012,
+    "default_event_projection": 120,
+    "full_history_ui_verified": true,
+    "earlier_events_expanded_to": 160,
+    "all_records_remain_accessible": true,
+    "newer_dynamic_instances_preserved": 19,
+    "savepoints_preserved": 13
+  },
+  "representative_page_checks": [
+    {
+      "path": "/knowledge",
+      "settledMs": 2100,
+      "headings": [
+        "领域知识总门户",
+        "最近研究任务",
+        "最近需求 Query"
+      ]
+    },
+    {
+      "path": "/equipment/queries",
+      "settledMs": 1826,
+      "headings": [
+        "从安全态势发现研究命题",
+        "装备需求短 Query 库"
+      ]
+    },
+    {
+      "path": "/equipment/runs",
+      "settledMs": 2939,
+      "headings": [
+        "创新为帆 探索未至之境",
+        "研究任务与运行记录"
+      ]
+    },
+    {
+      "path": "/equipment/reports",
+      "networkSettled": false,
+      "elapsedMs": 3143,
+      "headings": [
+        "研究报告",
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "第一层：需求挖掘层——场景·战法/技术·装备能力特征",
+        "① 典型作战场景"
+      ]
+    },
+    {
+      "path": "/agent",
+      "networkSettled": true,
+      "elapsedMs": 1364,
+      "headings": [
+        "智启新境 · 探索未来"
+      ]
+    },
+    {
+      "path": "/models",
+      "networkSettled": true,
+      "elapsedMs": 2447,
+      "headings": [
+        "模型设置",
+        "系统默认模型",
+        "AMiner 学术检索",
+        "Open WebSearch × SearXNG"
+      ]
+    },
+    {
+      "path": "/agent-manage",
+      "networkSettled": false,
+      "elapsedMs": 3102,
+      "headings": [
+        "智能体管理"
+      ]
+    },
+    {
+      "path": "/workspace",
+      "networkSettled": true,
+      "elapsedMs": 2125,
+      "headings": [
+        "个人空间"
+      ]
+    },
+    {
+      "path": "/extensions",
+      "networkSettled": true,
+      "elapsedMs": 1029,
+      "headings": [
+        "智能体扩展"
+      ]
+    },
+    {
+      "path": "/dashboard",
+      "networkSettled": true,
+      "elapsedMs": 1602,
+      "headings": [
+        "数据总览",
+        "模型分布",
+        "对话 / 运行 / 工具调用分布 (TOP 5)",
+        "最常用工具 TOP 10"
+      ]
+    },
+    {
+      "path": "/equipment/deep-thinking",
+      "networkSettled": true,
+      "elapsedMs": 1841,
+      "headings": [
+        "深度追问每一处未知  持续探索每一种可能"
+      ]
+    },
+    {
+      "path": "/enterprise",
+      "networkSettled": true,
+      "elapsedMs": 1017,
+      "headings": [
+        "组织与权限管理",
+        "企业用户",
+        "部门组织架构",
+        "新建部门"
+      ]
+    },
+    {
+      "path": "/equipment/capabilities",
+      "networkSettled": false,
+      "elapsedMs": 3094,
+      "headings": [
+        "能力画像",
+        "瞬域伴航即时拒止拦截器v1",
+        "低耗散布自航拦截网v1",
+        "折叠环翼巡弋弹v1",
+        "稠密金属氢爆轰前出拦截雷v1",
+        "海雾潜跃潜伏攻击雷v1",
+        "跃迁式感知打击同拍拦截弹v1"
+      ]
+    }
+  ],
+  "validation": {
+    "frontend_unit_tests": {
+      "passed": 621,
+      "failed": 0
+    },
+    "backend_targeted_tests": {
+      "passed": 5,
+      "deselected": 41
+    },
+    "actual_postgres_http_route": "passed: compact and complete projections both contain the same 2480 unique events and latest sequence 4012",
+    "changed_frontend_files_eslint": "passed",
+    "backend_service_and_new_test_ruff": "passed",
+    "backend_service_and_new_test_format": "passed",
+    "production_build": "passed",
+    "candidate_static_asset_compression_and_cache_headers": "passed",
+    "old_static_assets_retained": true,
+    "readiness": "passed"
+  },
+  "deployment": {
+    "web": {
+      "status": "deployed",
+      "backup": "/opt/backups/deepquest-interaction-performance-20261029-161117",
+      "web_image": "sha256:23861a53e9af7eb05238d3bdfe79c4c942600170dd7cf40d6c7d0a0cbf6b03d4",
+      "untouched_containers": 19,
+      "source_files": 10,
+      "public_html_verified": true
+    },
+    "api": {
+      "status": "deployed",
+      "backup": "/opt/backups/deepquest-interaction-api-20261029-160323",
+      "api_image": "sha256:a5c2bedef693d2776a1d39be976799752be17b60b4c8f82ef2ba1483c932eabd",
+      "untouched_containers": 19
+    }
+  },
+  "limitations": [
+    "The thirteen representative page checks are smoke checks, not exhaustive coverage of every route, role and data volume.",
+    "Report, capability and agent-management pages rendered content while networkidle was not reached within the browser tool observation window; their elapsed observations are not completion-time claims.",
+    "A pre-existing full-project ESLint no-unused-vars issue in web/src/stores/equipment.js is outside this release; changed files passed ESLint.",
+    "Completed request results are not cached by the shared pool; account-specific authorization and fresh-response semantics are preserved."
+  ],
+  "screenshot": "run-after-verified.png"
+}

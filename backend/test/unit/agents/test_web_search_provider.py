@@ -25,6 +25,9 @@ from platform_core.agents.toolkits.buildin.tools import (
 @pytest.fixture(autouse=True)
 def isolate_provider_adapters_from_distributed_scheduler(monkeypatch):
     """适配器单测隔离 Redis；真实共享调度在独立进程集成测试中验证。"""
+    # 生产容器会注入该地址；旧路径单测必须从无 SearXNG 的确定性基线开始，
+    # 融合用例再在各自测试内显式启用，避免测试结果依赖执行机环境。
+    monkeypatch.delenv("SEARXNG_URL", raising=False)
     monkeypatch.setattr(search_module, "coordinated_search", lambda provider, arguments, call: call())
 
 
@@ -812,6 +815,309 @@ def test_queries_without_topic_do_not_call_search_backends(monkeypatch, query):
     monkeypatch.setattr(search_module, "_invoke_search_provider", invoke)
     assert _resilient_web_search("public", {"query": query})["status"] == "empty"
     invoke.assert_not_called()
+
+
+def _fusion_config(**overrides):
+    config = {
+        "adaptive_fusion_enabled": True,
+        "searxng_enabled": True,
+        "general_engines": ["brave"],
+        "chinese_engines": ["baidu", "sogou", "sogou wechat"],
+        "academic_engines": ["arxiv", "semantic scholar", "pubmed"],
+        "news_engines": ["brave.news", "reuters"],
+        "official_engines": ["brave"],
+        "min_relevant_results": 6,
+        "min_distinct_domains": 4,
+        "max_filtered_ratio_percent": 60,
+        "total_timeout_seconds": 1,
+        "searxng_timeout_seconds": 1,
+        "hedge_delay_seconds": 0.1,
+        "rrf_k": 60,
+    }
+    return {**config, **overrides}
+
+
+@pytest.mark.parametrize(
+    "query,expected_language,expected_categories,immediate",
+    [
+        ("无人机蜂群", "zh-CN", {"chinese"}, True),
+        ("无人机 swarm autonomy", "all", {"mixed"}, True),
+        ("latest radar news", "en", {"news"}, True),
+        ("radar official standard", "en", {"official"}, True),
+        ("radar signal processing", "en", {"general"}, False),
+        (
+            "photonic time crystal nonreciprocal microwave amplification",
+            "en",
+            {"academic"},
+            True,
+        ),
+        ("Moiré excitons in semiconductor heterobilayers", "en", {"academic"}, True),
+        ("Hydrodynamic electron flow in graphene", "en", {"academic"}, True),
+        ("roton-like phonon polariton dispersion in twisted alpha-MoO3", "en", {"academic"}, True),
+        ("magneto-ionic protonation control of exchange bias", "en", {"academic"}, True),
+        ("nonreciprocal magnon polarons in antiferromagnets", "en", {"academic"}, True),
+    ],
+)
+def test_fusion_query_classification_is_deterministic(query, expected_language, expected_categories, immediate):
+    profile = search_module._classify_fusion_query({"query": query}, _fusion_config())
+
+    assert profile["language"] == expected_language
+    assert expected_categories.issubset(profile["categories"])
+    assert profile["immediate_fusion"] is immediate
+    assert len(profile["engines"]) <= 8
+
+
+def test_searxng_response_normalizes_dates_failures_and_strict_custom_range():
+    payload = {
+        "results": [
+            {
+                "title": "<b>Radar drone field test</b>",
+                "url": "https://ieee.org/paper",
+                "content": "Radar drone field test evidence",
+                "publishedDate": "2025-06-15T12:00:00Z",
+                "engines": ["semantic scholar", "brave"],
+            },
+            {
+                "title": "Radar drone old field test",
+                "url": "https://ieee.org/old",
+                "content": "Radar drone field test evidence",
+                "publishedDate": "2024-12-31",
+                "engine": "brave",
+            },
+            {
+                "title": "Radar drone undated field test",
+                "url": "https://ieee.org/undated",
+                "content": "Radar drone field test evidence",
+                "engine": "brave",
+            },
+        ],
+        "unresponsive_engines": [["pubmed", "timeout"]],
+    }
+
+    result = search_module._parse_searxng_response(
+        "radar drone field test",
+        payload,
+        count=10,
+        engines=["brave", "pubmed"],
+        time_range="2025-01-01..2025-12-31",
+        sites=["ieee.org"],
+    )
+
+    assert [item["url"] for item in result["results"]] == ["https://ieee.org/paper"]
+    assert result["results"][0]["title"] == "Radar drone field test"
+    assert result["results"][0]["publish_time"].startswith("2025-06-15")
+    assert result["partial_failures"] == [{"provider": "searxng", "engine": "pubmed", "error": "timeout"}]
+
+
+def test_searxng_posts_form_with_profiles_and_search_operators(monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080/")
+    monkeypatch.setattr(search_module, "get_active_search_coordinator", lambda: None)
+    response = MagicMock()
+    response.json.return_value = {
+        "results": [
+            {
+                "title": "Radar drone field test",
+                "url": "https://ieee.org/paper",
+                "content": "Radar drone field test evidence",
+                "engine": "brave",
+            }
+        ]
+    }
+
+    with patch("httpx.Client.post", return_value=response) as post:
+        result = search_module._searxng_search(
+            "radar drone field test",
+            count=5,
+            time_range="OneWeek",
+            sites=["ieee.org"],
+            block_hosts=["spam.example"],
+            engines=["brave", "semantic scholar"],
+            language="all",
+        )
+
+    _, kwargs = post.call_args
+    assert kwargs["data"] == {
+        "q": "radar drone field test (site:ieee.org) -site:spam.example",
+        "format": "json",
+        "engines": "brave,semantic scholar",
+        "language": "all",
+        "safesearch": "0",
+        "time_range": "week",
+    }
+    assert result["provider"] == "searxng"
+
+
+def test_rrf_fusion_merges_canonical_urls_metadata_and_preserves_hard_constraints():
+    open_result = {
+        "provider": "open-websearch",
+        "results": [
+            {
+                "title": "Counter UAV test",
+                "url": "https://example.org/paper?utm_source=open",
+                "content": "counter UAV field test",
+                "search_engine": "bing",
+            }
+        ],
+    }
+    searx_result = {
+        "provider": "searxng",
+        "results": [
+            {
+                "title": "Counter UAV field test and assessment",
+                "url": "https://example.org/paper",
+                "content": "counter UAV field test with measured assessment results",
+                "search_engines": ["brave"],
+            },
+            {
+                "title": "Counter UAV field test program",
+                "url": "https://www.darpa.mil/program/counter-uav",
+                "content": "counter UAV field test program",
+                "search_engines": ["brave"],
+            },
+        ],
+    }
+
+    result = search_module._merge_fused_search_results(
+        "counter UAV field test",
+        {"count": 10, "block_hosts": ["blocked.example"]},
+        {"language": "en", "categories": ["general"], "engines": ["brave"]},
+        _fusion_config(),
+        [open_result, searx_result],
+        searxng_attempted=True,
+    )
+
+    assert result["status"] == "ok"
+    assert result["provider"] == "fusion"
+    assert result["completed_providers"] == ["open-websearch", "searxng"]
+    merged = next(item for item in result["results"] if "example.org/paper" in item["url"])
+    assert merged["title"] == "Counter UAV field test and assessment"
+    assert merged["providers"] == ["open-websearch", "searxng"]
+    assert merged["search_engines"] == ["bing", "brave"]
+    assert all(not key.startswith("_fusion_") for item in result["results"] for key in item)
+
+
+def test_plain_english_query_skips_searxng_when_open_quality_is_sufficient(monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080")
+    monkeypatch.setattr(search_module, "load_web_search_runtime_options", lambda: _fusion_config())
+    open_result = {
+        "provider": "open-websearch",
+        "status": "ok",
+        "results": [
+            {
+                "title": f"Radar drone field test result {index}",
+                "url": f"https://source{index}.example/paper",
+                "content": "radar drone field test evidence",
+            }
+            for index in range(6)
+        ],
+        "distinct_domains": 6,
+        "source_quality": {"authoritative": 0, "other": 6},
+    }
+    monkeypatch.setattr(search_module, "_legacy_resilient_web_search", MagicMock(return_value=open_result))
+    searxng = MagicMock(side_effect=AssertionError("quality gate should stop the second lane"))
+    monkeypatch.setattr(search_module, "_invoke_searxng_provider", searxng)
+
+    result = search_module._resilient_web_search("open-websearch", {"query": "radar drone field test", "count": 10})
+
+    assert result["search_mode"] == "open_only"
+    assert result["completed_providers"] == ["open-websearch"]
+    searxng.assert_not_called()
+
+
+def test_parallel_strategy_starts_both_web_lanes_for_plain_english_query(monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080")
+    monkeypatch.setattr(search_module, "load_web_search_runtime_options", lambda: _fusion_config())
+    monkeypatch.setattr(
+        search_module,
+        "_legacy_resilient_web_search",
+        lambda *_: {
+            "provider": "open-websearch",
+            "results": [
+                {
+                    "title": "Radar drone field test",
+                    "url": "https://open.example/radar",
+                    "content": "radar drone field test evidence",
+                }
+            ],
+        },
+    )
+    searxng = MagicMock(
+        return_value={
+            "provider": "searxng",
+            "results": [
+                {
+                    "title": "Radar drone field test report",
+                    "url": "https://searx.example/radar",
+                    "content": "radar drone field test report evidence",
+                }
+            ],
+        }
+    )
+    monkeypatch.setattr(search_module, "_invoke_searxng_provider", searxng)
+
+    result = search_module._resilient_web_search(
+        "open-websearch",
+        {"query": "radar drone field test", "count": 10, "_fusion_strategy": "parallel"},
+    )
+
+    assert result["search_mode"] == "parallel_fusion"
+    assert result["completed_providers"] == ["open-websearch", "searxng"]
+    searxng.assert_called_once()
+
+
+def test_immediate_fusion_keeps_open_results_when_searxng_misses_total_deadline(monkeypatch):
+    import time
+
+    monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080")
+    monkeypatch.setattr(
+        search_module,
+        "load_web_search_runtime_options",
+        lambda: _fusion_config(total_timeout_seconds=0.05, hedge_delay_seconds=0.01),
+    )
+    monkeypatch.setattr(
+        search_module,
+        "_legacy_resilient_web_search",
+        lambda *_: {
+            "provider": "open-websearch",
+            "status": "ok",
+            "results": [
+                {
+                    "title": "无人机雷达试验",
+                    "url": "https://example.org/radar",
+                    "content": "无人机雷达试验证据",
+                }
+            ],
+        },
+    )
+
+    def slow_searxng(*_args):
+        time.sleep(0.2)
+        return {"provider": "searxng", "results": []}
+
+    monkeypatch.setattr(search_module, "_invoke_searxng_provider", slow_searxng)
+    started = time.monotonic()
+    result = search_module._resilient_web_search("open-websearch", {"query": "无人机 雷达", "count": 10})
+
+    assert time.monotonic() - started < 0.15
+    assert result["status"] == "ok"
+    assert result["completed_providers"] == ["open-websearch"]
+    assert result["partial_failures"][0]["provider"] == "searxng"
+
+
+def test_disabling_adaptive_fusion_restores_legacy_path(monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080")
+    monkeypatch.setattr(
+        search_module,
+        "load_web_search_runtime_options",
+        lambda: _fusion_config(adaptive_fusion_enabled=False),
+    )
+    legacy = MagicMock(return_value={"status": "empty", "results": [], "marker": "legacy"})
+    monkeypatch.setattr(search_module, "_legacy_resilient_web_search", legacy)
+
+    result = search_module._resilient_web_search("open-websearch", {"query": "radar field test"})
+
+    assert result["marker"] == "legacy"
+    legacy.assert_called_once()
 
 
 def test_open_websearch_filters_before_count_limit():

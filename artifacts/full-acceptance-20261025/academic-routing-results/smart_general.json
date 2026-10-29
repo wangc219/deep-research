@@ -1,0 +1,18 @@
+{
+  "case": "smart_general",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "今天心情不好，给我一句简短的鼓励。",
+  "tool_calls": [],
+  "http_requests": [],
+  "model_requests": 1,
+  "web_calls": 0,
+  "cost_cents": 0,
+  "root_budget_shared": true,
+  "seconds": 2.49,
+  "answer": "给自己一点耐心，风浪总会过去，你已经比昨天更坚强了。",
+  "tool_results": [],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

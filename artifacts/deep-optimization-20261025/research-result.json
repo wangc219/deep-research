@@ -1,0 +1,27 @@
+{
+  "real_research_status": "completed",
+  "run_id": "run-63cb44f5-53f4-4a04-a52f-6cfc17abd429",
+  "report_characters": 15169,
+  "capability_versions": 2,
+  "completed_model_calls": 98,
+  "model_call_outcomes": [
+    {
+      "status": "completed",
+      "n": 98
+    },
+    {
+      "status": "failed",
+      "n": 3
+    }
+  ],
+  "s5_fallback_events": 0,
+  "valid_equipment_query": {
+    "valid_query_generation": "passed",
+    "query_published": "passed",
+    "generation_id": "qgen-79bd7f7d-386a-4074-9d8a-995eab991bb2",
+    "query_id": "query-1ddbc351-ee37-4e57-9356-ecfe1a47a8e4",
+    "query": "长期断电地下安置点自检电池应急灯自主续照研究",
+    "seconds": 8
+  },
+  "initial_maintenance_query": "rejected_by_domain_validation_not_counted_as_passed"
+}

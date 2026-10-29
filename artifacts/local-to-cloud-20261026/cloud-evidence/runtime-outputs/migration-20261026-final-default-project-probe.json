@@ -1,0 +1,10 @@
+{
+  "default_project_created_on_entry": true,
+  "run_deep_and_query_same_owned_project": true,
+  "real_query_completed": true,
+  "query_source": "agent",
+  "successful_model_calls": 1,
+  "manual_project_rename_keeps_identity": true,
+  "owned_projects": 1,
+  "cleanup": "passed"
+}

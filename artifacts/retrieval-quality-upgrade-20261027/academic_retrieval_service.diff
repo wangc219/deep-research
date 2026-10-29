@@ -1,0 +1,192 @@
+--- before/services/academic_retrieval_service.py
++++ services/academic_retrieval_service.py
+@@ -27,11 +27,15 @@
+ 提取简短科研关键词，必要时分别使用中英文检索词。
+ 用户要求论文证据或研究依据时，必须实际检索后再回答，不得只凭模型记忆直接生成带论文依据的结论；简短回答也适用。
+ 仅发送公开科研概念；不要把完整会话、内部文档、客户或项目名称、能力画像原文发送给 AMiner。
+-已知论文标题使用 mode=title；主题发现使用 mode=topic。
++已知论文标题使用 mode=title；标准索引术语使用 mode=topic。
++罕见术语、新命名、跨学科问题优先用 mode=semantic，保留公开研究对象、方法与关键约束的简短自然语言问题；
++语义接口每页约 ¥0.30，按共享预算记账，固定每页最多 10 条。any_terms 可传经来源确认的名称/中英文别名（组内任选其一）；
++不要凭空杜撰别名或把待证结论当过滤条件。语义分页只用 query_coverage 返回的 next_cursor，不猜页码。
++受控主题词空命中会尝试同一短语的免费标题发现；依然为空时针对具体缺口改用语义搜索或来源证实的英文别名。
+ 详情仅使用实际检索返回的 AMiner id；arXiv 编号、DOI、URL 均不能代替该 ID。只有编号时先查准确标题再定位。
+ 同名论文必须核对作者、年份和发表 venue，不能把第一个标题命中直接认定为目标论文。
+ 技术检索先将问题拆成公开的技术对象、方法和约束，避免把整段问题作为关键词。
+-每个不同检索词都单独占用额度。首次主题发现仅使用一个由 2-6 个标准学术术语组成的简短查询，不携带 related_queries，
++每个不同检索词都单独占用额度。标准主题词检索首次使用一个由 2-6 个术语组成的简短查询；新命名/跨学科问题用 semantic，不携带 related_queries，
+ 不并行发起多个学术检索。首次主题检索为空时，先从论文出版页或 DOI 入口找到一篇相关论文的准确标题，
+ 再用 mode=title 定位，不连续堆叠同义词。
+ 只在首次已有命中但仍存在明确互补缺口时，才可用 related_queries 提供最多两个补充检索词；不要机械凑满。
+@@ -90,31 +94,9 @@
+ 
+ def _topic_title_fallback(query: str) -> str:
+     """把空命中的主题词压缩为免费标题接口可识别的核心技术短语。"""
+-    value = query.casefold()
+-    value = re.sub(r"\b(?:counter|anti)[-\s]*(?:drone|uas|uav)s?\b", " uav ", value)
+-    value = re.sub(r"\bunmanned\s+aerial\s+vehicles?\b|\bdrones?\b|\buas\b", " uav ", value)
+-    value = re.sub(r"[-_/]+", " ", value)
+-    ignored = {
+-        "anti",
+-        "counter",
+-        "countermeasure",
+-        "countermeasures",
+-        "defense",
+-        "system",
+-        "systems",
+-        "solid",
+-        "state",
+-        "technology",
+-        "technologies",
+-        "weapon",
+-        "weapons",
+-    }
+-    terms = []
+-    for term in re.findall(r"[a-z0-9]+", value):
+-        if len(term) < 2 or term in ignored or term in terms:
+-            continue
+-        terms.append(term)
+-    return " ".join(terms[:5]) if 3 <= len(terms) <= 8 else ""
++    value = " ".join(query.split()).strip('"')
++    # 免费接口按标题短语匹配；保留新命名，不做领域替换或截掉身份词。
++    return value if 1 <= len(value.split()) <= 8 and len(value) <= 160 else ""
+ 
+ 
+ def _compact_topic_query(query: str) -> str:
+@@ -207,29 +189,46 @@
+         order: str = "relevance",
+         page: int = 1,
+         related_queries: list[str] | None = None,
++        cursor: str | None = None,
++        any_terms: list[str] | None = None,
+     ) -> dict:
+         """有界联合检索，交错保留各角度候选，补证失败时保留已有论文。"""
++        if mode == "semantic" and (page != 1 or (cursor and related_queries)):
++            return self._result(
++                {"status": "invalid_request", "message": "语义翻页只使用返回的 cursor，不混合补充查询或页码"}
++            )
+         queries = []
+         requested_queries: dict[str, str] = {}
+         for value in [query, *(related_queries or [])]:
+             value = " ".join(value.split())
+-            effective = _compact_topic_query(value) if mode != "title" else value
++            effective = _compact_topic_query(value) if mode == "topic" else value
+             if effective and effective.casefold() not in {existing.casefold() for existing in queries}:
+                 queries.append(effective)
+                 requested_queries[effective.casefold()] = value
+-        endpoint = "title_search" if mode == "title" else "search"
++        endpoint = {"title": "title_search", "semantic": "semantic_search"}.get(mode, "search")
+         responses, coverage, groups, errors = [], [], [], []
+         for term in queries:
+             payload = {"page": min(page, 10) if mode == "title" else page - 1, "size": limit}
+             payload["title" if mode == "title" else "keyword"] = term
+             if mode != "title" and order != "relevance":
+                 payload["order"] = "year" if order == "recent" else "n_citation"
++            if mode == "semantic":
++                payload = (
++                    {"cursor": cursor}
++                    if cursor
++                    else {
++                        "query": term,
++                        "query_type": "auto",
++                        "sort": {"cited": "citation"}.get(order, order),
++                        **({"any_terms": any_terms} if any_terms else {}),
++                    }
++                )
+             found = await self._request(endpoint, payload)
+             responses.append(found)
+             candidates = [
+                 {**normalize_paper(item, retrieved_at=found.get("retrieved_at")), "matched_queries": [term]}
+                 for item in found.get("data", [])
+-                if isinstance(item, dict) and (item.get("id") or item.get("_id"))
++                if isinstance(item, dict) and (item.get("id") or item.get("_id") or item.get("paper_id"))
+             ][:limit]
+             total = found.get("total")
+             more = total > page * limit if isinstance(total, int) else len(candidates) == limit
+@@ -245,7 +244,18 @@
+                     "page": page,
+                     "returned": len(candidates),
+                     "total": total,
+-                    "next_page": page + 1 if found["status"] == "ok" and more and page < 10 else None,
++                    "next_page": page + 1
++                    if mode != "semantic" and found["status"] == "ok" and more and page < 10
++                    else None,
++                    **(
++                        {
++                            "next_cursor": found.get("next_cursor"),
++                            "total_relation": found.get("total_relation"),
++                            "warnings": found.get("warnings", []),
++                        }
++                        if mode == "semantic"
++                        else {}
++                    ),
+                 }
+             )
+             groups.append(candidates)
+@@ -257,9 +267,9 @@
+                 errors.append({**found, "endpoint": endpoint})
+                 break
+ 
+-        if mode != "title" and not errors and not any(groups) and len(queries) == 1:
++        if mode == "topic" and not errors and not any(groups) and len(queries) == 1:
+             title_fallback = _topic_title_fallback(queries[0])
+-            if title_fallback and title_fallback.casefold() != query.casefold():
++            if title_fallback:
+                 found = await self._request(
+                     "title_search",
+                     {"page": 1, "size": limit, "title": title_fallback},
+@@ -272,7 +282,7 @@
+                         "discovery_mode": "title_fallback",
+                     }
+                     for item in found.get("data", [])
+-                    if isinstance(item, dict) and (item.get("id") or item.get("_id"))
++                    if isinstance(item, dict) and (item.get("id") or item.get("_id") or item.get("paper_id"))
+                 ][:limit]
+                 groups.append(candidates)
+                 coverage.append(
+@@ -300,7 +310,7 @@
+                 summaries = [
+                     normalize_paper(item, retrieved_at=info.get("retrieved_at"))
+                     for item in info["data"]
+-                    if isinstance(item, dict) and str(item.get("id") or item.get("_id")) in ids
++                    if isinstance(item, dict) and str(item.get("id") or item.get("_id") or item.get("paper_id")) in ids
+                 ]
+                 selected = deduplicate_papers([*selected, *summaries])
+             else:
+@@ -360,7 +370,7 @@
+         papers = [
+             normalize_paper(item, retrieved_at=info.get("retrieved_at"))
+             for item in info.get("data", [])
+-            if isinstance(item, dict) and str(item.get("id") or item.get("_id")) in ids
++            if isinstance(item, dict) and str(item.get("id") or item.get("_id") or item.get("paper_id")) in ids
+         ]
+         errors = [] if info["status"] == "ok" else [{**info, "endpoint": "info"}]
+         responses = [info]
+@@ -372,7 +382,10 @@
+                     errors.append({**detail, "endpoint": "detail"})
+                     break
+                 for item in detail["data"]:
+-                    if isinstance(item, dict) and str(item.get("id") or item.get("_id")) == paper_id:
++                    if (
++                        isinstance(item, dict)
++                        and str(item.get("id") or item.get("_id") or item.get("paper_id")) == paper_id
++                    ):
+                         papers.append(normalize_paper(item, retrieved_at=detail.get("retrieved_at")))
+         result = self._result({"status": "ok"}, papers=papers)
+         obtained_ids = {paper["id"] for paper in papers}
+@@ -465,6 +478,15 @@
+                         "status": "ok",
+                         "data": data["data"],
+                         "total": data.get("total"),
++                        **(
++                            {
++                                "next_cursor": data.get("next_cursor"),
++                                "total_relation": data.get("total_relation"),
++                                "warnings": data.get("warnings", []),
++                            }
++                            if endpoint == "semantic_search"
++                            else {}
++                        ),
+                         "retrieved_at": format_utc_datetime(utc_now_naive()),
+                         "log_id": data.get("log_id"),
+                         "cached": False,

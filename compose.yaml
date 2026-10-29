@@ -61,12 +61,13 @@ x-api-worker-env: &api-worker-env
   OPEN_WEBSEARCH_URL: ${OPEN_WEBSEARCH_URL:-http://open-websearch:3210}
   OPEN_WEBSEARCH_ENGINES: ${OPEN_WEBSEARCH_ENGINES:-bing,duckduckgo}
   OPEN_WEBSEARCH_TIMEOUT_SECONDS: ${OPEN_WEBSEARCH_TIMEOUT_SECONDS:-15}
+  SEARXNG_URL: ${SEARXNG_URL:-http://searxng:8080}
   WEB_SEARCH_QUEUE_WAIT_SECONDS: ${WEB_SEARCH_QUEUE_WAIT_SECONDS:-60}
   WEB_SEARCH_MIN_INTERVAL_SECONDS: ${WEB_SEARCH_MIN_INTERVAL_SECONDS:-1.5}
   WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS: ${WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS:-300}
   # 其他环境变量
-  NO_PROXY: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
-  no_proxy: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
+  NO_PROXY: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,searxng,api.siliconflow.cn
+  no_proxy: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,searxng,api.siliconflow.cn
 
 services:
   open-websearch:
@@ -88,6 +89,35 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3210/status').then(r=>r.json()).then(x=>{if(x.status!=='ok'||x.data?.runtime!=='ready'||!x.data?.capabilities?.includes('search'))process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  searxng:
+    image: ${SEARXNG_IMAGE:-docker.io/searxng/searxng@sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1}
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_BIND_ADDRESS: 0.0.0.0
+      SEARXNG_PORT: "8080"
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in .env, or run bash scripts/platform.sh up to migrate it.}
+      SEARXNG_LIMITER: "false"
+      SEARXNG_PUBLIC_INSTANCE: "false"
+      HTTP_PROXY: ${SEARXNG_HTTP_PROXY:-}
+      HTTPS_PROXY: ${SEARXNG_HTTPS_PROXY:-}
+      NO_PROXY: localhost,127.0.0.1,searxng
+    volumes:
+      - ./configs/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/searxng:/var/cache/searxng
+    expose:
+      - "8080"
+    networks:
+      - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz | grep -qx OK"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -153,6 +183,8 @@ services:
     depends_on:
       open-websearch:
         condition: service_healthy
+      searxng:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -222,6 +254,8 @@ services:
     depends_on:
       open-websearch:
         condition: service_healthy
+      searxng:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:

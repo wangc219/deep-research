@@ -1,0 +1,57 @@
+{
+  "asset": "/assets/index-C9uN8OjQ.js",
+  "single_transfers": [
+    {
+      "compressed": false,
+      "http_version": "2",
+      "bytes": 1242249,
+      "seconds": 0.420777,
+      "ttfb_seconds": 0.159218,
+      "overall_mbps": 23.62
+    },
+    {
+      "compressed": true,
+      "http_version": "2",
+      "bytes": 375526,
+      "seconds": 0.337155,
+      "ttfb_seconds": 0.150947,
+      "overall_mbps": 8.91
+    }
+  ],
+  "four_parallel_transfers": [
+    {
+      "compressed": true,
+      "http_version": "2",
+      "bytes": 375526,
+      "seconds": 0.375272,
+      "ttfb_seconds": 0.200505,
+      "overall_mbps": 8.01
+    },
+    {
+      "compressed": true,
+      "http_version": "2",
+      "bytes": 375526,
+      "seconds": 0.34425,
+      "ttfb_seconds": 0.159434,
+      "overall_mbps": 8.73
+    },
+    {
+      "compressed": true,
+      "http_version": "2",
+      "bytes": 375526,
+      "seconds": 0.333723,
+      "ttfb_seconds": 0.160919,
+      "overall_mbps": 9.0
+    },
+    {
+      "compressed": true,
+      "http_version": "2",
+      "bytes": 375526,
+      "seconds": 0.371847,
+      "ttfb_seconds": 0.157222,
+      "overall_mbps": 8.08
+    }
+  ],
+  "parallel_seconds": 0.385,
+  "aggregate_mbps": 31.23
+}

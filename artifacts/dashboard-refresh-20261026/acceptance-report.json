@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-26",
+  "site": "https://www.deepquest.space/dashboard",
+  "deployed": true,
+  "before": [
+    {
+      "phase": "single",
+      "requests": [
+        {
+          "path": "/api/dashboard/stats",
+          "ms": 256.7,
+          "bytes": 152
+        },
+        {
+          "path": "/api/dashboard/stats/users",
+          "ms": 13.5,
+          "bytes": 4762
+        },
+        {
+          "path": "/api/dashboard/stats/tools",
+          "ms": 44.8,
+          "bytes": 875
+        },
+        {
+          "path": "/api/dashboard/stats/agents",
+          "ms": 32.7,
+          "bytes": 6643
+        },
+        {
+          "path": "/api/dashboard/stats/knowledge",
+          "ms": 11.3,
+          "bytes": 176
+        },
+        {
+          "path": "/api/dashboard/stats/model-usage",
+          "ms": 634.0,
+          "bytes": 2780
+        }
+      ]
+    },
+    {
+      "phase": "16_concurrent",
+      "count": 96,
+      "p50_ms": 211.25,
+      "p95_ms": 2705.5,
+      "max_ms": 2901.7,
+      "wall_seconds": 4.64,
+      "by_endpoint": {
+        "/api/dashboard/stats": {
+          "p95_ms": 226.5
+        },
+        "/api/dashboard/stats/users": {
+          "p95_ms": 214.3
+        },
+        "/api/dashboard/stats/tools": {
+          "p95_ms": 517.3
+        },
+        "/api/dashboard/stats/agents": {
+          "p95_ms": 1353.7
+        },
+        "/api/dashboard/stats/knowledge": {
+          "p95_ms": 2716.0
+        },
+        "/api/dashboard/stats/model-usage": {
+          "p95_ms": 2901.7
+        }
+      }
+    }
+  ],
+  "after": [
+    {
+      "phase": "single",
+      "requests": [
+        {
+          "path": "/api/dashboard/stats",
+          "ms": 173.8,
+          "bytes": 152
+        },
+        {
+          "path": "/api/dashboard/stats/users",
+          "ms": 15.2,
+          "bytes": 4762
+        },
+        {
+          "path": "/api/dashboard/stats/tools",
+          "ms": 16.5,
+          "bytes": 875
+        },
+        {
+          "path": "/api/dashboard/stats/agents",
+          "ms": 28.1,
+          "bytes": 6643
+        },
+        {
+          "path": "/api/dashboard/stats/knowledge",
+          "ms": 10.3,
+          "bytes": 176
+        },
+        {
+          "path": "/api/dashboard/stats/model-usage",
+          "ms": 88.2,
+          "bytes": 2781
+        }
+      ]
+    },
+    {
+      "phase": "16_concurrent",
+      "count": 96,
+      "p50_ms": 127.4,
+      "p95_ms": 751.8,
+      "max_ms": 1001.9,
+      "wall_seconds": 1.63,
+      "by_endpoint": {
+        "/api/dashboard/stats": {
+          "p95_ms": 478.0
+        },
+        "/api/dashboard/stats/users": {
+          "p95_ms": 378.7
+        },
+        "/api/dashboard/stats/tools": {
+          "p95_ms": 228.3
+        },
+        "/api/dashboard/stats/agents": {
+          "p95_ms": 321.7
+        },
+        "/api/dashboard/stats/knowledge": {
+          "p95_ms": 175.6
+        },
+        "/api/dashboard/stats/model-usage": {
+          "p95_ms": 1001.9
+        }
+      }
+    }
+  ],
+  "refresh": {
+    "pages": [
+      "数据总览",
+      "知识总览",
+      "资料库列表",
+      "个人空间目录"
+    ],
+    "visible_page_interval_seconds": 15,
+    "mutation_notification_debounce_ms": 500,
+    "cross_tab_notifications": true,
+    "refresh_on_focus_and_activation": true,
+    "hidden_or_inactive_pages_pause": true,
+    "task_terminal_notifications": true,
+    "background_refresh_preserves_existing_data_and_preview_edits": true,
+    "knowledge_fixture": {
+      "fixture_name": "qa_dashboard_refresh_bd2c153546",
+      "before": 3,
+      "created": 4,
+      "after_cleanup": 3,
+      "passed": true
+    },
+    "browser_created": {
+      "knowledge": "知识库使用情况\n4\n知识库总数\n94\n文件总数\n537.6\n存储容量 (MB)\n文件类型分布\n文件总数\n94\nPDF文档\n93\n98.9%\nMarkdown\n1\n1.1%",
+      "updated": "系统运行与资源使用 · 更新于 21:30:34"
+    },
+    "browser_cleaned": {
+      "knowledge": "知识库使用情况\n3\n知识库总数\n94\n文件总数\n537.6\n存储容量 (MB)\n文件类型分布\n文件总数\n94\nPDF文档\n93\n98.9%\nMarkdown\n1\n1.1%",
+      "updated": "系统运行与资源使用 · 更新于 21:32:35"
+    }
+  },
+  "docker": {
+    "cpu_cores": 4,
+    "api_workers": 2,
+    "generic_task_concurrency_before": 4,
+    "generic_task_concurrency_after": 8,
+    "arq_max_jobs": 16,
+    "container_cpu_and_memory_quotas": "no additional hard limits",
+    "memory_total_mib": 7618,
+    "memory_used_mib": 3787,
+    "memory_available_mib": 3830,
+    "used_percent": 49.7,
+    "api_and_worker_oom": false,
+    "api_and_worker_restart_count": 0
+  },
+  "validation": {
+    "frontend_tests": "602 passed",
+    "backend_tests": "21 passed",
+    "frontend_build_and_lint": "passed",
+    "backend_ruff": "passed",
+    "real_postgres_usage_comparison": {
+      "real_postgres_usage_values_identical": true,
+      "query_and_aggregation_ms": 194.1
+    },
+    "comparison_tolerance": "计数、Token、分布严格一致；累计耗时仅允许小于 0.001 ms 的浮点聚合尾差。",
+    "source_files_verified": 17,
+    "running_api_source_verified": true,
+    "previous_hashed_asset_http_status": 200,
+    "cloud_ready": "ready"
+  },
+  "scope": [
+    "并发测量从云机通过生产 HTTPS 入口，以管理员会话运行 16 路访问，每路顺序请求 6 个统计接口，共 96 次；指标是统计 API 耗时，并非浏览器整页 LCP。",
+    "新增与删除临时知识库后，页面未手动刷新即显示 3→4→3；夹具已删除。自动刷新不是服务器推送，其他客户端写入由下一轮可见页面轮询获取。",
+    "新增写操作通知只广播资源类型与更新时间，不广播记录正文或凭据。动态 API 使用 no-store，没有增加长期业务数据缓存。",
+    "两次测量使用相同接口与并发规模；实际网络与长期大任务吞吐仍随业务负载变化。"
+  ],
+  "rollback": {
+    "directory": "/var/backups/deepquest/dashboard-refresh-20261026",
+    "api_before_release": "deepquest-api:before-dashboard-refresh-20261026",
+    "api_before_sql_rollup": "deepquest-api:before-dashboard-rollup-20261026",
+    "web_before_release": "deepquest-web:before-dashboard-refresh-20261026"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "count": 12,
+  "scope": "12 个生产知识库解析、向量入库任务；使用当前管理员的私有临时知识库，不新增账户。",
+  "fixture_marker": "qa_capacity_c284c70a39b0",
+  "kb_id": "kb_6p4un77ebv",
+  "completion_seconds": 7.32,
+  "tasks_successful": 12,
+  "files_indexed": 12,
+  "retrieval_probes_successful": 3,
+  "passed": true,
+  "monitor_errors": [],
+  "peak_simultaneous_running": 12,
+  "peak_postgres_connections": 51,
+  "dashboard_under_load": {
+    "requests": 19,
+    "p50_ms": 23.9,
+    "p95_ms": 186.9,
+    "max_ms": 186.9
+  },
+  "cleanup_remaining": {
+    "tasks": 0,
+    "knowledge_libraries": 0,
+    "files": 0
+  }
+}

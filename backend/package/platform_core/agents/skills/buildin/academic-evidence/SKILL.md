@@ -1,8 +1,8 @@
 ---
 name: academic-evidence
 description: "按当前研究目标检索强相关论文与完整摘要，在需要技术实现分析时提供原理启发和证据，不限定对话范式。"
-version: "2026.10.19"
-tool_dependencies: ["web_search", "academic_search", "academic_get_papers", "academic_get_references"]
+version: "2026.10.29"
+tool_dependencies: ["web_search", "parallel_research_search", "academic_search", "academic_get_papers", "academic_get_references"]
 ---
 
 # 学术证据检索
@@ -11,9 +11,14 @@ tool_dependencies: ["web_search", "academic_search", "academic_get_papers", "aca
 需要新证据、事实核实或用户明确要求论文依据时，实际检索后再给出宣称有论文支持的结论。
 简短问题直接由当前智能体检索并作答，无需先读取深研技能、创建任务或委派子智能体。
 
-论文主路径为内置 `academic_search` → 筛选 → `academic_get_papers(full_abstract=True)`，
+调研探索员首轮使用 `parallel_research_search` 并行查询 Open WebSearch、SearXNG 与 AMiner，按 URL、DOI 和题名
+融合去重；评估首轮候选后再按证据缺口选择单路深挖。论文深挖路径为内置 `academic_search` → 筛选 →
+`academic_get_papers(full_abstract=True)`，
 必要时再用 `academic_get_references` 追溯一层。该路径共享预算、去重和证据层级。
-优先使用一个简短技术名词或准确论文标题；空命中时缩短关键词或校正标题，不叠加长句限制。
+自然语言技术问题默认使用 `academic_search(mode="precision")`，让 AMiner 官方论文问答搜索提取关键词；
+对象容易同名或主题漂移时，用 `required_term_groups` 表达组内 OR、组间 AND 的真实别名与核心概念，
+用 `boost_terms` 加权方法或条件。年份、SCI、作者、机构和 venue 用结构化字段，不拼进关键词。
+单一标准术语可用 topic，准确论文标题用 title；空命中时 precision 自动补召回，再校正标题，不叠加长句限制。
 每个 related_queries 项单独消耗额度，不机械凑满。搜索次数用尽时仍可补齐已取得论文的摘要。
 
 相关性优先于论文数量、被引量和年份。先确定用户当前需要解释的技术对象、机理或比较维度，
@@ -58,10 +63,11 @@ MCP 工具按 AMiner 账号价格计费，不属于内置论文工具的预估�
 
 ## 长尾与跨学科检索
 
-罕见术语、新命名和跨学科问题可用 academic_search(mode="semantic")；语义解析保留公开对象、方法和关键约束，
-每页约 ¥0.30，父子任务共享费用与检索账本。用实际返回的 next_cursor 翻页，不构造游标。
-any_terms 可表达来源证实的名称/中英文别名（OR）；标准索引词继续用 topic，准确论文标题用 title。
-网页 required_term_groups 为组内 OR、组间 AND；先核对别名指向同一实体，防止跨领域同名污染。
+罕见术语、新命名和跨学科问题先用 `academic_search(mode="precision")`；结果漂移时把来源确认的中英文别名
+放进同一个 required_term_groups 子组，把必须同时出现的第二概念放进另一个子组。precision 仍不足且确有
+深语义翻页价值时，再用 `mode="semantic"`；Pro 语义接口每页约 ¥0.30，父子任务共享费用与检索账本，
+只用实际返回的 next_cursor 翻页。any_terms 表达来源证实的名称/别名（OR），不构造游标或猜测别名。
+网页和 precision 的 required_term_groups 均为组内 OR、组间 AND；先核对别名指向同一实体，防止跨领域同名污染。
 聚焦证据问题默认使用有界研究模式；附件驱动、开放式、海量覆盖或需要多轮发现—深挖的长程分片，由主智能体
 在 `subagent_start` 中选择 `adaptive_long_running`。长程模式不按网页、主题/语义、标题、摘要批次或总工具调用的
 固定次数停止，而按覆盖缺口、证据冲突和边际信息增益继续；完全重复、连续无新增、外部限流、成本/执行边界或

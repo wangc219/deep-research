@@ -1,0 +1,23 @@
+{
+  "scope": "16 ordinary users, 20 real provider short chats plus five native deep turns, public HTTPS; not full reports/ASR mixed-load acceptance",
+  "identity_ids": [
+    2939,
+    2940,
+    2941,
+    2942,
+    2943,
+    2944,
+    2945,
+    2946,
+    2947,
+    2948,
+    2949,
+    2950,
+    2951,
+    2952,
+    2953,
+    2954
+  ],
+  "cleanup_errors": [],
+  "accounts_remaining": 0
+}

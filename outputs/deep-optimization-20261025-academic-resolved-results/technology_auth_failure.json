@@ -1,0 +1,101 @@
+{
+  "case": "technology_auth_failure",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "围绕长序列推理显存瓶颈比较稀疏注意力与 FlashAttention 的解决路径，结合公开证据，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "FlashAttention memory-efficient attention",
+        "mode": "topic",
+        "limit": 6
+      },
+      "id": "01a172f2fdf23aa357655d57235b36b2",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention IO-aware exact attention memory reduction linear",
+        "required_terms": [
+          "FlashAttention"
+        ]
+      },
+      "id": "01a172f30bf200ff45d3fdf16c0620f8",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "sparse attention long sequence KV cache memory bottleneck",
+        "required_terms": [
+          "sparse attention"
+        ]
+      },
+      "id": "01a172f30bf200ff45d3fdf16c0620f9",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "KV cache memory long context LLM linear attention scaling",
+        "required_terms": [
+          "KV cache"
+        ]
+      },
+      "id": "01a172f316b61c4eb3b0164d46e17174",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "6",
+        "keyword": "FlashAttention memory-efficient attention"
+      }
+    }
+  ],
+  "model_requests": 4,
+  "web_calls": 3,
+  "cost_cents": 1,
+  "root_budget_shared": true,
+  "seconds": 20.52,
+  "answer": "公网检索同样只命中同一来源，说明当前搜索证据不足。基于已有证据和领域常识给出结论，并明确标注证据缺口。\n\n## 比对结论\n\n长序列推理的显存瓶颈主要来自两部分：计算过程中的**中间注意力矩阵（O(n²)）**和自回归阶段的**KV cache（O(n·d)）**。\n\n**FlashAttention** 走\"不省算力、省中间显存\"路线，不近似、不稀疏，通过 IO-aware 分块算法（tiling + online softmax）把 O(n²) 的中间矩阵碎片化处理，从 HBM 反复读写改为片上 SRAM 内计算，显存占用从 O(n²) 降到 O(n)，且是精确注意力、精度无损<cite source=\"https://arxiv.org/abs/2205.14135\" type=\"url\">[1]</cite>。但它不降低 KV cache，长序列下 cache 仍是瓶颈。\n\n**稀疏注意力**（如局部窗口+全局锚点）改变的是计算模式，把参与计算的 token 数从 n 降到 k，从而同时缓解中间矩阵和 KV 缓存增长，可扩展到远超 FlashAttention 的长度；代价是引入近似误差，可能损失长程依赖。\n\n**结论**：两者互补而非对立。显存峰值瓶颈优先用 FlashAttention 化解；若序列长度逼近 cache 上限，则以稀疏化缩减参与 token 量。工程上常组合使用——先稀疏选 token，再对选中集合做精确分块注意力。\n\n**证据缺口**：AMiner 鉴权失败、公网仅命中 FlashAttention 原文一篇，稀疏注意力 KV cache 的定量对比（如省显存百分比、精度下降幅度）本轮未获得可追溯来源，属于领域常识性判断而非已核实数据。",
+  "tool_results": [
+    {
+      "status": "auth_failed",
+      "aminer_status": "auth_failed",
+      "query": "FlashAttention memory-efficient attention",
+      "source": "aminer",
+      "results": [],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "检索未全部完成：AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限；结果仅包含已取得的论文证据",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "FlashAttention memory-efficient attention",
+          "status": "auth_failed",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 0,
+      "omitted_candidates": 0,
+      "failed_endpoint": "search"
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

@@ -1,0 +1,383 @@
+{
+  "provider": "live AMiner",
+  "isolated_schema": true,
+  "online_configuration_modified": false,
+  "seconds": 2.2,
+  "requests": [
+    {
+      "endpoint": "title_search",
+      "status": "ok",
+      "cost_cents": 0
+    },
+    {
+      "endpoint": "info",
+      "status": "ok",
+      "cost_cents": 0
+    },
+    {
+      "endpoint": "search",
+      "status": "ok",
+      "cost_cents": 1
+    },
+    {
+      "endpoint": "search",
+      "status": "ok",
+      "cost_cents": 1
+    },
+    {
+      "endpoint": "info",
+      "status": "ok",
+      "cost_cents": 0
+    },
+    {
+      "endpoint": "info",
+      "status": "ok",
+      "cost_cents": 0
+    },
+    {
+      "endpoint": "detail",
+      "status": "ok",
+      "cost_cents": 1
+    },
+    {
+      "endpoint": "references",
+      "status": "ok",
+      "cost_cents": 10
+    }
+  ],
+  "estimated_cost_cents": 13,
+  "cases": {
+    "title": {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "Attention Is All You Need",
+      "source": "aminer",
+      "evidence_gaps": {
+        "metadata_only_ids": [
+          "6a43aca50a96f8c83cacba02"
+        ],
+        "partial_abstract_ids": [
+          "599c7987601a182cd2648373"
+        ]
+      },
+      "cached": false,
+      "message": "",
+      "total": 69,
+      "query_coverage": [
+        {
+          "query": "Attention Is All You Need",
+          "status": "ok",
+          "page": 1,
+          "returned": 2,
+          "total": 69,
+          "next_page": 2
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 2,
+      "omitted_candidates": 0,
+      "papers": [
+        {
+          "id": "599c7987601a182cd2648373",
+          "doi": "10.65215/ysbyhc05",
+          "title": "Attention is All You Need.",
+          "year": 2017,
+          "url": "https://doi.org/10.65215/ysbyhc05",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "6a43aca50a96f8c83cacba02",
+          "doi": "10.1201/9781003561460-19",
+          "title": "Attention is All You Need",
+          "year": 2025,
+          "url": "https://doi.org/10.1201/9781003561460-19",
+          "content_level": "metadata"
+        }
+      ],
+      "content_lengths": [
+        415,
+        0
+      ]
+    },
+    "technical": {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "synthetic aperture radar target recognition",
+      "source": "aminer",
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "69eeb4a39be8eb7c4bd40987",
+          "6924e71a163c01c8504e734f",
+          "676915bbae8580e7ff0580f9",
+          "693ca5fa94d1bc07b4673dce",
+          "690a08ed163c01c85079abd2"
+        ]
+      },
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "synthetic aperture radar target recognition",
+          "status": "ok",
+          "page": 1,
+          "returned": 5,
+          "total": 11,
+          "next_page": 2
+        },
+        {
+          "query": "SAR automatic target recognition",
+          "status": "ok",
+          "page": 1,
+          "returned": 5,
+          "total": 40,
+          "next_page": 2
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 10,
+      "omitted_candidates": 5,
+      "papers": [
+        {
+          "id": "69eeb4a39be8eb7c4bd40987",
+          "doi": "10.1109/tcsvt.2026.3726430",
+          "title": "Unlocking Optical Prior: Spectrum-Guided Knowledge Transfer for SAR Generalized Category Discovery",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/tcsvt.2026.3726430",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "6924e71a163c01c8504e734f",
+          "doi": "10.1109/tap.2025.3633961",
+          "title": "Adversarial Attack Method Against SAR ATR Based on Superimposed Phase Modulation",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/tap.2025.3633961",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "676915bbae8580e7ff0580f9",
+          "doi": "10.1117/1.jrs.19.016503",
+          "title": "Synthetic Aperture Radar Target Recognition Using Multi-View Feature Enhancement-Based Contrastive Clustering",
+          "year": 2025,
+          "url": "https://doi.org/10.1117/1.jrs.19.016503",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "693ca5fa94d1bc07b4673dce",
+          "doi": "10.1109/jstars.2025.3643525",
+          "title": "A Prototype-Based Semi-Supervised Learning Method for Few-Shot SAR Target Recognition",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/jstars.2025.3643525",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "690a08ed163c01c85079abd2",
+          "doi": "10.1016/j.engappai.2025.112309",
+          "title": "Synthetic Aperture Radar Target Recognition with Limited Training Data Based on Frequency-Domain-assisted Dual-Stream Attention Hierarchical Deformable Convolutional Networks",
+          "year": 2025,
+          "url": "https://doi.org/10.1016/j.engappai.2025.112309",
+          "content_level": "partial_abstract"
+        }
+      ],
+      "content_lengths": [
+        473,
+        376,
+        569,
+        458,
+        508
+      ]
+    },
+    "details": {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "cached": false,
+      "message": "",
+      "total": null,
+      "requested_paper_ids": [
+        "69eeb4a39be8eb7c4bd40987"
+      ],
+      "missing_paper_ids": [],
+      "missing_abstract_ids": [],
+      "papers": [
+        {
+          "id": "69eeb4a39be8eb7c4bd40987",
+          "doi": "10.1109/tcsvt.2026.3726430",
+          "title": "Unlocking Optical Prior: Spectrum-Guided Knowledge Transfer for SAR Generalized Category Discovery",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/tcsvt.2026.3726430",
+          "content_level": "abstract"
+        }
+      ],
+      "content_lengths": [
+        1562
+      ]
+    },
+    "references": {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "evidence_gaps": {
+        "metadata_only_ids": [
+          "5390881820f70186a0d81e95",
+          "53909f6920f70186a0e39ed6",
+          "5c5104397301396d1f0a24ff",
+          "5f92ba1691e011edb3573ba0",
+          "608bdcae91e0112fc4e65b6b"
+        ],
+        "partial_abstract_ids": []
+      },
+      "cached": false,
+      "message": "",
+      "total": null,
+      "paper_id": "69eeb4a39be8eb7c4bd40987",
+      "relation": "references",
+      "one_hop": true,
+      "papers": [
+        {
+          "id": "5390881820f70186a0d81e95",
+          "doi": "",
+          "title": "Mean Shift: A Robust Approach Toward Feature Space Analysis",
+          "year": null,
+          "url": "https://www.aminer.cn/pub/5390881820f70186a0d81e95",
+          "content_level": "metadata"
+        },
+        {
+          "id": "53909f6920f70186a0e39ed6",
+          "doi": "",
+          "title": "K-Means++: the Advantages of Careful Seeding",
+          "year": null,
+          "url": "https://www.aminer.cn/pub/53909f6920f70186a0e39ed6",
+          "content_level": "metadata"
+        },
+        {
+          "id": "5c5104397301396d1f0a24ff",
+          "doi": "",
+          "title": "OpenSARShip: A Dataset Dedicated to Sentinel-1 Ship Interpretation",
+          "year": null,
+          "url": "https://www.aminer.cn/pub/5c5104397301396d1f0a24ff",
+          "content_level": "metadata"
+        },
+        {
+          "id": "5f92ba1691e011edb3573ba0",
+          "doi": "",
+          "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+          "year": null,
+          "url": "https://www.aminer.cn/pub/5f92ba1691e011edb3573ba0",
+          "content_level": "metadata"
+        },
+        {
+          "id": "608bdcae91e0112fc4e65b6b",
+          "doi": "",
+          "title": "Emerging Properties in Self-Supervised Vision Transformers",
+          "year": null,
+          "url": "https://www.aminer.cn/pub/608bdcae91e0112fc4e65b6b",
+          "content_level": "metadata"
+        }
+      ],
+      "content_lengths": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "cache_replay": {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "synthetic aperture radar target recognition",
+      "source": "aminer",
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "69eeb4a39be8eb7c4bd40987",
+          "6924e71a163c01c8504e734f",
+          "676915bbae8580e7ff0580f9",
+          "693ca5fa94d1bc07b4673dce",
+          "690a08ed163c01c85079abd2"
+        ]
+      },
+      "cached": true,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "synthetic aperture radar target recognition",
+          "status": "ok",
+          "page": 1,
+          "returned": 5,
+          "total": 11,
+          "next_page": 2
+        },
+        {
+          "query": "SAR automatic target recognition",
+          "status": "ok",
+          "page": 1,
+          "returned": 5,
+          "total": 40,
+          "next_page": 2
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 10,
+      "omitted_candidates": 5,
+      "papers": [
+        {
+          "id": "69eeb4a39be8eb7c4bd40987",
+          "doi": "10.1109/tcsvt.2026.3726430",
+          "title": "Unlocking Optical Prior: Spectrum-Guided Knowledge Transfer for SAR Generalized Category Discovery",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/tcsvt.2026.3726430",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "6924e71a163c01c8504e734f",
+          "doi": "10.1109/tap.2025.3633961",
+          "title": "Adversarial Attack Method Against SAR ATR Based on Superimposed Phase Modulation",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/tap.2025.3633961",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "676915bbae8580e7ff0580f9",
+          "doi": "10.1117/1.jrs.19.016503",
+          "title": "Synthetic Aperture Radar Target Recognition Using Multi-View Feature Enhancement-Based Contrastive Clustering",
+          "year": 2025,
+          "url": "https://doi.org/10.1117/1.jrs.19.016503",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "693ca5fa94d1bc07b4673dce",
+          "doi": "10.1109/jstars.2025.3643525",
+          "title": "A Prototype-Based Semi-Supervised Learning Method for Few-Shot SAR Target Recognition",
+          "year": 2026,
+          "url": "https://doi.org/10.1109/jstars.2025.3643525",
+          "content_level": "partial_abstract"
+        },
+        {
+          "id": "690a08ed163c01c85079abd2",
+          "doi": "10.1016/j.engappai.2025.112309",
+          "title": "Synthetic Aperture Radar Target Recognition with Limited Training Data Based on Frequency-Domain-assisted Dual-Stream Attention Hierarchical Deformable Convolutional Networks",
+          "year": 2025,
+          "url": "https://doi.org/10.1016/j.engappai.2025.112309",
+          "content_level": "partial_abstract"
+        }
+      ],
+      "content_lengths": [
+        473,
+        376,
+        569,
+        458,
+        508
+      ]
+    }
+  }
+}

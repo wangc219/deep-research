@@ -1,0 +1,27 @@
+{
+  "stage": "local_optimization_completed_awaiting_migration_data_choice",
+  "user_instruction": "去除云服务器上面所有已经部署的项目，等本地优化完善之后整体迁移上去",
+  "cloud": "49.232.128.56",
+  "redeploy_only_after_local_completion": true,
+  "local_changes_unverified": false,
+  "deferred": [
+    "协议问题",
+    "阿里云模型",
+    "MiniMax-M2.5",
+    "Dify",
+    "Notion",
+    "智谱云知识库"
+  ],
+  "cloud_deployments_removed": true,
+  "cloud_backup": "/var/backups/deepquest/offline-before-local-optimization-20261025",
+  "local_research_report_characters": 15169,
+  "local_research_completed_model_calls": 98,
+  "local_research_s5_fallback_events": 0,
+  "source_sha256": "e5074e087f8392b1c7950d9d18ff2037a92b724c8eb217c626540581620eef9c",
+  "cloud_currently_deployed": false,
+  "migration_data_choice": "awaiting_user",
+  "report": "optimization-report.html",
+  "historical": true,
+  "superseded_by": "../local-to-cloud-20261026/progress.json",
+  "old_cloud_backup_permanently_deleted": true
+}

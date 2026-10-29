@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Shanghai",
+  "status": "implemented_and_verified_with_scope_limits",
+  "objective": "优先取得与当前技术主题强相关的完整摘要和技术内容，提高说明的证据支撑；不以工具数量或学者、机构等旁支信息作为增强效果。",
+  "decision": {
+    "paper_primary": "现有 academic_search / academic_get_papers / academic_get_references，使用 REST",
+    "reason": "三类相同请求各三轮实测，REST 与官方 MCP 返回论文 ID 和摘要一致，REST 在本机该样本的单请求中位耗时约为 MCP 的五分之一；保留现有去重、摘要层级、缓存和父子运行共享费用预算。",
+    "mcp": "官方 MCP 已连通并预置为平台内置连接，默认停用，不向普通技术检索加载 26 个工具。",
+    "mcp_management_path": "/extensions?tab=mcp",
+    "mcp_endpoint": "https://mcp.aminer.cn/mcp",
+    "mcp_transport": "streamable_http",
+    "mcp_tools_discovered": 26,
+    "duplicate_paper_tools_disabled_by_default": [
+      "search_paper", "search_paper_by_title", "get_paper_detail", "get_papers_info", "get_paper_citations"
+    ],
+    "credential_storage": "运行时读取模型设置中的现有 AMiner 凭证；MCP 表 headers 为 null，无重复密钥副本。原始 Key 复用短期 JWT；控制台 Token 直接复用，MCP 按官方要求附带 Bearer 前缀。",
+    "official_documentation": "https://www.aminer.cn/open/docs?mcp=1"
+  },
+  "transport_comparison": {
+    "file": "transport-comparison.json",
+    "method": "生产 REST 客户端与官方 MCP SDK，交替顺序，每组各三次；不使用模拟供应商响应。MCP 通过平台当前 MultiServerMCPClient 的无状态工具调用方式执行。",
+    "results": [
+      {"case": "主题搜索 FlashAttention", "rest_median_seconds": 0.205, "mcp_median_seconds": 1.0316, "identical_paper_ids": true},
+      {"case": "准确论文标题定位", "rest_median_seconds": 0.2132, "mcp_median_seconds": 0.9744, "identical_paper_ids": true},
+      {"case": "FlashAttention 完整摘要", "rest_median_seconds": 0.197, "mcp_median_seconds": 0.9663, "identical_abstracts": true, "abstract_characters": 1674}
+    ],
+    "interpretation": "MCP 是协议接入方式，本轮没有观察到不同或更完整的论文内容；不能用接入 MCP 推导召回率或说明质量自动提高。此耗时不能外推为端到端回答提速。",
+    "exploratory_nonpaper_calls": "收窄范围前也验证过学者、专利、机构三个工具能返回数据；按用户后续要求，不启用为默认研究能力。"
+  },
+  "changes": [
+    "新增轻量 academic-evidence 平台内置技能，普通对话、调研探索员、事实核查员和网页检索角色可直接获得论文工具；深研技能依赖该证据规范。",
+    "优先按研究对象、技术机制与当前问题的解释维度筛选候选；只读少量强相关完整摘要，不为数量、年份或被引量堆砌文献。",
+    "明确标题/摘要出现关键词不等于相关证据，摘要未支持的适用性、精度损失和工程外推应标注推断。",
+    "明确要求检索论文或摘要来源的中文请求，在工具可用、未检索、未禁用的条件下约束首次模型调用使用 academic_search；一般问题及明确仅用网页/不检索的请求不强制学术检索。",
+    "详情与参考文献在发送前识别被误用的 arXiv 编号、DOI 和 URL，返回 invalid_paper_id 与重新定位提示；不产生该次供应商费用，也不把误用当作 AMiner 不可用。",
+    "新增内置 MCP 的固定官方目标和凭证热读取，默认停用重复论文工具；不另存 Token。",
+    "修正新建内置 Skill 使用旧版权限格式的问题，新记录创建为现有系统所要求的 version 2。"
+  ],
+  "real_dialogue_acceptance": {
+    "environment": "本机真实 HTTP API、Worker、PostgreSQL；真实已配置模型与真实 AMiner 数据，正常共享缓存保留",
+    "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+    "worker_reloaded_at_local": "2026-10-19 15:40:03",
+    "final_record_directory": "active-runtime",
+    "cases": [
+      {
+        "case": "rag_active-smart-aminer",
+        "kind": "智能对话",
+        "file": "active-runtime/rag_active-smart-aminer.json",
+        "run_id": "d173dc74-f03c-4e9f-8948-4253f52a3bd9",
+        "first_tool": "academic_search",
+        "academic_tool_calls": 3,
+        "complete_abstracts": 2,
+        "final_citations_matching_complete_abstracts": 2,
+        "web_search_calls": 0,
+        "mcp_calls": 0,
+        "server_total_seconds": 11.653,
+        "cache_note": "两次标题/免费题录请求未全命中缓存，完整摘要补证复用了此前真实取得的缓存。"
+      },
+      {
+        "case": "rag_active-deep-aminer",
+        "kind": "深研对话",
+        "file": "active-runtime/rag_active-deep-aminer.json",
+        "run_id": "2cf4918f-7496-4cf6-a354-960bac7f854a",
+        "first_tool": "academic_search",
+        "academic_tool_calls": 3,
+        "complete_abstracts": 2,
+        "final_citations_matching_complete_abstracts": 2,
+        "web_search_calls": 0,
+        "mcp_calls": 0,
+        "server_total_seconds": 10.762,
+        "cache_note": "三次学术调用均复用正常缓存；不是三次新的供应商 HTTP 请求。"
+      }
+    ],
+    "relevance_review": [
+      {"title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach", "doi": "10.18653/v1/2024.emnlp-industry.66", "fit": "直接比较用户问题中的两条技术路线，并给出成本、性能和 Self-Route 混合路由结论。"},
+      {"title": "Lost in the Middle: How Language Models Use Long Contexts", "doi": "10.1162/tacl_a_00638", "fit": "直接研究长上下文信息位置敏感的失效机制，支持用户问题中的信息遗漏维度。"}
+    ],
+    "not_claimed": "最终受控复验给出了准确标题，证明新运行路径可用，不等于任意自然语言主题都已获得稳定高召回。",
+    "residual_semantic_issues": [
+      "智能对话把 multi-document question answering 写成了多头问答，属于生成术语错误；原始摘要正确。",
+      "两例对 RAG 检索遗漏及缓解中部信息问题的部分表述仍带有工程推断，不能全部归为摘要原始结论。",
+      "主题强相关、取得完整摘要和引用身份一致，仍不足以自动保证每句话都被证据蕴含。"
+    ]
+  },
+  "earlier_failures_retained": {
+    "directories": ["relevance-conversations", "final-relevance"],
+    "findings": [
+      "仅增加提示仍发生过模型不检索就作答，因此增加明确论文检索请求的首次取证约束。",
+      "长检索词仍会空命中；存在委派导致的长延迟和默认工具审批中断，不据此宣称端到端性能已稳定改善。",
+      "最初 Worker 未自动重载新代码；重载前及跨重载在途运行不算最终新约束验收。",
+      "仅停止了本轮验证运行，未终止其他业务任务；最终没有遗留活跃验证运行。"
+    ]
+  },
+  "checks": {
+    "regression_passed": 222,
+    "opt_in_model_probes_skipped": 10,
+    "real_postgres_isolated_academic_service_tests_included": 9,
+    "real_http_mcp_management_scenarios_passed": 7,
+    "http_test_record": "http-management-tests.json",
+    "http_fixture_note": "pytest 默认因未配置测试账号密码跳过；随后直接复用同一七场景测试函数，以现有管理验证身份通过真实 HTTP 执行，未保存或修改密码。",
+    "real_official_mcp_management_connection": "passed; 26 tools discovered through production HTTP management endpoint",
+    "platform_inspection": "platform-inspection.json",
+    "browser_ui": "真实浏览器确认知识库·技能 → MCP 页面显示可添加的 AMiner 学术数据卡片，保持停用。",
+    "ruff": "changed files passed with pre-existing UP038 excluded; no unrelated cleanup",
+    "readiness": "ready; degraded=false",
+    "active_verification_runs_at_finish": 0,
+    "cloud_deployed": false
+  },
+  "limits": [
+    "本轮只针对少量公开技术问题做人工相关性核对，没有独立真值集、盲评或召回率/精确率统计。",
+    "没有新增语义重排模型；强相关筛选由技能规范、模型和后续摘要证据核对执行，候选列表本身仍可能有噪声。",
+    "完整摘要并非全文；精确实验与工程适用性仍须核对原论文或额外证据。",
+    "REST/MCP 比较仅覆盖本机当前 SDK、网络和三个论文接口，不代表所有 MCP 客户端与持久会话模式。",
+    "MCP 如被管理员启用，非论文工具按 AMiner 账号规则计费，不属于现有论文工具预估预算。"
+  ]
+}

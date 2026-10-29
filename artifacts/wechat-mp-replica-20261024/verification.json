@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-24",
+  "reference": "wechat-mp-tools-2.3.3",
+  "entry": "http://localhost:5173/extensions?tool=wechat-articles",
+  "scope": [
+    "账号池",
+    "公众号管理",
+    "文章下载",
+    "网址下载",
+    "下载历史",
+    "代理设置",
+    "系统设置"
+  ],
+  "appearance": [
+    "项目紫色主题变量",
+    "Lucide图标",
+    "深浅主题",
+    "390px响应式菜单"
+  ],
+  "checks": {
+    "api_image_build": "passed",
+    "api_recreated": "passed",
+    "readiness": "ready, degraded=false",
+    "upstream_unit_tests": {
+      "passed": 27,
+      "data_directory": "isolated temporary writable directory"
+    },
+    "frontend_unit_tests": {
+      "passed": 586,
+      "failed": 0
+    },
+    "frontend_lint": "passed",
+    "frontend_build": "passed",
+    "javascript_syntax": {
+      "files": 14,
+      "status": "passed"
+    },
+    "live_http_integration": "passed: auth, CSRF, two-user isolation, file bounds, HTML/Markdown/ZIP, RSS tokens/resources/ETag, singleton worker, retired tables absent",
+    "pdf_export": {
+      "status": "passed",
+      "bytes": 46534,
+      "browser": "/opt/wechat-mp-browsers/chromium-1248/chrome-linux-arm64/chrome"
+    },
+    "socks5_dependency": "passed",
+    "upstream_blueprint_route_comparison": {
+      "unique_paths": 56,
+      "http_method_path_pairs": 65,
+      "missing": 0
+    },
+    "legacy_implementation": "No active old pages/APIs found; retain old-table cleanup migration"
+  },
+  "limits": [
+    "真实微信扫码和在线采集尚未验证，需要用户授权登录",
+    "原项目PC微信桌面自动刷新不支持Linux容器，网页扫码登录保留"
+  ],
+  "screenshots": [
+    "desktop.jpg",
+    "dark.jpg",
+    "mobile.jpg"
+  ]
+}

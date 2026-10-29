@@ -3,6 +3,8 @@ import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import Components from 'unplugin-vue-components/vite'
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import { providers } from '@opencode-ai/models/snapshot'
 
 // 快照只在构建进程读取，浏览器只接收展示字段；模型覆盖随锁定依赖更新。
@@ -83,7 +85,22 @@ export default defineConfig(({ mode }) => {
   const usePolling = env.VITE_USE_POLLING === 'true'
   const pollingInterval = Number.parseInt(env.VITE_POLL_INTERVAL_MS || '1000', 10)
   return {
-    plugins: [vue(), modelMetadataPlugin, pdfjsCmapsPlugin],
+    plugins: [
+      vue(),
+      // 只打包模板实际使用的组件；避免每次打开登录页下载整个组件库。
+      Components({
+        dirs: [],
+        dts: false,
+        resolvers: [AntDesignVueResolver({
+          importStyle: false,
+          resolveIcons: false,
+          // Node 的 SSR 测试使用组件库 CJS 入口，避免其 ESM 扩展名解析限制。
+          cjs: Boolean(env.NODE_TEST_CONTEXT)
+        })]
+      }),
+      modelMetadataPlugin,
+      pdfjsCmapsPlugin
+    ],
     // SSR 单元测试不使用浏览器依赖预构建，避免反复扫描和遗留大型临时缓存。
     optimizeDeps: { noDiscovery: Boolean(env.NODE_TEST_CONTEXT) },
     resolve: {

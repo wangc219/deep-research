@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-15",
+  "scope": "文档研究导航与工作界面并入知识库；未迁移或统一后端身份、资料、模型配置",
+  "canonical_route": "/extensions?tool=document-research",
+  "legacy_route": "/document-research",
+  "checks": {
+    "frontend_unit_tests": {
+      "passed": 545,
+      "failed": 0
+    },
+    "frontend_lint": "passed",
+    "frontend_build": "passed",
+    "independent_navigation_removed": true,
+    "legacy_route_redirect": "passed",
+    "knowledge_library_switch": "passed",
+    "skills_tab_clears_document_tool_query": "passed",
+    "desktop_no_horizontal_overflow": true,
+    "mobile": {
+      "requested_viewport_width": 390,
+      "observed_css_width": 433,
+      "document_scroll_width": 433,
+      "horizontal_overflow": false
+    },
+    "vite_error_overlay": false,
+    "service_unavailable_message": "文档研究服务暂不可用，请联系管理员启用或检查服务后重试。"
+  },
+  "not_verified": [
+    "专用服务当前不可用；未执行真实资料上传、提供商检索或模型研究生成",
+    "未发布线上部署"
+  ],
+  "screenshots": [
+    "desktop.jpg",
+    "mobile.jpg"
+  ]
+}

@@ -1,0 +1,1114 @@
+{
+  "mock": false,
+  "repetitions": 3,
+  "summary": [
+    {
+      "case": "topic",
+      "rest_median_seconds": 0.205,
+      "mcp_median_seconds": 1.0316,
+      "identical_paper_ids": true,
+      "identical_abstracts": true
+    },
+    {
+      "case": "title",
+      "rest_median_seconds": 0.2132,
+      "mcp_median_seconds": 0.9744,
+      "identical_paper_ids": true,
+      "identical_abstracts": true
+    },
+    {
+      "case": "abstract",
+      "rest_median_seconds": 0.197,
+      "mcp_median_seconds": 0.9663,
+      "identical_paper_ids": true,
+      "identical_abstracts": true
+    }
+  ],
+  "requests": [
+    {
+      "case": "topic",
+      "transport": "rest",
+      "repetition": 1,
+      "seconds": 0.2105,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53Vc9zbuEGX7UvbldJ3gSvF9",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:13.814262Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:13.815818Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:13.815871Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:13.815918Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:13.816045Z"
+        }
+      ]
+    },
+    {
+      "case": "topic",
+      "transport": "mcp",
+      "repetition": 1,
+      "seconds": 1.0316,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53gqIT91REB7w55nk2yuM95y",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:14.848091Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:14.848147Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:14.848168Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:14.848186Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:14.848205Z"
+        }
+      ]
+    },
+    {
+      "case": "topic",
+      "transport": "mcp",
+      "repetition": 2,
+      "seconds": 0.9594,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53kUlSUN05Koqz0hk00fxzOs",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.807781Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.807792Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.807796Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.807799Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.807802Z"
+        }
+      ]
+    },
+    {
+      "case": "topic",
+      "transport": "rest",
+      "repetition": 2,
+      "seconds": 0.1857,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53rBdKBPMnHCZJ0yGoiUbj60",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.993521Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.993534Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.993538Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.993542Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:15.993546Z"
+        }
+      ]
+    },
+    {
+      "case": "topic",
+      "transport": "rest",
+      "repetition": 3,
+      "seconds": 0.205,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53yneKDTsyyqkqoYV0vqRxd3",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:16.198661Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:16.198711Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:16.198731Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:16.198746Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:16.198763Z"
+        }
+      ]
+    },
+    {
+      "case": "topic",
+      "transport": "mcp",
+      "repetition": 3,
+      "seconds": 1.0367,
+      "code": 200,
+      "success": true,
+      "total": 32,
+      "provider_log_id": "3Ku53spTX3k4yquufT8ZbFXEHNP",
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.110732Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.110790Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.110807Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.110820Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.110835Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "rest",
+      "repetition": 1,
+      "seconds": 0.2054,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku545qwoYscUpXs37G2OOpN1yQ",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:17.316332Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "mcp",
+      "repetition": 1,
+      "seconds": 0.9744,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku540jGUEzZGrjqoqdfZsZDfKa",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:18.290843Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "mcp",
+      "repetition": 2,
+      "seconds": 0.9936,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku54Bjx9FOEKZek3UtDpfaJgF3",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:19.284676Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "rest",
+      "repetition": 2,
+      "seconds": 0.2132,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku54EyrecFzASsG1AkdAJG6EBP",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:19.498026Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "rest",
+      "repetition": 3,
+      "seconds": 0.2138,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku54GJgChoOSpcE85DTJdexOao",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:19.712014Z"
+        }
+      ]
+    },
+    {
+      "case": "title",
+      "transport": "mcp",
+      "repetition": 3,
+      "seconds": 0.9631,
+      "code": 200,
+      "success": true,
+      "total": 1,
+      "provider_log_id": "3Ku54PdAyM2PCUVrIgZg0480Qdb",
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "title_zh": null,
+          "authors": [
+            "Zhuowan Li"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:20.675302Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "rest",
+      "repetition": 1,
+      "seconds": 0.2525,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54RUxu1mAZY9oX5pKysciAFn",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:20.927918Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "mcp",
+      "repetition": 1,
+      "seconds": 0.944,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54Wzopohw1O7v4vB2QYoUiCN",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:21.872043Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "mcp",
+      "repetition": 2,
+      "seconds": 0.9663,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54gWSHLbS8RE1K9WmT6a1XWw",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:22.838452Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "rest",
+      "repetition": 2,
+      "seconds": 0.1961,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54eqFgE8MSApnvixIDYTTFbo",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:23.034793Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "rest",
+      "repetition": 3,
+      "seconds": 0.197,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54rljVFhkQHyEm2DJo0KJFsY",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:23.231846Z"
+        }
+      ]
+    },
+    {
+      "case": "abstract",
+      "transport": "mcp",
+      "repetition": 3,
+      "seconds": 0.979,
+      "code": 200,
+      "success": true,
+      "total": null,
+      "provider_log_id": "3Ku54lsK9D27COCWx3m4wwAA8l8",
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao",
+            "Daniel Y Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Re"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IO-aware -- accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3$\\times$ speedup on GPT-2 (seq. length 1K), and 2.4$\\times$ speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4% accuracy) and Path-256 (seq. length 64K, 63.1% accuracy).",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:20:24.210989Z"
+        }
+      ]
+    }
+  ],
+  "additional_mcp_capabilities": [
+    {
+      "tool": "search_person",
+      "arguments": {
+        "name": "Tri Dao",
+        "size": 3
+      },
+      "seconds": 1.0185,
+      "result": {
+        "code": 200,
+        "success": true,
+        "msg": "",
+        "data": [
+          {
+            "id": "561a2f8645ce1e59645b4a78",
+            "interests": [
+              "Deep Learning",
+              "Representation Learning",
+              "Transfer Learning",
+              "Attention",
+              "Language Modeling"
+            ],
+            "n_citation": 28392,
+            "name": "Tri Dao",
+            "name_zh": "",
+            "org": "Together AI;Princeton University",
+            "org_id": "62331e330a6eb147dca8a6e8",
+            "org_zh": ""
+          },
+          {
+            "id": "6524ea0c55b3f8ac4657e678",
+            "interests": [
+              "Antibacterial",
+              "Electronic Materials",
+              "Silver Nanoparticle",
+              "Electron Microscopy",
+              "Green Synthesis"
+            ],
+            "n_citation": 101,
+            "name": "Dao Tri Thuc",
+            "name_zh": "",
+            "org": "Faculty of Physics, Hanoi National University of Education",
+            "org_id": "5f71b42d1c455f439fe48275",
+            "org_zh": ""
+          },
+          {
+            "id": "53f362f5dabfae4b3498e64d",
+            "interests": [
+              "Nuclear Structure",
+              "Isospin Physics",
+              "Dynamic Nuclear Polarization",
+              "Elastic Scattering",
+              "Nuclear Matter"
+            ],
+            "n_citation": 5000,
+            "name": "Dao T. Khoa",
+            "name_zh": "",
+            "org": "Institute for Nuclear Science & Technique"
+          }
+        ],
+        "total": 107,
+        "log_id": "3Ku54whNkzTjOGehav1mwgdAF8Y"
+      }
+    },
+    {
+      "tool": "search_patent",
+      "arguments": {
+        "query": "lithium battery",
+        "size": 3
+      },
+      "seconds": 1.3518,
+      "result": {
+        "code": 200,
+        "msg": "操作成功",
+        "status": 0,
+        "data": [
+          {
+            "id": "655d7dec0bffe1df2de31d75",
+            "title": "Lithium battery electrolyte and lithium battery",
+            "title_zh": "一种锂电池电解液及锂电池",
+            "pub_year": "2023",
+            "app_year": "2023",
+            "inventor_name": "请求不公布姓名"
+          },
+          {
+            "id": "652133d78c66b7bc76c1cb9c",
+            "title": "Lithium battery shell, lithium battery anode cover plate and lithium battery",
+            "title_zh": "一种锂电池外壳、锂电池正极盖板及锂电池",
+            "pub_year": "2023",
+            "app_year": "2023",
+            "inventor_name": "索永成"
+          },
+          {
+            "id": "65212ab627b71df99ec1b887",
+            "title": "Lithium battery diaphragm and lithium battery",
+            "title_zh": "锂电池隔膜及锂电池",
+            "pub_year": "2023",
+            "app_year": "2022",
+            "inventor_name": "LUO J"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "search_organization",
+      "arguments": {
+        "orgs": [
+          "清华大学"
+        ]
+      },
+      "seconds": 1.1706,
+      "result": {
+        "code": 200,
+        "success": true,
+        "msg": "",
+        "data": [
+          {
+            "aliases": [
+              "seda association debating english students tsinghua university",
+              "department mathematical sciences tsinghua",
+              "beijing china tsinghua university"
+            ],
+            "org_id": "5f71b2881c455f439fe3c860",
+            "org_name": "Tsinghua University"
+          }
+        ],
+        "total": 1,
+        "log_id": "3Ku55HawgjRJivSUAayCyJcoiSp"
+      }
+    }
+  ]
+}

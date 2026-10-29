@@ -1,0 +1,64 @@
+{
+  "name": "attention-smart-aminer",
+  "topic": "attention",
+  "kind": "smart",
+  "variant": "aminer",
+  "thread_id": "31351880-195f-4292-87fa-35ce7a6d5c01",
+  "session_id": null,
+  "run_id": "110d6bad-fb99-46c8-852e-1d551221d1b6",
+  "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。",
+  "submitted_at_utc": "2026-10-19T07:04:20.302073",
+  "result": {
+    "status": "cancelled",
+    "output": "",
+    "agent_slug": "default-chatbot",
+    "thread_id": "31351880-195f-4292-87fa-35ce7a6d5c01",
+    "conversation_id": 392,
+    "agent_run_id": "110d6bad-fb99-46c8-852e-1d551221d1b6",
+    "request_id": "f7ce53b1-2af2-4882-b094-8d39010e08db",
+    "final_message_id": null,
+    "langfuse_trace_id": null,
+    "token_usage": {
+      "total": {
+        "input_tokens": 0,
+        "total_tokens": 0,
+        "output_tokens": 0
+      },
+      "models": {},
+      "complete": false,
+      "schema_version": 2,
+      "model_call_count": 0,
+      "usage_reported_call_count": 0,
+      "usage_unavailable_call_count": 0
+    },
+    "timing": {
+      "created_at": "2026-10-19T07:04:20.291487Z",
+      "started_at": "2026-10-19T07:04:20.384673Z",
+      "prepared_at": "2026-10-19T07:04:20.665760Z",
+      "first_model_request_at": "2026-10-19T07:04:20.746489Z",
+      "first_output_at": "2026-10-19T07:04:22.497310Z",
+      "finished_at": "2026-10-19T07:09:51.641535Z",
+      "dispatch_latency_ms": 93,
+      "preparation_latency_ms": 281,
+      "first_model_request_latency_ms": 455,
+      "model_first_output_latency_ms": 1832,
+      "first_output_latency_ms": 2206,
+      "total_latency_ms": 331350
+    },
+    "error": {
+      "type": "cancelled",
+      "message": "对话已取消"
+    }
+  },
+  "tools": [],
+  "watchdog": "Manually cancelled after 331 seconds without any tool call; verification-only runner was stopped before starting another topic.",
+  "aminer_ledger": [],
+  "academic_evidence": [],
+  "academic_tool_calls": 0,
+  "web_tool_calls": 0,
+  "estimated_aminer_cost_cents": 0,
+  "answer_urls": [],
+  "full_abstract_unique_count": 0,
+  "partial_abstract_unique_count": 0,
+  "collected_at": "2026-10-19T07:15:58.126835+00:00"
+}

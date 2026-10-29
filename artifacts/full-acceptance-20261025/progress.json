@@ -1,0 +1,50 @@
+{
+  "stage": "historical_acceptance_cloud_removed_by_user",
+  "server": "49.232.128.56",
+  "domain": "https://www.deepquest.space",
+  "source_sha256": "6fbaf01e49af8fb4d2896b3ab873e29aef7b2448037dee9ff558ed94388bbeb3",
+  "api_image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+  "production_root": "/opt/deep-research",
+  "backup": "/var/backups/deepquest/full-acceptance-20261025",
+  "maintenance": false,
+  "authorized_deferred": [
+    "阿里云模型",
+    "MiniMax-M2.5（用户后续自行开通）",
+    "Dify",
+    "Notion",
+    "智谱云知识库"
+  ],
+  "cloud_passed": {
+    "unit": 2926,
+    "integration_unique": 406,
+    "integration_initial_skipped_not_passed": 21,
+    "real_e2e": 21,
+    "multimodal": 3,
+    "deterministic_unique": 11,
+    "real_summary": 1,
+    "enabled_model_options": 8,
+    "provider_reasoning_roundtrip": 3,
+    "academic_unique_including_real_model_and_contracts": 72,
+    "final_public_real_e2e": 2,
+    "complete_research_report_characters": 7032,
+    "complete_research_capability_versions": 2,
+    "complete_research_successful_model_calls": 66,
+    "s5_fallback_events": 0,
+    "all_services_restart_persistence": true,
+    "original_data_preserved": true,
+    "real_wechat_mp_account_list_and_batch": true,
+    "real_wechat_video_asr_document_index": true,
+    "temporary_credentials_retired": true
+  },
+  "known_limitations": [
+    "协议与隐私页面仍有组织名和生效日期占位符",
+    "后端全仓既有1081条lint告警，修改运行文件检查已通过",
+    "21个集成初跑跳过保留记录；显式真实复测与退役入口替代验证单独记录",
+    "模型质量为本轮观测结果，未宣称绝对无漏洞"
+  ],
+  "remaining_required_work": [],
+  "report": "acceptance-report.html",
+  "historical_acceptance": true,
+  "cloud_currently_deployed": false,
+  "current_progress_report": "artifacts/deep-optimization-20261025/progress.json"
+}

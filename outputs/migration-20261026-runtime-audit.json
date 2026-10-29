@@ -1,0 +1,10 @@
+{
+  "active": {
+    "agent_runs": 0,
+    "equipment_research_runs": 0,
+    "tasks": 0,
+    "acceptance_users": 0
+  },
+  "full_research_non_success_calls": [],
+  "effective_research_slots": 4
+}

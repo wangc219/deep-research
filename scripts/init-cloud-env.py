@@ -20,6 +20,7 @@ def main():
         "MINIO_SECRET_KEY": secrets.token_hex(32),
         "NEO4J_PASSWORD": secrets.token_hex(24),
         "SANDBOX_PROVISIONER_TOKEN": secrets.token_hex(32),
+        "SEARXNG_SECRET": secrets.token_hex(32),
         "DEEP_RESEARCH_CORS_ORIGINS": "https://www.deepquest.space",
         "EQUIPMENT_ALLOW_SELF_REGISTRATION": "false",
         "ARQ_MAX_JOBS": "4",
@@ -39,6 +40,7 @@ def main():
         "WEB_SEARCH_PROVIDER": "open-websearch",
         "OPEN_WEBSEARCH_URL": "http://open-websearch:3210",
         "OPEN_WEBSEARCH_ENGINES": "bing,duckduckgo",
+        "SEARXNG_URL": "http://searxng:8080",
     }
     path = root / ".env.prod"
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

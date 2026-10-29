@@ -2869,8 +2869,26 @@ def _build_project_limited_report_from_cues(
     operational workflow.
     """
 
+    def sanitize_capability_seed(value: Any) -> str:
+        """Remove capability-card field labels before prose aggregation.
+
+        Capability portraits are a structured upstream artifact.  Their field
+        names are useful to the Reporter, but publishing those names verbatim
+        produces the visible ``能力分类：主：...概述：当前背景：...`` dump that
+        this deterministic recovery path is meant to prevent.
+        """
+
+        text = str(value or "")
+        text = re.sub(r"能力分类\s*[：:]\s*", "", text)
+        text = re.sub(r"(?:(?<=^)|(?<=[。；;，,]))\s*(?:主|辅)\s*[：:]\s*", "", text)
+        text = re.sub(r"概述\s*[：:]\s*", "", text)
+        text = re.sub(r"当前背景\s*[：:]\s*", "", text)
+        text = re.sub(r"[；;]\s*[；;]+", "；", text)
+        return text.strip(" ；;，,")
+
     def clean(value: Any, limit: int = 260) -> str:
-        return _clean_reporter_clue_text(value, max_chars=limit).replace("|", "／").strip()
+        sanitized = sanitize_capability_seed(value)
+        return _clean_reporter_clue_text(sanitized, max_chars=limit).replace("|", "／").strip()
 
     def first(item: Mapping[str, Any], keys: Sequence[str], limit: int = 260) -> str:
         for key in keys:
@@ -2899,11 +2917,134 @@ def _build_project_limited_report_from_cues(
         )
         return "；".join(unique) if unique else fallback
 
+    def summarized_arguments(values: Sequence[str], fallback: str, *, limit: int = 4) -> str:
+        """Collapse repeated portrait prose into at most four report arguments."""
+
+        unique: list[str] = []
+        normalized_seen: set[str] = set()
+        for value in values:
+            text = clean(value, 260).strip().rstrip("。；; ")
+            if not text:
+                continue
+            normalized = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]", "", text)
+            if not normalized or normalized in normalized_seen:
+                continue
+            # Treat a shorter statement already contained in a longer one as
+            # the same argument, avoiding six near-identical portrait rows.
+            if any(
+                normalized in previous or previous in normalized
+                for previous in normalized_seen
+                if min(len(normalized), len(previous)) >= 18
+            ):
+                continue
+            normalized_seen.add(normalized)
+            unique.append(text)
+            if len(unique) >= limit:
+                break
+        return "；".join(unique) if unique else fallback
+
     def missing(name: str, subject: str) -> str:
         return f"关于{name}的{subject}尚缺可核验公开证据，相关判断保持待验证"
 
     def combine(*values: str) -> str:
         return "；".join(dict.fromkeys(value for value in values if value))
+
+    def catalog_cases(key: str) -> list[str]:
+        catalog = payload.get("evidence_catalog", [])
+        if not isinstance(catalog, Sequence) or isinstance(catalog, (str, bytes)):
+            return []
+        foreign_markers = (
+            "mq-4c",
+            "mq－4c",
+            "triton",
+            "sea hunter",
+            "darpa",
+            "美国",
+            "美军",
+            "美国海军",
+            "英国",
+            "澳大利亚",
+            "日本",
+            "北约",
+        )
+        domestic_markers = (
+            "中国",
+            "国内",
+            "工信部",
+            "海卫",
+            "v35a",
+            "珠海",
+            "国家海洋实验室",
+            "无人节点",
+            "中国船级社",
+            "江苏海事",
+            "自动化学报",
+        )
+        rendered: list[str] = []
+        for item in catalog:
+            if not isinstance(item, Mapping):
+                continue
+            title = clean(item.get("title", "公开来源"), 110) or "公开来源"
+            raw_claim = item.get("claim") or item.get("fact") or item.get("summary")
+            if isinstance(raw_claim, Mapping):
+                claim = "；".join(
+                    clean(value, 150).rstrip("。；; ")
+                    for value in list(raw_claim.values())[:3]
+                    if clean(value, 150)
+                )
+            elif isinstance(raw_claim, Sequence) and not isinstance(raw_claim, (str, bytes)):
+                claim = "；".join(
+                    clean(value, 150).rstrip("。；; ")
+                    for value in list(raw_claim)[:3]
+                    if clean(value, 150)
+                )
+            else:
+                claim = clean(raw_claim, 260)
+            url = str(item.get("url", "")).strip()
+            if not url.startswith(("http://", "https://")):
+                continue
+            searchable = f"{title} {claim} {url}".lower()
+            foreign_score = sum(marker in searchable for marker in foreign_markers)
+            domestic_score = sum(marker in searchable for marker in domestic_markers)
+            if key == "foreign_cases":
+                # A Chinese news host can still describe a foreign platform;
+                # explicit equipment/country terms therefore take precedence.
+                if not foreign_score or foreign_score < domestic_score:
+                    continue
+            elif key == "domestic_cases":
+                if not domestic_score or foreign_score > domestic_score:
+                    continue
+            else:
+                continue
+            parsed = urlsplit(url)
+            strong_case_marker = any(
+                marker in searchable
+                for marker in (
+                    "mq-4c",
+                    "triton",
+                    "sea hunter",
+                    "海卫",
+                    "v35a",
+                    "江苏海事",
+                    "无人节点",
+                    "海试",
+                    "样机",
+                    "原型",
+                    "部署",
+                )
+            )
+            if parsed.path in {"", "/"} and not strong_case_marker:
+                continue
+            fact = (claim or "该公开页面确认了项目或装备活动，但未给出足以外推全部性能的完整数据").rstrip(
+                "。；; "
+            )
+            rendered.append(
+                f"- **{title}**：{fact}。公开状态以来源披露的试验、海试、部署或项目进展为限；"
+                f"技术路线与性能参数仅采用原文明确内容，未披露指标不作外推。来源：{url}"
+            )
+            if len(rendered) >= 3:
+                break
+        return rendered
 
     def case_text(key: str, label: str) -> str:
         comparative = handoff.get("comparative_status", {})
@@ -2929,6 +3070,8 @@ def _build_project_limited_report_from_cues(
                 fact = clean(value, 260)
                 if fact:
                     rendered.append(f"- {fact}")
+        if not rendered:
+            rendered = catalog_cases(key)
         return "\n".join(rendered) or f"公开资料尚不能支持{label}的型号、状态或性能判断。"
 
     topic = clean(payload.get("topic", "装备研究项目"), 220)
@@ -3080,11 +3223,11 @@ def _build_project_limited_report_from_cues(
         [*background_rows, *breaks, *anchors],
         f"围绕“{topic}”的公开证据尚不足以确认现实任务断点；背景判断保持待核验",
     )
-    capability_need_text = joined(
+    capability_need_text = summarized_arguments(
         [*breaks, *capability_need_rows],
         "尚无足够证据确认具体任务链断点、装备形态与直接效果",
     )
-    operation_gap_text = joined(
+    operation_gap_text = summarized_arguments(
         [*breaks, *capability_need_rows],
         "具体作战对象、阶段和能力缺口尚缺可核验证据",
     )

@@ -1,0 +1,38 @@
+{
+  "generation_id": "qgen-c6a940888d4af32beea05861d4b5931b",
+  "status": "completed",
+  "stage": "completed",
+  "saved_count": 6,
+  "query_ids": [
+    "query-af6bebd6-8d21-4c8c-b72d-73452b1d66df",
+    "query-70b97dc8-ae45-47e0-857e-0cdad69fbee1",
+    "query-47b452de-ae44-4af6-8414-28426d3e46ed",
+    "query-ea999cd9-cc41-4d3b-9e4d-12b248552da3",
+    "query-25c9f1e3-9989-4910-93f0-5c590349a054",
+    "query-11fa6e15-3490-488e-bcdc-41249dfb0338"
+  ],
+  "original_five_preserved": true,
+  "all_six_exist": true,
+  "progress": {
+    "total": 6,
+    "attempt": 1,
+    "completed": 6,
+    "remaining": 0,
+    "rejections": [],
+    "model_seconds": 15.802,
+    "rejected_count": 0,
+    "repair_batches": 0,
+    "restored_count": 5,
+    "elapsed_seconds": 15.842,
+    "planning_reused": false,
+    "request_batches": 1
+  },
+  "error": "",
+  "latest_model_call": [
+    "query_generation",
+    "completed",
+    15767.12,
+    2144,
+    531
+  ]
+}

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 
 from equipment_deep_research.agents.provider import AgentRunRequest
 from equipment_deep_research.agents.registry import AgentDef
@@ -241,28 +240,30 @@ def test_mission_publication_sanitizer_preserves_governed_s6_headings() -> None:
 def test_mission_query_uses_relevant_public_search_instead_of_combat_anchors(
     monkeypatch,
 ) -> None:
-    response = SimpleNamespace(
-        raise_for_status=lambda: None,
-        json=lambda: {
+    import public_web_search_gateway as web_gateway
+
+    calls = []
+
+    def unified_search(query, *, count, **_kwargs):
+        calls.append((query, count))
+        return {
             "status": "ok",
-            "data": {
-                "results": [
-                    {
-                        "title": "UAV-Based Mesh Networks for Emergency Communication",
-                        "url": "https://example.org/emergency-uav-mesh",
-                        "description": "A disaster rescue communication relay network study.",
-                    },
-                    {
-                        "title": "Precision strike missile",
-                        "url": "https://example.org/missile",
-                        "description": "A weapon system page.",
-                    },
-                ]
-            },
-        },
-    )
-    monkeypatch.setenv("OPEN_WEBSEARCH_URL", "http://open-websearch:3210")
-    monkeypatch.setattr(baseline_execution.httpx, "post", lambda *args, **kwargs: response)
+            "search_mode": "adaptive_fusion",
+            "results": [
+                {
+                    "title": "UAV-Based Mesh Networks for Emergency Communication",
+                    "url": "https://example.org/emergency-uav-mesh",
+                    "content": "A disaster rescue communication relay network study.",
+                },
+                {
+                    "title": "Precision strike missile",
+                    "url": "https://example.org/missile",
+                    "content": "A weapon system page.",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(web_gateway, "execute_public_web_search", unified_search)
     request = AgentRunRequest(
         "run-mission-search",
         AgentDef("equipment", "装备", "", ["equipment"], [], {}),
@@ -274,7 +275,9 @@ def test_mission_query_uses_relevant_public_search_instead_of_combat_anchors(
     rows = baseline_execution._provider_neutral_live_search_rows(request, limit=4)
 
     assert [item["url"] for item in rows] == ["https://example.org/emergency-uav-mesh"]
-    assert rows[0]["retrieval_lane"] == "provider_neutral_live_search"
+    assert rows[0]["retrieval_lane"] == "research_explorer_public_search"
+    assert len(calls) == 2
+    assert all(count == 8 for _, count in calls)
 
 
 def test_combat_query_keeps_direct_effect_requirement() -> None:

@@ -1,0 +1,153 @@
+{
+  "case": "title_references",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "查找 Attention Is All You Need，追溯其引用的基础工作，只扩展一层参考文献并列出来源，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "Attention Is All You Need",
+        "mode": "title"
+      },
+      "id": "01a172fca84bca3603395e3d6c25e86c",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_get_references",
+      "args": {
+        "paper_id": "probe-attention",
+        "limit": 20
+      },
+      "id": "01a172fcac8ae646e6a91b086f9655d1",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search",
+      "payload": {
+        "page": "1",
+        "size": "10",
+        "title": "Attention Is All You Need"
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-attention"
+        ]
+      }
+    },
+    {
+      "path": "relation",
+      "payload": {
+        "id": "probe-attention"
+      }
+    }
+  ],
+  "model_requests": 3,
+  "web_calls": 0,
+  "cost_cents": 10,
+  "root_budget_shared": true,
+  "seconds": 6.13,
+  "answer": "《Attention Is All You Need》由 AMiner 定位，AMiner 数据库记录其引用文献一条（仅扩展一层）：\n\n引用的基础工作：Bahdanau 等（2015）《Neural Machine Translation by Jointly Learning to Align and Translate》，首次提出基于注意力的对齐机制，是 Transformer 注意力思想的重要基础。<cite source=\"https://doi.org/10.48550/arXiv.1409.0473\" type=\"url\">1</cite>\n\n需说明：AMiner 的参考文献扩展仅返回上述一条记录，Transformer 原文实际引用较多（如自注意力、位置编码相关文献），本层数据未完整覆盖。<cite source=\"https://doi.org/10.48550/arXiv.1706.03762\" type=\"url\">2</cite>",
+  "tool_results": [
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "Attention Is All You Need",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T12:15:24.322792Z",
+          "matched_queries": [
+            "Attention Is All You Need"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1706.03762\" type=\"url\">1</cite>"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "probe-attention"
+        ]
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "Attention Is All You Need",
+          "status": "ok",
+          "page": 1,
+          "returned": 1,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 1,
+      "omitted_candidates": 0,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-bahdanau",
+          "doi": "10.48550/arXiv.1409.0473",
+          "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+          "title_zh": null,
+          "authors": [],
+          "year": 2015,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1409.0473",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T12:15:25.473222Z",
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1409.0473\" type=\"url\">1</cite>"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [
+          "probe-bahdanau"
+        ],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "paper_id": "probe-attention",
+      "relation": "references",
+      "one_hop": true,
+      "reference_count": 1,
+      "omitted_references": 0
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

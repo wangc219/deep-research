@@ -1,0 +1,51 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AMiner 长尾检索增强与批量研究 MCP 选型</title>
+<style>body{margin:0;background:#f4f6fa;color:#202838;font:16px/1.8 system-ui,-apple-system,sans-serif}main{max-width:1100px;margin:32px auto;padding:34px;background:white;border-radius:18px}h1{font-size:28px;line-height:1.4}h2{margin-top:30px;font-size:21px}table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #e4e8f0}.table{overflow:auto}.callout{background:#eef2ff;padding:16px 20px;border-radius:12px}.muted{color:#667085}a{color:#4654c8}code,pre{background:#f1f3f8;border-radius:5px}code{padding:2px 5px}pre{padding:16px;white-space:pre-wrap}li{margin:8px 0}@media(max-width:700px){main{margin:0;padding:20px;border-radius:0}table{min-width:820px}}</style>
+<main><small>2026-10-27 · 按用户澄清重新聚焦：保留 AMiner、提高长尾精准度、研究批量检索增强 MCP</small>
+<h1>AMiner 保留为学术检索主链，MCP 补充发现、批量处理与证据筛选能力</h1>
+<p class="callout"><b>建议首批试点：AMiner + Exa MCP + Jina MCP。</b>AMiner 本身改进查询路由、术语展开和候选筛选；Exa 补充语义发现与多步搜索，Jina 补充多查询搜索、批量阅读、重排与候选去重。若需要外部完整深研任务，再对照 Perplexity 或 Parallel，先选一种评测，而不是全部默认开启。以上是基于官方功能资料的选型建议，尚未验证它们对本项目长尾题库的实际准确率。</p>
+<h2>1. 对上一轮判断的修正</h2>
+<p>常用词对照只能证明 AMiner 鉴权、网络和基本接口正常，不能证明新质技术、罕见术语或跨领域问题检索质量合格。此前“machine learning”等四次对照不应作为精准度验收。当前云端未设置应用侧次数/费用上限，也不意味着有效召回已经足够。</p>
+<p>本轮目标是研究如何让智能体形成并执行检索计划、分批积累候选、筛选高相关原始来源并补证。OpenAlex、Semantic Scholar、Crossref 是来源和核验能力，不能替代这一研究流程；它们保留为补充层。</p>
+<h2>2. 增强 AMiner 自身，而不是替换它</h2>
+<ol>
+<li><b>按查询意图和接口语义路由。</b> 当前实现把 topic 查询统一放入 Pro 的 keyword 字段。应分别使用受控术语、题名短语、摘要字段、标识定位；真正的自然语言问题按需走 QA 类接口。AMiner 的 <a href="https://github.com/AMinerOrg/aminer-open-skill/blob/main/skills/aminer-academic-search/references/api-catalog.md">接口参考</a>区分字面字段搜索和 QA 语义搜索。不能把所有问题压成同一种短关键词，也不能假定改为 title 字段一定更准。</li>
+<li><b>针对长尾术语形成检索计划。</b> 保留研究问题的完整约束，为不同接口生成双语术语、精确短语、学科别名和互补查询。术语扩展优先来自实际命中文献的关键词、摘要、作者用语与参考文献，避免模型凭空制造近义词。语义搜索可保留较完整的问题描述，字面字段使用更精确的短语。</li>
+<li><b>用相关种子继续找。</b> 从确实相关的论文、真实题名或 DOI 开始，核对作者、年份和主题；再根据新术语、参考文献、后续引用和相似论文扩展。AMiner 未收录的新资料可以保留独立来源标识，不能为了统一接口而伪造 AMiner ID。</li>
+<li><b>先扩大内部候选池，再按问题重排。</b> DOI/论文身份去重后，结合相关性重排、必要条件筛选与主题多样性分组。高被引只是辅助特征，不能把低引用的新论文挤掉；语义相似也不代表实验独立性相同，候选聚类不能合并掉不同原始研究。</li>
+<li><b>把精准度落到论断上。</b> 区分“用了类似术语”“研究对象相关”“原文直接支持当前论断”。保留全文证据、实验适用条件和缺口；不能用相邻学科论文替代具体论断的直接证据。</li>
+</ol>
+<h2>3. 真正值得试点的检索增强 MCP</h2>
+<div class="table"><table><tr><th>候选</th><th>已核实的当前能力</th><th>对本项目的角色</th><th>关键限制</th></tr>
+<tr><td><b><a href="https://github.com/jina-ai/MCP">Jina AI 官方 MCP</a></b><br>服务端 Apache-2.0</td><td><code>search_web</code>、<code>search_arxiv</code>；搜索与 URL 阅读支持数组输入；<code>sort_by_relevance</code> 做相关性重排；<code>deduplicate_strings</code> 做语义候选去重；另有 PDF 提取能力。</td><td><b>首批优先。</b>把 AMiner 与其他检索器积累的候选做批量阅读、筛排和聚类，帮助控制大量候选中的噪声。</td><td>搜索、重排等核心能力需要 API key；开源 MCP 服务端不是可免费自建的完整搜索索引。当前 README 已删除旧的 parallel_*、expand_query 和 search_web_deep 工具名，需按新版 Schema 接入。</td></tr>
+<tr><td><b><a href="https://github.com/exa-labs/exa-mcp-server">Exa 官方 MCP</a></b><br>服务端 MIT</td><td><code>web_search_exa</code>、<code>web_fetch_exa</code>；可选 <code>web_search_advanced_exa</code> 提供域名/日期等筛选与内容提取；<code>agent_run</code> 执行多步研究和结构化信息收集。<a href="https://docs.exa.ai/reference/search">底层 Search API</a>另有搜索类型等控制。</td><td><b>首批优先。</b>补充发现 AMiner 字面检索漏掉的论文、机构技术页和原始报告，带着新术语回到 AMiner 核对。</td><td>高级研究需要鉴权；托管搜索有额度与费用。语义发现是否改善长尾召回，仍需用已知相关论文做实测，不能从产品描述直接得出结论。</td></tr>
+<tr><td><b><a href="https://github.com/perplexityai/modelcontextprotocol">Perplexity 官方 MCP</a></b><br>服务端 MIT</td><td><code>perplexity_search</code> 返回搜索结果；<code>perplexity_research</code> 执行较深的研究并返回引用，当前实现使用 Agent API high preset，可能运行数分钟。</td><td>可选的深研补充：在现有流程存在明确覆盖缺口时发起一个研究任务，取得候选与检索线索。</td><td>需要 API key。另一代理生成的综合答案仍需核验原始来源；不能把它当作已经确认的权威证据，或为每个问题无条件叠加第二套代理。</td></tr>
+<tr><td><b><a href="https://docs.parallel.ai/integrations/mcp/quickstart">Parallel 官方 MCP</a></b></td><td>新版统一入口提供 <code>web_search</code>、<code>web_fetch</code>、<code>web_research</code>，研究可延续先前 response。<a href="https://docs.parallel.ai/integrations/mcp/task-mcp">旧 Task MCP 文档</a>已标 legacy，新批量项目应评估 Task API，而不是照搬旧教程。</td><td>可选的研究任务与后台批处理服务。要区分单问题研究工具与多条记录的批量任务。</td><td>新 MCP 的 web_research 是单问题研究；真正批量任务应按官方 Task API 设计。研究需要鉴权，并有费用和任务时延。</td></tr>
+<tr><td><b><a href="https://github.com/firecrawl/firecrawl-mcp-server">Firecrawl 官方 MCP</a></b></td><td>搜索、单页抓取、站点映射、站点爬取、结构化提取和研究工具。</td><td>适合补采机构网站、实验室资料与原始技术页面；作为“资料获取层”，补全文阅读不足。</td><td>当前文档明确：普通 MCP scrape 接收单 URL；真正批量 API 操作走底层 batch endpoint。研究工具有特定语料覆盖，不能假定覆盖所有专业领域。</td></tr>
+<tr><td><a href="https://github.com/tavily-ai/tavily-mcp">Tavily 官方 MCP</a><br>服务端 MIT</td><td>search、extract、map、crawl，具备深度搜索参数和网页抽取能力。</td><td>可作为搜索与内容获取的替补，后续按来源互补性选择。</td><td>与现有搜索工具可能重叠；不建议第一批同时启用所有相近服务。检索结果仍要经过 AMiner/书目核验和证据筛排。</td></tr>
+</table></div>
+<p class="muted">这里的“优先”表示按需求匹配程度优先试点，不是已经测得的准确率排名。没有把任何商业搜索后端宣传为完全免费、无限量或全栈可自托管。</p>
+<h2>4. MCP 版本与接入细节，避免“装上了却没增强”</h2>
+<ul>
+<li>Jina 当前用单工具的 query/url 数组实现批量操作，不能继续按已移除的 parallel_search_web、parallel_read_url、expand_query 配置。<a href="https://github.com/jina-ai/MCP#functions-have-been-removed-in-v1100">官方变更说明</a></li>
+<li>Exa 的 agent_run 是可选工具，需要显式启用并鉴权；只接默认工具不会自动拥有完整研究能力。<a href="https://github.com/exa-labs/exa-mcp-server#available-tools">官方工具列表</a></li>
+<li>Parallel 新集成使用统一 MCP；旧 Search/Task MCP 教程仍能被搜索到，但已标为 legacy。<a href="https://docs.parallel.ai/integrations/mcp/quickstart">新版入口与说明</a></li>
+<li>新 MCP 返回内容须经过适配器纳入同一用户、同一研究轮次的证据登记表。引用由系统依据 source_id 渲染，继续保留 AMiner 实际 ID 和来源，不让模型手工改写长跳转链接。</li>
+</ul>
+<h2>5. 如何让智能体做大规模检索，而不是堆满上下文</h2>
+<pre>AMiner 主检索与真实论文种子
+   ↕ 双语术语、题名、摘要条件、按需语义查询
+检索计划 → 多查询/多来源批次
+         → 服务端保存候选、游标与已处理集合
+         → DOI/真实身份去重、主题分组、相关性重排
+         → 智能体只读取高相关候选的关键原文
+         → 根据证据缺口追加下一批
+         → 输出经过核验的结论与尚缺证据</pre>
+<p>研究任务可以以分批累积数百乃至更多候选为设计目标，但这不是本次实测吞吐保证。智能体不应把几千篇文档全文一次塞入对话；候选留在后端索引和缓存中，按页、按主题、按证据缺口读取。更大规模的站点/语料采集应通过后台任务、批量 API 和增量索引处理，MCP 向智能体提供启动、状态、候选分页、阅读证据等能力。</p>
+<p>检索继续与否应看新增高相关证据、主题覆盖和预算，而不是只看已调用多少次。4 核 16 GB 服务器优先承担任务调度、缓存、权限和结果存储；浏览器采集与全文解析控制并发，外部托管 MCP 可分担计算，但相应消耗服务额度。多用户研究记录与私有证据上下文仍需隔离。</p>
+<h2>6. 开源自托管路线</h2>
+<p>若更看重本地控制，可将 <a href="https://docs.searxng.org/dev/search_api.html">SearXNG 元搜索 API</a>、<a href="https://github.com/unclecode/crawl4ai">Crawl4AI</a> 与现有知识库/重排能力封装为内部 MCP。它们提供搜索聚合和资料采集基础，但仍需要集成查询计划、后台批次、去重、证据登记和权限。自托管元搜索也受上游搜索服务可用性和限流影响，并不等于拥有无限规模的自建学术索引。</p>
+<h2>7. 精准度验收改用长尾任务</h2>
+<p>建议建立公开、非敏感的长尾题库，包含罕见标准术语、同一概念不同命名、中英文不对齐、新出现的论文、跨学科同词异义、必须阅读全文才能回答的问题，以及本就缺乏直接证据的问题。常用词只保留为连通性检查。</p>
+<p>核心指标：已知相关论文种子的 Recall@50/100、Precision@10、近义但不相关的误召回、关键论断的直接证据支持率、来源可追溯性、耗时与费用。种子召回只衡量已知集合，不冒充“所有相关文献”的完整召回率。结果需要盲评，不能只让同一个生成模型给自己打分。</p>
+<p class="callout"><b>本轮结论：</b>AMiner 本身要升级检索策略与证据筛选；最贴近“批量检索增强”需求的首批组合是 Exa + Jina。Perplexity/Parallel 可选作额外深研能力，Firecrawl/Tavily 补资料获取。已核实官方工具和当前接入边界；尚未改动生产服务或部署新 MCP，尚未给候选工具宣称长尾准确率提升百分比。</p>
+</main></html>

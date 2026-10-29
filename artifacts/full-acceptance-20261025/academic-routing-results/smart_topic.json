@@ -1,0 +1,350 @@
+{
+  "case": "smart_topic",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "比较稀疏注意力与 FlashAttention 在长序列推理中的技术取舍，结合论文证据，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "sparse attention long sequence inference",
+        "mode": "topic"
+      },
+      "id": "01a172c7ca7d9291e5025adf5e0878f2",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "FlashAttention IO-aware exact attention",
+        "mode": "topic"
+      },
+      "id": "01a172c7ca7d9291e5025adf5e0878f3",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_get_papers",
+      "args": {
+        "paper_ids": [
+          "probe-flash",
+          "probe-sparse"
+        ],
+        "full_abstract": true
+      },
+      "id": "01a172c7cef10d26e502712bbf94adc7",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "sparse attention long sequence inference"
+      }
+    },
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "FlashAttention IO-aware exact attention"
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-flash",
+          "probe-sparse"
+        ]
+      }
+    },
+    {
+      "path": "detail",
+      "payload": {
+        "id": "probe-flash"
+      }
+    },
+    {
+      "path": "detail",
+      "payload": {
+        "id": "probe-sparse"
+      }
+    }
+  ],
+  "model_requests": 3,
+  "web_calls": 0,
+  "cost_cents": 4,
+  "root_budget_shared": true,
+  "seconds": 5.62,
+  "answer": "基于论文证据（200字内）：\n\n二者解决不同瓶颈。FlashAttention 通过 IO-aware 分块重计算，减少显存读写，保持**精确**完全注意力，无需改动模型语义，提升取决于硬件与负载<cite source=\"https://doi.org/10.48550/arXiv.2205.14135\" type=\"url\">1</cite>。稀疏注意力（如 Sparse Transformers）用分解/局部模式压缩 token 连接，从 O(n²) 降计算量，但改变 token 连通性，可能损失全局建模精度，收益依赖任务与实现<cite source=\"https://doi.org/10.48550/arXiv.1904.10509\" type=\"url\">2</cite>。\n\n**取舍**：长序列推理中，要求无损精度与工程通用性选 FlashAttention；对超长上下文需硬性控制算力、可接受近似时选稀疏注意力。两者也可组合。",
+  "tool_results": [
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "sparse attention long sequence inference",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.269433Z",
+          "matched_queries": [
+            "sparse attention long sequence inference"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1706.03762\" type=\"url\">1</cite>"
+        },
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.269433Z",
+          "matched_queries": [
+            "sparse attention long sequence inference"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.2205.14135\" type=\"url\">2</cite>"
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.269433Z",
+          "matched_queries": [
+            "sparse attention long sequence inference"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1904.10509\" type=\"url\">3</cite>"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "sparse attention long sequence inference",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 3,
+      "omitted_candidates": 0,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "FlashAttention IO-aware exact attention",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.282017Z",
+          "matched_queries": [
+            "FlashAttention IO-aware exact attention"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1706.03762\" type=\"url\">1</cite>"
+        },
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.282017Z",
+          "matched_queries": [
+            "FlashAttention IO-aware exact attention"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.2205.14135\" type=\"url\">2</cite>"
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:31.282017Z",
+          "matched_queries": [
+            "FlashAttention IO-aware exact attention"
+          ],
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1904.10509\" type=\"url\">3</cite>"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": [
+          "probe-attention",
+          "probe-flash",
+          "probe-sparse"
+        ]
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "FlashAttention IO-aware exact attention",
+          "status": "ok",
+          "page": 1,
+          "returned": 3,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 3,
+      "omitted_candidates": 0,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-flash",
+          "doi": "10.48550/arXiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.2205.14135",
+          "content": "An IO-aware exact attention algorithm reduces memory reads and writes. The reported results are bounded to the paper's evaluated settings; hardware and workload affect speedups. This abstract does not establish a universal twofold inference speedup, nor provide deployment measurements.",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:32.401445Z",
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.2205.14135\" type=\"url\">1</cite>"
+        },
+        {
+          "id": "probe-sparse",
+          "doi": "10.48550/arXiv.1904.10509",
+          "title": "Generating Long Sequences with Sparse Transformers",
+          "title_zh": null,
+          "authors": [
+            "Rewon Child"
+          ],
+          "year": 2019,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1904.10509",
+          "content": "Sparse Transformers introduce factorized sparse attention patterns for long sequences. Sparsity changes token connectivity; engineering gains depend on workload and implementation. The reported results are bounded to the paper's evaluated settings; hardware and workload affect speedups. This abstract does not establish a universal twofold inference speedup, nor provide deployment measurements.",
+          "content_level": "abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-25T11:17:32.411298Z",
+          "citation": "<cite source=\"https://doi.org/10.48550/arXiv.1904.10509\" type=\"url\">2</cite>"
+        }
+      ],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "requested_paper_ids": [
+        "probe-flash",
+        "probe-sparse"
+      ],
+      "missing_paper_ids": [],
+      "missing_abstract_ids": []
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

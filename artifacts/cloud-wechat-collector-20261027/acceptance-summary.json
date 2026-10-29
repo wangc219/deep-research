@@ -1,0 +1,48 @@
+{
+  "ordinary_accounts": 16,
+  "source": "Linux cloud WeChat",
+  "passed": true,
+  "discovery": {
+    "concurrent_users": 16,
+    "source_videos": 568,
+    "wall_seconds": 6.184,
+    "p50_seconds": 4.154,
+    "max_seconds": 5.411,
+    "all_five_ranges_passed": true,
+    "private_channel_ids": 16,
+    "snapshot_public_metadata_only": true
+  },
+  "explicit_incremental_refresh_seconds": 0.64,
+  "transcription": {
+    "real_cloud_audio": true,
+    "asr_and_punctuation": true,
+    "word_and_zip_download": true,
+    "workspace_published": true,
+    "characters": 39,
+    "word_bytes": 37124,
+    "elapsed_seconds": 25.103,
+    "cross_user_document_blocked": 15
+  },
+  "knowledge_import_and_retrieval": true,
+  "cross_user_read_delete_blocked": true,
+  "cleanup_remaining": {
+    "accounts": 0,
+    "tasks": 0,
+    "channels": 0,
+    "libraries": 0,
+    "logs": 0,
+    "profiles": 0,
+    "agent_env": 0,
+    "request_metrics": 0,
+    "objects": 0,
+    "directories": 0,
+    "redis_payloads": 0
+  },
+  "http": {
+    "count": 322,
+    "p50_ms": 47.1,
+    "p95_ms": 1271.2,
+    "max_ms": 1550.4
+  },
+  "elapsed_seconds": 51.343
+}

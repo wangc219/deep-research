@@ -1,0 +1,10 @@
+[
+  {
+    "path": "backend/server/routers/equipment_router.py",
+    "local_exists": true,
+    "cloud_disk_matches_runtime": true,
+    "sha256": "51dc5665879c2a274e96ae5867da6a98cf613d121dfb9a3834d93adfaa76fc39",
+    "mtime": 1792956750.0,
+    "size": 34079
+  }
+]

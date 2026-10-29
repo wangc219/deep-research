@@ -1,0 +1,173 @@
+{
+  "verified_at": "2026-10-15T23:56:00.968872+08:00",
+  "status": "applied_and_verified",
+  "server": "49.232.128.56",
+  "site": "https://www.deepquest.space",
+  "hardware": {
+    "vcpus": 4,
+    "kernel": "7.0.0-14-generic",
+    "ram_GiB": 7.44,
+    "available_ram_before_GiB": 4.32,
+    "available_ram_after_GiB": 4.3,
+    "memory_PSI_averages": "all zero in before/after samples",
+    "swap": "已有约 457 MiB 历史换出；采样无持续换入换出。",
+    "oom": "过去 24 小时内核日志未发现 OOM/kill 记录"
+  },
+  "changes": {
+    "worker_total_jobs": {
+      "before": 4,
+      "after": 16
+    },
+    "research_global_slots": {
+      "before": 4,
+      "after": 6
+    },
+    "query_tasks": {
+      "before": 4,
+      "after": 4
+    },
+    "deep_turns": {
+      "before": 8,
+      "after": 8
+    },
+    "regular_durable_tasks": {
+      "before": 4,
+      "after": 4
+    },
+    "api_postgres_pool": {
+      "before": [
+        8,
+        4
+      ],
+      "after": [
+        12,
+        4
+      ]
+    },
+    "worker_postgres_pool": {
+      "before": [
+        8,
+        4
+      ],
+      "after": [
+        12,
+        4
+      ]
+    },
+    "worker_checkpoint_pool": {
+      "before": 8,
+      "after": 12
+    },
+    "api_and_worker_redis": {
+      "before": 32,
+      "after": 64
+    },
+    "api_and_worker_nofile_soft": {
+      "before": 1024,
+      "after": 8192
+    },
+    "postgres_max_connections": 100,
+    "kernel_sysctls_changed": false
+  },
+  "live_worker": {
+    "max_jobs": 16,
+    "task_type_limits": {
+      "equipment_research": 6,
+      "equipment_query_generation": 4,
+      "equipment_deep_turn": 8
+    },
+    "postgres_pool": "12",
+    "postgres_overflow": "4",
+    "checkpoint_pool": "12",
+    "redis_connections": "64",
+    "nofile": [
+      8192,
+      65536
+    ]
+  },
+  "checks": {
+    "cloud_postgresql_claim_races": {
+      "passed": 3,
+      "failed": 0,
+      "scope": "隔离 Schema 验证 4/6 槽位原子领取、普通任务容量限制"
+    },
+    "read_only_http": {
+      "simultaneous_requests": 24,
+      "successes": 24,
+      "postgres_connections_after": 32,
+      "model_calls": 0
+    },
+    "public_readiness": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    },
+    "all_services": "running; healthy where configured",
+    "compose_validation": "passed",
+    "local_postgresql_capacity": "3 passed",
+    "python_ruff": "passed",
+    "git_diff_check": "passed"
+  },
+  "interpretation": "槽位为全站共享上限，所有任务类型共用 Worker 总并发 16；不是每位用户 6 个研究任务，也不代表每类上限可同时占满。",
+  "limits": [
+    "本次并发检查是只读接口检查，不是 16 个真实模型任务的满载压测。",
+    "实际承载受研究模式、工具子进程、文档体积及模型供应商限流影响；当前以研究 6、Query 4 作为首轮保守配置。"
+  ],
+  "rollback": {
+    "compose_backup": "/var/backups/deepquest/capacity-20261015/compose.cloud.before.yaml",
+    "previous_live_research_capacity": 4,
+    "instructions": "恢复覆盖层并重建 api/worker 容器（无需重建镜像）；通过 /api/equipment/runtime/capacity 将研究槽位恢复到 4。"
+  },
+  "source_sha256": {
+    "compose.cloud.yaml": "f800340e18458ee91047e7cd31ca7959ad33b7b4660c758dcce7f6ca5e7c5aa6",
+    "backend/test/integration/services/test_durable_task_repository.py": "201451f339906dddb086218669c138ab3881172438e0bb7274389196585cf27d"
+  }
+}

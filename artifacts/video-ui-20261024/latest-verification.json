@@ -1,0 +1,29 @@
+{
+  "changes": [
+    "默认 max_pages=null，遍历全部页；可选限定页数",
+    "解析发布时间秒/毫秒，时间倒序，未知时间置后",
+    "先按持久化 OID 完成记录去重，再选最新 N 条，默认20最多100",
+    "个人端每批2000条回传，服务端合并、排序、去重"
+  ],
+  "validation": {
+    "backend_unit": 28,
+    "real_http_integration": 1,
+    "frontend_unit": 586,
+    "lint": "passed",
+    "build": "passed",
+    "live_browser": {
+      "account": "火研所",
+      "total": 565,
+      "completed_skipped": 1,
+      "pending": 564,
+      "all_timestamps_descending": true,
+      "new_transcription_started": false,
+      "responsive": "passed"
+    }
+  },
+  "screenshots": [
+    "latest-all-pages-settings.jpg",
+    "latest-sorted-results.jpg",
+    "latest-settings-mobile.jpg"
+  ]
+}

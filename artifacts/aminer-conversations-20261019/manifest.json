@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Shanghai",
+  "environment": "local production HTTP API and worker",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "aminer_enabled": true,
+  "real_model": true,
+  "real_aminer": true,
+  "mock_transport": false,
+  "configuration_modified": false,
+  "baseline_method": "same prompt plus user constraint to use web only; tools remain available; verify zero academic calls",
+  "cases": [
+    {
+      "name": "attention-smart-web",
+      "topic": "attention",
+      "kind": "smart",
+      "variant": "web",
+      "thread_id": "6a66a414-1f50-4919-a9a1-3c2f142dadc1",
+      "session_id": null,
+      "run_id": "5d068ecd-d0b8-4a3a-927f-5d93d7132b8f",
+      "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。\n本轮作为网页检索对照实验，仅使用网页检索与网页阅读，不使用 AMiner 或 academic 学术工具。",
+      "submitted_at_utc": "2026-10-19T07:04:20.300410"
+    },
+    {
+      "name": "attention-smart-aminer",
+      "topic": "attention",
+      "kind": "smart",
+      "variant": "aminer",
+      "thread_id": "31351880-195f-4292-87fa-35ce7a6d5c01",
+      "session_id": null,
+      "run_id": "110d6bad-fb99-46c8-852e-1d551221d1b6",
+      "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。",
+      "submitted_at_utc": "2026-10-19T07:04:20.302073"
+    },
+    {
+      "name": "attention-deep-aminer",
+      "topic": "attention",
+      "kind": "deep",
+      "variant": "aminer",
+      "thread_id": "equipment-deep-2a38406c-9eb0-4429-bd1c-27ba0c555579",
+      "session_id": "thinking-70a85736-c300-4636-9fbc-086e7e8ea7fe",
+      "run_id": "b2865dc8-2566-4ab7-af70-2c89b45f34b0",
+      "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。",
+      "submitted_at_utc": "2026-10-19T07:04:20.319134"
+    },
+    {
+      "name": "attention-deep-web",
+      "topic": "attention",
+      "kind": "deep",
+      "variant": "web",
+      "thread_id": "equipment-deep-d05f7ca6-69eb-4b3a-af57-f35c6ba911f0",
+      "session_id": "thinking-17a9ec25-ed3c-4e02-b983-615432f89646",
+      "run_id": "851de2de-e98b-4d23-b5d6-71108a9415e8",
+      "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。\n本轮作为网页检索对照实验，仅使用网页检索与网页阅读，不使用 AMiner 或 academic 学术工具。",
+      "submitted_at_utc": "2026-10-19T07:04:20.320982"
+    }
+  ]
+}

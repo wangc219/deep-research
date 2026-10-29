@@ -1,0 +1,871 @@
+{
+  "generated_at": "2026-10-25T19:24:45+08:00",
+  "decision": "新版已上线；已开通核心功能与真实闭环通过；已授权暂缓项单列。",
+  "deployment": {
+    "checked_at": "2026-10-25T11:22:53.254747+00:00",
+    "services": {
+      "api": {
+        "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+        "image": "deepquest-api:acceptance-20261025",
+        "running": true,
+        "health": "healthy"
+      },
+      "worker": {
+        "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+        "image": "deepquest-api:acceptance-20261025",
+        "running": true,
+        "health": "healthy"
+      },
+      "equipment-worker": {
+        "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+        "image": "deepquest-api:acceptance-20261025",
+        "running": true,
+        "health": "not_configured"
+      },
+      "equipment-query-worker": {
+        "image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+        "image": "deepquest-api:acceptance-20261025",
+        "running": true,
+        "health": "not_configured"
+      },
+      "web": {
+        "image_id": "sha256:e7de15d7dd2ef7fcfe81fdb37b7d7660f67127f44501edb21c5c3772dc9f8aec",
+        "image": "deepquest-web-document-research:local",
+        "running": true,
+        "health": "not_configured"
+      },
+      "sandbox-provisioner": {
+        "image_id": "sha256:0fe1357022f255364916f11e9189ecac439240c0ae4d39b399920fe9df49dba5",
+        "image": "deepquest-sandbox-provisioner:acceptance-20261025",
+        "running": true,
+        "health": "healthy"
+      },
+      "document-research": {
+        "image_id": "sha256:694903dc954b9da9b8be4d0c1d8e5d5366dce27e1f36b5aae35c26894c468704",
+        "image": "deepquest-document-research:local",
+        "running": true,
+        "health": "healthy"
+      },
+      "document-websearch": {
+        "image_id": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "image": "ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "running": true,
+        "health": "not_configured"
+      },
+      "graph": {
+        "image_id": "sha256:89d577f2e49606de76441eca8cf7a0fe88e594cbaac4d2a3d86c6e59676e2b1e",
+        "image": "neo4j:5.26.29",
+        "running": true,
+        "health": "healthy"
+      },
+      "postgres": {
+        "image_id": "sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d",
+        "image": "postgres:16",
+        "running": true,
+        "health": "healthy"
+      },
+      "open-websearch": {
+        "image_id": "sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "image": "ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+        "running": true,
+        "health": "healthy"
+      },
+      "milvus": {
+        "image_id": "sha256:fe39aa0fa006be4825a177b6b41393465deece910351c33a58170444265c63d8",
+        "image": "milvusdb/milvus:v2.5.6",
+        "running": true,
+        "health": "healthy"
+      },
+      "redis": {
+        "image_id": "sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2",
+        "image": "redis:7.4.10-alpine",
+        "running": true,
+        "health": "healthy"
+      },
+      "etcd": {
+        "image_id": "sha256:89b6debd43502d1088f3e02f39442fd3e951aa52bee846ed601cf4477114b89e",
+        "image": "quay.io/coreos/etcd:v3.5.5",
+        "running": true,
+        "health": "healthy"
+      },
+      "minio": {
+        "image_id": "sha256:6d770d7f255cda1f18d841ffc4365cb7e0d237f6af6a15fcdb587480cd7c3b93",
+        "image": "minio/minio:RELEASE.2023-03-20T20-16-18Z",
+        "running": true,
+        "health": "healthy"
+      }
+    },
+    "api_image_id": "sha256:54b18dfc47eaf48b5cac014f77ea2311de9c2557e3c309ed98036254b462e65a",
+    "source_sha256": "6fbaf01e49af8fb4d2896b3ab873e29aef7b2448037dee9ff558ed94388bbeb3",
+    "ready": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    },
+    "maintenance": false,
+    "old_active_version_removed": true,
+    "backup_files_verified": [
+      "postgres-before-cutover.dump",
+      "preflight-postgres.dump",
+      "persistent-data-before.tar.gz",
+      "document-research-before.tar.gz",
+      "nginx-before.conf"
+    ],
+    "backup_root": "/var/backups/deepquest/full-acceptance-20261025",
+    "staging_removed": true,
+    "persistence_private_state_removed": true
+  },
+  "url": "https://www.deepquest.space",
+  "source_sha256": "6fbaf01e49af8fb4d2896b3ab873e29aef7b2448037dee9ff558ed94388bbeb3",
+  "production_root": "/opt/deep-research",
+  "backup_root": "/var/backups/deepquest/full-acceptance-20261025",
+  "api_image": "deepquest-api:acceptance-20261025",
+  "api_image_id_prefix": "54b18dfc47ea",
+  "schema": {
+    "business": 14,
+    "knowledge": 6
+  },
+  "frontend": {
+    "passed": 586,
+    "failed": 0,
+    "lint": "passed",
+    "build": "passed"
+  },
+  "checks": {
+    "cloud_unit": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-unit.xml",
+      "cases": 2926,
+      "passed": 2926,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_integration_initial": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-integration.xml",
+      "cases": 427,
+      "passed": 405,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 21
+    },
+    "cloud_integration_system_retest": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-system-final.xml",
+      "cases": 14,
+      "passed": 14,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_real_e2e": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-real.xml",
+      "cases": 21,
+      "passed": 21,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_multimodal": {
+      "evidence": "cloud-xml/full-acceptance-20261025-real-multimodal-final.xml",
+      "cases": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_deterministic_initial": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-deterministic.xml",
+      "cases": 11,
+      "passed": 10,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_deterministic_retest": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-deterministic-final.xml",
+      "cases": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_summary": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-summary.xml",
+      "cases": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_final_image_smoke": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-final-image-smoke.xml",
+      "cases": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_async_image_smoke": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-async-image-smoke.xml",
+      "cases": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_public_https": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-https-final.xml",
+      "cases": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_provider_reasoning": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-provider-reasoning.xml",
+      "cases": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_academic_routing_initial": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-academic-routing.xml",
+      "cases": 10,
+      "passed": 8,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_academic_citation_before_notice": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-academic-citation-before-notice.xml",
+      "cases": 72,
+      "passed": 70,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_academic_citation_final": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-academic-citation-final.xml",
+      "cases": 72,
+      "passed": 71,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_academic_citation_resolved": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-academic-citation-resolved.xml",
+      "cases": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloud_citation_public_final": {
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-citation-public-final.xml",
+      "cases": 2,
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "domain_final_initial": {
+      "evidence": "full-acceptance-20261025-domain-s5-final.xml",
+      "cases": 2250,
+      "passed": 2249,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "domain_final_retest": {
+      "evidence": "full-acceptance-20261025-domain-gate-resolved.xml",
+      "cases": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "document_offline": {
+      "evidence": "document-research.xml",
+      "cases": 373,
+      "passed": 373,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "models": [
+    {
+      "provider": "alibaba-cn",
+      "model": "qwen3-rerank",
+      "type": "rerank",
+      "status": "deferred_by_user"
+    },
+    {
+      "provider": "alibaba-cn",
+      "model": "qwen3.7-text-embedding-flash",
+      "type": "embedding",
+      "status": "deferred_by_user"
+    },
+    {
+      "provider": "alibaba-cn",
+      "model": "qwen3.8-flash",
+      "type": "chat",
+      "status": "deferred_by_user"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "type": "chat",
+      "status": "passed",
+      "response_nonempty": true,
+      "seconds": 1.07
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "deepseek-ai/DeepSeek-V4-Flash",
+      "type": "chat",
+      "status": "passed",
+      "response_nonempty": true,
+      "seconds": 1.06
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "Pro/MiniMaxAI/MiniMax-M2.5",
+      "type": "chat",
+      "status": "deferred_by_user_after_real_403",
+      "exception_type": "Exception",
+      "http_status": 403,
+      "upstream_model_disabled": true,
+      "seconds": 0.05,
+      "observed_status": "failed"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "zai-org/GLM-5.2",
+      "type": "chat",
+      "status": "passed",
+      "response_nonempty": true,
+      "seconds": 1.26
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "Pro/BAAI/bge-m3",
+      "type": "embedding",
+      "status": "passed",
+      "vectors": 2,
+      "dimension": 1024,
+      "seconds": 0.24
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "BAAI/bge-m3",
+      "type": "embedding",
+      "status": "passed",
+      "vectors": 2,
+      "dimension": 1024,
+      "seconds": 0.23
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "type": "embedding",
+      "status": "passed",
+      "vectors": 2,
+      "dimension": 1024,
+      "seconds": 0.29
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "Pro/BAAI/bge-reranker-v2-m3",
+      "type": "rerank",
+      "status": "passed",
+      "scores": 2,
+      "seconds": 0.16
+    },
+    {
+      "provider": "siliconflow-cn",
+      "model": "BAAI/bge-reranker-v2-m3",
+      "type": "rerank",
+      "status": "passed",
+      "scores": 2,
+      "seconds": 0.19
+    }
+  ],
+  "matrix": [
+    {
+      "feature": "登录、HTTPS 与资源加载",
+      "method": "正式公网 HTTPS 真实密码登录；SSE、worker、PG 因果链",
+      "result": "证书校验、301、静态资源、ready、未登录管理接口401通过",
+      "evidence": "public-https-verification.json; cloud-logs/https-final.log",
+      "status": "passed"
+    },
+    {
+      "feature": "企业、用户、项目与权限隔离",
+      "method": "真实HTTP、PG与隔离测试身份的自动化契约；浏览器页面巡检",
+      "result": "当前原生入口、普通用户/管理员可见性、资源授权与撤销通过",
+      "evidence": "cloud-xml/full-acceptance-20261025-cloud-integration.xml; cloud-logs/system-final.log",
+      "status": "passed"
+    },
+    {
+      "feature": "智能对话、Steer 与多智能体",
+      "method": "真实供应商、真实worker、SSE与持久化",
+      "result": "异步执行、Steer checkpoint、子智能体并行、共享成果和历史回读通过",
+      "evidence": "cloud-logs/real.log; cloud-logs/deterministic-final.log",
+      "status": "passed"
+    },
+    {
+      "feature": "上下文压缩",
+      "method": "实际3轮对话→模型摘要→文件和PG checkpoint→下一轮复述",
+      "result": "唯一标记在压缩后准确保留；复测通过",
+      "evidence": "cloud-logs/summary-final.log",
+      "status": "passed"
+    },
+    {
+      "feature": "Query→研究→能力画像→报告",
+      "method": "临时普通用户，真实模型与后台worker完整执行",
+      "result": "387秒完成；7032字报告；2个画像版本；66次成功调用；S5降级0次",
+      "evidence": "cloud-logs/research-complete.log; cloud-real-research-report.md",
+      "status": "passed"
+    },
+    {
+      "feature": "原生深研对话、计量与报告接口",
+      "method": "真实模型；真实HTTP与PG",
+      "result": "原生深研、模型计量、终态投影与下载通过",
+      "evidence": "cloud-logs/real.log; cloud-logs/final-image-smoke.log",
+      "status": "passed"
+    },
+    {
+      "feature": "图片、PDF OCR、推理流",
+      "method": "真实看图、PDF OCR、非视觉OCR回退",
+      "result": "3项通过；思考内容SSE/历史/PG一致",
+      "evidence": "cloud-logs/multimodal.log",
+      "status": "passed"
+    },
+    {
+      "feature": "已开通模型逐项连通",
+      "method": "运行时真实模型工厂；重排直接校验供应商结果，排除中性分数回退",
+      "result": "3对话、3嵌入、2重排共8项通过",
+      "evidence": "enabled-model-verification.json",
+      "status": "passed"
+    },
+    {
+      "feature": "已开通对话模型工具往返",
+      "method": "逐个真实调用 DeepSeek、硅基DeepSeek、GLM；流式工具→结果→续答",
+      "result": "3项通过；显式thinking；续答正文和工具协议通过",
+      "evidence": "cloud-logs/provider-reasoning.log",
+      "status": "passed"
+    },
+    {
+      "feature": "学术工具选路与引用",
+      "method": "真实模型、隔离PG；AMiner与Web响应使用测试替身",
+      "result": "10类选路、完整摘要、规范引用、鉴权失败恢复和共享预算已复测；另有真实外部检索E2E",
+      "evidence": "cloud-logs/academic-citation-final.log; cloud-logs/citation-public-final.log",
+      "status": "passed"
+    },
+    {
+      "feature": "知识库完整闭环",
+      "method": "真实上传、OCR、嵌入、MinIO、Milvus、Neo4j、重排、模型评估",
+      "result": "入库、向量召回、图谱、评估集生成、回答与裁判通过",
+      "evidence": "cloud-logs/real.log; real-knowledge-evaluation.log",
+      "status": "passed"
+    },
+    {
+      "feature": "原有知识与原文",
+      "method": "浏览器真实召回原技术库；实际PDF预览",
+      "result": "原库10个相关片段与PDF可读，重启后数据计数保留",
+      "evidence": "cloud-original-retrieval.png; cloud-original-pdf-preview.png; final-state-verification.json",
+      "status": "passed"
+    },
+    {
+      "feature": "公众号扫码与账号池",
+      "method": "用户亲自微信扫码；实际账号验证、公众号搜索与列表",
+      "result": "1个可用账号；实际搜索、收藏、21篇列表通过；重启后授权保留",
+      "evidence": "cloud-real-wechat-batch-download.png; final-state-verification.json",
+      "status": "passed"
+    },
+    {
+      "feature": "公众号下载、成果与入库",
+      "method": "真实公开URL下载、正文预览、2篇多选批量下载、新建私有库和索引",
+      "result": "批量2成功0失败；入库3片段；全服务重启后再次召回3片段",
+      "evidence": "cloud-real-wechat-download.png; cloud-real-wechat-sandbox.png; cloud-real-wechat-restart-retrieval.png",
+      "status": "passed"
+    },
+    {
+      "feature": "微信视频→ASR→Word/ZIP→知识库",
+      "method": "本机真实微信视频→个人采集器→云端CPU ASR",
+      "result": "实际新闻视频转录553字；Word、ZIP、入库与向量召回通过",
+      "evidence": "cloud-real-video-delivery-final.log; cloud-real-wechat-video.docx",
+      "status": "passed"
+    },
+    {
+      "feature": "独立文档研究",
+      "method": "真实资料库与模型；问答、研究报告、追问、编辑、下载、撤销",
+      "result": "逐字引文、ZIP、SHA冲突409、撤销后403通过；重启后3任务仍completed",
+      "evidence": "cloud-logs/document-answer.log; cloud-logs/document-report.log; final-state-verification.json",
+      "status": "passed"
+    },
+    {
+      "feature": "个人空间、技能与MCP",
+      "method": "真实沙盒成果→工作区预览、编辑与ZIP；真实模型技能/MCP调用；安全拒绝契约",
+      "result": "chat/deep成果链、个人技能、动态MCP及stdio安全拒绝通过",
+      "evidence": "cloud-logs/real.log; cloud-xml/full-acceptance-20261025-cloud-integration.xml",
+      "status": "passed"
+    },
+    {
+      "feature": "任务、取消、审计与仪表盘",
+      "method": "真实PG/Redis与HTTP契约；确定性provider用于可重复的故障/取消测试",
+      "result": "终态竞争、因果一致性、取消、工具审计、统计契约通过；不将确定性provider算真实模型",
+      "evidence": "cloud-logs/deterministic.log; cloud-logs/deterministic-final.log; cloud-logs/real.log",
+      "status": "passed"
+    },
+    {
+      "feature": "源码与运行镜像一致性",
+      "method": "3434个源码文件hash；716运行Python文件hash；API及3worker镜像核对",
+      "result": "源码、运行代码、沙盒控制器一致；内部发布端口仅loopback",
+      "evidence": "release-integrity-final.json; source-manifest-final.json",
+      "status": "passed"
+    },
+    {
+      "feature": "迁移与全服务重启持久化",
+      "method": "备份；隔离PG schema幂等演练；停启全部应用和存储容器",
+      "result": "schema14/6；PG、JWT、MinIO原文、Milvus召回通过；原数据计数一致",
+      "evidence": "cloud-schema-rehearsal.log; cloud-logs/restart-final.log; cloud-logs/persistence-verify.log; final-state-verification.json",
+      "status": "passed"
+    },
+    {
+      "feature": "清理旧版与临时权限",
+      "method": "活动目录替换；旧容器退出；删除临时staging；禁用验收账号和采集设备",
+      "result": "新版单一活动目录/镜像；临时凭据清理；受保护回滚备份保留",
+      "evidence": "final-state-verification.json; release-integrity-final.json",
+      "status": "passed"
+    },
+    {
+      "feature": "阿里云模型",
+      "method": "用户明确暂不验证",
+      "result": "不计通过",
+      "evidence": "用户本轮授权",
+      "status": "deferred"
+    },
+    {
+      "feature": "MiniMax-M2.5",
+      "method": "实际调用返回403 Model disabled；用户决定后续自行开通",
+      "result": "本轮暂缓，不计通过",
+      "evidence": "enabled-model-verification.json; 用户本轮授权",
+      "status": "deferred"
+    },
+    {
+      "feature": "Dify / Notion / 智谱云知识库",
+      "method": "缺少真实凭据或资料库授权；用户要求先迁移",
+      "result": "外部服务连接暂缓，不计通过",
+      "evidence": "用户本轮授权",
+      "status": "deferred"
+    },
+    {
+      "feature": "协议与隐私页面内容",
+      "method": "页面仍为现有模板",
+      "result": "组织名与生效日占位符待用户替换；未代拟法务内容",
+      "evidence": "现有登录页协议模板",
+      "status": "limitation"
+    },
+    {
+      "feature": "后端全仓lint",
+      "method": "修改的运行文件检查通过；全仓遗留告警未全部清理",
+      "result": "全仓1081条既有告警，不宣称全仓lint通过",
+      "evidence": "backend-lint.json; backend-lint.log",
+      "status": "limitation"
+    }
+  ],
+  "fixes": [
+    {
+      "problem": "学术回答将来源链接自行改写、遗漏引用标签或仅凭部分摘要写技术比较",
+      "change": "工具返回可直接使用的citation标签；明确逐字使用来源URL、技术结论前读取完整摘要；修正鉴权恢复测试对首个非学术工具批次的错误假设",
+      "proof": "最初引用失败与部分摘要问题已复验；72项中71通过、1查询规范化测试假设失败，修正后定向1通过；正式公网检索复验见日志"
+    },
+    {
+      "problem": "S3/S5精简输入丢失run/agent/mission/batch身份与phase",
+      "change": "精简后保留阶段身份；运行时phase直接读stream_options",
+      "proof": "完整研究66次成功模型调用、2画像、S5降级0；阶段计量正确"
+    },
+    {
+      "problem": "S6 fan-out等待gate占满线程池，完成调用又等待同一线程池写计量",
+      "change": "新增异步等待acquire_async，保留优先级、取消清理与lease语义",
+      "proof": "单线程池12调用完成；取消测试与51项回归；真实研究387秒完成"
+    },
+    {
+      "problem": "云端CPU ASR权重加载峰值内存过高",
+      "change": "torch mmap与assign低内存加载",
+      "proof": "x86预检、真实微信新闻视频转录及最终镜像ASR复验通过"
+    },
+    {
+      "problem": "新写入Milvus数据被一致性延迟误判未就绪",
+      "change": "关键count/query采用Strong一致性",
+      "proof": "真实入库、原文/向量召回与全服务重启后唯一标记召回通过"
+    },
+    {
+      "problem": "非视觉OCR回退生命周期、空正文与Steer交接",
+      "change": "修正BaseChatModel生命周期与审计；拒绝空正文并保留Steer安全点",
+      "proof": "真实多模态3项与Steer回归通过"
+    },
+    {
+      "problem": "部署、迁移脚本与旧CI契约不一致",
+      "change": "受控停写迁移入口、退出沙盒、证明令牌；修正init拉镜像与质量门禁",
+      "proof": "101项配置契约、脚本语法和真实schema幂等演练通过"
+    }
+  ],
+  "limitations": [
+    "学术选路初跑8通过2引用失败；首个候选70通过2失败，其中1项未取完整摘要、1项测试错误假设首批工具必须为学术工具。后续修正完整摘要提示和测试批次定位后71通过，余1项因查询被既有规则缩短而断言失败；对照query_coverage修正测试后定向1通过，72唯一用例已验证，未把复测重复相加。保留各次失败证据。",
+    "按用户要求在初步验收后先迁移；云端继续发现、修复并复验问题。未将迁移前状态包装成零缺陷。",
+    "HTTP集成初跑405通过、1失败、21跳过；日志测试harness只读路径修正后14项复测通过，唯一已通过用例共406，不能直接相加为419。21个跳过原样保留，部分能力另有显式真实测试。",
+    "领域最终全量2249通过、1测试替身失败；将测试替身适配新acquire_async后5项定向复测通过，2250唯一用例已验证；初次全量XML仍保留失败记录。",
+    "确定性provider初跑10通过、1未配置Langfuse的断言失败；按实际启用状态检查后1项复测通过，唯一用例11，不等于真实供应商11项。",
+    "单元XML汇总tests属性为2933，与实际2926个testcase及pytest日志不一致；报告按实际用例与日志统计2926。",
+    "学术选路探针使用真实模型、真实隔离PG，但AMiner/Web响应由测试替身提供，仅证明选路、预算、鉴权失败恢复和引用约束；外部检索真实性另见real E2E。",
+    "知识评估中的1.0仅代表本轮合成小样本，不代表平台整体准确率100%。",
+    "完整研究最终成功，辅助source_anchor曾有20秒超时并恢复，未宣称所有模型请求零失败。",
+    "本轮验证为全服务/容器重启，未重启服务器操作系统；没有以破坏生产环境的方式做无限并发或全面渗透测试，不能保证绝对无漏洞。"
+  ],
+  "integration_initial_skips": [
+    {
+      "test": "test.integration.api.test_enterprise_isolation_live.test_enterprise_real_http_isolation",
+      "reason": "独立 /api/v1 工作台已退役；当前隔离契约见 equipment_superadmin_management 与 knowledge_personal_isolation"
+    },
+    {
+      "test": "test.integration.api.test_equipment_unified_models_live.test_query_generation_and_deep_dialogue_use_managed_model",
+      "reason": "需要显式启用真实模型调用"
+    },
+    {
+      "test": "test.integration.api.test_full_real_knowledge_acceptance.test_upload_ocr_embedding_retrieval_and_graph",
+      "reason": "显式启用真实模型与 OCR 验收"
+    },
+    {
+      "test": "test.integration.api.test_native_deep_models_live.test_native_deep_message_reaches_worker_transcript_and_usage",
+      "reason": "需要显式启用真实模型调用"
+    },
+    {
+      "test": "test.integration.api.test_wxchannels_live.test_personal_audio_to_docx_download_and_import",
+      "reason": "显式启用 CPU 语音识别验收"
+    },
+    {
+      "test": "test.integration.api.test_wxchannels_live.test_oneclick_packages_include_pairing_and_platform_programs",
+      "reason": "显式启用 CPU 语音识别验收"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[smart_general]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[smart_title]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[smart_topic]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[deep_research]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[technology_cabin]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[research_explorer]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[fact_verifier]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[title_references]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[technology_auth_failure]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_academic_retrieval.test_live_model_routes_and_executes_academic_tools[technology_preloaded]",
+      "reason": "显式启用才调用已配置的真实模型"
+    },
+    {
+      "test": "test.integration.services.test_model_provider_runtime_connectivity.test_provider_db_chat_model_connectivity",
+      "reason": "Set RUN_MODEL_PROVIDER_CONNECTIVITY=1 to call real provider model APIs."
+    },
+    {
+      "test": "test.integration.services.test_model_provider_runtime_connectivity.test_provider_db_embedding_model_connectivity",
+      "reason": "Set RUN_MODEL_PROVIDER_CONNECTIVITY=1 to call real provider model APIs."
+    },
+    {
+      "test": "test.integration.services.test_model_provider_runtime_connectivity.test_provider_db_rerank_model_connectivity",
+      "reason": "Set RUN_MODEL_PROVIDER_CONNECTIVITY=1 to call real provider model APIs."
+    },
+    {
+      "test": "test.integration.services.test_provider_reasoning_live.test_live_reasoning_tool_roundtrip[None]",
+      "reason": "仅在显式配置 DEEP_RESEARCH_REASONING_PROBE_MODELS 时调用计费服务"
+    },
+    {
+      "test": "test.integration.services.test_summary_middleware_real_model.test_compacted_messages_call_real_chat_model",
+      "reason": "Set RUN_MODEL_PROVIDER_CONNECTIVITY=1 to call real provider model APIs."
+    }
+  ],
+  "final_state": {
+    "checked_at": "2026-10-25T11:22:53.254747+00:00",
+    "original_data_counts": {
+      "users": 6,
+      "conversations": 82,
+      "messages": 2142,
+      "agent_runs": 77,
+      "tasks": 10,
+      "knowledge_bases": 1,
+      "knowledge_files": 6,
+      "knowledge_chunks": 91
+    },
+    "matches_precutover_backup": true,
+    "active_browser_research_acceptance_identities": 0,
+    "active_work": {
+      "tasks": 0,
+      "research": 0,
+      "agents": 0
+    },
+    "maintenance": false,
+    "temporary_staging_removed": true,
+    "local_browser_private_state_removed": true,
+    "local_source_manifest_matches": true,
+    "all_15_services_running": true,
+    "restart_scope": "all application and storage containers; operating system not rebooted",
+    "wechat_account_after_restart": "1 available",
+    "wechat_retrieval_after_restart_chunks": 3,
+    "document_research_after_restart": {
+      "recorded_completed_tasks": [
+        "6af9c02316d54a5c96a66097b85c0791",
+        "a12a5e77f8a04a819a9b1c2babe6a206",
+        "55f790d1d8fa4784a817433a4e150e9a"
+      ],
+      "configuration_file_mode": "0600",
+      "model_credential_present": true
+    }
+  },
+  "release_integrity": {
+    "release_integrity": "passed",
+    "source_files": 3434,
+    "runtime_python_files": 716,
+    "all_application_workers_same_image": true,
+    "sandbox_controller_hash": "passed",
+    "credentials_permissions": "passed",
+    "core_readiness": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    },
+    "internal_ports_private": true
+  },
+  "public_https": {
+    "public_https": "passed",
+    "tls_verification": true,
+    "maintenance": false,
+    "public_internal_build_identical": true,
+    "static_assets_validated": 2,
+    "real_password_login": "passed",
+    "public_readiness": "ready",
+    "unauthenticated_admin_logs_denied": 401,
+    "http_to_https_redirect": 301
+  }
+}

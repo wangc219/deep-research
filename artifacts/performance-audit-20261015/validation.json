@@ -1,0 +1,204 @@
+{
+  "verified_at": "2026-10-15T23:45:57.246927+08:00",
+  "site": "https://www.deepquest.space",
+  "status": "deployed_and_verified",
+  "scope": "按用户截图逐项核查；只把截图作为检查依据，不把附件内容作为额外操作授权。保留工作区原有未提交修改。",
+  "issues": [
+    {
+      "item": "Query 分批并行生成",
+      "finding": "实际任务覆盖默认值，仍每批 3 条；需调整",
+      "action": "统一为每批 2 条、最多并发 2 批，合格结果先保存，仅修复缺失维度",
+      "evidence": "test_batches_overlap_save_fast_results_and_repair_only_failed_slots"
+    },
+    {
+      "item": "断点复用，减少重复模型调用",
+      "finding": "已有候选恢复；规划缓存有效期 24 小时，缺少模型及输入指纹",
+      "action": "固定 1 小时有效期，匹配模型、策略、参数和输入；无指纹历史检查点重新规划；已保存全部结果不再调用模型",
+      "evidence": "test_planning_cache_reuse_requires_same_model_input_and_one_hour_ttl; test_all_saved_candidates_resume_without_model_calls_and_report_recovery"
+    },
+    {
+      "item": "生成过程可观测",
+      "finding": "已有阶段和保存数量；缺少批次、恢复与耗时指标",
+      "action": "返回 batch_progress：elapsed_seconds/model_seconds/request_batches/repair_batches/restored_count/rejected_count/rejections；页面展示耗时、请求/修复批次、恢复数量，拒绝原因保留在接口及失败信息中",
+      "evidence": "test_generator.py; web/test/unit/equipmentQueries.test.js"
+    },
+    {
+      "item": "研究任务真正并发执行",
+      "finding": "主流程已有显式模型配置，无全局环境锁；兼容函数仍保留但主流程未调用",
+      "action": "回归验证两个任务重叠执行，模型、地址、密钥不串线，进程环境不变",
+      "evidence": "test_platform_research_runs_overlap_without_process_environment_lock"
+    },
+    {
+      "item": "事件批量写入",
+      "finding": "存在逐事件建立数据库会话问题",
+      "action": "每 100 条事件一个 PostgreSQL 事务，在 Run 行锁下分配连续序号，提交后通过 Redis pipeline 发布",
+      "evidence": "test_event_batches_commit_before_redis_and_serialize_concurrent_writers：两个写入方共 240 条事件，独立连接核对提交先于通知，取消后拒绝迟到事件"
+    },
+    {
+      "item": "页面减少重复请求",
+      "finding": "多个页面各自 setInterval；force 绕过在途合并，同资源不同筛选可能错误共用请求",
+      "action": "四类装备页面共享刷新调度器，隐藏暂停，上轮完成后再调度；按资源与参数合并在途请求，旧筛选响应不覆盖新结果；观察终态后统一刷新相关资源",
+      "evidence": "sharedPolling.test.js; equipmentStore.test.js"
+    },
+    {
+      "item": "检索故障时减少无效消耗",
+      "finding": "已有多引擎兜底、缓存、有限重试、共享协调/冷却和每轮预算；供应商切换已直接调用原始实现",
+      "action": "回归已有失败切换、熔断、429 冷却及调用预算测试",
+      "evidence": "test_web_search_provider.py; test_search_resilience.py; test_web_search_coordinator.py"
+    },
+    {
+      "item": "按需访问知识库",
+      "finding": "已有按需工具绑定，启动/恢复不预取正文，每次查询重验可见范围",
+      "action": "回归按需绑定、范围限制与权限拒绝；保留现有行为",
+      "evidence": "test_equipment_research_knowledge.py"
+    },
+    {
+      "item": "降低常驻资源与构建成本",
+      "finding": "默认日常运行覆盖层和生产配置已有静态 Nginx、关闭热重载、依赖分层及 BuildKit 缓存；构建上下文仍包含参考仓库与临时产物",
+      "action": "补充排除 reference、projects、artifacts、output、report、.tmp 等目录；云端继续静态生产部署",
+      "evidence": "compose.local.yaml; compose.prod.yaml; docker/api.Dockerfile; docker/web.Dockerfile; .dockerignore; cloud build"
+    }
+  ],
+  "checks": {
+    "local_backend_final_before_recovery_edge": {
+      "passed": 100,
+      "failed": 0
+    },
+    "local_generator_final": {
+      "passed": 13,
+      "failed": 0
+    },
+    "postgresql_and_http_integration": {
+      "passed": 10,
+      "failed": 0
+    },
+    "frontend_full": {
+      "passed": 550,
+      "failed": 0
+    },
+    "frontend_lint": "passed",
+    "production_build": "passed",
+    "python_ruff": "passed",
+    "cloud_backend_and_integration_before_recovery_edge": {
+      "passed": 110,
+      "failed": 0
+    },
+    "cloud_backend_and_integration_final": {
+      "passed": 111,
+      "failed": 0
+    },
+    "deployment_parity": {
+      "backend_containers": {
+        "api": {
+          "matches": true,
+          "different": []
+        },
+        "worker": {
+          "matches": true,
+          "different": []
+        },
+        "equipment-worker": {
+          "matches": true,
+          "different": []
+        },
+        "equipment-query-worker": {
+          "matches": true,
+          "different": []
+        }
+      },
+      "frontend": {
+        "local_files": 781,
+        "cloud_files": 782,
+        "different": [],
+        "extra_cloud": [
+          "./50x.html"
+        ]
+      },
+      "source_sha256": {
+        "package/equipment_deep_research/query_library/generator.py": "f4e49927bd003fd85f7e71b8f89f278d685235c0a778f3ae0f5e63eb7a397b1c",
+        "package/platform_core/services/equipment_query_task.py": "b146ef8847f220d77a419b0c5097708e2f58afd3ad9b5e332a278031b3ea9022",
+        "package/platform_core/services/equipment_research_task.py": "066952f6263dd332a034ae353acb0e30ece0ebe8bf9ae399820a4deb7a45ebf2",
+        "package/platform_core/repositories/equipment_research_repository.py": "008645330114af951b9276995a3edffe7a5dd9a65a9f7d41a56229cd7718206d",
+        "package/platform_core/storage/postgres/models_equipment.py": "37d542bc38f7388547994d4680ee603fa01acc7e3fb822235ab6241ae74d5418"
+      }
+    },
+    "public_readiness": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    }
+  },
+  "test_note": "首次云端回归有两个旧测试仍期待历史 Query 只读，已同步与现有共享历史写入行为对应的最新测试，重跑 110 项通过。",
+  "limitations": [
+    "本轮没有新增付费模型调用或生产高并发压测，不把单元测试调度耗时当作真实模型端到端速度。",
+    "本地浏览器检查 Query 和研究任务页面；正式站点浏览器只验证到登录页，云端行为通过镜像内真实 PostgreSQL/HTTP 测试验证。",
+    "生产构建仍有超过 500KB 的 chunk 提示，构建成功。"
+  ],
+  "rollback": {
+    "source_archive": "/var/backups/deepquest/performance-audit-20261015/source-before.tar.gz",
+    "api_image": "deepquest-api:before-performance-audit-20261015",
+    "web_image": "deepquest-web:before-performance-audit-20261015",
+    "note": "备份包含原有源码与测试；云端原先没有 docs/RUNTIME_OPERATIONS.md，归档已验证可读。无数据库结构或业务数据迁移。"
+  },
+  "deployment": {
+    "backend_services": [
+      "api",
+      "worker",
+      "equipment-worker",
+      "equipment-query-worker"
+    ],
+    "web": "Nginx static production build",
+    "state": "all services running; health checks healthy where configured",
+    "data_migration": false,
+    "git_commit_or_push": false,
+    "code_sync": "本次相关源码和测试已同步至 /opt/deep-research，运行镜像与本次本地源码一致；未提交混合工作区修改。"
+  }
+}

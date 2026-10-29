@@ -1,0 +1,388 @@
+{
+  "date": "2026-10-27",
+  "hardware": {
+    "online_vcpus": 4,
+    "memory_mib": 15480,
+    "swap_used_during_test_mib": 0
+  },
+  "applied_capacity": {
+    "generic_tasks": 20,
+    "arq_worker_jobs": 24,
+    "api_workers": 2,
+    "postgres_max_connections": 160
+  },
+  "ordinary_user_acceptance": {
+    "ordinary_accounts": 16,
+    "origin": "https://www.deepquest.space",
+    "test_identity_ids": [
+      2890,
+      2891,
+      2892,
+      2893,
+      2894,
+      2895,
+      2896,
+      2897,
+      2898,
+      2899,
+      2900,
+      2901,
+      2902,
+      2903,
+      2904,
+      2905
+    ],
+    "real_password_logins": "16/16 passed",
+    "isolated_mp_sessions": "16/16 passed",
+    "private_knowledge_libraries": "16/16 created",
+    "test_knowledge_ids": [
+      "kb_h5e669npw2",
+      "kb_of3si5fonp",
+      "kb_01m8k8p970",
+      "kb_gx15pthnbs",
+      "kb_fwm1dlr1mq",
+      "kb_bhbf05sw6f",
+      "kb_mz77mh3toh",
+      "kb_p4qwhqmt0m",
+      "kb_j5mmnyw6os",
+      "kb_dt8leq7q8m",
+      "kb_8k62vucnej",
+      "kb_bj9se6zd5b",
+      "kb_7eg80j6dvr",
+      "kb_o6knh8tcj2",
+      "kb_aqwni9m3ux",
+      "kb_z80ehi9b2o"
+    ],
+    "warm_concurrent_requests": {
+      "count": 1920,
+      "p50_ms": 165.7,
+      "p95_ms": 342.7,
+      "max_ms": 643.9
+    },
+    "warm_success_rate": "100%",
+    "cross_account_access": "80/80 rejected",
+    "parallel_upload_download_word": "16/16 passed",
+    "real_knowledge_ingest_and_retrieval": "16/16 passed",
+    "ingest_completion": {
+      "count": 16,
+      "p50_ms": 5136.6,
+      "p95_ms": 6197.1,
+      "max_ms": 6197.1
+    },
+    "passed": true,
+    "cleanup": {
+      "accounts_remaining": 0,
+      "tasks_remaining": 0,
+      "libraries_remaining": 0,
+      "operation_logs_remaining": 0,
+      "profiles_remaining": 0,
+      "agent_env_remaining": 0,
+      "private_directories_remaining": 0,
+      "errors": []
+    }
+  },
+  "real_task_acceptance": {
+    "count": 20,
+    "scope": "20 个生产知识库解析、向量入库任务；使用当前管理员的私有临时知识库，不新增账户。",
+    "fixture_marker": "qa_capacity_62a6dddaf59a",
+    "kb_id": "kb_pu5xx2a1px",
+    "completion_seconds": 7.85,
+    "tasks_successful": 20,
+    "files_indexed": 20,
+    "retrieval_probes_successful": 3,
+    "passed": true,
+    "monitor_errors": [],
+    "peak_simultaneous_running": 20,
+    "peak_postgres_connections": 54,
+    "dashboard_under_load": {
+      "requests": 21,
+      "p50_ms": 25.2,
+      "p95_ms": 33.0,
+      "max_ms": 261.2
+    },
+    "cleanup_remaining": {
+      "tasks": 0,
+      "knowledge_libraries": 0,
+      "files": 0
+    }
+  },
+  "independent_cleanup": {
+    "verified_accounts": 16,
+    "verified_library_fixtures": 18,
+    "remaining": {
+      "test_accounts": 0,
+      "ordinary_user_tasks": 0,
+      "ordinary_user_libraries": 0,
+      "ordinary_user_files": 0,
+      "isolated_capacity_test_schemas": 0,
+      "fixture_library_metadata": 0,
+      "fixture_files": 0,
+      "fixture_tasks": 0,
+      "test_user_operation_logs": 0,
+      "object_storage_files": 0,
+      "vector_collections": 0
+    },
+    "passed": true
+  },
+  "resources_during_acceptance": {
+    "samples": 100,
+    "minimum_available_mib": 10622.8,
+    "maximum_cpu_percent": 100.0,
+    "maximum_swap_used_mib": 0.0
+  },
+  "dashboard_measurement": [
+    {
+      "phase": "single",
+      "requests": [
+        {
+          "path": "/api/dashboard/stats",
+          "ms": 47.4,
+          "bytes": 152
+        },
+        {
+          "path": "/api/dashboard/stats/users",
+          "ms": 22.5,
+          "bytes": 4762
+        },
+        {
+          "path": "/api/dashboard/stats/tools",
+          "ms": 36.6,
+          "bytes": 875
+        },
+        {
+          "path": "/api/dashboard/stats/agents",
+          "ms": 67.1,
+          "bytes": 6643
+        },
+        {
+          "path": "/api/dashboard/stats/knowledge",
+          "ms": 16.2,
+          "bytes": 176
+        },
+        {
+          "path": "/api/dashboard/stats/model-usage",
+          "ms": 98.0,
+          "bytes": 2781
+        }
+      ]
+    },
+    {
+      "phase": "16_concurrent",
+      "count": 96,
+      "p50_ms": 243.2,
+      "p95_ms": 574.8,
+      "max_ms": 660.1,
+      "wall_seconds": 1.93,
+      "by_endpoint": {
+        "/api/dashboard/stats": {
+          "p95_ms": 500.6
+        },
+        "/api/dashboard/stats/users": {
+          "p95_ms": 248.4
+        },
+        "/api/dashboard/stats/tools": {
+          "p95_ms": 306.9
+        },
+        "/api/dashboard/stats/agents": {
+          "p95_ms": 567.4
+        },
+        "/api/dashboard/stats/knowledge": {
+          "p95_ms": 363.3
+        },
+        "/api/dashboard/stats/model-usage": {
+          "p95_ms": 660.1
+        }
+      }
+    }
+  ],
+  "bandwidth": {
+    "asset": "/assets/index-C9uN8OjQ.js",
+    "single_transfers": [
+      {
+        "compressed": false,
+        "http_version": "2",
+        "bytes": 1242249,
+        "seconds": 0.420777,
+        "ttfb_seconds": 0.159218,
+        "overall_mbps": 23.62
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375526,
+        "seconds": 0.337155,
+        "ttfb_seconds": 0.150947,
+        "overall_mbps": 8.91
+      }
+    ],
+    "four_parallel_transfers": [
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375526,
+        "seconds": 0.375272,
+        "ttfb_seconds": 0.200505,
+        "overall_mbps": 8.01
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375526,
+        "seconds": 0.34425,
+        "ttfb_seconds": 0.159434,
+        "overall_mbps": 8.73
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375526,
+        "seconds": 0.333723,
+        "ttfb_seconds": 0.160919,
+        "overall_mbps": 9.0
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375526,
+        "seconds": 0.371847,
+        "ttfb_seconds": 0.157222,
+        "overall_mbps": 8.08
+      }
+    ],
+    "parallel_seconds": 0.385,
+    "aggregate_mbps": 31.23
+  },
+  "runtime": [
+    {
+      "api_access_log_statuses": {
+        "2xx": 2724,
+        "3xx": 0,
+        "4xx": 80,
+        "5xx": 0
+      },
+      "services": {
+        "/deepquest-api-1": {
+          "health": "healthy",
+          "oom": false,
+          "automatic_restarts": 0,
+          "selected_capacity": {
+            "API_WEB_CONCURRENCY": "2",
+            "DURABLE_TASK_MAX_RUNNING": "20",
+            "ARQ_MAX_JOBS": "4",
+            "POSTGRES_POOL_SIZE": "8",
+            "POSTGRES_MAX_OVERFLOW": "4"
+          }
+        },
+        "/deepquest-worker-1": {
+          "health": "healthy",
+          "oom": false,
+          "automatic_restarts": 0,
+          "selected_capacity": {
+            "DURABLE_TASK_MAX_RUNNING": "20",
+            "ARQ_MAX_JOBS": "24",
+            "POSTGRES_POOL_SIZE": "12",
+            "POSTGRES_MAX_OVERFLOW": "4"
+          }
+        },
+        "/deepquest-postgres-1": {
+          "health": "healthy",
+          "oom": false,
+          "automatic_restarts": 0,
+          "selected_capacity": {}
+        },
+        "/deepquest-milvus-1": {
+          "health": "healthy",
+          "oom": false,
+          "automatic_restarts": 0,
+          "selected_capacity": {}
+        }
+      }
+    },
+    {
+      "active_tasks": [],
+      "active_agent_runs": 0,
+      "connections": 55,
+      "max_connections": 160
+    }
+  ],
+  "validation": {
+    "local_backend_regressions_passed": 59,
+    "isolated_postgres_capacity_tests_passed": 5,
+    "candidate_container_startup_tests_passed": 2,
+    "ruff_check_and_format": "passed",
+    "source_files_verified": 9,
+    "api_runtime_code_matches_source": true,
+    "ready": {
+      "status": "ready",
+      "degraded": false,
+      "checks": {
+        "startup": {
+          "status": "ok"
+        },
+        "postgres": {
+          "status": "ok"
+        },
+        "redis": {
+          "status": "ok"
+        },
+        "worker": {
+          "status": "ok"
+        }
+      },
+      "components": {
+        "builtin_mcp_servers": {
+          "status": "ok",
+          "required": false
+        },
+        "builtin_skills": {
+          "status": "ok",
+          "required": true
+        },
+        "default_agents": {
+          "status": "ok",
+          "required": true
+        },
+        "knowledge_base": {
+          "status": "ok",
+          "required": true
+        },
+        "model_cache": {
+          "status": "ok",
+          "required": true
+        },
+        "model_providers": {
+          "status": "ok",
+          "required": true
+        },
+        "sandbox_provider": {
+          "status": "ok",
+          "required": true
+        },
+        "security_secrets": {
+          "status": "ok",
+          "required": true
+        }
+      },
+      "version": "0.7.3"
+    }
+  },
+  "fixes": [
+    "API 和主 Worker 在向量服务健康后启动，避免整机重启时依赖顺序导致的退出重启。",
+    "认证及公众号权限读取结束后及时结束事务、归还连接，修复 20 路上传暴露的嵌套连接等待。JWT、API Key、账户状态及权限检查保留。",
+    "根据实际 4 vCPU / 16 GB 容量配置 20 个通用槽、24 个主 Worker 槽；没有套用 8 核档位。"
+  ],
+  "scope": [
+    "16 个真实普通平台账户以密码登录，访问本人视频终态、公众号下载历史夹具、任务、私有知识库及文件；未替 16 人登录外部微信。",
+    "知识库解析、向量入库、检索、上传下载及 Word 文件接口真实执行；视频语音转录记录使用终态夹具。",
+    "1,920 次请求覆盖 16 路普通账户访问；另有 20 任务同库入库压力和 16 路管理员统计请求。发压来源为云机，经生产 HTTPS 入口。",
+    "本次为短时并发验收，未模拟长期大文件、16 路语音识别或所有外部模型供应商的持续限流。语音识别的单任务容量保留。",
+    "初次 20 路上传发现 13 个连接池超时，夹具已删除；修复后同规模重测全部通过。"
+  ],
+  "backup": {
+    "directory": "/var/backups/deepquest/cloud-upgrade-20261027",
+    "database_dump_bytes": 98734759,
+    "dump_catalog_verified": true,
+    "full_restore_drill_performed": false,
+    "credentials_backup_root_only": true
+  }
+}

@@ -54,7 +54,6 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
 ):
     """列出当前用户可选择的 Project。"""
-    await ensure_equipment_project_view(uid=str(current_user.uid), username=current_user.username, db=db)
     return await list_projects_view(uid=str(current_user.uid), db=db, actor=current_user)
 
 

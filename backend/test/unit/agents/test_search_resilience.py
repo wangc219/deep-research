@@ -69,6 +69,60 @@ def test_research_explorer_keeps_source_choice_with_the_model():
     assert "自主选择网页、AMiner" in str(prepared.system_message.content)
 
 
+def test_research_explorer_forces_one_three_channel_discovery_then_replans():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    request = ModelRequest(
+        model=SimpleNamespace(),
+        tools=[
+            SimpleNamespace(name="parallel_research_search"),
+            SimpleNamespace(name="web_search"),
+            SimpleNamespace(name="academic_search"),
+        ],
+        messages=[HumanMessage(content="核验稀疏阵列雷达的工程边界")],
+    )
+
+    assert middleware._prepare_model_request(request).tool_choice == "parallel_research_search"
+    assert middleware._prepare_model_request(request).tool_choice is None
+
+
+@pytest.mark.parametrize("scope", ["仅使用网页", "不使用 AMiner", "仅分析已有证据，无需检索"])
+def test_three_channel_discovery_respects_explicit_source_scope(scope):
+    request = ModelRequest(
+        model=SimpleNamespace(),
+        tools=[SimpleNamespace(name="parallel_research_search")],
+        messages=[HumanMessage(content=scope)],
+    )
+
+    assert SearchResilienceMiddleware(research_mode=True)._prepare_model_request(request).tool_choice is None
+
+
+def test_research_explorer_tracks_deduplicated_aminer_coverage_for_dynamic_routing():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    middleware._record_academic_result(
+        "academic_search",
+        {
+            "status": "ok",
+            "results": [
+                {"id": "paper-1", "doi": "10.1000/example", "content_level": "metadata"},
+                {"id": "paper-1-copy", "doi": "10.1000/example", "content_level": "abstract"},
+                {"id": "paper-2", "content_level": "abstract"},
+            ],
+        },
+    )
+    request = ModelRequest(
+        model=SimpleNamespace(),
+        tools=[SimpleNamespace(name="web_search"), SimpleNamespace(name="academic_search")],
+        messages=[HumanMessage(content="核验材料工程边界")],
+    )
+
+    prepared = middleware._prepare_model_request(request)
+
+    assert middleware.research_academic_papers == {"10.1000/example", "paper-2"}
+    assert middleware.research_academic_abstracts == {"10.1000/example", "paper-2"}
+    assert "2 篇去重论文候选" in str(prepared.system_message.content)
+    assert "没有固定内容分工" in str(prepared.system_message.content)
+
+
 def test_research_explorer_technical_subproblem_respects_aminer_opt_out():
     request = ModelRequest(
         model=SimpleNamespace(),
@@ -681,6 +735,38 @@ def test_technical_evidence_request_cannot_skip_all_retrieval(question):
         model=SimpleNamespace(), tools=[SimpleNamespace(name="academic_search")], messages=[HumanMessage(question)]
     )
     prepared = SearchResilienceMiddleware().wrap_model_call(request, lambda value: value)
+    assert prepared.tool_choice == "academic_search"
+
+
+def test_taskbook_planning_does_not_force_academic_search_from_section_names():
+    """“证据门/算法/材料”等规划章节名不能触发真实取证。"""
+    question = (
+        "把下面任务书转化为90天推进方案，列出目标树、算法工作包、材料风险、质量门和证据门；"
+        "不得启动真实研究任务，只做规划。"
+    )
+    request = ModelRequest(
+        model=SimpleNamespace(),
+        tools=[SimpleNamespace(name="academic_search")],
+        messages=[HumanMessage(question)],
+    )
+
+    prepared = SearchResilienceMiddleware().wrap_model_call(request, lambda value: value)
+
+    assert prepared.tool_choice is None
+    assert prepared.tools == []
+    assert "既有材料规划任务" in str(prepared.system_message.content)
+
+
+def test_taskbook_planning_can_explicitly_request_external_papers():
+    """用户明确补充论文依据时，规划语句不能吞掉真实检索请求。"""
+    request = ModelRequest(
+        model=SimpleNamespace(),
+        tools=[SimpleNamespace(name="academic_search")],
+        messages=[HumanMessage("只做规划，但请检索论文并补充论文依据，核验材料性能边界。")],
+    )
+
+    prepared = SearchResilienceMiddleware().wrap_model_call(request, lambda value: value)
+
     assert prepared.tool_choice == "academic_search"
 
 

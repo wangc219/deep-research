@@ -1,0 +1,85 @@
+{
+  "ordinary_accounts": 16,
+  "source": "Linux cloud WeChat",
+  "passed": true,
+  "discovery": {
+    "concurrent_users": 16,
+    "source_videos": 30,
+    "wall_seconds": 5.134,
+    "p50_seconds": 3.921,
+    "max_seconds": 4.647,
+    "default_bounded_to_two_pages": true,
+    "private_channel_ids": 16,
+    "snapshot_public_metadata_only": true
+  },
+  "explicit_incremental_refresh_seconds": 0.64,
+  "load_more": {
+    "new_count": 30,
+    "total_loaded": 60,
+    "seconds": 1.874,
+    "continued_cursor": true
+  },
+  "range_checks": [
+    {
+      "range": 30,
+      "returned": 30,
+      "seconds": 0.633
+    },
+    {
+      "range": 40,
+      "returned": 40,
+      "seconds": 0.635
+    },
+    {
+      "range": 50,
+      "returned": 50,
+      "seconds": 0.644
+    },
+    {
+      "range": 100,
+      "returned": 100,
+      "seconds": 2.491
+    },
+    {
+      "range": 150,
+      "returned": 150,
+      "seconds": 2.495
+    }
+  ],
+  "duplicate_rows": 0,
+  "latest_refresh_preserves_history_cursor": true,
+  "selected_video_identity_cached": true,
+  "transcription": {
+    "real_cloud_audio": true,
+    "asr_and_punctuation": true,
+    "word_and_zip_download": true,
+    "workspace_published": true,
+    "characters": 39,
+    "word_bytes": 37124,
+    "elapsed_seconds": 26.738,
+    "cross_user_document_blocked": 15
+  },
+  "knowledge_import_and_retrieval": true,
+  "cross_user_read_delete_blocked": true,
+  "cleanup_remaining": {
+    "accounts": 0,
+    "tasks": 0,
+    "channels": 0,
+    "libraries": 0,
+    "logs": 0,
+    "profiles": 0,
+    "agent_env": 0,
+    "request_metrics": 0,
+    "objects": 0,
+    "directories": 0,
+    "private_cursors": 0,
+    "redis_payloads": 0
+  },
+  "http": {
+    "count": 364,
+    "p50_ms": 28.8,
+    "p95_ms": 1549.8,
+    "max_ms": 1749.6
+  },
+  "elapsed_seconds": 64.77
+}

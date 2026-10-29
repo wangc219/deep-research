@@ -1,0 +1,5 @@
+backend/package/platform_core/services/project_service.py
+backend/package/platform_core/services/equipment_research_service.py
+backend/test/unit/services/test_project_service.py
+backend/test/integration/services/test_equipment_query_integrity.py
+web/src/components/AgentChatComponent.vue

@@ -1,0 +1,333 @@
+{
+  "validated_at": "2026-10-20T04:37:12.685997+00:00",
+  "query_id": "query-30510033-b96d-46e8-8a3a-48ffe2b07e8e",
+  "query": "低空无人集群复杂电磁环境闭环反制装备研究",
+  "project_id": "06a3a154-076d-4fab-88a5-add6cd8bacd3",
+  "knowledge_base_id": "kb_zcfj9omke9",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "real_services": {
+    "open_websearch": true,
+    "aminer": true,
+    "knowledge_base": true
+  },
+  "knowledge_preflight": {
+    "result_count": 10,
+    "top_sources": [
+      {
+        "source": "057_ktfy_2026-01_探测-干扰-通信一体化管控策略研究.pdf",
+        "file_id": "file_b66beb",
+        "score": 0.6798187494277954
+      },
+      {
+        "source": "057_ktfy_2026-01_探测-干扰-通信一体化管控策略研究.pdf",
+        "file_id": "file_b66beb",
+        "score": 0.6729716658592224
+      },
+      {
+        "source": "069_xxdkjs_2024-04_xxdkjs202404001_雷达主瓣反干扰研究进展及展望.pdf",
+        "file_id": "file_8401de",
+        "score": 0.6718466877937317
+      },
+      {
+        "source": "069_xxdkjs_2024-04_xxdkjs202404001_雷达主瓣反干扰研究进展及展望.pdf",
+        "file_id": "file_8401de",
+        "score": 0.6483083963394165
+      },
+      {
+        "source": "041_ktfy_2025-01_群对群拦截协同态势感知关键技术.pdf",
+        "file_id": "file_1f3327",
+        "score": 0.6474814414978027
+      }
+    ]
+  },
+  "runs": [
+    {
+      "entry": "smart",
+      "agent_slug": "default-chatbot",
+      "run_id": "b4f3dcdb-bd1c-4957-8410-0a1680f4deac",
+      "thread_id": "dea81800-4c2c-4b8a-ae51-b3238ff040e7",
+      "session_id": null,
+      "elapsed_seconds": 303.2,
+      "result": {
+        "status": "completed",
+        "output": "本轮已完成三类检索并完成证据融合，全文如下。\n\n---\n\n# 低空无人集群复杂电磁环境闭环反制装备——检索质量核验正文\n\n## 一、三类检索最有价值的证据及相关性\n\n**（一）网页公开检索（Open Websearch）**。先后以“counter-UAS drone swarm electronic warfare jamming layered defense kill chain”（required_terms 锚定 counter-UAS）、“Joint Counter-small UAS layered defense”、以及论文出版页定向检索三类词开展精确检索。最有价值的一手/高权威证据来自论文出版页：MDPI《Sensors》论文\"Drone Detection and Defense Systems: Survey and a Software-Defined Radio-based Solution\"（https://www.mdpi.com/1424-8220/22/4/1453，authoritative 档），综述了射频、声学、光学、雷达等多类探测与防御手段并突出基于软件无线电的射频探测，直接支撑\"探测—识别\"环节的多传感融合结论；MDPI《Drones》的 C-UAS 协同防御综述（https://www.mdpi.com/2504-446x/6/3/65，authoritative 档）覆盖检测—识别—中和（mitigation）链路；ScienceDirect 多智能体反无人机架构论文（https://www.sciencedirect.com/science/article/pii/S2468227625002236）体现多手段集成与 AI 跟踪。需要如实说明：本轮的政府/军队/标准组织一手页面未被返回，主流结果多为论文出版页与媒体聚合页（uasfeed、drone-warfare 等，other 档），因此\"政府一手来源\"属于本轮缺口，仅以出版页作为高权威证据。\n\n**（二）AMiner 论文检索**。主题发现（counter-UAS/uav electronic warfare 等多组词）多次返回空结果，遂按标题桥接定位强相关论文并取得两篇完整摘要：Castrillo 等 2022《A Review of Counter-UAS Technologies for Cooperative Defensive Teams of Drones》（Drones，DOI 10.3390/drones6030065），摘要明确以小型无人机编队构成多平台 C-UAS 协同防御体系，综述传感、中和与指挥控制环节——与\"闭环装备构型\"直接对应；Besada 等 2022《Review and Simulation of Counter-UAS Sensors for Unmanned Traffic Management》（Sensors，DOI 10.3390/s22010189），摘要给出雷达/RF/光学/声学传感器及概率化探测模型（虚警率、检测概率、单/双/多基地与无源配置），并在仿真平台集成验证——支持\"效果评估与最小验证试验\"设计。\n\n**（三）知识库检索（kb_zcfj9omke9，\"技术\"库）**。四组主题检索均命中强相关内部文献：①《空天防御》2025年第2期李克勇等《群对群拦截协同态势感知关键技术》（文档 041_ktfy_2025-01）：给出电磁干扰/诱骗、高功率微波、激光、防空火力、以群制群等反无手段对比表，并将\"以群制群\"的协同探测/识别/跟踪确认为拦截核心；②《空天防御》2026年第1期杨革文等《探测-干扰-通信一体化管控策略研究》（057_ktfy_2026-01）：提出分级/扁平/智能三类管控体制，雷达组网借频率/极化/空间分集实现 MIMO 化抗干扰，对欺骗/压制资源联合调度、波形博弈一体化波形；③《雷达主瓣反干扰研究进展及展望》（069_xxdkjs_2024-04，周长霖等）：区分主瓣/旁瓣、压制/欺骗/组合/灵巧干扰，指出干扰识别、多干扰同时对抗、智能波形设计与\"雷达—干扰机实时动态博弈\"（强化学习/博弈论/控制论）并强调 OODA 闭环先发优势；④《降低测量参数不确定性的动态建模方法》（017_dzdkjs_2026-01，马红光等）：明确定义认知电子战\"认知截获—认知处理—认知决策—认知干扰\"闭环与复杂电磁环境五大特征，用 Bayesian 估计抑制测量参数不确定性；⑤《一种面向电磁对抗的体系效能机理反演分析模型》（008_dzdkjs_2025-04）：覆盖 DRFM 干扰对 CFAR 检测的压制、多假目标干扰对航迹的影响与体系效能评估，直指\"效果评估\"环节。\n\n## 二、基于上述证据的闭环判断\n\n**闭环装备构型**：网页与论文均印证\"探测—识别—决策—软硬反制—效果评估\"必须由多平台、多传感、软硬结合构成，而非单一武器；知识库进一步给出落到具体装备面的两条主线——\"以群制群\"的拦截子平台群（041）与\"探干通一体化\"的频谱综合对抗载体（057、069）。综合判断：可行构型为\"多源探测传感网（雷达/RF/光电/声学）＋认知频谱综合对抗设备（干扰/欺骗/组网反干扰一体化）＋以群制群拦截子群＋体系效能评估模块\"的软硬闭环装备族。\n\n**关键技术链**：干扰样式识别与测量参数不确定性建模（017 的 Bayesian 降不确定）→雷达多域（频率/极化/空间）分集与 MIMO 化组网反干扰（057）→干扰-雷达实时波形博弈决策（069，强化学习/博弈论/控制论）→欺骗/压制资源联合调度与 DRFM/灵巧干扰执行（057、001）→基于检测概率与航迹效应的干扰/拦截效能闭环评估（008、Besada 论文）。Besada 论文的概率化探测模型为\"探测→评估\"提供了可量化接口。\n\n**性能/适用边界**：知识库 041 明确指出蜂群目标呈点目标、可探测性低、轨迹交叉/遮挡致多目标跟踪困难，防空火力与激光应对蜂群效率低、高功率微波有附带毁伤与反辐射风险——即软硬反制的适用边界与代价结构；以群制群与电磁干扰适合低慢小蜂群，但技术成熟度不高、拦截距离受限。\n\n**主要失效条件**：①干扰样式未知/多样并存时单一样式反干扰失效（069 强调需要通用鲁棒干扰识别，实为难点）；②敌方采用光纤链路、自主导航或 AI 制导时\"断链\"式软反制失去作用对象（网页 drone-warfare 聚合页提示此风险，属待核验）；③测量参数不确定性与环境动态变化导致认知决策失真（017、008）；④多目标轨迹交点导致漏检/误跟（041）。\n\n**最小验证试验**：可构建\"单基地雷达＋RF 侦收＋SDR 干扰源＋模拟蜂群（多无人机点目标）＋效能评估终端\"的小规模闭环，先用 Besada 仿真模型标定检测概率与虚警率，再在受控复杂电磁环境（叠加压制与欺骗干扰）中检验干扰识别—波形博弈—干扰执行，最后以航迹保持与 CFAR 检测状态反演评估闭环增益（008）。此为工程推断，尚未检索到已公开的同类集成试验证据。\n\n## 三、证据层级逐项区分\n\n网页公开事实：上述 MDPI/ScienceDirect 出版页可点击内容属于公开文献（出版页为准，聚合页为次级，政府一手页缺失）。AMiner 论文摘要结论：Castrillo、Besada 两篇全文摘要属论文级证据（注：AMiner 主题检索多组为空，标题桥接后取得完整摘要，非零命中）。知识库内部文献结论：041、057、069、017、008、001 等文件名所示文献属内部文献结论，含反无手段对比、探干通三类体制、认知电子战闭环等具体论断。尚待验证的工程推断：上述\"最小验证试验\"与\"软硬闭环装备族\"构型、DRFM 频谱综合对抗载体形态、光纤链路/AI 制导使断链失效等，均系基于证据的外推，无直接公开试验数据支撑，需标记为待验证假设。\n\n---\n\n**检索质量小结**：三类检索通道均成功执行且相互互补——网页提供出版页级公开事实并暴露政府一手来源缺口；AMiner 提供两篇强相关论文完整摘要补足探测模型与协同构型；知识库贡献高相关的内部文献闭环证据（探干通一体化、认知电子战闭环、干扰效能评估），是全轮证据主体。证据足以支撑对闭环构型、关键技术链、适用边界、失效条件与最小验证试验的初步判断，但政府/军队一手公开页与集成实测试验数据仍属明确缺口，相关边界标为待验证。",
+        "agent_slug": "default-chatbot",
+        "thread_id": "dea81800-4c2c-4b8a-ae51-b3238ff040e7",
+        "conversation_id": 525,
+        "agent_run_id": "b4f3dcdb-bd1c-4957-8410-0a1680f4deac",
+        "request_id": "retrieval-quality-smart-d14bc99ffc",
+        "final_message_id": 4373,
+        "langfuse_trace_id": null,
+        "token_usage": {
+          "total": {
+            "input_tokens": 334016,
+            "total_tokens": 341995,
+            "output_tokens": 7979
+          },
+          "models": {
+            "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+              "model": {
+                "provider_id": "siliconflow-cn",
+                "provider_type": "openai",
+                "identity_source": "configured_metadata",
+                "response_model_ids": [
+                  "deepseek-ai/DeepSeek-V4-Flash"
+                ],
+                "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+                "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+              },
+              "usage": {
+                "input_tokens": 334016,
+                "total_tokens": 341995,
+                "output_tokens": 7979,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 0
+                }
+              },
+              "cache_hit_ratio": 0.0,
+              "model_call_count": 11,
+              "cache_hit_call_count": 0,
+              "uncached_input_tokens": 334016,
+              "cache_read_input_tokens": 0,
+              "cache_request_hit_ratio": 0.0,
+              "cache_observed_call_count": 11,
+              "usage_reported_call_count": 11,
+              "cache_observed_input_tokens": 334016
+            }
+          },
+          "complete": true,
+          "schema_version": 2,
+          "model_call_count": 11,
+          "usage_reported_call_count": 11,
+          "usage_unavailable_call_count": 0
+        },
+        "timing": {
+          "created_at": "2026-10-20T04:29:34.305752Z",
+          "started_at": "2026-10-20T04:29:34.320518Z",
+          "prepared_at": "2026-10-20T04:29:34.393658Z",
+          "first_model_request_at": "2026-10-20T04:29:34.429642Z",
+          "first_output_at": "2026-10-20T04:29:36.578381Z",
+          "finished_at": "2026-10-20T04:34:37.523674Z",
+          "dispatch_latency_ms": 15,
+          "preparation_latency_ms": 73,
+          "first_model_request_latency_ms": 124,
+          "model_first_output_latency_ms": 2185,
+          "first_output_latency_ms": 2273,
+          "total_latency_ms": 303218
+        }
+      },
+      "children": [],
+      "audit": {
+        "web_search_calls": 5,
+        "web_result_count": 14,
+        "web_distinct_urls": 13,
+        "web_relevant_results": 14,
+        "web_relevance_ratio": 1.0,
+        "web_authoritative_results": 4,
+        "web_urls": [
+          "http://www.03ls.com",
+          "https://aci.aero/airport-advocacy/security/counter-drones",
+          "https://drone-warfare.com/counter-uas/electronic-warfare",
+          "https://smallwarsjournal.com/2026/10/19/northcom-expands-counter-uas-operations-against-cartel-drones-at-the-southern-border",
+          "https://www.defense-aerospace.com/rand-and-joint-counter-uas-office-run-six-exercises-on-homeland-drone-defense",
+          "https://www.idga.org/command-and-control/articles/jiatf-401-explained-how-the-pentagons-new-counter-uas-task-force-is-changing-drone-defense",
+          "https://www.mdpi.com/1424-8220/22/4/1453",
+          "https://www.mdpi.com/2504-446x/6/3/65",
+          "https://www.researchgate.net/publication/377999398_Anti-drone_systems_Current_intelligent_countermeasures_from_low_to_high_risks",
+          "https://www.researchgate.net/publication/390803714_Electronic_Warfare_Cyberattacks_Countermeasures_and_Modern_Defensive_Strategies_of_UAV_Avionics_A_Survey",
+          "https://www.sciencedirect.com/science/article/pii/S1874548225000058",
+          "https://www.sciencedirect.com/science/article/pii/S2468227625002236",
+          "https://www.uasfeed.com/article/layered-counter-uas-defense-explained"
+        ],
+        "academic_search_calls": 9,
+        "academic_candidate_count": 20,
+        "academic_get_papers_calls": 1,
+        "full_abstracts": [
+          {
+            "id": "61deb1435244ab9dcbddf3f2",
+            "title": "Review and Simulation of Counter-UAS Sensors for Unmanned Traffic Management.",
+            "year": 2022,
+            "doi": "10.3390/s22010189"
+          },
+          {
+            "id": "627e29665aee126c0f8606f3",
+            "title": "A Review of Counter-UAS Technologies for Cooperative Defensive Teams of Drones",
+            "year": 2022,
+            "doi": "10.3390/drones6030065"
+          }
+        ],
+        "aminer_ledger_calls": 21,
+        "aminer_failed_calls": 0,
+        "knowledge_calls": 2,
+        "knowledge_result_count": 20,
+        "knowledge_sources": [
+          "001_dzdkjs_2025-01_dzdkjs202501001_基于ADRV9009的雷达干扰系统设计.pdf",
+          "008_dzdkjs_2025-04_dzdkjs202504007_一种面向电磁对抗的体系效能机理反演分析模型.pdf",
+          "017_dzdkjs_2026-01_dzdkjs202601010_降低测量参数不确定性的动态建模方法.pdf",
+          "041_ktfy_2025-01_群对群拦截协同态势感知关键技术.pdf",
+          "057_ktfy_2026-01_探测-干扰-通信一体化管控策略研究.pdf",
+          "069_xxdkjs_2024-04_xxdkjs202404001_雷达主瓣反干扰研究进展及展望.pdf",
+          "077_zsdd_2022-05_拒止环境下巡飞武器分布式智能作战关键技术研究.pdf"
+        ],
+        "knowledge_top_scores": [
+          0.7465700507164001,
+          0.7407611608505249,
+          0.7341646552085876,
+          0.7309145331382751,
+          0.7300666570663452
+        ]
+      },
+      "quality_checks": {
+        "completed": true,
+        "open_websearch_effective": true,
+        "open_websearch_high_quality": true,
+        "aminer_effective": true,
+        "knowledge_effective": true,
+        "standalone_synthesis": true,
+        "source_boundaries_explicit": true,
+        "no_tool_protocol_leak": true
+      },
+      "quality_passed": true
+    },
+    {
+      "entry": "deep",
+      "agent_slug": "deep-research",
+      "run_id": "9a3750d5-a24b-4578-b7ac-4c5d47982e41",
+      "thread_id": "equipment-deep-a246cdd2-d385-439b-8f92-13222e443a18",
+      "session_id": null,
+      "elapsed_seconds": 85.6,
+      "result": {
+        "status": "completed",
+        "output": "# 检索质量核验正文\n\n本轮回合围绕\"复杂电磁环境下低空无人集群探测—识别—决策—软硬反制—效果评估闭环\"依次执行三类检索并融合证据。各通道执行情况与证据价值如下。\n\n**一、Open Websearch。**首轮两条中文精确检索（\"低空无人机蜂群反制 复杂电磁环境\"、\"探干通一体化 反无人机 电子对抗\"，均带 required_terms 锚定）由 sogou/duckduckgo/bing 返回空或 403/反爬，属于通道受限而非主题无资料；按规则调整一次改为英文锚定检索后命中。最有价值的网页证据是 ScienceDirect 综述《Advances in UAV detection: integrating multi-sensor systems and AI…》（https://www.sciencedirect.com/science/article/pii/S1874548225000058，权威级），明确列举 AUDS 等典型反无人机系统\"雷达搜索捕获—光电跟踪识别分类—定向射频干扰摧毁\"的探测-识别-干扰分段构型，直接支撑\"多传感器融合+AI识别\"这条探测链。其余命中（droneanti.com、mtsuav.com、drone-warfare.com、counteruavradar.com）为厂商资料，属于公开事实但权威性较低，仅可佐证\"现役反无人机系统以链路压制（干扰/欺骗/协议攻击）为主，且正被光纤链路、星链与 AI 制导无人机削弱\"这一适用边界判断。网页通道结论：探测分系统证据充分，失效边界有公开佐证，但缺乏政府/军队一手标准材料，属公开事实层级。\n\n**二、AMiner academic_search→academic_get_papers。**首次主题检索两个英文术语后命中一篇强相关论文并读取完整摘要：K. Malon 等《Evaluation of Safety Zones Created by Hybrid UAV Detection and Jamming System》，2025，IEEE EUROCON 2025，DOI 10.1109/eurocon64445.2025.11073269（https://doi.org/10.1109/eurocon64445.2025.11073269）。摘要结论：面向微型/小型无人机提出\"地面机动站+协同无人机\"的混合式 C-UAS，探测器与效应器分布于地面站和随机无人机，并基于仿真评估射频分系统建立的安全区，证明\"把射频反制载荷上置到无人机\"可提升反制效能与覆盖。这是\"软硬反制\"分布化、以及\"效果评估需按安全区/空间几何量化\"这一构型层面的论文级直接证据，相关性高。\n\n**三、知识库（kb_zcfj9omke9，库名\"技术\"）。**query_kbs 命中多份内部文献，内部结论层级最强。\"探干通一体化管控策略\"来自《057_ktfy_2026-01_探测-干扰-通信一体化管控策略研究.pdf》，提出电磁静默、雷达组网、多传感器数据融合、多源主动干扰反侦察四类协同对抗策略，与\"探测-干扰-通信纳入统一资源编排、节点迁移重构以提升闭环效率与抗毁性\"的闭环管控逻辑；《069_xxdkjs_2024-04_雷达主瓣反干扰研究进展及展望.pdf》指出当前反干扰方法依赖已知信号模型，提出干扰识别、多干扰同时对抗、智能波形设计及\"雷达与干扰机实时动态博弈\"+OODA 先发优势，是决策/反识别链的典型内部结论；《008_dzdkjs_2025-04_一种面向电磁对抗的体系效能机理反演分析模型.pdf》与《017_dzdkjs_2026-01_降低测量参数不确定性的动态建模方法.pdf》分别支撑\"干扰效能反演评估\"与\"认知截获—处理—决策—干扰\"的闭环效果评估环节。\n\n**四、证据融合后的核心判断。**综合三通道：装备构型宜为\"分布式探干通一体化\"——地面机动站承担雷达组网+光电+频谱感知与决策调度，小型无人机/分布式传感节点携带射频干扰、欺骗与探测载荷构成可上置效应器与安全区，符合论文的混合式布局与知识库的编队级综合管控。关键技术链是：多源融合探测→AI 识别分级→认知决策（波形/资源博弈）→软（压制、欺骗、协议攻击）硬（定向能/动能）反制→按空间安全区与干扰效能反演模型的闭环评估。性能边界：探测/反制以链路压制为主攻面，且受\"雷达对干扰敏感、光电抗干扰强\"的互补性约束。主要失效条件：敌方采用光纤/星链/C2 上行分离、频段跳变或 AI 自主制导时链路压制失效；本系统在多节点受扰时若不能迁移关键节点角色即丧失鲁棒性；效果评估在信息不完整、干扰样式多样条件下失准——后三者均明确见于知识库文献。最小验证试验建议：以 10–30 架微型无人机集群为靶，设置强干扰背景，验证\"探测→识别→决策→压制→安全区评估\"端到端闭环，测定压制成功率与漏识别率。\n\n**证据层级区分**：网页为公开事实（厂商/综述，权威性有限）；论文为 AMiner 摘要级结论（混合式安全区评估，仿真证据，非全实物）；知识库为内部文献结论（探干通管控、雷达反干扰、效能评估）；\"可迁移部署后能实际压制具体集群\"仍属待验证工程推断，尚未有实物全流程试验数据支撑。三类通道共用一份 Sciencedirect 综述与一篇论文，均非全文，精确指标未取证。",
+        "agent_slug": "deep-research",
+        "thread_id": "equipment-deep-a246cdd2-d385-439b-8f92-13222e443a18",
+        "conversation_id": 526,
+        "agent_run_id": "9a3750d5-a24b-4578-b7ac-4c5d47982e41",
+        "request_id": "31176d46-a6db-4d67-bbfa-a5168f693ba5",
+        "final_message_id": 4387,
+        "langfuse_trace_id": null,
+        "token_usage": {
+          "total": {
+            "input_tokens": 86308,
+            "total_tokens": 90127,
+            "output_tokens": 3819
+          },
+          "models": {
+            "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+              "model": {
+                "provider_id": "siliconflow-cn",
+                "provider_type": "openai",
+                "identity_source": "configured_metadata",
+                "response_model_ids": [
+                  "deepseek-ai/DeepSeek-V4-Flash"
+                ],
+                "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+                "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+              },
+              "usage": {
+                "input_tokens": 86308,
+                "total_tokens": 90127,
+                "output_tokens": 3819,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 0
+                }
+              },
+              "cache_hit_ratio": 0.0,
+              "model_call_count": 4,
+              "cache_hit_call_count": 0,
+              "uncached_input_tokens": 86308,
+              "cache_read_input_tokens": 0,
+              "cache_request_hit_ratio": 0.0,
+              "cache_observed_call_count": 4,
+              "usage_reported_call_count": 4,
+              "cache_observed_input_tokens": 86308
+            }
+          },
+          "complete": true,
+          "schema_version": 2,
+          "model_call_count": 4,
+          "usage_reported_call_count": 4,
+          "usage_unavailable_call_count": 0
+        },
+        "timing": {
+          "created_at": "2026-10-20T04:34:42.797760Z",
+          "started_at": "2026-10-20T04:34:42.847549Z",
+          "prepared_at": "2026-10-20T04:34:42.913440Z",
+          "first_model_request_at": "2026-10-20T04:34:42.956895Z",
+          "first_output_at": "2026-10-20T04:34:44.391924Z",
+          "finished_at": "2026-10-20T04:36:08.419105Z",
+          "dispatch_latency_ms": 50,
+          "preparation_latency_ms": 66,
+          "first_model_request_latency_ms": 159,
+          "model_first_output_latency_ms": 1478,
+          "first_output_latency_ms": 1594,
+          "total_latency_ms": 85621
+        }
+      },
+      "children": [],
+      "audit": {
+        "web_search_calls": 4,
+        "web_result_count": 6,
+        "web_distinct_urls": 6,
+        "web_relevant_results": 6,
+        "web_relevance_ratio": 1.0,
+        "web_authoritative_results": 1,
+        "web_urls": [
+          "https://drone-warfare.com/counter-uas/electronic-warfare",
+          "https://droneanti.com/solutions/drone-detection-and-jamming-system",
+          "https://mtsuav.com/category/electronic-warfare-counter-uas",
+          "https://mtsuav.com/electronic-warfare-counter-uas/counter-uas-complete-guide",
+          "https://www.counteruavradar.com/en/knowledge-base/drone-countermeasure-system-effective-low-altitude-defense-solutions-and-application-guide",
+          "https://www.sciencedirect.com/science/article/pii/S1874548225000058"
+        ],
+        "academic_search_calls": 2,
+        "academic_candidate_count": 1,
+        "academic_get_papers_calls": 1,
+        "full_abstracts": [
+          {
+            "id": "6876e2b6163c01c85088422f",
+            "title": "Evaluation of Safety Zones Created by Hybrid UAV Detection and Jamming System",
+            "year": 2025,
+            "doi": "10.1109/eurocon64445.2025.11073269"
+          }
+        ],
+        "aminer_ledger_calls": 6,
+        "aminer_failed_calls": 0,
+        "knowledge_calls": 1,
+        "knowledge_result_count": 10,
+        "knowledge_sources": [
+          "008_dzdkjs_2025-04_dzdkjs202504007_一种面向电磁对抗的体系效能机理反演分析模型.pdf",
+          "017_dzdkjs_2026-01_dzdkjs202601010_降低测量参数不确定性的动态建模方法.pdf",
+          "057_ktfy_2026-01_探测-干扰-通信一体化管控策略研究.pdf",
+          "064_xxdkjs_2023-04_xxdkjs202304005_光电侦察技术发展现状与趋势.pdf",
+          "069_xxdkjs_2024-04_xxdkjs202404001_雷达主瓣反干扰研究进展及展望.pdf"
+        ],
+        "knowledge_top_scores": [
+          0.7249909043312073,
+          0.7189661264419556,
+          0.7039567828178406,
+          0.6957286596298218,
+          0.6876798868179321
+        ]
+      },
+      "quality_checks": {
+        "completed": true,
+        "open_websearch_effective": true,
+        "open_websearch_high_quality": true,
+        "aminer_effective": true,
+        "knowledge_effective": true,
+        "standalone_synthesis": true,
+        "source_boundaries_explicit": true,
+        "no_tool_protocol_leak": true
+      },
+      "quality_passed": true
+    }
+  ],
+  "passed": true
+}

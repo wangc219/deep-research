@@ -1,6 +1,7 @@
 import { useUserStore, checkAdminPermission, checkSuperAdminPermission } from '@/stores/user'
 import { message } from 'ant-design-vue'
 import { notifyDataChanged } from '@/utils/dataFreshness'
+import { pooledReadFetch } from '@/utils/readRequestPool'
 
 function safeRequestMetadata(url, requestOptions, response = null) {
   let path = '[invalid-url]'
@@ -25,6 +26,11 @@ const SAFE_ERROR_RESPONSE_HEADERS = ['x-lock-remaining', 'retry-after', 'www-aut
 const SAFE_CONFLICT_MESSAGES = new Set([
   '历史研究任务为只读数据',
   'Query 已被其他操作更新，请刷新后重试'
+])
+const SAFE_CONFLICT_CODES = new Set([
+  'run_busy',
+  'run_interrupted',
+  'resume_superseded'
 ])
 
 /**
@@ -72,6 +78,22 @@ function safeResponseHeaders(headers) {
 }
 
 function safeErrorData(errorData, status, publicMessage) {
+  if (status === 409 && errorData?.detail && typeof errorData.detail === 'object') {
+    const detail = errorData.detail
+    if (SAFE_CONFLICT_CODES.has(detail.code)) {
+      return {
+        detail: {
+          code: detail.code,
+          ...(typeof detail.active_run_id === 'string'
+            ? { active_run_id: detail.active_run_id }
+            : {}),
+          ...(typeof detail.active_run_status === 'string'
+            ? { active_run_status: detail.active_run_status }
+            : {})
+        }
+      }
+    }
+  }
   if (status !== 422) return { detail: publicMessage }
   const detail = errorData?.detail
   if (!Array.isArray(detail)) return { detail: publicMessage }
@@ -150,8 +172,21 @@ export async function apiRequest(url, options = {}, requiresAuth = true, respons
       Object.assign(requestOptions.headers, userStore.getAuthHeaders())
     }
 
-    // 发送请求
-    const response = await fetch(url, requestOptions)
+    // GET/HEAD 在容器切换或移动网络瞬时抖动时允许一次短退避重试；
+    // 写请求不自动重放，仍由各业务端点的幂等键负责安全重试。
+    let response
+    const method = (requestOptions.method || 'GET').toUpperCase()
+    // 带取消信号的读取保留原生响应体取消语义，其余页面共享普通在途读取。
+    const send = ['GET', 'HEAD'].includes(method) && ['json', 'text'].includes(responseType) && !requestOptions.signal
+      ? pooledReadFetch
+      : fetch
+    try {
+      response = await send(url, requestOptions)
+    } catch (firstError) {
+      if (!['GET', 'HEAD'].includes(method) || firstError?.name === 'AbortError') throw firstError
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      response = await send(url, requestOptions)
+    }
 
     // 处理API返回的错误
     if (!response.ok) {

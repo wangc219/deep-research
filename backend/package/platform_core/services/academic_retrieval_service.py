@@ -28,11 +28,14 @@ ACADEMIC_RETRIEVAL_PROMPT = """# 学术检索与论文证据
 提取简短科研关键词，必要时分别使用中英文检索词。
 用户要求论文证据或研究依据时，必须实际检索后再回答，不得只凭模型记忆直接生成带论文依据的结论；简短回答也适用。
 仅发送公开科研概念；不要把完整会话、内部文档、客户或项目名称、能力画像原文发送给 AMiner。
-已知论文标题使用 mode=title；标准索引术语使用 mode=topic。
-罕见术语、新命名、跨学科问题优先用 mode=semantic，保留公开研究对象、方法与关键约束的简短自然语言问题；
-语义接口每页约 ¥0.30，按共享预算记账，固定每页最多 10 条。any_terms 可传经来源确认的名称/中英文别名（组内任选其一）；
-不要凭空杜撰别名或把待证结论当过滤条件。语义分页只用 query_coverage 返回的 next_cursor，不猜页码。
-受控主题词空命中会尝试同一短语的免费标题发现；依然为空时针对具体缺口改用语义搜索或来源证实的英文别名。
+已知论文标题使用 mode=title；单一标准索引术语使用 mode=topic；自然语言技术问题、罕见术语和跨学科问题优先
+使用 mode=precision。precision 使用 AMiner 官方论文问答搜索自动提取关键词；容易同名或概念漂移时，用
+required_term_groups 表达“组内 OR、组间 AND”的真实名称/中英文别名，用 boost_terms 提升方法或约束词，
+不要把待证结论设为硬过滤条件。需要年份、SCI、作者、机构或 venue 边界时直接传结构化过滤，不把它们拼进检索句。
+precision 仍不足且确有深语义翻页价值时再用 mode=semantic；Pro 语义接口每页约 ¥0.30，按共享预算记账，
+固定每页最多 10 条。any_terms 只传经来源确认的名称/别名，语义分页只用 query_coverage 返回的 next_cursor，不猜页码。
+受控主题词空命中会先用官方论文问答搜索自动提词，再尝试同一短语的免费标题发现；依然为空时针对具体缺口
+改用 Pro 语义搜索或来源证实的英文别名。
 详情仅使用实际检索返回的 AMiner id；arXiv 编号、DOI、URL 均不能代替该 ID。只有编号时先查准确标题再定位。
 同名论文必须核对作者、年份和发表 venue，不能把第一个标题命中直接认定为目标论文。
 技术检索先将问题拆成公开的技术对象、方法和约束，避免把整段问题作为关键词。
@@ -73,7 +76,9 @@ metadata 是题录，partial_abstract 是部分摘要，abstract 是完整摘要
 不得自行把 DOI 链接改成 arXiv、出版社或其他未返回的地址，即使认为它们指向同一论文。
 简短回答、仅列题录和追溯一层参考文献也必须保留对应 citation，不能只写“来源：AMiner”或论文 ID。
 上下文压缩后仍保留论文 ID、DOI、来源和证据层级。
-一般问题无需学术检索，非学术公开事实继续使用 web_search，内部事实使用授权知识库。
+一般问题无需学术检索，非学术公开事实继续使用 web_search，内部事实使用授权知识库。把用户已经提供的任务书、
+材料或要求转成推进计划/实施方案时，不因文本里出现“研究、证据门、算法、材料”等词自动检索；只有用户明确要求
+补充外部论文依据或方案中的关键技术事实确需核验时才检索。
 AMiner 返回 disabled/auth_failed/rate_limited/unavailable/budget_exhausted 时停止对此服务的重试或同义改写。
 转用网页、知识库和已有证据完成回答。
 limit_reached 表示当前接口额度用尽；不要反复调用该接口。配置更改或相同请求执行中时使用已有证据，不等待或循环尝试。
@@ -158,6 +163,96 @@ def _compact_topic_query(query: str) -> str:
     return normalized if compact_query.casefold() == normalized.casefold() and len(tokens) <= 6 else compact_query
 
 
+def _clean_term_groups(groups: list[list[str]] | None, *, group_limit: int = 6) -> list[list[str]]:
+    """清理 AMiner 联合检索组，保留组内 OR、组间 AND 语义。"""
+    cleaned = []
+    for raw_group in groups or []:
+        group = []
+        for raw_term in raw_group:
+            term = " ".join(str(raw_term or "").split())[:100]
+            if term and term.casefold() not in {value.casefold() for value in group}:
+                group.append(term)
+            if len(group) == group_limit:
+                break
+        if group:
+            cleaned.append(group)
+        if len(cleaned) == 6:
+            break
+    return cleaned
+
+
+def _clean_terms(values: list[str] | None, *, limit: int) -> list[str]:
+    """清理 AMiner 作者、机构、venue 与加权词数组。"""
+    cleaned = []
+    for raw_value in values or []:
+        value = " ".join(str(raw_value or "").split())[:120]
+        if value and value.casefold() not in {item.casefold() for item in cleaned}:
+            cleaned.append(value)
+        if len(cleaned) == limit:
+            break
+    return cleaned
+
+
+def _question_search_payload(
+    query: str,
+    *,
+    limit: int,
+    page: int,
+    order: str,
+    required_term_groups: list[list[str]] | None = None,
+    boost_terms: list[str] | None = None,
+    years: list[int] | None = None,
+    sci_only: bool | None = None,
+    citation_boost: bool = False,
+    author_terms: list[str] | None = None,
+    org_terms: list[str] | None = None,
+    venue_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    """按官方论文问答搜索协议构造受控精确检索参数。"""
+    size = min(100, max(limit, 20))
+    payload: dict[str, Any] = {
+        "use_topic": True,
+        "size": size,
+        "offset": min(10_000, max(0, page - 1) * size),
+    }
+    high = _clean_term_groups(required_term_groups)
+    if high:
+        payload["topic_high"] = json.dumps(high, ensure_ascii=False, separators=(",", ":"))
+    else:
+        payload["query"] = " ".join(query.split())
+    middle = _clean_terms(boost_terms, limit=12)
+    if middle:
+        payload["topic_middle"] = json.dumps([[value] for value in middle], ensure_ascii=False, separators=(",", ":"))
+    normalized_years = []
+    for raw_year in years or []:
+        try:
+            year = int(raw_year)
+        except (TypeError, ValueError):
+            continue
+        if 1800 <= year <= 2100 and year not in normalized_years:
+            normalized_years.append(year)
+    normalized_years = sorted(normalized_years)[:50]
+    if normalized_years:
+        payload["year"] = normalized_years
+    if sci_only is not None:
+        payload["sci_flag"] = sci_only
+    if citation_boost:
+        payload["n_citation_flag"] = True
+    if order == "recent":
+        payload["force_year_sort"] = True
+    elif order == "cited":
+        payload["force_citation_sort"] = True
+    for field, values, field_limit in (
+        ("author_terms", author_terms, 20),
+        ("org_terms", org_terms, 20),
+        ("venue_ids", venue_ids, 20),
+    ):
+        cleaned = _clean_terms(values, limit=field_limit)
+        if cleaned:
+            payload[field] = cleaned
+    return payload
+
+
 def is_external_paper_identifier(value: str) -> bool:
     """识别被误当作 AMiner ID 的 arXiv 编号、DOI 与链接。"""
     return bool(re.search(r"^(?:arxiv:|doi:|https?://|10\.|\d{4}\.\d{4,5}(?:v\d+)?$|[a-z][a-z.-]*/\d{7})", value, re.I))
@@ -200,6 +295,14 @@ class AcademicRetrievalService:
         related_queries: list[str] | None = None,
         cursor: str | None = None,
         any_terms: list[str] | None = None,
+        required_term_groups: list[list[str]] | None = None,
+        boost_terms: list[str] | None = None,
+        years: list[int] | None = None,
+        sci_only: bool | None = None,
+        citation_boost: bool = False,
+        author_terms: list[str] | None = None,
+        org_terms: list[str] | None = None,
+        venue_ids: list[str] | None = None,
     ) -> dict:
         """有界联合检索，交错保留各角度候选，补证失败时保留已有论文。"""
         if mode == "semantic" and (page != 1 or (cursor and related_queries)):
@@ -214,13 +317,32 @@ class AcademicRetrievalService:
             if effective and effective.casefold() not in {existing.casefold() for existing in queries}:
                 queries.append(effective)
                 requested_queries[effective.casefold()] = value
-        endpoint = {"title": "title_search", "semantic": "semantic_search"}.get(mode, "search")
+        endpoint = {
+            "title": "title_search",
+            "precision": "question_search",
+            "semantic": "semantic_search",
+        }.get(mode, "search")
         responses, coverage, groups, errors = [], [], [], []
         for term in queries:
             payload = {"page": min(page, 10) if mode == "title" else page - 1, "size": limit}
             payload["title" if mode == "title" else "keyword"] = term
             if mode != "title" and order != "relevance":
                 payload["order"] = "year" if order == "recent" else "n_citation"
+            if mode == "precision":
+                payload = _question_search_payload(
+                    term,
+                    limit=limit,
+                    page=page,
+                    order=order,
+                    required_term_groups=required_term_groups,
+                    boost_terms=boost_terms,
+                    years=years,
+                    sci_only=sci_only,
+                    citation_boost=citation_boost,
+                    author_terms=author_terms,
+                    org_terms=org_terms,
+                    venue_ids=venue_ids,
+                )
             if mode == "semantic":
                 payload = (
                     {"cursor": cursor}
@@ -250,6 +372,7 @@ class AcademicRetrievalService:
                         else {}
                     ),
                     "status": found["status"],
+                    "mode": mode,
                     "page": page,
                     "returned": len(candidates),
                     "total": total,
@@ -275,6 +398,49 @@ class AcademicRetrievalService:
             if found["status"] != "ok":
                 errors.append({**found, "endpoint": endpoint})
                 break
+
+        if mode == "topic" and not errors and not any(groups) and len(queries) == 1:
+            found = await self._request(
+                "question_search",
+                _question_search_payload(
+                    requested_queries.get(queries[0].casefold(), queries[0]),
+                    limit=limit,
+                    page=1,
+                    order=order,
+                    required_term_groups=required_term_groups,
+                    boost_terms=boost_terms,
+                    years=years,
+                    sci_only=sci_only,
+                    citation_boost=citation_boost,
+                    author_terms=author_terms,
+                    org_terms=org_terms,
+                    venue_ids=venue_ids,
+                ),
+            )
+            responses.append(found)
+            candidates = [
+                {
+                    **normalize_paper(item, retrieved_at=found.get("retrieved_at")),
+                    "matched_queries": [query],
+                    "discovery_mode": "precision_fallback",
+                }
+                for item in found.get("data", [])
+                if isinstance(item, dict) and (item.get("id") or item.get("_id") or item.get("paper_id"))
+            ][:limit]
+            groups.append(candidates)
+            coverage.append(
+                {
+                    "query": query,
+                    "mode": "precision_fallback",
+                    "status": found["status"],
+                    "page": 1,
+                    "returned": len(candidates),
+                    "total": found.get("total"),
+                    "next_page": None,
+                }
+            )
+            if found["status"] != "ok":
+                errors.append({**found, "endpoint": "question_search"})
 
         if mode == "topic" and not errors and not any(groups) and len(queries) == 1:
             title_fallback = _topic_title_fallback(queries[0])

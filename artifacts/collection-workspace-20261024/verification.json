@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-24",
+  "scope": "用户确认仅接入沙盒共享工作区与产物流程，处理程序仍用已有环境",
+  "workspace_roots": [
+    "/采集成果/公众号文章",
+    "/采集成果/视频号文字稿"
+  ],
+  "checks": {
+    "backend_artifact_tests": 4,
+    "video_regression_tests": 20,
+    "milvus_and_index_health_tests": 38,
+    "frontend_unit_tests": 586,
+    "frontend_lint": "passed",
+    "frontend_build": "passed",
+    "api_image_build": "passed",
+    "api_and_worker_recreated": true,
+    "readiness": "ready, no degraded components",
+    "live_http": "passed after image recreation: isolated users, auto article publication without browser, DOCX/Markdown workspace publication, selected ZIP, target KB permission, parsing and vector indexing to success",
+    "browser": "two sample articles selected via UI, imported and verified indexed; workspace preview; video artifact selection; light and dark theme",
+    "responsive": "temporary viewport tested via DOM; no horizontal overflow; screenshot capture timed out; viewport reset"
+  },
+  "cleanup": "Temporary UI artifacts and dedicated test KB removed; temporary test account disabled; existing user video artifact retained",
+  "limits": [
+    "New live WeChat download/ASR not re-run; test source documents generated locally, actual workspace/storage/PostgreSQL/queue/Milvus used",
+    "100 selected artifacts per batch; file limit 100 MB; ZIP total 500 MB"
+  ],
+  "screenshots_contain_labelled_test_examples": true,
+  "screenshots": [
+    "wechat-results-qa.jpg",
+    "video-results-qa.jpg",
+    "workspace-preview-qa.jpg",
+    "dark-qa.jpg"
+  ]
+}

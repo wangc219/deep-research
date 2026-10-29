@@ -114,6 +114,7 @@ def load_chat_model(
         stream_usage=True,
         preserve_reasoning=info.provider_id
         in {
+            "deepseek",
             "siliconflow",
             "siliconflow-cn",
             "opencode",
@@ -127,6 +128,10 @@ def load_chat_model(
         },
         provider_compat={
             **({"max_tokens_field": "max_tokens"} if info.provider_id in {"siliconflow", "siliconflow-cn"} else {}),
+            # DeepSeek 的思考模式允许模型自主选择工具，但不接受指定
+            # 函数名的 tool_choice。研究中间件会在首轮指定检索工具，
+            # 因此在传输边界降级为 auto，避免请求直接返回 400。
+            **({"forced_tool_choice_mode": "auto"} if info.provider_id == "deepseek" else {}),
             **info.compat,
         },
         **kwargs,
@@ -248,6 +253,13 @@ class ChatCompletionsAdapter(ChatOpenAI):
         compat = self.provider_compat
         if not compat:
             return
+
+        if compat.get("forced_tool_choice_mode") == "auto":
+            tool_choice = payload.get("tool_choice")
+            if isinstance(tool_choice, dict) or (
+                isinstance(tool_choice, str) and tool_choice not in {"auto", "none"}
+            ):
+                payload["tool_choice"] = "auto"
 
         if compat.get("max_tokens_field") == "max_tokens" and "max_completion_tokens" in payload:
             payload["max_tokens"] = payload.pop("max_completion_tokens")

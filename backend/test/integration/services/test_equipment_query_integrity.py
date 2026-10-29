@@ -508,7 +508,10 @@ async def test_http_generation_accepts_no_project_and_replays_idempotent_request
     manager, users = query_db
     async with manager.get_async_session_context() as db:
         project = await db.get(Project, created.json()["project_id"])
-        assert project.uid == users[0].uid and project.name == f"装备深研工作台 · {users[0].username}"
+        assert project.uid == users[0].uid
+        assert project.name is None
+        assert project.selection_status == "implicit"
+        assert project.idempotency_key == "equipment-runtime-scope"
         assert len(list((await db.scalars(select(TaskRecord))).all())) == 1
 
 

@@ -1,0 +1,55 @@
+--- services/aminer_client.py before
++++ services/aminer_client.py
+@@ -16,6 +16,7 @@
+ ACADEMIC_TOOL_NAMES = frozenset({"academic_search", "academic_get_papers", "academic_get_references"})
+ ENDPOINTS = {
+     "search": ("GET", "/paper/search/pro", 1, "search"),
++    "semantic_search": ("POST", "/paper/qa/searchPro", 30, "search"),
+     "title_search": ("GET", "/paper/search", 0, "free"),
+     "info": ("POST", "/paper/info", 0, "free"),
+     "detail": ("GET", "/paper/detail", 1, "detail"),
+@@ -65,7 +66,11 @@
+         token = aminer_authorization_token(self.credentials)
+         method, path, _cost, _kind = ENDPOINTS[endpoint]
+         try:
+-            async with httpx.AsyncClient(timeout=10.0, transport=self.transport, follow_redirects=False) as client:
++            async with httpx.AsyncClient(
++                timeout=30.0 if endpoint == "semantic_search" else 10.0,
++                transport=self.transport,
++                follow_redirects=False,
++            ) as client:
+                 response = await client.request(
+                     method,
+                     f"{AMINER_BASE_URL}{path}",
+@@ -101,6 +106,22 @@
+         # 供应商会用 HTTP 500 承载鉴权/限流等业务错误，先保留上面的稳定语义。
+         if response.status_code >= 500:
+             raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True)
++        if endpoint == "semantic_search" and data.get("success") is True and code in {"", "200"}:
++            semantic = data.get("data")
++            if not isinstance(semantic, dict) or not isinstance(semantic.get("items"), list):
++                raise AMinerError("unavailable", "AMiner 语义检索返回了无效数据")
++            cursor = semantic.get("next_cursor")
++            if cursor is not None and (not isinstance(cursor, str) or not 16 <= len(cursor) <= 256):
++                raise AMinerError("unavailable", "AMiner 语义检索返回了无效游标")
++            total = semantic.get("total")
++            return {
++                **data,
++                "data": semantic["items"],
++                "next_cursor": cursor,
++                "total": total.get("value") if isinstance(total, dict) else total,
++                "total_relation": total.get("relation") if isinstance(total, dict) else None,
++                "warnings": semantic.get("warnings", []),
++            }
+         if data.get("success") is True and code == "200" and "data" in data and data["data"] is None:
+             # 实际服务在无命中时返回 data:null，不应把空结果熔断成供应商故障。
+             data["data"] = []
+@@ -111,7 +132,7 @@
+ 
+ def normalize_paper(item: dict[str, Any], *, retrieved_at: str | None = None) -> dict[str, Any]:
+     """保留真实题录与摘要层级，不将搜索命中包装成全文证据。"""
+-    paper_id = str(item.get("id") or item.get("_id") or "")
++    paper_id = str(item.get("id") or item.get("_id") or item.get("paper_id") or "")
+     doi = str(item.get("doi") or "").strip()
+     for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+         if doi.lower().startswith(prefix):

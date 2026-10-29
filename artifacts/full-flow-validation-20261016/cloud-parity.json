@@ -1,0 +1,89 @@
+{
+  "site": "https://www.deepquest.space",
+  "backend": {
+    "api": {
+      "matched": true,
+      "files": 3
+    },
+    "worker": {
+      "matched": true,
+      "files": 3
+    },
+    "equipment-worker": {
+      "matched": true,
+      "files": 3
+    },
+    "equipment-query-worker": {
+      "matched": true,
+      "files": 3
+    }
+  },
+  "frontend": {
+    "local_files": 781,
+    "cloud_files": 782,
+    "independent_dev_build_differences": 221,
+    "public_asset": "assets/EquipmentDeepThinkingView-BHIa8bHW.js",
+    "public_asset_sha256": "cd883812f86f68db5f1da54797d0c0cb8631be392ec8450d7b20b1dbed5e1c46",
+    "compiled_branch_navigation_marker": true,
+    "public_asset_hash_matches_container": true,
+    "compiled_followup_marker": true,
+    "source_parity": {
+      "different_files": [],
+      "compared_files": 1132
+    }
+  },
+  "public_readiness": {
+    "status": "ready",
+    "degraded": false,
+    "checks": {
+      "startup": {
+        "status": "ok"
+      },
+      "postgres": {
+        "status": "ok"
+      },
+      "redis": {
+        "status": "ok"
+      },
+      "worker": {
+        "status": "ok"
+      }
+    },
+    "components": {
+      "builtin_mcp_servers": {
+        "status": "ok",
+        "required": false
+      },
+      "builtin_skills": {
+        "status": "ok",
+        "required": true
+      },
+      "default_agents": {
+        "status": "ok",
+        "required": true
+      },
+      "knowledge_base": {
+        "status": "ok",
+        "required": true
+      },
+      "model_cache": {
+        "status": "ok",
+        "required": true
+      },
+      "model_providers": {
+        "status": "ok",
+        "required": true
+      },
+      "sandbox_provider": {
+        "status": "ok",
+        "required": true
+      },
+      "security_secrets": {
+        "status": "ok",
+        "required": true
+      }
+    },
+    "version": "0.7.3"
+  },
+  "public_home_http": 200
+}

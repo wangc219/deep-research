@@ -8,7 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core import get_version
 from platform_core.config.environment import deep_research_env
-from platform_core.config.options import invalidate_option_cache, system_options, update_option_value
+from platform_core.config.options import (
+    invalidate_option_cache,
+    publish_web_search_runtime_options,
+    system_options,
+    update_option_value,
+    web_search_opts,
+)
 from platform_core.services.readiness_service import get_readiness
 from platform_core.storage.postgres.models_business import User
 from platform_core.utils.logging_config import LOG_FILE, logger
@@ -40,6 +46,17 @@ async def test_aminer(
         user_id=payload.user_id,
         api_key=payload.api_key.get_secret_value() if payload.api_key is not None else None,
     )
+
+
+@system.post("/web-search/test")
+async def test_web_search(
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员执行内部 SearXNG 健康与真实 JSON 检索测试。"""
+    from platform_core.services.searxng_service import test_searxng_connection
+
+    return await test_searxng_connection(await web_search_opts.get(db))
 
 
 # =============================================================================
@@ -303,6 +320,8 @@ async def put_config_option(
             raise HTTPException(status_code=404, detail=f"配置项不存在: {key}")
         await db.commit()
         await invalidate_option_cache(key)
+        if key == web_search_opts.key:
+            await publish_web_search_runtime_options(dict(record.value or {}))
         await db.refresh(record)
         return {"option": serialize_option(record)}
     except HTTPException:

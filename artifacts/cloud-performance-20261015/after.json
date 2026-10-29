@@ -1,0 +1,56 @@
+[
+  {
+    "path": "/api/equipment/runs?compact=true",
+    "encoding": "identity",
+    "wire_bytes": 27214,
+    "decoded_bytes": 27214,
+    "ttfb_s": 0.267,
+    "total_s": 0.316,
+    "rows": 18
+  },
+  {
+    "path": "/api/equipment/runs?compact=true",
+    "encoding": "gzip",
+    "wire_bytes": 4991,
+    "decoded_bytes": 27214,
+    "ttfb_s": 0.228,
+    "total_s": 0.231,
+    "rows": 18
+  },
+  {
+    "path": "/api/equipment/portal",
+    "encoding": "identity",
+    "wire_bytes": 33132,
+    "decoded_bytes": 33132,
+    "ttfb_s": 0.315,
+    "total_s": 0.364,
+    "rows": 8
+  },
+  {
+    "path": "/api/equipment/portal",
+    "encoding": "gzip",
+    "wire_bytes": 7817,
+    "decoded_bytes": 33132,
+    "ttfb_s": 0.286,
+    "total_s": 0.327,
+    "rows": 8
+  },
+  {
+    "path": "/api/equipment/capabilities?compact=true",
+    "encoding": "identity",
+    "wire_bytes": 3771537,
+    "decoded_bytes": 3771537,
+    "ttfb_s": 0.722,
+    "total_s": 1.386,
+    "rows": 121
+  },
+  {
+    "path": "/api/equipment/capabilities?compact=true",
+    "encoding": "gzip",
+    "wire_bytes": 820809,
+    "decoded_bytes": 3771537,
+    "ttfb_s": 0.697,
+    "total_s": 0.974,
+    "rows": 121
+  }
+]

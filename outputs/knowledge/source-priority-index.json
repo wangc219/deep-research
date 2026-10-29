@@ -771,6 +771,25 @@
       ],
       "url": "https://atlantic.navfac.navy.mil/Home/News-Detail/Article/4397067/navfac-pacific-awards-85-million-base-operating-support-contract-at-diego-garcia/"
     },
+    "https://baike.baidu.com/item/MISSION/23653636": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "operational_employment",
+        "combat_scenario",
+        "weapon_equipment"
+      ],
+      "domain": "baike.baidu.com",
+      "failure_count": 0,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-25T12:28:02.413225+00:00",
+      "last_status": "fetched",
+      "success_count": 3,
+      "title": "MISSION（英语单词）_百度百科",
+      "topics": [
+        "民用公共避难场所的应急照明维护：减少电池失效和漏检"
+      ],
+      "url": "https://baike.baidu.com/item/MISSION/23653636"
+    },
     "https://baykartech.com/en/uav/bayraktar-akinci/": {
       "accepted_count": 1,
       "agent_ids": [
@@ -1868,6 +1887,24 @@
       ],
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/disabled"
     },
+    "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/mission": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "combat_scenario",
+        "weapon_equipment"
+      ],
+      "domain": "dictionary.cambridge.org",
+      "failure_count": 0,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-25T12:28:02.428234+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 2,
+      "title": "MISSION中文 (简体)翻译：剑桥词典 - Cambridge Dictionary",
+      "topics": [
+        "民用公共避难场所的应急照明维护：减少电池失效和漏检"
+      ],
+      "url": "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/mission"
+    },
     "https://digital-commons.usnwc.edu/cmsi-maritime-reports/32/": {
       "accepted_count": 2,
       "agent_ids": [
@@ -1980,18 +2017,18 @@
         "cross_domain_fusion"
       ],
       "domain": "dodcio.defense.gov",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-12T18:09:08.532703+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T15:55:45.010391+00:00",
+      "last_status": "fetch_failed",
       "success_count": 13,
       "title": "dodcio.defense.gov · DoD C3 Strategy.pdf",
       "topics": [
-        "西太高强度对抗中前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
         "【技术革命】依托前沿技术赋能与新域跨界拓展构建非对称优势，是突破传统瓶颈、重塑战场规则的关键路径，深度挖掘人工智能、量子信息、无人系统、太空技术、电磁XX等颠覆性技术方向，深度思考颠覆性技术突破催生了哪些潜在的新型作战空间和新质装备跨代能力；",
         "【技术革命】强敌大力推进“马赛克战”、“决策中心战”等新型作战概念，旨在构建全域联动、分布式杀伤与智能决策的颠覆性作战体系。其核心策略是将传统武器平台拆解为“马赛克”碎片，依托信息网络动态重组，大幅提升体系鲁棒性；通过深度融合人工智能与自主系统，实现较对手更快、更优的决策闭环，确立不对称优势。同时，推行弹性供应链策略，重点发展低成本装备集群，推动作战样式从集中式平台向分布式、网络化转型，试图以技术代差和概念创新掌控未来战场主导权。面对强敌不断提出的新型作战概念，并应用数字化、智能等新技术，加快推进军事应用带来的威胁，深度调研深度思考破击之法，及其牵引的新质装备能力需求。",
         "卫星受扰条件下跨域自主远程精确火力研究",
-        "精打武器集群任务自主分工与动态重组研究"
+        "精打武器集群任务自主分工与动态重组研究",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf"
     },
@@ -2643,6 +2680,40 @@
       ],
       "url": "https://example.com/unavailable"
     },
+    "https://example.org/one": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "international_situation"
+      ],
+      "domain": "example.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-25T07:21:52.781852+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Authoritative source",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://example.org/one"
+    },
+    "https://example.org/report": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "agent"
+      ],
+      "domain": "example.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-25T07:21:52.642558+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Report",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://example.org/report"
+    },
     "https://features.csis.org/Insights-from-the-Russia-Ukraine-War/": {
       "accepted_count": 15,
       "agent_ids": [
@@ -2868,7 +2939,7 @@
       "url": "https://files.gao.gov/reports/GAO-25-107263陆军FY2026导弹采购书披露PrSM、M-SHORAD、Launched"
     },
     "https://files.gao.gov/reports/GAO-25-107491/index.html": {
-      "accepted_count": 10,
+      "accepted_count": 12,
       "agent_ids": [
         "weapon_equipment",
         "opponent_monitoring",
@@ -2877,16 +2948,16 @@
       "domain": "files.gao.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-18T19:09:13.243157+00:00",
+      "last_seen_at": "2026-10-18T16:57:15.583783+00:00",
       "last_status": "fetched",
-      "success_count": 10,
+      "success_count": 12,
       "title": "GAO-25-107491, ARMY MODERNIZATION: Air and Missile Defense Efforts Would Benefit from Applying Leading Practices",
       "topics": [
-        "海峡空情压迫低空反制压力能力研究",
         "面向2030年前后高强度近海多域对抗，研究营旅级机动部队在GNSS持续压制、战术通信间歇、低空小型无人机与巡飞弹多波次饱和突击、弹药与能源补给受限条件下，如何形成伴随式反无人蜂群制胜能力。最终必须收敛为3—6项可独立识别、可研制或可改装验证的具体前瞻新型武器装备（给出明确装备形态/平台—载荷组合/任务对象，禁止仅写‘智能化探测系统’‘综合反制平台’等泛化能力名词）；入选装备与参考装备分开列示。每项装备能力画像必须围绕一个真实可复现的军事制胜场景，按敌情与环境约束—装备进入战位—探测识别—决策交战—毁伤/失效判据—再装填或能源恢复—与现役体系接口的连续任务链撰写，并用公开可核验的具体装备/项目/试验案例支撑。重点比较定向能、微波、低成本动能拦截、电子对抗与被动探测的组合边界、饱和容量、单位交战成本、机动部署和持续作战瓶颈；不得机械罗列技术指标，不得从场景跳步到装备结论。",
         "低空多源感知至软硬杀伤闭环杀伤链研究",
         "第一岛链无人蜂群防护反制装备研究",
-        "低空无人机集群在复杂电磁环境下的探测与拦截装备能力缺口"
+        "低空无人机集群在复杂电磁环境下的探测与拦截装备能力缺口",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://files.gao.gov/reports/GAO-25-107491/index.html"
     },
@@ -3018,6 +3089,23 @@
       ],
       "url": "https://files.gao.gov/reports/GAO-26-108888/index.html"
     },
+    "https://fixture.local/agent": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "agent"
+      ],
+      "domain": "fixture.local",
+      "failure_count": 0,
+      "last_decision": "rejected",
+      "last_seen_at": "2026-10-25T07:21:52.588323+00:00",
+      "last_status": "fixture_materialized",
+      "success_count": 1,
+      "title": "Agent离线验证材料",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://fixture.local/agent"
+    },
     "https://fixture.local/case_research": {
       "accepted_count": 7,
       "agent_ids": [
@@ -3040,23 +3128,23 @@
       "url": "https://fixture.local/case_research"
     },
     "https://fixture.local/combat_scenario": {
-      "accepted_count": 771,
+      "accepted_count": 818,
       "agent_ids": [
         "combat_scenario"
       ],
       "domain": "fixture.local",
-      "failure_count": 21,
+      "failure_count": 37,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-26T05:58:23.845295+00:00",
+      "last_seen_at": "2026-10-25T12:10:53.625360+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 771,
+      "success_count": 818,
       "title": "作战场景离线验证材料",
       "topics": [
-        "编辑草稿回归 94ae5345",
-        "编辑草稿回归 830968ea",
-        "编辑草稿回归 0f8021a0",
-        "编辑草稿回归 f172810b",
-        "编辑草稿回归 8b1abfd9"
+        "体系对抗关键链路韧性",
+        "弹性制胜机理 Agent 群持久化验证",
+        "质量蜂群跨分支收敛模型调用验证",
+        "动态制胜组合门失败时不得启动报告模型",
+        "民用应急照明设备维护的软件交付验收"
       ],
       "url": "https://fixture.local/combat_scenario"
     },
@@ -3083,9 +3171,9 @@
         "cross_domain_fusion"
       ],
       "domain": "fixture.local",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-24T05:08:10.487271+00:00",
+      "last_seen_at": "2026-10-25T07:21:43.938361+00:00",
       "last_status": "network_safety_rejected",
       "success_count": 0,
       "title": "跨域融合离线验证材料",
@@ -3130,16 +3218,16 @@
       "url": "https://fixture.local/generic_researcher"
     },
     "https://fixture.local/international_situation": {
-      "accepted_count": 111,
+      "accepted_count": 140,
       "agent_ids": [
         "international_situation"
       ],
       "domain": "fixture.local",
-      "failure_count": 12,
+      "failure_count": 25,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-24T05:08:15.196999+00:00",
+      "last_seen_at": "2026-10-25T07:21:51.586999+00:00",
       "last_status": "network_safety_rejected",
-      "success_count": 111,
+      "success_count": 140,
       "title": "国际形势离线验证材料",
       "topics": [
         "民用仓储设备可靠性研究",
@@ -3168,56 +3256,57 @@
       "url": "https://fixture.local/nontraditional_security"
     },
     "https://fixture.local/operational_employment": {
-      "accepted_count": 738,
+      "accepted_count": 778,
       "agent_ids": [
         "operational_employment"
       ],
       "domain": "fixture.local",
-      "failure_count": 21,
+      "failure_count": 36,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-26T05:58:24.112323+00:00",
+      "last_seen_at": "2026-10-25T12:10:53.750524+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 738,
+      "success_count": 778,
       "title": "作战运用离线验证材料",
       "topics": [
-        "编辑草稿回归 94ae5345",
-        "编辑草稿回归 830968ea",
-        "编辑草稿回归 0f8021a0",
-        "编辑草稿回归 f172810b",
-        "编辑草稿回归 8b1abfd9"
+        "体系对抗关键链路韧性",
+        "弹性制胜机理 Agent 群持久化验证",
+        "质量蜂群跨分支收敛模型调用验证",
+        "动态制胜组合门失败时不得启动报告模型",
+        "民用应急照明设备维护的软件交付验收"
       ],
       "url": "https://fixture.local/operational_employment"
     },
     "https://fixture.local/opponent_monitoring": {
-      "accepted_count": 5,
+      "accepted_count": 7,
       "agent_ids": [
         "opponent_monitoring"
       ],
       "domain": "fixture.local",
-      "failure_count": 0,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-23T14:33:23.425470+00:00",
-      "last_status": "fixture_materialized",
-      "success_count": 5,
+      "last_seen_at": "2026-10-25T07:20:27.858049+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 7,
       "title": "对手动向监测离线验证材料",
       "topics": [
         "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）",
         "南海通信遮断无人协同压力能力研究",
-        "挖掘在西太反介入体系下的装备能力缺口"
+        "挖掘在西太反介入体系下的装备能力缺口",
+        "六业务 Agent 流水线验证"
       ],
       "url": "https://fixture.local/opponent_monitoring"
     },
     "https://fixture.local/public-report": {
-      "accepted_count": 1,
+      "accepted_count": 2,
       "agent_ids": [
         "international_situation"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-24T05:08:15.559710+00:00",
+      "last_seen_at": "2026-10-25T07:21:52.124122+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 1,
+      "success_count": 2,
       "title": "公开威胁报告",
       "topics": [
         "低空无人机探测预警能力"
@@ -3225,16 +3314,16 @@
       "url": "https://fixture.local/public-report"
     },
     "https://fixture.local/scenario_divergence": {
-      "accepted_count": 8,
+      "accepted_count": 9,
       "agent_ids": [
         "scenario_divergence"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-24T05:08:09.685606+00:00",
+      "last_seen_at": "2026-10-25T07:21:42.440401+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 8,
+      "success_count": 9,
       "title": "场景发散离线验证材料",
       "topics": [
         "西太反介入环境下低带宽任务网络与分布式保障装备能力需求",
@@ -3246,37 +3335,37 @@
       "url": "https://fixture.local/scenario_divergence"
     },
     "https://fixture.local/system_confrontation": {
-      "accepted_count": 11,
+      "accepted_count": 13,
       "agent_ids": [
         "system_confrontation"
       ],
       "domain": "fixture.local",
-      "failure_count": 0,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-23T14:33:23.460998+00:00",
-      "last_status": "fixture_materialized",
-      "success_count": 11,
+      "last_seen_at": "2026-10-25T07:20:29.302695+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 13,
       "title": "体系对抗仿真离线验证材料",
       "topics": [
-        "隔离验证：低带宽任务网络装备能力需求",
         "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）",
         "挖掘在西太反介入体系下的装备能力缺口",
         "并行冒烟：西太反介入装备能力缺口",
-        "南海通信遮断无人协同压力能力研究"
+        "南海通信遮断无人协同压力能力研究",
+        "六业务 Agent 流水线验证"
       ],
       "url": "https://fixture.local/system_confrontation"
     },
     "https://fixture.local/technology_radar": {
-      "accepted_count": 2,
+      "accepted_count": 3,
       "agent_ids": [
         "technology_radar"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-24T05:08:09.781295+00:00",
+      "last_seen_at": "2026-10-25T07:21:42.551143+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 2,
+      "success_count": 3,
       "title": "技术雷达离线验证材料",
       "topics": [
         "量子传感技术驱动的探测装备机会",
@@ -3285,37 +3374,37 @@
       "url": "https://fixture.local/technology_radar"
     },
     "https://fixture.local/weapon_equipment": {
-      "accepted_count": 804,
+      "accepted_count": 864,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "fixture.local",
-      "failure_count": 18,
+      "failure_count": 35,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-26T05:58:23.828014+00:00",
+      "last_seen_at": "2026-10-25T12:10:53.638826+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 804,
+      "success_count": 864,
       "title": "武器装备离线验证材料",
       "topics": [
-        "编辑草稿回归 94ae5345",
-        "编辑草稿回归 830968ea",
-        "编辑草稿回归 0f8021a0",
-        "编辑草稿回归 f172810b",
-        "编辑草稿回归 8b1abfd9"
+        "体系对抗关键链路韧性",
+        "弹性制胜机理 Agent 群持久化验证",
+        "质量蜂群跨分支收敛模型调用验证",
+        "动态制胜组合门失败时不得启动报告模型",
+        "民用应急照明设备维护的软件交付验收"
       ],
       "url": "https://fixture.local/weapon_equipment"
     },
     "https://fixture.local/weapon_equipment-r2": {
-      "accepted_count": 1,
+      "accepted_count": 2,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-23T13:58:57.256354+00:00",
+      "last_seen_at": "2026-10-25T07:19:22.348057+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 1,
+      "success_count": 2,
       "title": "fixture",
       "topics": [
         "定向再调"
@@ -5887,6 +5976,24 @@
       ],
       "url": "https://oe.tradoc.army.mil/wp-content/uploads/2022/12/359-SR-Ukraine-Preliminary-Lessons-Feb-July-2022-web-final.pdf"
     },
+    "https://onlinelibrary.wiley.com/doi/full/10.1002/eng2.70295": {
+      "accepted_count": 2,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "onlinelibrary.wiley.com",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-18T14:50:20.837436+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 2,
+      "title": "Optimized UAV-Based Relay Algorithm for Enhanced Emergency Wireless ...",
+      "topics": [
+        "第三次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第六次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。"
+      ],
+      "url": "https://onlinelibrary.wiley.com/doi/full/10.1002/eng2.70295"
+    },
     "https://peoc3n.army.mil/Organizations/PM-Tactical-Network/Mission-Network/TNT-OTM/": {
       "accepted_count": 2,
       "agent_ids": [
@@ -6318,6 +6425,57 @@
         "低空无人装备在强对抗环境中的体系能力缺口研究"
       ],
       "url": "https://smallwarsjournal.com/2026/05/21/distributed-combat-power-how-ukraine-is-redefining-fires-electronic-warfare-and-air-defense-at"
+    },
+    "https://source-0.example/report": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "agent"
+      ],
+      "domain": "source-0.example",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-25T07:21:52.697313+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Source 0",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://source-0.example/report"
+    },
+    "https://source-1.example/report": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "agent"
+      ],
+      "domain": "source-1.example",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-25T07:21:52.716663+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Source 1",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://source-1.example/report"
+    },
+    "https://source-2.example/report": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "agent"
+      ],
+      "domain": "source-2.example",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-25T07:21:52.735232+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Source 2",
+      "topics": [
+        "topic"
+      ],
+      "url": "https://source-2.example/report"
     },
     "https://ssu.gov.ua/en/novyny/1-chervnia-2025-roku-istorychna-data-koly-sbu-provela-spetsoperatsiiu-pavutyna-video": {
       "accepted_count": 1,
@@ -11316,18 +11474,18 @@
         "scenario_divergence"
       ],
       "domain": "www.asafm.army.mil",
-      "failure_count": 6,
+      "failure_count": 7,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-10T08:17:51.986987+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T12:27:09.795233+00:00",
+      "last_status": "fetch_failed",
       "success_count": 45,
       "title": "asafm.army.mil · Missile%20Procurement%20Army.pdf",
       "topics": [
-        "不完备与不确定战场信息条件下精确打击研究",
         "高机动宽域变轨战术精打飞行器研究",
         "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合",
         "面向2030年前后强对抗、通信受限、导航受扰和高密度反无人环境，聚焦无人远程火力打击装备，包括无人低空作战平台、巡飞猎歼装备、远程精确制导导弹与任务弹药等直接承担突防、压制、歼灭和毁伤的武器装备；从体系化、实战化、智能化和颠覆化出发，重点检验成本逻辑、平台逻辑、时间逻辑、毁伤逻辑、体系逻辑及伦理与博弈逻辑，并研究通用化、系列化、规模化所需的低成本设计理念、供应链生态和产线柔性重组，形成在传统能力红海具有跨代优势、在新质能力蓝海具有高维优速的5至7项公开证据支撑、可验证装备能力画像，其中至少4项为直接作战装备。",
-        "大规模离散目标低成本精确打击研究"
+        "大规模离散目标低成本精确打击研究",
+        "山地森林火灾导致公网中断场景下的便携式无人中继通信装备需求研究。聚焦救援队在复杂地形、烟尘遮挡和节点高动态条件下恢复语音、定位与低速图像链路；先发散再收敛为3—5个可工程化装备候选，明确公开基线、关键因果链、失效边界和可证伪验证指标，区分事实、推断与待验证假设。"
       ],
       "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf"
     },
@@ -11598,7 +11756,7 @@
       "url": "https://www.avinc.com/solution/switchblade-600-block-2/"
     },
     "https://www.avinc.com/solution/switchblade-600/": {
-      "accepted_count": 57,
+      "accepted_count": 71,
       "agent_ids": [
         "weapon_equipment",
         "technology_radar",
@@ -11607,16 +11765,16 @@
       "domain": "www.avinc.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-25T10:37:59.864939+00:00",
+      "last_seen_at": "2026-10-18T16:59:16.650648+00:00",
       "last_status": "fetched",
-      "success_count": 58,
+      "success_count": 72,
       "title": "Switchblade® 600 - AeroVironment",
       "topics": [
-        "小型化高性能战术精打武器研究",
-        "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
-        "低空无人集群复杂电磁环境闭环反制装备研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "第二次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第四次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第五次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.avinc.com/solution/switchblade-600/"
     },
@@ -13318,14 +13476,15 @@
         "international_situation"
       ],
       "domain": "www.csis.org",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-27T11:40:23.483024+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-10-18T16:09:46.369090+00:00",
+      "last_status": "fetch_failed",
       "success_count": 15,
-      "title": "The Air and Missile War in Nagorno-Karabakh: Lessons for the Future of Strike and Defense",
+      "title": "csis.org · air and missile war nagorno karabakh lessons future strike and defense",
       "topics": [
-        "从近年局部战争中挖掘我军装备发展需求"
+        "从近年局部战争中挖掘我军装备发展需求",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense"
     },
@@ -14416,7 +14575,7 @@
       "url": "https://www.darpa.mil/news/2026/long-shot-success"
     },
     "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations": {
-      "accepted_count": 30,
+      "accepted_count": 46,
       "agent_ids": [
         "operational_employment",
         "scenario_divergence",
@@ -14427,17 +14586,17 @@
       ],
       "domain": "www.darpa.mil",
       "failure_count": 0,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-09-25T10:37:42.933996+00:00",
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-18T16:59:16.622912+00:00",
       "last_status": "fetched",
-      "success_count": 30,
+      "success_count": 73,
       "title": "ROCkN enables GPS-free operations | DARPA",
       "topics": [
-        "卫星受扰条件下跨域自主远程精确火力研究",
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
-        "低空无人集群复杂电磁环境闭环反制装备研究",
-        "低空蜂群渗透下反无人机一体防御体系研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "第五次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第七次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations"
     },
@@ -14641,7 +14800,7 @@
       "url": "https://www.darpa.mil/research/programs/blackjack"
     },
     "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment": {
-      "accepted_count": 24,
+      "accepted_count": 31,
       "agent_ids": [
         "system_confrontation",
         "technology_radar",
@@ -14653,16 +14812,16 @@
       "domain": "www.darpa.mil",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-08T14:00:06.318489+00:00",
+      "last_seen_at": "2026-10-18T16:57:14.686815+00:00",
       "last_status": "fetched",
-      "success_count": 25,
+      "success_count": 32,
       "title": "CODE | DARPA",
       "topics": [
-        "强干扰与间歇通信条件下低信息依赖精确打击装备研究",
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
         "未来强干扰弱通信海空对抗下分布式低成本精确火力与反无人直接作战装备研究：只提出约20个新质武器候选，S5按创新性30%、需求性30%、科学可行性20%、效能性10%、发展性10%只选前7，S6生成入选能力画像。（GPT档案真实验收）",
         "低空多源感知至软硬杀伤闭环杀伤链研究",
-        "岛链拒止环境智能巡飞精打弹药研究"
+        "岛链拒止环境智能巡飞精打弹药研究",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
     },
@@ -15891,18 +16050,18 @@
         "system_confrontation"
       ],
       "domain": "www.defense.gov",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-07T12:38:12.794231+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T15:24:25.897823+00:00",
+      "last_status": "fetch_failed",
       "success_count": 25,
       "title": "defense.gov · philippines us announce locations of four new edca sites",
       "topics": [
-        "南海通信遮断无人协同压力能力研究（企业级效率回归）",
         "台海岛链低轨韧性条件下适应研究",
         "南海远海维修低空穿透背景下影响分析",
         "面向西太高强度对抗，研究无人集群与远程精确火力协同形成新制胜机理的装备需求",
-        "【作战任务】围绕我无人远程火力打击装备摄控周边、前出远海、远程快打、全球达到等任务需求，按照一岛链绝对控制、二岛链有效拒止、三岛链对等反制的战略目标，深度研究我无人远程火力打击装备领域对陆、对海、对空等核心作战任务及其制胜装备能力新质需求或者缺口需求。"
+        "【作战任务】围绕我无人远程火力打击装备摄控周边、前出远海、远程快打、全球达到等任务需求，按照一岛链绝对控制、二岛链有效拒止、三岛链对等反制的战略目标，深度研究我无人远程火力打击装备领域对陆、对海、对空等核心作战任务及其制胜装备能力新质需求或者缺口需求。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.defense.gov/News/Releases/Release/Article/3349257/philippines-us-announce-locations-of-four-new-edca-sites/"
     },
@@ -18536,15 +18695,16 @@
         "system_confrontation"
       ],
       "domain": "www.gao.gov",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-09T08:58:35.095934+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-10-18T15:55:46.010563+00:00",
+      "last_status": "fetch_failed",
       "success_count": 12,
-      "title": "Defense Navigation Capabilities: DOD is Developing Positioning, Navigation, and Timing Technologies to Complement GPS | U.S. GAO",
+      "title": "gao.gov · gao 21 320sp",
       "topics": [
         "卫星拒止条件下多源自主导航精打武器研究",
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？"
+        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.gao.gov/products/gao-21-320sp"
     },
@@ -18689,18 +18849,18 @@
         "generic_researcher"
       ],
       "domain": "www.gao.gov",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-04T05:37:10.667345+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-10-18T15:45:40.393945+00:00",
+      "last_status": "fetch_failed",
       "success_count": 18,
       "title": "gao.gov · gao 22 106010",
       "topics": [
-        "复杂电磁环境自适应精打武器研究",
         "间歇通信条件下精打武器任务保持与任务续接研究",
         "多源异构战场信息融合精确打击研究",
         "强电磁压制下精确打击任务续接装备研究",
-        "强电磁压制与GNSS拒止条件下远程反舰火力链断裂后的自主续接装备研究"
+        "强电磁压制与GNSS拒止条件下远程反舰火力链断裂后的自主续接装备研究",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.gao.gov/products/gao-22-106010"
     },
@@ -18835,18 +18995,18 @@
         "weapon_equipment"
       ],
       "domain": "www.gao.gov",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-06T09:30:43.519208+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T15:36:53.064721+00:00",
+      "last_status": "fetch_failed",
       "success_count": 18,
       "title": "gao.gov · gao 25 106454",
       "topics": [
-        "多源异构战场信息融合精确打击研究",
         "目标持续监视与精确打击一体化研究",
         "卫星受扰条件下跨域自主远程精确火力研究",
         "面向高威胁海空封锁条件下的远程反介入作战，研究能够直接改变敌方侦察、指挥与火力链耦合关系的新质武器装备",
-        "通信受限条件下分布式低成本精确火力与反无人装备需求研究，分析感知、协同、火力与评估闭环能力及失效边界。"
+        "通信受限条件下分布式低成本精确火力与反无人装备需求研究，分析感知、协同、火力与评估闭环能力及失效边界。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.gao.gov/products/gao-25-106454"
     },
@@ -19415,7 +19575,7 @@
       "url": "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
     },
     "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems": {
-      "accepted_count": 37,
+      "accepted_count": 42,
       "agent_ids": [
         "case_research",
         "scenario_divergence",
@@ -19425,16 +19585,16 @@
       "domain": "www.gov.uk",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T11:45:21.116486+00:00",
+      "last_seen_at": "2026-10-18T16:57:45.480618+00:00",
       "last_status": "fetched",
-      "success_count": 38,
+      "success_count": 43,
       "title": "Defence Drone Strategy - the UK’s approach to Defence Uncrewed Systems - GOV.UK",
       "topics": [
-        "面向2030年前后强对抗、通信受限、导航受扰和高密度反无人环境，聚焦无人远程火力打击装备，包括无人低空作战平台、巡飞猎歼装备、远程精确制导导弹与任务弹药等直接承担突防、压制、歼灭和毁伤的武器装备；从体系化、实战化、智能化和颠覆化出发，重点检验成本逻辑、平台逻辑、时间逻辑、毁伤逻辑、体系逻辑及伦理与博弈逻辑，并研究通用化、系列化、规模化所需的低成本设计理念、供应链生态和产线柔性重组，形成在传统能力红海具有跨代优势、在新质能力蓝海具有高维优速的5至7项公开证据支撑、可验证装备能力画像，其中至少4项为直接作战装备。",
-        "深度研究、理解并长期记忆面向打赢未来高端战争，无人远程火力打击装备体系侦察感知、网络通信、作战管理、火力控制、实战对抗、新质毁伤、规模持续等方面的核心能力需求；",
-        "俄乌战争无人机与反无人机作战案例对装备需求的可迁移启示",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "山地森林火灾导致公网中断场景下的便携式无人中继通信装备需求研究。聚焦救援队在复杂地形、烟尘遮挡和节点高动态条件下恢复语音、定位与低速图像链路；先发散再收敛为3—5个可工程化装备候选，明确公开基线、关键因果链、失效边界和可证伪验证指标，区分事实、推断与待验证假设。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
     },
@@ -19745,18 +19905,18 @@
         "weapon_equipment"
       ],
       "domain": "www.iai.co.il",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-25T10:37:59.847775+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-10-15T17:20:30.312001+00:00",
+      "last_status": "fetch_failed",
       "success_count": 82,
       "title": "iai.co.il · harop",
       "topics": [
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
         "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
         "低空无人集群复杂电磁环境闭环反制装备研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。",
+        "极端灾害场景自组网通信终端韧性连接研究"
       ],
       "url": "https://www.iai.co.il/p/harop"
     },
@@ -19812,6 +19972,25 @@
         "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？"
       ],
       "url": "https://www.iai.co.il/product/mini-harpy/"
+    },
+    "https://www.iciba.com/word?w=mission": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "operational_employment",
+        "combat_scenario",
+        "weapon_equipment"
+      ],
+      "domain": "www.iciba.com",
+      "failure_count": 0,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-25T12:28:02.400047+00:00",
+      "last_status": "fetched",
+      "success_count": 3,
+      "title": "mission是什么意思_mission的翻译_音标_读音_用法_例句_爱词霸在线词典",
+      "topics": [
+        "民用公共避难场所的应急照明维护：减少电池失效和漏检"
+      ],
+      "url": "https://www.iciba.com/word?w=mission"
     },
     "https://www.idf.il/en/mini-sites/idf-press-releases-israel-at-war/june-25-pr/for-the-first-time-the-barak-magen-aerial-defense-system-and-the-long-range-air-defense-system-lrad-were-operationally-employed/": {
       "accepted_count": 1,
@@ -20453,18 +20632,18 @@
         "case_research"
       ],
       "domain": "www.jcs.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-26T15:09:32.149721+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T15:24:32.662594+00:00",
+      "last_status": "fetch_failed",
       "success_count": 29,
       "title": "jcs.mil · 3 0 operations series",
       "topics": [
-        "南海通信遮断无人协同压力能力研究",
         "南海通信遮断无人协同压力能力研究（企业级效率回归）",
         "台海岛链低轨韧性条件下适应研究",
         "从近年局部战争中挖掘我军装备发展需求",
-        "挖掘在西太反介入体系下的装备能力缺口，重点评估在强电磁对抗、分布式海上作战、无人蜂群介入和多域一体化打击条件下的体系脆弱点、现役能力差距与未来装备需求"
+        "挖掘在西太反介入体系下的装备能力缺口，重点评估在强电磁对抗、分布式海上作战、无人蜂群介入和多域一体化打击条件下的体系脆弱点、现役能力差距与未来装备需求",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.jcs.mil/doctrine/joint-doctrine-pubs/3-0-operations-series/"
     },
@@ -20891,18 +21070,18 @@
         "system_confrontation"
       ],
       "domain": "www.lineofdeparture.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-11T07:38:50.564447+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T12:41:25.875412+00:00",
+      "last_status": "fetch_failed",
       "success_count": 28,
       "title": "lineofdeparture.army.mil · Engineering Resilient Fire Support in",
       "topics": [
-        "目标持续监视与精确打击一体化研究",
         "间歇通信条件下精打武器任务保持与任务续接研究",
         "强电磁压制下精确打击任务续接装备研究",
         "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
-        "环境融合型精打武器突防研究"
+        "环境融合型精打武器突防研究",
+        "真实模型回归验收：山地灾害导致公网中断时，便携式无人中继如何恢复救援队语音、定位与低速图像链路？请收敛为3个可工程化装备候选，明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告。"
       ],
       "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
     },
@@ -20914,18 +21093,18 @@
         "system_confrontation"
       ],
       "domain": "www.lineofdeparture.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-03T09:03:54.834023+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-10-18T16:09:44.315475+00:00",
+      "last_status": "fetch_failed",
       "success_count": 11,
       "title": "lineofdeparture.army.mil · Silence on the Gun Line",
       "topics": [
-        "强干扰、弱通信条件下低信息依赖精确打击研究",
         "强干扰、弱通信条件下低信息依赖精确打击装备稳定性验收",
         "强干扰、弱通信条件下低信息依赖精确打击装备最终发布验收",
         "强干扰、弱通信条件下低信息依赖远程精确打击武器装备稳定性验收",
-        "强电磁压制下精确打击任务续接装备研究"
+        "强电磁压制下精确打击任务续接装备研究",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Silence-on-the-Gun-Line/"
     },
@@ -21013,6 +21192,23 @@
         "多源异构战场信息融合精确打击研究"
       ],
       "url": "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf"
+    },
+    "https://www.lockheed": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.lockheed",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-18T16:59:18.664132+00:00",
+      "last_status": "fetch_failed",
+      "success_count": 0,
+      "title": "lockheed",
+      "topics": [
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
+      ],
+      "url": "https://www.lockheed"
     },
     "https://www.lockheedmartin.com/content/dam/lockheed-martin/mfc/documents/business-area-landing/25-10145-ADSW-JASSM-Fast_Facts.pdf": {
       "accepted_count": 8,
@@ -21286,7 +21482,7 @@
       "url": "https://www.lockheedmartin.com/en-us/products/long-range-anti-ship-missile/lrasm-media-kit.html"
     },
     "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html": {
-      "accepted_count": 47,
+      "accepted_count": 61,
       "agent_ids": [
         "weapon_equipment",
         "operational_employment"
@@ -21294,16 +21490,16 @@
       "domain": "www.lockheedmartin.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-25T10:36:12.380913+00:00",
+      "last_seen_at": "2026-10-18T16:57:43.258862+00:00",
       "last_status": "fetched",
-      "success_count": 48,
+      "success_count": 69,
       "title": "Precision Strike Missile (PrSM) | Lockheed Martin",
       "topics": [
-        "强电磁干扰与低空蜂群突防条件下的无人拦截装备能力缺口",
-        "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
-        "低空无人集群复杂电磁环境闭环反制装备研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "第二次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第四次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第五次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html"
     },
@@ -25756,18 +25952,18 @@
         "operational_employment"
       ],
       "domain": "www.navy.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-05T07:36:17.774035+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T13:00:37.397039+00:00",
+      "last_status": "fetch_failed",
       "success_count": 27,
-      "title": "Department of the Navy Unmanned Campaign Framework",
+      "title": "navy.mil · 20210315%20Unmanned%20Campaign Final LowRes.pdf",
       "topics": [
-        "台海岛链低轨韧性条件下适应研究",
         "从近年局部战争中挖掘我军装备发展需求",
         "印度洋基地支撑强扰链路场景支撑研究",
         "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
-        "西太高强度对抗中前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究"
+        "西太高强度对抗中前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
+        "修复后真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤等作战叙事。"
       ],
       "url": "https://www.navy.mil/Portals/1/Strategic/20210315%20Unmanned%20Campaign_Final_LowRes.pdf"
     },
@@ -28282,18 +28478,18 @@
         "case_research"
       ],
       "domain": "www.rand.org",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-27T11:40:42.067961+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-10-18T15:36:54.751518+00:00",
+      "last_status": "fetch_failed",
       "success_count": 23,
       "title": "rand.org · RAND RRA2434 3.pdf",
       "topics": [
-        "从近年局部战争中挖掘我军装备发展需求",
         "西太反介入环境下低带宽任务网络与分布式保障装备能力需求",
         "菲律宾基地牵引强扰链路场景支撑研究",
         "南海通信遮断无人协同压力能力研究",
-        "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距"
+        "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA2400/RRA2434-3/RAND_RRA2434-3.pdf"
     },
@@ -28527,6 +28723,27 @@
       ],
       "url": "https://www.research-collection.ethz.ch/entities/publication/52a44062-cde8-4307-957e-9bc38db7b5f8"
     },
+    "https://www.researchgate.net/publication/390723050_UAV-Based_Mesh_Networks_for_Emergency_Communication_A_Comprehensive_Analysis": {
+      "accepted_count": 4,
+      "agent_ids": [
+        "operational_employment",
+        "weapon_equipment"
+      ],
+      "domain": "www.researchgate.net",
+      "failure_count": 0,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-18T15:08:05.084935+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 8,
+      "title": "(PDF) UAV-Based Mesh Networks for Emergency Communication: A ...",
+      "topics": [
+        "第三次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第六次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第七次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。"
+      ],
+      "url": "https://www.researchgate.net/publication/390723050_UAV-Based_Mesh_Networks_for_Emergency_Communication_A_Comprehensive_Analysis"
+    },
     "https://www.rheinmetall.com/en/media/news-watch/news/2024/02/2024-02-27-bundeswehr-ordered-skyranger-30-mobile-air-defence-system": {
       "accepted_count": 2,
       "agent_ids": [
@@ -28636,18 +28853,18 @@
         "weapon_equipment"
       ],
       "domain": "www.rtx.com",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T07:45:14.874008+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-10-15T17:20:32.700299+00:00",
+      "last_status": "fetch_failed",
       "success_count": 51,
-      "title": "MALD Decoy | Raytheon",
+      "title": "rtx.com · mald decoy",
       "topics": [
-        "深度研究、理解并长期记忆现代战争“全链条、全流程”的制胜机理，把握各作战环节对装备的实质需求；",
         "西太高强度对抗中前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
         "深度研究、理解并长期记忆复杂电磁环境和强对抗条件的突防抗扰设计不足和发展需求；",
         "深度研究、理解并长期记忆面向打赢未来高端战争，无人远程火力打击装备体系侦察感知、网络通信、作战管理、火力控制、实战对抗、新质毁伤、规模持续等方面的核心能力需求；",
-        "强干扰低空蜂群拦截装备的公开能力边界"
+        "强干扰低空蜂群拦截装备的公开能力边界",
+        "极端灾害场景自组网通信终端韧性连接研究"
       ],
       "url": "https://www.rtx.com/raytheon/what-we-do/air/mald-decoy"
     },
@@ -28816,7 +29033,7 @@
       "url": "https://www.rusi.org/explore-our-research/publications/commentary/drones-win-battles-components-wars"
     },
     "https://www.rusi.org/explore-our-research/publications/commentary/jamming-jdam-threat-us-munitions-russian-electronic-warfare": {
-      "accepted_count": 24,
+      "accepted_count": 30,
       "agent_ids": [
         "combat_scenario",
         "operational_employment",
@@ -28825,16 +29042,16 @@
       "domain": "www.rusi.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-07T10:45:20.759851+00:00",
+      "last_seen_at": "2026-10-18T15:55:40.076272+00:00",
       "last_status": "fetched",
-      "success_count": 25,
+      "success_count": 32,
       "title": "Jamming JDAM: The Threat to US Munitions from Russian Electronic Warfare | Royal United Services Institute",
       "topics": [
-        "强干扰、弱通信条件下低信息依赖精确打击装备稳定性验收",
-        "强干扰、弱通信条件下低信息依赖精确打击装备最终发布验收",
-        "强干扰、弱通信条件下低信息依赖远程精确打击武器装备稳定性验收",
-        "面向2030年前后强对抗、通信受限、导航受扰和高密度反无人环境，聚焦无人远程火力打击装备，包括无人低空作战平台、巡飞猎歼装备、远程精确制导导弹与任务弹药等直接承担突防、压制、歼灭和毁伤的武器装备；从体系化、实战化、智能化和颠覆化出发，重点检验成本逻辑、平台逻辑、时间逻辑、毁伤逻辑、体系逻辑及伦理与博弈逻辑，并研究通用化、系列化、规模化所需的低成本设计理念、供应链生态和产线柔性重组，形成在传统能力红海具有跨代优势、在新质能力蓝海具有高维优速的5至7项公开证据支撑、可验证装备能力画像，其中至少4项为直接作战装备。",
-        "卫星受扰条件下跨域自主远程精确火力研究"
+        "卫星受扰条件下跨域自主远程精确火力研究",
+        "第二次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第四次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第五次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.rusi.org/explore-our-research/publications/commentary/jamming-jdam-threat-us-munitions-russian-electronic-warfare"
     },
@@ -28916,7 +29133,7 @@
       "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations"
     },
     "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces": {
-      "accepted_count": 40,
+      "accepted_count": 54,
       "agent_ids": [
         "combat_scenario",
         "operational_employment",
@@ -28925,16 +29142,16 @@
       "domain": "www.rusi.org",
       "failure_count": 0,
       "last_decision": "duplicate",
-      "last_seen_at": "2026-09-25T10:37:38.467588+00:00",
+      "last_seen_at": "2026-10-18T16:57:43.287857+00:00",
       "last_status": "fetched",
-      "success_count": 46,
+      "success_count": 70,
       "title": "Mass Precision Strike: Designing UAV Complexes for Land Forces | Royal United Services Institute",
       "topics": [
-        "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "低空无人集群复杂电磁环境闭环反制装备研究",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
-        "低空蜂群渗透下反无人机一体防御体系研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "第二次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第五次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请优先收敛为5—6个可独立立项、部署和试验验收的实体装备候选，每个必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
     },
@@ -29392,6 +29609,69 @@
       ],
       "url": "https://www.sciencedirect.com/science/article/pii/S0029801824017050"
     },
+    "https://www.sciencedirect.com/science/article/pii/S0360835226000458": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.sciencedirect.com",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-18T15:08:05.817166+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 1,
+      "title": "Optimizing emergency rescue operations: A computerized intelligent ...",
+      "topics": [
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。"
+      ],
+      "url": "https://www.sciencedirect.com/science/article/pii/S0360835226000458"
+    },
+    "https://www.sciencedirect.com/science/article/pii/S157087052500201X": {
+      "accepted_count": 4,
+      "agent_ids": [
+        "combat_scenario",
+        "operational_employment",
+        "weapon_equipment"
+      ],
+      "domain": "www.sciencedirect.com",
+      "failure_count": 3,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-10-18T15:08:05.069373+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 10,
+      "title": "Adaptive UAV deployment for enhanced connectivity in disaster-stricken ...",
+      "topics": [
+        "第三次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第四次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第六次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第七次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。"
+      ],
+      "url": "https://www.sciencedirect.com/science/article/pii/S157087052500201X"
+    },
+    "https://www.sciencedirect.com/science/article/pii/S1570870525003117": {
+      "accepted_count": 4,
+      "agent_ids": [
+        "combat_scenario",
+        "weapon_equipment",
+        "operational_employment"
+      ],
+      "domain": "www.sciencedirect.com",
+      "failure_count": 2,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-18T15:08:05.786962+00:00",
+      "last_status": "hosted_search_citation",
+      "success_count": 6,
+      "title": "A systematic literature review of emergency communications assisted by ...",
+      "topics": [
+        "第三次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、击落、毁伤、弹药等作战叙事。",
+        "第四次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第六次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "第七次根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。",
+        "最终根治真实模型回归：山地灾害造成公网中断时，研究便携式无人中继如何恢复救援队语音、定位与低速图像链路。请收敛为正好3个可工程化装备候选，每个候选分别明确公开事实、推断、失效边界和可证伪指标，并形成完整S1-S6能力画像与研究报告；保持灾害救援语义，不使用敌方、我方、对手、击落、摧毁、毁伤、杀伤、弹药、战果、交战、作战反制等叙事，不把自然环境、地形、天气、故障、拥塞或灾害拟人化。"
+      ],
+      "url": "https://www.sciencedirect.com/science/article/pii/S1570870525003117"
+    },
     "https://www.scmp.com/news/china/military/article/3185730/chinas-military-puts-advanced-rocket-launch-system-test-high": {
       "accepted_count": 0,
       "agent_ids": [
@@ -29482,18 +29762,18 @@
         "international_situation"
       ],
       "domain": "www.sda.mil",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-25T10:37:38.483451+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-10-15T17:18:54.465829+00:00",
+      "last_status": "fetch_failed",
       "success_count": 50,
-      "title": "FAQ – Space Development Agency",
+      "title": "sda.mil · faq",
       "topics": [
-        "强干扰低空蜂群拦截装备的公开能力边界",
         "低空无人集群复杂电磁环境闭环反制装备研究",
         "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
         "低空蜂群渗透下反无人机一体防御体系研究",
-        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。",
+        "极端灾害场景自组网通信终端韧性连接研究"
       ],
       "url": "https://www.sda.mil/home/about-us/faq/"
     },
@@ -31586,18 +31866,18 @@
         "cross_domain_fusion"
       ],
       "domain": "www.war.gov",
-      "failure_count": 1,
-      "last_decision": "duplicate",
-      "last_seen_at": "2026-09-04T17:59:00.007164+00:00",
-      "last_status": "hosted_search_citation",
+      "failure_count": 2,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-10-18T15:45:41.506535+00:00",
+      "last_status": "fetch_failed",
       "success_count": 15,
       "title": "war.gov · deputy secretary of defense kathleen hicks announces additional replicator all",
       "topics": [
-        "可消耗模块化无人远程精打平台规模建设研究",
         "更高速战术精打武器研究",
         "无人低空远程精确打击全链条智能制胜机理研究",
         "第一岛链无人蜂群防护反制装备研究",
-        "未来高强度海空对抗中的分布式低成本精确火力与无人协同装备需求研究"
+        "未来高强度海空对抗中的分布式低成本精确火力与无人协同装备需求研究",
+        "面向2035年前后的未来高强度体系对抗，针对GNSS拒止、数据链间歇和低成本无人集群饱和共同造成的发现—定位—决策—效应链断点，发散能够改变制胜关系的新质创新武器装备。请收敛为正好3个可独立立项、部署和试验验收的实体装备候选，三者必须具有不同主装备身份和不可替代的制胜机理；每个候选分别区分公开事实、类比迁移、模型推断和待验证假设，明确前瞻性、创新性、超前性、新质性、工程瓶颈、失效边界与可证伪指标，形成完整S1-S6能力画像和研究报告。不要用纯软件、治理机制或同义改写凑数。"
       ],
       "url": "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
     },
@@ -31761,5 +32041,5 @@
       "url": "https://zh.wikipedia.org/wiki/FK-3000%E9%98%B2%E7%A9%BA%E7%B3%BB%E7%BB%9F"
     }
   },
-  "updated_at": "2026-09-26T05:58:24.112330+00:00"
+  "updated_at": "2026-10-25T12:28:02.428238+00:00"
 }

@@ -1,0 +1,513 @@
+{
+  "url": "https://www.deepquest.space/login",
+  "navigation": [
+    {
+      "name": "https://www.deepquest.space/login",
+      "entryType": "navigation",
+      "startTime": 0,
+      "duration": 3062.2999997138977,
+      "navigationId": 121,
+      "initiatorType": "navigation",
+      "deliveryType": "",
+      "nextHopProtocol": "h2",
+      "renderBlockingStatus": "non-blocking",
+      "contentType": "text/html",
+      "contentEncoding": "",
+      "workerStart": 0,
+      "workerRouterEvaluationStart": 0,
+      "workerCacheLookupStart": 0,
+      "workerMatchedSourceType": "",
+      "workerFinalSourceType": "",
+      "redirectStart": 0,
+      "redirectEnd": 0,
+      "fetchStart": 0.5,
+      "domainLookupStart": 0.5,
+      "domainLookupEnd": 0.5,
+      "connectStart": 705,
+      "secureConnectionStart": 705.2999997138977,
+      "connectEnd": 1144.5,
+      "requestStart": 1144.5999999046326,
+      "responseStart": 1208.0999999046326,
+      "firstInterimResponseStart": 0,
+      "finalResponseHeadersStart": 1208.0999999046326,
+      "responseEnd": 1208.2999997138977,
+      "transferSize": 1109,
+      "encodedBodySize": 809,
+      "decodedBodySize": 809,
+      "responseStatus": 200,
+      "serverTiming": [],
+      "unloadEventStart": 0,
+      "unloadEventEnd": 0,
+      "domInteractive": 1212.0999999046326,
+      "domContentLoadedEventStart": 2054.9000000953674,
+      "domContentLoadedEventEnd": 2055.0999999046326,
+      "domComplete": 3062.2999997138977,
+      "loadEventStart": 3062.2999997138977,
+      "loadEventEnd": 3062.2999997138977,
+      "type": "navigate",
+      "redirectCount": 0,
+      "activationStart": 0,
+      "criticalCHRestart": 0,
+      "notRestoredReasons": null,
+      "confidence": {
+        "randomizedTriggerRate": 0.4994798,
+        "value": "low"
+      }
+    }
+  ],
+  "paints": [
+    {
+      "name": "first-paint",
+      "entryType": "paint",
+      "startTime": 2068,
+      "duration": 0,
+      "navigationId": 121,
+      "paintTime": 2064.5999999046326,
+      "presentationTime": 2068
+    },
+    {
+      "name": "first-contentful-paint",
+      "entryType": "paint",
+      "startTime": 2068,
+      "duration": 0,
+      "navigationId": 121,
+      "paintTime": 2064.5999999046326,
+      "presentationTime": 2068
+    }
+  ],
+  "lcp": [
+    {
+      "time": 2068,
+      "size": 1980,
+      "url": ""
+    },
+    {
+      "time": 3148,
+      "size": 1209600,
+      "url": "https://www.deepquest.space/assets/login-hero-BX5dHgla.webp"
+    }
+  ],
+  "resources": [
+    {
+      "url": "https://www.deepquest.space/assets/login-hero-BX5dHgla.webp",
+      "type": "link",
+      "start": 1211,
+      "duration": 322,
+      "ttfb": 98,
+      "transfer": 53294,
+      "decoded": 52994,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/useApi-CROJJdhE-DLunriav.js",
+      "type": "other",
+      "start": 1211,
+      "duration": 325,
+      "ttfb": 322,
+      "transfer": 1130,
+      "decoded": 830,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/index-CL63glu1.js",
+      "type": "script",
+      "start": 1211,
+      "duration": 325,
+      "ttfb": 320,
+      "transfer": 22323,
+      "decoded": 56387,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/runtime-core.esm-bundler-C_gm0W10.js",
+      "type": "other",
+      "start": 1211,
+      "duration": 640,
+      "ttfb": 636,
+      "transfer": 27132,
+      "decoded": 69352,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/index-BxbdxQFe.css",
+      "type": "link",
+      "start": 1211,
+      "duration": 826,
+      "ttfb": 823,
+      "transfer": 8546,
+      "decoded": 36657,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/user-BjdddVtE.js",
+      "type": "other",
+      "start": 1211,
+      "duration": 825,
+      "ttfb": 323,
+      "transfer": 64857,
+      "decoded": 196982,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/api/system/info",
+      "type": "fetch",
+      "start": 2046,
+      "duration": 1016,
+      "ttfb": 1016,
+      "transfer": 1074,
+      "decoded": 774,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/LoginView-Dc99WTiN.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 358,
+      "ttfb": 357,
+      "transfer": 5641,
+      "decoded": 14819,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/button-CTx8oX08.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 357,
+      "ttfb": 356,
+      "transfer": 8948,
+      "decoded": 24611,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/form-CI47t451.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 697,
+      "ttfb": 358,
+      "transfer": 19539,
+      "decoded": 56338,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/styleChecker-DFyv9-bS.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 356,
+      "ttfb": 355,
+      "transfer": 5131,
+      "decoded": 11481,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/collapseMotion-BoNfKF-p.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 699,
+      "ttfb": 698,
+      "transfer": 4588,
+      "decoded": 11181,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/vnode-lYQWNNRb.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 703,
+      "ttfb": 703,
+      "transfer": 1185,
+      "decoded": 885,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/slide-D-mMN7Zm.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 703,
+      "ttfb": 702,
+      "transfer": 19296,
+      "decoded": 59270,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/placementArrow-C0LrOl_Q.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 705,
+      "ttfb": 704,
+      "transfer": 1977,
+      "decoded": 5794,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/firstNotUndefined-aK5HbgpO.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1005,
+      "ttfb": 1004,
+      "transfer": 452,
+      "decoded": 152,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/hasIn-BSi1Soac.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1005,
+      "ttfb": 1004,
+      "transfer": 1320,
+      "decoded": 1970,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/debounce-Cyt9DmR4.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 704,
+      "ttfb": 703,
+      "transfer": 1224,
+      "decoded": 1752,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/_flatRest-BXEQzTdN.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1005,
+      "ttfb": 1004,
+      "transfer": 1054,
+      "decoded": 1399,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/isSymbol-BsZE4Fqu.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1005,
+      "ttfb": 1005,
+      "transfer": 442,
+      "decoded": 142,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/_arrayIncludesWith-D3sQWlhs.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 730,
+      "decoded": 430,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/responsiveObserve-DzogWaTX.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 704,
+      "ttfb": 703,
+      "transfer": 842,
+      "decoded": 1044,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/_baseIteratee-DIwVXsqd.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1004,
+      "ttfb": 1003,
+      "transfer": 943,
+      "decoded": 1274,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/Col-Di8ph0EV.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1005,
+      "ttfb": 1004,
+      "transfer": 2514,
+      "decoded": 5504,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/input-C_x8iriB.js",
+      "type": "script",
+      "start": 2054,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 12285,
+      "decoded": 39327,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/vc-overflow-C2Pj-gdN.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1005,
+      "ttfb": 1003,
+      "transfer": 2672,
+      "decoded": 6333,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/select-CdblH2sa.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1004,
+      "ttfb": 1001,
+      "transfer": 22501,
+      "decoded": 68101,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/CheckOutlined-wuaPm2-H.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 704,
+      "ttfb": 703,
+      "transfer": 1317,
+      "decoded": 1017,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/useMergedState-wenTYBzL.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 788,
+      "decoded": 488,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/createLucideIcon-CmgnYV3v.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 1071,
+      "decoded": 1347,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/checkbox-CsYJGFbd.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 4151,
+      "decoded": 10332,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/Button-DzuJNh9E.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1007,
+      "ttfb": 1006,
+      "transfer": 2199,
+      "decoded": 5287,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/circle-alert-uu3P7WUf.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1006,
+      "ttfb": 1005,
+      "transfer": 550,
+      "decoded": 250,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/key-D7PEJ5oI.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1007,
+      "ttfb": 1005,
+      "transfer": 564,
+      "decoded": 264,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/shield-check-WFoOlsZa.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1007,
+      "ttfb": 1006,
+      "transfer": 620,
+      "decoded": 320,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/LoginView-DI8p5PVQ.css",
+      "type": "link",
+      "start": 2055,
+      "duration": 1007,
+      "ttfb": 1006,
+      "transfer": 2315,
+      "decoded": 7337,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/assets/user-WcneMYcT.js",
+      "type": "script",
+      "start": 2055,
+      "duration": 1007,
+      "ttfb": 1006,
+      "transfer": 496,
+      "decoded": 196,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/api/system/health",
+      "type": "fetch",
+      "start": 3102,
+      "duration": 161,
+      "ttfb": 161,
+      "transfer": 364,
+      "decoded": 64,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/api/auth/check-first-run",
+      "type": "fetch",
+      "start": 3102,
+      "duration": 162,
+      "ttfb": 162,
+      "transfer": 319,
+      "decoded": 19,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/api/auth/oidc/config",
+      "type": "fetch",
+      "start": 3103,
+      "duration": 161,
+      "ttfb": 161,
+      "transfer": 363,
+      "decoded": 63,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/api/auth/registration-config",
+      "type": "fetch",
+      "start": 3103,
+      "duration": 162,
+      "ttfb": 161,
+      "transfer": 334,
+      "decoded": 34,
+      "protocol": "h2"
+    },
+    {
+      "url": "https://www.deepquest.space/favicon.svg",
+      "type": "other",
+      "start": 3108,
+      "duration": 156,
+      "ttfb": 156,
+      "transfer": 764,
+      "decoded": 1049,
+      "protocol": "h2"
+    }
+  ],
+  "errors": []
+}

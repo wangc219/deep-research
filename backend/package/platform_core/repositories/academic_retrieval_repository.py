@@ -81,7 +81,7 @@ class AcademicRetrievalRepository:
         if root is None:
             raise ValueError("学术检索父运行不存在")
 
-        ttl = 3600 if endpoint in {"search", "title_search", "semantic_search"} else 86400
+        ttl = 3600 if endpoint in {"search", "question_search", "title_search", "semantic_search"} else 86400
         cached = await self.db.scalar(
             select(AcademicRetrievalCall)
             .where(

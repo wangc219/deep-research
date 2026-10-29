@@ -1,0 +1,119 @@
+{
+  "case": "technology_auth_failure",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "围绕长序列推理显存瓶颈比较稀疏注意力与 FlashAttention 的解决路径，结合公开证据，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "FlashAttention long sequence memory",
+        "mode": "topic",
+        "limit": 6
+      },
+      "id": "01a172fcc91dc741d77d64dcad3dc636",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention memory IO complexity long sequence sparse attention comparison",
+        "required_terms": [
+          "FlashAttention"
+        ],
+        "content_format": "markdown"
+      },
+      "id": "01a172fcd778cd97aa59df794b7cdb8b",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "稀疏注意力长序列显存 复杂度 稀疏率 对比 FlashAttention",
+        "required_terms": [
+          "稀疏注意力"
+        ]
+      },
+      "id": "01a172fcd778cd97aa59df794b7cdb8c",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention tiling IO-aware exact attention no O(N^2) memory CUDA",
+        "required_terms": [
+          "FlashAttention",
+          "memory"
+        ]
+      },
+      "id": "01a172fce021d57a7c785730e6dbd533",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention IO-aware exact attention tiling high-level memory reduction arxiv"
+      },
+      "id": "01a172fce7247af91d93cd83bc89910d",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "sparse attention low-rank long context memory reduction survey"
+      },
+      "id": "01a172fcef6aa59e731631275ee4031c",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "6",
+        "keyword": "FlashAttention long sequence memory"
+      }
+    }
+  ],
+  "model_requests": 6,
+  "web_calls": 5,
+  "cost_cents": 1,
+  "root_budget_shared": true,
+  "seconds": 19.18,
+  "answer": "公開證據較為有限，僅獲取到 FlashAttention 原始論文。基於已取得證據與公開常識作答。\n\nFlashAttention 与稀疏注意力两者缓解显存瓶颈的机理不同，可以互补：\n\n稀疏注意力通过**降低计算与存储复杂度**（如局部窗口、全局 token、低秩近似），使 N×N 注意力矩阵无需完整物化，显存随稀疏率近似线性下降。代价是牺牲精确性，需依赖真实序列的局部/长程结构存在性。\n\nFlashAttention 则保持**精确注意力**，通过 IO-aware 分块（tiling）与在线 softmax 重计算，将显存占用由 O(N²) 降至 O(N)，并显著减少 HBM 与 SRAM 间的读写开销。\n\n实测中 FlashAttention 更通用、无精度损失<cite source=\"https://arxiv.org/abs/2205.14135\" type=\"url\">[1]</cite>，是当前长序列主流底座；稀疏注意力可作为超长上下文时的进一步压缩手段，两者常叠加使用。注：本轮学术接口鉴权失败，网页检索证据有限，性能倍数等具体数值未取得原文核实。",
+  "tool_results": [
+    {
+      "status": "auth_failed",
+      "aminer_status": "auth_failed",
+      "query": "FlashAttention long sequence memory",
+      "source": "aminer",
+      "results": [],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "检索未全部完成：AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限；结果仅包含已取得的论文证据",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "FlashAttention long sequence memory",
+          "status": "auth_failed",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 0,
+      "omitted_candidates": 0,
+      "failed_endpoint": "search"
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

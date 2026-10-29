@@ -1,0 +1,18 @@
+{
+  "backend/package/platform_core/services/wxchannels_service.py": "bd4bc312c03cf697c62c602bf3a45b83e836983a6f9dc300b32120b9115291b5",
+  "backend/package/platform_core/services/task_registry.py": "247892bfe5f0a19c4e3c8f9f6a906624e2cb220b4b39c0a7f1047ae4839147a2",
+  "backend/package/platform_core/services/task_service.py": "fcbf036d50fa90aa8726740e130b305aea0c647781b02e7a618b67b4128d1d5e",
+  "backend/server/routers/wxchannels_router.py": "76b65606d6a2dd0152292488571edfe5e00c34e84aa2a7ae499d22b1018ecff4",
+  "backend/test/unit/services/test_wxchannels_service.py": "bd6cae9a7f43fbf50b3af0db8a6f5f89cc84d11e1ec87ea7bbe8317e70c2b1b7",
+  "backend/test/integration/services/test_video_collector_repository.py": "4a1ab2a4ba80333d0533eee636c03fdcd9f008af54c2415017a2d011937ef9f6",
+  "backend/test/integration/services/test_wechat_channel_repository.py": "983dd6cb7610ac3e6d786d53c36086736d84d7c77f3633a1027f6668900b634a",
+  "backend/test/unit/services/test_video_collector_package.py": "84324db0e3f9f20d65791e27b69208415f7509a9cd14d4375a4445d7b366a8c8",
+  "backend/test/conftest.py": "fd5d37af7506fe4b07ef049720a63a6b9684cf375c1a3ba082fa5157ed49674c",
+  "backend/test/integration/conftest.py": "4f49c6df89f9ecf42ad5ad15039972c26c48a84f8979331d37a5d2e1b3f4986a",
+  "backend/test/live_api_cleanup.py": "d7ff7877980cf3ad16ea70a57a687b1566aa16c69627e3ff899384e49f7270e6",
+  "web/src/utils/wechatConnection.js": "793083d715bcebb7eb10fd9323c0847c9b929cf5f03d22bcc9f777e85aa98f0c",
+  "web/src/components/knowledge/WechatConnectionStatus.vue": "86042c9e7a212d216913051397ef8aa05b02f811214942c0c6a5f53a6721fc17",
+  "web/src/views/WxChannelsView.vue": "8003853b004b6e90de7e4893227feb3babc9f56e70f204101bb5571454553549",
+  "web/test/unit/wxchannelsConnection.test.js": "db4934ce2050f73863447c289692f8084670b8f7a09c481aba478075df667034",
+  "backend/package/platform_core/repositories/wechat_channel_repository.py": "9fcb662196247337423f63ee2738b0d69043f9df6c94c23faaefc01884b77b98"
+}

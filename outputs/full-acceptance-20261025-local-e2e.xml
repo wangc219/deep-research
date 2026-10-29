@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="7" time="184.268" timestamp="2026-10-25T15:29:06.816472+08:00" hostname="60a5356f1608"><testcase classname="test.e2e.test_agent_async_e2e" name="test_async_agent_run_stream_result_and_persistence" time="3.560" /><testcase classname="test.e2e.test_agent_call_entrypoints_e2e" name="test_agent_eval_and_agent_call_entrypoints_share_run_invocation_flow" time="1.964"><failure message="KeyError: 'source'">/Users/wangchen/equipment research 3/backend/test/e2e/test_agent_call_entrypoints_e2e.py:210: in test_agent_eval_and_agent_call_entrypoints_share_run_invocation_flow
+    ???
+E   KeyError: 'source'</failure></testcase><testcase classname="test.e2e.test_agent_steer_e2e" name="test_real_tool_steer_runs_next_from_checkpoint" time="20.157" /><testcase classname="test.e2e.test_attachment_and_agent_state" name="test_attachment_confirm_is_reflected_in_thread_metadata" time="0.122" /><testcase classname="test.e2e.test_deterministic_agent_path_e2e" name="test_replay_rejects_requests_outside_deterministic_contract" time="0.004"><failure message="httpx.ConnectError: All connection attempts failed">/usr/local/lib/python3.13/site-packages/httpx/_transports/default.py:101: in map_httpcore_exceptions
+    yield
+/usr/local/lib/python3.13/site-packages/httpx/_transports/default.py:394: in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpcore/_async/connection_pool.py:256: in handle_async_request
+    raise exc from None
+/usr/local/lib/python3.13/site-packages/httpcore/_async/connection_pool.py:236: in handle_async_request
+    response = await connection.handle_async_request(
+/usr/local/lib/python3.13/site-packages/httpcore/_async/connection.py:101: in handle_async_request
+    raise exc
+/usr/local/lib/python3.13/site-packages/httpcore/_async/connection.py:78: in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpcore/_async/connection.py:124: in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpcore/_backends/auto.py:31: in connect_tcp
+    return await self._backend.connect_tcp(
+/usr/local/lib/python3.13/site-packages/httpcore/_backends/anyio.py:113: in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/contextlib.py:162: in __exit__
+    self.gen.throw(value)
+/usr/local/lib/python3.13/site-packages/httpcore/_exceptions.py:14: in map_exceptions
+    raise to_exc(exc) from exc
+E   httpcore.ConnectError: All connection attempts failed
+
+The above exception was the direct cause of the following exception:
+/Users/wangchen/equipment research 3/backend/test/e2e/test_deterministic_agent_path_e2e.py:97: in test_replay_rejects_requests_outside_deterministic_contract
+    ???
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1859: in post
+    return await self.request(
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1629: in send
+    response = await self._send_handling_auth(
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpx/_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/httpx/_transports/default.py:393: in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/contextlib.py:162: in __exit__
+    self.gen.throw(value)
+/usr/local/lib/python3.13/site-packages/httpx/_transports/default.py:118: in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+E   httpx.ConnectError: All connection attempts failed</failure></testcase><testcase classname="test.e2e.test_deterministic_agent_path_e2e" name="test_subagent_worker_enforces_inherited_write_policy[default]" time="2.171"><failure message="AssertionError: {'id': 'd2657bc5-062d-4c31-b9af-045e14385406', 'conversation_thread_id': '3289ed53-4f65-4fa9-aa47-996f1c724c08', 'runtime_scope_id': '3289ed53-4f65-4fa9-aa47-996f1c724c08', 'runtime_cleanup_pending': False, ...}&#10;assert 'failed' == 'completed'&#10;  &#10;  - completed&#10;  + failed">/Users/wangchen/equipment research 3/backend/test/e2e/test_deterministic_agent_path_e2e.py:316: in test_subagent_worker_enforces_inherited_write_policy
+    ???
+E   AssertionError: {'id': 'd2657bc5-062d-4c31-b9af-045e14385406', 'conversation_thread_id': '3289ed53-4f65-4fa9-aa47-996f1c724c08', 'runtime_scope_id': '3289ed53-4f65-4fa9-aa47-996f1c724c08', 'runtime_cleanup_pending': False, ...}
+E   assert 'failed' == 'completed'
+E     
+E     - completed
+E     + failed</failure></testcase><testcase classname="test.e2e.test_deterministic_agent_path_e2e" name="test_subagent_worker_enforces_inherited_write_policy[always_trust]" time="2.240"><failure message="AssertionError: {'id': 'ef5519eb-635b-4a2c-9007-5178cd0a8745', 'conversation_thread_id': 'e06ec685-c877-4965-add2-c257df8dd5c9', 'runtime_scope_id': 'e06ec685-c877-4965-add2-c257df8dd5c9', 'runtime_cleanup_pending': False, ...}&#10;assert 'failed' == 'completed'&#10;  &#10;  - completed&#10;  + failed">/Users/wangchen/equipment research 3/backend/test/e2e/test_deterministic_agent_path_e2e.py:316: in test_subagent_worker_enforces_inherited_write_policy
+    ???
+E   AssertionError: {'id': 'ef5519eb-635b-4a2c-9007-5178cd0a8745', 'conversation_thread_id': 'e06ec685-c877-4965-add2-c257df8dd5c9', 'runtime_scope_id': 'e06ec685-c877-4965-add2-c257df8dd5c9', 'runtime_cleanup_pending': False, ...}
+E   assert 'failed' == 'completed'
+E     
+E     - completed
+E     + failed</failure></testcase><testcase time="0.045" /></testsuite></testsuites>

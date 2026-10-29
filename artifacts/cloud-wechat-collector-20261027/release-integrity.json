@@ -1,0 +1,11 @@
+{
+  "source_files_verified": 24,
+  "collector_healthy": true,
+  "api_worker_healthy": true,
+  "https_website_and_readiness": true,
+  "collector_memory_limit_gib": 3.0,
+  "collector_cpu_limit": 1.25,
+  "privileged": false,
+  "desktop_loopback_only": true,
+  "runtime_collector_sha256": "eb3a5816419239b91df272c8e488d0c524fbbd8da1071a1f6e2b9bedb4bd01ac"
+}

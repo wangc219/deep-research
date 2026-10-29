@@ -1,0 +1,377 @@
+{
+  "name": "rag_correct_title-deep-aminer",
+  "topic": "rag_correct_title",
+  "kind": "deep",
+  "variant": "aminer",
+  "thread_id": "equipment-deep-4b37be53-9635-4bc2-902b-3050ffe3d20d",
+  "session_id": "thinking-1de9b9c7-4461-40d5-97ff-90e329fcd0b2",
+  "run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+  "prompt": "请先读取 deep-research 技能，由主智能体直接研究，不委派子任务。本轮验证 AMiner 论文证据，请用 academic_search(mode=\"title\") 定位准确标题 Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach，以及 Lost in the Middle: How Language Models Use Long Contexts。筛选后使用检索结果实际返回的 AMiner id 调用 academic_get_papers 读取完整摘要，不能把 arXiv 编号当作 AMiner id。根据实际取得证据，用中文约500字比较 RAG 和长上下文模型在准确性、成本、信息遗漏和组合方案上的取舍，给出两篇 DOI 链接。明确哪些是摘要报告、哪些是推断；摘要不等于全文。只输出最终答案，不输出分析过程，不要文件或任务，不要追问。",
+  "submitted_at_utc": "2026-10-19T07:15:18.751404+00:00",
+  "elapsed_seconds": 24.26,
+  "result": {
+    "status": "completed",
+    "output": "基于 AMiner 检索到的两篇论文完整摘要，给出如下比较（约500字）。\n\n## RAG 与长上下文模型：取舍比较\n\n**准确性。** 综合研究（Li 等，EMNLP 2024）在多个公开数据集上用三款最新 LLM 对比 RAG 与长上下文（LC）模型：当计算资源充足时，**LC 的平均性能稳定优于 RAG**。但另一面，Lost in the Middle（Liu 等，TACL 2024）指出，即便号称专门面向长上下文的模型，在需要取用位于长上下文**中部**的关键信息时性能也会显著下降，而相关信息出现在开头或结尾时表现最好——这说明长上下文模型的\"长\"并不保证鲁棒利用。两篇摘要合读：LC 在整体平均准确率上占优，但存在\"位置依赖\"的信息遗漏弱点。\n\n**成本。** RAG 的明确优势是**成本显著更低**：它只把检索出的相关片段送入模型，而非每次投入完整冗长上下文，从而减少计算开销。LC 虽准确率更高，但推理成本随上下文长度放大，是 RAG 的一个可量化劣势。\n\n**信息遗漏。** RAG 的遗漏风险来自检索环节——若检索漏掉关键片段，模型无法看到，属于\"检索侧遗漏\"；LC 的遗漏风险是上述摘要所显示的\"中部信息遗忘\"。两者遗漏机理不同：前者是选择性暴露，后者是上下文内可用但模型未充分利用。\n\n**组合方案。** 论文提出了 Self-Route 混合方法：基于**模型自我反思**将查询路由到 RAG 或 LC，在显著降低计算成本的同时保持与 LC 相当的性能，说明两者并非互斥，可按查询难度分层取舍。\n\n需要说明：以上全部来自两篇论文的**完整摘要**，摘要报告的是论文自身结论，不等于已核实全文实验数据（具体性能数值、成本数字均未在本轮获取）；RAG\"检索侧遗漏\"的机理是对摘要内容的**推断**，非摘要原话。DOI 链接：[RAG vs LC (Self-Route)](https://doi.org/10.18653/v1/2024.emnlp-industry.66)；[Lost in the Middle](https://doi.org/10.1162/tacl_a_00638)。",
+    "agent_slug": "deep-research",
+    "thread_id": "equipment-deep-4b37be53-9635-4bc2-902b-3050ffe3d20d",
+    "conversation_id": 402,
+    "agent_run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+    "request_id": "6a028d1a-2cfc-40ed-8fa9-1cc00828893e",
+    "final_message_id": 2591,
+    "langfuse_trace_id": null,
+    "token_usage": {
+      "total": {
+        "input_tokens": 37685,
+        "total_tokens": 38666,
+        "output_tokens": 981
+      },
+      "models": {
+        "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+          "model": {
+            "provider_id": "siliconflow-cn",
+            "provider_type": "openai",
+            "identity_source": "configured_metadata",
+            "response_model_ids": [
+              "deepseek-ai/DeepSeek-V4-Flash"
+            ],
+            "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+            "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+          },
+          "usage": {
+            "input_tokens": 37685,
+            "total_tokens": 38666,
+            "output_tokens": 981,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          },
+          "cache_hit_ratio": 0.0,
+          "model_call_count": 3,
+          "cache_hit_call_count": 0,
+          "uncached_input_tokens": 37685,
+          "cache_read_input_tokens": 0,
+          "cache_request_hit_ratio": 0.0,
+          "cache_observed_call_count": 3,
+          "usage_reported_call_count": 3,
+          "cache_observed_input_tokens": 37685
+        }
+      },
+      "complete": true,
+      "schema_version": 2,
+      "model_call_count": 3,
+      "usage_reported_call_count": 3,
+      "usage_unavailable_call_count": 0
+    },
+    "timing": {
+      "created_at": "2026-10-19T07:15:18.742556Z",
+      "started_at": "2026-10-19T07:15:18.792099Z",
+      "prepared_at": "2026-10-19T07:15:18.990065Z",
+      "first_model_request_at": "2026-10-19T07:15:19.007159Z",
+      "first_output_at": "2026-10-19T07:15:20.592212Z",
+      "finished_at": "2026-10-19T07:15:35.509464Z",
+      "dispatch_latency_ms": 50,
+      "preparation_latency_ms": 198,
+      "first_model_request_latency_ms": 265,
+      "model_first_output_latency_ms": 1602,
+      "first_output_latency_ms": 1850,
+      "total_latency_ms": 16767
+    }
+  },
+  "tools": [
+    {
+      "run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "Lost in the Middle: How Language Models Use Long Contexts",
+        "mode": "title"
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"Lost in the Middle: How Language Models Use Long Contexts\", \"source\": \"aminer\", \"results\": [{\"id\": \"64a78f1fd68f896efa01eb25\", \"doi\": \"10.1162/tacl_a_00638\", \"title\": \"Lost in the Middle: How Language Models Use Long Contexts\", \"title_zh\": null, \"authors\": [\"Nelson F. Liu\", \"Kevin Lin\", \"John Hewitt\", \"Ashwin Paranjape\", \"Michele Bevilacqua\", \"Fabio Petroni\", \"Percy Liang\"], \"year\": 2024, \"venue\": \"TRANSACTIONS OF THE ASSOCIATION FOR COMPUTATIONAL LINGUISTICS\", \"url\": \"https://doi.org/10.1162/tacl_a_00638\", \"content\": \"While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1001-5000\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:15:22.868804Z\", \"matched_queries\": [\"Lost in the Middle: How Language Models Use Long Contexts\"]}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": [\"64a78f1fd68f896efa01eb25\"]}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": 1, \"query_coverage\": [{\"query\": \"Lost in the Middle: How Language Models Use Long Contexts\", \"status\": \"ok\", \"page\": 1, \"returned\": 1, \"total\": 1, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 1, \"omitted_candidates\": 0, \"retrieval_guidance\": \"这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a15303f0149e361c2768cb43c490a7",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+        "mode": "title"
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach\", \"source\": \"aminer\", \"results\": [{\"id\": \"66a1b12601d2a3fbfc21f2de\", \"doi\": \"10.18653/v1/2024.emnlp-industry.66\", \"title\": \"Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach\", \"title_zh\": null, \"authors\": [\"Zhuowan Li\", \"Cheng Li\", \"Mingyang Zhang\", \"Qiaozhu Mei\", \"Michael Bendersky\"], \"year\": 2024, \"venue\": \"EMNLP 2024\", \"url\": \"https://doi.org/10.18653/v1/2024.emnlp-industry.66\", \"content\": \"Retrieval Augmented Generation (RAG) has been a powerful tool for Large Language Models (LLMs) to efficiently process overly lengthy contexts. However, recent LLMs like Gemini-1.5 and GPT-4 show exceptional capabilities to understand long contexts directly. We conduct a comprehensive comparison between RAG and long-context (LC) LLMs,...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"51-200\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:15:22.888855Z\", \"matched_queries\": [\"Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach\"]}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": [\"66a1b12601d2a3fbfc21f2de\"]}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": 1, \"query_coverage\": [{\"query\": \"Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach\", \"status\": \"ok\", \"page\": 1, \"returned\": 1, \"total\": 1, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 1, \"omitted_candidates\": 0, \"retrieval_guidance\": \"这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a15303eef7b6ff2bbe22afa748b7b4",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+      "tool_name": "academic_get_papers",
+      "tool_input": {
+        "paper_ids": [
+          "66a1b12601d2a3fbfc21f2de",
+          "64a78f1fd68f896efa01eb25"
+        ],
+        "full_abstract": true
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"\", \"source\": \"aminer\", \"results\": [{\"id\": \"64a78f1fd68f896efa01eb25\", \"doi\": \"10.1162/tacl_a_00638\", \"title\": \"Lost in the Middle: How Language Models Use Long Contexts\", \"title_zh\": null, \"authors\": [\"Nelson F. Liu\", \"Kevin Lin\", \"John Hewitt\", \"Ashwin Paranjape\", \"Michele Bevilacqua\", \"Fabio Petroni\", \"Percy Liang\"], \"year\": 2024, \"venue\": \"TRANSACTIONS OF THE ASSOCIATION FOR COMPUTATIONAL LINGUISTICS\", \"url\": \"https://doi.org/10.1162/tacl_a_00638\", \"content\": \"While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value retrieval. We find that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts. In particular, we observe that performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts, even for explicitly long-context models. Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models.\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:15:27.912196Z\"}, {\"id\": \"66a1b12601d2a3fbfc21f2de\", \"doi\": \"10.18653/v1/2024.emnlp-industry.66\", \"title\": \"Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach\", \"title_zh\": null, \"authors\": [\"Zhuowan Li\", \"Cheng Li\", \"Mingyang Zhang\", \"Qiaozhu Mei\", \"Michael Bendersky\"], \"year\": 2024, \"venue\": \"EMNLP 2024\", \"url\": \"https://doi.org/10.18653/v1/2024.emnlp-industry.66\", \"content\": \"Retrieval Augmented Generation (RAG) has been a powerful tool for Large Language Models (LLMs) to efficiently process overly lengthy contexts. However, recent LLMs like Gemini-1.5 and GPT-4 show exceptional capabilities to understand long contexts directly. We conduct a comprehensive comparison between RAG and long-context (LC) LLMs, aiming to leverage the strengths of both. We benchmark RAG and LC across various public datasets using three latest LLMs. Results reveal that when resourced sufficiently, LC consistently outperforms RAG in terms of average performance. However, RAG's significantly lower cost remains a distinct advantage. Based on this observation, we propose Self-Route, a simple yet effective method that routes queries to RAG or LC based on model self-reflection. Self-Route significantly reduces the computation cost while maintaining a comparable performance to LC. Our findings provide a guideline for long-context applications of LLMs using RAG and LC.\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:15:27.686809Z\"}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": []}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"requested_paper_ids\": [\"66a1b12601d2a3fbfc21f2de\", \"64a78f1fd68f896efa01eb25\"], \"missing_paper_ids\": [], \"missing_abstract_ids\": []}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_get_papers",
+        "id": null,
+        "tool_call_id": "01a15303e0ce96cb16089a225810af7c",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    }
+  ],
+  "aminer_ledger": [
+    {
+      "endpoint": "title_search",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:22.429167",
+      "finished_at": "2026-10-19 07:15:22.684386",
+      "provider_log_id": "3Ku4SymVpefMzPRk4tMvCQeaEHk",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "title_search",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:22.439634",
+      "finished_at": "2026-10-19 07:15:22.678719",
+      "provider_log_id": "3Ku4Sxz9nXBx2SJs9hP4xpDH63b",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:22.684067",
+      "finished_at": "2026-10-19 07:15:22.869725",
+      "provider_log_id": "3Ku4Sz9ShihkkQLdkQQMklht8qL",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:22.693542",
+      "finished_at": "2026-10-19 07:15:22.889770",
+      "provider_log_id": "3Ku4T22XjJeB7tVLazWIMb6zYaH",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:27.206539",
+      "finished_at": "2026-10-19 07:15:27.416132",
+      "provider_log_id": "3Ku4TfFqa5c2BAi8m0KCmLSltJ6",
+      "result_status": "ok",
+      "returned": 2
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:27.433470",
+      "finished_at": "2026-10-19 07:15:27.688885",
+      "provider_log_id": "3Ku4TezcHPMyBDvSQ6xDhEDp3YO",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:15:27.701966",
+      "finished_at": "2026-10-19 07:15:27.916239",
+      "provider_log_id": "3Ku4Tdq84YMw85xyo4UZVbs2XOW",
+      "result_status": "ok",
+      "returned": 1
+    }
+  ],
+  "estimated_aminer_cost_cents": 2,
+  "academic_tool_calls": 3,
+  "web_tool_calls": 0,
+  "answer_urls": [
+    "https://doi.org/10.1162/tacl_a_00638",
+    "https://doi.org/10.18653/v1/2024.emnlp-industry.66"
+  ],
+  "academic_evidence": [
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "Lost in the Middle: How Language Models Use Long Contexts",
+        "mode": "title"
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "Lost in the Middle: How Language Models Use Long Contexts",
+          "status": "ok",
+          "page": 1,
+          "returned": 1,
+          "total": 1,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": [
+        {
+          "id": "64a78f1fd68f896efa01eb25",
+          "doi": "10.1162/tacl_a_00638",
+          "title": "Lost in the Middle: How Language Models Use Long Contexts",
+          "authors": [
+            "Nelson F. Liu",
+            "Kevin Lin",
+            "John Hewitt",
+            "Ashwin Paranjape",
+            "Michele Bevilacqua",
+            "Fabio Petroni",
+            "Percy Liang"
+          ],
+          "year": 2024,
+          "venue": "TRANSACTIONS OF THE ASSOCIATION FOR COMPUTATIONAL LINGUISTICS",
+          "url": "https://doi.org/10.1162/tacl_a_00638",
+          "content_level": "partial_abstract",
+          "content": "While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value..."
+        }
+      ]
+    },
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+        "mode": "title"
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "status": "ok",
+          "page": 1,
+          "returned": 1,
+          "total": 1,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": [
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "authors": [
+            "Zhuowan Li",
+            "Cheng Li",
+            "Mingyang Zhang",
+            "Qiaozhu Mei",
+            "Michael Bendersky"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content_level": "partial_abstract",
+          "content": "Retrieval Augmented Generation (RAG) has been a powerful tool for Large Language Models (LLMs) to efficiently process overly lengthy contexts. However, recent LLMs like Gemini-1.5 and GPT-4 show exceptional capabilities to understand long contexts directly. We conduct a comprehensive comparison between RAG and long-context (LC) LLMs,..."
+        }
+      ]
+    },
+    {
+      "tool": "academic_get_papers",
+      "input": {
+        "paper_ids": [
+          "66a1b12601d2a3fbfc21f2de",
+          "64a78f1fd68f896efa01eb25"
+        ],
+        "full_abstract": true
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": null,
+      "missing_paper_ids": [],
+      "papers": [
+        {
+          "id": "64a78f1fd68f896efa01eb25",
+          "doi": "10.1162/tacl_a_00638",
+          "title": "Lost in the Middle: How Language Models Use Long Contexts",
+          "authors": [
+            "Nelson F. Liu",
+            "Kevin Lin",
+            "John Hewitt",
+            "Ashwin Paranjape",
+            "Michele Bevilacqua",
+            "Fabio Petroni",
+            "Percy Liang"
+          ],
+          "year": 2024,
+          "venue": "TRANSACTIONS OF THE ASSOCIATION FOR COMPUTATIONAL LINGUISTICS",
+          "url": "https://doi.org/10.1162/tacl_a_00638",
+          "content_level": "abstract",
+          "content": "While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value retrieval. We find that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts. In particular, we observe that performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts, even for explicitly long-context models. Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models."
+        },
+        {
+          "id": "66a1b12601d2a3fbfc21f2de",
+          "doi": "10.18653/v1/2024.emnlp-industry.66",
+          "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+          "authors": [
+            "Zhuowan Li",
+            "Cheng Li",
+            "Mingyang Zhang",
+            "Qiaozhu Mei",
+            "Michael Bendersky"
+          ],
+          "year": 2024,
+          "venue": "EMNLP 2024",
+          "url": "https://doi.org/10.18653/v1/2024.emnlp-industry.66",
+          "content_level": "abstract",
+          "content": "Retrieval Augmented Generation (RAG) has been a powerful tool for Large Language Models (LLMs) to efficiently process overly lengthy contexts. However, recent LLMs like Gemini-1.5 and GPT-4 show exceptional capabilities to understand long contexts directly. We conduct a comprehensive comparison between RAG and long-context (LC) LLMs, aiming to leverage the strengths of both. We benchmark RAG and LC across various public datasets using three latest LLMs. Results reveal that when resourced sufficiently, LC consistently outperforms RAG in terms of average performance. However, RAG's significantly lower cost remains a distinct advantage. Based on this observation, we propose Self-Route, a simple yet effective method that routes queries to RAG or LC based on model self-reflection. Self-Route significantly reduces the computation cost while maintaining a comparable performance to LC. Our findings provide a guideline for long-context applications of LLMs using RAG and LC."
+        }
+      ]
+    }
+  ],
+  "full_abstract_unique_count": 2,
+  "partial_abstract_unique_count": 0,
+  "collected_at": "2026-10-19T07:15:58.312329+00:00"
+}

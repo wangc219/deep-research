@@ -1,0 +1,68 @@
+<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Progressive video loading acceptance</title><style>body{font:15px/1.6 system-ui;background:#f5f6fa;color:#202433}main{max-width:1050px;margin:30px auto;padding:28px;background:white;border-radius:16px}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid #e6e8ec;vertical-align:top}pre{white-space:pre-wrap}img{max-width:100%}</style><main><h1>Progressive video loading acceptance</h1><p>2026-10-27 / Production HTTPS / Linux WeChat / 4 vCPU 16 GB</p><p>Latest pages first; resume history from the saved per-user cursor. Public video IDs deduplicate the private index. Test accounts and records have been removed.</p><img src="latest-videos-mobile.png" alt="Latest 30 videos and load more history"><p><a href="cleanup-verification.log">Independent cleanup verification</a> / <a href="release-verification.json">Release source verification</a></p><table><tr><th>ordinary_accounts</th><td><pre>16</pre></td></tr><tr><th>source</th><td><pre>&quot;Linux cloud WeChat&quot;</pre></td></tr><tr><th>passed</th><td><pre>true</pre></td></tr><tr><th>discovery</th><td><pre>{
+  &quot;concurrent_users&quot;: 16,
+  &quot;source_videos&quot;: 30,
+  &quot;wall_seconds&quot;: 5.134,
+  &quot;p50_seconds&quot;: 3.921,
+  &quot;max_seconds&quot;: 4.647,
+  &quot;default_bounded_to_two_pages&quot;: true,
+  &quot;private_channel_ids&quot;: 16,
+  &quot;snapshot_public_metadata_only&quot;: true
+}</pre></td></tr><tr><th>explicit_incremental_refresh_seconds</th><td><pre>0.64</pre></td></tr><tr><th>load_more</th><td><pre>{
+  &quot;new_count&quot;: 30,
+  &quot;total_loaded&quot;: 60,
+  &quot;seconds&quot;: 1.874,
+  &quot;continued_cursor&quot;: true
+}</pre></td></tr><tr><th>range_checks</th><td><pre>[
+  {
+    &quot;range&quot;: 30,
+    &quot;returned&quot;: 30,
+    &quot;seconds&quot;: 0.633
+  },
+  {
+    &quot;range&quot;: 40,
+    &quot;returned&quot;: 40,
+    &quot;seconds&quot;: 0.635
+  },
+  {
+    &quot;range&quot;: 50,
+    &quot;returned&quot;: 50,
+    &quot;seconds&quot;: 0.644
+  },
+  {
+    &quot;range&quot;: 100,
+    &quot;returned&quot;: 100,
+    &quot;seconds&quot;: 2.491
+  },
+  {
+    &quot;range&quot;: 150,
+    &quot;returned&quot;: 150,
+    &quot;seconds&quot;: 2.495
+  }
+]</pre></td></tr><tr><th>duplicate_rows</th><td><pre>0</pre></td></tr><tr><th>latest_refresh_preserves_history_cursor</th><td><pre>true</pre></td></tr><tr><th>selected_video_identity_cached</th><td><pre>true</pre></td></tr><tr><th>transcription</th><td><pre>{
+  &quot;real_cloud_audio&quot;: true,
+  &quot;asr_and_punctuation&quot;: true,
+  &quot;word_and_zip_download&quot;: true,
+  &quot;workspace_published&quot;: true,
+  &quot;characters&quot;: 39,
+  &quot;word_bytes&quot;: 37124,
+  &quot;elapsed_seconds&quot;: 26.738,
+  &quot;cross_user_document_blocked&quot;: 15
+}</pre></td></tr><tr><th>knowledge_import_and_retrieval</th><td><pre>true</pre></td></tr><tr><th>cross_user_read_delete_blocked</th><td><pre>true</pre></td></tr><tr><th>cleanup_remaining</th><td><pre>{
+  &quot;accounts&quot;: 0,
+  &quot;tasks&quot;: 0,
+  &quot;channels&quot;: 0,
+  &quot;libraries&quot;: 0,
+  &quot;logs&quot;: 0,
+  &quot;profiles&quot;: 0,
+  &quot;agent_env&quot;: 0,
+  &quot;request_metrics&quot;: 0,
+  &quot;objects&quot;: 0,
+  &quot;directories&quot;: 0,
+  &quot;private_cursors&quot;: 0,
+  &quot;redis_payloads&quot;: 0
+}</pre></td></tr><tr><th>http</th><td><pre>{
+  &quot;count&quot;: 364,
+  &quot;p50_ms&quot;: 28.8,
+  &quot;p95_ms&quot;: 1549.8,
+  &quot;max_ms&quot;: 1749.6
+}</pre></td></tr><tr><th>elapsed_seconds</th><td><pre>64.77</pre></td></tr></table></main></html>

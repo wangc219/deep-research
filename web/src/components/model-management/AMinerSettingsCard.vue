@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { BookOpen } from '@lucide/vue'
+import { BookOpen, ChevronDown } from '@lucide/vue'
 import { aminerApi } from '@/apis/system_api'
 import { buildAMinerConfigPatch, createAMinerDraft } from '@/utils/aminer'
 
@@ -112,137 +112,147 @@ onMounted(load)
 </script>
 
 <template>
-  <section class="aminer-card" aria-labelledby="aminer-heading">
-    <header>
-      <div class="title">
+  <details class="aminer-card" aria-labelledby="aminer-heading">
+    <summary class="card-summary">
+      <span class="title">
         <BookOpen :size="20" />
-        <div>
-          <h2 id="aminer-heading">AMiner 学术检索</h2>
-          <p>为智能对话和深研对话补充论文、摘要与参考文献。</p>
-        </div>
-      </div>
-      <span class="status" :class="status" role="status">{{
-        loading ? '加载中' : statusLabels[status] || '待检查'
-      }}</span>
-    </header>
-    <p v-if="loading" class="muted">正在读取学术检索配置…</p>
-    <form v-else-if="option" @submit.prevent="save">
-      <fieldset :disabled="!editable">
-        <label class="enable"
-          ><input
-            v-model="draft.enabled"
-            type="checkbox"
-            :disabled="!draft.enabled && !canEnable"
-          />启用 AMiner 学术检索<span>科研问题自动调用，父子智能体共享单轮预算</span></label
-        >
-        <div class="fields">
-          <label for="aminer-user-id"
-            >AMiner 用户 ID<input
-              id="aminer-user-id"
-              v-model="draft.user_id"
-              type="text"
-              maxlength="128"
-              autocomplete="off"
-              placeholder="在 AMiner 控制台账号资料中查看"
-          /></label>
-          <label for="aminer-api-key"
-            >API Key / 控制台 Token<input
-              id="aminer-api-key"
-              v-model="draft.api_key"
-              type="password"
-              autocomplete="new-password"
-              placeholder="填写 API Key 或控制台生成的 Token；留空保留已保存凭证"
-            /><small>已保存：{{ keyPreview }}。凭证不会回显。</small>
-            <small>API Key 自动生成短期 JWT；控制台 Token 直接使用，到期后需重新生成并替换。</small></label
+        <span>
+          <span id="aminer-heading" class="card-heading" role="heading" aria-level="2"
+            >AMiner 学术检索</span
           >
-        </div>
-        <details class="advanced">
-          <summary>高级设置：单轮预算与调用限额</summary>
-          <div class="budget-grid">
-            <div v-for="(prefix, index) in ['chat', 'deep']" :key="prefix" class="budget-column">
-              <h3>{{ index ? '深研对话' : '智能对话' }}</h3>
-              <label :for="`aminer-${prefix}-budget`"
-                >费用预算（元）<input
-                  :id="`aminer-${prefix}-budget`"
-                  v-model.number="draft[`${prefix}_budget_yuan`]"
-                  type="number"
-                  min="0"
-                  :max="index ? 50 : 10"
-                  step="0.01"
-                  required
-              /></label>
-              <label :for="`aminer-${prefix}-search`"
-                >Pro 搜索次数<input
-                  :id="`aminer-${prefix}-search`"
-                  v-model.number="draft[`${prefix}_search_limit`]"
-                  type="number"
-                  min="0"
-                  :max="index ? 50 : 20"
-                  step="1"
-                  required
-              /></label>
-              <label :for="`aminer-${prefix}-detail`"
-                >论文详情次数<input
-                  :id="`aminer-${prefix}-detail`"
-                  v-model.number="draft[`${prefix}_detail_limit`]"
-                  type="number"
-                  min="0"
-                  :max="index ? 100 : 50"
-                  step="1"
-                  required
-              /></label>
-              <label :for="`aminer-${prefix}-reference`"
-                >参考文献查询次数<input
-                  :id="`aminer-${prefix}-reference`"
-                  v-model.number="draft[`${prefix}_reference_limit`]"
-                  type="number"
-                  min="0"
-                  :max="index ? 20 : 10"
-                  step="1"
-                  required
-              /></label>
-            </div>
+          <span class="card-description">为智能对话和深研对话补充论文、摘要与参考文献。</span>
+        </span>
+      </span>
+      <span class="card-meta">
+        <span class="status" :class="status" role="status">{{
+          loading ? '加载中' : statusLabels[status] || '待检查'
+        }}</span>
+        <ChevronDown class="card-chevron" :size="18" aria-hidden="true" />
+      </span>
+    </summary>
+    <div class="card-content">
+      <p v-if="loading" class="muted">正在读取学术检索配置…</p>
+      <form v-else-if="option" @submit.prevent="save">
+        <fieldset :disabled="!editable">
+          <label class="enable"
+            ><input
+              v-model="draft.enabled"
+              type="checkbox"
+              :disabled="!draft.enabled && !canEnable"
+            />启用 AMiner 学术检索<span>科研问题自动调用，父子智能体共享单轮预算</span></label
+          >
+          <div class="fields">
+            <label for="aminer-user-id"
+              >AMiner 用户 ID<input
+                id="aminer-user-id"
+                v-model="draft.user_id"
+                type="text"
+                maxlength="128"
+                autocomplete="off"
+                placeholder="在 AMiner 控制台账号资料中查看"
+            /></label>
+            <label for="aminer-api-key"
+              >API Key / 控制台 Token<input
+                id="aminer-api-key"
+                v-model="draft.api_key"
+                type="password"
+                autocomplete="new-password"
+                placeholder="填写 API Key 或控制台生成的 Token；留空保留已保存凭证"
+              /><small>已保存：{{ keyPreview }}。凭证不会回显。</small>
+              <small
+                >API Key 自动生成短期 JWT；控制台 Token 直接使用，到期后需重新生成并替换。</small
+              ></label
+            >
           </div>
+          <details class="advanced">
+            <summary>高级设置：单轮预算与调用限额</summary>
+            <div class="budget-grid">
+              <div v-for="(prefix, index) in ['chat', 'deep']" :key="prefix" class="budget-column">
+                <h3>{{ index ? '深研对话' : '智能对话' }}</h3>
+                <label :for="`aminer-${prefix}-budget`"
+                  >费用预算（元）<input
+                    :id="`aminer-${prefix}-budget`"
+                    v-model.number="draft[`${prefix}_budget_yuan`]"
+                    type="number"
+                    min="0"
+                    :max="index ? 50 : 10"
+                    step="0.01"
+                    required
+                /></label>
+                <label :for="`aminer-${prefix}-search`"
+                  >Pro 搜索次数<input
+                    :id="`aminer-${prefix}-search`"
+                    v-model.number="draft[`${prefix}_search_limit`]"
+                    type="number"
+                    min="0"
+                    :max="index ? 50 : 20"
+                    step="1"
+                    required
+                /></label>
+                <label :for="`aminer-${prefix}-detail`"
+                  >论文详情次数<input
+                    :id="`aminer-${prefix}-detail`"
+                    v-model.number="draft[`${prefix}_detail_limit`]"
+                    type="number"
+                    min="0"
+                    :max="index ? 100 : 50"
+                    step="1"
+                    required
+                /></label>
+                <label :for="`aminer-${prefix}-reference`"
+                  >参考文献查询次数<input
+                    :id="`aminer-${prefix}-reference`"
+                    v-model.number="draft[`${prefix}_reference_limit`]"
+                    type="number"
+                    min="0"
+                    :max="index ? 20 : 10"
+                    step="1"
+                    required
+                /></label>
+              </div>
+            </div>
+            <p class="muted">
+              按当前接口单价预占预算，重试计入限额，缓存命中不占付费预算。接口实际费用以 AMiner
+              账单为准。
+            </p>
+          </details>
           <p class="muted">
-            按当前接口单价预占预算，重试计入限额，缓存命中不占付费预算。接口实际费用以 AMiner
-            账单为准。
+            连接测试使用免费标题搜索。仅发送公开科研检索词；题录和摘要不等于论文全文。
           </p>
-        </details>
-        <p class="muted">
-          连接测试使用免费标题搜索。仅发送公开科研检索词；题录和摘要不等于论文全文。
-        </p>
-        <div class="actions">
-          <button class="primary" type="submit" :disabled="draft.enabled && !canEnable">
-            {{ busy === 'save' ? '保存中…' : '保存配置' }}
-          </button>
-          <button type="button" :disabled="!canEnable" @click="testConnection">
-            {{ busy === 'test' ? '测试中…' : '测试连接' }}
-          </button>
-          <button v-if="hasSavedKey" class="clear" type="button" @click="clearKey">
-            {{ busy === 'clear' ? '清除中…' : '清除已保存密钥并停用' }}
-          </button>
-          <a
-            href="https://www.aminer.cn/open/board?tab=doc"
-            target="_blank"
-            rel="noopener noreferrer"
-            >使用说明</a
-          >
-        </div>
-      </fieldset>
-    </form>
-    <p
-      v-if="testResult"
-      class="feedback"
-      :class="testResult.status === 'ok' ? 'success' : 'error'"
-      role="status"
-    >
-      {{ testResult.message }}
-    </p>
-    <p v-if="notice" class="feedback success" role="status">{{ notice }}</p>
-    <p v-if="error" class="feedback error" role="alert">
-      {{ error }} <button v-if="!option && !loading" type="button" @click="load">重新加载</button>
-    </p>
-  </section>
+          <div class="actions">
+            <button class="primary" type="submit" :disabled="draft.enabled && !canEnable">
+              {{ busy === 'save' ? '保存中…' : '保存配置' }}
+            </button>
+            <button type="button" :disabled="!canEnable" @click="testConnection">
+              {{ busy === 'test' ? '测试中…' : '测试连接' }}
+            </button>
+            <button v-if="hasSavedKey" class="clear" type="button" @click="clearKey">
+              {{ busy === 'clear' ? '清除中…' : '清除已保存密钥并停用' }}
+            </button>
+            <a
+              href="https://www.aminer.cn/open/board?tab=doc"
+              target="_blank"
+              rel="noopener noreferrer"
+              >使用说明</a
+            >
+          </div>
+        </fieldset>
+      </form>
+      <p
+        v-if="testResult"
+        class="feedback"
+        :class="testResult.status === 'ok' ? 'success' : 'error'"
+        role="status"
+      >
+        {{ testResult.message }}
+      </p>
+      <p v-if="notice" class="feedback success" role="status">{{ notice }}</p>
+      <p v-if="error" class="feedback error" role="alert">
+        {{ error }}
+        <button v-if="!option && !loading" type="button" @click="load">重新加载</button>
+      </p>
+    </div>
+  </details>
 </template>
 
 <style scoped lang="less">
@@ -254,23 +264,50 @@ onMounted(load)
   background: var(--gray-0);
   color: var(--gray-900);
 }
-header,
+.card-summary,
 .title,
+.card-meta,
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-header {
+.card-summary {
   justify-content: space-between;
   align-items: flex-start;
+  cursor: pointer;
+  list-style: none;
+}
+.card-summary::-webkit-details-marker {
+  display: none;
 }
 .title {
   align-items: flex-start;
 }
-h2 {
+.card-heading {
+  display: block;
   margin: 0 0 6px;
   font-size: 16px;
+  font-weight: 600;
+}
+.card-description {
+  display: block;
+  color: var(--gray-600);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.card-meta {
+  flex: none;
+}
+.card-chevron {
+  color: var(--gray-500);
+  transition: transform 160ms ease;
+}
+.aminer-card[open] > .card-summary .card-chevron {
+  transform: rotate(180deg);
+}
+.card-content {
+  padding-top: 18px;
 }
 h3 {
   margin: 0 0 12px;
@@ -354,7 +391,7 @@ small,
   border: 1px solid var(--gray-150);
   border-radius: 8px;
 }
-summary {
+.advanced > summary {
   font-size: 13px;
   cursor: pointer;
 }
@@ -405,8 +442,12 @@ a {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  header {
+  .card-summary {
     flex-wrap: wrap;
+  }
+  .card-meta {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 </style>

@@ -17,6 +17,9 @@ def _qwen_chat_model(
         "thinking_format": "enable_thinking",
         "thinking_always_send": True,
         "thinking_disable_on_non_stream": True,
+        # DashScope 思考模式与 DeepSeek 一样不接受指定函数名的
+        # tool_choice；保留工具列表并让模型在 auto 模式自主调用。
+        "forced_tool_choice_mode": "auto",
         "supports_reasoning_effort": supports_reasoning_effort,
     }
     if supports_reasoning_effort:

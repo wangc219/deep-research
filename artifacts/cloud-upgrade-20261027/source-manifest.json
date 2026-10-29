@@ -1,0 +1,11 @@
+{
+  "compose.cloud.yaml": "fb048d2bd628396e577e01b7fa3bf62ddbc2e35184c891fcc2b1da7513572702",
+  "configs/cloud/4c16g.env.example": "610242e52aff8b5cae605f00bf1fea2663f224b868bf46ea06f3048c69d44c02",
+  "docs/CLOUD_CAPACITY.md": "6fac06ab297d601922aaefe397743b1a15fa4ac0c70945a082b0f94c42517f31",
+  "backend/server/wait_dependencies.py": "1ca8888b7028958be3f5d380e53dbc01776dce2ac550b96b1a3fc4a24413e027",
+  "backend/test/unit/server/test_wait_dependencies.py": "933bd44e77f7cd6ca4c4956318271e0295777da3c03a23c73c06f181cdf69398",
+  "backend/server/utils/auth_middleware.py": "5270dcbc3c83bb0d1ab26bc1ab4d5c94f6100d22fa74ef934708336b650d2159",
+  "backend/server/routers/wechat_mp_router.py": "986c342e2a5e9008c60240bbfaf7155847bc1179f17c871f3553a83ecee7720e",
+  "backend/test/unit/server/test_auth_connection_release.py": "c9c9f48a1526b61d16b83ec86ae57b887c6cc8c3754c70647ce49ef9f659c238",
+  "backend/test/integration/services/test_durable_task_repository.py": "eb15b861614154a4cc8ffaf6b6ba87f8a9148b2fd9b5e84a9e0750c6d8598af8"
+}

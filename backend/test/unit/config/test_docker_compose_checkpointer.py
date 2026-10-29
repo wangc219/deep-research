@@ -125,7 +125,7 @@ def test_api_healthcheck_uses_readiness_in_development_and_production():
         ]
 
 
-def test_worker_healthcheck_uses_arq_health_contract_in_development_and_production():
+def test_worker_healthcheck_uses_explicit_development_and_production_contracts():
     project_root = _project_root()
     for filename in ("compose.yaml", "compose.prod.yaml"):
         compose = yaml.safe_load((project_root / filename).read_text())
@@ -137,7 +137,12 @@ def test_worker_healthcheck_uses_arq_health_contract_in_development_and_producti
         else:
             assert healthcheck[0] == "CMD"
             command = healthcheck[1:]
-        assert command[-3:] == ["arq", "--check", "server.worker_main.WorkerSettings"]
+        expected = (
+            ["python", "-m", "server.worker_health"]
+            if filename == "compose.prod.yaml"
+            else ["arq", "--check", "server.worker_main.WorkerSettings"]
+        )
+        assert command[-3:] == expected
 
 
 def test_worker_starts_owned_entrypoint_in_development_and_production():

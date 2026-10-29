@@ -1,0 +1,111 @@
+{
+  "observed_date": "2026-10-27",
+  "scope": "General academic retrieval and source-provenance diagnosis; no production changes",
+  "production_incident": {
+    "call_summary": [
+      {
+        "endpoint": "detail",
+        "status": "succeeded",
+        "provider_status": "ok",
+        "calls": 1,
+        "empty_responses": 0
+      },
+      {
+        "endpoint": "info",
+        "status": "failed",
+        "provider_status": "unavailable",
+        "calls": 2,
+        "empty_responses": 2
+      },
+      {
+        "endpoint": "info",
+        "status": "succeeded",
+        "provider_status": "ok",
+        "calls": 1,
+        "empty_responses": 0
+      },
+      {
+        "endpoint": "search",
+        "status": "succeeded",
+        "provider_status": "ok",
+        "calls": 15,
+        "empty_responses": 15
+      },
+      {
+        "endpoint": "title_search",
+        "status": "succeeded",
+        "provider_status": "ok",
+        "calls": 3,
+        "empty_responses": 2
+      }
+    ],
+    "message_kinds": {
+      "('user', 'text')": 1,
+      "('assistant', 'model_audit')": 10,
+      "('tool', 'tool_audit')": 12,
+      "('assistant', 'text')": 1
+    },
+    "tool_names": [
+      "academic_get_papers",
+      "academic_search",
+      "web_search"
+    ],
+    "unrecognized_tool_payload_shapes": [],
+    "retrieved_source_count": 11,
+    "distinct_unmatched_citations": 4,
+    "mismatch_categories": {
+      "changed_search_redirect": true,
+      "unreturned_news_url": true,
+      "incomplete_news_url": true
+    },
+    "live_limits": "all chat/deep count and fee limits are 0 (unlimited); not the immediate cause",
+    "source_verified_against_production": {
+      "package/platform_core/agents/middlewares/academic_evidence.py": "d2de729b0e6b9febaa4d656ee8e2200f69f0ac4cebd4e724ec09ba3d04b27f1b",
+      "package/platform_core/services/academic_retrieval_service.py": "ebf9c93ca12aab8b84b5da420c17a3eb9838cfc69a278740681149244c41be84"
+    }
+  },
+  "neutral_aminer_controls": [
+    {
+      "field": "keyword",
+      "term": "machine learning",
+      "status": "ok",
+      "returned": 5,
+      "total": 10000,
+      "seconds": 0.26
+    },
+    {
+      "field": "title",
+      "term": "machine learning",
+      "status": "ok",
+      "returned": 5,
+      "total": 10000,
+      "seconds": 0.166
+    },
+    {
+      "field": "keyword",
+      "term": "graph neural network",
+      "status": "ok",
+      "returned": 5,
+      "total": 10000,
+      "seconds": 0.185
+    },
+    {
+      "field": "title",
+      "term": "graph neural network",
+      "status": "ok",
+      "returned": 5,
+      "total": 10000,
+      "seconds": 0.065
+    }
+  ],
+  "evidence_boundary_reproduction": {
+    "exact_aminer_source": "accepted_or_not_checked",
+    "rewritten_url": "correction_requested",
+    "mcp_source_with_aminer_results": "correction_requested",
+    "subagent_source_with_aminer_results": "correction_requested",
+    "mcp_only_without_aminer_results": "accepted_or_not_checked"
+  },
+  "synthetic_accounts_created": 0,
+  "production_data_modified": false,
+  "candidate_tools_deployed": false
+}

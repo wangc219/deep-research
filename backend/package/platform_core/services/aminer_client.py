@@ -13,9 +13,12 @@ import jwt
 from platform_core.utils.datetime_utils import format_utc_datetime, utc_now_naive
 
 AMINER_BASE_URL = "https://datacenter.aminer.cn/gateway/open_platform/api"
-ACADEMIC_TOOL_NAMES = frozenset({"academic_search", "academic_get_papers", "academic_get_references"})
+ACADEMIC_TOOL_NAMES = frozenset(
+    {"academic_search", "academic_get_papers", "academic_get_references", "parallel_research_search"}
+)
 ENDPOINTS = {
     "search": ("GET", "/paper/search/pro", 1, "search"),
+    "question_search": ("POST", "/paper/qa/search", 5, "search"),
     "semantic_search": ("POST", "/paper/qa/searchPro", 30, "search"),
     "title_search": ("GET", "/paper/search", 0, "free"),
     "info": ("POST", "/paper/info", 0, "free"),
@@ -67,7 +70,7 @@ class AMinerClient:
         method, path, _cost, _kind = ENDPOINTS[endpoint]
         try:
             async with httpx.AsyncClient(
-                timeout=30.0 if endpoint == "semantic_search" else 10.0,
+                timeout=30.0 if endpoint == "semantic_search" else 20.0 if endpoint == "question_search" else 10.0,
                 transport=self.transport,
                 follow_redirects=False,
             ) as client:

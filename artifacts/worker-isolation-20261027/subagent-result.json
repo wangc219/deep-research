@@ -1,0 +1,20 @@
+{
+  "scope": "real parent-child model/tool/file/SSE flow across independent workers",
+  "identity_id": 2938,
+  "status": "passed",
+  "executions": [
+    {
+      "id": "366a8e6f-68a9-484f-9dfb-1db4af33a91d",
+      "run_type": "subagent",
+      "status": "completed",
+      "worker_id": "worker-4d2c94e14b444970807980afcc2a03cb:ba3c9e2323b84d2e815c3288e770ad79"
+    },
+    {
+      "id": "5a8c21bc-b36e-40da-8d6e-90553f2e8a0e",
+      "run_type": "chat",
+      "status": "completed",
+      "worker_id": "worker-95bb0673fb834e53b7fc0ed4d3192d1a:f14fc93fe9634b5dbc717ffb49855bff"
+    }
+  ],
+  "accounts_remaining": 0
+}

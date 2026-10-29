@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -145,6 +146,12 @@ async def _publish_stream(run_id: str, event: dict[str, Any]) -> None:
     )
 
 
+def _include_legacy_history(user: User) -> bool:
+    """融合前历史只向超级管理员开放。"""
+
+    return user.role == "superadmin"
+
+
 async def _require_project(db: AsyncSession, *, user: User, project_id: str):
     """解析当前用户可管理的 Project；全局管理员保留项目真实所有者。"""
 
@@ -198,6 +205,16 @@ def _run_payload_for_user(run: EquipmentResearchRun, user: User, *, compact: boo
         or getattr(run, "import_batch_id", None)
     )
     payload["readonly"] = permission != ResourcePermission.MANAGE
+    counts = dict(payload.get("artifact_counts") or {})
+    count_keys = ("sources", "evidence", "capabilities", "winning_steps", "reports")
+    if run.status not in EQUIPMENT_RUN_ACTIVE_STATUSES and any(int(counts.get(key) or 0) <= 0 for key in count_keys):
+        roots = tuple(str(root) for root in _research_run_roots(run))
+        revision = f"{getattr(run, 'updated_at', '')}:{getattr(run, 'artifact_sha256', '')}"
+        projected = _cached_artifact_counts_from_roots(roots, revision)
+        for key in count_keys:
+            if int(counts.get(key) or 0) <= 0 and int(projected.get(key) or 0) > 0:
+                counts[key] = int(projected[key])
+        payload["artifact_counts"] = counts
     if compact:
         # 列表只需要模型标签；完整研究摘要与正文通过详情接口按需读取。
         payload["payload"] = {"model_spec": (run.payload or {}).get("model_spec", "")}
@@ -207,6 +224,80 @@ def _run_payload_for_user(run: EquipmentResearchRun, user: User, *, compact: boo
             if key.endswith("_count") or key in {"artifact_counts", "report_available"}
         }
     return payload
+
+
+@lru_cache(maxsize=512)
+def _cached_artifact_counts_from_roots(
+    roots: tuple[str, ...],
+    revision: str,
+) -> dict[str, int]:
+    """从不可变历史产物补齐列表计数，并按任务修订号缓存小文件读取。"""
+
+    del revision  # 仅参与缓存失效；计数来自 roots 指向的当前修订产物。
+    for root_text in roots:
+        root = Path(root_text)
+        summary_path = _safe_research_artifact_path(root, "round_summary.json")
+        if summary_path is None:
+            continue
+        try:
+            if summary_path.stat().st_size > _MAX_RESEARCH_ARTIFACT_LINE_BYTES * 16:
+                continue
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+            logger.warning("读取历史任务产物计数失败：%s", summary_path, exc_info=True)
+            continue
+        if not isinstance(summary, dict):
+            continue
+        store_summary = summary.get("store_summary")
+        store_summary = store_summary if isinstance(store_summary, dict) else {}
+        source_materials = summary.get("source_materials")
+        evidence_assessments = summary.get("evidence_assessments")
+        counts = {
+            "sources": _nonnegative_artifact_count(
+                store_summary.get("baseline_packet_count"),
+                len(source_materials) if isinstance(source_materials, list) else None,
+            ),
+            "evidence": _nonnegative_artifact_count(
+                store_summary.get("materialized_evidence_count"),
+                store_summary.get("evidence_count"),
+                len(evidence_assessments) if isinstance(evidence_assessments, list) else None,
+            ),
+            "capabilities": _nonnegative_artifact_count(store_summary.get("capability_image_count")),
+            "winning_steps": _nonnegative_artifact_count(store_summary.get("stage_output_count")),
+            "reports": _nonnegative_artifact_count(store_summary.get("report_count")),
+        }
+        if counts["capabilities"] <= 0:
+            capability_path = _safe_research_artifact_path(root, "capability_images.json")
+            if capability_path is not None:
+                try:
+                    value = json.loads(capability_path.read_text(encoding="utf-8"))
+                    rows = (
+                        value
+                        if isinstance(value, list)
+                        else value.get("capability_images") or value.get("items") or value.get("cards") or []
+                        if isinstance(value, dict)
+                        else []
+                    )
+                    counts["capabilities"] = len(rows) if isinstance(rows, list) else 0
+                except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+                    logger.warning("读取历史能力画像计数失败：%s", capability_path, exc_info=True)
+        if counts["reports"] <= 0 and any(
+            _safe_research_artifact_path(root, filename) is not None for filename in ("report-postfix.md", "report.md")
+        ):
+            counts["reports"] = 1
+        return counts
+    return {}
+
+
+def _nonnegative_artifact_count(*values: Any) -> int:
+    for value in values:
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            return parsed
+    return 0
 
 
 async def _require_query(
@@ -370,7 +461,7 @@ async def list_runs(
         owner_uid=None if has_global_business_access(user) else user.uid,
         project_id=project_id,
         status=status,
-        include_legacy=True,
+        include_legacy=_include_legacy_history(user),
     )
     return [_run_payload_for_user(item, user, compact=compact) for item in runs]
 
@@ -413,17 +504,39 @@ async def get_run_interactions(
 
     run = await _require_run(db, user=user, run_id=run_id)
     trace_rows, summary = await asyncio.to_thread(_load_run_trace_and_summary, run)
-    events = [
+    postgres_rows = await EquipmentResearchRepository(db).list_events(
+        run.id, after_seq=0, limit=_MAX_RESEARCH_ARTIFACT_RECORDS
+    )
+    return await asyncio.to_thread(
+        _project_run_interactions,
+        run,
+        trace_rows,
+        summary,
+        [row.to_dict() for row in postgres_rows],
+        compact,
+    )
+
+
+def _project_run_interactions(
+    run: EquipmentResearchRun,
+    trace_rows: list[dict[str, Any]],
+    summary: dict[str, Any],
+    postgres_rows: list[dict[str, Any]],
+    compact: bool,
+) -> dict[str, Any]:
+    """在线程中合并权威事件与文件产物，保留新事件及完整去重总数。"""
+    postgres_events = [
+        event
+        for index, row in enumerate(postgres_rows)
+        if (event := _normalize_research_interaction(row, index=index, run_id=run.id)) is not None
+    ]
+    trace_events = [
         event
         for index, row in enumerate(trace_rows)
         if (event := _normalize_research_interaction(row, index=index, run_id=run.id)) is not None
     ]
-
-    # 新平台任务会先把生命周期事件写入 PostgreSQL，再异步形成文件产物。
-    # trace 尚未出现时仍应给 Vue 工作台完整、可回放的运行状态。
-    if not events:
-        events = await _load_postgres_interactions(db, run_id=run.id)
-    events = _dedupe_research_interactions(events)
+    # 同一事件优先保留文件中的丰富产物，PostgreSQL 中较新的生命周期事件仍需展示。
+    events = _dedupe_research_interactions([*postgres_events, *trace_events])
     visible_events = _compact_research_interactions(events) if compact else events
     workflow = _research_interaction_workflow(events, run=run, summary=summary)
     agents = _research_interaction_agents(events, run=run, summary=summary, workflow=workflow)
@@ -748,8 +861,9 @@ async def portal_snapshot(*, db: AsyncSession, user: User) -> dict[str, Any]:
 
     repo = EquipmentResearchRepository(db)
     owner_uid = None if has_global_business_access(user) else user.uid
+    include_legacy = _include_legacy_history(user)
     live = user_workbench_snapshot(await asyncio.to_thread(load_workbench_snapshot), user)
-    stats = await repo.portal_stats(owner_uid, include_legacy=True)
+    stats = await repo.portal_stats(owner_uid, include_legacy=include_legacy)
     stats = {key: max(value, live.get("stats", {}).get(key, 0)) for key, value in stats.items()}
     recent_runs = _merge_by_id(
         [
@@ -757,14 +871,14 @@ async def portal_snapshot(*, db: AsyncSession, user: User) -> dict[str, Any]:
             for item in await repo.list_runs_for_user(
                 owner_uid=owner_uid,
                 limit=8,
-                include_legacy=True,
+                include_legacy=include_legacy,
             )
         ],
         live.get("runs", []),
         "run_id",
     )[:8]
     recent_queries = _merge_by_id(
-        [item.to_dict() for item in await repo.list_queries(owner_uid, limit=8, include_legacy=True)],
+        [item.to_dict() for item in await repo.list_queries(owner_uid, limit=8, include_legacy=include_legacy)],
         live.get("queries", []),
         "query_id",
     )[:8]
@@ -840,12 +954,12 @@ def _merge_by_id(
 
 
 async def _equipment_project(db: AsyncSession, *, user: User, project_id: str | None) -> Any:
-    """未选项目时复用当前用户的研究工作台。"""
+    """显式选择时使用目标 Project，否则使用不可见的运行作用域。"""
     if project_id:
         return await _require_project(db, user=user, project_id=project_id)
-    from platform_core.services.project_service import ensure_equipment_project_record
+    from platform_core.services.project_service import ensure_equipment_runtime_project_record
 
-    return await ensure_equipment_project_record(uid=str(user.uid), username=user.username, db=db)
+    return await ensure_equipment_runtime_project_record(uid=str(user.uid), db=db)
 
 
 async def _prepare_query_write(db: AsyncSession, query: EquipmentQuery, user: User) -> None:
@@ -946,6 +1060,7 @@ async def list_queries(
 ) -> dict[str, Any]:
     repo = EquipmentResearchRepository(db)
     owner_uid = None if has_global_business_access(user) else user.uid
+    include_legacy = _include_legacy_history(user)
     rows = [
         item.to_dict()
         for item in await repo.list_queries(
@@ -956,7 +1071,7 @@ async def list_queries(
             search=search,
             limit=limit,
             offset=offset,
-            include_legacy=True,
+            include_legacy=include_legacy,
         )
     ]
     total = await repo.count_queries(
@@ -965,7 +1080,7 @@ async def list_queries(
         status=status,
         source_type=source_type,
         search=search,
-        include_legacy=True,
+        include_legacy=include_legacy,
     )
     return {"items": rows, "total": total, "limit": limit, "offset": offset}
 
@@ -1156,12 +1271,29 @@ async def delete_query(*, db: AsyncSession, user: User, query_id: str, expected_
     return {"deleted": True, "query_id": query.id}
 
 
-async def list_capabilities(*, db: AsyncSession, user: User, compact: bool = False):
+async def list_capabilities(
+    *,
+    db: AsyncSession,
+    user: User,
+    compact: bool = False,
+    run_id: str | None = None,
+):
     repo = EquipmentResearchRepository(db)
-    persisted = await repo.list_capability_versions(
-        None if has_global_business_access(user) else user.uid,
-        include_legacy=True,
-    )
+    include_legacy = _include_legacy_history(user)
+    requested_run_id = str(run_id or "").strip()
+    requested_run = None
+    if requested_run_id:
+        requested_run = await _require_run(db, user=user, run_id=requested_run_id)
+        persisted = await repo.list_capability_versions_for_run(
+            owner_uid=str(requested_run.owner_uid),
+            run_id=requested_run.id,
+            limit=200,
+        )
+    else:
+        persisted = await repo.list_capability_versions(
+            None if has_global_business_access(user) else user.uid,
+            include_legacy=include_legacy,
+        )
     payloads = [
         item.snapshot | {"id": item.id, "version_id": item.id, "run_id": item.run_id}
         for item in persisted
@@ -1173,10 +1305,14 @@ async def list_capabilities(*, db: AsyncSession, user: User, compact: bool = Fal
     # Project those cards as formal baselines so the capability workspace and
     # every jump from the run list remain useful without rewriting history.
     covered_run_ids = {str(item.run_id or "") for item in persisted}
-    runs = await repo.list_runs_for_user(
-        owner_uid=None if has_global_business_access(user) else user.uid,
-        limit=200,
-        include_legacy=True,
+    runs = (
+        [requested_run]
+        if requested_run is not None
+        else await repo.list_runs_for_user(
+            owner_uid=None if has_global_business_access(user) else user.uid,
+            limit=200,
+            include_legacy=include_legacy,
+        )
     )
     for run in runs:
         if run.id in covered_run_ids:
@@ -1867,7 +2003,7 @@ async def list_deep_sessions(*, db: AsyncSession, user: User):
         for item in await repo.list_deep_sessions(
             None if has_global_business_access(user) else user.uid,
             limit=200,
-            include_legacy=True,
+            include_legacy=_include_legacy_history(user),
         )
     ]
 
@@ -2492,34 +2628,6 @@ def _compact_research_interactions(events: list[dict[str, Any]]) -> list[dict[st
         return selected
     head_count = 16
     return [*selected[:head_count], *selected[-(_COMPACT_RESEARCH_EVENT_LIMIT - head_count) :]]
-
-
-async def _load_postgres_interactions(db: AsyncSession, *, run_id: str) -> list[dict[str, Any]]:
-    repo = EquipmentResearchRepository(db)
-    events: list[dict[str, Any]] = []
-    after_sequence = 0
-    for _ in range(_MAX_RESEARCH_ARTIFACT_RECORDS // 200):
-        rows = await repo.list_events(run_id, after_seq=after_sequence, limit=200)
-        if not rows:
-            break
-        for row in rows:
-            raw = row.to_dict() if hasattr(row, "to_dict") else row
-            if not isinstance(raw, dict):
-                continue
-            event = _normalize_research_interaction(raw, index=len(events), run_id=run_id)
-            if event is not None:
-                events.append(event)
-        next_sequence = max(
-            (
-                _safe_int(getattr(row, "sequence", None) or (row.get("sequence") if isinstance(row, dict) else 0))
-                for row in rows
-            ),
-            default=0,
-        )
-        if len(rows) < 200 or next_sequence <= after_sequence:
-            break
-        after_sequence = next_sequence
-    return events
 
 
 def _event_step(event: dict[str, Any]) -> int:

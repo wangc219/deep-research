@@ -1,0 +1,186 @@
+{
+  "generated_at": "2026-10-25T21:04:07.515847+08:00",
+  "local_status": "optimized_and_retested",
+  "cloud_status": "deployments_removed_not_redeployed",
+  "migration_blocker": "待用户确认业务数据以本地、原云端或合并结果为准；两边资料数量不同，不默认覆盖。",
+  "cloud_removal": {
+    "cloud_deployments_removed": true,
+    "containers_remaining": 0,
+    "compose_projects_remaining": 0,
+    "active_project_directory_exists": false,
+    "nginx_stopped_and_disabled": true,
+    "enabled_sites_remaining": 0,
+    "project_ports_closed": true,
+    "backup_root": "/var/backups/deepquest/offline-before-local-optimization-20261025",
+    "latest_postgres_dump_validated": true,
+    "document_data_archive_validated": true,
+    "persistent_data_and_configuration_retained": true,
+    "historical_backups_retained": true,
+    "postgres_dump_sha256": "66e3ffc6e2971667eafd2343ad61692d90567ded5b050c8fb0a7ad8a6c3349ae"
+  },
+  "cloud_final_verification": "cloud-offline-release.log",
+  "improvements": [
+    "并发调用由20毫秒轮询改为跨线程与事件循环通知；释放、取消和扩容都会唤醒等待者。",
+    "学术回答仅接受当前轮次、匹配实际工具调用的真实来源；缺引用或摘要不足最多两轮纠正，仍不满足则失败。",
+    "明确要求公开技术证据时必须检索；遵循用户明确排除论文等渠道的限制。",
+    "重排失败保留原召回排序并显式提示降级，不再伪造0.5分；状态沿来源元数据传递到前端。",
+    "来源整理阶段进入供应商调用及计量；短阶段关闭隐藏推理，保留20秒上限。实际预算由返回元数据传递，原参数不再被污染。",
+    "后端历史lint从本轮1079项减至241项，新增问题门禁为零；前端CI增加只读lint。"
+  ],
+  "tests": [
+    {
+      "label": "平台后端完整单元",
+      "passed": 2948,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "unit-release.xml",
+      "note": "最后阶段参数修复另由领域全量和真实探针覆盖。"
+    },
+    {
+      "label": "最终研究领域完整回归",
+      "passed": 2254,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "domain-release.xml",
+      "note": "使用历史测试要求的临时目录布局；未跳过断言。"
+    },
+    {
+      "label": "真实 HTTP 集成",
+      "passed": 406,
+      "failed": 0,
+      "skipped": 21,
+      "evidence": "deep-optimization-20261025-integration-final.xml",
+      "note": "21项跳过未计为通过；范围见原始XML。"
+    },
+    {
+      "label": "学术选路与证据探针",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "deep-optimization-20261025-academic-final.xml",
+      "note": "模型真实调用；AMiner/Web传输使用受控响应，外部真实性另见E2E。"
+    },
+    {
+      "label": "真实外部服务与业务链路",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "deep-optimization-20261025-real.xml",
+      "note": "含模型、检索、知识入库、OCR、嵌入、重排、图谱及评估等。"
+    },
+    {
+      "label": "前次服务重启后关键链路",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "deep-optimization-20261025-real-final.xml",
+      "note": "5项，含真实知识链路和采集。"
+    },
+    {
+      "label": "最终服务重启后真实复验",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "real-release.xml",
+      "note": "真实对话、Web、AMiner和论文摘要。"
+    },
+    {
+      "label": "最终阶段、预算与并发定向回归",
+      "passed": 220,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "phase-and-gate-resolved.xml",
+      "note": "与领域全量存在重叠，不累计为独立总量。"
+    }
+  ],
+  "frontend": {
+    "passed": 586,
+    "failed": 0,
+    "skipped": 0,
+    "lint": "passed",
+    "build": "passed",
+    "evidence": [
+      "web-unit.log",
+      "web-lint-final.log",
+      "web-build-final.log"
+    ]
+  },
+  "quality": {
+    "legacy_findings": 241,
+    "new_findings": 0,
+    "architecture": "passed",
+    "evidence": "quality-release.log"
+  },
+  "real_research": {
+    "real_research_status": "completed",
+    "run_id": "run-63cb44f5-53f4-4a04-a52f-6cfc17abd429",
+    "report_characters": 15169,
+    "capability_versions": 2,
+    "completed_model_calls": 98,
+    "model_call_outcomes": [
+      {
+        "status": "completed",
+        "n": 98
+      },
+      {
+        "status": "failed",
+        "n": 3
+      }
+    ],
+    "s5_fallback_events": 0,
+    "valid_equipment_query": {
+      "valid_query_generation": "passed",
+      "query_published": "passed",
+      "generation_id": "qgen-79bd7f7d-386a-4074-9d8a-995eab991bb2",
+      "query_id": "query-1ddbc351-ee37-4e57-9356-ecfe1a47a8e4",
+      "query": "长期断电地下安置点自检电池应急灯自主续照研究",
+      "seconds": 8
+    },
+    "initial_maintenance_query": "rejected_by_domain_validation_not_counted_as_passed"
+  },
+  "final_source_anchor_probe": {
+    "real_source_anchor_phase_probe": "passed",
+    "calls": [
+      {
+        "nonempty_visible_output": true,
+        "seconds": 1.71
+      },
+      {
+        "nonempty_visible_output": true,
+        "seconds": 5.76
+      },
+      {
+        "nonempty_visible_output": true,
+        "seconds": 4.28
+      }
+    ],
+    "phase_attribution": "passed",
+    "timeout_seconds": 20,
+    "original_bounded_timeout_retained": true
+  },
+  "deferred": [
+    "协议主体与正式协议文本",
+    "阿里云模型",
+    "MiniMax-M2.5开通",
+    "Dify",
+    "Notion",
+    "智谱外部知识库"
+  ],
+  "source": {
+    "sha256": "e5074e087f8392b1c7950d9d18ff2037a92b724c8eb217c626540581620eef9c",
+    "files": 3439,
+    "changed": 195,
+    "added": 5,
+    "removed": 0,
+    "archive": "source-final.tar.gz"
+  },
+  "limitations": [
+    "云端当前没有项目运行，因此本报告不将历史云端验收计为当前新版云端复验。",
+    "完整研究耗时594秒，产生15169字报告和2个画像版本：98次模型调用成功、3次辅助来源请求超时，S5回退0次。",
+    "针对上述超时与阶段缺失的最终短探针3次成功，输入不同于原长请求，不能据此宣称所有长请求均已消除超时。",
+    "原并行维护规程Query被领域规则拒绝，未计通过；另一个明确设备能力Query真实生成并发布。",
+    "保留初次学术选路失败、旧重排断言失败、历史目录布局失败与原wrapper失败日志；修复及复测独立归档。",
+    "剩余241项历史lint和21项集成跳过项不计为已消除问题；测试通过不等于不存在任何漏洞。",
+    "源码包不含私有部署凭据和运行数据；迁移需另行迁移所选业务数据和受保护配置，PostgreSQL跨架构使用逻辑恢复。"
+  ]
+}

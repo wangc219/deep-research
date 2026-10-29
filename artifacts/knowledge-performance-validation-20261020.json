@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-20",
+  "knowledge_base": "kb_zcfj9omke9",
+  "deployment": {
+    "api_and_worker_restarted": true,
+    "readiness": "ready",
+    "previous_task": "8651a9b6e20a4937aef37db0e31c5193",
+    "previous_task_status": "cancelled through Task Service",
+    "resumed_task": "3436af3d4a004c77b9703bb2872f8aae",
+    "preserved_indexed_chunks": 1598,
+    "remaining_at_restart": 786,
+    "initial_live_observation": {
+      "extracted": 3,
+      "written": 3,
+      "active": 8,
+      "extraction_failures": 0,
+      "write_failures": 0,
+      "vector_failures": 0,
+      "verified_fact_quotes": 8,
+      "quotes_reclassified_for_review": 14
+    }
+  },
+  "balanced_options": {
+    "concurrency_count": 8,
+    "timeout_seconds": 180,
+    "enable_thinking": true,
+    "thinking_budget": 2048,
+    "max_output_tokens": 8192,
+    "context_window_size": 1,
+    "context_max_chars": 4000,
+    "enable_hypothesis_extraction": true,
+    "max_hypotheses_per_chunk": 2
+  },
+  "verification": {
+    "backend_targeted_tests_passed": 219,
+    "real_postgres_and_minio_parallel_parse_test_passed": 1,
+    "frontend_tests_passed": 581,
+    "frontend_lint": "passed",
+    "frontend_build": "passed; pre-existing bundle-size and macro warnings",
+    "modified_python_files_ruff_check": "passed",
+    "real_sdk_request_body_test": "max_tokens and thinking flag verified via HTTP MockTransport",
+    "real_process_pool_pdf_test": "passed",
+    "live_ui_config_save": "success toast and PostgreSQL configuration verified"
+  },
+  "sample_measurements": {
+    "historical_extraction_average_seconds": 163.0,
+    "bounded_thinking_sample_seconds": [94.96, 83.07, 43.53],
+    "final_prompt_successful_sample_seconds": [35.19, 38.06, 40.25],
+    "final_prompt_sample_note": "The third chunk initially timed out at about 180 seconds and succeeded in a subsequent isolated check. Not a full-load paired A/B benchmark.",
+    "ocr_files": 2,
+    "ocr_pages": 4,
+    "serial_forced_ocr_seconds": 17.09,
+    "parallel_text_layer_priority_seconds": 2.44,
+    "ocr_character_counts_before": [4319, 3950],
+    "ocr_character_counts_after": [4385, 4169],
+    "limitations": "Measured speedups depend on text layers and provider latency. Literal quotation checks do not establish semantic accuracy or recall. Turning thinking off showed omissions, so balanced mode retains bounded thinking."
+  },
+  "artifacts": [
+    "knowledge-pipeline-performance-20261020.json",
+    "knowledge-quality-balanced-20261020.json",
+    "knowledge-quality-final-20261020.json",
+    "knowledge-balanced-performance-config-20261020.png"
+  ]
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="15.843" timestamp="2026-10-25T16:15:50.810741+08:00" hostname="3a6250d2430a"><testcase classname="test.e2e.test_read_file_multimodal_e2e" name="test_non_vision_model_uses_ocr_fallback" time="15.778"><failure message="AssertionError: 图片中的英文文字为：&#10;  &#10;  **OCR FALLBACK**&#10;  **OK**&#10;assert 'OCR FALLBACK OK' in '图片中的英文文字为： **OCR FALLBACK** **OK**'&#10; +  where '图片中的英文文字为： **OCR FALLBACK** **OK**' = &lt;built-in method join of str object at 0xe81baba3c558&gt;(['图片中的英文文字为：', '**OCR', 'FALLBACK**', '**OK**'])&#10; +    where &lt;built-in method join of str object at 0xe81baba3c558&gt; = ' '.join&#10; +    and   ['图片中的英文文字为：', '**OCR', 'FALLBACK**', '**OK**'] = &lt;built-in method split of str object at 0xe81b9f860830&gt;()&#10; +      where &lt;built-in method split of str object at 0xe81b9f860830&gt; = '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**'.split&#10; +        where '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**' = &lt;built-in method upper of str object at 0xe81b9f8612b0&gt;()&#10; +          where &lt;built-in method upper of str object at 0xe81b9f8612b0&gt; = '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**'.upper">/Users/wangchen/equipment research 3/backend/test/e2e/test_read_file_multimodal_e2e.py:244: in test_non_vision_model_uses_ocr_fallback
+    ???
+E   AssertionError: 图片中的英文文字为：
+E     
+E     **OCR FALLBACK**
+E     **OK**
+E   assert 'OCR FALLBACK OK' in '图片中的英文文字为： **OCR FALLBACK** **OK**'
+E    +  where '图片中的英文文字为： **OCR FALLBACK** **OK**' = &lt;built-in method join of str object at 0xe81baba3c558&gt;(['图片中的英文文字为：', '**OCR', 'FALLBACK**', '**OK**'])
+E    +    where &lt;built-in method join of str object at 0xe81baba3c558&gt; = ' '.join
+E    +    and   ['图片中的英文文字为：', '**OCR', 'FALLBACK**', '**OK**'] = &lt;built-in method split of str object at 0xe81b9f860830&gt;()
+E    +      where &lt;built-in method split of str object at 0xe81b9f860830&gt; = '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**'.split
+E    +        where '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**' = &lt;built-in method upper of str object at 0xe81b9f8612b0&gt;()
+E    +          where &lt;built-in method upper of str object at 0xe81b9f8612b0&gt; = '图片中的英文文字为：\n\n**OCR FALLBACK**\n**OK**'.upper</failure></testcase></testsuite></testsuites>

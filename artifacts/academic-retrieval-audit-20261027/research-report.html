@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>学术检索质量诊断与开源工具调研 · 2026-10-27</title>
+<style>body{margin:0;background:#f3f5f9;color:#202838;font:16px/1.8 system-ui,-apple-system,sans-serif}main{max-width:1080px;margin:32px auto;background:#fff;padding:36px;border-radius:18px}h1{font-size:28px;line-height:1.4}h2{font-size:21px;margin-top:30px}small,.muted{color:#667085}.callout{padding:16px 20px;background:#eef2ff;border-radius:12px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #e6e9ef;padding:12px}a{color:#4853c9}code{background:#f0f2f6;border-radius:4px;padding:2px 5px}li{margin:8px 0}pre{white-space:pre-wrap;background:#f6f7fa;padding:16px;border-radius:10px}@media(max-width:700px){main{margin:0;padding:20px;border-radius:0}.table-wrap{overflow:auto}table{min-width:760px}}</style>
+<main><small>2026-10-27 · 源码审计、指定生产轮次只读诊断、4 次中性接口对照、官方文档与项目仓库调研</small>
+<h1>提升学术检索质量，应先修查询路由和证据传递，再补多源检索与全文阅读</h1>
+<p class="callout">这次问题同时涉及“没有检索到足够文献”和“回答引用了未登记来源”。增加调用次数或接入更多 MCP，并不能单独解决。建议保留 AMiner，补入 OpenAlex / Semantic Scholar 的发现能力、原文解析和统一证据登记；引用检查继续保留。</p>
+<h2>一、这次实际发生了什么</h2>
+<div class="table-wrap"><table><tr><th>观察</th><th>证据与含义</th></tr>
+<tr><td>不是应用侧额度用尽</td><td>云端 AMiner 的聊天、深研调用次数与费用预算均设置为 0，即不设应用侧额度。不能把源码默认额度误当作当前生产配置。</td></tr>
+<tr><td>本轮主题检索召回失败</td><td>指定对话执行树中，15 次 Pro 主题检索均为成功响应但返回空列表；3 次免费标题定位仅 1 次命中；题录补全另有 2 次 unavailable。这里的空结果只描述本轮查询，不能证明某技术不存在，也不能代表 AMiner 的整体质量。</td></tr>
+<tr><td>服务不是全面失效</td><td>以 machine learning、graph neural network 做中性对照，keyword 与 title 两个字段共 4 次请求，每次均正常返回 5 条。没有读取全文、没有新建测试账号。</td></tr>
+<tr><td>确有不合规引用</td><td>该失败子任务可见输出中的引用与工具返回来源存在 4 个不同地址的差异，包括未返回的新闻网址、不完整网址和改写的搜索跳转链接。两条实际返回的 DOI 并不能授权回答引用其他链接。不能据此关闭来源检查。</td></tr>
+<tr><td>父子证据传递存在兼容缺口</td><td>本地复现表明：校验器只识别指定内置学术工具和 web_search；新 MCP 或子智能体来源与 AMiner 结果混用时可被拒绝。单独只有新 MCP 结果时又不会进入同一校验分支，规则覆盖不一致。</td></tr>
+<tr><td>审计对象与生产一致</td><td>已比对运行中 API 的 academic_evidence.py 与 academic_retrieval_service.py SHA-256，均与本地审计源码一致。生产记录显示主任务 completed，而 3 个子任务中有 1 个因引用检查失败，应把这一缺口传递给综合报告。</td></tr></table></div>
+<p><a href="diagnostic-summary.json">脱敏诊断汇总</a> · <a href="neutral-field-probe.log">中性字段对照</a> · <a href="evidence-boundary-results.json">来源兼容边界复现</a></p>
+
+<h2>二、源码中限制广度与深度的地方</h2>
+<ol>
+<li><b>主题查询都进入 keyword 字段。</b> AcademicRetrievalService 将 topic 查询发送到 <code>/paper/search/pro</code> 的 keyword 字段。AMiner 接口资料将其描述为字段字面匹配，而 QA 类接口用于自然语言查询。应区分精确术语、标题短语、摘要条件和语义问题；不能用同一查询方式覆盖所有任务。中性对照说明 keyword 不是普遍不可用，不能声称“换成 title 就一定解决”。<a href="https://github.com/AMinerOrg/aminer-open-skill/blob/main/skills/aminer-academic-search/references/api-catalog.md">AMiner 接口参考</a></li>
+<li><b>缺少任务相关性重排。</b> 多个查询的候选交错合并、去重，再截断到 limit；这并不等于按当前问题的论证需要重新排序。默认候选 10 条，最多 20 条；多角度结果也共享最终数量限制。需要更大的内部候选池，但只把少量高相关证据交给写作模型。</li>
+<li><b>已有“深度”主要是摘要和一层参考文献。</b> 当前工具没有统一的全文证据读取、页面/段落定位、后续引用者与相似论文发现链路。完整摘要仍不足以支持实验细节、外推性能和应用级可行性。</li>
+<li><b>引用依赖模型逐字抄 URL。</b> 搜索跳转地址长且脆弱，模型改协议、漏字符或拼入记忆中的新闻网址都会失败。应由服务端分配 source_id 并渲染引用；只有真实抓取或可靠标识核验过的地址才登记为别名。</li>
+<li><b>来源真实性与论断支持度尚未分开。</b> 目前检查主要是“地址来自本轮工具”和“是否尝试取摘要”，并不能证明某篇论文的内容支持具体句子。需要独立的 claim→evidence 段落映射和证据级别。</li>
+</ol>
+<p class="muted">代码定位：<code>backend/package/platform_core/services/academic_retrieval_service.py:224、292</code>；<code>backend/package/platform_core/agents/middlewares/academic_evidence.py:61、85、92</code>；<code>backend/package/platform_core/agents/middlewares/subagent_task.py:304</code>。这是通用检索与证据治理诊断，不对截图中的具体前沿机理作已验证判断。</p>
+
+<h2>三、开源工具与 MCP 选型</h2>
+<div class="table-wrap"><table><tr><th>候选</th><th>能补什么</th><th>限制与接入判断</th><th>建议</th></tr>
+<tr><td><a href="https://github.com/ourresearch/openalex-mcp-server">OpenAlex 官方 MCP</a><br>MIT</td><td>关键词/语义发现、文献关系、参考文献真实性核验；返回可复现查询。</td><td>官方托管入口 <a href="https://mcp.openalex.org/mcp">mcp.openalex.org/mcp</a> 使用 Streamable HTTP 与 OAuth，查询消耗对应账号预算；不直接获取 PDF 全文。现有项目尚未见完整 OAuth 授权与刷新流程，可先接官方 REST API，经内部适配输出统一证据。仅开放所需读取工具。</td><td><b>优先试点</b></td></tr>
+<tr><td><a href="https://www.semanticscholar.org/product/api/tutorial">Semantic Scholar API</a></td><td>前向/后向引用、种子论文相关推荐、论文元数据，补单关键词搜索的盲区。</td><td>这是服务 API，不能把它与开源自托管数据库等同。接入需考虑 API key、限流、可用字段。未验证到官方 MCP 服务；可通过本项目统一适配，避免把社区封装误称官方。</td><td><b>优先补充</b></td></tr>
+<tr><td><a href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/">Crossref API</a></td><td>DOI、题名/作者/出版信息核验；结合 <a href="https://www.crossref.org/documentation/retrieve-metadata/retraction-watch/">Retraction Watch 数据</a>检查撤稿/更正信息。</td><td>适合书目信息与状态核验，不是通用全文阅读器，也不能凭 DOI 存在就认定论断成立。</td><td>证据质量基础层</td></tr>
+<tr><td><a href="https://github.com/Future-House/paper-qa">PaperQA2</a><br>Apache-2.0</td><td>针对已取得科研文档检索证据、重排、综合并生成带引用的回答。</td><td>开源版并不附带所有出版商全文权限；项目 FAQ 明确提示通常仍需提供 PDF。适合借鉴证据收集流程，或用合法取得的文档做小范围试点，不能承诺“安装即能读遍全网论文”。</td><td><b>全文证据层优先评估</b></td></tr>
+<tr><td><a href="https://github.com/docling-project/docling-mcp">Docling MCP</a><br>MIT</td><td>将 PDF 等文档转为结构化内容，为段落、表格和版面证据提取提供基础。</td><td>它负责文档解析，不负责发现论文或判断论断成立。优先复用项目现有解析链路；只在对照样本显示明显收益后引入，避免在 4 核服务器常驻重复模型。官方提供 <a href="https://github.com/docling-project/docling-serve/blob/main/docs/mcp.md">HTTP 容器部署方式</a>。</td><td>按需补充</td></tr>
+<tr><td><a href="https://github.com/openags/paper-search-mcp">Paper Search MCP</a><br>MIT，社区聚合器</td><td>统一访问 OpenAlex、Semantic Scholar、Crossref、arXiv 等多个来源。</td><td>覆盖面来自连接器，不等于结果已做学术证据审查。需固定版本、筛选来源、统一去重并测试限流/空响应；生产首期只启用明确需要的公开与开放获取来源，不把不稳定网页抓取当核心依赖。</td><td>备选聚合层</td></tr>
+<tr><td><a href="https://github.com/stanford-oval/storm">STORM</a><br>MIT</td><td>多视角提问、检索与综述组织，值得借鉴研究规划方法。</td><td>偏知识综述与报告组织，不能替代论文全文、实验条件和逐条证据核验。现有平台已有多智能体编排，不建议再叠一套完整编排框架。</td><td>借鉴方法</td></tr>
+<tr><td><a href="https://github.com/langchain-ai/open_deep_research">Open Deep Research</a><br>MIT</td><td>多检索源和 MCP 的研究代理参考实现。</td><td>官方仓库标明 2026-08-21 已归档。可参考代码，不宜作为当前新增长期核心依赖。</td><td>不作为首选新依赖</td></tr>
+</table></div>
+<p>OpenAlex 的当前能力、OAuth、预算和全文边界以 <a href="https://help.openalex.org/access/connector/">官方连接器文档</a> 为准；语义检索另有 <a href="https://help.openalex.org/api/semantic-search/">专门速率与结果数量限制</a>。开源许可证不等于外部 API、模型推理与论文全文均无费用。</p>
+
+<h2>四、对当前项目的推荐顺序</h2>
+<p><b>P0：先让现有链路可靠。</b> 分别处理精确术语、短语、语义问题；同一接口连续空结果后切换字段/来源，不继续机械堆同义词。工具结果由可信适配层登记 source_id、DOI/原始标识、实际取得的 URL、证据级别与时间；父子任务共享同一用户研究轮次的登记表。模型引用 source_id，由服务端渲染 URL，保留来源真实性检查。失败时交付已核实部分并明确缺口，不把未完成的子任务包装成完整证据。</p>
+<p><b>P1：补广度和文献关系。</b> 保留 AMiner，增加 OpenAlex 与 Semantic Scholar；统一 DOI 去重，融合候选并按问题相关性重排，同时保留新论文和经典论文的位置。围绕少量相关种子，按需查参考文献、后续引用与相关推荐。以“新增有效证据是否还在增加”决定继续或停止，不设机械凑数要求。</p>
+<p><b>P2：补全文深度。</b> 从公开出版页、开放获取仓库或用户已获授权文档取得原文，复用知识库解析与缓存；只读取支持关键论断的段落、图表和实验条件。把“题录、摘要、原文直接证据、类比推断、待验证假设”分开展示。Crossref 负责身份/状态核验，原文证据决定论断支持程度，两者不能互相替代。</p>
+<pre>问题拆分 → 按接口语义选择查询
+        → 多源候选 → DOI去重与任务相关性重排
+        → 种子论文关系扩展 → 原文/段落证据读取
+        → claim–evidence核验 → source_id引用渲染
+        → 有据结论 + 尚未解决的证据缺口</pre>
+<p>对缺乏直接权威证据的前沿主题，应标明“本轮没有取得足够的直接证据”，区分基础研究与应用外推。不能用相关论文数量、期刊名或引用次数替代直接支持，也不能把检索为空写成“不存在”。</p>
+
+<h2>五、验收方式与资源约束</h2>
+<p>下一阶段建议用 20–30 个公开通用科研问题与已知相关 DOI 做盲评，覆盖常见主题、长尾术语、多词歧义、相互矛盾证据和确实无证据的问题。与当前版本对照：相关论文召回、前 10 条相关率、原文可取得率、关键论断的直接证据支持率、错误引用率、父子来源传递、P95 时间与费用。缺证据问题应能正确保留缺口；来源真实不等于答案质量合格。这里只提出验收指标，没有声称新候选已取得某个提升百分比。</p>
+<p>4 核 16 GB 下优先做轻量 API 聚合、共享缓存和现有 Worker 调度，不为每个用户复制一套全文解析或重排模型。文档解析先用现有资源调度控制并发，外部请求做限流与去重；具体并发值需经过多用户压测后确定。不会因为资料不足就盲目增大搜索次数或 CPU 并发。</p>
+<p class="callout"><b>本次完成范围：</b>生产只读诊断、4 次中性 AMiner 字段对照、5 类本地来源边界复现与工具选型。未修改产品代码、未部署新 MCP、未创建验收账号、未修改或删除真实用户记录。候选工具的效果仍需下一阶段试点验证。</p>
+</main></html>

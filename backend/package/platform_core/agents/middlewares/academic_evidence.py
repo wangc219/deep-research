@@ -65,6 +65,21 @@ def _result_payload(result: Any) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _subagent_result_text(payload: dict[str, Any]) -> str:
+    """读取 subagent_await 的平面或嵌套完成输出，不把整个字典字符串化。"""
+    value: Any = payload.get("result")
+    for _ in range(4):
+        if isinstance(value, str):
+            return value
+        if not isinstance(value, dict):
+            return ""
+        output = value.get("output")
+        if isinstance(output, str):
+            return output
+        value = value.get("result")
+    return ""
+
+
 def _discloses_abstract_gap(text: str) -> bool:
     """识别模型已明确降级证据层级的交付。"""
     normalized = text.casefold()
@@ -135,7 +150,7 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
             return
         if name == "subagent_await":
             citations = _Citations()
-            citations.feed(str(payload.get("result") or ""))
+            citations.feed(_subagent_result_text(payload))
             with self._lock:
                 for url in citations.urls:
                     self._sources.setdefault(_canonical_url(url), url)
@@ -159,7 +174,16 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                 previous = self._papers.get(canonical)
                 if previous is None or item.get("content_level") == "abstract":
                     self._papers[canonical] = item
-                if name == "academic_search" and arguments.get("mode", "topic") in {"topic", "semantic"}:
+                discovery_mode = (
+                    arguments.get("academic_mode", "precision")
+                    if name == "parallel_research_search"
+                    else arguments.get("mode", "precision")
+                )
+                if name in {"academic_search", "parallel_research_search"} and discovery_mode in {
+                    "precision",
+                    "topic",
+                    "semantic",
+                }:
                     self._topic_papers.add(item["id"])
 
     @hook_config(can_jump_to=["model"])
@@ -196,7 +220,7 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                 result = _result_payload(message)
                 if result is not None:
                     citations = _Citations()
-                    citations.feed(str(result.get("result") or ""))
+                    citations.feed(_subagent_result_text(result))
                     for url in citations.urls:
                         sources.setdefault(_canonical_url(url), url)
                 continue
@@ -220,7 +244,16 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                 previous = papers.get(canonical)
                 if previous is None or item.get("content_level") == "abstract":
                     papers[canonical] = item
-                if name == "academic_search" and arguments.get("mode", "topic") in {"topic", "semantic"}:
+                discovery_mode = (
+                    arguments.get("academic_mode", "precision")
+                    if name == "parallel_research_search"
+                    else arguments.get("mode", "precision")
+                )
+                if name in {"academic_search", "parallel_research_search"} and discovery_mode in {
+                    "precision",
+                    "topic",
+                    "semantic",
+                }:
                     topic_papers.add(item["id"])
         if not papers:
             return None

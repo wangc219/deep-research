@@ -1,0 +1,36 @@
+{
+  "deployed_at": "2026-10-16T00:49:36+08:00",
+  "server": "49.232.128.56",
+  "url": "https://www.deepquest.space",
+  "remote_root": "/opt/deep-research",
+  "files": [
+    "backend/package/platform_core/agents/presets/deep_research.py",
+    "backend/package/platform_core/agents/skills/buildin/equipment-deep-conversation/SKILL.md",
+    "backend/package/platform_core/services/equipment_deep_integration_service.py",
+    "backend/test/unit/services/test_equipment_deep_integration_service.py",
+    "web/src/utils/equipmentDeepPortraitSections.js",
+    "web/src/views/equipment/EquipmentDeepThinkingView.vue",
+    "web/test/unit/equipmentDeepViewIntegration.test.js",
+    "web/test/unit/equipmentRouteViewKey.test.js",
+    "web/test/unit/equipmentTechnologyCabin.test.js"
+  ],
+  "backup": "/var/backups/deepquest/deep-conversation-autonomy-20261016T004742",
+  "images": {
+    "api_worker_equipment": "sha256:5c76aab8484ce1ed728643278b86ebeac091be820e95dfb28bbf78a2648f7eb9",
+    "web": "sha256:c35aef46f45fee21501740c7c9cef3555024ea0307fbfa4812a0a19976463c72"
+  },
+  "verification": {
+    "source_manifest": "9/9 matched",
+    "container_backend_hashes": "matched local",
+    "frontend_markers": "present in public production asset",
+    "runtime_preload_skills": [],
+    "runtime_goal_present": true,
+    "runtime_no_forced_seven_level_chain": true,
+    "public_readiness": {
+      "status": "ready",
+      "degraded": false
+    },
+    "public_home_status": 200,
+    "recent_target_service_errors": 0
+  }
+}

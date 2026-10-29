@@ -1,5 +1,14 @@
 # Third-Party Notices
 
+## SearXNG
+
+- Project: SearXNG
+- Source: https://github.com/searxng/searxng
+- Integrated revision: `c360868e5b7c01e463a362a53518190d5a3b1097`
+- Container image: `docker.io/searxng/searxng@sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1`
+- License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
+- Integration note: the upstream image is used unmodified; this project supplies deployment and runtime configuration only.
+
 This project includes code and implementation ideas derived from nanobot.
 
 ## nanobot

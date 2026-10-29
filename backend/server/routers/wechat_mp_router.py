@@ -17,6 +17,22 @@ from server.utils.auth_middleware import get_current_user, get_db, get_required_
 
 router = APIRouter(prefix="/wechat-mp", tags=["wechat-mp"])
 COOKIE = "wechat_mp_session"
+ACCOUNT_MANAGER_ROLES = {"admin", "superadmin"}
+
+
+def can_manage_accounts(user) -> bool:
+    """共享微信读书凭据仅允许平台管理员维护。"""
+    return user.role in ACCOUNT_MANAGER_ROLES
+
+
+def requires_account_manager(path: str, method: str) -> bool:
+    """识别会改变共享凭据或全局扫码状态的原版接口。"""
+    normalized = path.strip("/")
+    if normalized.startswith("api/account-pool"):
+        return method not in {"GET", "HEAD"} or normalized == "api/account-pool/events"
+    if normalized.startswith("api/auth/"):
+        return normalized not in {"api/auth/status", "api/auth/check-credentials"}
+    return False
 
 
 async def module_user(request: Request, db=Depends(get_db)):
@@ -49,7 +65,11 @@ async def open_session(request: Request, user=Depends(module_user)):
     except (service.WechatMPUnavailable, OSError) as exc:
         raise HTTPException(503, "公众号运行环境未就绪，请检查服务依赖后重试") from exc
     response = JSONResponse(
-        {"url": "/api/wechat-mp/app/index.html", "version": "2.3.3", "document": service.frontend_document()}
+        {
+            "url": "/api/wechat-mp/app/index.html",
+            "version": "2.3.3",
+            "document": service.frontend_document(can_manage_accounts=can_manage_accounts(user)),
+        }
     )
     response.set_cookie(
         COOKIE,
@@ -116,7 +136,9 @@ async def application(path: str, request: Request, user=Depends(module_user)):
     """页面、资源、任务进度与下载使用同一个用户身份。"""
     if path in {"", "index.html"}:
         return Response(
-            service.frontend_document(), media_type="text/html", headers={"Cache-Control": "private, no-store"}
+            service.frontend_document(can_manage_accounts=can_manage_accounts(user)),
+            media_type="text/html",
+            headers={"Cache-Control": "private, no-store"},
         )
     if path.startswith(("js/", "css/")):
         if request.method not in {"GET", "HEAD"}:
@@ -152,6 +174,8 @@ async def application(path: str, request: Request, user=Depends(module_user)):
         "platform",
     }:
         raise HTTPException(404, "本模块仅提供微信公众号功能")
+    if requires_account_manager(path, request.method) and not can_manage_accounts(user):
+        raise HTTPException(403, "共享微信读书账号仅允许管理员维护")
     key = service.register_owner(user.uid)
     return await forward(request, key, "/" + path)
 

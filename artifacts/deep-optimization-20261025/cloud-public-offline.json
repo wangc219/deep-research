@@ -1,0 +1,10 @@
+{
+  "http://www.deepquest.space": {
+    "no_http_response": true,
+    "transport_status": "RemoteProtocolError"
+  },
+  "https://www.deepquest.space": {
+    "no_http_response": true,
+    "transport_status": "ConnectError"
+  }
+}

@@ -1602,12 +1602,19 @@ async def _worker_startup(ctx):
         from platform_core.config.options import (
             ensure_options_in_db,
             invalidate_option_cache,
+            publish_web_search_runtime_options,
             system_options,
+            web_search_opts,
         )
 
-        await ensure_options_in_db(session)
+        synced_options = await ensure_options_in_db(session)
+        web_search_stored = next(
+            (dict(record.value or {}) for record in (synced_options or []) if record.key == web_search_opts.key),
+            {},
+        )
         await session.commit()
     await invalidate_option_cache(system_options.key)
+    await publish_web_search_runtime_options(web_search_stored)
     try:
         await ensure_builtin_mcp_servers_in_db()
     except Exception as exc:
@@ -1635,7 +1642,7 @@ async def _worker_startup(ctx):
     from platform_core.services.resource_budget import governor_enabled, resource_governor
 
     if governor_enabled():
-        ctx['resource_governor_task'] = asyncio.create_task(resource_governor())
+        ctx["resource_governor_task"] = asyncio.create_task(resource_governor())
 
 
 async def _worker_shutdown(ctx):
@@ -1645,7 +1652,7 @@ async def _worker_shutdown(ctx):
         reconciliation_tasks = [
             ctx.pop(_RECONCILIATION_TASK_KEY, None),
             ctx.pop(_TASK_RECONCILIATION_TASK_KEY, None),
-            ctx.pop('resource_governor_task', None),
+            ctx.pop("resource_governor_task", None),
         ]
         reconciliation_tasks = [task for task in reconciliation_tasks if task is not None]
         for task in reconciliation_tasks:

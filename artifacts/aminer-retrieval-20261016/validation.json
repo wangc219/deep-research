@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "status": "implemented_and_verified",
+  "scope": [
+    "智能对话",
+    "深研对话/技术攻关舱",
+    "调研探索员及事实核查员共享学术工具"
+  ],
+  "changes": [
+    "技术检索优先使用 AMiner，并按公开技术对象、方法和约束提取关键词",
+    "最多三个公开检索词联合查询，空白和大小写重复词消除，交错合并并按 DOI/ID 去重",
+    "返回逐词覆盖、可选下一页、未执行查询、候选截断及实际摘要缺口",
+    "补全保留已有更完整摘要，兼容 id/_id，标记缺失论文和缺失摘要",
+    "参考文献在限量前去重，返回截断数量且只追溯一层",
+    "免费题录限额与 Pro 搜索、详情接口限额分别处理，联合查询沿用父子 Run 共享事务预算",
+    "压缩上下文保留论文身份、证据层级与紧凑覆盖信息",
+    "修复 Qwen enable_thinking 通过 OpenAI SDK extra_body 发送的协议阻塞"
+  ],
+  "regression": {
+    "passed": 198,
+    "skipped_opt_in_model_cases": 10,
+    "command": "docker compose -f compose.yaml exec -T api python -m pytest test/unit/services/test_aminer.py test/unit/agents/test_search_resilience.py test/unit/middlewares/test_summary_middleware.py test/unit/agents/test_context_auth.py test/unit/services/test_equipment_deep_integration_service.py test/unit/config/test_options.py test/unit/agents/test_chat_compat_transport.py test/unit/agents/test_provider_reasoning.py test/integration/services/test_academic_retrieval.py -q -p no:cacheprovider",
+    "postgres": "真实隔离 Schema；预算、缓存和父子运行均通过真实事务验证"
+  },
+  "provider_validation": {
+    "record": "live-validation.json",
+    "provider": "真实 AMiner",
+    "passed": [
+      "免费标题定位",
+      "两词技术联合检索",
+      "完整摘要",
+      "一层参考文献",
+      "缓存复用"
+    ],
+    "estimated_cost_cents": 13,
+    "production_configuration_modified": false,
+    "credential_values_saved": false
+  },
+  "model_validation": {
+    "model": "真实平台已配置的 DeepSeek 模型",
+    "passed_cases": [
+      "smart_topic",
+      "research_explorer",
+      "technology_preloaded"
+    ],
+    "actual_related_queries_observed": true,
+    "record_directory": "model-cases",
+    "aminer": "httpx.MockTransport 模拟，不能作为真实检索质量对比",
+    "runtime": "生产主/子图、真实隔离 PostgreSQL、InMemorySaver、隔离临时工作区",
+    "model_spec": "deepseek:deepseek-flash"
+  },
+  "known_external_issue": {
+    "model": "alibaba-cn:qwen3.8-flash",
+    "status": "provider_auth_blocked",
+    "message": "修复 SDK 参数后，供应商返回 HTTP 401: API-key is blocked。需管理员更新该模型凭证；AMiner 凭证正常。",
+    "changed_model_configuration": false
+  },
+  "checks": {
+    "ruff_check_changed_production_files": "passed",
+    "ruff_format_check": "passed",
+    "git_diff_check": "passed"
+  },
+  "local_activation": {
+    "api": "restarted; running healthy",
+    "worker": "restarted; running healthy",
+    "readiness": "ready",
+    "degraded": false,
+    "active_agent_runs_before_restart": 0,
+    "active_tasks_before_restart": 0
+  },
+  "limits": [
+    "尚未对更大样本进行召回率和科研结论质量的量化对比",
+    "题录、部分摘要与完整摘要均不代表全文",
+    "本轮改动范围为平台共享学术工具和对话智能体；未修改独立装备研究引擎的 hosted web search 适配器"
+  ],
+  "source_sha256": {
+    "backend/package/platform_core/services/aminer_client.py": "62c4348bee23e9f85229164c328be7e3abc231eb64c533699851ca04861d075f",
+    "backend/package/platform_core/services/academic_retrieval_service.py": "4b67bfd5f2d91cc2d1d73b09e2fbae0f9b0e7646b9e9bab86d119e2b141d670b",
+    "backend/package/platform_core/agents/toolkits/buildin/academic.py": "a0feb3607fecbdaaf1ff02ca6b6fd6b3f3e179f46aa921112fb57139f6d3a913",
+    "backend/package/platform_core/agents/middlewares/search_resilience.py": "c8c63107e77357ac75e84f2f0ba063346b183b2214cf65ec08987492dfa85c4b",
+    "backend/package/platform_core/agents/middlewares/summary.py": "6bde041de1c93235a128dbe028237c7ff7a7895f3f1bc5356057188f713479d5",
+    "backend/package/platform_core/services/equipment_deep_integration_service.py": "f333b9a20d3d353a6f11bc16d9685e6ec82b56c273c15a605714fe11bf62bbd7",
+    "backend/package/platform_core/models/chat.py": "9d5a1165f4c920bbeda7044d05ae1f8bc0173c5b15995a80dcb5c5063279beed"
+  }
+}

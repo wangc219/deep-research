@@ -7,7 +7,7 @@
     }"
   >
     <img class="hero-art-backdrop" :src="loginBgImage" alt="" aria-hidden="true" />
-    <img class="hero-art" :src="loginBgImage" alt="武器装备创新研究场景" />
+    <img class="hero-art" :src="loginBgImage" alt="武器装备创新研究场景" fetchpriority="high" decoding="async" width="1448" height="844" />
     <div class="hero-wash" aria-hidden="true"></div>
     <div v-if="serverStatus === 'error'" class="server-status-alert">
       <div class="alert-content">
@@ -363,7 +363,6 @@ import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useInfoStore } from '@/stores/info'
-import { useAgentStore } from '@/stores/agent'
 import { message } from 'ant-design-vue'
 import { healthApi } from '@/apis/system_api'
 import { authApi } from '@/apis/auth_api'
@@ -376,15 +375,14 @@ import {
 } from '@lucide/vue'
 import { tryAutoStartOIDC, sanitizeRedirect } from '@/utils/oidcAutoStart'
 import { MIN_PASSWORD_LENGTH } from '@/utils/passwordValidation'
+import loginBgImage from '@/assets/defaults/login-hero.webp'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const infoStore = useInfoStore()
-const agentStore = useAgentStore()
 
 // 品牌展示数据
-const loginBgImage = '/equipment-login-hero.png'
 const userAgreementUrl = computed(() => {
   return infoStore.footer?.user_agreement_url?.trim() || ''
 })
@@ -559,19 +557,8 @@ const handleLogin = async () => {
     const redirectPath = sessionStorage.getItem('redirect') || '/knowledge'
     sessionStorage.removeItem('redirect') // 清除重定向信息
 
-    // 根据用户角色决定重定向目标
-    if (redirectPath === '/' || redirectPath === '/knowledge') {
-      try {
-        await agentStore.initialize()
-        router.push('/knowledge')
-      } catch (error) {
-        console.error('获取智能体信息失败:', error)
-        router.push('/knowledge')
-      }
-    } else {
-      // 跳转到其他预设的路径
-      router.push(redirectPath)
-    }
+    // 身份就绪即可进入目标页，聊天配置由使用它的页面按需初始化。
+    router.push(redirectPath === '/' ? '/knowledge' : redirectPath)
   } catch (error) {
     console.error('登录失败:', error)
 
@@ -621,7 +608,6 @@ const handleRegister = async () => {
       password: registerForm.password
     })
     message.success('注册成功，已为你登录')
-    await agentStore.initialize().catch(() => undefined)
     router.push('/knowledge')
   } catch (error) {
     console.error('注册失败:', error)
@@ -771,21 +757,20 @@ onMounted(async () => {
     errorMessage.value = String(route.query.oidc_error)
   }
 
-  // 首先检查服务器健康状态
-  await checkServerHealth()
-
-  // 检查是否是首次运行
-  await checkFirstRunStatus()
+  // 公开只读检查互相独立，并行发起；只有 OIDC 跳转依赖首次初始化结果。
+  const [, , , config] = await Promise.all([
+    checkServerHealth(),
+    checkFirstRunStatus(),
+    checkRegistrationConfig(),
+    checkOIDCConfig()
+  ])
 
   // 如果处于首次运行状态，不需要 OIDC 自动登录
   if (isFirstRun.value) {
     return
   }
 
-  await checkRegistrationConfig()
-
   // 检查 OIDC 配置完成后，尝试自动触发 OIDC 登录（跨系统跳转场景）
-  const config = await checkOIDCConfig()
   if (config && config.enabled) {
     const autoStarted = await tryAutoStartOIDC(async () => await authApi.getOIDCLoginUrl(), config)
     // 如果已发起 OIDC 跳转，页面会被重定向，不需要继续

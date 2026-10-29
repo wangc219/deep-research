@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-19",
+  "server": "49.232.128.56",
+  "root": "/opt/deep-research",
+  "public_url": "https://www.deepquest.space",
+  "status": "deployed_with_latency_observation",
+  "final_image": "sha256:3e02486433ef8c8aaf061b61b2ae2767f1cac120598eb44be2c03697b5036211",
+  "deployments": [
+    {
+      "id": "research-search-quality-20261019T212827",
+      "backup": "/var/backups/deepquest/research-search-quality-20261019T212827"
+    },
+    {
+      "id": "research-search-cloud-fix-20261019T215113",
+      "backup": "/var/backups/deepquest/research-search-cloud-fix-20261019T215113"
+    },
+    {
+      "id": "aminer-title-fallback-20261019T221716",
+      "backup": "/var/backups/deepquest/aminer-title-fallback-20261019T221716"
+    }
+  ],
+  "configuration": {
+    "open_websearch_engines": "baidu,bing",
+    "aminer_application_quota_unlimited": true
+  },
+  "tests": {
+    "main": {"passed": 158, "skipped": 10},
+    "open_websearch_incremental": {"passed": 45, "skipped": 0},
+    "aminer_incremental": {"passed": 48, "skipped": 0},
+    "internal_ready": true,
+    "public_ready": true,
+    "recent_error_logs": 0
+  },
+  "live_aminer_smoke": {
+    "query": "solid-state high-power microwave counter-UAV",
+    "topic_results": 0,
+    "title_fallback_query": "high power microwave uav",
+    "title_fallback_results": 1,
+    "paper_id": "68cb420f163c01c85094fa7e",
+    "title": "High-Power Microwave UAV Damage Characteristics Analysis",
+    "content_level": "abstract",
+    "abstract_chars": 1140
+  },
+  "local_full_acceptance": {
+    "query_id": "query-30510033-b96d-46e8-8a3a-48ffe2b07e8e",
+    "smart_seconds": 218.9,
+    "deep_seconds": 229.6,
+    "total_seconds": 448.5,
+    "passed": true
+  },
+  "cloud_final_model_run": {
+    "agent_slug": "default-chatbot",
+    "run_id": "1e8531a0-b389-436b-a6e1-b69610e6bcb1",
+    "elapsed_seconds": 731.7,
+    "children": 2,
+    "web_search": 7,
+    "web_with_required_terms": 7,
+    "web_distinct_sources": 10,
+    "web_authoritative_sources": 2,
+    "academic_search": 6,
+    "academic_topic_hits": 1,
+    "academic_title_hits": 1,
+    "academic_get_papers": 2,
+    "full_abstracts": 3,
+    "aminer_calls": 20,
+    "aminer_failed_calls": 0,
+    "quality_checks": {
+      "completed": true,
+      "two_focused_explorers": true,
+      "web_evidence_volume": true,
+      "web_source_breadth": true,
+      "authoritative_web_evidence": true,
+      "required_terms_precision": true,
+      "aminer_used": true,
+      "aminer_precise_discovery": true,
+      "full_abstract_chain": true,
+      "standalone_final_body": true,
+      "no_visible_tool_protocol": true,
+      "concrete_equipment_and_validation": true,
+      "efficient_single_entry": false,
+      "full_abstract_relevance": false,
+      "evidence_shapes_generation": false
+    },
+    "assessment": "functional_and_evidence_chain_passed_but_strict_latency_gate_failed"
+  },
+  "sha256": {
+    "backend/package/platform_core/agents/toolkits/buildin/tools.py": "e8f1af1c95e0b8b8c92a5a65f4514ea13d9213de25338a746b7917d5df402d8f",
+    "backend/package/platform_core/services/academic_retrieval_service.py": "315ed1d0033e217495131f8a4f1bba3255d961acc2b95154aa7cf4d0e9a6fef9"
+  }
+}

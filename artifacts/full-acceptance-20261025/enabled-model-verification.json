@@ -1,0 +1,97 @@
+[
+  {
+    "provider": "alibaba-cn",
+    "model": "qwen3-rerank",
+    "type": "rerank",
+    "status": "deferred_by_user"
+  },
+  {
+    "provider": "alibaba-cn",
+    "model": "qwen3.7-text-embedding-flash",
+    "type": "embedding",
+    "status": "deferred_by_user"
+  },
+  {
+    "provider": "alibaba-cn",
+    "model": "qwen3.8-flash",
+    "type": "chat",
+    "status": "deferred_by_user"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "type": "chat",
+    "status": "passed",
+    "response_nonempty": true,
+    "seconds": 1.07
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "deepseek-ai/DeepSeek-V4-Flash",
+    "type": "chat",
+    "status": "passed",
+    "response_nonempty": true,
+    "seconds": 1.06
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "Pro/MiniMaxAI/MiniMax-M2.5",
+    "type": "chat",
+    "status": "failed",
+    "exception_type": "Exception",
+    "http_status": 403,
+    "upstream_model_disabled": true,
+    "seconds": 0.05
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "zai-org/GLM-5.2",
+    "type": "chat",
+    "status": "passed",
+    "response_nonempty": true,
+    "seconds": 1.26
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "Pro/BAAI/bge-m3",
+    "type": "embedding",
+    "status": "passed",
+    "vectors": 2,
+    "dimension": 1024,
+    "seconds": 0.24
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "BAAI/bge-m3",
+    "type": "embedding",
+    "status": "passed",
+    "vectors": 2,
+    "dimension": 1024,
+    "seconds": 0.23
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "Qwen/Qwen3-Embedding-0.6B",
+    "type": "embedding",
+    "status": "passed",
+    "vectors": 2,
+    "dimension": 1024,
+    "seconds": 0.29
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "Pro/BAAI/bge-reranker-v2-m3",
+    "type": "rerank",
+    "status": "passed",
+    "scores": 2,
+    "seconds": 0.16
+  },
+  {
+    "provider": "siliconflow-cn",
+    "model": "BAAI/bge-reranker-v2-m3",
+    "type": "rerank",
+    "status": "passed",
+    "scores": 2,
+    "seconds": 0.19
+  }
+]

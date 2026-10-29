@@ -1,0 +1,12 @@
+{
+  "migrated_technical_library_files": 93,
+  "original_pdf_download": "passed",
+  "original_pdf_bytes": 467187,
+  "original_file_preview": "passed",
+  "existing_library_real_retrieval": "passed",
+  "retrieved_chunks": 10,
+  "migrated_report_characters": 15169,
+  "migrated_capability_versions": 6,
+  "new_cloud_report_characters": 19932,
+  "new_cloud_capability_versions": 6
+}

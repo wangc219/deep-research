@@ -1,0 +1,139 @@
+{
+  "name": "attention-smart-web",
+  "topic": "attention",
+  "kind": "smart",
+  "variant": "web",
+  "thread_id": "6a66a414-1f50-4919-a9a1-3c2f142dadc1",
+  "session_id": null,
+  "run_id": "5d068ecd-d0b8-4a3a-927f-5d93d7132b8f",
+  "prompt": "针对长序列大模型的显存瓶颈，比较 FlashAttention 与稀疏注意力：各自改变什么、计算与显存开销、速度结论适用条件、是否能保证任意硬件推理提速两倍。请检索公开技术资料，给出3篇左右可追溯论文和链接，把每项关键结论对应到实际取得的证据，明确摘要与全文边界。中文600字左右，仅在正文作答，无需文件或平台任务，不要追问。\n本轮作为网页检索对照实验，仅使用网页检索与网页阅读，不使用 AMiner 或 academic 学术工具。",
+  "submitted_at_utc": "2026-10-19T07:04:20.300410",
+  "elapsed_seconds": 96.63,
+  "result": {
+    "status": "interrupted",
+    "output": "The subagent reported it did not have real-time web search capability and provided knowledge-based content. The user's request is specifically a \"网页检索对照实验\" (web search control experiment). I should attempt to actually retrieve the arXiv pages to verify. Let me try using the execute tool with curl, or better, check if I have a direct way to retrieve web pages.\n\nSince I don't have a direct browser/fetch tool in my function list, and the web-search subagent reported it lacked real-time retrieval, let me try using the execute tool with curl to fetch the arXiv abstract pages to verify the metadata and confirm what's in abstracts.\n\nLet me try fetching the arXiv pages directly. Note user said \"仅使用网页检索与网页阅读，不使用 AMiner 或 academic 学术工具\" - so curl to fetch arxiv abstract pages is legitimate web retrieval/writing.\n\nLet me try curl to fetch the abstract pages.\n\n",
+    "agent_slug": "default-chatbot",
+    "thread_id": "6a66a414-1f50-4919-a9a1-3c2f142dadc1",
+    "conversation_id": 390,
+    "agent_run_id": "5d068ecd-d0b8-4a3a-927f-5d93d7132b8f",
+    "request_id": "5c113ac8-0238-4cee-bc6a-3587e6c78ca3",
+    "final_message_id": 2480,
+    "langfuse_trace_id": null,
+    "token_usage": {
+      "total": {
+        "input_tokens": 30052,
+        "total_tokens": 30967,
+        "output_tokens": 915
+      },
+      "models": {
+        "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+          "model": {
+            "provider_id": "siliconflow-cn",
+            "provider_type": "openai",
+            "identity_source": "configured_metadata",
+            "response_model_ids": [
+              "deepseek-ai/DeepSeek-V4-Flash"
+            ],
+            "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+            "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+          },
+          "usage": {
+            "input_tokens": 30052,
+            "total_tokens": 30967,
+            "output_tokens": 915,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          },
+          "cache_hit_ratio": 0.0,
+          "model_call_count": 3,
+          "cache_hit_call_count": 0,
+          "uncached_input_tokens": 30052,
+          "cache_read_input_tokens": 0,
+          "cache_request_hit_ratio": 0.0,
+          "cache_observed_call_count": 3,
+          "usage_reported_call_count": 3,
+          "cache_observed_input_tokens": 30052
+        }
+      },
+      "complete": true,
+      "schema_version": 2,
+      "model_call_count": 3,
+      "usage_reported_call_count": 3,
+      "usage_unavailable_call_count": 0
+    },
+    "timing": {
+      "created_at": "2026-10-19T07:04:20.289552Z",
+      "started_at": "2026-10-19T07:04:20.381462Z",
+      "prepared_at": "2026-10-19T07:04:20.608784Z",
+      "first_model_request_at": "2026-10-19T07:04:20.699324Z",
+      "first_output_at": "2026-10-19T07:04:22.927795Z",
+      "finished_at": "2026-10-19T07:05:50.381297Z",
+      "dispatch_latency_ms": 92,
+      "preparation_latency_ms": 227,
+      "first_model_request_latency_ms": 410,
+      "model_first_output_latency_ms": 2319,
+      "first_output_latency_ms": 2638,
+      "total_latency_ms": 90092
+    },
+    "error": {
+      "type": "human_approval_required",
+      "message": "需要用户审批工具操作"
+    }
+  },
+  "tools": [
+    {
+      "run_id": "5d068ecd-d0b8-4a3a-927f-5d93d7132b8f",
+      "tool_name": "subagent_start",
+      "tool_input": {
+        "description": "检索关于长序列大模型显存瓶颈下 FlashAttention 与稀疏注意力(Sparse Attention)对比的公开技术资料。需要找到以下信息并给出可追溯来源与链接：\n1. FlashAttention 的原理（如何避免显存中存储 N×N 注意力矩阵、tiling/重计算、IO复杂度优化）。代表论文：FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness (Dao et al., 2022, arXiv:2205.14135)，FlashAttention-2 (2023, arXiv:2307.08691)。请核实这些论文的题目、作者、arXiv编号和链接。\n2. 稀疏注意力(Sparse Attention)代表性论文：如 Sparse Transformer (Child et al. 2019, arXiv:1904.10509)、Longformer (Beltagy et al. 2020, arXiv:2004.05150)、BigBird (Zaheer et al. 2020, arXiv:2007.14087)。请给出准确论文信息与链接。\n3. FlashAttention 的显存复杂度 O(N)（避免N^2矩阵）和速度提升的实际证据（论文报告相对 PyTorch 标准注意力的加速倍数），以及\"两倍提速\"是否在所有硬件上成立的边界条件。\n4. 稀疏注意力的计算复杂度降低（从O(N^2)到O(N log N)等）与真实加速证据，以及其\"近似/非精确\"特性。\n5. 明确这些论文中哪些是摘要即可确认的内容、哪些需要阅读全文才能确认（如具体加速倍数、硬件依赖、FLOPs vs 实际运行时间）。\n\n请返回带引用的结构化摘要，每条结论标注来源（标题、作者、年份、arXiv编号/链接、DOI等），并区分\"摘要可确认\"与\"需全文确认\"。",
+        "subagent_slug": "web-search"
+      },
+      "tool_output": {
+        "content": "{\n  \"status\": \"started\",\n  \"run_id\": \"a13571f6-a3b1-4810-880a-864486b264c6\",\n  \"thread_id\": \"subagent_fa51e9c023852452e2d44acec00094151e154fd4d441042a5e3a6c1\",\n  \"subagent_slug\": \"web-search\",\n  \"subagent_name\": \"网页检索\",\n  \"created_by_run_id\": \"5d068ecd-d0b8-4a3a-927f-5d93d7132b8f\",\n  \"run_status\": \"pending\",\n  \"continuing\": false,\n  \"subagent_thread_relation_id\": 56,\n  \"events_url\": \"/api/agent/runs/a13571f6-a3b1-4810-880a-864486b264c6/events\",\n  \"result_url\": \"/api/agent/runs/a13571f6-a3b1-4810-880a-864486b264c6/result\"\n}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": null,
+        "id": null,
+        "tool_call_id": "01a152f9cd7d227568f8ad12e739d9d1",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "5d068ecd-d0b8-4a3a-927f-5d93d7132b8f",
+      "tool_name": "subagent_await",
+      "tool_input": {
+        "run_id": "a13571f6-a3b1-4810-880a-864486b264c6"
+      },
+      "tool_output": {
+        "content": "{\n  \"status\": \"completed\",\n  \"run_id\": \"a13571f6-a3b1-4810-880a-864486b264c6\",\n  \"thread_id\": \"subagent_fa51e9c023852452e2d44acec00094151e154fd4d441042a5e3a6c1\",\n  \"result\": {\n    \"status\": \"completed\",\n    \"output\": \"**关于检索方式的重要说明（证据缺口）**\\n\\n本轮会话中我没有可用的实时公网检索工具（工具箱内仅提供本地文件与 OCR 工具），因此**未能通过实时网页/学术库检索对以下内容逐一抓取原文页面进行核实**。以下内容基于我对此批公开发表论文的既有知识整理，论文的题目、作者、年份与 arXiv 编号均为该领域公认稳定的元数据，可信度较高；但\\\"具体加速倍数、硬件依赖、FLOPs 对比\\\"等细节属于论文正文/实验章节的内容，**必须阅读全文或下载论文 PDF 核验后才可确认**，我用标注区分。请你在交付前将下方链接人工/借助可用的检索工具复核一遍。\\n\\n---\\n\\n# FlashAttention 与稀疏注意力(Sparse Attention)对比 —— 结构化摘要\\n\\n## 一、FlashAttention 原理（精确注意力、IO 感知）\\n\\nFlashAttention（Dao et al., 2022）的核心思想是 **IO 感知（IO-awareness）**：注意力计算不再在 HBM（显存）中物化 N×N 的注意力矩阵，而是利用片上 SRAM 高带宽、低延迟的特性。具体机制：\\n\\n1. **Tiling（分块）**：把 Q、K、V 切成小块，每次只在 SRAM 中计算一个子块的注意力，避免将完整 Q·K^T 矩阵写入/读回 HBM。\\n2. **不存储 N×N 注意力矩阵**：只维护统计量（行最大值与累积 softmax 的归一化项），逐块做在线 softmax（online softmax），从而**避免显存中存储 N² 规模的注意力矩阵**。\\n3. **重计算（recomputation）**：前向不保存注意力矩阵，反向传播时用已缓存的 Q、K、V 分块重新计算 attention 梯度，用少量额外计算换更低的显存占用。\\n4. **IO 复杂度优化**：将注意力从「读 HBM 的 O(N²) 次」降到更少的块级传输，从而在**不改变数学结果**（仍是精确的完整注意力）的前提下大幅降低显存与运行时间。\\n\\n<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n\\n- **内存复杂度**：不依赖 N² 的注意力矩阵，论文报告显存随序列长度近似 **O(N)** 增长（而标准注意力为 O(N²)）。<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n- **论文元数据（需人工复核）**：题目《FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness》；作者 Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré；2022；arXiv:2205.14135。<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n\\n**FlashAttention-2**：在 FLOPs 相同前提下通过改进并行方式和 work partitioning（如减少非矩阵乘部分、更好地利用 TensorCore），宣称相对 FlashAttention v1 进一步提速（约 2×）。<cite source=\\\"https://arxiv.org/abs/2307.08691\\\" type=\\\"url\\\">2</cite>\\n\\n- **论文元数据（需人工复核）**：题目《FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning》；作者 Tri Dao；2023；arXiv:2307.08691。<cite source=\\\"https://arxiv.org/abs/2307.08691\\\" type=\\\"url\\\">2</cite>\\n\\n## 二、稀疏注意力（Sparse Attention）代表性论文\\n\\n稀疏注意力的共同点：**不计算全部的 N×N 注意力对**，只计算按某种模式选出的子集，以此把计算/显存复杂度从 O(N²) 降下来，代价是**输出是『部分注意力』的近似结果（非标准的稠密精确注意力）**。\\n\\n1. **Sparse Transformer**（Child et al., 2019）：利用 factorized attention（因子化注意力模式，如固定步长 strided + 局部固定 local 模式），论文题为《Generating Long Sequences with Sparse Transformers》，作者 Rewon Child, Scott Gray, Alec Radford, Ilya Sutskever，arXiv:1904.10509。<cite source=\\\"https://arxiv.org/abs/1904.10509\\\" type=\\\"url\\\">3</cite>\\n2. **Longformer**（Beltagy et al., 2020）：滑动窗口注意力（sliding window）+ 全局 token，将注意力复杂度降到窗口宽度相关的 O(N·w)，宣称在长文档任务上高效；作者 Iz Beltagy, Matthew E. Peters, Arman Cohan，题为《Longformer: The Long-Document Transformer》，arXiv:2004.05150。<cite source=\\\"https://arxiv.org/abs/2004.05150\\\" type=\\\"url\\\">4</cite>\\n3. **BigBird**（Zaheer et al., 2020）：随机（random）+ 窗口（window）+ 全局（global）三种稀疏模式组合，总体复杂度 **O(N)**；并给出理论结果：该稀疏模式可作为**全注意力的万能近似器（universal approximator）**，即能逼近任意函数的完整注意力输出；作者 Manzil Zaheer, Guru Guruganesh 等（Google），题为《Big Bird: Transformers for Longer Sequences》，arXiv:2007.14087（NeurIPS 2020）。<cite source=\\\"https://arxiv.org/abs/2007.14087\\\" type=\\\"url\\\">5</cite>\\n\\n## 三、FlashAttention 的显存与速度证据\\n\\n- **显存**：论文核心主张即\\\"避免 N×N 注意力矩阵写入 HBM\\\"，显存随 N 近似线性增长（O(N)）。<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n- **加速倍数**：论文报告相对 PyTorch 标准注意力（及优化基线）在典型 GPU 上可提速，常见引用的量级为 **约 2–4×**（不同基准略有差异）。该数字是**实验章节内容，需全文确认**。<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n- **\\\"两倍提速\\\"的边界条件（需全文确认）**：加速并非在所有硬件/配置下恒成立，已知影响因素包括：\\n  - GPU 型号与 SRAM 容量（如 H100/A100 的 SRAM 大小、带宽差异显著影响收益）；\\n  - 序列长度 N（越长、分块越受益）；head 维度、batch size；\\n  - 是否启用因果掩码（causal mask）、mask 分块处理方式；\\n  - 数据类型（FP16/BF16 等）与 TensorCore 利用率；\\n  - 注意力是计算受限还是访存受限——访存受限场景（长序列、大批量）收益更大，短序列/小批量时提升有限。\\n  因此\\\"统一两倍提速\\\"仅是论文所述特定条件下的结果，需核验全文的硬件配置与测量方法。<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite><cite source=\\\"https://arxiv.org/abs/2307.08691\\\" type=\\\"url\\\">2</cite>\\n\\n## 四、稀疏注意力的复杂度降低与真实加速、近似特性\\n\\n- **计算复杂度**：稀疏注意力的 FLOPs 从 O(N²) 降到约 **O(N)**（Longformer/BigBird）或 O(N√N) 量级（Sparse Transformer 的因子化模式），对超长序列有理论优势。<cite source=\\\"https://arxiv.org/abs/1904.10509\\\" type=\\\"url\\\">3</cite><cite source=\\\"https://arxiv.org/abs/2004.05150\\\" type=\\\"url\\\">4</cite><cite source=\\\"https://arxiv.org/abs/2007.14087\\\" type=\\\"url\\\">5</cite>\\n- **真实加速**：各论文报告在长序列任务上相对标准注意力的速度/内存收益，但**具体倍数与收益取决于实现、GPU、掩码效率与任务**，需读全文实验确认，摘要不足以支撑精确数值。<cite source=\\\"https://arxiv.org/abs/2004.05150\\\" type=\\\"url\\\">4</cite><cite source=\\\"https://arxiv.org/abs/2007.14087\\\" type=\\\"url\\\">5</cite>\\n- **近似/非精确特性**：稀疏注意力**不计算全部注意力对**，属近似（对稠密注意力的一种结构化近似）。这意味着：\\n  - 某些长程依赖只有通过全局/随机 token 才能捕获，模式选择不当会导致精度损失；\\n  - 与 FlashAttention 形成关键分野：**FlashAttention 是\\\"精确注意力 + IO 优化\\\"**（计算结果与标准注意力数学上一致），而 **Sparse Attention 是\\\"改变计算内容以省 FLOPs\\\"**（结果是近似的、不完整注意力）。\\n  - BigBird 通过理论证明其模式能逼近任意函数（其\\\"近似性\\\"在理论上有界保障），而 Sparse Transformer/Longformer 更倾向经验启发式模式，缺乏同等的通用近似保证。<cite source=\\\"https://arxiv.org/abs/2007.14087\\\" type=\\\"url\\\">5</cite>\\n- **注意**：稀疏注意力降低的是 **FLOPs**，FlashAttention 的收益主要是**减少 HBM 访存**；二者优化方向不同——稀疏在\\\"少算\\\"，FlashAttention 在\\\"少搬数据\\\"，可互相叠加使用（如稀疏模式 + IO 优化内核），这一点需结合全文与工程实践确认。\\n\\n## 五、哪些内容摘要即可确认 vs 需全文确认\\n\\n**仅凭论文摘要即可确认（相对可靠）**\\n- 每篇论文的题目、作者、年份、arXiv 编号与链接；\\n- FlashAttention 的基本主张：避免物化 N×N 注意力矩阵、IO 感知、使用 tiling 与重计算（摘要明确描述）；<cite source=\\\"https://arxiv.org/abs/2205.14135\\\" type=\\\"url\\\">1</cite>\\n- 稀疏注意力\\\"只计算部分注意力对、降低复杂度、近似\\\"的定性性质；<cite source=\\\"https://arxiv.org/abs/1904.10509\\\" type=\\\"url\\\">3</cite><cite source=\\\"https://arxiv.org/abs/2004.05150\\\" type=\\\"url\\\">4</cite><cite source=\\\"https://arxiv.org/abs/2007.14087\\\" type=\\\"url\\\">5</cite>\\n- 各复杂度量级的定性表述（O(N) 等）。\\n\\n**必须阅读全文才能确认**\\n- 具体的加速倍数（如 2×/4×/7×）与配套的硬件（GPU 型号、SRAM 大小）、dtype、序列长度等测量条件；\\n- \\\"两倍提速\\\"成立的边界/前提；FA2 相对 FA1 的精确提速量；\\n- FLOPs 与实际运行时间（wall-clock speedup）之间的差异——摘要通常不提供最终运行时长对比；\\n- 稀疏注意力在具体任务上的精度损失数值、与标准注意力/FlashAttention 的间接对比；\\n- 泛化/可复现性细节（训练设置、超参数）。\\n\\n---\\n\\n## 参考来源\\n\\n1. Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré. *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. 2022. arXiv:2205.14135. https://arxiv.org/abs/2205.14135\\n2. Tri Dao. *FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning*. 2023. arXiv:2307.08691. https://arxiv.org/abs/2307.08691\\n3. Rewon Child, Scott Gray, Alec Radford, Ilya Sutskever. *Generating Long Sequences with Sparse Transformers*. 2019. arXiv:1904.10509. https://arxiv.org/abs/1904.10509\\n4. Iz Beltagy, Matthew E. Peters, Arman Cohan. *Longformer: The Long-Document Transformer*. 2020. arXiv:2004.05150. https://arxiv.org/abs/2004.05150\\n5. Manzil Zaheer, Guru Guruganesh, et al. *Big Bird: Transformers for Longer Sequences*. 2020. arXiv:2007.14087. https://arxiv.org/abs/2007.14087\\n\\n---\\n\\n**证据缺口与后续建议**：本会话因缺少实时检索工具，上述链接与元数据未能逐条抓取原文页面复核；加速倍数、边界条件、FLOPs 与实测运行时间等细节需阅读论文 PDF（并对照其实验章节的硬件与方法）来最终确认。若要落地对比结论，建议下一步：下载 5 篇论文 PDF 核验摘要与实验表；或由主智能体启用具备公网搜索能力的检索通道，对上述 arXiv 链接及\\\"FlashAttention vs 稀疏注意力基准测评/对比综述（survey）\\\"补一轮实时抓取。\",\n    \"agent_slug\": \"web-search\",\n    \"thread_id\": \"subagent_fa51e9c023852452e2d44acec00094151e154fd4d441042a5e3a6c1\",\n    \"conversation_id\": 393,\n    \"agent_run_id\": \"a13571f6-a3b1-4810-880a-864486b264c6\",\n    \"request_id\": \"req:e0d61a21e6e3ad4ee0bbb324d685dd1640198f750eec\",\n    \"final_message_id\": 2477,\n    \"langfuse_trace_id\": null,\n    \"token_usage\": {\n      \"total\": {\n        \"input_tokens\": 5596,\n        \"total_tokens\": 10628,\n        \"output_tokens\": 5032\n      },\n      \"models\": {\n        \"siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash\": {\n          \"model\": {\n            \"provider_id\": \"siliconflow-cn\",\n            \"provider_type\": \"openai\",\n            \"identity_source\": \"configured_metadata\",\n            \"response_model_ids\": [\n              \"deepseek-ai/DeepSeek-V4-Flash\"\n            ],\n            \"configured_model_id\": \"deepseek-ai/DeepSeek-V4-Flash\",\n            \"configured_model_spec\": \"siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash\"\n          },\n          \"usage\": {\n            \"input_tokens\": 5596,\n            \"total_tokens\": 10628,\n            \"output_tokens\": 5032,\n            \"input_token_details\": {\n              \"cache_read\": 0\n            },\n            \"output_token_details\": {\n              \"reasoning\": 0\n            }\n          },\n          \"cache_hit_ratio\": 0.0,\n          \"model_call_count\": 1,\n          \"cache_hit_call_count\": 0,\n          \"uncached_input_tokens\": 5596,\n          \"cache_read_input_tokens\": 0,\n          \"cache_request_hit_ratio\": 0.0,\n          \"cache_observed_call_count\": 1,\n          \"usage_reported_call_count\": 1,\n          \"cache_observed_input_tokens\": 5596\n        }\n      },\n      \"complete\": true,\n      \"schema_version\": 2,\n      \"model_call_count\": 1,\n      \"usage_reported_call_count\": 1,\n      \"usage_unavailable_call_count\": 0\n    },\n    \"timing\": {\n      \"created_at\": \"2026-10-19T07:04:46.062239Z\",\n      \"started_at\": \"2026-10-19T07:04:46.117751Z\",\n      \"prepared_at\": \"2026-10-19T07:04:46.175346Z\",\n      \"first_model_request_at\": \"2026-10-19T07:04:46.199006Z\",\n      \"first_output_at\": \"2026-10-19T07:04:47.346194Z\",\n      \"finished_at\": \"2026-10-19T07:05:37.272028Z\",\n      \"dispatch_latency_ms\": 56,\n      \"preparation_latency_ms\": 58,\n      \"first_model_request_latency_ms\": 137,\n      \"model_first_output_latency_ms\": 1171,\n      \"first_output_latency_ms\": 1284,\n      \"total_latency_ms\": 51210\n    }\n  }\n}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": null,
+        "id": null,
+        "tool_call_id": "01a152fa2514a2a87c21beecdebe2f64",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    }
+  ],
+  "aminer_ledger": [],
+  "estimated_aminer_cost_cents": 0,
+  "academic_tool_calls": 0,
+  "web_tool_calls": 0,
+  "answer_urls": [],
+  "academic_evidence": [],
+  "full_abstract_unique_count": 0,
+  "partial_abstract_unique_count": 0,
+  "collected_at": "2026-10-19T07:15:58.112344+00:00"
+}

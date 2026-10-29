@@ -1,0 +1,429 @@
+{
+  "transport": "real AMiner",
+  "estimated_cost_cents": 4,
+  "ledger": "direct provider diagnostic, excluded from conversation ledger",
+  "cases": [
+    {
+      "endpoint": "search",
+      "payload": {
+        "keyword": "FlashAttention",
+        "page": 0,
+        "size": 5
+      },
+      "status": "ok",
+      "total": 32,
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "title_zh": null,
+          "authors": [
+            "Jacob Portes"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.635835Z"
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "title_zh": null,
+          "authors": [
+            "Haixu Wu"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1-10",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.635882Z"
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "title_zh": null,
+          "authors": [
+            "Haoran Wu"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.635901Z"
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "title_zh": null,
+          "authors": [
+            "Huizheng Wang"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.635913Z"
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "title_zh": null,
+          "authors": [
+            "Maximilian Beck"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "11-50",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.635928Z"
+        }
+      ],
+      "seconds": 0.254
+    },
+    {
+      "endpoint": "search",
+      "payload": {
+        "keyword": "sparse attention",
+        "page": 0,
+        "size": 5
+      },
+      "status": "ok",
+      "total": 713,
+      "papers": [
+        {
+          "id": "5e6f4f1f91e011c42aa78b7a",
+          "doi": "10.1162/tacl_a_00353",
+          "title": "Efficient Content-Based Sparse Attention with Routing Transformers",
+          "title_zh": null,
+          "authors": [
+            "Aurko Roy"
+          ],
+          "year": 2020,
+          "venue": "ICLR 2020",
+          "url": "https://doi.org/10.1162/tacl_a_00353",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.932770Z"
+        },
+        {
+          "id": "60cb2a281bc21f07d08111ae",
+          "doi": "10.1109/cvpr46437.2021.00352",
+          "title": "Image Super-Resolution with Non-Local Sparse Attention",
+          "title_zh": null,
+          "authors": [
+            "Yiqun Mei"
+          ],
+          "year": 2021,
+          "venue": "2021 IEEE/CVF CONFERENCE ON COMPUTER VISION AND PATTERN RECOGNITION, CVPR 2021",
+          "url": "https://doi.org/10.1109/cvpr46437.2021.00352",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.932819Z"
+        },
+        {
+          "id": "6684b07501d2a3fbfce34e3c",
+          "doi": "10.52202/079017-1663",
+          "title": "MInference 1.0: Accelerating Pre-filling for Long-Context LLMs Via Dynamic Sparse Attention",
+          "title_zh": null,
+          "authors": [
+            "Huiqiang Jiang"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-1663",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.932827Z"
+        },
+        {
+          "id": "653a868d939a5f40827e91c9",
+          "doi": "10.1016/j.patcog.2023.109897",
+          "title": "Sparse Self-Attention Transformer for Image Inpainting",
+          "title_zh": null,
+          "authors": [
+            "Wenli Huang"
+          ],
+          "year": 2024,
+          "venue": "PATTERN RECOGNITION",
+          "url": "https://doi.org/10.1016/j.patcog.2023.109897",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.932832Z"
+        },
+        {
+          "id": "685b5b98163c01c850d213e0",
+          "doi": "",
+          "title": "Radial Attention: $\\mathcal{o}(n\\log N)$ Sparse Attention with Energy Decay for Long Video Generation",
+          "title_zh": null,
+          "authors": [
+            "Xingyang Li"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/685b5b98163c01c850d213e0",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:45.932838Z"
+        }
+      ],
+      "seconds": 0.297
+    },
+    {
+      "endpoint": "title_search",
+      "payload": {
+        "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+        "page": 1,
+        "size": 3
+      },
+      "status": "ok",
+      "total": 1,
+      "papers": [
+        {
+          "id": "629435a25aee126c0f2fecb3",
+          "doi": "10.48550/arxiv.2205.14135",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.",
+          "title_zh": null,
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2022,
+          "venue": "NEURIPS 2022",
+          "url": "https://doi.org/10.48550/arxiv.2205.14135",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1001-5000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.196595Z"
+        }
+      ],
+      "seconds": 0.264
+    },
+    {
+      "endpoint": "search",
+      "payload": {
+        "keyword": "retrieval augmented generation",
+        "page": 0,
+        "size": 5
+      },
+      "status": "ok",
+      "total": 6597,
+      "papers": [
+        {
+          "id": "65309159939a5f4082843d1b",
+          "doi": "10.48550/arxiv.2310.11511",
+          "title": "Self-RAG: Learning to Retrieve, Generate, and Critique Through Self-Reflection.",
+          "title_zh": null,
+          "authors": [
+            "Akari Asai"
+          ],
+          "year": 2024,
+          "venue": "ICLR 2024",
+          "url": "https://doi.org/10.48550/arxiv.2310.11511",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "1001-5000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.432965Z"
+        },
+        {
+          "id": "6684b07501d2a3fbfce34e37",
+          "doi": "10.52202/079017-3850",
+          "title": "RankRAG: Unifying Context Ranking with Retrieval-Augmented Generation in LLMs",
+          "title_zh": null,
+          "authors": [
+            "Yue Yu"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-3850",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.433002Z"
+        },
+        {
+          "id": "681c0f58163c01c850c83d94",
+          "doi": "",
+          "title": "ZeroSearch: Incentivize the Search Capability of LLMs Without Searching",
+          "title_zh": null,
+          "authors": [
+            "Hao Sun"
+          ],
+          "year": null,
+          "venue": "ICLR 2026",
+          "url": "https://www.aminer.cn/pub/681c0f58163c01c850c83d94",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.433012Z"
+        },
+        {
+          "id": "65e14a2a13fb2c6cf612dcde",
+          "doi": "10.1007/s41019-025-00335-5",
+          "title": "Retrieval-Augmented Generation for AI-Generated Content: A Survey",
+          "title_zh": null,
+          "authors": [
+            "Penghao Zhao"
+          ],
+          "year": 2026,
+          "venue": "Data Science and Engineering",
+          "url": "https://doi.org/10.1007/s41019-025-00335-5",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.433020Z"
+        },
+        {
+          "id": "6625c43f13fb2c6cf67e2115",
+          "doi": "10.1145/3768628",
+          "title": "RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation",
+          "title_zh": null,
+          "authors": [
+            "Chao Jin"
+          ],
+          "year": 2026,
+          "venue": "ACM TRANSACTIONS ON COMPUTER SYSTEMS",
+          "url": "https://doi.org/10.1145/3768628",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.433033Z"
+        }
+      ],
+      "seconds": 0.236
+    },
+    {
+      "endpoint": "search",
+      "payload": {
+        "keyword": "long context",
+        "page": 0,
+        "size": 5
+      },
+      "status": "ok",
+      "total": 486,
+      "papers": [
+        {
+          "id": "64ba03413fda6d7f06273487",
+          "doi": "10.48550/arxiv.2307.11088",
+          "title": "L-Eval: Instituting Standardized Evaluation for Long Context Language Models",
+          "title_zh": null,
+          "authors": [
+            "Chenxin An"
+          ],
+          "year": 2024,
+          "venue": "ICLR 2024",
+          "url": "https://doi.org/10.48550/arxiv.2307.11088",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.704674Z"
+        },
+        {
+          "id": "650cf92d3fda6d7f06d445d9",
+          "doi": "10.48550/arxiv.2309.12307",
+          "title": "LongLoRA: Efficient Fine-tuning of Long-Context Large Language Models.",
+          "title_zh": null,
+          "authors": [
+            "Yukang Chen"
+          ],
+          "year": 2024,
+          "venue": "ICLR 2024",
+          "url": "https://doi.org/10.48550/arxiv.2309.12307",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.704702Z"
+        },
+        {
+          "id": "662b0b1701d2a3fbfc6610e1",
+          "doi": "10.52202/079017-1986",
+          "title": "Make Your LLM Fully Utilize the Context",
+          "title_zh": null,
+          "authors": [
+            "Shengnan An"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-1986",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.704710Z"
+        },
+        {
+          "id": "65c437ba939a5f4082d8c094",
+          "doi": "10.52202/079017-3801",
+          "title": "InfLLM: Training-Free Long-Context Extrapolation for LLMs with an Efficient Context Memory",
+          "title_zh": null,
+          "authors": [
+            "Chaojun Xiao"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-3801",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "51-200",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.704716Z"
+        },
+        {
+          "id": "65bafda1939a5f40824d9bcc",
+          "doi": "10.52202/079017-0040",
+          "title": "KVQuant: Towards 10 Million Context Length LLM Inference with KV Cache Quantization",
+          "title_zh": null,
+          "authors": [
+            "Coleman Hooper"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-0040",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": "201-1000",
+          "source": "aminer",
+          "retrieved_at": "2026-10-19T07:05:46.704721Z"
+        }
+      ],
+      "seconds": 0.272
+    }
+  ]
+}

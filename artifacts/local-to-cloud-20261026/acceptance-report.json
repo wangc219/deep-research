@@ -1,0 +1,271 @@
+{
+  "generated_at": "2026-10-26T04:28:18.510179+08:00",
+  "site": "https://www.deepquest.space",
+  "status": "latest_release_deployed_acceptance_passed_with_explicit_deferred_scope",
+  "data_source": "local",
+  "old_cloud_data_and_backups_permanently_removed": true,
+  "latest_source": {
+    "files": 3443,
+    "sha256": "b7ba92354f1cf677a5fa378260d0b3ae103eb78c7fc4c7b684313c64b6ef3609",
+    "runtime_python_files": 717,
+    "api_image_id": "sha256:9969e2095a91d6f9dcf2c7b953c292e6fb9cd31a9de1ab52983cfd257e6285a0",
+    "local_content_changes_since_packaging": 0,
+    "all_workers_same_new_image": true
+  },
+  "s5": [
+    {
+      "run_id": "run-63cb44f5-53f4-4a04-a52f-6cfc17abd429",
+      "versions": 6,
+      "formal_cards": 6,
+      "s5_selected": 6,
+      "s5_to_formal_identity_and_scores": "passed",
+      "identities": [
+        {
+          "capability_id": "cap-new-001",
+          "hypothesis_id": "hypothesis-e8ccf2e7cfebb8ac",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-002",
+          "hypothesis_id": "hypothesis-8205836049043906",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-003",
+          "hypothesis_id": "hypothesis-877123ea809ba7bd",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-004",
+          "hypothesis_id": "hypothesis-382281829e6303a3",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-005",
+          "hypothesis_id": "hypothesis-ebf82d0bc1feefab",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-006",
+          "hypothesis_id": "hypothesis-13c9a662d77bda79",
+          "version_no": 1,
+          "has_s5_scores": true
+        }
+      ],
+      "stages": [
+        "stage-L1",
+        "stage-L2",
+        "stage-L3"
+      ]
+    },
+    {
+      "run_id": "run-ed464daf-f4af-4e2e-b008-bc0b9bbfeea8",
+      "versions": 6,
+      "formal_cards": 6,
+      "s5_selected": 6,
+      "s5_to_formal_identity_and_scores": "passed",
+      "identities": [
+        {
+          "capability_id": "cap-new-001",
+          "hypothesis_id": "hypothesis-aaf334e35b654373",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-002",
+          "hypothesis_id": "hypothesis-9c36168e28696af3",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-003",
+          "hypothesis_id": "hypothesis-5287b8885e3251d3",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-004",
+          "hypothesis_id": "hypothesis-305991aee4f2cd83",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-005",
+          "hypothesis_id": "hypothesis-fe502aa4b06cf42e",
+          "version_no": 1,
+          "has_s5_scores": true
+        },
+        {
+          "capability_id": "cap-new-006",
+          "hypothesis_id": "hypothesis-174aa6d0b3f404ee",
+          "version_no": 1,
+          "has_s5_scores": true
+        }
+      ],
+      "stages": [
+        "stage-L1",
+        "stage-L2",
+        "stage-L3"
+      ]
+    }
+  ],
+  "tests": {
+    "latest_backend_unit": {
+      "passed": 2948,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "latest_http_integration": {
+      "passed": 408,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 21
+    },
+    "migration_domain_before_final_query_changes": {
+      "passed": 2254,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "migration_real_flows_before_feedback": {
+      "passed": 22,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "migration_multimodal_before_feedback": {
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "latest_post_cold_real_flows": {
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "web_unit_passed": 591,
+  "web_lint": "passed",
+  "web_build": "passed",
+  "cold_recreated_containers": 15,
+  "final_application_containers_recreated": 5,
+  "persistent_tables_compared": 8,
+  "persistent_tables_unchanged": true,
+  "feedback_persistence": {
+    "records_before_cleanup": 4,
+    "rolled_back_records": 2,
+    "synthetic_fixture_cleaned": true
+  },
+  "feedback_features": [
+    "server_confirmed_immediate_display",
+    "five_second_visible_page_polling",
+    "latest_first",
+    "per_card_version_history",
+    "five_dimension_scores_and_deltas",
+    "candidate_status_not_effective_claim",
+    "rollback_audit_retained",
+    "server_derived_reviewer_and_utc"
+  ],
+  "business": {
+    "migrated_technical_library_files": 93,
+    "original_pdf_download": "passed",
+    "original_pdf_bytes": 467187,
+    "original_file_preview": "passed",
+    "existing_library_real_retrieval": "passed",
+    "retrieved_chunks": 10,
+    "migrated_report_characters": 15169,
+    "migrated_capability_versions": 6,
+    "new_cloud_report_characters": 19932,
+    "new_cloud_capability_versions": 6
+  },
+  "final_default_project_probe": {
+    "default_project_created_on_entry": true,
+    "run_deep_and_query_same_owned_project": true,
+    "real_query_completed": true,
+    "query_source": "agent",
+    "successful_model_calls": 1,
+    "manual_project_rename_keeps_identity": true,
+    "owned_projects": 1,
+    "cleanup": "passed"
+  },
+  "real_research": {
+    "run_id": "run-ed464daf-f4af-4e2e-b008-bc0b9bbfeea8",
+    "query_id": "query-afb597d2-066a-4e08-a6dd-a289106ca02f",
+    "report_characters": 19932,
+    "capability_versions": 6,
+    "completed_model_calls": 89,
+    "model_call_outcomes": [
+      {
+        "status": "completed",
+        "n": 89
+      },
+      {
+        "status": "failed",
+        "n": 1
+      }
+    ],
+    "s5_fallback_events": 0,
+    "previous_count_correction": {
+      "previous": 2,
+      "reason": "此前误对响应对象的两个字段计数；改为 versions 数组逐项核实。"
+    },
+    "formal_capabilities": 6,
+    "s5_to_formal_identity_and_scores": "passed"
+  },
+  "runtime_audit": {
+    "active": {
+      "agent_runs": 0,
+      "equipment_research_runs": 0,
+      "tasks": 0,
+      "acceptance_users": 0
+    },
+    "full_research_non_success_calls": [
+      {
+        "phase": "source_anchor_reasoning",
+        "status": "failed",
+        "error_type": "TimeoutError",
+        "duration_ms": 20000.62
+      }
+    ],
+    "effective_research_slots": 4
+  },
+  "remaining_ui_check": null,
+  "feedback_in_page_confirmation": {
+    "site": "https://www.deepquest.space",
+    "in_page_confirmation": true,
+    "cancel_preserved_status": true,
+    "confirmed_via_browser": true,
+    "rolled_back_label_visible": true,
+    "audit_retained": true,
+    "source_sha256": "66d1f7c6d38d315af752b7f8b054eec865f5af82bf932916c843092610b680c1",
+    "records": 4,
+    "rolled_back": 2,
+    "cancel_verified_by_server_count": true
+  },
+  "deferred": [
+    "协议",
+    "阿里云模型",
+    "MiniMax-M2.5开通",
+    "Dify",
+    "Notion",
+    "智谱外部知识库"
+  ],
+  "quality": {
+    "legacy_lint": 241,
+    "new_lint": 0
+  },
+  "limitations": [
+    "未验证反馈仅为记忆候选；不宣称已训练或自动改写生产评分。",
+    "完整研究有一次辅助来源请求20秒超时；最终交付成功，超时不计成功。",
+    "21项集成跳过与用户暂缓项不计通过。",
+    "测试通过不构成所有潜在漏洞均已排除的保证。"
+  ]
+}

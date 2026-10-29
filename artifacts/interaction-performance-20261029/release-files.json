@@ -1,0 +1,12 @@
+[
+  "web/src/apis/base.js",
+  "web/src/apis/equipment_api.js",
+  "web/src/utils/readRequestPool.js",
+  "web/src/utils/sharedPolling.js",
+  "web/src/components/AgentFilePreview.vue",
+  "web/src/components/shared/AsyncContentLoading.vue",
+  "web/src/views/equipment/EquipmentRunDetailView.vue",
+  "web/test/unit/equipmentRunDetailLoading.test.js",
+  "web/test/unit/readRequestPool.test.js",
+  "web/test/unit/sharedPolling.test.js"
+]

@@ -1,0 +1,9 @@
+backend/package/platform_core/agents/presets/deep_research.py
+backend/package/platform_core/agents/skills/buildin/equipment-deep-conversation/SKILL.md
+backend/package/platform_core/services/equipment_deep_integration_service.py
+backend/test/unit/services/test_equipment_deep_integration_service.py
+web/src/utils/equipmentDeepPortraitSections.js
+web/src/views/equipment/EquipmentDeepThinkingView.vue
+web/test/unit/equipmentDeepViewIntegration.test.js
+web/test/unit/equipmentRouteViewKey.test.js
+web/test/unit/equipmentTechnologyCabin.test.js

@@ -1,0 +1,21 @@
+{
+  "slug": "aminer-official",
+  "enabled": false,
+  "url": "https://mcp.aminer.cn/mcp",
+  "persisted_headers": null,
+  "duplicate_tools_disabled": [
+    "search_paper",
+    "search_paper_by_title",
+    "get_paper_detail",
+    "get_papers_info",
+    "get_paper_citations"
+  ],
+  "paper_primary": "REST",
+  "default_mcp_loading": "disabled to avoid irrelevant capabilities",
+  "http_connection_test": {
+    "success": true,
+    "message": "连接成功，共发现 26 个工具",
+    "tool_count": 26
+  },
+  "http_configuration_visible": "AMiner 学术数据"
+}

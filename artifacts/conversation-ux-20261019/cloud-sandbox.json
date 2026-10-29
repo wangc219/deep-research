@@ -1,0 +1,32 @@
+{
+  "sandbox_probes": [
+    {
+      "kind": "chat",
+      "thread_id": "a686d2aa-e693-49e2-941c-3bd37d5e7188",
+      "path": "/outputs/验收-717b7cfb/report.md",
+      "write_read": true,
+      "execute_relative_write": true,
+      "preview": true,
+      "edit_save": true,
+      "zip_download": true,
+      "unauthenticated_denied": true,
+      "traversal_denied": true,
+      "reprovision_persistence": true,
+      "branch_inherits_files": null
+    },
+    {
+      "kind": "deep",
+      "thread_id": "equipment-deep-3597cb2c-d368-419d-9391-da564b0cab94",
+      "path": "/outputs/验收-a8d9f937/report.md",
+      "write_read": true,
+      "execute_relative_write": true,
+      "preview": true,
+      "edit_save": true,
+      "zip_download": true,
+      "unauthenticated_denied": true,
+      "traversal_denied": true,
+      "reprovision_persistence": true,
+      "branch_inherits_files": true
+    }
+  ]
+}

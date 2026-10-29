@@ -241,7 +241,7 @@ def test_platform_task_preserves_selected_execution_contract(monkeypatch, tmp_pa
 
 
 def test_platform_failed_run_resume_reaches_domain_runner(monkeypatch, tmp_path):
-    """平台恢复动作必须真正启用领域检查点恢复，而不是从头运行。"""
+    """平台恢复动作允许按当前运行时重验检查点，而不是被配置升级卡死。"""
     observed = []
     (tmp_path / "outputs" / "equipment-research" / "resume-run").mkdir(parents=True)
     monkeypatch.setattr(task, "user_workdir_host_dir", lambda uid, workdir: tmp_path)
@@ -254,9 +254,18 @@ def test_platform_failed_run_resume_reaches_domain_runner(monkeypatch, tmp_path)
         def __init__(self, **_kwargs):
             pass
 
-        def run(self, *, resume=False, **_kwargs):
-            observed.append(resume)
-            return {"resumed": resume}
+        def run(
+            self,
+            *,
+            resume=False,
+            allow_resume_config_mismatch=False,
+            **_kwargs,
+        ):
+            observed.append((resume, allow_resume_config_mismatch))
+            return {
+                "resumed": resume,
+                "allowed_config_mismatch": allow_resume_config_mismatch,
+            }
 
     class KnowledgeToolFactory:
         def __call__(self, _view, _event_sink):
@@ -283,8 +292,11 @@ def test_platform_failed_run_resume_reaches_domain_runner(monkeypatch, tmp_path)
         },
     )
 
-    assert task._run_domain(run, resume=True)["result"] == {"resumed": True}
-    assert observed == [True]
+    assert task._run_domain(run, resume=True)["result"] == {
+        "resumed": True,
+        "allowed_config_mismatch": True,
+    }
+    assert observed == [(True, True)]
 
 
 def test_platform_resume_without_checkpoint_starts_fresh(monkeypatch, tmp_path):
@@ -300,9 +312,18 @@ def test_platform_resume_without_checkpoint_starts_fresh(monkeypatch, tmp_path):
         def __init__(self, **_kwargs):
             pass
 
-        def run(self, *, resume=False, **_kwargs):
-            observed.append(resume)
-            return {"resumed": resume}
+        def run(
+            self,
+            *,
+            resume=False,
+            allow_resume_config_mismatch=False,
+            **_kwargs,
+        ):
+            observed.append((resume, allow_resume_config_mismatch))
+            return {
+                "resumed": resume,
+                "allowed_config_mismatch": allow_resume_config_mismatch,
+            }
 
     class KnowledgeToolFactory:
         def __call__(self, _view, _event_sink):
@@ -329,8 +350,11 @@ def test_platform_resume_without_checkpoint_starts_fresh(monkeypatch, tmp_path):
         },
     )
 
-    assert task._run_domain(run, resume=True)["result"] == {"resumed": False}
-    assert observed == [False]
+    assert task._run_domain(run, resume=True)["result"] == {
+        "resumed": False,
+        "allowed_config_mismatch": False,
+    }
+    assert observed == [(False, False)]
 
 
 def test_managed_research_workdir_is_materialized_when_missing(monkeypatch, tmp_path):

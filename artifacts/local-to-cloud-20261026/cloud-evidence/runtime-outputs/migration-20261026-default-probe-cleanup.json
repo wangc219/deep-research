@@ -1,0 +1,11 @@
+{
+  "scoped_probe_cleanup": "passed",
+  "resources": {
+    "equipment_queries": 1,
+    "equipment_query_generations": 2,
+    "equipment_deep_sessions": 1,
+    "equipment_research_runs": 1,
+    "projects": 1
+  },
+  "customer_records_modified": 0
+}

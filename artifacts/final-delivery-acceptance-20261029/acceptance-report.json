@@ -1,0 +1,292 @@
+{
+  "suite": "final-delivery-acceptance-20261029",
+  "phases": {
+    "intelligent_dialogue": {
+      "status": "failed",
+      "gate": {
+        "public_ready": true,
+        "all_completed": false,
+        "all_substantive": true,
+        "rare_case_has_citation": false
+      },
+      "cases": [
+        {
+          "name": "general",
+          "thread_id": "9fbca40b-4eca-416c-b123-34870ae01e8e",
+          "run_id": "f16c0b97-7098-432a-85b3-d3c73cbda33b",
+          "status": "completed",
+          "elapsed_seconds": 24.362,
+          "output_characters": 559,
+          "has_citation": false,
+          "output_excerpt": "海水呈现蓝色是多重物理机制叠加的结果，其中选择性吸收是主因，瑞利散射和天空反射是次要因素。\n\n**选择性吸收（主因）**：水分子对红橙等长波可见光的吸收远强于蓝紫短波光。日光在穿透海水时，红光在浅层就被吸收殆尽，绿光、黄光依次衰减，而蓝光（及少量紫光、绿光）能穿透得更深。因此我们看到的“海水色”本质上是阳光穿透水体后剩余光的总和——剩余成分以蓝绿为主，所以水体越深、越纯净，蓝得越明显。这是吸收路径作用，不依赖水质浑浊度。\n\n**瑞利散射（次要）**：同样的物理机制也让天空呈蓝——大气分子对短波光散射更强。但就海水显色而言，水体中的瑞利散射贡献有限：它能增强水体内部蓝光的散射返回，使较浅的清水中也带有蓝色调，但不像吸收那样主导颜色。需要强调的是，海面下的蓝并非主要来自天空反射。\n\n**天空反射（辅助）**：海面像一面镜子，会反射头顶天空的颜色。风平浪静时，反射的蔚蓝天色叠加在海水自身颜色之上，会强化“蓝”的观感；而阴天、日落或水面波动破碎时，反射成分减少，海水更接近其本征的灰蓝或蓝绿色。\n\n综合来看，**吸收决定海水“自带”的蓝基调，散射增强浅水蓝度，天空反射调节我们最终看到的海面色**。三者角色不同：吸收是本质来源，散射是附加增强，反射是环境叠加。这也解释了大洋深水比近岸浊水更蓝、阴天海水发灰的现象。"
+        },
+        {
+          "name": "rare-equipment",
+          "thread_id": "fad44fe3-b593-48d4-80e5-9f17986aec17",
+          "run_id": "51f299b3-ecdc-45b8-9452-cc6cf04c9a8c",
+          "status": "completed",
+          "elapsed_seconds": 619.765,
+          "output_characters": 1146,
+          "has_citation": false,
+          "output_excerpt": "已完成委派研究并交付。探索员按约定执行：首轮 `parallel_research_search` 三渠道（Open WebSearch、SearXNG、AMiner）并行，随后仅对强相关论文取 AMiner 完整摘要。完整简报已写入 outputs 目录并展示。\n\n以下是核心结论摘要：\n\n**物理机制（可验证）**——\"质子化磁离子控交换偏置\"本质是：用电压把 H⁺ 注入 FM/AFM 界面或磁性层，通过改变界面磁耦合来控制交换偏置。三条直接证据链（均为完整摘要）：\n- Fe₃GeTe₂：质子插层增强 vdW 层间磁耦合，诱导出零场冷却交换偏置，最高 1.2 kOe（PRL 2020, 10.1103/physrevlett.125.047202）。\n- Fe₃GaTe₂：质子插层把 EB 最大调到 3859 Oe（低温），并实现正/负 EB 符号可逆（栅压依赖 H 吸附位点，DFT 推断）（PRB 2023, 10.1103/physrevb.107.l140409）。\n- FePS₃–Fe₅GeTe₂：固体质子栅极可重复电控 EB，阻塞温度 30–60 K（Nano Lett 2022, 10.1021/acs.nanolett.2c01370）。\n- 氧/氮/锂等非质子磁离子属于同一\"电压控离子\"大家庭，但机理介质不同（已区分)。\n\n**工程实现边界**：适用于低功耗可重构自旋电子（MRAM 参考层、磁传感器钉扎层、场可编程磁逻辑）；关键设计原则是\"自旋阀式解耦\"保护 EB 层、全固态电池式几何（Co/CoO 已证 1000 次可逆循环，但那是锂离子体系）。硬边界：质子化核心证据集中在 vdW 二维磁体或特定氧化物，非标准 CMOS 工艺；工作温度窗口窄（阻塞温度多为低温段）；离子迁移响应慢；高栅压插层长期可逆循环未证实；离子液体栅极不耐恶劣/真空环境。\n\n**TRL/缺口**：整体处于 TRL 2–3（单元物性演示，未到器件阵列/系统级）。明确缺口包括质子系可逆寿命未证、室温以上\"大 EB+质子可逆\"组合缺失、器件级 AMR/磁化翻转读出不足、正/负符号切换的位点级可控未实验证实。\n\n**来源纪律**：逐条注明了证据层级（完整摘要/部分摘要/题录）。PRM 2021 仅取得题录（返回无正文摘要），只作对照引用、未用于性能论断；PRB 2023 的吸附位点-磁构型为 DFT 理论推断，已明确标注，符合\"不以仅元数据当作论文结论\"的要求。\n\n证据覆盖缺口说明：三渠道并行命中以综述与氧化物/氮化物体系为主，质子化直接证据以 AMiner 命中为主；部分来源（如 Nature Materials 2018 质子泵范式）仅取得部分摘要，未声称阅读全文。"
+        },
+        {
+          "name": "long-taskbook",
+          "thread_id": "9782aa43-e533-47b6-a20f-5102424ba0ce",
+          "run_id": "0742a22e-d492-472b-a167-c0d4d89b9740",
+          "status": "failed",
+          "elapsed_seconds": 298.857,
+          "output_characters": 3553,
+          "has_citation": true,
+          "output_excerpt": "这份任务书与检索到的参考无关，我不需要外部学术证据。这是一个纯规划任务：将用户提供的任务书正文转化为一份90天研究推进方案。用户明确要求\"不得启动真实研究任务，只做规划\"。\n\n让我基于任务书内容直接构造规划方案。这是一个交付文档任务，我应该把它写成一份高质量的 Markdown 文件并保存到 outputs 目录。\n\n现在我将编写完整的90天研究推进方案文档。这是一份纯规划文档，不涉及实际研究执行。我需要系统性地覆盖任务书要求的所有维度：目标树、工作包、前后依赖、动态蜂群角色、每阶段输入输出、质量门、证据门、风险与停止条件。\n\n让我认真思考这份规划的架构：\n\n1. **目标树**：从总目标\"1万条真实技术→约100个核心专业方向\"逐层分解\n2. **工作包**：按任务书7大环节(或合并)划分为工作包，每个含输入/输出/工时\n3. **前后依赖**：工作包的依赖关系形成网络\n4. **动态蜂群角色**：结合多智能体编排，定义探索员、核查员、标注员等角色及动态调度逻辑\n5. **每阶段输入输出**：沿90天时间轴展开\n6. **质量门**：阶段性冻结/放行标准\n7. **证据门**：数据可追溯、可复算的验证点\n8. **风险与停止条件**：识别风险、设置停止条件与降级路径\n\n90天分解成三个30天阶段：海选建池→五维标注与筛选→图论评价与专业收敛输出。加上前后各留缓冲。\n\n我用文字详细编写这个方案。考虑到用户要求的是可执行规划，我会写成结构完整的 Markdown 文档并在聊天中给出核心摘要。\n\n---\n\n让我组织内容并写出文件。\n\n让我核验一下文件写入了正确的内容。\n\n文件已成功写入并核验通过。现在登记交付物。\n\n已将可执行的90天研究推进方案写入 `outputs/90天研究推进方案.md` 并在上方展示。以下为核心要点摘要。\n\n**方案性质**：这是一份规划文档，不含任何真实研究启动。所有内容以任务书（v4.4）为基准，按甲方\"1万条真实技术→约100个核心专业方向\"的规模目标设计，并明确要求执行前先确认验收边界。\n\n**方案骨架**（90天 = 3个30天神期）：\n\n- **目标树**：总目标G0（1万条→100个方向）→ 3个神期目标G1/G2/G3 → 12个二级目标S1—S12 → 工作包级三级目标。\n- **工作包**：10个——WP0准备确认、WP1建池、WP2数据治理冻结、WP3五维标注、WP4生态位筛选、WP5科学问题与专业映射、WP6三链图论、WP7四象限与交付，外加横向的WP-Q质量证据和WP-O编排基础设施。含输入/输出/工时预算/依赖。\n- **依赖**：关键路径贯穿全程（WP0→…→WP7）；并行机会点已在各工作包标注（如WP1按196槽并行、WP3按分片并行）。\n- **动态蜂群角色**：主智能体总控常驻，探索员（建池）、标注员（分片并行）、核查员（对抗式复核）、图论执行员按证据缺口动态生成与回收；含波次驱动、正交拆分、失败处理、容量弹性、收敛条件五条调度规则。\n- **阶段I/O**：三个神期的输入、处理、输出明细及时间轴图。\n- **质量门**：Q1/Q2/Q3三阶段冻结门，各含准入与放行标准。\n- **证据门**：E0—E5覆盖可追溯、理由留痕、分类一致、可复算、人工可校准、过程留痕；与质量门联合验收、互不替代。\n- **风险与停止**：10项风险登记（含7项可触发停止），9个停止条件按需求/数据/质量/约束/资源五类分组，并附7.3降级路径（回退冻结版本、补充来源、缩小范围并声明等）。\n\n**执行前置条件**：方案第10节列出了启动检查单，其中第一项就是\"甲方确认验收边界\"——这正对应任务书第七节建议向甲方确认的问题（\"1万→100个方向为主要验收目标，还是需同步完成代际规划、专业族与产品簇\"）。不确认则不启动。\n\n如需调整（例如将代际规划/产品簇纳入主计划而非扩展路径、调整90天为其他周期、或补充更细的批处理量级测算），我可以在此方案上继续修订。我明白了。上一轮方案中我在\"方案摘要/工时预算\"等处引用了具体的人·日工时数字，但这些数字并未有可追溯的学术来源支持——它们是我为规划构造的工程估算，而非来自已取得的证据。而我在学术检索中实际获得的唯一来源是 Rainey（2005）关于产品创新 NPD"
+        }
+      ],
+      "artifact_validation": {
+        "rare_report_characters": 5804,
+        "rare_report_doi_count": 12,
+        "rare_three_channel_declared": true,
+        "long_plan_characters": 12155,
+        "long_plan_required_sections": 6
+      },
+      "known_failure": "长任务书已生成完整方案文件，但 AgentRun 被学术引用质量门误判为 failed；罕见术语报告保留 DOI 来源但最终聊天摘要未渲染 <cite> URL。"
+    },
+    "dynamic_swarm_research": {
+      "status": "passed",
+      "gate": {
+        "completed": true,
+        "real_model_calls": true,
+        "report_substantive": true,
+        "capability_portraits": true,
+        "dynamic_swarm_events": true,
+        "source_query_lineage": true,
+        "projectless_creation": true
+      },
+      "source_query": {
+        "id": "query-55501dae-36cc-4c23-a42a-18701fa7c582",
+        "query": "新动力战术精打武器研究",
+        "supplemental_information": "从总体装备需求出发探索新型动力对射程、速度、持续机动、尺寸和成本边界的拓展。",
+        "status": "published"
+      },
+      "test_query_id": "query-62220825-35f2-4344-b255-ec7b5857a6a1",
+      "run_id": "run-d6ba69221c2941fb3e257c7f54a141b7",
+      "run_statuses": [
+        "resumed",
+        "synthesizing",
+        "reporting",
+        "completed"
+      ],
+      "elapsed_seconds": 419.842,
+      "report_characters": 21882,
+      "capability_version_count": 3,
+      "dynamic_event_count": 45,
+      "completed_model_calls": 58
+    },
+    "capability_feedback_and_deep_research": {
+      "status": "passed",
+      "gate": {
+        "feedback_processed": true,
+        "approval_bound_to_session": true,
+        "deep_completed": true,
+        "deep_substantive": true,
+        "implementation_specific": true,
+        "projectless_deep_session": true
+      },
+      "feedback_id": "feedback-0f12126c-39ae-4654-9f6c-29d4d9922edd",
+      "feedback_learning_status": "processed",
+      "feedback_memory_status": "candidate",
+      "feedback_effect_status": "pending_validation",
+      "session_id": "thinking-8f9708bb-5507-42bb-bb14-efc40baac9a6",
+      "deep_run_id": "97a4459d-fd6f-445d-ad83-7f51f786d7f3",
+      "elapsed_seconds": 501.172,
+      "output_characters": 857,
+      "output_excerpt": "已完成\"叠翼沉降阻滞雷\"可实施技术方案深化。以下是核心交付与关键发现。\n\n## 交付成果\n\n已生成《武器装备研发技术方案报告（叠翼沉降阻滞雷）》七章完整方案，写入 `outputs/叠翼沉降阻滞雷技术方案/` 目录，包含全部要求要素：系统组成（三大分系统+弹体结构树）、接口与数据流（含感知-决策-执行时序）、关键算法/控制环（触地判定、展开-喷放时序）、硬件选型边界、试验件分级（T1-T5）、验证指标、故障与降级策略（FMEA要点）、12个月里程碑（M0-M5）、30/60/90天启动包，以及能力—设计—技术—验证追溯矩阵。\n\n## 关键核验发现（改变方案的核心结论）\n\n经调研探索员核验外部文献，**画像中有两处时间参数假设被证伪**，方案已据此修正：\n\n**1. \"数毫秒SMA相变展开\"不现实**。文献证明热驱动SMA受热传导与冷却带宽限制——即便专门优化（导热弹性体夹层）最快弯曲响应仍需150ms，航天先例中SMA成熟角色是低冲击释放/锁死/阻尼（锁定力2000N级）而非毫秒快速展开。因此**主攻路线反转**为：**弹簧/卷簧储能毫秒级展开 + 惯性G-switch触地解锁 + 机械限位锁死**，SMA降级为低冲击解锁备选。展开窗口放宽为工程可达的 ≤200ms。\n\n**2. \"湿固化PU数十秒成膜\"无证据支撑**。湿固化是渐进、扩散受限过程，常规单组分表干为小时级。方案改为**双组分异氰酸酯快反应体系达秒级初黏为主**（初黏≤2s），湿固化PU保留为分钟级持久层（成熟材料，硅烷封端剪切强度17.73MPa量级），形成双介质分层。\n\n## 需由您/总体单位确认的关键参数（TBD）\n\n布撒平台具体型号与接口、单弹成本上限与批产规模、敌方主战车型标定、低温温区试验条件。这些不影响总体构型成立，但将决定弹径适配与介质配方标定，后续按工程假设推进并在试验中标定即可。\n\n报告已明确区分事实（文献与工程数据）、工程判断（指标目标值，需试验验证）与待验证假设（复合阻滞作战效果，须T5外场确认）。",
+      "resume_transitions": [
+        {
+          "run_id": "a1a8e3d1-1d5b-4775-ba54-97d350ae7580",
+          "status": "interrupted"
+        },
+        {
+          "run_id": "97a4459d-fd6f-445d-ad83-7f51f786d7f3",
+          "status": "completed",
+          "elapsed_seconds": 274.795
+        }
+      ],
+      "artifact_path": "2026-10-29_02-38-08_0634b530/outputs/叠翼沉降阻滞雷技术方案/《武器装备研发技术方案报告》叠翼沉降阻滞雷.md",
+      "artifact_characters": 16533,
+      "artifact_bytes": 36697
+    },
+    "wechat_article_download_and_ingest": {
+      "status": "passed",
+      "gate": {
+        "module_session": true,
+        "real_account_search": true,
+        "real_article_download": true,
+        "artifact_published": true,
+        "knowledge_indexed": true,
+        "vector_recall": true
+      },
+      "account": "央视新闻",
+      "article_title": "如果你有这10种特征，说明“心理柔韧度”超强",
+      "download_task_id": "batch_1793214742",
+      "kb_id": "kb_0fk8nozaxn",
+      "recall_characters": 2933
+    },
+    "wxchannels_transcription_and_ingest": {
+      "status": "passed",
+      "gate": {
+        "collector_ready": true,
+        "real_video_discovered": true,
+        "asr_completed": true,
+        "docx_valid": true,
+        "knowledge_indexed": true,
+        "vector_recall": true
+      },
+      "source_account": "央视新闻",
+      "source_title": "“小臭”“骨头”“皮皮”“艾迪”，四头功勋警犬光荣退役！愿你们卸甲安养，做幸福快乐的小狗～（总台记者 李健飞 李常明）",
+      "discovered_videos": 3,
+      "transcribe_task_id": "f2cbb6a2659c46a0adffdaa3074d51bf",
+      "docx_bytes": 37367,
+      "kb_id": "kb_zw2h794kl5",
+      "recall_characters": 640
+    },
+    "three_channel_retrieval_quality": {
+      "status": "passed",
+      "gate": {
+        "all_three_channels_attempted": true,
+        "at_least_one_provider_survived_each_case": true,
+        "top10_term_precision_at_least_0_8": true,
+        "hard_constraint_leaks_zero": true
+      },
+      "cases": 5,
+      "three_channels_attempted": 5,
+      "three_channels_completed": 4,
+      "unique_candidates": 76,
+      "cross_channel_matches": 6,
+      "top10_term_precision": 0.82,
+      "hard_constraint_leaks": 0,
+      "latency_seconds_range": [
+        1.36,
+        3.64
+      ],
+      "known_partial_failures": [
+        "Brave/Arxiv 偶发超时",
+        "Baidu 风控；其余通道继续返回"
+      ]
+    },
+    "platform_postflight": {
+      "status": "passed",
+      "gate": {
+        "public_ready": true,
+        "frontend_http_200": true,
+        "searxng_healthz": true,
+        "searxng_live_results": true,
+        "no_active_test_agents": true,
+        "no_active_test_research": true,
+        "no_active_test_tasks": true
+      },
+      "searxng_live_result_count": 20,
+      "active_test_agents": 0,
+      "active_test_research": 0,
+      "active_test_tasks": 0
+    }
+  },
+  "cleanup": {
+    "status": "passed",
+    "before": {
+      "users": 1,
+      "projects": 0,
+      "conversations": 0,
+      "agent_runs": 0,
+      "equipment_research_runs": 0,
+      "equipment_queries": 0,
+      "equipment_deep_sessions": 0,
+      "equipment_expert_feedback": 0,
+      "tasks": 2
+    },
+    "remaining": {
+      "users": 0,
+      "projects": 0,
+      "conversations": 0,
+      "agent_runs": 0,
+      "research_runs": 0,
+      "queries": 0,
+      "deep_sessions": 0,
+      "feedback": 0
+    },
+    "errors": []
+  },
+  "finished_at": 1793215222.815555,
+  "overall_status": "failed",
+  "cleanup_extended_verification": {
+    "status": "passed",
+    "test_uid": "qa_final_f6c07b5ebe36",
+    "database_remaining": {
+      "users": 0,
+      "projects": 0,
+      "conversations": 0,
+      "agent_runs": 0,
+      "research_runs": 0,
+      "queries": 0,
+      "deep_sessions": 0,
+      "feedback": 0,
+      "capability_versions": 0,
+      "tasks": 0,
+      "knowledge_bases": 0,
+      "knowledge_chunks": 0,
+      "knowledge_files": 0,
+      "knowledge_graph_entities": 0,
+      "knowledge_graph_triples": 0
+    },
+    "filesystem_matching_paths": 0,
+    "removed_additional_residuals": {
+      "derived_knowledge_tasks": 2,
+      "test_capability_baseline_versions": 3,
+      "skill_projection_directory": 1,
+      "skill_projection_lock": 1
+    },
+    "scope": "仅本轮唯一测试账号及精确测试资源 ID"
+  },
+  "administrator_preservation": {
+    "status": "passed",
+    "uid": "Hitsz504",
+    "role": "superadmin",
+    "is_deleted": 0,
+    "research_runs": 36,
+    "research_runs_completed": 30,
+    "research_runs_paused": 6,
+    "queries": 179,
+    "capability_versions": 47,
+    "runs_with_report_payload": 36,
+    "runs_with_report_path": 13
+  },
+  "final_system_verification": {
+    "status": "passed",
+    "public_readiness": {
+      "status": "ready",
+      "degraded": false,
+      "version": "0.7.3"
+    },
+    "frontend_http_status": 200,
+    "searxng": {
+      "container": "healthy",
+      "live_http_status": 200,
+      "live_results": 10,
+      "partial_failures": [
+        [
+          "brave",
+          "timeout"
+        ]
+      ]
+    },
+    "open_websearch": {
+      "container": "healthy",
+      "runtime": "ready",
+      "capability": "search",
+      "search_mode": "request"
+    },
+    "active_test_tasks": 0,
+    "api_worker_image": "sha256:d79547afde362583e192db5d46e76b6860ee08a763b4a7e3e81adb66276c56b4",
+    "searxng_image": "sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1"
+  },
+  "overall_reason": "除智能对话质量门外其余阶段及清理均通过；智能对话保留两项真实缺陷：长任务书 AgentRun 误判失败、罕见术语聊天摘要未渲染引用 URL。"
+}

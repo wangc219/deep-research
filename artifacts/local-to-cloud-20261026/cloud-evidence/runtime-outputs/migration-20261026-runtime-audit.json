@@ -1,0 +1,17 @@
+{
+  "active": {
+    "agent_runs": 0,
+    "equipment_research_runs": 0,
+    "tasks": 0,
+    "acceptance_users": 0
+  },
+  "full_research_non_success_calls": [
+    {
+      "phase": "source_anchor_reasoning",
+      "status": "failed",
+      "error_type": "TimeoutError",
+      "duration_ms": 20000.62
+    }
+  ],
+  "effective_research_slots": 4
+}

@@ -1,0 +1,71 @@
+{
+  "verified_at": "2026-10-15T21:28:44.711232+08:00",
+  "url": "https://www.deepquest.space",
+  "changes": [
+    "Navigation, projects and conversation history share a scroll area.",
+    "Brand and account controls remain fixed.",
+    "Complete local web source synchronized; production web image rebuilt and recreated."
+  ],
+  "source_parity": "rsync checksum dry run reports no differences, excluding dependencies, caches, dist and env files",
+  "production_static_parity": {
+    "local_files": 780,
+    "cloud_files": 781,
+    "only_local": [],
+    "only_cloud": [
+      "./50x.html"
+    ],
+    "different": [],
+    "identical": false,
+    "frontend_files_identical": true,
+    "extra_cloud_file_note": "50x.html is the base Nginx image error page; all 780 local frontend files match the deployed files byte for byte."
+  },
+  "checks": {
+    "lint": "passed",
+    "unit_tests": {
+      "passed": 545,
+      "failed": 0
+    },
+    "local_build": "passed",
+    "cloud_image_build": "passed",
+    "readiness": "ready; degraded=false"
+  },
+  "browser": [
+    {
+      "viewport": [
+        1362,
+        634
+      ],
+      "scroll_top": 719,
+      "max_scroll": 719,
+      "last_history_bottom": 548,
+      "account_top": 556,
+      "result": "passed; mouse wheel reaches final history; account stays fixed"
+    },
+    {
+      "viewport": [
+        390,
+        740
+      ],
+      "scroll_top": 773,
+      "max_scroll": 773,
+      "last_history_bottom": 674,
+      "account_top": 682,
+      "document_width": 390,
+      "result": "passed; scroll to both ends; no horizontal overflow"
+    },
+    {
+      "viewport": [
+        320,
+        568
+      ],
+      "last_history_bottom": 504,
+      "account_top": 510,
+      "document_width": 320,
+      "result": "passed; keyboard reaches final history; no horizontal overflow"
+    }
+  ],
+  "rollback": {
+    "image": "deepquest-web:before-sidebar-scroll-20261015",
+    "source": "/opt/deep-research/migration-20261015/frontend-before-scroll/web-source.tar.gz"
+  }
+}

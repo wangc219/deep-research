@@ -404,6 +404,70 @@ def _admitted_packet_snapshot(store: DomainStore) -> list[Any]:
     ]
 
 
+def _research_gap_agent_ids(
+    report_text: str,
+    selected_agent_ids: Sequence[str],
+) -> list[str]:
+    """Choose research roles only when the written report exposes a gap.
+
+    Evidence-card counts are not a publication rule: one strong source can be
+    sufficient, while ten generic sources may still leave the comparison
+    unanswered.  Recovery therefore reacts to the actual domestic/foreign
+    research prose and reopens the roles whose discovery phase invokes the
+    research-explorer search lane.
+    """
+
+    text = str(report_text or "")
+    selected = [str(agent_id) for agent_id in selected_agent_ids if str(agent_id).strip()]
+    status_match = re.search(
+        r"^###\s*（二）国内外现状\s*$\n(?P<body>.*?)(?=^###\s*（三）建设必要性分析\s*$)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    status_body = status_match.group("body") if status_match else ""
+
+    def subsection_needs_research(title_pattern: str) -> bool:
+        match = re.search(
+            rf"^####\s*(?:\d+[.、]?\s*)?{title_pattern}\s*$\n(?P<body>.*?)(?=^####\s*|\Z)",
+            status_body,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        if match is None:
+            return True
+        body = match.group("body").strip()
+        compact = re.sub(r"\s+", "", body)
+        # Length is only a guard for an empty/heading-only subsection, not an
+        # evidence quota. A concise paragraph with a concrete case and a
+        # bounded technical judgment is sufficient.
+        if len(compact) < 40:
+            return True
+        if re.search(r"公开资料尚不能支持.*(?:型号|状态|性能|判断|结论)", compact):
+            return True
+        has_case = bool(
+            re.search(
+                r"(?:[A-Za-z][A-Za-z0-9-]{2,}|[“《][^”》]{2,}[”》]|公司|研究院|实验室|军方|海军|项目|计划|型号)",
+                body,
+            )
+        )
+        has_research_judgment = any(
+            marker in body
+            for marker in ("试验", "部署", "服役", "研制", "原型", "样机", "技术", "参数", "性能", "证据")
+        )
+        return not (has_case and has_research_judgment)
+
+    if not (
+        subsection_needs_research("国外情况")
+        or subsection_needs_research(r"国内现状(?:（中国）|\(中国\))?")
+    ):
+        return []
+    preferred = [
+        agent_id
+        for agent_id in ("weapon_equipment", "operational_employment", "international_situation")
+        if agent_id in selected
+    ]
+    return preferred or selected
+
+
 _MILITARY_EFFECT_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("侦察预警", ("侦察", "预警", "探测", "感知", "态势")),
     ("指挥决策", ("指挥", "决策", "指控", "闭环", "c4isr")),
@@ -2326,20 +2390,35 @@ class DeepResearchRunner:
                 and is_quality_execution_profile_id(discovery_blueprint.get("execution_profile_id"))
                 and any(str(item.status).strip().lower() != "approved" for item in store.audits.values())
             )
-            if checkpoint.status == "completed" and (resume_config_changed or reopen_limited_quality_delivery):
-                checkpoint = replace(
-                    checkpoint,
-                    status="running",
-                    config_fingerprint=config_fingerprint,
-                    completed_task_ids=[
-                        task_id for task_id in checkpoint.completed_task_ids if task_id != FINALIZE_TASK_ID
-                    ],
-                    pending_task_ids=[FINALIZE_TASK_ID],
-                    task_statuses={
-                        **checkpoint.task_statuses,
-                        FINALIZE_TASK_ID: "pending",
-                    },
-                )
+            reopen_missing_delivery_artifacts = checkpoint.status == "completed" and (
+                not store.capability_images
+                or not store.reports
+                or not (workspace.run_dir / "report.md").is_file()
+                or not (workspace.run_dir / "capability_images.json").is_file()
+            )
+            completed_report_text = ""
+            if checkpoint.status == "completed":
+                try:
+                    completed_report_text = (workspace.run_dir / "report.md").read_text(encoding="utf-8")
+                except OSError:
+                    completed_report_text = ""
+            reopened_research_agent_ids = (
+                _research_gap_agent_ids(completed_report_text, selected_agent_ids)
+                if checkpoint.status == "completed"
+                and is_quality_execution_profile_id(discovery_blueprint.get("execution_profile_id"))
+                else []
+            )
+            reopen_research_gap_exploration = bool(reopened_research_agent_ids)
+            if checkpoint.status == "completed" and (
+                resume_config_changed
+                or reopen_limited_quality_delivery
+                or reopen_missing_delivery_artifacts
+                or reopen_research_gap_exploration
+            ):
+                checkpoint = replace(checkpoint, status="running", config_fingerprint=config_fingerprint)
+                for agent_id in reopened_research_agent_ids:
+                    checkpoint = self._set_task_status(checkpoint, _task_id(agent_id), "pending")
+                checkpoint = self._set_task_status(checkpoint, FINALIZE_TASK_ID, "pending")
             problem = replace(
                 recovered.problem,
                 supplemental_information=effective_supplemental_information,
@@ -2358,6 +2437,12 @@ class DeepResearchRunner:
                     "status": checkpoint.status,
                     "configuration_changed": resume_config_changed,
                     "limited_quality_delivery_reopened": (reopen_limited_quality_delivery),
+                    "missing_delivery_artifacts_reopened": (reopen_missing_delivery_artifacts),
+                    "research_gap_exploration_reopened": (reopen_research_gap_exploration),
+                    "reopened_agent_ids": reopened_research_agent_ids,
+                    "research_gap_trigger": (
+                        "domestic_or_foreign_report_content" if reopen_research_gap_exploration else ""
+                    ),
                     "evolution": evolution_snapshot,
                     "evolution_scope": evolution_scope,
                     "tenant_id": evolution_scope["tenant_id"],
@@ -8226,8 +8311,94 @@ def _report_evidence_catalog(
     priority_rows = [
         store.evidence[evidence_id] for evidence_id in decision_evidence_ids if evidence_id in store.evidence
     ]
+    def lane(item: EvidenceCard) -> str:
+        searchable = " ".join(
+            (
+                str(item.source_title),
+                str(item.claim),
+                str(item.excerpt),
+                str(item.source_url),
+            )
+        ).lower()
+        foreign_markers = (
+            "mq-4c",
+            "mq－4c",
+            "triton",
+            "sea hunter",
+            "darpa",
+            "美国",
+            "美军",
+            "美国海军",
+            "英国",
+            "澳大利亚",
+            "日本海上自卫队",
+            "北约",
+        )
+        domestic_markers = (
+            "中国",
+            "国内",
+            "工信部",
+            "海卫",
+            "v35a",
+            "珠海",
+            "国家海洋实验室",
+            "无人节点",
+            "中国船级社",
+            "江苏海事",
+            "自动化学报",
+        )
+        foreign_score = sum(marker in searchable for marker in foreign_markers)
+        domestic_score = sum(marker in searchable for marker in domestic_markers)
+        if foreign_score and foreign_score >= domestic_score:
+            return "foreign"
+        if domestic_score:
+            return "domestic"
+        return ""
+
+    def comparative_case_score(item: EvidenceCard) -> tuple[int, int, int]:
+        searchable = f"{item.source_title} {item.claim} {item.excerpt}".lower()
+        explicit_case_markers = (
+            "mq-4c",
+            "triton",
+            "sea hunter",
+            "海卫",
+            "v35a",
+            "江苏海事",
+            "无人节点",
+            "海试",
+            "样机",
+            "原型",
+            "部署",
+            "型号",
+            "项目",
+        )
+        try:
+            parsed = urlsplit(str(item.source_url))
+            page_level = int(parsed.path not in {"", "/"})
+        except ValueError:
+            page_level = 0
+        return (
+            sum(marker in searchable for marker in explicit_case_markers),
+            page_level,
+            min(len(str(item.claim)), 240),
+        )
+
+    # The Reporter catalog is deliberately compact, but a pure rank cut can
+    # push the only foreign or domestic comparison case just beyond the limit.
+    # Reserve one slot for each lane before filling with decision-linked and
+    # globally ranked evidence.  This keeps comparative research recoverable
+    # without increasing the prompt budget or inventing facts.
+    comparative_priority: list[str] = []
+    for lane_name in ("foreign", "domestic"):
+        matches = [item for item in ranked_rows if lane(item) == lane_name]
+        if matches:
+            comparative_priority.append(max(matches, key=comparative_case_score).evidence_id)
     rows = list(
-        dict.fromkeys([item.evidence_id for item in priority_rows] + [item.evidence_id for item in ranked_rows])
+        dict.fromkeys(
+            comparative_priority
+            + [item.evidence_id for item in priority_rows]
+            + [item.evidence_id for item in ranked_rows]
+        )
     )
     selected = [store.evidence[evidence_id] for evidence_id in rows[: max(1, limit)]]
     return [

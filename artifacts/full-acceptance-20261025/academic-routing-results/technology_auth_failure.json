@@ -1,0 +1,160 @@
+{
+  "case": "technology_auth_failure",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "围绕长序列推理显存瓶颈比较稀疏注意力与 FlashAttention 的解决路径，结合公开证据，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "FlashAttention memory efficient attention",
+        "mode": "topic",
+        "limit": 5
+      },
+      "id": "01a172c883ca2d276424de390a032f7e",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "sparse attention long sequence transformer",
+        "mode": "topic",
+        "limit": 5
+      },
+      "id": "01a172c883ca2d276424de390a032f7f",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention memory efficient exact attention scaling",
+        "required_terms": [
+          "FlashAttention",
+          "attention"
+        ]
+      },
+      "id": "01a172c891be299da2dcee69258e5ea7",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "sparse attention Sparse Transformer Longformer long sequence memory",
+        "required_terms": [
+          "sparse"
+        ]
+      },
+      "id": "01a172c891be299da2dcee69258e5ea8",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "Longformer efficient attention sparse window local",
+        "required_terms": [
+          "Longformer"
+        ]
+      },
+      "id": "01a172c89fd6b353710796404a97dbd6",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "Sparse Transformers generated long sequence attention",
+        "required_terms": [
+          "sparse"
+        ]
+      },
+      "id": "01a172c89fd6b353710796404a97dbd7",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "5",
+        "keyword": "FlashAttention memory efficient attention"
+      }
+    },
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "5",
+        "keyword": "sparse attention long sequence transformer"
+      }
+    }
+  ],
+  "model_requests": 4,
+  "web_calls": 4,
+  "cost_cents": 2,
+  "root_budget_shared": true,
+  "seconds": 26.18,
+  "answer": "网页检索一直返回同一 URL，有效证据不足。我说明这一证据缺口，仅凭借公开常识和已有的 FlashAttention 论文条目进行回答。\n\n基于公开证据说明当前状态：AMiner 学术检索鉴权失败、网页定向检索未能命中稀疏注意力文献的独立来源，证据覆盖有限。下面在 200 字内给出比较，并区分已核实事实与判断。\n\n---\n\n**长序列推理显存瓶颈的两条路径比较**\n\n**FlashAttention（精确注意力的 IO 优化）**：不改变注意力的数学结果，而是通过分块（tiling）与在线 softmax，避免把整个 S×S 注意力矩阵写入高带宽显存，内存从 O(N²) 降为 O(N)，且保持精确<cite source=\"https://arxiv.org/abs/2205.14135\" type=\"url\">1</cite>。本质是缓解\"访存瓶颈\"，加速比依赖硬件与工作负载。其局限是仍须计算全部注意力，长序列下计算量不降。\n\n**稀疏注意力（Sparse Transformer、Longformer 等）**：通过局部窗口/分块模式剪枝注意力图，把计算与内存都压至 O(N) 或近线性，从源头降低规模，但损失部分长程信息、改变精确性，需按任务取舍模式设计。\n\n**结论（判断）**：实际系统常以稀疏化降规模、FlashAttention 提速，二者互补而非互斥。\n\n---\n\n证据缺口说明：AMiner 鉴权失败未返回检索结果，网页搜索仅命中 FlashAttention 一篇原始论文，稀疏注意力（Longformer/Sparse Transformer）的具体数值与实验证据本轮未取得独立来源，相关表述应视为工程判断而非已核实事实。",
+  "tool_results": [
+    {
+      "status": "auth_failed",
+      "aminer_status": "auth_failed",
+      "query": "FlashAttention memory efficient attention",
+      "source": "aminer",
+      "results": [],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "检索未全部完成：AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限；结果仅包含已取得的论文证据",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "FlashAttention memory efficient attention",
+          "status": "auth_failed",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 0,
+      "omitted_candidates": 0,
+      "failed_endpoint": "search"
+    },
+    {
+      "status": "auth_failed",
+      "aminer_status": "auth_failed",
+      "query": "sparse attention long sequence transformer",
+      "source": "aminer",
+      "results": [],
+      "evidence_gaps": {
+        "metadata_only_ids": [],
+        "partial_abstract_ids": []
+      },
+      "evidence_notice": "若结果为 partial_abstract，写技术比较、方法或性能结论之前，必须调用 academic_get_papers(paper_ids=[拟引用论文的实际 id], full_abstract=True)；当前搜索返回的部分摘要不能代替这一步。仅列题录或参考文献关系时无需读取完整摘要。只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。引用直接复制结果中的 citation 标签，source 逐字使用 url，不自行替换成其他网站链接。仅列题录或参考文献关系也需引用对应结果；只写 AMiner 或论文 ID 不能代替可追溯来源。",
+      "cached": false,
+      "message": "检索未全部完成：AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限；结果仅包含已取得的论文证据",
+      "total": null,
+      "query_coverage": [
+        {
+          "query": "sparse attention long sequence transformer",
+          "status": "auth_failed",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "unsearched_queries": [],
+      "unique_candidates": 0,
+      "omitted_candidates": 0,
+      "failed_endpoint": "search"
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

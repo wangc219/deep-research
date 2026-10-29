@@ -1,0 +1,8 @@
+{
+  "backend/package/equipment_deep_research/query_library/generator.py": "3c5a9a5f182997c4f311226c5a463effe1148bb1a30c4ad7319473d558bc6a73",
+  "backend/package/equipment_deep_research/query_library/quality.py": "9cd7d634ed3502336ebdf08b7d1ed75540e6cb6ab17d34f03722de3aa6f1dc4e",
+  "backend/package/platform_core/services/equipment_query_task.py": "740962923464a75e533bf24ce994fc4fff4d3a67fbe3c34a651abade5dff2ab2",
+  "backend/package/platform_core/services/equipment_research_service.py": "c8d4c13be92922a33535eb419a1a15b70020f42ad39578a059f87c6a81be21b6",
+  "backend/package/platform_core/storage/postgres/models_equipment.py": "7e80ba80189f372ba9d133e993761fbb6ab26580f284eada1eb6fb67aaf8a2c4",
+  "backend/server/routers/equipment_router.py": "222d829dff3ce04fca6b12783e8879eb627207832cbd8b358ce8839bfbdc73b8"
+}

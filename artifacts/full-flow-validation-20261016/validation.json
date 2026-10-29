@@ -1,0 +1,380 @@
+{
+  "verified_at": "2026-10-16T02:22:56.424021+08:00",
+  "site": "https://www.deepquest.space",
+  "status": "deployed_and_verified",
+  "summary": "真实生成4条Query，选取1条完成整项研究，产出6张能力画像和1份报告；报告经浏览器下载，新画像的5栏材料与概述研究目标正确关联，真实模型按问题仅回复关联成功。相关修复已同步云端并通过最终检查。",
+  "fixes": [
+    {
+      "issue": "新建深研首轮流式回答被历史加载遮罩阻挡",
+      "change": "线程就绪后立即解除遮罩，再提交首轮问题；慢响应不能解除其他新线程的加载状态。"
+    },
+    {
+      "issue": "Query 筛选后旧详情可能与列表不一致",
+      "change": "切换筛选或翻页时清除失配详情；普通刷新保留用户主动选择的生成结果。"
+    },
+    {
+      "issue": "正式研究运行中长期停留在规划中",
+      "change": "线程事件运行期间每批至多100条写入 PostgreSQL，提交后发布 Redis；阶段按里程碑推进，终态拒绝迟到事件，完成不重复写入。"
+    },
+    {
+      "issue": "供应商在流片中重复上报累计用量，造成 Token 统计倍增",
+      "change": "同步与异步 Chat Completions 流将累计快照转为增量；状态隔离到每次请求，非流式与仅末片上报保持兼容。",
+      "live_evidence": {
+        "before": "同一请求在多个流片中重复上报 prompt_tokens=11",
+        "after": {
+          "status": "passed",
+          "response": "收到",
+          "usage": {
+            "input_tokens": 11,
+            "output_tokens": 1,
+            "total_tokens": 12,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          },
+          "chunk_count": 5
+        }
+      }
+    },
+    {
+      "issue": "本地一项已完成任务报告文件未位于当前身份工作目录",
+      "change": "从保留的迁移备份恢复86个原始文件；本地可读并已真实下载。云端原文件已存在，SHA-256一致，没有覆盖云端报告。"
+    },
+    {
+      "issue": "前端测试产生大量临时预构建缓存并占满 Docker 磁盘",
+      "change": "删除527个可重建 deps_temp 缓存，保留正式 deps；测试环境关闭不需要的依赖发现。释放约24GB，最终缓存约71MB。"
+    },
+    {
+      "issue": "服务错误提示要求普通用户运行运维命令；引用追问硬编码军事表述",
+      "change": "错误提示改为重试/联系管理员；引用追问围绕关键判断、适用条件与验证方式。"
+    },
+    {
+      "issue": "专注视图隐藏了探索分支来源和返回入口",
+      "change": "存在父分支或子分支时显示分支导航与继承说明，提供返回主线；真实浏览器创建分支和返回均通过。"
+    },
+    {
+      "issue": "S6画像已经落盘但最终产物计数未回写，报告撰写期间列表为空",
+      "change": "运行中任务可读取已授权目录中的现有画像；终态和历史投影保持原规则。真实PostgreSQL/HTTP验证所有者可见、其他用户不可见，且不修改任务生命周期。"
+    },
+    {
+      "issue": "供应商生成的对话标题可能包含完整推理块或残留的think结束标记",
+      "change": "标题生成时清理推理标记；聊天页显示已有标题时使用同一清理逻辑，保留用户已有长标题。5个专项用例和真实页面复测通过。"
+    }
+  ],
+  "checks": {
+    "frontend_full": {
+      "passed": 560,
+      "failed": 0,
+      "log": "frontend-tests-final.log"
+    },
+    "frontend_final_text_related": {
+      "passed": 37,
+      "failed": 0,
+      "log": "frontend-targeted-final.log"
+    },
+    "frontend_lint": "passed",
+    "frontend_production_build": "passed; existing large-chunk warnings",
+    "backend_related": {
+      "passed": 121,
+      "failed": 0,
+      "log": "backend-tests-final.log"
+    },
+    "provider_protocol_and_metering": {
+      "passed": 58,
+      "failed": 0,
+      "log": "provider-usage-tests.log"
+    },
+    "local_postgresql_and_http": {
+      "passed": 34,
+      "failed": 0,
+      "note": "31项 Query/Durable 基线，加含新阶段与取消竞态的13项复测；其中10项重叠。"
+    },
+    "cloud_regression_and_postgresql_http": {
+      "passed": 154,
+      "failed": 0,
+      "log": "cloud-tests.log"
+    },
+    "cloud_provider_protocol_and_metering": {
+      "passed": 58,
+      "failed": 0,
+      "log": "cloud-provider-tests.log"
+    },
+    "cloud_native_real_model": {
+      "passed": 1,
+      "failed": 0,
+      "worker_completion_seconds": 12,
+      "log": "cloud-native-live-model.log",
+      "metering": [
+        {
+          "surface": "深研对话",
+          "model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+          "input_tokens": 8586,
+          "output_tokens": 145,
+          "total_tokens": 8731,
+          "status": "completed",
+          "created_at": "2026-10-15 17:42:33.985770"
+        }
+      ]
+    },
+    "full_engine_http_local_and_cloud": {
+      "passed": true,
+      "model_mode": "deterministic, not a real-model report-quality claim",
+      "event_count": 88,
+      "report_bytes": 6778,
+      "cleanup": "isolated test identity/project/workspace only"
+    },
+    "authenticated_local_and_cloud_http": "13/13 current API endpoints returned HTTP 200",
+    "source_consistency": {
+      "different_files": [],
+      "compared_files": 1132
+    },
+    "deployment": {
+      "site": "https://www.deepquest.space",
+      "backend": {
+        "api": {
+          "matched": true,
+          "files": 3
+        },
+        "worker": {
+          "matched": true,
+          "files": 3
+        },
+        "equipment-worker": {
+          "matched": true,
+          "files": 3
+        },
+        "equipment-query-worker": {
+          "matched": true,
+          "files": 3
+        }
+      },
+      "frontend": {
+        "local_files": 781,
+        "cloud_files": 782,
+        "independent_dev_build_differences": 221,
+        "public_asset": "assets/EquipmentDeepThinkingView-BHIa8bHW.js",
+        "public_asset_sha256": "cd883812f86f68db5f1da54797d0c0cb8631be392ec8450d7b20b1dbed5e1c46",
+        "compiled_branch_navigation_marker": true,
+        "public_asset_hash_matches_container": true,
+        "compiled_followup_marker": true,
+        "source_parity": {
+          "different_files": [],
+          "compared_files": 1132
+        }
+      },
+      "public_readiness": {
+        "status": "ready",
+        "degraded": false,
+        "checks": {
+          "startup": {
+            "status": "ok"
+          },
+          "postgres": {
+            "status": "ok"
+          },
+          "redis": {
+            "status": "ok"
+          },
+          "worker": {
+            "status": "ok"
+          }
+        },
+        "components": {
+          "builtin_mcp_servers": {
+            "status": "ok",
+            "required": false
+          },
+          "builtin_skills": {
+            "status": "ok",
+            "required": true
+          },
+          "default_agents": {
+            "status": "ok",
+            "required": true
+          },
+          "knowledge_base": {
+            "status": "ok",
+            "required": true
+          },
+          "model_cache": {
+            "status": "ok",
+            "required": true
+          },
+          "model_providers": {
+            "status": "ok",
+            "required": true
+          },
+          "sandbox_provider": {
+            "status": "ok",
+            "required": true
+          },
+          "security_secrets": {
+            "status": "ok",
+            "required": true
+          }
+        },
+        "version": "0.7.3"
+      },
+      "public_home_http": 200
+    },
+    "cloud_final_regression": {
+      "passed": 214,
+      "failed": 0,
+      "log": "cloud-tests-final.log",
+      "note": "在最终镜像中一次完整执行，包含相关业务、协议计量、真实PostgreSQL/HTTP和取消终态竞态。"
+    },
+    "running_capability_visibility_local": {
+      "status": "passed",
+      "run_state": "reporting",
+      "stored_artifact_count": 0,
+      "owner_visible_cards": 1,
+      "other_user_visible_cards": 0,
+      "lifecycle_unchanged": true,
+      "real_postgresql_and_http": true
+    },
+    "running_capability_visibility_cloud": {
+      "status": "passed",
+      "run_state": "reporting",
+      "stored_artifact_count": 0,
+      "owner_visible_cards": 1,
+      "other_user_visible_cards": 0,
+      "lifecycle_unchanged": true,
+      "real_postgresql_and_http": true
+    },
+    "title_and_deep_final": {
+      "passed": 16,
+      "failed": 0,
+      "log": "title-and-deep-final.log"
+    }
+  },
+  "browser_checks": [
+    "真实生成4条 Query，49秒完成；查看详情，发布并创建真实研究任务，保留模型、Query版本与知识范围。",
+    "原生深研输入问题、创建会话、真实回答、同会话追问、刷新恢复、引用回答预填。",
+    "修复后的 Query 空筛选显示0条，旧详情标题不可见。",
+    "恢复历史报告正文并通过下载按钮实际下载 Markdown。",
+    "11个常用入口320px页面布局烟测，未发现横向溢出；390px深研与Query布局检查。管理配置未改写。",
+    "公网登录入口可访问；云端登录后的功能通过隔离用户真实HTTP及Worker验证，没有代用户接受登录协议。",
+    "390px导航抽屉可打开，Escape关闭后焦点回到菜单按钮；默认专注模式下创建分支后显示来源与返回入口。",
+    "新报告14个标题可见，实际下载95,831字节Markdown；新画像6个技术攻关入口可见；从新画像概述一键进入深研，5栏上下文正确绑定且真实回复关联成功。",
+    "已持久化的异常标题在最终页面显示为“功能连通性验收”，不再显示think推理标记；截图已更新。"
+  ],
+  "limits": [
+    "没有改写历史已保存的异常Token计量；新请求使用修正后的流式计量。",
+    "本轮验收聚焦核心研究闭环和相关交互，没有穷举所有可选外部服务、完整知识库上传解析、所有管理写操作或高并发负载。",
+    "真实长任务耗时2810.41秒（约47分钟），不把单元测试或确定性引擎耗时当作真实模型研究速度。",
+    "独立开发环境与生产环境的资源文件名/哈希有差异；已验证1132个源码文件一致，公网资源与生产容器哈希一致。",
+    "测试校验功能、权限、结构和交付链路，不等同于专家对报告事实与领域结论的审定；画像保留自身质量标注。"
+  ],
+  "deployment": {
+    "server": "49.232.128.56",
+    "remote_root": "/opt/deep-research",
+    "source_files_synced": 18,
+    "first_backup": "/var/backups/deepquest/full-flow-20261016T013422",
+    "final_backup": "/var/backups/deepquest/full-flow-20261016T020717",
+    "api_image": "sha256:8fc770fd81ac5c4b139a2998905b378bb0b067900cf488bf237d080fc9c833fe",
+    "web_image": "sha256:b2e2b32da3032541a9cd02bee91367e01d61876ba9ae50926294e14cd800a8af",
+    "database_schema_changed": false,
+    "existing_working_tree_preserved": true,
+    "git_commit_or_push": false,
+    "frontend_final_backup": "/var/backups/deepquest/full-flow-title-20261016T022115",
+    "business_data_migration": false,
+    "evidence_remote_path": "/opt/deep-research/artifacts/full-flow-validation-20261016/validation.json"
+  },
+  "screenshots": [
+    "query-filter-empty-desktop.png",
+    "report-restored.png",
+    "deep-fixed-desktop.png",
+    "deep-mobile.png",
+    "deep-branch-navigation.png",
+    "new-report-completed.png",
+    "linked-deep-success.png",
+    "query-filter-empty-mobile.png"
+  ],
+  "core_workflow_acceptance": {
+    "passed": true,
+    "scope": "需求 Query → 真实完整研究 → 能力画像 → 报告正文与下载 → 画像栏目关联深研 → 真实追问与分支",
+    "all_platform_features_exhaustively_tested": false
+  },
+  "real_model_full_workflow": {
+    "status": "passed",
+    "run_id": "run-9b0ef94fe8359ab0b12c845c0ca26623",
+    "run_status": "completed",
+    "source_query": {
+      "version": 2,
+      "query_id": "query-2ba184a4-9da9-46ff-89b8-2b13e51cbee6"
+    },
+    "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+    "event_count": 925,
+    "event_sequences": "contiguous_unique",
+    "formal_capability_versions": 6,
+    "report_bytes": 95807,
+    "report_sha256": "e7c69dcb56ebac3ccebbdcdb84bff0a235c6325102f9d86414300e810a73d099",
+    "artifacts": {
+      "reports": 1,
+      "sources": 3,
+      "evidence": 4,
+      "capabilities": 6,
+      "winning_steps": 3
+    },
+    "http_endpoints": {
+      "report": {
+        "http_status": 200,
+        "bytes": 95807
+      },
+      "evidence": {
+        "http_status": 200,
+        "bytes": 3607
+      },
+      "interactions": {
+        "http_status": 200,
+        "bytes": 444545
+      },
+      "winning-mechanism": {
+        "http_status": 200,
+        "bytes": 1352227
+      },
+      "capability-versions": {
+        "http_status": 200,
+        "bytes": 563302
+      }
+    },
+    "deep_context_options_http": 200,
+    "durable_task_statuses": [
+      "success"
+    ],
+    "result_status": "completed",
+    "timing": {
+      "status": "success",
+      "started_at_utc": "2026-10-15 17:17:10.906406",
+      "completed_at_utc": "2026-10-15 18:04:01.311488",
+      "elapsed_seconds": 2810.41
+    },
+    "environment": "本地完整服务栈，真实模型、PostgreSQL和Worker；云端另有真实原生深研与完整引擎HTTP验收。",
+    "execution_boundary": "该长任务在实时事件修复前启动并由原Worker完成；新事件桥接由慢执行器、真实PostgreSQL和云端完整领域引擎验证。本地Worker已在任务完成后重启加载全部修复。"
+  },
+  "linked_portrait_real_model": {
+    "status": "passed",
+    "session_id": "thinking-1c629b81-5849-40ce-92ed-36de62cb5cf0",
+    "run_id": "run-9b0ef94fe8359ab0b12c845c0ca26623",
+    "capability_card_key": "s6-card-13ad7f6e0e476e59401c",
+    "bound_section": "概述",
+    "bound_portrait_modules": 5,
+    "runtime": "agent",
+    "assistant_acknowledgement_only": true,
+    "provider_usage": {
+      "input_tokens": 14715,
+      "output_tokens": 2,
+      "total_tokens": 14717
+    },
+    "usage_matches_model_call_ledger": true
+  },
+  "downloaded_new_report": {
+    "path": "/Users/wangchen/Downloads/极端灾害场景自组网通信终端韧性连接研究-run-9b0ef94fe8359ab0b12c845c0ca26623.md",
+    "bytes": 95831,
+    "sha256": "ac1fcbab4bff78a989d8330e7d79393c1bb643a82e875c2869b5944d1e6bedca",
+    "note": "前端规范化后的下载副本；原始报告SHA-256记录在real_model_full_workflow。"
+  }
+}

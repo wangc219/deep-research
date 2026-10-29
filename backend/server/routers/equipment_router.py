@@ -727,10 +727,11 @@ async def delete_query_generation(
 @equipment.get("/capabilities")
 async def list_capabilities(
     compact: bool = False,
+    run_id: str | None = None,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await svc.list_capabilities(db=db, user=current_user, compact=compact)
+    return await svc.list_capabilities(db=db, user=current_user, compact=compact, run_id=run_id)
 
 
 @equipment.get("/runs/{run_id}/capability-versions")

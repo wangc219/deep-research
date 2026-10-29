@@ -1,0 +1,11 @@
+--- agents/middlewares/academic_evidence.py before
++++ agents/middlewares/academic_evidence.py
+@@ -80,7 +80,7 @@
+                 previous = papers.get(url)
+                 if previous is None or item.get("content_level") == "abstract":
+                     papers[url] = item
+-                if name == "academic_search" and arguments.get("mode", "topic") == "topic":
++                if name == "academic_search" and arguments.get("mode", "topic") in {"topic", "semantic"}:
+                     topic_papers.add(item["id"])
+         if not papers:
+             return None

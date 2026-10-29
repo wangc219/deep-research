@@ -7,6 +7,10 @@ const LoginPage = {
     _eventTimer: null,
     _accounts: [],
 
+    canManageAccounts() {
+        return window.__WECHAT_MP_CAN_MANAGE_ACCOUNTS__ === true;
+    },
+
     formatDate(timestamp) {
         return timestamp
             ? new Date(timestamp * 1000).toLocaleString('zh-CN')
@@ -34,19 +38,20 @@ const LoginPage = {
     },
 
     render() {
+        const canManage = this.canManageAccounts();
         return `
             <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
                 <div>
                     <h2 class="page-title" style="margin: 0;">微信读书账号池</h2>
-                    <p class="page-description" style="margin-top: 6px; color: var(--text-secondary);">管理您的微信读书账号池与登录状态</p>
+                    <p class="page-description" style="margin-top: 6px; color: var(--text-secondary);">平台共享账号池，所有用户自动使用可用账号${canManage ? '；仅管理员可维护凭据' : ''}</p>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-secondary" onclick="LoginPage.loadAccounts()" style="font-size: 0.85rem; padding: 8px 14px; display: flex; align-items: center; gap: 6px;">
                         🔄 刷新列表
                     </button>
-                    <button class="btn btn-primary" id="btn-add-account" onclick="LoginPage.startLogin()" style="font-weight: 600; font-size: 0.85rem; padding: 8px 18px; display: flex; align-items: center; gap: 6px;">
+                    ${canManage ? `<button class="btn btn-primary" id="btn-add-account" onclick="LoginPage.startLogin()" style="font-weight: 600; font-size: 0.85rem; padding: 8px 18px; display: flex; align-items: center; gap: 6px;">
                         ➕ 扫码添加账号
-                    </button>
+                    </button>` : ''}
                 </div>
             </div>
 
@@ -54,7 +59,7 @@ const LoginPage = {
             <div id="pool-accounts-grid" class="animate-fade-in"></div>
 
             <!-- 独立扫码模态弹窗 (Modal)，悬浮全屏居中展示，完全不影响页面任何已有排版 -->
-            <div id="weread-qr-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 20px;">
+            ${canManage ? `<div id="weread-qr-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 20px;">
                 <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e0e0e0); border-radius: 16px; width: 100%; max-width: 380px; padding: 24px; text-align: center; box-shadow: 0 20px 45px rgba(0,0,0,0.3); position: relative;">
                     <button onclick="LoginPage.cancelLogin()" style="position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 1.25rem; color: var(--text-muted, #999); cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1;" title="关闭">✕</button>
                     <h3 style="margin: 0 0 6px; font-size: 1.15rem; color: var(--text-primary); font-weight: 700;">📱 微信读书扫码登录</h3>
@@ -72,13 +77,13 @@ const LoginPage = {
                         <button class="btn btn-secondary btn-sm" onclick="LoginPage.cancelLogin()" style="padding: 6px 18px;">取消</button>
                     </div>
                 </div>
-            </div>
+            </div>` : ''}
         `;
     },
 
     async init() {
         await this.loadAccounts();
-        this._startEventPolling();
+        if (this.canManageAccounts()) this._startEventPolling();
     },
 
     destroy() {
@@ -149,16 +154,19 @@ const LoginPage = {
         if (!grid) return;
 
         if (accounts.length === 0) {
+            const canManage = this.canManageAccounts();
             grid.innerHTML = `
                 <div class="empty-state" style="text-align: center; padding: 60px 24px; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border-color);">
                     <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.6;">📖</div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 8px;">微信读书账号池为空</h3>
+                    <h3 style="color: var(--text-primary); margin-bottom: 8px;">共享账号池暂无可用账号</h3>
                     <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.6;">
-                        点击右上角「➕ 扫码添加账号」，使用手机微信扫码授权登录，系统将自动录入并静默维护换票凭证。
+                        ${canManage
+                            ? '点击右上角「➕ 扫码添加账号」，使用手机微信扫码授权登录，系统将自动录入并静默维护换票凭证。'
+                            : '请联系平台管理员添加微信读书账号；添加后所有用户均可自动使用，无需分别扫码。'}
                     </p>
-                    <button class="btn btn-primary" onclick="LoginPage.startLogin()" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 20px;">
+                    ${canManage ? `<button class="btn btn-primary" onclick="LoginPage.startLogin()" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 20px;">
                         ➕ 立即扫码添加
-                    </button>
+                    </button>` : ''}
                 </div>
             `;
             return;
@@ -176,6 +184,7 @@ const LoginPage = {
         const statusText = this.statusLabel(acc.status);
         const isKicked = acc.status === 'banned' || acc.status === 'invalid';
         const initial = (acc.nickname || '?').charAt(0);
+        const canManage = this.canManageAccounts();
 
         return `
             <div style="
@@ -221,7 +230,7 @@ const LoginPage = {
 
                 ${acc.last_error ? `<div style="font-size: 0.78rem; color: var(--error); margin-bottom: 10px; word-break: break-all;">最近异常: ${this._esc(acc.last_error)}</div>` : ''}
 
-                <!-- 操作按钮 -->
+                ${canManage ? `<!-- 操作按钮 -->
                 <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
                     <button class="btn btn-secondary btn-sm" onclick="LoginPage.refreshAccount('${acc.id}')" style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px;" title="使用 RefreshToken 立即重新换取最新 AccessToken">
                         🔄 换新 Token
@@ -235,7 +244,7 @@ const LoginPage = {
                     <button class="btn btn-danger btn-sm" onclick="LoginPage.removeAccount('${acc.id}')" style="font-size: 0.8rem; margin-left: auto;">
                         删除
                     </button>
-                </div>
+                </div>` : ''}
             </div>
         `;
     },
@@ -248,6 +257,7 @@ const LoginPage = {
     },
 
     async refreshAccount(id) {
+        if (!this.canManageAccounts()) return;
         Toast.info('正在为账号执行原生算法静默换票...');
         try {
             const data = await API.post(`/api/wechat-mp/app/api/account-pool/${id}/refresh`);
@@ -263,6 +273,7 @@ const LoginPage = {
     },
 
     async verifyAccount(id) {
+        if (!this.canManageAccounts()) return;
         Toast.info('正在验证账号有效性...');
         try {
             const data = await API.post(`/api/wechat-mp/app/api/account-pool/${id}/verify`);
@@ -278,6 +289,7 @@ const LoginPage = {
     },
 
     async startLogin() {
+        if (!this.canManageAccounts()) return;
         const btn = document.getElementById('btn-add-account');
         if (btn) {
             btn.disabled = true;
@@ -407,6 +419,7 @@ const LoginPage = {
     },
 
     async cancelLogin() {
+        if (!this.canManageAccounts()) return;
         try {
             await API.auth.cancel();
             Toast.info('已关闭登录弹窗');
@@ -425,6 +438,7 @@ const LoginPage = {
     },
 
     async removeAccount(id) {
+        if (!this.canManageAccounts()) return;
         const acc = (this._accounts || []).find(a => a.id === id);
         const name = acc ? (acc.nickname || '该账号') : '该账号';
         Modal.confirm('删除账号', `确定要从账号池中删除「${name}」吗？`, async () => {

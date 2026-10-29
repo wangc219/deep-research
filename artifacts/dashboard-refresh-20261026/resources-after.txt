@@ -1,0 +1,20 @@
+deepquest-web-1 0.00% 8.453MiB / 7.44GiB
+deepquest-equipment-worker-1 0.09% 97.89MiB / 7.44GiB
+deepquest-equipment-query-worker-1 0.16% 89.84MiB / 7.44GiB
+deepquest-api-1 36.02% 1.061GiB / 7.44GiB
+deepquest-worker-1 101.52% 461.6MiB / 7.44GiB
+deepquest-sandbox-provisioner-1 0.12% 16.27MiB / 7.44GiB
+deepquest-milvus-1 4.69% 210MiB / 7.44GiB
+deepquest-document-research-1 34.35% 16.89MiB / 7.44GiB
+deepquest-document-websearch-1 0.00% 7.719MiB / 7.44GiB
+deepquest-open-websearch-1 0.00% 132.2MiB / 7.44GiB
+deepquest-postgres-1 10.92% 168.9MiB / 7.44GiB
+deepquest-redis-1 0.68% 14.05MiB / 7.44GiB
+deepquest-graph-1 0.42% 308.4MiB / 7.44GiB
+deepquest-minio-1 0.01% 91.75MiB / 7.44GiB
+deepquest-etcd-1 0.43% 43.08MiB / 7.44GiB
+               total        used        free      shared  buff/cache   available
+Mem:            7618        3905        1107          69        2983        3712
+Swap:           2047        1188         859
+/deepquest-api-1 false 0
+/deepquest-worker-1 false 0

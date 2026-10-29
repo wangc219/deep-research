@@ -140,12 +140,40 @@ def antibot_delay(result: dict) -> float:
         return 300.0
 
 
-def coordinated_search(provider: str, arguments: dict, call: Callable[[], dict]) -> dict:
+def transient_engine_delay(result: dict) -> float:
+    """短暂冷却超时或网络故障引擎，避免并行子任务反复等待同一坏出口。"""
+
+    detail = " ".join(str(result.get(field) or "") for field in ("error", "message", "code")).casefold()
+    if any(
+        marker in detail
+        for marker in (
+            "timeout",
+            "timed out",
+            "network is unreachable",
+            "connection refused",
+            "connection reset",
+            "name or service not known",
+            "temporary failure in name resolution",
+            "http error 403",
+            "http error 422",
+        )
+    ):
+        return max(30.0, float(os.getenv("WEB_SEARCH_ENGINE_FAILURE_COOLDOWN_SECONDS", "180")))
+    return 0.0
+
+
+def coordinated_search(
+    provider: str,
+    arguments: dict,
+    call: Callable[[], dict],
+    *,
+    wait_seconds: float | None = None,
+) -> dict:
     """对供应商的一次原始调用执行跨进程排队、合并和有界限流恢复。"""
     config = RedisConfig.from_env(socket_timeout=3.0, socket_connect_timeout=3.0)
     try:
         with sync_redis_client(config, ping=False) as redis:
-            return SearchCoordinator(redis).run(provider, arguments, call)
+            return SearchCoordinator(redis, wait_seconds=wait_seconds).run(provider, arguments, call)
     except RedisError:
         # 共享协调不可用时不放行请求，避免所有 worker 同时冲击公网。
         return {"results": [], "status": "unavailable", "error": "公开检索共享调度暂不可用"}
@@ -164,11 +192,17 @@ class SearchCoordinator:
 
     def run(self, provider: str, arguments: dict, call: Callable[[], dict]) -> dict:
         """同查询仅发一次请求；限流时最多等候冷却后恢复一次。"""
+        endpoint = os.getenv("SEARXNG_URL", "") if provider == "searxng" else os.getenv("OPEN_WEBSEARCH_URL", "")
+        engines = (
+            arguments.get("engines")
+            if provider == "searxng"
+            else os.getenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")
+        )
         identity = {
             "provider": provider,
             "arguments": arguments,
-            "engines": os.getenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo"),
-            "endpoint": os.getenv("OPEN_WEBSEARCH_URL", ""),
+            "engines": engines,
+            "endpoint": endpoint,
             "credentials": hashlib.sha256(
                 (os.getenv("DOUBAO_SEARCH_API_KEY", "") + "|" + os.getenv("TAVILY_API_KEY", "")).encode()
             ).hexdigest(),
@@ -199,9 +233,16 @@ class SearchCoordinator:
             if cached:
                 return with_wait({**json.loads(cached), "cache_hit": True, "shared_cache_hit": True})
             # daemon 与公网兜底访问同一组搜索引擎，必须共用一个出口池。
-            channel = "public-web" if provider in {"open-websearch", "public"} else provider
+            if provider in {"open-websearch", "public"}:
+                channel = "public-web:open"
+            elif provider == "searxng":
+                channel = "public-web:searxng"
+            else:
+                channel = provider
             key = f"{self.prefix}:channel:{channel}"
-            interval = float(os.getenv("WEB_SEARCH_MIN_INTERVAL_SECONDS", "1.5" if channel == "public-web" else "0.3"))
+            interval = float(
+                os.getenv("WEB_SEARCH_MIN_INTERVAL_SECONDS", "1.5" if channel.startswith("public-web:") else "0.3")
+            )
             for attempt in range(2):
                 while True:
                     delay = self.redis.eval(_ACQUIRE, 1, key, token, 180000, max(0, int(interval * 1000))) / 1000
@@ -220,7 +261,11 @@ class SearchCoordinator:
                         result = search_failure(exc)
                     for failure in result.get("partial_failures") or []:
                         if isinstance(failure, dict) and failure.get("engine"):
-                            engine_delay = antibot_delay(failure) or rate_limit_delay(failure)
+                            engine_delay = (
+                                antibot_delay(failure)
+                                or rate_limit_delay(failure)
+                                or transient_engine_delay(failure)
+                            )
                             if engine_delay:
                                 self.cool_engine(failure["engine"], engine_delay)
                     # 挑战页面不会靠同一次工具调用内的等待恢复；直接交给其他证据渠道。

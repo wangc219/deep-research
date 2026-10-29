@@ -306,7 +306,7 @@ async def test_default_thread_creates_implicit_project_with_exclusive_binding(te
     assert user_workdir_host_dir(str(row["uid"]), str(row["workdir_path"])).is_dir()
 
 
-async def test_equipment_default_project_is_created_once_for_empty_user(test_client):
+async def test_project_listing_does_not_create_default_project_for_empty_user(test_client):
     engine = create_async_engine(os.environ["POSTGRES_URL"])
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     owner_uid = f"pytest-equipment-default-{uuid.uuid4()}"
@@ -328,8 +328,7 @@ async def test_equipment_default_project_is_created_once_for_empty_user(test_cli
 
         before = await test_client.get("/api/projects", headers=headers)
         assert before.status_code == 200, before.text
-        assert len(before.json()) == 1
-        initial_project_id = before.json()[0]["id"]
+        assert before.json() == []
 
         first = await test_client.post("/api/projects/defaults/equipment", headers=headers)
         second = await test_client.post("/api/projects/defaults/equipment", headers=headers)
@@ -337,7 +336,7 @@ async def test_equipment_default_project_is_created_once_for_empty_user(test_cli
         assert first.status_code == 200, first.text
         assert second.status_code == 200, second.text
         project = first.json()
-        assert second.json()["id"] == project["id"] == initial_project_id
+        assert second.json()["id"] == project["id"]
         assert project["uid"] == owner_uid
         assert project["name"] == f"装备深研工作台 · {owner_uid}"
         assert project["selection_status"] == "selectable"
@@ -351,8 +350,8 @@ async def test_equipment_default_project_is_created_once_for_empty_user(test_cli
         assert removed.status_code == 200, removed.text
         restored = await test_client.get("/api/projects", headers=headers)
         assert restored.status_code == 200, restored.text
-        assert len(restored.json()) == 1
-        replacement = restored.json()[0]
+        assert restored.json() == []
+        replacement = (await test_client.post("/api/projects/defaults/equipment", headers=headers)).json()
         assert replacement["id"] != project["id"]
         assert replacement["name"] == project["name"]
         concurrent = await asyncio.gather(

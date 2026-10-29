@@ -1,0 +1,31 @@
+{
+  "tables": 63,
+  "objects": 202,
+  "collections": [
+    {
+      "database": "yuxi",
+      "name": "kb_zcfj9omke9",
+      "rows": 91
+    },
+    {
+      "database": "yuxi",
+      "name": "kb_zcfj9omke9_triple",
+      "rows": 14945
+    },
+    {
+      "database": "yuxi",
+      "name": "kb_zcfj9omke9_entity",
+      "rows": 17646
+    },
+    {
+      "database": "deep_research",
+      "name": "kb_zcfj9omke9",
+      "rows": 2384
+    },
+    {
+      "database": "deep_research",
+      "name": "kb_uty6d7dv8e",
+      "rows": 3
+    }
+  ]
+}

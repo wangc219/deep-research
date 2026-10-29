@@ -3556,6 +3556,71 @@ def _report_project_argument_content_issues(text: str) -> list[str]:
         )
     ):
         issues.append("国内外现状需分别给出国外和中国案例，并覆盖问题解决、技术途径、指标与证据边界")
+    status_subsections = {
+        "国外情况": re.search(
+            r"^####\s*(?:\d+[.、]?\s*)?国外情况\s*$\n(?P<body>.*?)(?=^####\s*|\Z)",
+            status_body,
+            flags=re.MULTILINE | re.DOTALL,
+        ),
+        "国内现状（中国）": re.search(
+            r"^####\s*(?:\d+[.、]?\s*)?国内现状(?:（中国）|\(中国\))?\s*$\n(?P<body>.*?)(?=^####\s*|\Z)",
+            status_body,
+            flags=re.MULTILINE | re.DOTALL,
+        ),
+    }
+    for subsection_name, subsection_match in status_subsections.items():
+        subsection_body = subsection_match.group("body").strip() if subsection_match else ""
+        compact_body = re.sub(r"\s+", "", subsection_body)
+        placeholder_only = bool(
+            re.search(r"公开资料尚不能支持.*(?:型号|状态|性能|判断)", compact_body)
+            and len(compact_body) < 220
+        )
+        concrete_case = bool(
+            re.search(
+                r"(?:[A-Za-z][A-Za-z0-9-]{2,}|[“《][^”》]{2,}[”》]|公司|研究院|实验室|军方|海军|空军|项目|计划|型号)",
+                subsection_body,
+            )
+        )
+        public_status = has_any(
+            "试验",
+            "演示",
+            "部署",
+            "服役",
+            "列装",
+            "研制",
+            "合同",
+            "原型",
+            "样机",
+            "公开",
+            body=subsection_body,
+        )
+        technical_judgment = has_any(
+            "参数",
+            "性能",
+            "技术",
+            "传感器",
+            "载荷",
+            "链路",
+            "航程",
+            "续航",
+            "探测",
+            "精度",
+            body=subsection_body,
+        )
+        if (
+            len(compact_body) < 120
+            or placeholder_only
+            or not concrete_case
+            or not public_status
+            or not technical_judgment
+        ):
+            issues.append(
+                f"{subsection_name}调研内容不足：至少给出一个具体装备/项目/机构、公开状态、技术或参数判断及证据边界，不能使用占位句"
+            )
+    raw_card_dump_count = len(re.findall(r"能力分类\s*[：:]\s*主\s*[：:]", text))
+    raw_background_dump_count = len(re.findall(r"概述\s*[：:]\s*当前背景\s*[：:]", text))
+    if raw_card_dump_count or raw_background_dump_count:
+        issues.append("正文直接倾倒能力画像内部字段；须删除“能力分类/主/辅/概述/当前背景”等标签并归纳为2至4个连贯论点")
     if not all(
         term in text
         for term in (

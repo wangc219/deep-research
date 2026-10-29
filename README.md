@@ -8,6 +8,19 @@
 
 架构采用“产品一体化、领域高内聚、协作低耦合”：用户看到一条连续的 Query → 研究 → 证据 → 能力画像 → 深研 → 报告链路；代码内部通过稳定端口和事件契约隔离平台通用能力与装备研究规则。详见 [一体化系统架构](docs/ARCHITECTURE.md)。
 
+## 当前版本（2026-10-29）
+
+当前代码包含通用 Agent Harness、装备研究主链、自适应公开检索、公众号与视频号采集，以及近期页面加载和云端运行优化。2026-10-29 已将生产服务器项目回同步至本地，按 SHA-256 核对 3,461 个文件；同步范围、备份和当时的测试结果见 [服务器回同步记录](artifacts/server-to-local-sync-20261029/report.json)。该记录是同步时的快照，之后的本地改动以 Git 提交和对应验证结果为准。
+
+- **检索融合**：SearXNG、Open Websearch 和已配置的供应商共用检索入口，支持关键词锚点、去重、跨 worker 缓存、并发控制与故障回退；管理员可在模型设置中调整并测试公开检索。
+- **持续研究**：通用研究与装备研究衔接，保留检查点、证据边界、任务取消和恢复；Agent 并发结合 worker 容量与供应商背压调节。
+- **采集与知识入库**：公众号账号池支持共享协调，用户下载成果与权限分别管理；视频号提供桌面采集程序、后台文字识别、Word 导出和知识库入库。
+- **工作台与运行维护**：按需加载页面、共享读取请求与轮询，分离不同类型的 worker；镜像构建复用稳定依赖层与云端 BuildKit 缓存。
+
+本次入库验证：前端 lint、616 项单元测试与构建通过；后端配置及研究专项 203 项、`make check` 的 13 项检查通过。完整后端单元回归为 3,087 项通过、21 项失败，失败清单与验证范围见 [本次入库验证](artifacts/main-sync-20261029/validation.json)。这些结果不替代完整服务栈集成和端到端验收。
+
+功能开发、问题修复和测试均先在本地完成。推送 GitHub `main` 用于保存和交付源码；生产发布使用经过验证的明确版本，先备份、准备回滚，再切换并检查 readiness。详见 [项目协作约定](AGENTS.md) 和 [本地开发与发布流程](docs/LOCAL_DEVELOPMENT_AND_RELEASE.md)。
+
 ## 主要能力
 
 - 多路线装备需求研究：新制胜机理、传统能力缺口和局部战争案例。
@@ -17,6 +30,7 @@
 - 通用文档研究：本地资料问答、连续追问、转为深研方案、BM25 检索排序、候选证据覆盖与关系筛选，以及 Markdown/HTML/CSV/JSON 交付。
 - 研究证据治理：公网检索、材料化、正文定位、质量评分、引用与交付清单。
 - AMiner 学术检索：智能对话、深研对话及技术攻关舱共享论文发现、摘要补证与一层参考文献追溯；父子智能体共享费用预算。
+- 自适应公开检索：SearXNG 与 Open Websearch 融合检索、来源锚点筛选、共享缓存和供应商故障回退。
 - 企业级平台能力：用户、租户、部门、角色权限、任务队列、SSE 事件回放和运行监控。
 - 视频号转 DOCX：自动复用微信连接、后台识别、Word 下载及文字稿入库。见 [使用与云部署](docs/VIDEO_CHANNELS.md)。
 - 知识基础设施：文档解析、混合检索、RAG 评估、知识图谱和知识导图。
@@ -33,11 +47,12 @@
 
 ### 从 GitHub 完整恢复
 
-2026-10-12 验收状态：现有完整开发栈的 API、PostgreSQL、Redis 和 Worker 就绪检查通过，AMiner 的应用侧检索链路已验证；本轮未覆盖新设备首次冷安装。通用文档入口的可选 Docker 部署与独立启动方式见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
+仓库包含当前源码、锁定依赖、Compose 配置和可复核验收材料。新设备首次冷安装仍需按目标环境验证镜像下载、外部模型配置及各依赖服务；历史验收范围和日期见文档与 `artifacts/`。通用文档入口的可选 Docker 部署与独立启动方式见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
 
 ```bash
 git clone git@github.com:wangc219/deep-research.git
 cd deep-research
+git switch main
 bash scripts/platform.sh start
 ```
 
@@ -85,7 +100,7 @@ report/                           设计、进展与交付报告
 
 ## 配置与运行模式
 
-初始化模板位于 `.env.platform.example`。本地环境使用 `.env`，生产环境默认使用 `.env.prod`；二者均包含部署密钥，因此不会进入版本库。支持三种 Compose 模式：
+配置字段参考 `.env.example`；`scripts/init.sh` 在首次运行时生成本机配置并补齐必需安全项。本地环境使用 `.env`，生产环境默认使用 `.env.prod`；二者均包含部署密钥，因此不会进入版本库。支持三种 Compose 模式：
 
 ```bash
 PLATFORM_MODE=local bash scripts/platform.sh start  # 默认，适合日常使用
@@ -98,22 +113,26 @@ PLATFORM_MODE=prod bash scripts/platform.sh start   # 生产模式，读取 .env
 ## 公网检索
 
 智能对话、深研对话及其子智能体共用一个 `web_search` 工具。完整 Compose 默认随栈启动
-[open-websearch](https://github.com/aas-ee/open-websearch) daemon，通过 Bing、DuckDuckGo 多引擎并发检索；
-单个引擎失败时保留其他引擎结果，daemon 故障时继续切换豆包、Tavily（已配置密钥时）和内置公开检索。
-结果缓存、重试、熔断和每轮调用预算会阻止子智能体在故障期间无限改写查询。
+[SearXNG](https://github.com/searxng/searxng) 和
+[Open Websearch](https://github.com/aas-ee/open-websearch)，结合已配置供应商进行自适应融合检索；
+单个渠道失败时保留其他渠道取得的结果。豆包、Tavily 等渠道按实际配置和可用性参与检索或回退。
+跨 worker 的共享缓存、并发控制、重试、熔断和每轮调用预算限制重复请求与失败重试。
 调研探索员按单个子问题建立“核心对象/实体 + 作用或指标 + 场景/约束”的短查询；对同名或易漂移主题可用
 `required_terms` 指定最多三个必须命中的核心锚点。平台在多引擎结果合并后再次执行锚点过滤和标题优先排序，
 减少只命中泛词、相邻领域或错误对象的结果进入主智能体上下文。
 
 新设备迁移只需复制仓库与部署级 `.env` 后执行 `bash scripts/platform.sh start`。检索服务使用 Compose
-服务名 `http://open-websearch:3210`，不依赖原设备 IP、绝对路径或宿主机浏览器。默认镜像按多架构 digest
+服务名 `http://open-websearch:3210` 与 `http://searxng:8080`，不依赖原设备 IP、绝对路径或宿主机浏览器。默认镜像按 digest
 锁定，可通过 `OPEN_WEBSEARCH_IMAGE` 显式升级；网络需走代理时设置
 `OPEN_WEBSEARCH_USE_PROXY=true` 和 `OPEN_WEBSEARCH_PROXY_URL`。诊断命令：
 
 ```bash
 docker compose exec open-websearch node build/index.js status --base-url http://127.0.0.1:3210 --json
 docker compose exec api python -c "import httpx; print(httpx.get('http://open-websearch:3210/health').json())"
+docker compose ps searxng open-websearch
 ```
+
+SearXNG 引擎配置位于 `configs/searxng/settings.yml`，外部搜索引擎的可达性和结果数量会随网络环境变化。运行时设置与连接测试位于管理员的「模型设置 → 公开检索」。
 
 ## AMiner 学术检索
 
@@ -236,6 +255,7 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 - `auth.json`、Codex 会话目录和本机登录状态；
 - Docker 数据卷、服务级数据库、数据库 WAL/SHM、缓存、虚拟环境和 `node_modules`；
 - `outputs/runtime/`、`outputs/runs/runtime/` 等进程锁、Codex Home 和临时 Agent 工作区。
+- `user-data/` 用户工作区、用户账号迁移包、`.tmp/`、`.tmp-docx-qa/`、`.vite/`，以及 `artifacts/` 中可由源码重建的发布压缩包与采集器二进制。
 
 这些目录属于设备状态而非可移植源码。全新克隆可通过初始化脚本重建；若要迁移正在运行的生产数据，请先停止写入，再按 [交付说明](docs/DELIVERY.md) 和 [企业多用户部署说明](docs/ENTERPRISE_MULTIUSER.md) 单独备份数据库、对象存储与状态目录，切勿把凭据直接提交到仓库。
 
@@ -243,6 +263,9 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 
 ## 文档索引
 
+- [本地开发、服务器回同步与生产发布](docs/LOCAL_DEVELOPMENT_AND_RELEASE.md)
+- [2026-10-29 服务器源码同步与校验](artifacts/server-to-local-sync-20261029/report.json)
+- [云端容量与 worker 配置](docs/CLOUD_CAPACITY.md)
 - [简洁使用说明](docs/研究平台简洁使用说明.docx)
 - [管理员与普通用户详细使用手册](docs/研究平台使用说明-详细版.docx)
 - [装备智能研究平台简洁使用说明](docs/装备智能研究平台简洁使用说明.docx)

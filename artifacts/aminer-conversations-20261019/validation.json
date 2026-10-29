@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Shanghai",
+  "verdict": "conditional_effectiveness_verified_automatic_reliability_not_accepted",
+  "conclusion_zh": "真实模型与真实 AMiner 已在同一次智能对话、深研对话中完成检索、完整摘要补证和最终引用，能够增强技术解释的可追溯性及适用边界说明。但自然提问的自动技能激活、检索词选择和论文 ID 使用存在实际失败，不能宣称已稳定增强所有相关对话。",
+  "environment": {
+    "deployment": "本机运行中的完整平台，真实 HTTP API / Worker / PostgreSQL / 持久化对话",
+    "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+    "real_model": true,
+    "real_aminer": true,
+    "mock_transport": false,
+    "global_configuration_or_credentials_modified": false,
+    "production_code_modified": false,
+    "public_topics_only": true,
+    "cloud_deployment_tested": false
+  },
+  "method": {
+    "natural_prompt_cases": 4,
+    "explicit_skill_and_keyword_cases": 8,
+    "corrected_title_and_id_recovery_cases": 2,
+    "total_conversations": 14,
+    "topics": ["FlashAttention 与稀疏注意力", "RAG 与长上下文模型"],
+    "comparison": "每个主题分别在智能对话、深研对话运行网页对照与允许 AMiner 的实验。对照追加仅使用网页的指令，未修改全局工具或 AMiner 配置；账本验证对照没有 AMiner 请求。",
+    "controlled_followup": "首轮发现未激活技能和长检索式空结果后，后续八例明确要求读取 deep-research 技能、使用短关键词、主智能体直接研究；这八例验证引导条件下的能力，不能代替自然调用可靠性。",
+    "recovery_followup": "最初 RAG 测试提示把标题中的 or 写成 versus；随后使用准确标题，并要求只使用检索返回的 AMiner ID，再补两例恢复测试。原失败仍保留，恢复结果只证明明确引导下可用。",
+    "baseline_academic_requests": 0,
+    "repetitions_per_pair": 1,
+    "subagent_note": "深研测试关闭子智能体；引导测试均要求主智能体直检。首轮普通智能对话网页对照自主调用了应用内网页子智能体，已保留其缺工具及审批中断事实。",
+    "evidence": "服务端 Run 状态和计时、持久化工具输入/输出、AMiner 事务费用账本及供应商 log_id、最终回答 URL 与返回论文 URL 对应"
+  },
+  "counts": {
+    "completed_run_status": 12,
+    "interrupted_for_tool_approval": 1,
+    "cancelled_after_no_tool_call_331_seconds": 1,
+    "academic_tool_calls": 28,
+    "real_conversation_aminer_http_requests": 50,
+    "conversation_estimated_aminer_cost_cents": 26,
+    "additional_provider_keyword_diagnostic_requests": 6,
+    "additional_diagnostic_estimated_cost_cents": 4,
+    "total_estimated_aminer_cost_cents": 30,
+    "estimated_cost_note": "应用预估账本，非供应商实际结算账单；不含模型服务费。缓存命中不计付费请求。Run completed 只表示运行结束，不表示质量验收通过。"
+  },
+  "verified_effective_cases": [
+    {
+      "case": "attention_skill-smart-aminer",
+      "file": "focused/attention_skill-smart-aminer.json",
+      "kind": "智能对话",
+      "run_id": "1c6cb4e9-6957-43cb-b141-5703c1d133fc",
+      "academic_tools": 5,
+      "full_abstract_papers": 3,
+      "final_answer_cited_returned_full_abstract_papers": 3,
+      "web_search_calls": 0,
+      "server_total_seconds": 26.909,
+      "estimated_aminer_cost_cents": 4,
+      "web_baseline_server_total_seconds": 49.335,
+      "evidence_gain": "实际读取 FlashAttention、Routing Transformer、MInference 三篇完整摘要；回答把 15%、3 倍、2.4 倍和 A100 预填充最高 10 倍等论文报告值对应到真实 DOI，并说明不能保证任意硬件推理提速两倍。",
+      "residual_quality_issue": "AMiner 返回 Routing Transformer 的 venue 为 ICLR 2020，模型沿用了该题录；其 DOI 在 Crossref 登记为 Transactions of the Association for Computational Linguistics、2021 年 2 月。此处为上游题录与 DOI 注册元数据不一致，不能误报为模型没有遵循返回题录。"
+    },
+    {
+      "case": "attention_skill-deep-aminer",
+      "file": "focused/attention_skill-deep-aminer.json",
+      "kind": "深研对话",
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "academic_tools": 7,
+      "full_abstract_papers": 4,
+      "final_answer_cited_returned_full_abstract_papers": 4,
+      "web_search_calls": 0,
+      "server_total_seconds": 33.662,
+      "estimated_aminer_cost_cents": 10,
+      "web_baseline_server_total_seconds": 24.14,
+      "evidence_gain": "实际读取 FlashAttention-2、FlashAttention-3、SOFA、Longformer 四篇完整摘要；最终引用均对应返回论文，能区分 A100、H100、专用加速器及相应性能报告，并把部分跨硬件结论明确标为推断。",
+      "residual_quality_issue": "仍有六个空命中检索词，最后靠标题检索取得有效来源；模型对部分机理的概括超出摘要原句，需要保持表述克制。"
+    },
+    {
+      "case": "rag_correct_title-smart-aminer",
+      "file": "rag_recovery/rag_correct_title-smart-aminer.json",
+      "kind": "智能对话，准确标题与 ID 引导恢复",
+      "run_id": "950c5649-8222-4724-8b0d-10cc0d441ae6",
+      "academic_tools": 3,
+      "full_abstract_papers": 2,
+      "final_answer_cited_returned_full_abstract_papers": 2,
+      "web_search_calls": 0,
+      "server_total_seconds": 22.073,
+      "estimated_aminer_cost_cents": 0,
+      "cache_note": "本例三次学术工具调用全部命中正常共享缓存，没有新增供应商 HTTP 请求；缓存内容来自同轮深研真实 AMiner 请求。",
+      "evidence_gain": "准确定位 RAG or Long-Context LLMs 与 Lost in the Middle 两篇论文，读取完整摘要并在最终回答引用两个真实 DOI。回答能区分论文中的 LC 平均性能、RAG 成本优势、位置敏感和 Self-Route 路由，未编造精确数字。",
+      "residual_quality_issue": "平均性能结论应始终限定为该论文评测设置，不能推广为所有 LC 模型均优于 RAG；本例有明确标题与 ID 约束提示，不代表自动路由已修复。"
+    },
+    {
+      "case": "rag_correct_title-deep-aminer",
+      "file": "rag_recovery/rag_correct_title-deep-aminer.json",
+      "kind": "深研对话，准确标题与 ID 引导恢复",
+      "run_id": "48a71f93-e616-4d93-a3c4-05fde858fda3",
+      "academic_tools": 3,
+      "full_abstract_papers": 2,
+      "final_answer_cited_returned_full_abstract_papers": 2,
+      "web_search_calls": 0,
+      "server_total_seconds": 16.767,
+      "estimated_aminer_cost_cents": 2,
+      "provider_http_requests": 7,
+      "evidence_gain": "真实 AMiner 标题定位、免费题录、两次完整摘要请求完成闭环；最终两个 DOI 与返回证据一致。解释了资源充足时的论文报告结论、RAG 成本优势、中部信息遗漏及混合路由，并标注检索遗漏机理为推断。",
+      "residual_quality_issue": "这是一轮修正测试提示后的能力恢复验证，没有新的同提示网页对照，不能用耗时差外推性能提升。"
+    }
+  ],
+  "failed_or_unproven_cases": [
+    {
+      "case": "attention-smart-aminer",
+      "file": "attention-smart-aminer.json",
+      "result": "331 秒没有任何工具调用，主动取消验证运行；未证明自然提问可自动调用 AMiner。"
+    },
+    {
+      "case": "attention-smart-web",
+      "file": "attention-smart-web.json",
+      "result": "委派的网页子智能体自述无实时检索工具，主智能体尝试 execute 抓取后停在默认审批；保留中断，不自动批准命令。"
+    },
+    {
+      "case": "attention-deep-aminer",
+      "file": "attention-deep-aminer.json",
+      "result": "真实发送五次 Pro 搜索，均成功但返回零篇论文，最后依靠网页回答；没有 AMiner 证据增益。"
+    },
+    {
+      "case": "rag_skill-smart-aminer",
+      "file": "rag_focused/rag_skill-smart-aminer.json",
+      "result": "命中十篇部分摘要后，模型把 arXiv 编号 2407.16833、2307.03172 当作 AMiner paper_ids 请求详情，返回 unavailable。未取得完整摘要，最终引用与 AMiner 返回论文 URL 无对应，使用网页补证；无法归因质量提升给 AMiner。测试给出的标题变体不准确也影响了定位，不能把全部失败归因于模型。准确标题与 ID 引导后已补测恢复。"
+    },
+    {
+      "case": "rag_skill-deep-aminer",
+      "file": "rag_focused/rag_skill-deep-aminer.json",
+      "result": "AMiner 仅返回两篇部分摘要，未调用详情。最终三条论文链接来自网页链路，与 AMiner 返回论文无对应；没有证明有效利用 AMiner 证据。测试提示标题存在变体；改用准确标题和返回 ID 后已补测恢复。"
+    }
+  ],
+  "explanation_quality_review": {
+    "review_type": "人工核对持久化工具证据与最终文本，非盲评或统计显著性实验",
+    "positive_example": "两例 attention 引导实验的七篇最终引用均可对应实际取得的完整摘要；精确性能数字可在摘要中核对，适用硬件与训练/预填充阶段得到解释。",
+    "recovery_example": "两例 RAG 恢复实验均取得并引用两篇完整摘要，论文身份、DOI 和最终论证一致；其中智能对话复用本轮真实 AMiner 缓存。",
+    "baseline_mismatch_example": {
+      "file": "focused/attention_skill-smart-web.json",
+      "finding": "FlashAttention 段落附上标为 ar5iv 摘要的 https://ar5iv.labs.arxiv.org/html/2004.05150；该编号实际属于 Longformer，属于结论与来源错配。该段另有正确的 FlashAttention-2 链接，不能把整段简单判为没有来源。"
+    },
+    "overall": "AMiner 的直接贡献是结构化论文身份、可追溯 DOI、完整摘要及证据层级。它为解释提供更扎实依据，但模型仍可能误写会议、错用 ID 或忽略检索结果。"
+  },
+  "provider_diagnostic": {
+    "file": "keyword-diagnostic.json",
+    "short_queries": [
+      {"keyword": "FlashAttention", "returned": 5, "total": 32},
+      {"keyword": "sparse attention", "returned": 5, "total": 713},
+      {"keyword": "retrieval augmented generation", "returned": 5, "total": 6597},
+      {"keyword": "long context", "returned": 5, "total": 486}
+    ],
+    "exact_flashattention_title": {"returned": 1, "total": 1},
+    "request_seconds_range": [0.236, 0.297],
+    "implication": "当前凭证、主题搜索及标题搜索正常；长检索式空结果不能解释为供应商鉴权故障。"
+  },
+  "acceptance": {
+    "real_model_plus_real_aminer_in_same_smart_conversation": "passed",
+    "real_model_plus_real_aminer_in_same_deep_conversation": "passed",
+    "selected_full_abstracts_used_in_answer": "passed_in_two_attention_and_two_rag_recovery_cases",
+    "automatic_routing_without_skill_hint": "not_accepted",
+    "rag_evidence_usage": "passed_with_correct_title_and_returned_ids_initial_cases_failed",
+    "universal_quality_or_latency_improvement": "not_established",
+    "paid_reference_tracing_in_this_round": "not_tested"
+  },
+  "recommended_followup": [
+    "在普通技术问题中可靠激活学术检索技能，并核对子智能体的有效工具列表。",
+    "主题检索优先使用短技术关键词；空结果时在预算内缩短词组或使用准确标题，不继续堆叠约束。",
+    "详情调用仅接受当前检索返回的 AMiner ID；对 arXiv 编号误用给出可操作反馈。",
+    "生成前核对引用身份、会议/年份和证据层级；把最终使用的证据与仅检索到的候选分开审计。"
+  ],
+  "artifacts": {
+    "case_summary": "summary.json",
+    "raw_records": ["attention-*.json", "focused/*.json", "rag_focused/*.json", "rag_recovery/*.json"],
+    "independent_citation_checks": "independent-citation-checks.json",
+    "runner": "backend/scripts/verify_aminer_conversations_20261019.py",
+    "provider_probe": "backend/scripts/probe_aminer_keywords_20261019.py",
+    "evidence_collector": "backend/scripts/collect_aminer_conversations_20261019.py",
+    "script_checks": "ruff check and ruff format --check passed"
+  },
+  "limits": [
+    "小样本、每组一次；未进行独立专家盲评、覆盖率/召回率真值集评估或统计显著性检验。",
+    "并行运行共享正常缓存，成本与耗时受缓存、模型采样和供应商波动影响，不能外推稳定加速。",
+    "网页对照通过用户指令限制而非技术移除工具；账本确认本轮对照没有学术请求。",
+    "仅验证本机当前默认模型和运行环境，未覆盖其他模型或云端部署。",
+    "完整摘要不代表全文；没有独立复现论文实验。"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-19",
+  "crossref_check": {
+    "request_url": "https://api.crossref.org/works/10.1162%2Ftacl_a_00353",
+    "status": "ok",
+    "doi": "10.1162/tacl_a_00353",
+    "title": "Efficient Content-Based Sparse Attention with Routing Transformers",
+    "container_title": "Transactions of the Association for Computational Linguistics",
+    "published_date_parts": [2021, 2],
+    "aminer_returned_venue": "ICLR 2020",
+    "aminer_returned_year": 2020,
+    "finding": "题录与 DOI 注册元数据不一致；最终模型沿用了 AMiner 的会议与年份。"
+  },
+  "corrected_rag_title_provider_check": {
+    "transport": "real AMiner; existing configured credentials; no configuration changes",
+    "endpoint": "title_search",
+    "payload": {
+      "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+      "page": 1,
+      "size": 3
+    },
+    "code": 200,
+    "total": 1,
+    "returned": 1,
+    "paper": {
+      "id": "66a1b12601d2a3fbfc21f2de",
+      "doi": "10.18653/v1/2024.emnlp-industry.66",
+      "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+      "author": "Zhuowan Li",
+      "year": 2024,
+      "venue": "EMNLP 2024",
+      "content_level": "metadata"
+    },
+    "estimated_cost_cents": 0,
+    "test_harness_issue": "先前提示把准确标题中的 or 写成 versus，并改变了连字符和问号。原失败记录保留，但标题检索失败不能全部归因于模型或供应商。"
+  }
+}

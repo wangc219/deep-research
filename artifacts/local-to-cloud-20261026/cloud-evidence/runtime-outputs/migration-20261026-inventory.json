@@ -1,0 +1,48 @@
+{
+  "buckets": [
+    {
+      "name": "a-bucket",
+      "objects": 91,
+      "bytes": 287812865
+    },
+    {
+      "name": "kb-images",
+      "objects": 0,
+      "bytes": 0
+    },
+    {
+      "name": "knowledgebases",
+      "objects": 202,
+      "bytes": 568460826
+    }
+  ],
+  "collections": [
+    {
+      "database": "yuxi",
+      "collection": "kb_zcfj9omke9",
+      "num_entities": 91
+    },
+    {
+      "database": "yuxi",
+      "collection": "kb_zcfj9omke9_triple",
+      "num_entities": 14945
+    },
+    {
+      "database": "yuxi",
+      "collection": "kb_zcfj9omke9_entity",
+      "num_entities": 17646
+    },
+    {
+      "database": "deep_research",
+      "collection": "kb_zcfj9omke9",
+      "num_entities": 2384
+    },
+    {
+      "database": "deep_research",
+      "collection": "kb_uty6d7dv8e",
+      "num_entities": 3
+    }
+  ],
+  "graph_nodes": 20080,
+  "graph_relationships": 35102
+}

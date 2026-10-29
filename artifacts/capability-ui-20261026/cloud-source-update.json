@@ -1,0 +1,16 @@
+{
+  "source_files": 3443,
+  "changed": [
+    "web/src/assets/css/equipment-workbench-live.css",
+    "web/src/assets/css/main.css",
+    "web/src/components/equipment/CapabilityPortraitCard.vue",
+    "web/src/views/equipment/EquipmentCapabilitiesView.vue",
+    "web/test/unit/equipmentCapabilitiesViewIntegration.test.js",
+    "web/test/unit/equipmentReportComponents.test.js"
+  ],
+  "source_already_current": true,
+  "added": [],
+  "removed": [],
+  "archive_sha256": "b931915c6aa238e9868e67ae392ca65bba85a0a69e1317e6a7d35a7865a0c59c",
+  "business_data_touched": false
+}

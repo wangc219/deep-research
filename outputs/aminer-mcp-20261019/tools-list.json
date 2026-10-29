@@ -1,0 +1,629 @@
+{
+  "endpoint": "https://mcp.aminer.cn/mcp",
+  "transport": "streamable_http",
+  "count": 26,
+  "seconds": 0.848,
+  "tools": [
+    {
+      "name": "search_paper",
+      "description": "搜索论文id（论文搜索pro）：根据标题/关键词/摘要/作者/机构/期刊多种条件搜索论文\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - doi (string): 论文DOI\n    - first_author (string): 第一作者\n    - id (string): 论文id\n    - n_citation_bucket (string): 被引档位，分为 0、1-10、11-50、51-200、200-1000、1000-5000、5000+\n    - title (string): 论文标题\n    - title_zh (string): 论文中文标题\n    - total (float): 总数\n    - venue_name (string): 期刊/会议名称\n    - year (float): 年份\n    ",
+      "schema": {
+        "properties": {
+          "title": {
+            "default": "LLM",
+            "description": "标题",
+            "title": "Title",
+            "type": "string"
+          },
+          "keyword": {
+            "default": "",
+            "description": "关键词",
+            "title": "Keyword",
+            "type": "string"
+          },
+          "abstract": {
+            "default": "",
+            "description": "摘要",
+            "title": "Abstract",
+            "type": "string"
+          },
+          "author": {
+            "default": "",
+            "description": "作者",
+            "title": "Author",
+            "type": "string"
+          },
+          "org": {
+            "default": "",
+            "description": "机构",
+            "title": "Org",
+            "type": "string"
+          },
+          "venue": {
+            "default": "",
+            "description": "期刊",
+            "title": "Venue",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "页数（从0开始）",
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "default": 10,
+            "description": "条数",
+            "title": "Size",
+            "type": "integer"
+          },
+          "order": {
+            "default": "",
+            "description": "排序（不传为默认，可以传year和n_citation，降序排序）",
+            "title": "Order",
+            "type": "string"
+          }
+        },
+        "title": "search_paperArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_paper_by_title",
+      "description": "搜索论文id（按标题）：根据论文标题搜索论文标题、论文ID、论文DOI\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - doi (string): 论文的doi\n    - first_author (string): 第一作者\n    - id (string): 论文id\n    - n_citation_bucket (string): 被引档位，分为 0、1-10、11-50、51-200、200-1000、1000-5000、5000+\n    - title (string): 论文标题\n    - title_zh (string): 论文中文标题\n    - total (float): 总数\n    - venue_name (string): 期刊/会议名称\n    - year (float): 年份\n    ",
+      "schema": {
+        "properties": {
+          "title": {
+            "default": "LLM",
+            "description": "论文标题",
+            "title": "Title",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "description": "页码（从1开始，最大为10）",
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "default": 10,
+            "description": "每页大小（默认10，最大值为20）",
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "title": "search_paper_by_titleArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_person",
+      "description": "搜索学者id：根据学者名称搜索学者ID、学者名字、机构\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - id (string): 学者id\n    - interests (array): 研究兴趣\n    - n_citation (float): 引用值\n    - name (string): 姓名\n    - name_zh (string): 中文名\n    - org (string): 英文机构\n    - org_id (string): 机构id\n    - org_zh (string): 中文机构\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "name": {
+            "default": "李毅",
+            "description": "学者姓名",
+            "title": "Name",
+            "type": "string"
+          },
+          "org": {
+            "default": "",
+            "description": "机构名",
+            "title": "Org",
+            "type": "string"
+          },
+          "org_id": {
+            "default": [],
+            "description": "机构实体 ID 数组",
+            "items": {
+              "type": "string"
+            },
+            "title": "Org Id",
+            "type": "array"
+          },
+          "offset": {
+            "default": 0,
+            "description": "起始位置，最大为 0",
+            "title": "Offset",
+            "type": "integer"
+          },
+          "size": {
+            "default": 10,
+            "description": "条数，最大为 10",
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "title": "search_personArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_patent",
+      "description": "搜索专利id：根据专利名称搜索专利ID、专利标题、专利号\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - app_year (string): 申请年份\n    - id (string): 专利id\n    - inventor_name (string): 发明人名字（第一位）\n    - pub_year (string): 公开年份\n    - title (string): 专利英文标题\n    - title_zh (string): 专利中文标题\n    ",
+      "schema": {
+        "properties": {
+          "query": {
+            "default": "Si02",
+            "description": "查询字段，如专利标题、关键词等",
+            "title": "Query",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "页数，最大为5",
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "每页展示数量，最大为20",
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "title": "search_patentArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_organization",
+      "description": "搜索机构id：根据名称关键词搜索机构ID、名称\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - aliases (array): 别称（部分）\n    - code (int): 接口返回的状态码\n    - org_id (string): 机构id\n    - org_name (string): 机构名称\n    - success (boolean): 接口请求是否成功\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "orgs": {
+            "default": [],
+            "description": "机构名称",
+            "items": {
+              "type": "string"
+            },
+            "title": "Orgs",
+            "type": "array"
+          }
+        },
+        "title": "search_organizationArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_venue",
+      "description": "搜索期刊会议id：根据期刊名称搜索期刊ID、期刊标准名称\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - aliases (array): 别称（部分）\n    - id (string): 期刊id\n    - name_en (string): 期刊英文名称\n    - name_zh (string): 期刊中文名称\n    - venue_type (string): 期刊类型，journal 或 conference\n    ",
+      "schema": {
+        "properties": {
+          "name": {
+            "default": "Nature",
+            "description": "期刊名",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "title": "search_venueArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_paper_detail",
+      "description": "根据论文id获得论文详情：标题、作者、DOI、关键词、机构、期刊名称、年份等\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - abstract (string): 摘要\n    - abstract_zh (string): 中文摘要（如有）\n    - authors (array): 作者（name 姓名、name_zh 中文名、org 机构、org_zh 中文机构）\n    - doi (string): 论文数字唯一标识（DOI）\n    - id (string): 论文id\n    - issue (string): 卷号（期刊论文）\n    - keywords (string): 关键字\n    - keywords_zh (string): 中文关键字（如有）\n    - n_citation (int): 被引次数\n    - title (string): 英文标题\n    - title_zh (string): 中文标题（如有）\n    - venue (object): 期刊信息（raw 期刊名称、raw_zh 中文期刊名称、t 论文类型）\n    - volume (string): 期（期刊论文）\n    - year (int): 年份\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5c6eb520e1cd8f9057b21",
+            "description": "论文id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_paper_detailArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_papers_info",
+      "description": "根据论文id列表批量获得论文信息：标题、卷号、期刊名称、作者名称\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - abstract_slice (string): 部分摘要\n    - author_count (float): 作者数量总计\n    - authors (array): 作者（name 名称、name_zh 中文名称）\n    - id (string): 论文id\n    - issue (string): 论文的卷号\n    - title (string): 论文标题\n    - venue (object): 期刊信息（raw 期刊名称）\n    - venue_id (string): 期刊/会议id\n    - year (float): 年份\n    ",
+      "schema": {
+        "properties": {
+          "ids": {
+            "default": [
+              "5c6eb520e1cd8f9057b21"
+            ],
+            "description": "论文id列表，最多100个",
+            "items": {
+              "type": "string"
+            },
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "title": "get_papers_infoArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_detail",
+      "description": "根据学者id获得学者详情：中英文简介、教育背景、性别、姓名、职称、荣誉奖项\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - bio (string): 个人简介\n    - bio_zh (string): 中文简介\n    - edu (string): 教育经历\n    - edu_zh (string): 中文教育经历\n    - honor (array): 荣誉\n    - id (string): 学者id\n    - name (string): 姓名\n    - name_zh (string): 中文名\n    - org_zhs (array): 中文机构\n    - orgs (array): 英文机构\n    - position (string): 职称\n    - position_zh (string): 中文职称\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_detailArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_figure",
+      "description": "根据学者id获得学者画像：研究兴趣、研究领域、结构化工作经历、结构化教育经历\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - ai_domain (array): 研究领域\n    - ai_interests (array): 研究兴趣\n    - edus (array): 教育结构化经历\n    - id (string): 学者id\n    - works (array): 工作经历结构化数据\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_figureArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_stats",
+      "description": "根据学者id获得学者统计指标：论文数、引用值、H指数、G指数等多个统计数据\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - activity (float): 活跃度\n    - citation_num (float): 引用值\n    - diversity (float): 多样性\n    - g_index (float): G-Index\n    - h_index (float): H-Index\n    - id (string): 学者ID\n    - pub_num (float): 论文数\n    - sociability (float): 社交性\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者ID",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_statsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_projects",
+      "description": "根据学者id获得学者项目：学者主持/参与的项目信息\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - country (string): 国家\n    - end_date (object): 结束时间\n    - fund_amount (float): 资助金额\n    - fund_currency (string): 资助货币\n    - id (string): 项目id\n    - project_source (string): 项目源\n    - start_date (object): 开始时间\n    - titles (string): 项目标题\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_projectsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_patent_detail",
+      "description": "根据专利id获得专利详情：摘要、申请日期、申请号、申请人、受让人、发明人、公开日期等\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - abstract (object): 摘要\n    - app_date (object): 申请日\n    - app_kind (string): 申请类型\n    - app_num (string): 申请号\n    - applicant (array): 申请人\n    - assignee (array): 受让人\n    - claims (array): 权利要求\n    - country (string): 国别\n    - cpc (array): CPC分类号\n    - description (string): 说明书\n    - ep_family_id (string): EP同族专利号\n    - id (string): 专利id\n    - inventor (array): 发明人\n    - ipc (array): IPC分类号\n    - ipcr (array): IPCR分类号\n    - pct (object): PCT国际申请信息\n    - priority (array): 优先权信息\n    - pub_date (object): 公开日\n    - pub_kind (string): 公开类型\n    - pub_num (string): 公开号\n    - reference (array): 引用文献\n    - title (object): 标题\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "633620c3667297566c996ed7",
+            "description": "专利id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_patent_detailArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_patent_info",
+      "description": "根据专利id获得专利简要信息：专利标题、专利号、发明人、国家等\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - app_num (string): 申请号\n    - app_year (string): 申请年份\n    - country (string): 国家\n    - en (array): 专利英文\n    - id (string): 专利id\n    - inventor (array): 发明人（name 姓名、sequence 顺序）\n    - pub_kind (string): 发布类型\n    - pub_num (string): 发布号\n    - pub_year (string): 公开年份\n    - title (string): 标题\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "633620c3667297566c996ed7",
+            "description": "专利id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_patent_infoArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_organization_detail",
+      "description": "根据机构id获得机构详情：机构别名、成立时间、图片、简介、语言、类型等\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - acronyms (array): 机构简称\n    - aliases (array): 机构别名\n    - code (int): 接口返回的状态码\n    - details (array): 机构详情\n    - id (string): 机构id\n    - image (string): 机构图片链接\n    - name (string): 机构名称\n    - name_en (string): 机构英文名称\n    - name_zh (string): 机构中文名称\n    - success (boolean): 接口返回是否成功\n    - total (float): 总数\n    - type (string): 机构类型\n    ",
+      "schema": {
+        "properties": {
+          "ids": {
+            "default": [
+              "5f71b4c71c455f439fe4c748"
+            ],
+            "description": "机构id",
+            "items": {
+              "type": "string"
+            },
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "title": "get_organization_detailArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_venue_detail",
+      "description": "根据期刊会议id获得期刊会议详情：ISSN号、简称、类型等\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - alias (array): 别名\n    - eissn (string): EISSN\n    - id (string): 期刊id\n    - issn (string): ISSN\n    - lower_alias (array): 小写别名\n    - name (string): 名称\n    - name_en (string): 英文名称\n    - name_zh (string): 中文名称\n    - short (string): 简称\n    - type (string): 类型\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5ea19079edb6e7d53c00a1ed",
+            "description": "期刊会议id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_venue_detailArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_papers",
+      "description": "根据学者id获得论文id：学者的论文ID、论文标题\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - author_id (string): 学者的id\n    - id (string): 论文id\n    - title (string): 论文标题\n    - title_zh (string): 论文中文标题\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_papersArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_person_patents",
+      "description": "根据学者id获得专利id：学者的专利ID、专利标题\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - patent_id (string): 专利ID\n    - person_id (string): 学者ID\n    - title (object): 标题（en 英文标题、zh 中文标题）\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5d50c3907390bff0db2a6501",
+            "description": "学者id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_person_patentsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_paper_citations",
+      "description": "根据论文id获得论文的引用（参考文献）列表：论文中引用的论文ID、论文标题\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - _id (string): 论文id\n    - cited (array): 引用的其他论文的基本信息\n    - n_citation (int): 被引用数量\n    - title (string): 标题\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5c6eb520e1cd8f9057b21",
+            "description": "论文id",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "get_paper_citationsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_organization_papers",
+      "description": "根据机构id获得论文id：该机构学者曾发表过的论文列表\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - doi (string): DOI\n    - id (string): 论文id\n    - title (string): 标题\n    - title_zh (string): 中文标题\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "org_id": {
+            "default": "5f71b4c71c455f439fe4c748",
+            "description": "机构ID",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "description": "起始位置, 每次固定返回10条",
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "title": "get_organization_papersArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_organization_persons",
+      "description": "根据机构id获得学者id：该机构的学者信息\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - id (string): 学者id\n    - name (string): 姓名\n    - name_zh (string): 中文名\n    - org (string): 英文机构\n    - org_id (string): 机构ID\n    - org_zh (string): 中文机构\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "org_id": {
+            "default": "5f71b4c71c455f439fe4c748",
+            "description": "机构ID",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "description": "起始位置, 每次固定返回10条",
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "title": "get_organization_personsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_organization_patents",
+      "description": "根据机构id获得专利id：该机构拥有的专利ID列表\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - id (string): 专利id\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5f71b4c71c455f439fe4c748",
+            "description": "机构ID",
+            "title": "Id",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "页码",
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 10,
+            "description": "分页显示数据条数，最高10000条",
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "source": {
+            "default": "",
+            "description": "可填ass(受让人)、app(申请人)，建议填写此字段，查询速度翻倍",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "title": "get_organization_patentsArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_venue_papers",
+      "description": "根据期刊会议id获得论文id：该期刊/会议（可按年份过滤）的论文ID列表\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - id (string): 论文id\n    - title (string): 标题\n    - total (int): 总数（位于顶层）\n    - year (float): 年份\n    ",
+      "schema": {
+        "properties": {
+          "id": {
+            "default": "5ea19079edb6e7d53c00a1ed",
+            "description": "期刊id",
+            "title": "Id",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "description": "起始位置",
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 10,
+            "description": "条数",
+            "title": "Limit",
+            "type": "integer"
+          },
+          "year": {
+            "default": null,
+            "description": "年份",
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "title": "get_venue_papersArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "disambiguate_organization",
+      "description": "机构消歧：根据机构字符串获取机构归一化标准名称\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - code (int): 接口返回的状态码\n    - success (boolean): 接口请求状态是否成功\n    - data (array): 归一化后的机构标准名称列表\n    ",
+      "schema": {
+        "properties": {
+          "org": {
+            "default": "清华大学",
+            "description": "机构名称",
+            "title": "Org",
+            "type": "string"
+          }
+        },
+        "title": "disambiguate_organizationArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "disambiguate_organization_pro",
+      "description": "机构消歧pro：通过机构字符串提取一级机构和二级机构的ID\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中）：\n    - code (int): 接口状态\n    - success (boolean): 接口请求状态是否成功\n    - data (array): 消歧结果（一级 一级机构名称、一级ID 一级机构id、二级 二级机构名称、二级ID 二级机构id）\n    - total (float): 总数\n    ",
+      "schema": {
+        "properties": {
+          "org": {
+            "default": "清华大学计算机系",
+            "description": "机构名",
+            "title": "Org",
+            "type": "string"
+          }
+        },
+        "title": "disambiguate_organization_proArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "recommend_paper",
+      "description": "论文推荐：根据用户感兴趣的领域（主题词）或学者推荐论文\n\n    返回字段说明（外层为网关包装 code/success/msg/data/log_id，业务数据在 data 中；\n    data 元素为 {analyzed_topics 分析提取的主题词, offset 偏移量, papers 论文列表}，\n    以下字段位于 papers 元素中）：\n    - aminer_author_profiles (array): AMiner 作者档案\n    - arxiv_id (string): arXiv id，没有则为空\n    - author_entries (array): 作者展示条目，含主页和机构等信息\n    - authors (array): 作者名称列表\n    - keywords (array): 作者关键词\n    - links (object): 链接集合\n    - paper_id (string): 论文ID\n    - paper_url (string): 默认打开链接\n    - pdf (string): PDF 链接\n    - source (string): 来源\n    - structured_summary (object): 结构化摘要，可选消费\n    - summary (string): 展示摘要\n    - title (string): 标题\n    - year (float): 年份\n    ",
+      "schema": {
+        "properties": {
+          "author_name": {
+            "default": "",
+            "description": "感兴趣的学者姓名（author_name/topics/aminer_author_id 至少填一个）",
+            "title": "Author Name",
+            "type": "string"
+          },
+          "author_org": {
+            "default": "",
+            "description": "学者的机构，建议与 author_name 一同填写缩小范围",
+            "title": "Author Org",
+            "type": "string"
+          },
+          "topics": {
+            "default": [],
+            "description": "感兴趣的主题词列表（author_name/topics/aminer_author_id 至少填一个）",
+            "items": {
+              "type": "string"
+            },
+            "title": "Topics",
+            "type": "array"
+          },
+          "aminer_author_id": {
+            "default": "",
+            "description": "感兴趣的学者id（author_name/topics/aminer_author_id 至少填一个）",
+            "title": "Aminer Author Id",
+            "type": "string"
+          },
+          "size": {
+            "default": 10,
+            "description": "返回条数，范围 1~20",
+            "title": "Size",
+            "type": "integer"
+          },
+          "start_year": {
+            "default": null,
+            "description": "起始年份过滤",
+            "title": "Start Year",
+            "type": "integer"
+          },
+          "end_year": {
+            "default": null,
+            "description": "结束年份过滤",
+            "title": "End Year",
+            "type": "integer"
+          },
+          "language_sort": {
+            "default": "",
+            "description": "语言排序偏好，可选值：zh、en",
+            "title": "Language Sort",
+            "type": "string"
+          }
+        },
+        "title": "recommend_paperArguments",
+        "type": "object"
+      }
+    }
+  ]
+}

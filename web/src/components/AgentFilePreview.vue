@@ -359,7 +359,7 @@
 </template>
 
 <script setup>
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref, watch } from 'vue'
 import {
   CircleAlert,
   Code2,
@@ -375,8 +375,8 @@ import {
   ZoomOut
 } from '@lucide/vue'
 import hljs from 'highlight.js/lib/common'
-import MarkdownPreview from '@/components/common/MarkdownPreview.vue'
-import PdfPreview from '@/components/common/PdfPreview.vue'
+import AsyncContentLoading from '@/components/shared/AsyncContentLoading.vue'
+import AsyncViewError from '@/components/shared/AsyncViewError.vue'
 import FileTypeIcon from '@/components/common/FileTypeIcon.vue'
 import { useThemeStore } from '@/stores/theme'
 import { escapeHtml } from '@/utils/html'
@@ -386,6 +386,22 @@ import {
   isHtmlPreview,
   isMarkdownPreview
 } from '@/utils/file_preview'
+
+// 文件列表、聊天侧栏和技能页共用此预览器，只在实际预览相应格式时加载引擎。
+const MarkdownPreview = defineAsyncComponent({
+  loader: () => import('@/components/common/MarkdownPreview.vue'),
+  loadingComponent: AsyncContentLoading,
+  errorComponent: AsyncViewError,
+  delay: 100,
+  timeout: 30000
+})
+const PdfPreview = defineAsyncComponent({
+  loader: () => import('@/components/common/PdfPreview.vue'),
+  loadingComponent: AsyncContentLoading,
+  errorComponent: AsyncViewError,
+  delay: 100,
+  timeout: 30000
+})
 
 const EDITABLE_EXTENSIONS = new Set(['.md', '.markdown', '.mdx', '.txt'])
 const HTML_PREVIEW_DEFAULT_SCALE = 0.9

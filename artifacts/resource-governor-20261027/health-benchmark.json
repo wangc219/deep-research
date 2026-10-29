@@ -1,0 +1,7 @@
+{
+  "worker_old_check_seconds": 5.749,
+  "worker_old_check_exit_code": 0,
+  "worker_new_check_seconds_including_container_start": 0.776,
+  "graph_old_query_check_seconds": 2.437,
+  "graph_new_query_check_seconds": 0.829
+}

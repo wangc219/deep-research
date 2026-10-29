@@ -1,0 +1,94 @@
+{
+  "validated_at": "2026-10-29T21:07:08.987415+08:00",
+  "target_repository": "git@github.com:wangc219/deep-research.git",
+  "target_branch": "main",
+  "remote_main_before": "eaae2ec0b3d6899fd9f666a88a09f0721d54e517",
+  "local_parent_commit": "04301d8ccab84c4f4815715adead1684f388051f",
+  "frontend": {
+    "lint": "passed",
+    "unit": {
+      "passed": 616,
+      "failed": 0
+    },
+    "build": "passed",
+    "build_warning": "Existing chunks larger than 500 kB"
+  },
+  "backend": {
+    "make_check": {
+      "status": "passed",
+      "tests_passed": 13,
+      "includes": [
+        "architecture boundaries",
+        "compileall",
+        "architecture and settings tests"
+      ]
+    },
+    "configuration_and_research": {
+      "passed": 203,
+      "failed": 0
+    },
+    "unit_not_slow": {
+      "passed": 3087,
+      "failed": 21,
+      "warnings": 17,
+      "failed_tests": [
+        "backend/test/unit/agents/test_builtin_discovery.py::test_backend_import_does_not_scan_or_create_instances",
+        "backend/test/unit/permissions/test_enterprise_permission.py::test_portal_counts_and_history_do_not_leak",
+        "backend/test/unit/permissions/test_enterprise_permission.py::test_personal_resources_are_owner_only_except_for_global_admins",
+        "backend/test/unit/repositories/test_agent_repository.py::test_ensure_default_agent_backfills_missing_description",
+        "backend/test/unit/services/test_equipment_compact_reads.py::test_compact_runs_exclude_large_summary_without_mutating_detail",
+        "backend/test/unit/services/test_equipment_query_service.py::test_query_list_returns_server_pagination_and_filters",
+        "backend/test/unit/services/test_equipment_query_service.py::test_shared_history_query_can_be_changed_without_transferring_owner",
+        "backend/test/unit/services/test_equipment_query_service.py::test_historical_query_is_readable_by_other_users_but_future_query_is_not",
+        "backend/test/unit/services/test_equipment_research_service.py::test_owner_can_mutate_imported_historical_run",
+        "backend/test/unit/services/test_equipment_research_service.py::test_cancel_run_commits_business_state_before_cancelling_durable_task[pending]",
+        "backend/test/unit/services/test_equipment_research_service.py::test_cancel_run_commits_business_state_before_cancelling_durable_task[running]",
+        "backend/test/unit/services/test_equipment_research_service.py::test_legacy_deep_session_projects_imported_branches",
+        "backend/test/unit/services/test_equipment_research_service.py::test_run_projection_endpoints_read_legacy_artifacts_and_remove_credentials",
+        "backend/test/unit/services/test_equipment_research_service.py::test_run_interactions_fall_back_to_postgres_events",
+        "backend/test/unit/services/test_equipment_research_service.py::test_list_deep_sessions_reads_two_hundred_rows",
+        "backend/test/unit/services/test_equipment_superadmin_delegation.py::test_superadmin_updates_run_scope_without_changing_owner",
+        "backend/test/unit/services/test_equipment_workbench_sync_delete.py::test_owner_can_delete_legacy_draft",
+        "backend/test/unit/services/test_equipment_workbench_sync_delete.py::test_completed_legacy_run_remains_read_only",
+        "backend/test/unit/services/test_run_worker.py::test_durable_task_shipping_worker_accepts_default_above_24_hours",
+        "backend/test/unit/services/test_run_worker.py::test_worker_settings_reject_invalid_redis_dsn_instead_of_using_arq_default",
+        "backend/test/unit/services/test_skill_service.py::test_sync_user_accessible_skills_serializes_multiple_processes"
+      ]
+    },
+    "quality_ratchet": {
+      "legacy_findings": 217,
+      "new_findings": 0,
+      "baseline_removed": 24
+    },
+    "integration": "not run: complete isolated dependency stack not running",
+    "e2e": "not run: complete isolated dependency stack not running"
+  },
+  "source_whitespace": "passed for active project source and configuration; upstream reference/vendor and historical artifact whitespace retained",
+  "sensitive_file_scan": {
+    "staged_files_scanned": 2592,
+    "local_secret_value_matches": [],
+    "private_key_or_github_token_matches": []
+  },
+  "snapshot_scope": {
+    "included": [
+      "current source and tests",
+      "dependency lockfiles and deployment configuration",
+      "third-party source required by builds",
+      "project documentation and deliverables",
+      "reproducible acceptance evidence",
+      "deletions already present in the local project"
+    ],
+    "excluded": [
+      "private environment files, keys and credentials",
+      "user workspaces and account import packages",
+      "runtime storage, dependency caches and transient directories",
+      "generated deployment archives and compiled collectors"
+    ]
+  },
+  "production_modified": false,
+  "notes": [
+    "Test expectations were aligned with current WebP assets, public-search result metadata and separate development/production worker health contracts.",
+    "One newly introduced long line was wrapped without changing runtime logic; the lint baseline only shrank.",
+    "Repository snapshot and README update do not certify full backend test success or deploy any production service."
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "time_epoch": 1792079546.5352895,
+  "cpu_count": 4,
+  "kernel": "7.0.0-14-generic",
+  "memory": {
+    "MemTotal_KiB": 7800932,
+    "MemAvailable_KiB": 4534264,
+    "SwapTotal_KiB": 2097148,
+    "SwapFree_KiB": 1628628
+  },
+  "load_average": [
+    0.80224609375,
+    0.8818359375,
+    0.89990234375
+  ],
+  "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=5548730\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=4573674\n",
+  "cpu_pressure": "some avg10=0.52 avg60=0.80 avg300=1.14 total=687532186\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+  "somaxconn": "4096",
+  "containers": [
+    {
+      "BlockIO": "0B / 0B",
+      "CPUPerc": "0.00%",
+      "Container": "8d307c386bc5926e5b20605c5f27852a31007fa977226dfdad52aee319d5fcde",
+      "ID": "8d307c386bc5",
+      "MemPerc": "1.18%",
+      "MemUsage": "89.71MiB / 7.44GiB",
+      "Name": "deepquest-equipment-query-worker-1",
+      "NetIO": "1.17kB / 126B",
+      "PIDs": "6"
+    },
+    {
+      "BlockIO": "0B / 1.51MB",
+      "CPUPerc": "0.00%",
+      "Container": "0fe43ffee9bcff489a8af490bcf6a85967ad8984d7ce21d58f0debb81f73e979",
+      "ID": "0fe43ffee9bc",
+      "MemPerc": "1.28%",
+      "MemUsage": "97.63MiB / 7.44GiB",
+      "Name": "deepquest-equipment-worker-1",
+      "NetIO": "1.06kB / 126B",
+      "PIDs": "4"
+    },
+    {
+      "BlockIO": "4.1kB / 614kB",
+      "CPUPerc": "3.67%",
+      "Container": "647a12f91148c42db20b677d2e9e722969ade83f851f5517c58a567afa3bc62b",
+      "ID": "647a12f91148",
+      "MemPerc": "5.80%",
+      "MemUsage": "442MiB / 7.44GiB",
+      "Name": "deepquest-api-1",
+      "NetIO": "5.86MB / 1.49MB",
+      "PIDs": "20"
+    },
+    {
+      "BlockIO": "0B / 4.1kB",
+      "CPUPerc": "1.03%",
+      "Container": "6040a3ffb52929b7fe129724a69a4f539a10b01b49ca41f1d0d2b0c89c8c9c35",
+      "ID": "6040a3ffb529",
+      "MemPerc": "2.89%",
+      "MemUsage": "220.5MiB / 7.44GiB",
+      "Name": "deepquest-worker-1",
+      "NetIO": "778kB / 2.24MB",
+      "PIDs": "10"
+    },
+    {
+      "BlockIO": "3.12MB / 8.19kB",
+      "CPUPerc": "0.00%",
+      "Container": "6087cf880535c3fc0707fda6be32142a22064e39abf17da97d110e109898167b",
+      "ID": "6087cf880535",
+      "MemPerc": "0.11%",
+      "MemUsage": "8.633MiB / 7.44GiB",
+      "Name": "deepquest-web-1",
+      "NetIO": "138kB / 3.58MB",
+      "PIDs": "5"
+    },
+    {
+      "BlockIO": "40.8MB / 31MB",
+      "CPUPerc": "25.77%",
+      "Container": "363e1c16a07f1758734bf90838565492e1fdaae7b73ee882892d95c7c48a8835",
+      "ID": "363e1c16a07f",
+      "MemPerc": "0.37%",
+      "MemUsage": "28.57MiB / 7.44GiB",
+      "Name": "deepquest-sandbox-provisioner-1",
+      "NetIO": "13.5kB / 2.76kB",
+      "PIDs": "8"
+    },
+    {
+      "BlockIO": "362MB / 454MB",
+      "CPUPerc": "0.32%",
+      "Container": "b9a8972b0f30e6abcf51e8d53081aa6b822fc3d04bbbd1ff8a7bf1fcc62ecf20",
+      "ID": "b9a8972b0f30",
+      "MemPerc": "5.88%",
+      "MemUsage": "447.9MiB / 7.44GiB",
+      "Name": "deepquest-graph-1",
+      "NetIO": "18.1kB / 4.18kB",
+      "PIDs": "64"
+    },
+    {
+      "BlockIO": "62.4MB / 451MB",
+      "CPUPerc": "5.26%",
+      "Container": "863040b3e1f526cc4cdf030085e8185b945885e6f63790a35b1f38f5a1ae1be8",
+      "ID": "863040b3e1f5",
+      "MemPerc": "2.25%",
+      "MemUsage": "171.4MiB / 7.44GiB",
+      "Name": "deepquest-postgres-1",
+      "NetIO": "12MB / 550MB",
+      "PIDs": "24"
+    },
+    {
+      "BlockIO": "140MB / 40.5MB",
+      "CPUPerc": "0.01%",
+      "Container": "36c55389edd2adef05a61d5aca7a1c0dd7cb67b8202c2d60639efd6327dd817b",
+      "ID": "36c55389edd2",
+      "MemPerc": "1.50%",
+      "MemUsage": "114.3MiB / 7.44GiB",
+      "Name": "deepquest-open-websearch-1",
+      "NetIO": "13.4kB / 126B",
+      "PIDs": "11"
+    },
+    {
+      "BlockIO": "515MB / 144MB",
+      "CPUPerc": "3.16%",
+      "Container": "393353340d9ef22b34b6ebb84db257f11164af9418aa10a746d5b4edc1cc840a",
+      "ID": "393353340d9e",
+      "MemPerc": "2.83%",
+      "MemUsage": "215.5MiB / 7.44GiB",
+      "Name": "deepquest-milvus-1",
+      "NetIO": "34.9MB / 46.7MB",
+      "PIDs": "39"
+    },
+    {
+      "BlockIO": "53.2MB / 18.9MB",
+      "CPUPerc": "0.60%",
+      "Container": "11689877f9590ee61bf5ab8272edb6f6517513d7007cc4d3fe7157f80a849866",
+      "ID": "11689877f959",
+      "MemPerc": "0.08%",
+      "MemUsage": "6.066MiB / 7.44GiB",
+      "Name": "deepquest-redis-1",
+      "NetIO": "72.7MB / 23.2MB",
+      "PIDs": "7"
+    },
+    {
+      "BlockIO": "56.1MB / 143MB",
+      "CPUPerc": "4.76%",
+      "Container": "bd69844a2c0f2b27be0d08290a7269acdf40eb318016143236d08a07ffc2b3b1",
+      "ID": "bd69844a2c0f",
+      "MemPerc": "0.35%",
+      "MemUsage": "26.43MiB / 7.44GiB",
+      "Name": "deepquest-etcd-1",
+      "NetIO": "7.78MB / 5.78MB",
+      "PIDs": "10"
+    },
+    {
+      "BlockIO": "311MB / 83.7MB",
+      "CPUPerc": "0.00%",
+      "Container": "bb492f547a4d85791696443a658e3ced4666a6f3f92a3d3896e8c8ca7abad518",
+      "ID": "bb492f547a4d",
+      "MemPerc": "1.93%",
+      "MemUsage": "147.1MiB / 7.44GiB",
+      "Name": "deepquest-minio-1",
+      "NetIO": "47.3MB / 96.6MB",
+      "PIDs": "15"
+    }
+  ]
+}

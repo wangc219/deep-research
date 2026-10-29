@@ -1,0 +1,11 @@
+{
+  "public_https": "passed",
+  "tls_verification": true,
+  "maintenance": false,
+  "public_internal_build_identical": true,
+  "static_assets_validated": 2,
+  "real_password_login": "passed",
+  "public_readiness": "ready",
+  "unauthenticated_admin_logs_denied": 401,
+  "http_to_https_redirect": 301
+}

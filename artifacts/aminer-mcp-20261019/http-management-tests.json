@@ -1,0 +1,43 @@
+{
+  "real_http": true,
+  "real_postgres": true,
+  "mcp_peer": "local real protocol fixture",
+  "authentication": "existing administrative verification identity; no test password persisted",
+  "scenarios": [
+    {
+      "mode": "empty",
+      "server_enabled": false,
+      "passed": true
+    },
+    {
+      "mode": "empty",
+      "server_enabled": true,
+      "passed": true
+    },
+    {
+      "mode": "tool",
+      "server_enabled": false,
+      "passed": true
+    },
+    {
+      "mode": "error",
+      "server_enabled": false,
+      "passed": true
+    },
+    {
+      "mode": "refused",
+      "server_enabled": false,
+      "passed": true
+    },
+    {
+      "mode": "error",
+      "server_enabled": true,
+      "passed": true
+    },
+    {
+      "mode": "refused",
+      "server_enabled": true,
+      "passed": true
+    }
+  ]
+}

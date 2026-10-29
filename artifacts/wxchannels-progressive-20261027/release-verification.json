@@ -1,0 +1,11 @@
+{
+  "cloud_source_verified": 6,
+  "api_runtime_source_verified": {
+    "backend/package/platform_core/services/wxchannels_service.py": true,
+    "backend/package/platform_core/knowledge/wxchannels.py": true,
+    "backend/server/routers/wxchannels_router.py": true
+  },
+  "api_readiness": "ready",
+  "login_image_http": 200,
+  "local_and_cloud_source_identical": true
+}

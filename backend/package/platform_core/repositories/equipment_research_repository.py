@@ -38,20 +38,23 @@ EQUIPMENT_DEEP_JOB_TERMINAL_STATUSES = (
 
 
 def _visible_clause(model, owner_uid: str | None, *, include_legacy: bool = False):
-    """管理员读取全部；普通用户读取自己的数据和融合前的只读历史数据。"""
-    if owner_uid is None:
-        return true()
-    owner_clause = model.owner_uid == owner_uid
-    if hasattr(model, "import_batch_id"):
-        owner_clause = owner_clause & or_(model.import_batch_id.is_(None), model.import_batch_id != "workbench-sync")
-    if not include_legacy:
-        return owner_clause
+    """按所有者读取当前数据；仅显式授权时并入融合前历史。"""
     legacy_clauses = []
     if hasattr(model, "legacy_source_id"):
         legacy_clauses.append(model.legacy_source_id.is_not(None))
     if hasattr(model, "import_batch_id"):
-        legacy_clauses.append(model.import_batch_id == "workbench-sync")
-    return or_(owner_clause, *legacy_clauses) if legacy_clauses else owner_clause
+        legacy_clauses.append(model.import_batch_id.is_not(None))
+    legacy_clause = or_(*legacy_clauses) if legacy_clauses else None
+
+    if owner_uid is None:
+        if include_legacy or legacy_clause is None:
+            return true()
+        return ~legacy_clause
+
+    owner_clause = model.owner_uid == owner_uid
+    if not include_legacy and legacy_clause is not None:
+        return owner_clause & ~legacy_clause
+    return or_(owner_clause, legacy_clause) if legacy_clause is not None else owner_clause
 
 
 class EquipmentResearchRepository:

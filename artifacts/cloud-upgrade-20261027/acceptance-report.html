@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>云端扩容与多用户验收</title>
+<style>
+body{max-width:1080px;margin:40px auto;padding:0 20px;font:16px/1.8 system-ui;color:#243044;background:#f7f9fc}
+article{padding:32px;border:1px solid #e2e8f0;border-radius:16px;background:white}h1{font-size:28px}small{color:#64748b}
+table{width:100%;border-collapse:collapse;margin:24px 0}td{padding:12px;border-bottom:1px solid #e2e8f0}td:first-child{width:27%;font-weight:600}a{color:#5b4ccb}li{margin-bottom:8px}
+</style><article><small>Deepquest · 2026-10-27 · 扩容适配已上线</small>
+<h1>云端扩容与多用户并发验收</h1>
+<p>已按实际 4 vCPU / 16 GB 云机适配容量，完成普通用户并发、数据隔离、真实队列、文件与知识库验收。测试账户及业务夹具已清理。</p>
+<table><tr><td>实际云机</td><td>4 vCPU / 16 GB；没有额外设置容器 CPU、内存硬上限</td></tr><tr><td>生效档位</td><td>20 个通用任务槽；主 Worker 24 槽；API 2 进程；数据库连接上限 160</td></tr><tr><td>普通账户并发</td><td>16 个真实普通账户，1,920 次请求成功率 100%；P95 342.7 ms</td></tr><tr><td>跨账户隔离</td><td>80 / 80 次跨账户读取被拒绝</td></tr><tr><td>普通用户业务</td><td>16 / 16 完成上传下载、Word 交付、私有知识库入库与检索</td></tr><tr><td>后台真实负载</td><td>峰值 20 个任务同时 running；20 / 20 完成，耗时 7.85 s</td></tr><tr><td>负载期间总览</td><td>21 次探测，P95 33 ms，最大 261.2 ms；数据库峰值 54 / 160 连接</td></tr><tr><td>16 路总览统计</td><td>96 次统计请求，P95 574.8 ms，整组 1.93 s</td></tr><tr><td>资源采样</td><td>100 秒内 CPU 峰值 100%，可用内存最低 10.37 GiB，Swap 使用为 0</td></tr><tr><td>清理复核</td><td>16 个账户及 18 个知识库夹具的业务记录、文件、向量和对象存储均无残留</td></tr><tr><td>最终服务</td><td>核心容器 healthy、无 OOM；修复后 API 5xx 为 0，4xx 为预期越权拒绝</td></tr></table>
+<h2>修复与部署</h2><ul><li>API 和主 Worker 在向量服务健康后启动，避免整机重启时依赖顺序导致的退出重启。</li><li>认证及公众号权限读取结束后及时结束事务、归还连接，修复 20 路上传暴露的嵌套连接等待。JWT、API Key、账户状态及权限检查保留。</li><li>根据实际 4 vCPU / 16 GB 容量配置 20 个通用槽、24 个主 Worker 槽；没有套用 8 核档位。</li></ul>
+<p>59 项后端回归、5 项真实 PostgreSQL 并发边界测试及容器内 2 项依赖等待测试通过。9 个修改文件与云端源码核对一致，运行中 API 文件摘要也已核对。配置合并到生产环境文件，后续常规运维命令保留当前档位。</p>
+<p>部署前确认任务空闲，生成约 94 MiB 数据库归档并验证归档目录可读，同时保留根目录专用的配置与镜像回退点。本轮没有进行完整异地恢复演练。本地项目保持关闭，本机微信连接程序保留运行。</p>
+<h2>验收范围</h2><ul><li>16 个真实普通平台账户以密码登录，访问本人视频终态、公众号下载历史夹具、任务、私有知识库及文件；未替 16 人登录外部微信。</li><li>知识库解析、向量入库、检索、上传下载及 Word 文件接口真实执行；视频语音转录记录使用终态夹具。</li><li>1,920 次请求覆盖 16 路普通账户访问；另有 20 任务同库入库压力和 16 路管理员统计请求。发压来源为云机，经生产 HTTPS 入口。</li><li>本次为短时并发验收，未模拟长期大文件、16 路语音识别或所有外部模型供应商的持续限流。语音识别的单任务容量保留。</li><li>初次 20 路上传发现 13 个连接池超时，夹具已删除；修复后同规模重测全部通过。</li></ul>
+<p><a href="acceptance-report.json">完整验收 JSON</a> · <a href="16-users-result.json">16 账户原始结果</a> · <a href="20-tasks-result.json">20 任务原始结果</a> · <a href="cleanup-verification.log">独立清理复核</a> · <a href="source-manifest.json">源码摘要</a></p>
+</article></html>

@@ -1,0 +1,21 @@
+{
+  "backend/package/platform_core/repositories/wechat_channel_repository.py": "f5dad1569d4fb337fa166d6e0054f809bd255667a17cb4dd6b4ef1ec227826a0",
+  "backend/package/platform_core/repositories/video_collector_repository.py": "925b1866f35fb866bd0d55552afcbfabd6efa5bdf0b4984d8793ae7edf13bedd",
+  "backend/package/platform_core/services/wxchannels_service.py": "d4513c0ec6da73db088c43e49d8c1292e6354ae5c044f77885a7d15bad713383",
+  "backend/package/platform_core/services/video_collector_service.py": "ec8ccc3e4b571d45c3cbd191ac5688a1b4ec7531a3e9b01cea737fdca646f335",
+  "backend/package/platform_core/knowledge/wxchannels.py": "e111c7a04d7b77ed2b40659cf5c2e8fc1d58dcb982461faad0a80fbfc2d022f0",
+  "backend/server/routers/wxchannels_router.py": "f92448e86b6dfb3c8a9c8698d2a96c2d2ad565f55749cca2f6bc909221dee19f",
+  "backend/video_collector/collector.py": "beba2bdb15648f2ab251d60387066626f0606ddca62487700431e0b630ce0506",
+  "backend/package/platform_core/storage/postgres/models_knowledge.py": "3d7611ef0e89e2bc2fe600644b760b94caf778a25434ddaf478dd2f27b3cdc90",
+  "backend/package/platform_core/storage/postgres/manager.py": "ee033f09171c7f38b18d24bf6851c86cc280cdff81208f434896eab0e4f213d8",
+  "backend/package/platform_core/storage_migration.py": "b0d623414a74a2934f9f7ca4c5b7e03f4b51680e3e1cfdf46bb1b88789cf1b4b",
+  "backend/test/unit/services/test_wxchannels_service.py": "706c72f2ef7d0ec0bd68f6273a457e3db071a4aecf7850e5f1ce1e1a615dbc96",
+  "backend/test/integration/services/test_wechat_channel_repository.py": "50b5e04214d036b9f61cbb46bcb07d204a0bb6f75ae24bd2961669b995b11e16",
+  "web/src/views/WxChannelsView.vue": "f530c91fd94e309f5529062f85d83676e02ff59eddf6875dee3f0f18ba263b99",
+  "web/src/apis/wxchannels_api.js": "297e966f33e365b63622a574a20ed62296e713833a02dfb243859bdc96193d5d",
+  "backend/test/conftest.py": "fd5d37af7506fe4b07ef049720a63a6b9684cf375c1a3ba082fa5157ed49674c",
+  "backend/test/integration/conftest.py": "4f49c6df89f9ecf42ad5ad15039972c26c48a84f8979331d37a5d2e1b3f4986a",
+  "backend/test/live_api_cleanup.py": "d7ff7877980cf3ad16ea70a57a687b1566aa16c69627e3ff899384e49f7270e6",
+  "backend/test/integration/services/test_video_collector_repository.py": "faa61dbddc438985e7849d01deccf3f060169630b9fcb38409ac96d211f31402",
+  "backend/test/unit/services/test_video_collector_package.py": "84324db0e3f9f20d65791e27b69208415f7509a9cd14d4375a4445d7b366a8c8"
+}

@@ -18,6 +18,7 @@ from platform_core.workspace.workdir import Workdir
 MAX_PROJECT_NAME_LENGTH = 255
 DEFAULT_EQUIPMENT_PROJECT_NAME = "装备深研工作台"
 DEFAULT_EQUIPMENT_PROJECT_KEY = "equipment-default-workbench"
+EQUIPMENT_RUNTIME_PROJECT_KEY = "equipment-runtime-scope"
 
 
 async def _lock_project_workdir_changes(*, db, uid: str) -> None:
@@ -101,6 +102,32 @@ async def create_implicit_project(*, uid: str, db, idempotency_key: str | None =
         selection_status="implicit",
         db=db,
         idempotency_key=idempotency_key,
+    )
+
+
+async def ensure_equipment_runtime_project_record(*, uid: str, db) -> Project:
+    """为未显式选 Project 的装备功能提供隐藏运行作用域。
+
+    该记录只承担现有数据库外键和 Workdir 隔离职责，不出现在可选 Project
+    列表中，也不会把研究任务、Query 生成或深研对话绑定到默认工作台。
+    """
+
+    normalized_uid = str(uid)
+    await db.execute(
+        text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
+        {"lock_key": f"equipment-runtime-project:{normalized_uid}"},
+    )
+    repository = ProjectRepository(db)
+    existing = await repository.get_by_idempotency_key(EQUIPMENT_RUNTIME_PROJECT_KEY, normalized_uid)
+    if existing is not None:
+        if existing.status == "active":
+            return existing
+        existing.idempotency_key = None
+        await db.flush()
+    return await create_implicit_project(
+        uid=normalized_uid,
+        db=db,
+        idempotency_key=EQUIPMENT_RUNTIME_PROJECT_KEY,
     )
 
 

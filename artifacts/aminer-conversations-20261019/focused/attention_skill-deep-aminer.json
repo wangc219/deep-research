@@ -1,0 +1,1078 @@
+{
+  "name": "attention_skill-deep-aminer",
+  "topic": "attention_skill",
+  "kind": "deep",
+  "variant": "aminer",
+  "thread_id": "equipment-deep-7a2211f7-9303-4ac6-9b7e-d8bd781a2581",
+  "session_id": "thinking-a39d92e0-1336-4adf-852c-d6b043fcaa0d",
+  "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+  "prompt": "请先读取并使用 deep-research 技能，直接由主智能体完成，不委派子任务。比较 FlashAttention 与稀疏注意力解决长序列显存瓶颈的不同方法，并核验是否保证任意硬件推理提速两倍。请检索公开论文证据，使用简短关键词 FlashAttention、sparse attention；如主题检索无命中，改用已知论文精确标题定位。筛选后读取完整摘要，再用中文给出约500字结论，每个关键结论标注实际取得的来源链接，区分论文报告与推断，注明摘要不等于全文。仅输出最终答案，不输出分析过程，不要文件，不要追问。",
+  "submitted_at_utc": "2026-10-19T07:07:10.450314",
+  "elapsed_seconds": 40.2,
+  "result": {
+    "status": "completed",
+    "output": "**结论**\n\nFlashAttention 与稀疏注意力是两种机理不同的应对长序列显存瓶颈方案。FlashAttention 属“内存/IO 优化”：通过分块（tiling）与在线 softmax 重排，利用 GPU 异步的显存层次，把注意力计算限定在片上（SRAM）内完成，从而把显存占用从序列长度的二次方降为线性，且**不改变计算结果（无近似）**。FlashAttention-2 摘要明确给出相对优化基线 2–4 倍加速、显存线性化，并报告在 A100 上使运算利用率达到理论峰值 FLOP/s 的 50–73%（<a href=\"https://doi.org/10.48550/arxiv.2307.08691\">FlashAttention-2, arXiv:2307.08691</a>）。其后的 FlashAttention-3 利用 Hopper GPU 的张量核与 TMA 异步，报告在 H100 上再获 1.5–2.0 倍加速、BF16 达约 840 TFLOP/s（<a href=\"https://doi.org/10.52202/079017-2193\">FlashAttention-3, NeurIPS 2024</a>）。\n\n稀疏注意力则属“算法/计算量优化”：通过局部窗口、全局 token、随机链接或动态剪枝等固定/动态稀疏模式，把注意力复杂度从二次方压到线性或近似线性。代表性工作是 Longformer，其局部窗口+全局注意力机制随序列长度线性扩展，可处理数千 token 的长文档（<a href=\"https://doi.org/10.48550/arxiv.2004.05150\">Longformer/Long-Document Transformer, arXiv:2004.05150</a>）。SOFA 一类稀疏加速器进一步做“算法-硬件协同设计”，通过在专用加速器上预测注意力稀疏度并协同分块，报告相比 A100 达 9.5 倍加速、71.5 倍能效（<a href=\"https://doi.org/10.1109/micro61859.2024.00093\">SOFA, MICRO 2024</a>）。\n\n关于“是否保证任意硬件推理提速两倍”，核验结论是：**不能保证**。理由有三：(1) 论文中所有“2–4 倍 / 1.5–2 倍 / 9.5 倍”数值都是针对特定 GPU（A100、H100）或专用加速器、相对特定优化基线的实测报告，不是对任意硬件的普适承诺；(2) FlashAttention 的收益依赖目标硬件的存储层次与专用指令（如 Hopper 的 TMA、FP8），在无此类特性的硬件上收益会明显缩水，这一点由 FA-3 只针对 Hopper 体系这一点可以推断（模型推断，非论文原文陈述）；(3) 稀疏注意力省 FLOPs 与显存，但引入模式选择开销与不规则访存，其收益取决于稀疏率、硬件是否支持稀疏计算，短序列或稀疏率低时甚至可能不优于密集方案。（此点属基于机理的推断。）\n\n需要说明：本结论仅依据论文摘要，未读取全文或实验表格；上述精确数值、硬件型号均为论文摘要所述，非经全文核实。因此“两倍提速”应理解为特定评测环境下的论文报告，而非任意硬件的成立性保证。",
+    "agent_slug": "deep-research",
+    "thread_id": "equipment-deep-7a2211f7-9303-4ac6-9b7e-d8bd781a2581",
+    "conversation_id": 394,
+    "agent_run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+    "request_id": "fb3324c8-ff59-4e88-9d36-69890a16b82a",
+    "final_message_id": 2519,
+    "langfuse_trace_id": null,
+    "token_usage": {
+      "total": {
+        "input_tokens": 94311,
+        "total_tokens": 96843,
+        "output_tokens": 2532
+      },
+      "models": {
+        "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+          "model": {
+            "provider_id": "siliconflow-cn",
+            "provider_type": "openai",
+            "identity_source": "configured_metadata",
+            "response_model_ids": [
+              "deepseek-ai/DeepSeek-V4-Flash"
+            ],
+            "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+            "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+          },
+          "usage": {
+            "input_tokens": 94311,
+            "total_tokens": 96843,
+            "output_tokens": 2532,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 0
+            }
+          },
+          "cache_hit_ratio": 0.0,
+          "model_call_count": 5,
+          "cache_hit_call_count": 0,
+          "uncached_input_tokens": 94311,
+          "cache_read_input_tokens": 0,
+          "cache_request_hit_ratio": 0.0,
+          "cache_observed_call_count": 5,
+          "usage_reported_call_count": 5,
+          "cache_observed_input_tokens": 94311
+        }
+      },
+      "complete": true,
+      "schema_version": 2,
+      "model_call_count": 5,
+      "usage_reported_call_count": 5,
+      "usage_unavailable_call_count": 0
+    },
+    "timing": {
+      "created_at": "2026-10-19T07:07:10.418328Z",
+      "started_at": "2026-10-19T07:07:10.464751Z",
+      "prepared_at": "2026-10-19T07:07:10.728576Z",
+      "first_model_request_at": "2026-10-19T07:07:10.745999Z",
+      "first_output_at": "2026-10-19T07:07:12.681212Z",
+      "finished_at": "2026-10-19T07:07:44.080140Z",
+      "dispatch_latency_ms": 46,
+      "preparation_latency_ms": 264,
+      "first_model_request_latency_ms": 328,
+      "model_first_output_latency_ms": 1953,
+      "first_output_latency_ms": 2263,
+      "total_latency_ms": 33662
+    }
+  },
+  "tools": [
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "FlashAttention",
+        "mode": "title",
+        "limit": 10
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"FlashAttention\", \"source\": \"aminer\", \"results\": [{\"id\": \"64b60eaf3fda6d7f06eaf557\", \"doi\": \"10.48550/arxiv.2307.08691\", \"title\": \"FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning\", \"title_zh\": null, \"authors\": [\"Tri Dao\"], \"year\": 2024, \"venue\": \"ICLR 2024\", \"url\": \"https://doi.org/10.48550/arxiv.2307.08691\", \"content\": \"Scaling Transformers to longer sequence lengths has been a major problem in the last several years, promising to improve performance in language modeling and high-resolution image understanding, as well as to unlock new applications in code, audio, and video generation. The attention layer is the main bottleneck in scaling to longer sequences, as its runtime and memory increase quadratically in the sequence length. FlashAttention [5] exploits the asymmetric GPU memory hierarchy to bring significant memory saving (linear instead of quadratic) and runtime speedup (2-4×...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1001-5000\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"66908e2301d2a3fbfcea15a8\", \"doi\": \"10.52202/079017-2193\", \"title\": \"FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision\", \"title_zh\": null, \"authors\": [\"Jay Shah\", \"Ganesh Bikshandi\", \"Ying Zhang\", \"Vijay Thakkar\", \"Pradeep Ramani\", \"Tri Dao\"], \"year\": 2024, \"venue\": \"NeurIPS 2024\", \"url\": \"https://doi.org/10.52202/079017-2193\", \"content\": \"Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. elaborated an approach to speed up attention on GPUs through minimizing memory reads/writes. However, it has yet to take advantage of new capabilities present in recent hardware, with FlashAttention-2 achieving...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"201-1000\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"6740b8b4ae8580e7ffc041fd\", \"doi\": \"10.1016/j.etran.2024.100383\", \"title\": \"Resource-Efficient Artificial Intelligence for Battery Capacity Estimation Using Convolutional FlashAttention Fusion Networks\", \"title_zh\": null, \"authors\": [\"Zhilong Lv\", \"Jingyuan Zhao\"], \"year\": 2025, \"venue\": \"ETRANSPORTATION\", \"url\": \"https://doi.org/10.1016/j.etran.2024.100383\", \"content\": \"Accurate battery capacity estimation is crucial for optimizing lifespan and monitoring health conditions. Deep learning has made notable strides in addressing long-standing issues in the artificial intelligence community. However, large AI models often face challenges such as high computational resource consumption, extended training times, and elevated deployment costs. To address these issues, we developed an efficient end-to-end hybrid fusion neural network model. This model combines FlashAttention-2 with local feature extraction through convolutional neural networks (CNNs), significantly reducing memory usage and computational demands while maintaining precise and efficient health estimation. For practical implementation, the model uses only basic parameters,...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"11-50\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"682d24e6163c01c850f8c4e6\", \"doi\": \"10.1109/isvlsi65124.2025.11130263\", \"title\": \"Low-Cost FlashAttention with Fused Exponential and Multiplication Hardware Operators\", \"title_zh\": null, \"authors\": [\"Kosmas Alexandridis\", \"Vasileios Titopoulos\", \"Giorgos Dimitrakopoulos\"], \"year\": 2025, \"venue\": \"2025 IEEE COMPUTER SOCIETY ANNUAL SYMPOSIUM ON VLSI, ISVLSI\", \"url\": \"https://doi.org/10.1109/isvlsi65124.2025.11130263\", \"content\": \"Attention mechanisms, particularly within Transformer architectures and large language models (LLMs), have revolutionized sequence modeling in machine learning and artificial intelligence applications. To compute attention for increasingly long sequences, specialized accelerators have been proposed to execute key attention steps directly in hardware. Among the various recently proposed architectures, those based...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"682d254d163c01c850fa5369\", \"doi\": \"10.1109/islped65674.2025.11261805\", \"title\": \"FLASH-D: FlashAttention with Hidden Softmax Division\", \"title_zh\": null, \"authors\": [\"Kosmas Alexandridis\", \"Vasileios Titopoulos\", \"Giorgos Dimitrakopoulos\"], \"year\": 2025, \"venue\": \"2025 IEEE/ACM INTERNATIONAL SYMPOSIUM ON LOW POWER ELECTRONICS AND DESIGN, ISLPED\", \"url\": \"https://doi.org/10.1109/islped65674.2025.11261805\", \"content\": \"The transformer's attention mechanism has revolutionized AI and machine learning, with its efficient computation being crucial to its performance. However, calculating attention involves matrix operations interspersed with softmax rescaling, which inherently slows down computation and requires processing the entire input sequence. Building on online softmax computation, FlashAttention integrates softmax calculation with matrix arithmetic, enabling tiled computation independent of...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"6876f933163c01c850abf5e9\", \"doi\": \"\", \"title\": \"SystolicAttention: Fusing FlashAttention Within a Single Systolic Array\", \"title_zh\": null, \"authors\": [\"Jiawei Lin\", \"Yuanlong Li\", \"Guokai Chen\", \"Thomas Bourgeat\"], \"year\": 2025, \"venue\": \"CoRR\", \"url\": \"https://www.aminer.cn/pub/6876f933163c01c850abf5e9\", \"content\": \"Transformer models rely heavily on the scaled dot-product attention (SDPA) operation, typically implemented as FlashAttention. Characterized by its frequent interleaving of matrix multiplications and softmax operations, FlashAttention fails to fully utilize the compute resources of modern systolic-array-based accelerators designed for consecutive and large matrix multiplications. To fully unleash the performance potential of...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"6890122e163c01c850feaf5b\", \"doi\": \"10.1109/iccv51701.2025.01902\", \"title\": \"Representation Shift: Unifying Token Compression with FlashAttention\", \"title_zh\": null, \"authors\": [\"Joonmyung Choi\", \"Sanghyeok Lee\", \"Byungoh Ko\", \"Eunseo Kim\", \"Jihyung Kil\", \"Hyunwoo Kim\"], \"year\": 2025, \"venue\": \"ICCV 2025\", \"url\": \"https://doi.org/10.1109/iccv51701.2025.01902\", \"content\": \"Transformers have demonstrated remarkable success across vision, language, and video. Yet, increasing task complexity has led to larger models and more tokens, raising the quadratic cost of self-attention and the overhead of GPU memory access. To reduce the computation cost of self-attention, prior work has proposed token compression techniques that drop redundant or less...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"68a7d7e62855152d9fefce0c\", \"doi\": \"\", \"title\": \"From Online Softmax to FlashAttention\", \"title_zh\": null, \"authors\": [\"Zihao Ye\"], \"year\": 2023, \"venue\": \"\", \"url\": \"https://www.aminer.cn/pub/68a7d7e62855152d9fefce0c\", \"content\": \"\", \"content_level\": \"metadata\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:14.985141Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"690a07e8163c01c850721a79\", \"doi\": \"10.1016/j.rineng.2025.107282\", \"title\": \"Underwater Debris Detection Using YOLOv12 with Enhanced Feature Extraction Using R-ELAN and FlashAttention Network\", \"title_zh\": null, \"authors\": [\"N. Deluxni\", \"Pradeep Sudhakaran\"], \"year\": 2025, \"venue\": \"RESULTS IN ENGINEERING\", \"url\": \"https://doi.org/10.1016/j.rineng.2025.107282\", \"content\": \"Detecting undersea debris is crucial to attempts to clean the ocean and preserve marine ecosystems. Conventional object detection techniques are difficult to implement underwater cleaning vehicles because of poor visibility, variable lighting, and refraction distortions in water. This research presents an enhanced technique for real-time underwater debris identification utilizing YOLOv12 model. The proposed model combines R-ELAN (Recurrent Efficient Layer Aggregation Networks) with the FlashAttention Mechanism and...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"69aa3a5f9be8eb7c4b146063\", \"doi\": \"\", \"title\": \"FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling\", \"title_zh\": null, \"authors\": [\"Ted Zadouri\", \"Markus Hoehnerbach\", \"Jay Shah\", \"Timmy Liu\", \"Vijay Thakkar\", \"Tri Dao\"], \"year\": 2026, \"venue\": \"\", \"url\": \"https://www.aminer.cn/pub/69aa3a5f9be8eb7c4b146063\", \"content\": \"Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. While FlashAttention-3 optimized attention for Hopper GPUs through asynchronous execution and warp specialization, it primarily targets the H100 architecture. The AI industry has rapidly transitioned to deploying Blackwell-based systems such as the B200 and GB200, which exhibit fundamentally different performance characteristics due to asymmetric hardware scaling:...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"51-200\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.252664Z\", \"matched_queries\": [\"FlashAttention\"]}], \"evidence_gaps\": {\"metadata_only_ids\": [\"68a7d7e62855152d9fefce0c\"], \"partial_abstract_ids\": [\"64b60eaf3fda6d7f06eaf557\", \"66908e2301d2a3fbfcea15a8\", \"6740b8b4ae8580e7ffc041fd\", \"682d24e6163c01c850f8c4e6\", \"682d254d163c01c850fa5369\", \"6876f933163c01c850abf5e9\", \"6890122e163c01c850feaf5b\", \"690a07e8163c01c850721a79\", \"69aa3a5f9be8eb7c4b146063\"]}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": 45, \"query_coverage\": [{\"query\": \"FlashAttention\", \"status\": \"ok\", \"page\": 1, \"returned\": 10, \"total\": 45, \"next_page\": 2}], \"unsearched_queries\": [], \"unique_candidates\": 10, \"omitted_candidates\": 0, \"retrieval_guidance\": \"这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a152fc5a8ff78fd6a036eddcbfee17",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "FlashAttention",
+        "related_queries": [
+          "sparse attention long sequence memory",
+          "efficient transformer memory bottleneck"
+        ],
+        "mode": "topic",
+        "limit": 10
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"FlashAttention\", \"source\": \"aminer\", \"results\": [{\"id\": \"654d936b939a5f40825d3b8a\", \"doi\": \"10.52202/075280-0137\", \"title\": \"MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining\", \"title_zh\": null, \"authors\": [\"Jacob Portes\", \"Alexander R Trott\", \"Sam Havens\", \"Daniel King\", \"Abhinav Venigalla\", \"Moin Nadeem\", \"Nikhil Sardana\", \"Daya Khudia\", \"Jonathan Frankle\"], \"year\": 2023, \"venue\": \"NEURIPS 2023\", \"url\": \"https://doi.org/10.52202/075280-0137\", \"content\": \"Although BERT-style encoder models are heavily used in NLP research, many researchers do not pretrain their own BERTs from scratch due to the high cost of training. In the past half-decade since BERT first rose to prominence, many advances have been made with other transformer architectures and training configurations that have yet to be systematically incorporated into BERT. Here, we introduce MosaicBERT, a BERT-style encoder architecture and training recipe that is empirically optimized for fast pretraining. This efficient architecture...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"11-50\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"682be5de163c01c850f605ac\", \"doi\": \"10.52202/085713-0699\", \"title\": \"FlashBias: Fast Computation of Attention with Bias\", \"title_zh\": null, \"authors\": [\"Haixu Wu\", \"Minghao Guo\", \"Yuezhou Ma\", \"Yuanxu Sun\", \"Jianmin Wang\", \"Wojciech Matusik\", \"Mingsheng Long\"], \"year\": null, \"venue\": \"NeurIPS 2025\", \"url\": \"https://doi.org/10.52202/085713-0699\", \"content\": \"Attention with bias, which extends standard attention by introducing prior knowledge as an additive bias matrix to the query-key scores, has been widely deployed in vision, language, protein-folding and other advanced scientific models, underscoring its status as a key evolution of this foundational module. However, introducing bias terms creates a severe efficiency bottleneck in attention computation. It disrupts the tightly fused memory-compute pipeline that underlies the speed of accelerators like...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"68c3761a163c01c8504aafbf\", \"doi\": \"10.1109/isca66397.2026.00023\", \"title\": \"Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference\", \"title_zh\": null, \"authors\": [\"Haoran Wu\", \"Can Xiao\", \"Jiayi Nie\", \"Xuan Guo\", \"Binglei Lou\", \"Jeffrey T. H. Wong\", \"Zhiwen Mo\", \"Cheng Zhang\", \"Przemyslaw Forys\", \"Chengyang Ai\", \"Timi Adeniran\", \"Wayne Luk\", \"Hongxiang Fan\", \"Jianyi Cheng\", \"Timothy M. Jones\", \"Rika Antonova\", \"Robert Mullins\", \"Aaron Zhao\"], \"year\": 2026, \"venue\": \"2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)\", \"url\": \"https://doi.org/10.1109/isca66397.2026.00023\", \"content\": \"LLMs now form the backbone of AI agents across a diverse range of applications, including tool use, command-line interfaces, and web or computer interaction. These agentic LLM inference tasks are fundamentally different from chatbot-focused inference. They often involve much longer context lengths to capture complex and prolonged inputs, such as an entire webpage DOM or complicated tool-call trajectories. This, in turn, generates significant off-chip memory traffic during inference and causes workloads to be constrained by two...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"11-50\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"6695d3c001d2a3fbfccebf98\", \"doi\": \"10.1109/micro61859.2024.00093\", \"title\": \"SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling\", \"title_zh\": null, \"authors\": [\"Huizheng Wang\", \"Jiahao Fang\", \"Xinru Tang\", \"Zhiheng Yue\", \"Jinxi Li\", \"Yubin Qin\", \"Sihan Guan\", \"Qinze Yang\", \"Yang Wang\", \"Chao Li\", \"Yang Hu\", \"Shouyi Yin\"], \"year\": 2024, \"venue\": \"2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO\", \"url\": \"https://doi.org/10.1109/micro61859.2024.00093\", \"content\": \"Benefiting from the self-attention mechanism, Transformer models have attained impressive contextual comprehension capabilities for lengthy texts. The requirements of high-throughput inference arise as the large language models (LLMs) become increasingly prevalent, which calls for large-scale token parallel processing (LTPP). However, existing dynamic sparse accelerators struggle to effectively handle LTPP, as they solely focus on separate stage optimization, and with most efforts confined to computational enhancements. By re-examining the end-to-end flow of dynamic sparse acceleration, we pinpoint an...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"11-50\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"67da25b1163c01c85026a7e7\", \"doi\": \"\", \"title\": \"Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels\", \"title_zh\": null, \"authors\": [\"Maximilian Beck\", \"Korbinian Pöppel\", \"Phillip Lippe\", \"Sepp Hochreiter\"], \"year\": null, \"venue\": \"NeurIPS 2025\", \"url\": \"https://www.aminer.cn/pub/67da25b1163c01c85026a7e7\", \"content\": \"Linear RNNs with gating recently demonstrated competitive performance compared to Transformers in language modeling. Although their linear compute scaling in sequence length offers theoretical runtime advantages over Transformers, realizing these benefits in practice requires optimized custom kernels, as Transformers rely on the highly efficient Flash Attention kernels (Dao, 2024). Leveraging the chunkwise-parallel formulation of linear RNNs, Flash Linear Attention (FLA) (Yang & Zhang, 2024) shows that linear RNN kernels are faster than Flash Attention, by parallelizing over chunks of...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"11-50\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"69f0891c9be8eb7c4b3e0a84\", \"doi\": \"10.1145/3748173.3779572\", \"title\": \"FARE: A Fine-grained Pipelined Reconfigurable Flash Attention Kernel\", \"title_zh\": null, \"authors\": [\"Kaushikumar S. Rathva\"], \"year\": 2026, \"venue\": \"PROCEEDINGS OF THE 2026 ACM/SIGDA INTERNATIONAL SYMPOSIUM ON FIELD PROGRAMMABLE GATE ARRAYS, FPGA 2026\", \"url\": \"https://doi.org/10.1145/3748173.3779572\", \"content\": \"\", \"content_level\": \"metadata\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:14.918429Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"67ff4624163c01c85033b6c7\", \"doi\": \"10.1109/arith64983.2025.00016\", \"title\": \"VEXP: A Low-Cost RISC-V ISA Extension for Accelerated Softmax Computation in Transformers\", \"title_zh\": null, \"authors\": [\"Run Wang\", \"Gamze Islamoglu\", \"Andrea Belano\", \"Viviane Potocnik\", \"Francesco Conti\", \"Angelo Garofalo\", \"Luca Benini\"], \"year\": 2025, \"venue\": \"2025 IEEE 32ND SYMPOSIUM ON COMPUTER ARITHMETIC, ARITH\", \"url\": \"https://doi.org/10.1109/arith64983.2025.00016\", \"content\": \"While Transformers are dominated by Floating-Point (FP) Matrix-Multiplications, their aggressive acceleration through dedicated hardware or many-core programmable systems has shifted the performance bottleneck to non-linear functions like Softmax. Accelerating Softmax is challenging due to its non-pointwise, non-linear nature, with exponentiation as the most demanding step. To address this, we design a custom arithmetic block for Bfloat16 exponentiation leveraging a novel approximation algorithm based...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"68a6584c163c01c85078937e\", \"doi\": \"10.1109/asap65064.2025.00023\", \"title\": \"METAL: A Memory-Efficient Transformer Architecture for Long-Context Inference on FPGA\", \"title_zh\": null, \"authors\": [\"Zicheng He\", \"Shaoqiang Lu\", \"Tiandong Zhao\", \"Jinlong Yan\", \"Chen Wu\", \"Lei He\"], \"year\": 2025, \"venue\": \"2025 IEEE 36TH INTERNATIONAL CONFERENCE ON APPLICATION-SPECIFIC SYSTEMS, ARCHITECTURES AND PROCESSORS, ASAP\", \"url\": \"https://doi.org/10.1109/asap65064.2025.00023\", \"content\": \"Transformer-based models have shown remarkable proficiency in extensive tasks for natural language processing, which are facing the ever-increasing need of processing long-context inputs. However, the memory footprint of the self-attention mechanism grows quadratically with the context length and becomes the bandwidth and memory bottleneck. Existing accelerators are mainly tailored for short sequences and struggle to handle attention in long-context scenarios. While some works attempt to mitigate this memory overhead with algorithmic...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"67f71ef1163c01c850ff1133\", \"doi\": \"\", \"title\": \"Adaptive Computation Pruning for the Forgetting Transformer\", \"title_zh\": null, \"authors\": [\"Zhixuan Lin\", \"Johan Obando-Ceron\", \"Xu Owen He\", \"Aaron Courville\"], \"year\": null, \"venue\": \"COLM 2025\", \"url\": \"https://www.aminer.cn/pub/67f71ef1163c01c850ff1133\", \"content\": \"The recently proposed Forgetting Transformer (FoX) incorporates a forget gate into softmax attention and has shown consistently better or on-par performance compared to the standard RoPE-based Transformer. Notably, many attention heads in FoX tend to forget quickly, causing their output at each timestep to rely primarily on local context. Based on this observation, we propose Adaptive Computation Pruning (ACP) for FoX,...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}, {\"id\": \"676a2448ae8580e7ff2f88fe\", \"doi\": \"10.1109/cvpr52734.2025.00618\", \"title\": \"Flash3D: Super-scaling Point Transformers Through Joint Hardware-Geometry Locality\", \"title_zh\": null, \"authors\": [\"Liyan Chen\", \"Gregory P. Meyer\", \"Zaiwei Zhang\", \"Eric M. Wolff\", \"Paul Vernaza\"], \"year\": 2025, \"venue\": \"CVPR 2025\", \"url\": \"https://doi.org/10.1109/cvpr52734.2025.00618\", \"content\": \"Recent efforts recognize the power of scale in 3D learning (e.g. PTv3) and attention mechanisms (e.g. FlashAttention). However, current point cloud backbones fail to holistically unify geometric locality, attention mechanisms, and GPU architectures in one view. In this paper, we introduce Flash3D Transformer, which aligns geometric locality and...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"1-10\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:15.791898Z\", \"matched_queries\": [\"FlashAttention\"]}], \"evidence_gaps\": {\"metadata_only_ids\": [\"69f0891c9be8eb7c4b3e0a84\"], \"partial_abstract_ids\": [\"654d936b939a5f40825d3b8a\", \"682be5de163c01c850f605ac\", \"68c3761a163c01c8504aafbf\", \"6695d3c001d2a3fbfccebf98\", \"67da25b1163c01c85026a7e7\", \"67ff4624163c01c85033b6c7\", \"68a6584c163c01c85078937e\", \"67f71ef1163c01c850ff1133\", \"676a2448ae8580e7ff2f88fe\"]}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"query_coverage\": [{\"query\": \"FlashAttention\", \"status\": \"ok\", \"page\": 1, \"returned\": 10, \"total\": 32, \"next_page\": 2}, {\"query\": \"sparse attention long sequence memory\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}, {\"query\": \"efficient transformer memory bottleneck\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 10, \"omitted_candidates\": 0, \"retrieval_guidance\": \"这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a152fc58994900b86c021665949015",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "sparse attention long sequence transformer",
+        "related_queries": [
+          "Longformer sparse attention",
+          "BigBird sparse transformer"
+        ],
+        "mode": "topic",
+        "limit": 10
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"sparse attention long sequence transformer\", \"source\": \"aminer\", \"results\": [], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": []}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"query_coverage\": [{\"query\": \"sparse attention long sequence transformer\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}, {\"query\": \"Longformer sparse attention\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}, {\"query\": \"BigBird sparse transformer\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 0, \"omitted_candidates\": 0, \"retrieval_guidance\": \"本次查询未命中论文，不代表技术不存在；可针对缺口调整术语或使用其他来源。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a152fc940819ba5977cdf2d23f8e03",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_get_papers",
+      "tool_input": {
+        "paper_ids": [
+          "64b60eaf3fda6d7f06eaf557",
+          "66908e2301d2a3fbfcea15a8",
+          "6695d3c001d2a3fbfccebf98"
+        ],
+        "full_abstract": true
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"\", \"source\": \"aminer\", \"results\": [{\"id\": \"64b60eaf3fda6d7f06eaf557\", \"doi\": \"10.48550/arxiv.2307.08691\", \"title\": \"FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning\", \"title_zh\": null, \"authors\": [\"Tri Dao\"], \"year\": 2024, \"venue\": \"ICLR 2024\", \"url\": \"https://doi.org/10.48550/arxiv.2307.08691\", \"content\": \"Scaling Transformers to longer sequence lengths has been a major problem in the last several years, promising to improve performance in language modeling and high-resolution image understanding, as well as to unlock new applications in code, audio, and video generation. The attention layer is the main bottleneck in scaling to longer sequences, as its runtime and memory increase quadratically in the sequence length. FlashAttention [5] exploits the asymmetric GPU memory hierarchy to bring significant memory saving (linear instead of quadratic) and runtime speedup (2-4× compared to optimized baselines), with no approximation. However, FlashAttention is still not nearly as fast as optimized matrix-multiply (GEMM) operations, reaching only 25-40% of the theoretical maximum FLOPs/s. We observe that the inefficiency is due to suboptimal work partitioning between different thread blocks and warps on the GPU, causing either low-occupancy or unnecessary shared memory reads/writes. We propose FlashAttention-2, with better work partitioning to address these issues. In particular, we (1) tweak the algorithm to reduce the number of non-matmul FLOPs (2) parallelize the attention computation, even for a single head, across different thread blocks to increase occupancy, and (3) within each thread block, distribute the work between warps to reduce communication through shared memory. These yield around 2× speedup compared to FlashAttention, reaching 50-73% of the theoretical maximum FLOPs/s on A100 and getting close to the efficiency of GEMM operations. We empirically validate that when used end-to-end to train GPT-style models, FlashAttention-2 reaches training speed of up to 225 TFLOPs/s per A100 GPU (72% model FLOPs utilization).\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:21.160031Z\"}, {\"id\": \"66908e2301d2a3fbfcea15a8\", \"doi\": \"10.52202/079017-2193\", \"title\": \"FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision\", \"title_zh\": null, \"authors\": [\"Jay Shah\", \"Ganesh Bikshandi\", \"Ying Zhang\", \"Vijay Thakkar\", \"Pradeep Ramani\", \"Tri Dao\"], \"year\": 2024, \"venue\": \"NeurIPS 2024\", \"url\": \"https://doi.org/10.52202/079017-2193\", \"content\": \"Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. elaborated an approach to speed up attention on GPUs through minimizing memory reads/writes. However, it has yet to take advantage of new capabilities present in recent hardware, with FlashAttention-2 achieving only 35% utilization on the H100 GPU. We develop three main techniques to speed up attention on Hopper GPUs: exploiting asynchrony of the Tensor Cores and TMA to (1) overlap overall computation and data movement via warp-specialization and (2) interleave block-wise matmul and softmax operations, and (3) block quantization and incoherent processing that leverages hardware support for FP8 low-precision. We demonstrate that our method, FlashAttention-3, achieves speedup on H100 GPUs by 1.5-2.0$\\\\times$ with BF16 reaching up to 840 TFLOPs/s (85\\\\% utilization), and with FP8 reaching 1.3 PFLOPs/s. We validate that FP8 FlashAttention-3 achieves 2.6$\\\\times$ lower numerical error than a baseline FP8 attention.\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:21.483682Z\"}, {\"id\": \"6695d3c001d2a3fbfccebf98\", \"doi\": \"10.1109/micro61859.2024.00093\", \"title\": \"SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling\", \"title_zh\": null, \"authors\": [\"Huizheng Wang\", \"Jiahao Fang\", \"Xinru Tang\", \"Zhiheng Yue\", \"Jinxi Li\", \"Yubin Qin\", \"Sihan Guan\", \"Qinze Yang\", \"Yang Wang\", \"Chao Li\", \"Yang Hu\", \"Shouyi Yin\"], \"year\": 2024, \"venue\": \"2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO\", \"url\": \"https://doi.org/10.1109/micro61859.2024.00093\", \"content\": \"Benefiting from the self-attention mechanism, Transformer models have attained impressive contextual comprehension capabilities for lengthy texts. The requirements of high-throughput inference arise as the large language models (LLMs) become increasingly prevalent, which calls for large-scale token parallel processing (LTPP). However, existing dynamic sparse accelerators struggle to effectively handle LTPP, as they solely focus on separate stage optimization, and with most efforts confined to computational enhancements. By re-examining the end-to-end flow of dynamic sparse acceleration, we pinpoint an ever-overlooked opportunity that the LTPP can exploit the intrinsic coordination among stages to avoid excessive memory access and redundant computation. Motivated by our observation, we present SOFA, a cross-stage compute-memory efficient algorithm-hardware co-design, which is tailored to tackle the challenges posed by LTPP of Transformer inference effectively. We first propose a novel leading zero computing paradigm, which predicts attention sparsity by using log-based add-only operations to avoid the significant overhead of prediction. Then, a distributed sorting and a sorted updating FlashAttention mechanism are proposed with cross-stage coordinated tiling principle, which enables fine-grained and lightweight coordination among stages, helping optimize memory access and latency. Further, we propose a SOFA accelerator to support these optimizations efficiently. Extensive experiments on 20 benchmarks show that SOFA achieves 9.5x speed up and 71.5x higher energy efficiency than Nvidia A100 GPU. Compared to eight SOTA accelerators, SOFA achieves an average 15.8x energy efficiency, 10.3x area efficiency and 9.3x speed up, respectively.\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:21.789629Z\"}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": []}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"requested_paper_ids\": [\"64b60eaf3fda6d7f06eaf557\", \"66908e2301d2a3fbfcea15a8\", \"6695d3c001d2a3fbfccebf98\"], \"missing_paper_ids\": [], \"missing_abstract_ids\": []}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_get_papers",
+        "id": null,
+        "tool_call_id": "01a152fc960f2bcb1f23a7a8e955e94a",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "Longformer the long document transformer",
+        "mode": "title",
+        "limit": 5
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"Longformer the long document transformer\", \"source\": \"aminer\", \"results\": [{\"id\": \"5e943b8091e011344866420c\", \"doi\": \"10.48550/arxiv.2004.05150\", \"title\": \"Longformer: the Long-Document Transformer.\", \"title_zh\": null, \"authors\": [\"Iz Beltagy\", \"Matthew E. Peters\", \"Arman Cohan\"], \"year\": 2020, \"venue\": \"CoRR\", \"url\": \"https://doi.org/10.48550/arxiv.2004.05150\", \"content\": \"Transformer-based models are unable to process long sequences due to their self-attention operation, which scales quadratically with the sequence length. To address this limitation, we introduce the Longformer with an attention mechanism that scales linearly with sequence length, making it easy to process documents...\", \"content_level\": \"partial_abstract\", \"citation_bucket\": \"5000+\", \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:30.436013Z\", \"matched_queries\": [\"Longformer the long document transformer\"]}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": [\"5e943b8091e011344866420c\"]}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": 1, \"query_coverage\": [{\"query\": \"Longformer the long document transformer\", \"status\": \"ok\", \"page\": 1, \"returned\": 1, \"total\": 1, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 1, \"omitted_candidates\": 0, \"retrieval_guidance\": \"这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a152fcbaa06d5362eb54a83af89516",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_search",
+      "tool_input": {
+        "query": "FlashAttention exact IO awareness triton Dao",
+        "mode": "title",
+        "limit": 5
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"FlashAttention exact IO awareness triton Dao\", \"source\": \"aminer\", \"results\": [], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": []}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"query_coverage\": [{\"query\": \"FlashAttention exact IO awareness triton Dao\", \"status\": \"ok\", \"page\": 1, \"returned\": 0, \"total\": null, \"next_page\": null}], \"unsearched_queries\": [], \"unique_candidates\": 0, \"omitted_candidates\": 0, \"retrieval_guidance\": \"本次查询未命中论文，不代表技术不存在；可针对缺口调整术语或使用其他来源。\"}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_search",
+        "id": null,
+        "tool_call_id": "01a152fcb8a3183cdbbcb4ecc334ad29",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    },
+    {
+      "run_id": "e6df777f-786f-4d54-8661-0421e5de022e",
+      "tool_name": "academic_get_papers",
+      "tool_input": {
+        "paper_ids": [
+          "5e943b8091e011344866420c"
+        ],
+        "full_abstract": true
+      },
+      "tool_output": {
+        "content": "{\"status\": \"ok\", \"aminer_status\": \"ok\", \"query\": \"\", \"source\": \"aminer\", \"results\": [{\"id\": \"5e943b8091e011344866420c\", \"doi\": \"10.48550/arxiv.2004.05150\", \"title\": \"Longformer: the Long-Document Transformer.\", \"title_zh\": null, \"authors\": [\"Iz Beltagy\", \"Matthew E. Peters\", \"Arman Cohan\"], \"year\": 2020, \"venue\": \"CoRR\", \"url\": \"https://doi.org/10.48550/arxiv.2004.05150\", \"content\": \"Transformer-based models are unable to process long sequences due to their self-attention operation, which scales quadratically with the sequence length. To address this limitation, we introduce the Longformer with an attention mechanism that scales linearly with sequence length, making it easy to process documents of thousands of tokens or longer. Longformer's attention mechanism is a drop-in replacement for the standard self-attention and combines a local windowed attention with a task motivated global attention. Following prior work on long-sequence transformers, we evaluate Longformer on character-level language modeling and achieve state-of-the-art results on text8 and enwik8. In contrast to most prior work, we also pretrain Longformer and finetune it on a variety of downstream tasks. Our pretrained Longformer consistently outperforms RoBERTa on long document tasks and sets new state-of-the-art results on WikiHop and TriviaQA.\", \"content_level\": \"abstract\", \"citation_bucket\": null, \"source\": \"aminer\", \"retrieved_at\": \"2026-10-19T07:07:32.094409Z\"}], \"evidence_gaps\": {\"metadata_only_ids\": [], \"partial_abstract_ids\": []}, \"evidence_notice\": \"只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。\", \"cached\": false, \"message\": \"\", \"total\": null, \"requested_paper_ids\": [\"5e943b8091e011344866420c\"], \"missing_paper_ids\": [], \"missing_abstract_ids\": []}",
+        "additional_kwargs": {},
+        "response_metadata": {},
+        "type": "tool",
+        "name": "academic_get_papers",
+        "id": null,
+        "tool_call_id": "01a152fca04989b2f2e0ed4e19c74d5d",
+        "artifact": null,
+        "status": "success"
+      },
+      "error_message": null,
+      "status": null
+    }
+  ],
+  "aminer_ledger": [
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:14.608870",
+      "finished_at": "2026-10-19 07:07:14.924639",
+      "provider_log_id": "3Ku3TdcM5bL7SNxvDL8nYxKTfO6",
+      "result_status": "ok",
+      "returned": 10
+    },
+    {
+      "endpoint": "title_search",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:14.651816",
+      "finished_at": "2026-10-19 07:07:14.987938",
+      "provider_log_id": "3Ku3TbRwbBOpUMQvzxK1H9eRy6E",
+      "result_status": "ok",
+      "returned": 10
+    },
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:14.944749",
+      "finished_at": "2026-10-19 07:07:15.202034",
+      "provider_log_id": "3Ku3TpIljzE7zK15UjtKdzYpCpP",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:15.012408",
+      "finished_at": "2026-10-19 07:07:15.254777",
+      "provider_log_id": "3Ku3TpWEPRhMUvqtC0FJISRGbW2",
+      "result_status": "ok",
+      "returned": 10
+    },
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:15.233152",
+      "finished_at": "2026-10-19 07:07:15.476917",
+      "provider_log_id": "3Ku3TnV8xeT6gWDDqSQg2064kqZ",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:15.490240",
+      "finished_at": "2026-10-19 07:07:15.793494",
+      "provider_log_id": "3Ku3TmlpxYeyw8dqUB3Cli6NVuZ",
+      "result_status": "ok",
+      "returned": 10
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:20.771677",
+      "finished_at": "2026-10-19 07:07:20.956324",
+      "provider_log_id": "3Ku3URNxRfW25FZEmb6LMhzo8eF",
+      "result_status": "ok",
+      "returned": 3
+    },
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:20.782261",
+      "finished_at": "2026-10-19 07:07:20.990482",
+      "provider_log_id": "3Ku3USPhd4S3Bqwnng0ISOlYcNa",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:20.961299",
+      "finished_at": "2026-10-19 07:07:21.161554",
+      "provider_log_id": "3Ku3UWqZgj95jWk7G5XtYQscFRA",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:20.999051",
+      "finished_at": "2026-10-19 07:07:21.199621",
+      "provider_log_id": "3Ku3UVwvBBsqcYdHKgOTxgcQKHs",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:21.166374",
+      "finished_at": "2026-10-19 07:07:21.485944",
+      "provider_log_id": "3Ku3UZfHZoZmZEYpmJzWOPfds02",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "search",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:21.206242",
+      "finished_at": "2026-10-19 07:07:21.485484",
+      "provider_log_id": "3Ku3UTOe34O0fBimYO8LcWONUgW",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:21.494945",
+      "finished_at": "2026-10-19 07:07:21.790999",
+      "provider_log_id": "3Ku3UTu8wkeyQ37zVkeonaQu1w8",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "title_search",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:29.972777",
+      "finished_at": "2026-10-19 07:07:30.237297",
+      "provider_log_id": "3Ku3VfdBxaP7AdYvpayhSDSYnEX",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "title_search",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:29.981836",
+      "finished_at": "2026-10-19 07:07:30.209262",
+      "provider_log_id": "3Ku3Vf6PcrZKBTL9zGRcjuvZXHm",
+      "result_status": "ok",
+      "returned": 0
+    },
+    {
+      "endpoint": "info",
+      "status": "succeeded",
+      "cost_cents": 0,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:30.245458",
+      "finished_at": "2026-10-19 07:07:30.439917",
+      "provider_log_id": "3Ku3VfWHyiJo5eXHlfac7AiBrkO",
+      "result_status": "ok",
+      "returned": 1
+    },
+    {
+      "endpoint": "detail",
+      "status": "succeeded",
+      "cost_cents": 1,
+      "attempt": 1,
+      "created_at": "2026-10-19 07:07:31.905242",
+      "finished_at": "2026-10-19 07:07:32.095421",
+      "provider_log_id": "3Ku3Vtlzjr3xyad8a9uVyhjtVi5",
+      "result_status": "ok",
+      "returned": 1
+    }
+  ],
+  "estimated_aminer_cost_cents": 10,
+  "academic_tool_calls": 7,
+  "web_tool_calls": 0,
+  "answer_urls": [
+    "https://doi.org/10.1109/micro61859.2024.00093",
+    "https://doi.org/10.48550/arxiv.2004.05150",
+    "https://doi.org/10.48550/arxiv.2307.08691",
+    "https://doi.org/10.52202/079017-2193"
+  ],
+  "academic_evidence": [
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "FlashAttention",
+        "mode": "title",
+        "limit": 10
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "FlashAttention",
+          "status": "ok",
+          "page": 1,
+          "returned": 10,
+          "total": 45,
+          "next_page": 2
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": [
+        {
+          "id": "64b60eaf3fda6d7f06eaf557",
+          "doi": "10.48550/arxiv.2307.08691",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2024,
+          "venue": "ICLR 2024",
+          "url": "https://doi.org/10.48550/arxiv.2307.08691",
+          "content_level": "partial_abstract",
+          "content": "Scaling Transformers to longer sequence lengths has been a major problem in the last several years, promising to improve performance in language modeling and high-resolution image understanding, as well as to unlock new applications in code, audio, and video generation. The attention layer is the main bottleneck in scaling to longer sequences, as its runtime and memory increase quadratically in the sequence length. FlashAttention [5] exploits the asymmetric GPU memory hierarchy to bring significant memory saving (linear instead of quadratic) and runtime speedup (2-4×..."
+        },
+        {
+          "id": "66908e2301d2a3fbfcea15a8",
+          "doi": "10.52202/079017-2193",
+          "title": "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision",
+          "authors": [
+            "Jay Shah",
+            "Ganesh Bikshandi",
+            "Ying Zhang",
+            "Vijay Thakkar",
+            "Pradeep Ramani",
+            "Tri Dao"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-2193",
+          "content_level": "partial_abstract",
+          "content": "Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. elaborated an approach to speed up attention on GPUs through minimizing memory reads/writes. However, it has yet to take advantage of new capabilities present in recent hardware, with FlashAttention-2 achieving..."
+        },
+        {
+          "id": "6740b8b4ae8580e7ffc041fd",
+          "doi": "10.1016/j.etran.2024.100383",
+          "title": "Resource-Efficient Artificial Intelligence for Battery Capacity Estimation Using Convolutional FlashAttention Fusion Networks",
+          "authors": [
+            "Zhilong Lv",
+            "Jingyuan Zhao"
+          ],
+          "year": 2025,
+          "venue": "ETRANSPORTATION",
+          "url": "https://doi.org/10.1016/j.etran.2024.100383",
+          "content_level": "partial_abstract",
+          "content": "Accurate battery capacity estimation is crucial for optimizing lifespan and monitoring health conditions. Deep learning has made notable strides in addressing long-standing issues in the artificial intelligence community. However, large AI models often face challenges such as high computational resource consumption, extended training times, and elevated deployment costs. To address these issues, we developed an efficient end-to-end hybrid fusion neural network model. This model combines FlashAttention-2 with local feature extraction through convolutional neural networks (CNNs), significantly reducing memory usage and computational demands while maintaining precise and efficient health estimation. For practical implementation, the model uses only basic parameters,..."
+        },
+        {
+          "id": "682d24e6163c01c850f8c4e6",
+          "doi": "10.1109/isvlsi65124.2025.11130263",
+          "title": "Low-Cost FlashAttention with Fused Exponential and Multiplication Hardware Operators",
+          "authors": [
+            "Kosmas Alexandridis",
+            "Vasileios Titopoulos",
+            "Giorgos Dimitrakopoulos"
+          ],
+          "year": 2025,
+          "venue": "2025 IEEE COMPUTER SOCIETY ANNUAL SYMPOSIUM ON VLSI, ISVLSI",
+          "url": "https://doi.org/10.1109/isvlsi65124.2025.11130263",
+          "content_level": "partial_abstract",
+          "content": "Attention mechanisms, particularly within Transformer architectures and large language models (LLMs), have revolutionized sequence modeling in machine learning and artificial intelligence applications. To compute attention for increasingly long sequences, specialized accelerators have been proposed to execute key attention steps directly in hardware. Among the various recently proposed architectures, those based..."
+        },
+        {
+          "id": "682d254d163c01c850fa5369",
+          "doi": "10.1109/islped65674.2025.11261805",
+          "title": "FLASH-D: FlashAttention with Hidden Softmax Division",
+          "authors": [
+            "Kosmas Alexandridis",
+            "Vasileios Titopoulos",
+            "Giorgos Dimitrakopoulos"
+          ],
+          "year": 2025,
+          "venue": "2025 IEEE/ACM INTERNATIONAL SYMPOSIUM ON LOW POWER ELECTRONICS AND DESIGN, ISLPED",
+          "url": "https://doi.org/10.1109/islped65674.2025.11261805",
+          "content_level": "partial_abstract",
+          "content": "The transformer's attention mechanism has revolutionized AI and machine learning, with its efficient computation being crucial to its performance. However, calculating attention involves matrix operations interspersed with softmax rescaling, which inherently slows down computation and requires processing the entire input sequence. Building on online softmax computation, FlashAttention integrates softmax calculation with matrix arithmetic, enabling tiled computation independent of..."
+        },
+        {
+          "id": "6876f933163c01c850abf5e9",
+          "doi": "",
+          "title": "SystolicAttention: Fusing FlashAttention Within a Single Systolic Array",
+          "authors": [
+            "Jiawei Lin",
+            "Yuanlong Li",
+            "Guokai Chen",
+            "Thomas Bourgeat"
+          ],
+          "year": 2025,
+          "venue": "CoRR",
+          "url": "https://www.aminer.cn/pub/6876f933163c01c850abf5e9",
+          "content_level": "partial_abstract",
+          "content": "Transformer models rely heavily on the scaled dot-product attention (SDPA) operation, typically implemented as FlashAttention. Characterized by its frequent interleaving of matrix multiplications and softmax operations, FlashAttention fails to fully utilize the compute resources of modern systolic-array-based accelerators designed for consecutive and large matrix multiplications. To fully unleash the performance potential of..."
+        },
+        {
+          "id": "6890122e163c01c850feaf5b",
+          "doi": "10.1109/iccv51701.2025.01902",
+          "title": "Representation Shift: Unifying Token Compression with FlashAttention",
+          "authors": [
+            "Joonmyung Choi",
+            "Sanghyeok Lee",
+            "Byungoh Ko",
+            "Eunseo Kim",
+            "Jihyung Kil",
+            "Hyunwoo Kim"
+          ],
+          "year": 2025,
+          "venue": "ICCV 2025",
+          "url": "https://doi.org/10.1109/iccv51701.2025.01902",
+          "content_level": "partial_abstract",
+          "content": "Transformers have demonstrated remarkable success across vision, language, and video. Yet, increasing task complexity has led to larger models and more tokens, raising the quadratic cost of self-attention and the overhead of GPU memory access. To reduce the computation cost of self-attention, prior work has proposed token compression techniques that drop redundant or less..."
+        },
+        {
+          "id": "68a7d7e62855152d9fefce0c",
+          "doi": "",
+          "title": "From Online Softmax to FlashAttention",
+          "authors": [
+            "Zihao Ye"
+          ],
+          "year": 2023,
+          "venue": "",
+          "url": "https://www.aminer.cn/pub/68a7d7e62855152d9fefce0c",
+          "content_level": "metadata",
+          "content": ""
+        },
+        {
+          "id": "690a07e8163c01c850721a79",
+          "doi": "10.1016/j.rineng.2025.107282",
+          "title": "Underwater Debris Detection Using YOLOv12 with Enhanced Feature Extraction Using R-ELAN and FlashAttention Network",
+          "authors": [
+            "N. Deluxni",
+            "Pradeep Sudhakaran"
+          ],
+          "year": 2025,
+          "venue": "RESULTS IN ENGINEERING",
+          "url": "https://doi.org/10.1016/j.rineng.2025.107282",
+          "content_level": "partial_abstract",
+          "content": "Detecting undersea debris is crucial to attempts to clean the ocean and preserve marine ecosystems. Conventional object detection techniques are difficult to implement underwater cleaning vehicles because of poor visibility, variable lighting, and refraction distortions in water. This research presents an enhanced technique for real-time underwater debris identification utilizing YOLOv12 model. The proposed model combines R-ELAN (Recurrent Efficient Layer Aggregation Networks) with the FlashAttention Mechanism and..."
+        },
+        {
+          "id": "69aa3a5f9be8eb7c4b146063",
+          "doi": "",
+          "title": "FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling",
+          "authors": [
+            "Ted Zadouri",
+            "Markus Hoehnerbach",
+            "Jay Shah",
+            "Timmy Liu",
+            "Vijay Thakkar",
+            "Tri Dao"
+          ],
+          "year": 2026,
+          "venue": "",
+          "url": "https://www.aminer.cn/pub/69aa3a5f9be8eb7c4b146063",
+          "content_level": "partial_abstract",
+          "content": "Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. While FlashAttention-3 optimized attention for Hopper GPUs through asynchronous execution and warp specialization, it primarily targets the H100 architecture. The AI industry has rapidly transitioned to deploying Blackwell-based systems such as the B200 and GB200, which exhibit fundamentally different performance characteristics due to asymmetric hardware scaling:..."
+        }
+      ]
+    },
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "FlashAttention",
+        "related_queries": [
+          "sparse attention long sequence memory",
+          "efficient transformer memory bottleneck"
+        ],
+        "mode": "topic",
+        "limit": 10
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "FlashAttention",
+          "status": "ok",
+          "page": 1,
+          "returned": 10,
+          "total": 32,
+          "next_page": 2
+        },
+        {
+          "query": "sparse attention long sequence memory",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        },
+        {
+          "query": "efficient transformer memory bottleneck",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": [
+        {
+          "id": "654d936b939a5f40825d3b8a",
+          "doi": "10.52202/075280-0137",
+          "title": "MosaicBERT: A Bidirectional Encoder Optimized for Fast Pretraining",
+          "authors": [
+            "Jacob Portes",
+            "Alexander R Trott",
+            "Sam Havens",
+            "Daniel King",
+            "Abhinav Venigalla",
+            "Moin Nadeem",
+            "Nikhil Sardana",
+            "Daya Khudia",
+            "Jonathan Frankle"
+          ],
+          "year": 2023,
+          "venue": "NEURIPS 2023",
+          "url": "https://doi.org/10.52202/075280-0137",
+          "content_level": "partial_abstract",
+          "content": "Although BERT-style encoder models are heavily used in NLP research, many researchers do not pretrain their own BERTs from scratch due to the high cost of training. In the past half-decade since BERT first rose to prominence, many advances have been made with other transformer architectures and training configurations that have yet to be systematically incorporated into BERT. Here, we introduce MosaicBERT, a BERT-style encoder architecture and training recipe that is empirically optimized for fast pretraining. This efficient architecture..."
+        },
+        {
+          "id": "682be5de163c01c850f605ac",
+          "doi": "10.52202/085713-0699",
+          "title": "FlashBias: Fast Computation of Attention with Bias",
+          "authors": [
+            "Haixu Wu",
+            "Minghao Guo",
+            "Yuezhou Ma",
+            "Yuanxu Sun",
+            "Jianmin Wang",
+            "Wojciech Matusik",
+            "Mingsheng Long"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://doi.org/10.52202/085713-0699",
+          "content_level": "partial_abstract",
+          "content": "Attention with bias, which extends standard attention by introducing prior knowledge as an additive bias matrix to the query-key scores, has been widely deployed in vision, language, protein-folding and other advanced scientific models, underscoring its status as a key evolution of this foundational module. However, introducing bias terms creates a severe efficiency bottleneck in attention computation. It disrupts the tightly fused memory-compute pipeline that underlies the speed of accelerators like..."
+        },
+        {
+          "id": "68c3761a163c01c8504aafbf",
+          "doi": "10.1109/isca66397.2026.00023",
+          "title": "Combating the Memory Walls: Optimization Pathways for Long-Context Agentic LLM Inference",
+          "authors": [
+            "Haoran Wu",
+            "Can Xiao",
+            "Jiayi Nie",
+            "Xuan Guo",
+            "Binglei Lou",
+            "Jeffrey T. H. Wong",
+            "Zhiwen Mo",
+            "Cheng Zhang",
+            "Przemyslaw Forys",
+            "Chengyang Ai",
+            "Timi Adeniran",
+            "Wayne Luk",
+            "Hongxiang Fan",
+            "Jianyi Cheng",
+            "Timothy M. Jones",
+            "Rika Antonova",
+            "Robert Mullins",
+            "Aaron Zhao"
+          ],
+          "year": 2026,
+          "venue": "2026 ACM/IEEE 53rd Annual International Symposium on Computer Architecture (ISCA)",
+          "url": "https://doi.org/10.1109/isca66397.2026.00023",
+          "content_level": "partial_abstract",
+          "content": "LLMs now form the backbone of AI agents across a diverse range of applications, including tool use, command-line interfaces, and web or computer interaction. These agentic LLM inference tasks are fundamentally different from chatbot-focused inference. They often involve much longer context lengths to capture complex and prolonged inputs, such as an entire webpage DOM or complicated tool-call trajectories. This, in turn, generates significant off-chip memory traffic during inference and causes workloads to be constrained by two..."
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "authors": [
+            "Huizheng Wang",
+            "Jiahao Fang",
+            "Xinru Tang",
+            "Zhiheng Yue",
+            "Jinxi Li",
+            "Yubin Qin",
+            "Sihan Guan",
+            "Qinze Yang",
+            "Yang Wang",
+            "Chao Li",
+            "Yang Hu",
+            "Shouyi Yin"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content_level": "partial_abstract",
+          "content": "Benefiting from the self-attention mechanism, Transformer models have attained impressive contextual comprehension capabilities for lengthy texts. The requirements of high-throughput inference arise as the large language models (LLMs) become increasingly prevalent, which calls for large-scale token parallel processing (LTPP). However, existing dynamic sparse accelerators struggle to effectively handle LTPP, as they solely focus on separate stage optimization, and with most efforts confined to computational enhancements. By re-examining the end-to-end flow of dynamic sparse acceleration, we pinpoint an..."
+        },
+        {
+          "id": "67da25b1163c01c85026a7e7",
+          "doi": "",
+          "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and Xlstm Kernels",
+          "authors": [
+            "Maximilian Beck",
+            "Korbinian Pöppel",
+            "Phillip Lippe",
+            "Sepp Hochreiter"
+          ],
+          "year": null,
+          "venue": "NeurIPS 2025",
+          "url": "https://www.aminer.cn/pub/67da25b1163c01c85026a7e7",
+          "content_level": "partial_abstract",
+          "content": "Linear RNNs with gating recently demonstrated competitive performance compared to Transformers in language modeling. Although their linear compute scaling in sequence length offers theoretical runtime advantages over Transformers, realizing these benefits in practice requires optimized custom kernels, as Transformers rely on the highly efficient Flash Attention kernels (Dao, 2024). Leveraging the chunkwise-parallel formulation of linear RNNs, Flash Linear Attention (FLA) (Yang & Zhang, 2024) shows that linear RNN kernels are faster than Flash Attention, by parallelizing over chunks of..."
+        },
+        {
+          "id": "69f0891c9be8eb7c4b3e0a84",
+          "doi": "10.1145/3748173.3779572",
+          "title": "FARE: A Fine-grained Pipelined Reconfigurable Flash Attention Kernel",
+          "authors": [
+            "Kaushikumar S. Rathva"
+          ],
+          "year": 2026,
+          "venue": "PROCEEDINGS OF THE 2026 ACM/SIGDA INTERNATIONAL SYMPOSIUM ON FIELD PROGRAMMABLE GATE ARRAYS, FPGA 2026",
+          "url": "https://doi.org/10.1145/3748173.3779572",
+          "content_level": "metadata",
+          "content": ""
+        },
+        {
+          "id": "67ff4624163c01c85033b6c7",
+          "doi": "10.1109/arith64983.2025.00016",
+          "title": "VEXP: A Low-Cost RISC-V ISA Extension for Accelerated Softmax Computation in Transformers",
+          "authors": [
+            "Run Wang",
+            "Gamze Islamoglu",
+            "Andrea Belano",
+            "Viviane Potocnik",
+            "Francesco Conti",
+            "Angelo Garofalo",
+            "Luca Benini"
+          ],
+          "year": 2025,
+          "venue": "2025 IEEE 32ND SYMPOSIUM ON COMPUTER ARITHMETIC, ARITH",
+          "url": "https://doi.org/10.1109/arith64983.2025.00016",
+          "content_level": "partial_abstract",
+          "content": "While Transformers are dominated by Floating-Point (FP) Matrix-Multiplications, their aggressive acceleration through dedicated hardware or many-core programmable systems has shifted the performance bottleneck to non-linear functions like Softmax. Accelerating Softmax is challenging due to its non-pointwise, non-linear nature, with exponentiation as the most demanding step. To address this, we design a custom arithmetic block for Bfloat16 exponentiation leveraging a novel approximation algorithm based..."
+        },
+        {
+          "id": "68a6584c163c01c85078937e",
+          "doi": "10.1109/asap65064.2025.00023",
+          "title": "METAL: A Memory-Efficient Transformer Architecture for Long-Context Inference on FPGA",
+          "authors": [
+            "Zicheng He",
+            "Shaoqiang Lu",
+            "Tiandong Zhao",
+            "Jinlong Yan",
+            "Chen Wu",
+            "Lei He"
+          ],
+          "year": 2025,
+          "venue": "2025 IEEE 36TH INTERNATIONAL CONFERENCE ON APPLICATION-SPECIFIC SYSTEMS, ARCHITECTURES AND PROCESSORS, ASAP",
+          "url": "https://doi.org/10.1109/asap65064.2025.00023",
+          "content_level": "partial_abstract",
+          "content": "Transformer-based models have shown remarkable proficiency in extensive tasks for natural language processing, which are facing the ever-increasing need of processing long-context inputs. However, the memory footprint of the self-attention mechanism grows quadratically with the context length and becomes the bandwidth and memory bottleneck. Existing accelerators are mainly tailored for short sequences and struggle to handle attention in long-context scenarios. While some works attempt to mitigate this memory overhead with algorithmic..."
+        },
+        {
+          "id": "67f71ef1163c01c850ff1133",
+          "doi": "",
+          "title": "Adaptive Computation Pruning for the Forgetting Transformer",
+          "authors": [
+            "Zhixuan Lin",
+            "Johan Obando-Ceron",
+            "Xu Owen He",
+            "Aaron Courville"
+          ],
+          "year": null,
+          "venue": "COLM 2025",
+          "url": "https://www.aminer.cn/pub/67f71ef1163c01c850ff1133",
+          "content_level": "partial_abstract",
+          "content": "The recently proposed Forgetting Transformer (FoX) incorporates a forget gate into softmax attention and has shown consistently better or on-par performance compared to the standard RoPE-based Transformer. Notably, many attention heads in FoX tend to forget quickly, causing their output at each timestep to rely primarily on local context. Based on this observation, we propose Adaptive Computation Pruning (ACP) for FoX,..."
+        },
+        {
+          "id": "676a2448ae8580e7ff2f88fe",
+          "doi": "10.1109/cvpr52734.2025.00618",
+          "title": "Flash3D: Super-scaling Point Transformers Through Joint Hardware-Geometry Locality",
+          "authors": [
+            "Liyan Chen",
+            "Gregory P. Meyer",
+            "Zaiwei Zhang",
+            "Eric M. Wolff",
+            "Paul Vernaza"
+          ],
+          "year": 2025,
+          "venue": "CVPR 2025",
+          "url": "https://doi.org/10.1109/cvpr52734.2025.00618",
+          "content_level": "partial_abstract",
+          "content": "Recent efforts recognize the power of scale in 3D learning (e.g. PTv3) and attention mechanisms (e.g. FlashAttention). However, current point cloud backbones fail to holistically unify geometric locality, attention mechanisms, and GPU architectures in one view. In this paper, we introduce Flash3D Transformer, which aligns geometric locality and..."
+        }
+      ]
+    },
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "sparse attention long sequence transformer",
+        "related_queries": [
+          "Longformer sparse attention",
+          "BigBird sparse transformer"
+        ],
+        "mode": "topic",
+        "limit": 10
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "sparse attention long sequence transformer",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        },
+        {
+          "query": "Longformer sparse attention",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        },
+        {
+          "query": "BigBird sparse transformer",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": []
+    },
+    {
+      "tool": "academic_get_papers",
+      "input": {
+        "paper_ids": [
+          "64b60eaf3fda6d7f06eaf557",
+          "66908e2301d2a3fbfcea15a8",
+          "6695d3c001d2a3fbfccebf98"
+        ],
+        "full_abstract": true
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": null,
+      "missing_paper_ids": [],
+      "papers": [
+        {
+          "id": "64b60eaf3fda6d7f06eaf557",
+          "doi": "10.48550/arxiv.2307.08691",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [
+            "Tri Dao"
+          ],
+          "year": 2024,
+          "venue": "ICLR 2024",
+          "url": "https://doi.org/10.48550/arxiv.2307.08691",
+          "content_level": "abstract",
+          "content": "Scaling Transformers to longer sequence lengths has been a major problem in the last several years, promising to improve performance in language modeling and high-resolution image understanding, as well as to unlock new applications in code, audio, and video generation. The attention layer is the main bottleneck in scaling to longer sequences, as its runtime and memory increase quadratically in the sequence length. FlashAttention [5] exploits the asymmetric GPU memory hierarchy to bring significant memory saving (linear instead of quadratic) and runtime speedup (2-4× compared to optimized baselines), with no approximation. However, FlashAttention is still not nearly as fast as optimized matrix-multiply (GEMM) operations, reaching only 25-40% of the theoretical maximum FLOPs/s. We observe that the inefficiency is due to suboptimal work partitioning between different thread blocks and warps on the GPU, causing either low-occupancy or unnecessary shared memory reads/writes. We propose FlashAttention-2, with better work partitioning to address these issues. In particular, we (1) tweak the algorithm to reduce the number of non-matmul FLOPs (2) parallelize the attention computation, even for a single head, across different thread blocks to increase occupancy, and (3) within each thread block, distribute the work between warps to reduce communication through shared memory. These yield around 2× speedup compared to FlashAttention, reaching 50-73% of the theoretical maximum FLOPs/s on A100 and getting close to the efficiency of GEMM operations. We empirically validate that when used end-to-end to train GPT-style models, FlashAttention-2 reaches training speed of up to 225 TFLOPs/s per A100 GPU (72% model FLOPs utilization)."
+        },
+        {
+          "id": "66908e2301d2a3fbfcea15a8",
+          "doi": "10.52202/079017-2193",
+          "title": "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision",
+          "authors": [
+            "Jay Shah",
+            "Ganesh Bikshandi",
+            "Ying Zhang",
+            "Vijay Thakkar",
+            "Pradeep Ramani",
+            "Tri Dao"
+          ],
+          "year": 2024,
+          "venue": "NeurIPS 2024",
+          "url": "https://doi.org/10.52202/079017-2193",
+          "content_level": "abstract",
+          "content": "Attention, as a core layer of the ubiquitous Transformer architecture, is the bottleneck for large language models and long-context applications. elaborated an approach to speed up attention on GPUs through minimizing memory reads/writes. However, it has yet to take advantage of new capabilities present in recent hardware, with FlashAttention-2 achieving only 35% utilization on the H100 GPU. We develop three main techniques to speed up attention on Hopper GPUs: exploiting asynchrony of the Tensor Cores and TMA to (1) overlap overall computation and data movement via warp-specialization and (2) interleave block-wise matmul and softmax operations, and (3) block quantization and incoherent processing that leverages hardware support for FP8 low-precision. We demonstrate that our method, FlashAttention-3, achieves speedup on H100 GPUs by 1.5-2.0$\\times$ with BF16 reaching up to 840 TFLOPs/s (85\\% utilization), and with FP8 reaching 1.3 PFLOPs/s. We validate that FP8 FlashAttention-3 achieves 2.6$\\times$ lower numerical error than a baseline FP8 attention."
+        },
+        {
+          "id": "6695d3c001d2a3fbfccebf98",
+          "doi": "10.1109/micro61859.2024.00093",
+          "title": "SOFA: A Compute-Memory Optimized Sparsity Accelerator Via Cross-Stage Coordinated Tiling",
+          "authors": [
+            "Huizheng Wang",
+            "Jiahao Fang",
+            "Xinru Tang",
+            "Zhiheng Yue",
+            "Jinxi Li",
+            "Yubin Qin",
+            "Sihan Guan",
+            "Qinze Yang",
+            "Yang Wang",
+            "Chao Li",
+            "Yang Hu",
+            "Shouyi Yin"
+          ],
+          "year": 2024,
+          "venue": "2024 57TH IEEE/ACM INTERNATIONAL SYMPOSIUM ON MICROARCHITECTURE, MICRO",
+          "url": "https://doi.org/10.1109/micro61859.2024.00093",
+          "content_level": "abstract",
+          "content": "Benefiting from the self-attention mechanism, Transformer models have attained impressive contextual comprehension capabilities for lengthy texts. The requirements of high-throughput inference arise as the large language models (LLMs) become increasingly prevalent, which calls for large-scale token parallel processing (LTPP). However, existing dynamic sparse accelerators struggle to effectively handle LTPP, as they solely focus on separate stage optimization, and with most efforts confined to computational enhancements. By re-examining the end-to-end flow of dynamic sparse acceleration, we pinpoint an ever-overlooked opportunity that the LTPP can exploit the intrinsic coordination among stages to avoid excessive memory access and redundant computation. Motivated by our observation, we present SOFA, a cross-stage compute-memory efficient algorithm-hardware co-design, which is tailored to tackle the challenges posed by LTPP of Transformer inference effectively. We first propose a novel leading zero computing paradigm, which predicts attention sparsity by using log-based add-only operations to avoid the significant overhead of prediction. Then, a distributed sorting and a sorted updating FlashAttention mechanism are proposed with cross-stage coordinated tiling principle, which enables fine-grained and lightweight coordination among stages, helping optimize memory access and latency. Further, we propose a SOFA accelerator to support these optimizations efficiently. Extensive experiments on 20 benchmarks show that SOFA achieves 9.5x speed up and 71.5x higher energy efficiency than Nvidia A100 GPU. Compared to eight SOTA accelerators, SOFA achieves an average 15.8x energy efficiency, 10.3x area efficiency and 9.3x speed up, respectively."
+        }
+      ]
+    },
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "Longformer the long document transformer",
+        "mode": "title",
+        "limit": 5
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "Longformer the long document transformer",
+          "status": "ok",
+          "page": 1,
+          "returned": 1,
+          "total": 1,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": [
+        {
+          "id": "5e943b8091e011344866420c",
+          "doi": "10.48550/arxiv.2004.05150",
+          "title": "Longformer: the Long-Document Transformer.",
+          "authors": [
+            "Iz Beltagy",
+            "Matthew E. Peters",
+            "Arman Cohan"
+          ],
+          "year": 2020,
+          "venue": "CoRR",
+          "url": "https://doi.org/10.48550/arxiv.2004.05150",
+          "content_level": "partial_abstract",
+          "content": "Transformer-based models are unable to process long sequences due to their self-attention operation, which scales quadratically with the sequence length. To address this limitation, we introduce the Longformer with an attention mechanism that scales linearly with sequence length, making it easy to process documents..."
+        }
+      ]
+    },
+    {
+      "tool": "academic_search",
+      "input": {
+        "query": "FlashAttention exact IO awareness triton Dao",
+        "mode": "title",
+        "limit": 5
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": [
+        {
+          "query": "FlashAttention exact IO awareness triton Dao",
+          "status": "ok",
+          "page": 1,
+          "returned": 0,
+          "total": null,
+          "next_page": null
+        }
+      ],
+      "missing_paper_ids": null,
+      "papers": []
+    },
+    {
+      "tool": "academic_get_papers",
+      "input": {
+        "paper_ids": [
+          "5e943b8091e011344866420c"
+        ],
+        "full_abstract": true
+      },
+      "status": "ok",
+      "aminer_status": "ok",
+      "cached": false,
+      "query_coverage": null,
+      "missing_paper_ids": [],
+      "papers": [
+        {
+          "id": "5e943b8091e011344866420c",
+          "doi": "10.48550/arxiv.2004.05150",
+          "title": "Longformer: the Long-Document Transformer.",
+          "authors": [
+            "Iz Beltagy",
+            "Matthew E. Peters",
+            "Arman Cohan"
+          ],
+          "year": 2020,
+          "venue": "CoRR",
+          "url": "https://doi.org/10.48550/arxiv.2004.05150",
+          "content_level": "abstract",
+          "content": "Transformer-based models are unable to process long sequences due to their self-attention operation, which scales quadratically with the sequence length. To address this limitation, we introduce the Longformer with an attention mechanism that scales linearly with sequence length, making it easy to process documents of thousands of tokens or longer. Longformer's attention mechanism is a drop-in replacement for the standard self-attention and combines a local windowed attention with a task motivated global attention. Following prior work on long-sequence transformers, we evaluate Longformer on character-level language modeling and achieve state-of-the-art results on text8 and enwik8. In contrast to most prior work, we also pretrain Longformer and finetune it on a variety of downstream tasks. Our pretrained Longformer consistently outperforms RoBERTa on long document tasks and sets new state-of-the-art results on WikiHop and TriviaQA."
+        }
+      ]
+    }
+  ],
+  "full_abstract_unique_count": 4,
+  "partial_abstract_unique_count": 15,
+  "collected_at": "2026-10-19T07:15:58.096931+00:00"
+}

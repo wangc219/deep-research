@@ -1,0 +1,406 @@
+{
+  "validated_at": "2026-10-20T05:19:02.504920+00:00",
+  "query_id": "query-30510033-b96d-46e8-8a3a-48ffe2b07e8e",
+  "query": "低空无人集群复杂电磁环境闭环反制装备研究",
+  "project_id": "06a3a154-076d-4fab-88a5-add6cd8bacd3",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "runs": [
+    {
+      "entry": "smart",
+      "agent_slug": "default-chatbot",
+      "run_id": "7017cb63-2f8b-465c-8f78-b974d6b3b4e6",
+      "thread_id": "25f84b2a-a842-458f-a76b-7c582bfeb69d",
+      "session_id": null,
+      "elapsed_seconds": 207.1,
+      "result": {
+        "status": "completed",
+        "output": "**低空无人集群复杂电磁环境闭环反制装备研究——公开资料覆盖核验结论**\n\n本轮对\"低空无人集群、复杂电磁环境、闭环反制\"三个核心轴的公开检索共执行8次，国内与国外、官方与前沿角度均有尝试，现将有效命中、成熟度分类与证据缺口逐项交付。\n\n**国内角度（有效命中，但军队官方来源缺失）**\n- 中国电科大功率通信对抗系统（JN1199）：官网明确列出无人机测控链路干扰、导航压制与导航欺骗等多种手段，强调\"侦测+远距离干扰处置\"一体化，具备目标侦测与干扰作用距离远的特征。[21.cetc.com.cn](https://21.cetc.com.cn/zgdk/1592571/1592576/1819101/1819102/1819246/index.html)（中国，军工央企网页，页面未标注公开年份）\n- 中电科光电\"激光拦截干扰设备\"：粗精两级高精度跟瞄、分布式组网协同，对低慢小目标实施压制干扰与近距离物理拦截。[11.cetc.com.cn](https://11.cetc.com.cn/11/338317/1795385/1795949/index.html)（中国，央企网页，无公开年份）\n\n上述两条最能支撑\"复杂电磁环境反制\"方向的是JN1199的测控链路/导航压制能力。但需明确：我国军方（81.cn/mod.gov.cn）在限定站点检索中零命中，放宽站点后仅获CSDN技术综述等非权威内容，因此**国内已部署或在役的系统缺乏官方证实，国内军队正式试验与部署公告是明确证据缺口**。\n\n**国外角度**\n- 美国Leonardo DRS与BlueHalo在Stryker底盘上集成C-UAS定向能原型，2024年10月公开报道实弹演示，8个月完成开发，属**公开试验**。[National Defense Magazine](https://www.nationaldefensemagazine.org/articles/2024/10/14/leonardo-blue-halo-successfully-test-new-counter-uas-directed-energy-stryker)（美国，2024）\n- 印度DRDO高功率微波反无人机群原型，报道称野外试验确认杀伤距离约1公里、波束宽度可调，属**原型样机/公开试验**；但来源为thedefensenews.com（非defensenews.com权威域名），需存疑核验。[来源](https://www.thedefensenews.com/DRDO-Unveils-High-Power-Microwave-Weapon-to-Counter-Drone-Swarms/)\n- BAE Systems高功率微波反集群武器在AUSA 2026展出，属**原型样机**，同源存疑域名，无法确认原厂一手信息。[来源](https://www.thedefensenews.com/BAE-Systems-Unveils-High-Power-Microwave-Weapon-for-Drone-Defense-at-AUSA-2026/)\n- 一篇C-UAS成本效益研究对动能、电子战、定向能三类技术做比较（2022–2026），属**论文概念**。[ResearchGate](https://www.researchgate.net/publication/401707891_Cost-Effectiveness_Analysis_of_Counter-Unmanned_Aircraft_Systems_Technologies_A_Comparative_Study_of_Kinetic_Electronic_Warfare_and_Directed_Energy_Countermeasures_2022-2026)\n\n**证据缺口（必须显式标注）**\n1. \"闭环\"轴几乎无直接公开命中：对\"adaptive/closed-loop/cognitive\"检索两轮均空；现有公开资料只体现了\"侦测—干扰\"的半闭环，未见披露\"效果评估—策略迭代\"完整闭环的试验或系统。\n2. \"复杂电磁环境\"作为独立条件维度未获得专门公开证据，各国资料多为单一干扰能力描述，缺乏在强电磁对抗条件下的集群反制数据。\n3. DRDO与BAE的HPM信息出自低权威转载站，缺乏官方一手来源，其成熟度等级应保守对待。\n4. **已部署或在役**一类：本轮未取得任何可直接确认的公开证据。\n\n综上：该方向公开技术进展集中在软硬结合的定向能与通信/导航压制两类路径，成熟度最高的是**公开试验**（美国车载定向能）与**原型样机**（印度、美国的HPM），**论文概念**层面有成本效益研究；**已部署或在役**无有效命中。主要缺口在闭环反制机理、复杂电磁环境专项验证，以及中国军方正式部署信息。",
+        "agent_slug": "default-chatbot",
+        "thread_id": "25f84b2a-a842-458f-a76b-7c582bfeb69d",
+        "conversation_id": 533,
+        "agent_run_id": "7017cb63-2f8b-465c-8f78-b974d6b3b4e6",
+        "request_id": "equipment-websearch-smart-d265d8ebf5",
+        "final_message_id": 4471,
+        "langfuse_trace_id": null,
+        "token_usage": {
+          "total": {
+            "input_tokens": 57755,
+            "total_tokens": 61959,
+            "output_tokens": 4204
+          },
+          "models": {
+            "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+              "model": {
+                "provider_id": "siliconflow-cn",
+                "provider_type": "openai",
+                "identity_source": "configured_metadata",
+                "response_model_ids": [
+                  "deepseek-ai/DeepSeek-V4-Flash"
+                ],
+                "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+                "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+              },
+              "usage": {
+                "input_tokens": 57755,
+                "total_tokens": 61959,
+                "output_tokens": 4204,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 0
+                }
+              },
+              "cache_hit_ratio": 0.0,
+              "model_call_count": 3,
+              "cache_hit_call_count": 0,
+              "uncached_input_tokens": 57755,
+              "cache_read_input_tokens": 0,
+              "cache_request_hit_ratio": 0.0,
+              "cache_observed_call_count": 3,
+              "usage_reported_call_count": 3,
+              "cache_observed_input_tokens": 57755
+            }
+          },
+          "complete": true,
+          "schema_version": 2,
+          "model_call_count": 3,
+          "usage_reported_call_count": 3,
+          "usage_unavailable_call_count": 0
+        },
+        "timing": {
+          "created_at": "2026-10-20T05:12:19.452069Z",
+          "started_at": "2026-10-20T05:12:19.488492Z",
+          "prepared_at": "2026-10-20T05:12:20.211968Z",
+          "first_model_request_at": "2026-10-20T05:12:20.253623Z",
+          "first_output_at": "2026-10-20T05:12:21.347089Z",
+          "finished_at": "2026-10-20T05:15:46.574569Z",
+          "dispatch_latency_ms": 36,
+          "preparation_latency_ms": 723,
+          "first_model_request_latency_ms": 802,
+          "model_first_output_latency_ms": 1135,
+          "first_output_latency_ms": 1895,
+          "total_latency_ms": 207122
+        }
+      },
+      "children": [],
+      "audit": {
+        "web_search_calls": 8,
+        "queries": [
+          "adaptive radio frequency drone countermeasure closed-loop cognitive electronic warfare",
+          "counter-UAS electronic attack directed energy system 2024",
+          "反无人机 电磁干扰 低慢小 系统 研制",
+          "drone swarm countermeasure electronic warfare jamming system",
+          "低空无人机集群 电磁 反制 装备",
+          "high power microwave drone swarm defeat prototype trial",
+          "低空无人机集群 反制 电磁干扰 装备 中国",
+          "electronic warfare drone countermeasure adaptive frequency 2023 trial"
+        ],
+        "required_terms": [
+          [
+            "adaptive",
+            "countermeasure"
+          ],
+          [
+            "counter-UAS",
+            "directed"
+          ],
+          [
+            "无人机",
+            "干扰"
+          ],
+          [
+            "drone",
+            "jamming"
+          ],
+          [
+            "无人机",
+            "反制"
+          ],
+          [
+            "microwave",
+            "drone"
+          ],
+          [
+            "无人机",
+            "反制"
+          ],
+          [
+            "electronic warfare",
+            "drone"
+          ]
+        ],
+        "explicit_anchor_calls": 8,
+        "sites": [
+          [],
+          [],
+          [
+            "cas.cn",
+            "cetc.com.cn",
+            "avic.com"
+          ],
+          [],
+          [
+            "81.cn",
+            "mod.gov.cn",
+            "gov.cn"
+          ],
+          [],
+          [],
+          []
+        ],
+        "result_count": 10,
+        "distinct_urls": 10,
+        "domestic_urls": [
+          "https://11.cetc.com.cn/11/338317/1795385/1795949/index.html",
+          "https://21.cetc.com.cn/zgdk/1592571/1592576/1819101/1819102/1819246/index.html"
+        ],
+        "foreign_urls": [
+          "https://blog.csdn.net/workflower/article/details/159616861",
+          "https://ukraine-war-analytics.com/weapons/drone-electronic-warfare-ukraine.html",
+          "https://www.ewodronedefense.com/defend-drone-swarms.html",
+          "https://www.nationaldefensemagazine.org/articles/2024/10/14/leonardo-blue-halo-successfully-test-new-counter-uas-directed-energy-stryker",
+          "https://www.researchgate.net/publication/401707891_Cost-Effectiveness_Analysis_of_Counter-Unmanned_Aircraft_Systems_Technologies_A_Comparative_Study_of_Kinetic_Electronic_Warfare_and_Directed_Energy_Countermeasures_2022-2026",
+          "https://www.thedefenceblog.com/global/military-drone-swarms-counter",
+          "https://www.thedefensenews.com/BAE-Systems-Unveils-High-Power-Microwave-Weapon-for-Drone-Defense-at-AUSA-2026",
+          "https://www.thedefensenews.com/DRDO-Unveils-High-Power-Microwave-Weapon-to-Counter-Drone-Swarms"
+        ],
+        "domestic_query_urls": [
+          "https://11.cetc.com.cn/11/338317/1795385/1795949/index.html",
+          "https://21.cetc.com.cn/zgdk/1592571/1592576/1819101/1819102/1819246/index.html",
+          "https://blog.csdn.net/workflower/article/details/159616861"
+        ],
+        "foreign_query_urls": [
+          "https://ukraine-war-analytics.com/weapons/drone-electronic-warfare-ukraine.html",
+          "https://www.ewodronedefense.com/defend-drone-swarms.html",
+          "https://www.nationaldefensemagazine.org/articles/2024/10/14/leonardo-blue-halo-successfully-test-new-counter-uas-directed-energy-stryker",
+          "https://www.researchgate.net/publication/401707891_Cost-Effectiveness_Analysis_of_Counter-Unmanned_Aircraft_Systems_Technologies_A_Comparative_Study_of_Kinetic_Electronic_Warfare_and_Directed_Energy_Countermeasures_2022-2026",
+          "https://www.thedefenceblog.com/global/military-drone-swarms-counter",
+          "https://www.thedefensenews.com/BAE-Systems-Unveils-High-Power-Microwave-Weapon-for-Drone-Defense-at-AUSA-2026",
+          "https://www.thedefensenews.com/DRDO-Unveils-High-Power-Microwave-Weapon-to-Counter-Drone-Swarms"
+        ],
+        "authoritative_results": 2
+      },
+      "quality_checks": {
+        "completed": true,
+        "six_to_eight_calls": true,
+        "domestic_query": true,
+        "foreign_query": true,
+        "recent_progress_query": true,
+        "query_anchor_coverage": true,
+        "domestic_official_search_attempted": true,
+        "domestic_coverage_handled": true,
+        "foreign_source_found": true,
+        "source_quality": true,
+        "maturity_boundaries": true,
+        "region_and_time_labeled": true
+      },
+      "quality_passed": true
+    },
+    {
+      "entry": "deep",
+      "agent_slug": "deep-research",
+      "run_id": "e9765f19-97cd-43f2-ad95-60379fc52ff8",
+      "thread_id": "equipment-deep-48539ad9-f783-4706-a62d-d23ac6c82e5f",
+      "session_id": null,
+      "elapsed_seconds": 136.1,
+      "result": {
+        "status": "completed",
+        "output": "核验结论\n\n低空无人集群反制装备国内外公开资料总体以“体系方案综述+定向能（高功率微波/激光）样机”为主，复杂电磁环境下的“闭环（感知—识别—决策—干扰—评估）”反制成熟装备证据仍薄弱，属于该方向最大的证据缺口。\n\n国内角度（地域证据缺口显著）：现有结果均为技术博客与聚合媒体，未取得官方一手来源。csdn 提供了从多源探测、软硬杀伤协同到“感知—决策—打击”闭环的全链路体系综述([blog.csdn.net](https://blog.csdn.net/weixin_26742753/article/details/168293909))；兵器集团“飓风2000/3000”高功率微波反无人机系统于2024珠海航展首次展示、2026年才见详细披露，自称有效距离高于美方系统([news.qq.com](https://news.qq.com/rain/a/20260109A03SK100)、[toutiao.com](https://www.toutiao.com/article/7438844651869635124/))。上述均为转载/自媒体，指向官方域名的两次检索（81.cn/cetc.com.cn等）均返回空，故国内官方试验、列装进度无法核验。\n\n国外角度：证据较充分且含官方来源。美军 DE M-SHORAD（Stryker 50kW激光）已于2024年2月向中东部署4辆原型样机试用，士兵反馈“并非压倒性积极”，属公开试验/原型样机层次([congress.gov](https://www.congress.gov/crs_external_products/IF/PDF/IF12397/IF12397.20.pdf))；2026年陆军转向模块化 E-HEL，并授出约5亿美元 LOCUST 合同([avinc.com](https://www.avinc.com/2026/09/02/avs-locust-selected-for-nearly-500-million-army-counter-uas-contract-for-enduring-high-energy-laser-e-hel-program/)、[defensenews.com](https://www.defensenews.com/land/2025/08/06/army-readies-to-launch-2026-competition-for-counter-drone-laser-weapon/))。电磁（干扰）类反制以第三方清单为主，指出光纤/卫星链路与AI自主无人机正削弱常规干扰的有效性([drone-warfare.com](https://drone-warfare.com/counter-uas/electronic-warfare/))，该判断契合本项目“复杂电磁环境+集群”的需求背景。\n\n前沿/论文概念：IEEE 综述把认知电子战（自动识别威胁、博弈式干扰决策）作为对抗智能雷达/集群的核心方向之一([ieeexplore.ieee.org](https://ieeexplore.ieee.org/abstract/document/10106133))；另一篇讨论无人机对抗电磁网攻与干扰的防御措施([ieeexplore.ieee.org](https://ieeexplore.ieee.org/abstract/document/10965638))。认知类闭环干扰仍处论文概念/原型层次。\n\n逐项成熟度归类：已部署或在役——未获直接一手证据；公开试验——美军 DE M-SHORAD 中东试用（2024）、E-HEL 竞标（2025–2026）；原型样机——飓风2000/3000 航展展示（2024）、Stryker 50kW激光原型（2024）；论文概念——认知电子战闭环干扰决策（2023 IEEE综述）。主要证据缺口：国内官方一手来源、闭环干扰真实试验与效能评估数据，以及集群规模反制（非单机）的公开验证。",
+        "agent_slug": "deep-research",
+        "thread_id": "equipment-deep-48539ad9-f783-4706-a62d-d23ac6c82e5f",
+        "conversation_id": 534,
+        "agent_run_id": "e9765f19-97cd-43f2-ad95-60379fc52ff8",
+        "request_id": "9f849fbe-2536-407f-adf0-af50f181e0bc",
+        "final_message_id": 4485,
+        "langfuse_trace_id": null,
+        "token_usage": {
+          "total": {
+            "input_tokens": 96790,
+            "total_tokens": 99566,
+            "output_tokens": 2776
+          },
+          "models": {
+            "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash": {
+              "model": {
+                "provider_id": "siliconflow-cn",
+                "provider_type": "openai",
+                "identity_source": "configured_metadata",
+                "response_model_ids": [
+                  "deepseek-ai/DeepSeek-V4-Flash"
+                ],
+                "configured_model_id": "deepseek-ai/DeepSeek-V4-Flash",
+                "configured_model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+              },
+              "usage": {
+                "input_tokens": 96790,
+                "total_tokens": 99566,
+                "output_tokens": 2776,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 0
+                }
+              },
+              "cache_hit_ratio": 0.0,
+              "model_call_count": 5,
+              "cache_hit_call_count": 0,
+              "uncached_input_tokens": 96790,
+              "cache_read_input_tokens": 0,
+              "cache_request_hit_ratio": 0.0,
+              "cache_observed_call_count": 5,
+              "usage_reported_call_count": 5,
+              "cache_observed_input_tokens": 96790
+            }
+          },
+          "complete": true,
+          "schema_version": 2,
+          "model_call_count": 5,
+          "usage_reported_call_count": 5,
+          "usage_unavailable_call_count": 0
+        },
+        "timing": {
+          "created_at": "2026-10-20T05:15:58.999564Z",
+          "started_at": "2026-10-20T05:15:59.007925Z",
+          "prepared_at": "2026-10-20T05:15:59.914212Z",
+          "first_model_request_at": "2026-10-20T05:16:00.243567Z",
+          "first_output_at": "2026-10-20T05:16:01.368700Z",
+          "finished_at": "2026-10-20T05:18:15.053231Z",
+          "dispatch_latency_ms": 8,
+          "preparation_latency_ms": 906,
+          "first_model_request_latency_ms": 1244,
+          "model_first_output_latency_ms": 1454,
+          "first_output_latency_ms": 2369,
+          "total_latency_ms": 136054
+        }
+      },
+      "children": [],
+      "audit": {
+        "web_search_calls": 8,
+        "queries": [
+          "counter-UAS electronic warfare low-altitude drone swarm defeat",
+          "低空无人集群 复杂电磁环境 反制 电磁干扰装备",
+          "反无人机系统 低空 电子干扰 试验 部队",
+          "US Army counter-UAS directed energy laser weapon system fielded",
+          "cognitive electronic warfare adaptive jamming UAV countermeasure autonomous",
+          "低空反无人机 电磁干扰 高功率微波 试验 中国",
+          "反无人机 微波武器 珠海航展 中国兵器 官方",
+          "US Army DE M-SHORAD Stryker laser counter-drone fielded"
+        ],
+        "required_terms": [
+          [
+            "counter-UAS"
+          ],
+          [
+            "无人集群",
+            "反制"
+          ],
+          [
+            "反无人机"
+          ],
+          [
+            "counter-UAS"
+          ],
+          [
+            "jamming"
+          ],
+          null,
+          [
+            "反无人机"
+          ],
+          [
+            "M-SHORAD"
+          ]
+        ],
+        "explicit_anchor_calls": 7,
+        "sites": [
+          [],
+          [],
+          [
+            "81.cn",
+            "cetc.com.cn",
+            "mod.gov.cn"
+          ],
+          [],
+          [],
+          [],
+          [
+            "gov.cn",
+            "cctv.com",
+            "81.cn"
+          ],
+          []
+        ],
+        "result_count": 22,
+        "distinct_urls": 21,
+        "domestic_urls": [],
+        "foreign_urls": [
+          "https://blog.csdn.net/weixin_26742753/article/details/168293909",
+          "https://blog.csdn.net/workflower/article/details/159616861",
+          "https://drone-warfare.com/counter-uas",
+          "https://drone-warfare.com/counter-uas/electronic-warfare",
+          "https://ieeexplore.ieee.org/abstract/document/10106133",
+          "https://ieeexplore.ieee.org/abstract/document/10965638",
+          "https://insideunmannedsystems.com/pentagon-picks-four-directed-energy-systems-for-counter-drone-pilot",
+          "https://news.qq.com/rain/a/20260109A03SK100",
+          "https://rfessentials.com/resources/rf-glossary/cognitive-electronic-warfare",
+          "https://uas-forge.com/cuas-guide",
+          "https://wavedone.com/counter-uas-technologies-and-electronic-warfare-systems-the-race-to-defeat-the-drone-threat",
+          "https://www.armyrecognition.com/military-products/army/air-defense-systems/air-defense-vehicles/de-m-shorad-guardian-stryker-50-kw-class-laser-weapon-data-fact-sheet",
+          "https://www.armyrecognition.com/news/army-news/2026/u-s-army-moves-to-make-high-energy-lasers-a-permanent-counter-drone-weapon",
+          "https://www.avinc.com/2026/09/02/avs-locust-selected-for-nearly-500-million-army-counter-uas-contract-for-enduring-high-energy-laser-e-hel-program",
+          "https://www.congress.gov/crs_external_products/IF/PDF/IF12397/IF12397.20.pdf",
+          "https://www.defense-aerospace.com/u-s-army-debuts-stryker-mounted-de-m-shorad-laser-in-live-field-test",
+          "https://www.defensenews.com/land/2025/08/06/army-readies-to-launch-2026-competition-for-counter-drone-laser-weapon",
+          "https://www.sohu.com/a/835242803_120976922",
+          "https://www.sohu.com/a/989937852_122311471",
+          "https://www.toutiao.com/article/7434396351259099688",
+          "https://www.toutiao.com/article/7438844651869635124"
+        ],
+        "domestic_query_urls": [
+          "https://blog.csdn.net/weixin_26742753/article/details/168293909",
+          "https://blog.csdn.net/workflower/article/details/159616861",
+          "https://news.qq.com/rain/a/20260109A03SK100",
+          "https://www.sohu.com/a/835242803_120976922",
+          "https://www.sohu.com/a/989937852_122311471",
+          "https://www.toutiao.com/article/7434396351259099688",
+          "https://www.toutiao.com/article/7438844651869635124"
+        ],
+        "foreign_query_urls": [
+          "https://drone-warfare.com/counter-uas",
+          "https://drone-warfare.com/counter-uas/electronic-warfare",
+          "https://ieeexplore.ieee.org/abstract/document/10106133",
+          "https://ieeexplore.ieee.org/abstract/document/10965638",
+          "https://insideunmannedsystems.com/pentagon-picks-four-directed-energy-systems-for-counter-drone-pilot",
+          "https://rfessentials.com/resources/rf-glossary/cognitive-electronic-warfare",
+          "https://uas-forge.com/cuas-guide",
+          "https://wavedone.com/counter-uas-technologies-and-electronic-warfare-systems-the-race-to-defeat-the-drone-threat",
+          "https://www.armyrecognition.com/military-products/army/air-defense-systems/air-defense-vehicles/de-m-shorad-guardian-stryker-50-kw-class-laser-weapon-data-fact-sheet",
+          "https://www.armyrecognition.com/news/army-news/2026/u-s-army-moves-to-make-high-energy-lasers-a-permanent-counter-drone-weapon",
+          "https://www.avinc.com/2026/09/02/avs-locust-selected-for-nearly-500-million-army-counter-uas-contract-for-enduring-high-energy-laser-e-hel-program",
+          "https://www.congress.gov/crs_external_products/IF/PDF/IF12397/IF12397.20.pdf",
+          "https://www.defense-aerospace.com/u-s-army-debuts-stryker-mounted-de-m-shorad-laser-in-live-field-test",
+          "https://www.defensenews.com/land/2025/08/06/army-readies-to-launch-2026-competition-for-counter-drone-laser-weapon"
+        ],
+        "authoritative_results": 3
+      },
+      "quality_checks": {
+        "completed": true,
+        "six_to_eight_calls": true,
+        "domestic_query": true,
+        "foreign_query": true,
+        "recent_progress_query": true,
+        "query_anchor_coverage": true,
+        "domestic_official_search_attempted": true,
+        "domestic_coverage_handled": true,
+        "foreign_source_found": true,
+        "source_quality": true,
+        "maturity_boundaries": true,
+        "region_and_time_labeled": true
+      },
+      "quality_passed": true
+    }
+  ],
+  "passed": true
+}

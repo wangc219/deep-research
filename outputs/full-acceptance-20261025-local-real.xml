@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="3" tests="22" time="115.302" timestamp="2026-10-25T15:38:42.896728+08:00" hostname="60a5356f1608"><testcase classname="test.e2e.test_agent_async_e2e" name="test_async_agent_run_stream_result_and_persistence" time="2.355" /><testcase classname="test.e2e.test_agent_call_entrypoints_e2e" name="test_agent_eval_and_agent_call_entrypoints_share_run_invocation_flow" time="4.931" /><testcase classname="test.e2e.test_agent_steer_e2e" name="test_real_tool_steer_runs_next_from_checkpoint" time="21.959" /><testcase classname="test.e2e.test_attachment_and_agent_state" name="test_attachment_confirm_is_reflected_in_thread_metadata" time="0.104" /><testcase classname="test.e2e.test_mcp_lazy" name="test_real_model_loads_mcp_then_invokes_dynamic_tool" time="8.467" /><testcase classname="test.e2e.test_mcp_stdio_security" name="test_stdio_mcp_payload_is_rejected_without_side_effects" time="0.045" /><testcase classname="test.e2e.test_mcp_stdio_security" name="test_legacy_stdio_mcp_is_disabled_without_starting_process" time="0.086" /><testcase classname="test.e2e.test_mcp_stdio_security" name="test_direct_stdio_config_cannot_start_process" time="0.001" /><testcase classname="test.e2e.test_mcp_stdio_security" name="test_retired_chart_removed_and_deepwiki_registered" time="0.035" /><testcase classname="test.e2e.test_mcp_stdio_security" name="test_official_builtin_preserves_user_deepwiki" time="0.029" /><testcase classname="test.e2e.test_ocr_config_center_e2e" name="test_admin_ocr_config_drives_real_tmp_attachment_parse" time="5.507" /><testcase classname="test.e2e.test_parallel_subagents" name="test_two_subagents_run_concurrently_and_parent_collects_both" time="37.738" /><testcase classname="test.e2e.test_personal_skill_agent_e2e" name="test_main_agent_reads_personal_skill_directly_from_user_workspace" time="6.946" /><testcase classname="test.e2e.test_provider_reasoning_e2e" name="test_reasoning_stream_matches_persisted_history" time="0.045"><skipped type="pytest.skip" message="显式配置 DEEP_RESEARCH_REASONING_E2E_MODEL 后才调用真实模型">/Users/wangchen/equipment research 3/backend/test/e2e/test_provider_reasoning_e2e.py:20: 显式配置 DEEP_RESEARCH_REASONING_E2E_MODEL 后才调用真实模型</skipped></testcase><testcase classname="test.e2e.test_read_file_multimodal_e2e" name="test_read_file_image_and_document_real_agent_runs" time="0.043"><skipped type="pytest.skip" message="E2E_VISION_MODEL is not configured for the external vision model test.">/Users/wangchen/equipment research 3/backend/test/e2e/test_read_file_multimodal_e2e.py:171: E2E_VISION_MODEL is not configured for the external vision model test.</skipped></testcase><testcase classname="test.e2e.test_read_file_multimodal_e2e" name="test_non_vision_model_uses_ocr_fallback" time="0.042"><skipped type="pytest.skip" message="E2E_NON_VISION_MODEL is not configured for the external capability rejection test.">/Users/wangchen/equipment research 3/backend/test/e2e/test_read_file_multimodal_e2e.py:223: E2E_NON_VISION_MODEL is not configured for the external capability rejection test.</skipped></testcase><testcase classname="test.e2e.test_subagent_stream_e2e" name="test_subagent_stream_records_run_and_shares_output_files" time="25.215" /><testcase classname="test.integration.api.test_native_deep_models_live" name="test_native_deep_message_reaches_worker_transcript_and_usage" time="0.274"><error message="failed on setup with &quot;asyncio.exceptions.CancelledError&quot;">test/integration/conftest.py:52: in verify_schema_version
+    await pg_manager.require_current_schema()
+package/platform_core/storage/postgres/manager.py:751: in require_current_schema
+    versions = await self.get_schema_versions()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+package/platform_core/storage/postgres/manager.py:723: in get_schema_versions
+    async with self.async_engine.connect() as conn:
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/ext/asyncio/base.py:121: in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/ext/asyncio/engine.py:275: in start
+    await greenlet_spawn(self.sync_engine.connect)
+/usr/local/lib/python3.13/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3295: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/engine/base.py:144: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3319: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/pool/base.py:448: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1371: in _checkout
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1309: in _checkout
+    result = pool._dialect._do_ping_w_event(
+/usr/local/lib/python3.13/site-packages/sqlalchemy/engine/default.py:729: in _do_ping_w_event
+    return self.do_ping(dbapi_connection)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:1164: in do_ping
+    dbapi_connection.ping()
+/usr/local/lib/python3.13/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:818: in ping
+    self._handle_exception(error)
+/usr/local/lib/python3.13/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:799: in _handle_exception
+    raise error
+/usr/local/lib/python3.13/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:816: in ping
+    _ = self.await_(self._async_ping())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:825: in _async_ping
+    await tr.start()
+/usr/local/lib/python3.13/site-packages/asyncpg/transaction.py:146: in start
+    await self._connection.execute(query)
+/usr/local/lib/python3.13/site-packages/asyncpg/connection.py:354: in execute
+    result = await self._protocol.query(query, timeout)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+asyncpg/protocol/protocol.pyx:369: in query
+    return await waiter
+E   RuntimeError: Task &lt;Task pending name='conftest.ensure_live_api_schema.&lt;locals&gt;.verify_schema_version' coro=&lt;ensure_live_api_schema.&lt;locals&gt;.verify_schema_version() running at /usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py:2464&gt; cb=[_run_until_complete_cb() at /usr/local/lib/python3.13/asyncio/base_events.py:181]&gt; got Future &lt;Future pending cb=[BaseProtocol._on_waiter_completed()]&gt; attached to a different loop
+
+During handling of the above exception, another exception occurred:
+/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:558: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+test/integration/conftest.py:57: in ensure_live_api_schema
+    anyio.run(verify_schema_version)
+/usr/local/lib/python3.13/site-packages/anyio/_core/_eventloop.py:83: in run
+    return async_backend.run(func, args, {}, backend_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py:2481: in run
+    return runner.run(wrapper())
+           ^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/runners.py:119: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/base_events.py:726: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py:2464: in wrapper
+    return await func(*args)
+           ^^^^^^^^^^^^^^^^^
+test/integration/conftest.py:55: in verify_schema_version
+    await pg_manager.close()
+package/platform_core/storage/postgres/manager.py:1835: in close
+    await self.langgraph_pool.close()
+/usr/local/lib/python3.13/site-packages/psycopg_pool/pool_async.py:523: in close
+    await agather(*workers, timeout=timeout)
+/usr/local/lib/python3.13/site-packages/psycopg_pool/_acompat.py:127: in agather
+    await asyncio.wait_for(asyncio.shield(wait), timeout=timeout)
+/usr/local/lib/python3.13/asyncio/tasks.py:507: in wait_for
+    return await fut
+           ^^^^^^^^^
+/usr/local/lib/python3.13/site-packages/psycopg_pool/pool_async.py:670: in worker
+    if isinstance((task := (await q.get())), StopWorker):
+                            ^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/queues.py:186: in get
+    await getter
+E   asyncio.exceptions.CancelledError</error></testcase><testcase classname="test.integration.api.test_wxchannels_live" name="test_personal_audio_to_docx_download_and_import" time="0.000"><error message="failed on setup with &quot;AssertionError&quot;">/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:558: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+E   AssertionError</error></testcase><testcase classname="test.integration.api.test_wxchannels_live" name="test_oneclick_packages_include_pairing_and_platform_programs" time="0.000"><error message="failed on setup with &quot;AssertionError&quot;">/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:558: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+E   AssertionError</error></testcase><testcase classname="test.integration.api.test_sandbox_workspace_delivery" name="test_sandbox_to_workspace_preview_edit_and_zip[chat]" time="0.000"><error message="failed on setup with &quot;AssertionError&quot;">/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:558: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+E   AssertionError</error></testcase><testcase classname="test.integration.api.test_sandbox_workspace_delivery" name="test_sandbox_to_workspace_preview_edit_and_zip[deep]" time="0.160"><error message="failed on setup with &quot;AssertionError&quot;">/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:558: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+E   AssertionError</error></testcase></testsuite></testsuites>

@@ -1,0 +1,6 @@
+{
+  "authenticated_reverse_tunnel": true,
+  "collector_http_reachable_from_api": true,
+  "collector_http_not_published": true,
+  "host_key_verified": true
+}

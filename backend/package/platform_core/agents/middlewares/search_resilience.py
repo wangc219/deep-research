@@ -34,9 +34,24 @@ _ACADEMIC_STOP_PROMPT = """# AMiner 检索降级（本轮运行）
 已不可用或达到调用上限的学术工具已从本轮移除。停止对这些工具的重试、同义改写和等待。
 继续使用仍可用的网页搜索、授权知识库或已有来源完成当前任务，必要时注明具体证据缺口。"""
 
+_PLANNING_ONLY_PROMPT = """# 既有材料规划任务
+用户要求只把已经提供的任务书或材料转成计划，且明确不启动真实研究。本轮不调用 AMiner，也不把“证据门、算法、
+材料、研究”等规划章节名解释成外部论文取证请求。直接忠实提取既有材料，明确工程估算属于规划假设；只有用户明确
+要求补充外部论文依据时，后续轮次才进行学术检索。"""
+
 _RESEARCH_DELIVERY_PROMPT = """# 调研探索员运行边界
 只处理调用方交给你的一个明确证据问题。先判断什么发现会改变主智能体结论，再自主选择网页、AMiner 与
 已授权知识库；来源职责和调用顺序由问题决定，不按固定地区、数量或渠道配额机械检索。
+
+用户未限制渠道且工具可用时，首轮使用 parallel_research_search，同时启动 Open WebSearch、SearXNG 与 AMiner，
+按 URL、DOI 和题名融合去重；首轮只建立候选证据面，不要求各渠道凑数量。评估融合结果后，再用单路工具针对
+仍会改变判断的缺口深挖。
+
+web_search 已自适应融合 Open WebSearch 与 SearXNG，不要为两个网页后端重复同一查询。融合网页检索和 AMiner
+没有固定内容分工：根据证据缺口、预期信息增益、时效、命中质量与调用成本选择单路、互补并发或首轮后补查。
+两路都可发现技术、机构、案例和论文线索；只有预计来源、证据层级或交叉核验价值不同才并发。首路证据已经直接、
+权威且边界充分时不为覆盖渠道而补查；命中不足、只有聚合线索、缺摘要/DOI/原始出处或存在冲突时再定向补缺。
+只对真正影响判断的论文读取详情。
 
 每次查询解决一个证据缺口。容易同名或漂移时使用 required_terms 或 required_term_groups 保留核心身份，
 不要把待证明结论或多个独立问题设为锚点。互补调用可小批并发，同义查询不要并发或重复。
@@ -139,6 +154,37 @@ def _academic_search_mode(arguments: dict[str, Any]) -> str:
     return "title" if str(arguments.get("mode") or "").casefold() == "title" else "topic"
 
 
+def _is_planning_only_request(query: str) -> bool:
+    """识别只转换既有材料的规划任务，避免把“证据门”等章节名误判为取证请求。"""
+    explicit_external_evidence = any(
+        marker in query
+        for marker in (
+            "请检索论文",
+            "请搜索论文",
+            "检索外部证据",
+            "搜索外部证据",
+            "补充论文依据",
+            "补充学术依据",
+            "引用论文",
+            "查找论文",
+        )
+    )
+    if explicit_external_evidence:
+        return False
+    return any(
+        marker in query
+        for marker in (
+            "只做规划",
+            "仅做规划",
+            "只需规划",
+            "不得启动真实研究",
+            "不要启动真实研究",
+            "不启动真实研究",
+            "不得执行真实研究",
+        )
+    )
+
+
 class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
     """Disable web search after terminal degradation or a bounded call budget.
 
@@ -178,11 +224,14 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         self.research_queries: set[str] = set()
         self.research_sources: set[str] = set()
         self.research_source_domains: set[str] = set()
+        self.research_academic_papers: set[str] = set()
+        self.research_academic_abstracts: set[str] = set()
         self.research_no_progress = 0
         self.research_stop_reason = ""
         self._research_lock = threading.Lock()
         self.requested_academic_search_started = False
         self.requested_knowledge_search_started = False
+        self.parallel_discovery_started = False
         self.research_web_stop_reason = ""
         self.research_web_calls = 0
         self.research_academic_topic_calls = 0
@@ -210,7 +259,8 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
                 )
             prompt += (
                 f"\n本轮已取得 {len(self.research_sources)} 条去重网页来源、"
-                f"{len(self.research_source_domains)} 个站点；站点数不等于独立证据数。"
+                f"{len(self.research_source_domains)} 个站点、{len(self.research_academic_papers)} 篇去重论文候选，"
+                f"其中 {len(self.research_academic_abstracts)} 篇达到摘要级；渠道计数不等于独立证据数。"
             )
             if reason:
                 prompt += f"\n本轮停止条件已触发：{reason}。所有工具已移除；立即整理现有证据并交付子任务结果。"
@@ -227,16 +277,19 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
                 system_message=append_to_system_message(request.system_message, prompt),
             )
             if not self.search_blocked and not self.blocked_academic_tools:
-                return request
+                return self._require_parallel_discovery(request)
             blocked = self.blocked_academic_tools | ({"web_search"} if self.search_blocked else set())
             tools = [item for item in (request.tools or []) if _tool_name(item) not in blocked]
             stop_prompt = _SEARCH_STOP_PROMPT if self.search_blocked else ""
             if self.blocked_academic_tools:
                 stop_prompt += "\n" + _ACADEMIC_STOP_PROMPT
-            return request.override(
-                tools=tools,
-                system_message=append_to_system_message(request.system_message, stop_prompt),
+            return self._require_parallel_discovery(
+                request.override(
+                    tools=tools,
+                    system_message=append_to_system_message(request.system_message, stop_prompt),
+                )
             )
+        request = self._scope_planning_only_tools(request)
         if not self.search_blocked and not self.blocked_academic_tools:
             return self._require_requested_academic_search(self._require_knowledge_search(request))
         blocked = self.blocked_academic_tools | ({"web_search"} if self.search_blocked else set())
@@ -248,6 +301,60 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         return self._require_requested_academic_search(
             self._require_knowledge_search(request.override(tools=tools, system_message=system_message))
         )
+
+    def _scope_planning_only_tools(self, request: ModelRequest) -> ModelRequest:
+        """在模型选择工具前移除未被请求的 AMiner，根治规划任务误检索。"""
+        messages = request.messages or []
+        latest_user = next((message for message in reversed(messages) if isinstance(message, HumanMessage)), None)
+        if latest_user is None or not _is_planning_only_request(_message_text(latest_user).casefold()):
+            return request
+        return request.override(
+            tools=[tool for tool in (request.tools or []) if _tool_name(tool) not in ACADEMIC_TOOL_NAMES],
+            system_message=append_to_system_message(request.system_message, _PLANNING_ONLY_PROMPT),
+        )
+
+    def _require_parallel_discovery(self, request: ModelRequest) -> ModelRequest:
+        """探索员首轮强制一次三渠道并发发现，并尊重用户显式渠道限制。"""
+        if self.parallel_discovery_started or request.tool_choice is not None:
+            return request
+        if "parallel_research_search" not in {_tool_name(tool) for tool in request.tools or []}:
+            return request
+        messages = request.messages or []
+        latest_user = next((i for i in range(len(messages) - 1, -1, -1) if isinstance(messages[i], HumanMessage)), None)
+        if latest_user is None:
+            return request
+        query = _message_text(messages[latest_user]).casefold()
+        if any(
+            marker in query
+            for marker in (
+                "不要检索",
+                "无需检索",
+                "不检索",
+                "仅分析已有",
+                "只分析已有",
+                "仅使用网页",
+                "只用网页",
+                "不使用 aminer",
+                "不使用aminer",
+                "不要使用 aminer",
+                "不要使用aminer",
+                "仅使用 aminer",
+                "仅使用aminer",
+                "只用 aminer",
+                "只用aminer",
+                "不使用网页",
+                "不要使用网页",
+            )
+        ):
+            return request
+        if any(
+            isinstance(message, ToolMessage) and message.name in _RESEARCH_EVIDENCE_TOOLS
+            for message in messages[latest_user + 1 :]
+        ):
+            self.parallel_discovery_started = True
+            return request
+        self.parallel_discovery_started = True
+        return request.override(tool_choice="parallel_research_search")
 
     def _require_knowledge_search(self, request: ModelRequest) -> ModelRequest:
         """确保启用的本地来源贡献独立视角；工具授权仍由上下文权限层维护。"""
@@ -296,6 +403,8 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         if latest_user is None or not isinstance(messages[latest_user].content, str):
             return request
         query = messages[latest_user].content.casefold()
+        if _is_planning_only_request(query):
+            return request
         if any(
             x in query
             for x in (
@@ -405,6 +514,8 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         messages = state.get("messages") if isinstance(state, dict) else None
         if not messages or not _has_serialized_tool_markup(messages[-1]):
             return None
+        if self.research_calls == 0:
+            self.parallel_discovery_started = False
         self.tool_markup_recoveries += 1
         if self.tool_markup_recoveries >= 2:
             self.force_protocol_final = True
@@ -565,12 +676,12 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         blocked: set[str] = set()
         notes: list[str] = []
         if self.research_web_stop_reason:
-            blocked.add("web_search")
+            blocked.update({"web_search", "parallel_research_search"})
             notes.append(self.research_web_stop_reason + "；继续使用授权知识库、论文摘要和已有来源")
         if self.adaptive_long_running:
             return blocked, "；".join(notes)
         if self.research_web_calls >= _RESEARCH_WEB_LIMIT:
-            blocked.add("web_search")
+            blocked.update({"web_search", "parallel_research_search"})
             notes.append("网页精确检索已完成 24 次，停止新增网页查询")
         if self.research_academic_detail_calls >= _RESEARCH_ACADEMIC_DETAIL_LIMIT:
             blocked.add("academic_get_papers")
@@ -578,7 +689,7 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         topic_done = self.research_academic_topic_calls >= _RESEARCH_ACADEMIC_TOPIC_LIMIT
         title_done = self.research_academic_title_calls >= _RESEARCH_ACADEMIC_TITLE_LIMIT
         if topic_done and title_done:
-            blocked.add("academic_search")
+            blocked.update({"academic_search", "parallel_research_search"})
             notes.append("论文主题发现已完成，停止同义改写；使用已取得题录/摘要")
         elif topic_done:
             notes.append("论文主题/语义发现已达 8 次；academic_search 仍可在标题额度内准确定位")
@@ -586,7 +697,16 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
 
     def _reserve_research_tool_budget(self, name: str, arguments: dict[str, Any]) -> str:
         """在执行前原子预占渠道次数，阻止一个模型批次并行冲过建议边界。"""
-        if name == "web_search":
+        if name == "parallel_research_search":
+            if self.research_web_stop_reason:
+                return "三渠道并发发现已完成网页阶段：" + self.research_web_stop_reason
+            if not self.adaptive_long_running and self.research_web_calls >= _RESEARCH_WEB_LIMIT:
+                return "网页精确检索额度已完成，不能再次执行三渠道首轮发现"
+            if not self.adaptive_long_running and self.research_academic_topic_calls >= _RESEARCH_ACADEMIC_TOPIC_LIMIT:
+                return "论文主题发现额度已完成，不能再次执行三渠道首轮发现"
+            self.research_web_calls += 1
+            self.research_academic_topic_calls += 1
+        elif name == "web_search":
             if self.research_web_stop_reason:
                 return "web_search 已完成本轮网页发现：" + self.research_web_stop_reason
             if not self.adaptive_long_running and self.research_web_calls >= _RESEARCH_WEB_LIMIT:
@@ -687,7 +807,8 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
 
     def _record_research_result(self, request: ToolCallRequest, result: Any) -> None:
         """累计带摘要的去重网页来源，连续无增量时结束网页发现。"""
-        if not self.research_mode or _tool_name(request.tool_call) != "web_search":
+        name = _tool_name(request.tool_call)
+        if not self.research_mode or name not in {"web_search", "parallel_research_search"}:
             return
         text = _result_text(result)
         try:
@@ -702,6 +823,7 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
             str(item["url"]).split("#", 1)[0].rstrip("/")
             for item in payload["results"]
             if isinstance(item, dict)
+            and (name == "web_search" or item.get("evidence_type") in {"web", "hybrid"})
             and str(item.get("url") or "").startswith(("https://", "http://"))
             and item.get("title")
             and item.get("content")
@@ -735,12 +857,30 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
         except (TypeError, ValueError):
             payload = {}
         status = (payload.get("aminer_status") or payload.get("status")) if isinstance(payload, dict) else None
+        papers: set[str] = set()
+        abstracts: set[str] = set()
+        if isinstance(payload, dict):
+            for item in payload.get("results") or []:
+                if not isinstance(item, dict):
+                    continue
+                identity = str(item.get("doi") or item.get("id") or "")
+                identity = " ".join(identity.casefold().split())
+                if not identity:
+                    continue
+                papers.add(identity)
+                if item.get("content_level") == "abstract":
+                    abstracts.add(identity)
+        if papers:
+            with self._research_lock:
+                self.research_academic_papers.update(papers)
+                self.research_academic_abstracts.update(abstracts)
         if status in {"disabled", "denied", "auth_failed", "rate_limited", "unavailable", "budget_exhausted"}:
             self.blocked_academic_tools.update(ACADEMIC_TOOL_NAMES)
         elif status in {"limit_reached", "configuration_changed", "in_progress"}:
             endpoint = payload.get("failed_endpoint")
             limited_tool = {
                 "search": "academic_search",
+                "question_search": "academic_search",
                 "semantic_search": "academic_search",
                 "title_search": "academic_search",
                 "detail": "academic_get_papers",

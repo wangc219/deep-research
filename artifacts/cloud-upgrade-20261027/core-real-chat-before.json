@@ -1,0 +1,671 @@
+{
+  "scope": "16 ordinary users, real provider short chat, public HTTPS; not a full mixed heavy-workload test",
+  "identity_ids": [
+    2906,
+    2907,
+    2908,
+    2909,
+    2910,
+    2911,
+    2912,
+    2913,
+    2914,
+    2915,
+    2916,
+    2917,
+    2918,
+    2919,
+    2920,
+    2921
+  ],
+  "elapsed_seconds": 50.694,
+  "errors": [
+    "RuntimeError: Real chat did not complete: failed",
+    "RuntimeError: Real chat did not complete: failed",
+    "RuntimeError: Real chat did not complete: failed",
+    "RuntimeError: Real chat did not complete: failed"
+  ],
+  "completed": 12,
+  "chats": [
+    {
+      "id": 2906,
+      "run": "894d38ac-2001-4b68-8d7b-dd62e30b9432",
+      "status": "failed",
+      "accepted_seconds": 0.35
+    },
+    {
+      "id": 2907,
+      "run": "16b20eaa-aa38-4741-a785-f4f82ee33625",
+      "status": "completed",
+      "seconds": 35.667,
+      "accepted_seconds": 0.311,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.734484Z",
+        "started_at": "2026-10-27T03:58:41.907917Z",
+        "prepared_at": "2026-10-27T03:59:14.637426Z",
+        "first_model_request_at": "2026-10-27T03:59:14.777839Z",
+        "first_output_at": "2026-10-27T03:59:16.589345Z",
+        "finished_at": "2026-10-27T03:59:16.753141Z",
+        "dispatch_latency_ms": 173,
+        "preparation_latency_ms": 32730,
+        "first_model_request_latency_ms": 33043,
+        "model_first_output_latency_ms": 1952,
+        "first_output_latency_ms": 34855,
+        "total_latency_ms": 35019
+      }
+    },
+    {
+      "id": 2908,
+      "run": "5c0edb2a-680f-4f6b-9743-87ec1c5ab400",
+      "status": "completed",
+      "seconds": 34.786,
+      "accepted_seconds": 0.421,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.889525Z",
+        "started_at": "2026-10-27T03:58:42.203278Z",
+        "prepared_at": "2026-10-27T03:59:13.393802Z",
+        "first_model_request_at": "2026-10-27T03:59:13.960713Z",
+        "first_output_at": "2026-10-27T03:59:15.480099Z",
+        "finished_at": "2026-10-27T03:59:16.001607Z",
+        "dispatch_latency_ms": 314,
+        "preparation_latency_ms": 31191,
+        "first_model_request_latency_ms": 32071,
+        "model_first_output_latency_ms": 2086,
+        "first_output_latency_ms": 33591,
+        "total_latency_ms": 34112
+      }
+    },
+    {
+      "id": 2909,
+      "run": "e68f2e20-cb2d-4828-812c-16b9d249ad03",
+      "status": "completed",
+      "seconds": 34.437,
+      "accepted_seconds": 0.415,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.875752Z",
+        "started_at": "2026-10-27T03:58:42.084137Z",
+        "prepared_at": "2026-10-27T03:59:13.488065Z",
+        "first_model_request_at": "2026-10-27T03:59:14.059438Z",
+        "first_output_at": "2026-10-27T03:59:15.373350Z",
+        "finished_at": "2026-10-27T03:59:15.503861Z",
+        "dispatch_latency_ms": 208,
+        "preparation_latency_ms": 31404,
+        "first_model_request_latency_ms": 32184,
+        "model_first_output_latency_ms": 1885,
+        "first_output_latency_ms": 33498,
+        "total_latency_ms": 33628
+      }
+    },
+    {
+      "id": 2910,
+      "run": "155d873f-3e9f-43d5-b7b3-df20410c1feb",
+      "status": "completed",
+      "seconds": 50.275,
+      "accepted_seconds": 0.475,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.684509Z",
+        "started_at": "2026-10-27T03:58:41.857843Z",
+        "prepared_at": "2026-10-27T03:59:13.660528Z",
+        "first_model_request_at": "2026-10-27T03:59:14.214209Z",
+        "first_output_at": "2026-10-27T03:59:16.059857Z",
+        "finished_at": "2026-10-27T03:59:31.272230Z",
+        "dispatch_latency_ms": 173,
+        "preparation_latency_ms": 31803,
+        "first_model_request_latency_ms": 32530,
+        "model_first_output_latency_ms": 2399,
+        "first_output_latency_ms": 34375,
+        "total_latency_ms": 49588
+      }
+    },
+    {
+      "id": 2911,
+      "run": "99a895f2-a485-491f-89f6-3d287ebdb396",
+      "status": "completed",
+      "seconds": 33.987,
+      "accepted_seconds": 0.335,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.537334Z",
+        "started_at": "2026-10-27T03:58:41.656247Z",
+        "prepared_at": "2026-10-27T03:58:43.509767Z",
+        "first_model_request_at": "2026-10-27T03:59:12.727914Z",
+        "first_output_at": "2026-10-27T03:59:14.048176Z",
+        "finished_at": "2026-10-27T03:59:14.833324Z",
+        "dispatch_latency_ms": 119,
+        "preparation_latency_ms": 1854,
+        "first_model_request_latency_ms": 31191,
+        "model_first_output_latency_ms": 30538,
+        "first_output_latency_ms": 32511,
+        "total_latency_ms": 33296
+      }
+    },
+    {
+      "id": 2912,
+      "run": "f296412f-4b69-4fbf-83a3-348e2affc314",
+      "status": "failed",
+      "accepted_seconds": 0.373
+    },
+    {
+      "id": 2913,
+      "run": "91b495be-7e59-46b3-8d26-e8e512f29226",
+      "status": "completed",
+      "seconds": 35.398,
+      "accepted_seconds": 0.341,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.753279Z",
+        "started_at": "2026-10-27T03:58:42.012613Z",
+        "prepared_at": "2026-10-27T03:59:14.519541Z",
+        "first_model_request_at": "2026-10-27T03:59:14.670313Z",
+        "first_output_at": "2026-10-27T03:59:16.306722Z",
+        "finished_at": "2026-10-27T03:59:16.719774Z",
+        "dispatch_latency_ms": 259,
+        "preparation_latency_ms": 32507,
+        "first_model_request_latency_ms": 32917,
+        "model_first_output_latency_ms": 1787,
+        "first_output_latency_ms": 34553,
+        "total_latency_ms": 34966
+      }
+    },
+    {
+      "id": 2914,
+      "run": "3ea621a8-1b39-4c2f-b504-33af4b6e8d3b",
+      "status": "completed",
+      "seconds": 46.06,
+      "accepted_seconds": 0.424,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.639244Z",
+        "started_at": "2026-10-27T03:58:41.789554Z",
+        "prepared_at": "2026-10-27T03:59:12.457934Z",
+        "first_model_request_at": "2026-10-27T03:59:12.797532Z",
+        "first_output_at": "2026-10-27T03:59:14.808859Z",
+        "finished_at": "2026-10-27T03:59:26.806367Z",
+        "dispatch_latency_ms": 150,
+        "preparation_latency_ms": 30668,
+        "first_model_request_latency_ms": 31158,
+        "model_first_output_latency_ms": 2351,
+        "first_output_latency_ms": 33170,
+        "total_latency_ms": 45167
+      }
+    },
+    {
+      "id": 2915,
+      "run": "c68c5e55-091e-4637-a876-97d99b985b52",
+      "status": "completed",
+      "seconds": 38.749,
+      "accepted_seconds": 0.361,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.905630Z",
+        "started_at": "2026-10-27T03:58:43.645530Z",
+        "prepared_at": "2026-10-27T03:59:13.888834Z",
+        "first_model_request_at": "2026-10-27T03:59:14.313361Z",
+        "first_output_at": "2026-10-27T03:59:18.759329Z",
+        "finished_at": "2026-10-27T03:59:19.981680Z",
+        "dispatch_latency_ms": 1740,
+        "preparation_latency_ms": 30243,
+        "first_model_request_latency_ms": 32408,
+        "model_first_output_latency_ms": 4870,
+        "first_output_latency_ms": 36854,
+        "total_latency_ms": 38076
+      }
+    },
+    {
+      "id": 2916,
+      "run": "1b0ccd53-0e7a-4e3b-b08d-f4b4e956b7d6",
+      "status": "failed",
+      "accepted_seconds": 0.369
+    },
+    {
+      "id": 2917,
+      "run": "fc5365bf-a384-4348-8d2e-c523d51e9f1a",
+      "status": "completed",
+      "seconds": 33.704,
+      "accepted_seconds": 0.317,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.533534Z",
+        "started_at": "2026-10-27T03:58:41.647373Z",
+        "prepared_at": "2026-10-27T03:58:43.425116Z",
+        "first_model_request_at": "2026-10-27T03:59:12.555303Z",
+        "first_output_at": "2026-10-27T03:59:13.823788Z",
+        "finished_at": "2026-10-27T03:59:14.588106Z",
+        "dispatch_latency_ms": 114,
+        "preparation_latency_ms": 1778,
+        "first_model_request_latency_ms": 31022,
+        "model_first_output_latency_ms": 30399,
+        "first_output_latency_ms": 32290,
+        "total_latency_ms": 33055
+      }
+    },
+    {
+      "id": 2918,
+      "run": "5740d017-42d2-45b9-a0b4-daf8fca621eb",
+      "status": "completed",
+      "seconds": 34.234,
+      "accepted_seconds": 0.254,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.797992Z",
+        "started_at": "2026-10-27T03:58:42.006135Z",
+        "prepared_at": "2026-10-27T03:59:12.883862Z",
+        "first_model_request_at": "2026-10-27T03:59:13.793116Z",
+        "first_output_at": "2026-10-27T03:59:14.922655Z",
+        "finished_at": "2026-10-27T03:59:15.394572Z",
+        "dispatch_latency_ms": 208,
+        "preparation_latency_ms": 30878,
+        "first_model_request_latency_ms": 31995,
+        "model_first_output_latency_ms": 2039,
+        "first_output_latency_ms": 33125,
+        "total_latency_ms": 33597
+      }
+    },
+    {
+      "id": 2919,
+      "run": "2ffc4101-3a36-46ea-93ed-7c6a6ff44e74",
+      "status": "completed",
+      "seconds": 36.795,
+      "accepted_seconds": 0.34,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.524227Z",
+        "started_at": "2026-10-27T03:58:41.657627Z",
+        "prepared_at": "2026-10-27T03:58:43.472431Z",
+        "first_model_request_at": "2026-10-27T03:59:12.283682Z",
+        "first_output_at": "2026-10-27T03:59:16.481373Z",
+        "finished_at": "2026-10-27T03:59:17.721204Z",
+        "dispatch_latency_ms": 133,
+        "preparation_latency_ms": 1815,
+        "first_model_request_latency_ms": 30759,
+        "model_first_output_latency_ms": 33009,
+        "first_output_latency_ms": 34957,
+        "total_latency_ms": 36197
+      }
+    },
+    {
+      "id": 2920,
+      "run": "62d8aa43-d34c-419c-bbe4-9338c6ba5727",
+      "status": "failed",
+      "accepted_seconds": 0.357
+    },
+    {
+      "id": 2921,
+      "run": "16ca0f06-53d6-4bf5-9620-c189d3e80435",
+      "status": "completed",
+      "seconds": 35.236,
+      "accepted_seconds": 0.369,
+      "timing": {
+        "created_at": "2026-10-27T03:58:41.911253Z",
+        "started_at": "2026-10-27T03:58:42.231628Z",
+        "prepared_at": "2026-10-27T03:59:13.938744Z",
+        "first_model_request_at": "2026-10-27T03:59:14.331474Z",
+        "first_output_at": "2026-10-27T03:59:15.467317Z",
+        "finished_at": "2026-10-27T03:59:16.538632Z",
+        "dispatch_latency_ms": 320,
+        "preparation_latency_ms": 31707,
+        "first_model_request_latency_ms": 32420,
+        "model_first_output_latency_ms": 1529,
+        "first_output_latency_ms": 33556,
+        "total_latency_ms": 34627
+      }
+    }
+  ],
+  "page_probes": [
+    {
+      "status": 200,
+      "ms": 715.4
+    },
+    {
+      "status": 200,
+      "ms": 232.2
+    },
+    {
+      "status": 200,
+      "ms": 271.8
+    },
+    {
+      "status": 200,
+      "ms": 172.3
+    },
+    {
+      "status": 200,
+      "ms": 587.1
+    },
+    {
+      "status": 200,
+      "ms": 286.0
+    },
+    {
+      "status": 200,
+      "ms": 273.4
+    },
+    {
+      "status": 200,
+      "ms": 157.0
+    },
+    {
+      "status": 200,
+      "ms": 190.8
+    },
+    {
+      "status": 200,
+      "ms": 176.7
+    },
+    {
+      "status": 200,
+      "ms": 157.7
+    },
+    {
+      "status": 200,
+      "ms": 174.8
+    },
+    {
+      "status": 200,
+      "ms": 181.8
+    },
+    {
+      "status": 200,
+      "ms": 145.5
+    },
+    {
+      "status": 200,
+      "ms": 147.6
+    },
+    {
+      "status": 200,
+      "ms": 227.5
+    },
+    {
+      "status": 200,
+      "ms": 168.0
+    },
+    {
+      "status": 200,
+      "ms": 141.2
+    },
+    {
+      "status": 200,
+      "ms": 598.2
+    },
+    {
+      "status": 200,
+      "ms": 211.5
+    },
+    {
+      "status": 200,
+      "ms": 167.4
+    },
+    {
+      "status": 200,
+      "ms": 143.3
+    },
+    {
+      "status": 200,
+      "ms": 174.8
+    },
+    {
+      "status": 200,
+      "ms": 172.9
+    },
+    {
+      "status": 200,
+      "ms": 156.3
+    },
+    {
+      "status": 200,
+      "ms": 137.9
+    },
+    {
+      "status": 200,
+      "ms": 172.2
+    },
+    {
+      "status": 200,
+      "ms": 162.9
+    },
+    {
+      "status": 200,
+      "ms": 143.6
+    },
+    {
+      "status": 200,
+      "ms": 189.4
+    },
+    {
+      "status": 200,
+      "ms": 235.1
+    },
+    {
+      "status": 200,
+      "ms": 161.6
+    },
+    {
+      "status": 200,
+      "ms": 195.6
+    },
+    {
+      "status": 200,
+      "ms": 168.2
+    },
+    {
+      "status": 200,
+      "ms": 182.4
+    },
+    {
+      "status": 200,
+      "ms": 157.2
+    },
+    {
+      "status": 200,
+      "ms": 184.1
+    },
+    {
+      "status": 200,
+      "ms": 383.7
+    },
+    {
+      "status": 200,
+      "ms": 854.4
+    },
+    {
+      "status": 200,
+      "ms": 164.2
+    },
+    {
+      "status": 200,
+      "ms": 170.5
+    },
+    {
+      "status": 200,
+      "ms": 173.4
+    },
+    {
+      "status": 200,
+      "ms": 603.1
+    },
+    {
+      "status": 200,
+      "ms": 169.5
+    },
+    {
+      "status": 200,
+      "ms": 228.2
+    },
+    {
+      "status": 200,
+      "ms": 191.2
+    },
+    {
+      "status": 200,
+      "ms": 143.9
+    },
+    {
+      "status": 200,
+      "ms": 168.4
+    },
+    {
+      "status": 200,
+      "ms": 140.8
+    },
+    {
+      "status": 200,
+      "ms": 155.2
+    },
+    {
+      "status": 200,
+      "ms": 173.4
+    },
+    {
+      "status": 200,
+      "ms": 129.3
+    },
+    {
+      "status": 200,
+      "ms": 149.2
+    },
+    {
+      "status": 200,
+      "ms": 134.0
+    },
+    {
+      "status": 200,
+      "ms": 161.1
+    },
+    {
+      "status": 200,
+      "ms": 129.2
+    },
+    {
+      "status": 200,
+      "ms": 131.5
+    },
+    {
+      "status": 200,
+      "ms": 148.5
+    },
+    {
+      "status": 200,
+      "ms": 136.8
+    },
+    {
+      "status": 200,
+      "ms": 147.0
+    },
+    {
+      "status": 200,
+      "ms": 137.7
+    },
+    {
+      "status": 200,
+      "ms": 140.3
+    },
+    {
+      "status": 200,
+      "ms": 135.5
+    },
+    {
+      "status": 200,
+      "ms": 162.5
+    },
+    {
+      "status": 200,
+      "ms": 157.9
+    },
+    {
+      "status": 200,
+      "ms": 139.0
+    },
+    {
+      "status": 200,
+      "ms": 134.1
+    },
+    {
+      "status": 200,
+      "ms": 132.3
+    },
+    {
+      "status": 200,
+      "ms": 156.1
+    },
+    {
+      "status": 200,
+      "ms": 142.9
+    },
+    {
+      "status": 200,
+      "ms": 223.3
+    },
+    {
+      "status": 200,
+      "ms": 243.5
+    }
+  ],
+  "cleanup_errors": [
+    {
+      "id": 2906,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_00',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2907,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_01',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2908,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_02',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2909,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_03',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2910,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_04',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2911,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_05',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2912,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_06',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2913,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_07',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2914,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_08',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2915,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_09',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2916,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_10',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2917,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_11',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2918,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_12',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2919,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_13',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2920,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_14',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    },
+    {
+      "id": 2921,
+      "error": "ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column \"uid\" does not exist\nHINT:  Perhaps you meant to reference the column \"platform_model_calls.id\".\n[SQL: DELETE FROM platform_model_calls WHERE uid=$1]\n[parameters: ('qacore_7327a49e_15',)]\n(Background on this error at: https://sqlalche.me/e/20/f405)"
+    }
+  ],
+  "accounts_remaining": 0,
+  "real_model_calls": [
+    {
+      "status": "completed",
+      "n": 12
+    }
+  ],
+  "cleanup_recovery": "completed; SQL helper corrected to use model-call run_id"
+}

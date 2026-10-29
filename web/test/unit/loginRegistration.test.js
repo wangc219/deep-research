@@ -27,8 +27,8 @@ test('确认密码空值只由 required 规则提示一次', () => {
 })
 
 test('登录页默认使用装备创新主视觉', () => {
-  assert.match(loginSource, /const loginBgImage = '\/equipment-login-hero\.png'/)
-  assert.equal(existsSync(new URL('../../public/equipment-login-hero.png', import.meta.url)), true)
+  assert.match(loginSource, /import loginBgImage from '@\/assets\/defaults\/login-hero\.webp'/)
+  assert.equal(existsSync(new URL('../../src/assets/defaults/login-hero.webp', import.meta.url)), true)
   assert.match(loginSource, /\.hero-art[\s\S]*object-fit:\s*cover/)
   assert.match(loginSource, /@media \(max-aspect-ratio: 8 \/ 5\)[\s\S]*object-fit:\s*contain/)
   assert.match(

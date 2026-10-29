@@ -1,0 +1,26 @@
+{
+  "scope": "视频号模块界面对齐公众号文章；公众号与视频成果共用可关闭的沙盒右侧预览",
+  "checks": {
+    "lint": "passed",
+    "unit_tests": 586,
+    "build": "passed",
+    "browser": [
+      "视频选择空态及连接未就绪禁用",
+      "转录历史及真实已完成任务",
+      "设置与连接页面切换",
+      "真实 DOCX 沙盒侧开预览",
+      "关闭预览保留勾选及跨页面保留勾选",
+      "浅色与深色主题",
+      "窄屏横向导航及预览关闭"
+    ]
+  },
+  "limitation": "当前微信采集端未连接，未发起新的视频获取和转录。",
+  "screenshots": [
+    "video-selection.jpg",
+    "tasks.jpg",
+    "sandbox-drawer.jpg",
+    "dark.jpg",
+    "mobile.jpg",
+    "mobile-drawer.jpg"
+  ]
+}

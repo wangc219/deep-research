@@ -1,0 +1,5 @@
+{
+  "equipment_deep_research/providers/openai_compatible.py": "7766dd39551781bedebed71b84c14c876dc47cbc2afd1fe0388c1b68adff120d",
+  "equipment_deep_research/query_library/generator.py": "ec0376a1e06f8b9f98f3ee1d3bbf2cd10399cc0d8e67a57f11fb028a7abfe09a",
+  "platform_core/services/equipment_query_task.py": "b146ef8847f220d77a419b0c5097708e2f58afd3ad9b5e332a278031b3ea9022"
+}

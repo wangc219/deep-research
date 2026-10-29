@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-26",
+  "site": "https://www.deepquest.space",
+  "acceptance": {
+    "ordinary_accounts": 16,
+    "origin": "https://www.deepquest.space",
+    "real_password_logins": "16/16 passed",
+    "isolated_mp_sessions": "16/16 passed",
+    "private_knowledge_libraries": "16/16 created",
+    "warm_concurrent_requests": {
+      "count": 384,
+      "p50_ms": 172.4,
+      "p95_ms": 288.5,
+      "max_ms": 336.2
+    },
+    "warm_success_rate": "100%",
+    "cross_account_access": "80/80 rejected",
+    "parallel_upload_download_word": "16/16 passed",
+    "real_knowledge_ingest_and_retrieval": "16/16 passed",
+    "ingest_completion": {
+      "count": 16,
+      "p50_ms": 8164.4,
+      "p95_ms": 11331.5,
+      "max_ms": 11331.5
+    },
+    "passed": true,
+    "cleanup": {
+      "accounts_remaining": 0,
+      "tasks_remaining": 0,
+      "libraries_remaining": 0,
+      "operation_logs_remaining": 0,
+      "profiles_remaining": 0,
+      "agent_env_remaining": 0,
+      "private_directories_remaining": 0,
+      "errors": []
+    }
+  },
+  "independent_cleanup_verification": {
+    "verified_test_libraries": 16,
+    "remaining": {
+      "ordinary_test_accounts": 0,
+      "video_and_ingest_tasks": 0,
+      "knowledge_libraries": 0,
+      "knowledge_files": 0,
+      "vector_collections": 0,
+      "object_storage_files": 0,
+      "knowledge_config_cache": 0
+    },
+    "passed": true
+  },
+  "bandwidth": {
+    "asset": "/assets/index-DwH8x6E0.js",
+    "single_transfers": [
+      {
+        "compressed": false,
+        "http_version": "2",
+        "bytes": 1242184,
+        "seconds": 0.463894,
+        "ttfb_seconds": 0.14581,
+        "overall_mbps": 21.42
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375494,
+        "seconds": 0.324133,
+        "ttfb_seconds": 0.148851,
+        "overall_mbps": 9.27
+      }
+    ],
+    "four_parallel_transfers": [
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375494,
+        "seconds": 0.334483,
+        "ttfb_seconds": 0.155824,
+        "overall_mbps": 8.98
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375494,
+        "seconds": 0.354328,
+        "ttfb_seconds": 0.167062,
+        "overall_mbps": 8.48
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375494,
+        "seconds": 0.34447,
+        "ttfb_seconds": 0.157309,
+        "overall_mbps": 8.72
+      },
+      {
+        "compressed": true,
+        "http_version": "2",
+        "bytes": 375494,
+        "seconds": 0.309223,
+        "ttfb_seconds": 0.143512,
+        "overall_mbps": 9.71
+      }
+    ],
+    "parallel_seconds": 0.369,
+    "aggregate_mbps": 32.58
+  },
+  "article_static_resources": {
+    "before_seconds": 0.673,
+    "final_seconds": 0.242,
+    "resource_count": 16,
+    "bytes": 312783
+  },
+  "validation": {
+    "web_unit_tests_passed": 598,
+    "web_lint_and_build": "passed",
+    "login_and_rate_limit_tests_passed": 9,
+    "knowledge_router_tests_passed": 23,
+    "candidate_container_login_tests_passed": 2,
+    "wechat_replica_http_test": "1 passed in isolated pytest process",
+    "initial_combined_cloud_run": "4 passed, 1 failed due to test event-loop reuse; failed replica test independently rerun and passed",
+    "source_files_verified": 20,
+    "api_image_matches_source": true,
+    "backend_lint": "Changed files pass with existing main.py E402 excluded; four files pass formatting."
+  },
+  "resource_check": {
+    "host_cpu_cores": 4,
+    "api_workers": 2,
+    "api_and_workers_container_cpu_or_memory_limits": false,
+    "postgres_connections_at_check": 50,
+    "postgres_max_connections": 100,
+    "available_host_memory_at_check_mb": 2797,
+    "api_oom_killed": false,
+    "api_restart_count": 0
+  },
+  "operational_state": {
+    "cloud_ready": true,
+    "local_project_containers": "stopped",
+    "local_wechat_connection": "running, cloud connected"
+  },
+  "limits": [
+    "16 个普通平台账户从云机通过生产公网 HTTPS 入口发压；并非 16 个地域终端的长时间容量或 SLA 测试。",
+    "公众号下载记录、视频终态和工作区源文件使用隔离夹具；文件 API、知识库入库、向量索引与检索真实执行。未替 16 个账户登录各自的微信。",
+    "带宽为当前本机到云端的链路实测；公众号资源耗时为同规模单次前后测量。外部微信限流及语音识别长任务不在本轮 384 次页面 API 延迟指标内。"
+  ],
+  "rollback": {
+    "source_backup": "/var/backups/deepquest/wechat-16users-20261026/source-before.tar.gz",
+    "api_previous_image": "deepquest-api:before-16users-20261026",
+    "performance_source_backup": "/var/backups/deepquest/wechat-performance-20261026/source-before.tar.gz"
+  }
+}

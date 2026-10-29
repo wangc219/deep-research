@@ -1,0 +1,102 @@
+{
+  "completed_at": "2026-10-15T22:11:44.294977+08:00",
+  "site": "https://www.deepquest.space",
+  "status": "deployed_and_verified",
+  "issues": [
+    {
+      "issue": "历史 Query 可读但不能修改或删除",
+      "finding": "存在",
+      "resolution": "共享历史 Query 允许编辑、发布、归档和删除；保留原所有者、来源、首次写入前快照和操作者审计。私人 Query 仍隔离。"
+    },
+    {
+      "issue": "多人编辑覆盖",
+      "finding": "保存已有 expected_version 与行锁；状态与删除需补强",
+      "resolution": "编辑表单绑定读取版本；发布、归档、删除也携带并检查版本；陈旧请求返回 409。"
+    },
+    {
+      "issue": "生成失败被模板结果包装为成功",
+      "finding": "存在",
+      "resolution": "移除固定模板兜底；非法 JSON、空结果、全部重复或未通过质量检查明确失败。已有旧记录保留。"
+    },
+    {
+      "issue": "生成耗时且重试重做已完成工作",
+      "finding": "存在",
+      "resolution": "每批 2 个维度、最多并发 2 批；逐条持久化通过结果，重试复用结果和 24 小时内规划检查点；规划不返回浏览器。"
+    },
+    {
+      "issue": "取消后或执行权失效后迟到写入",
+      "finding": "存在",
+      "resolution": "Task lease 事务内锁定生成任务并检查取消状态，保护阶段、规划、结果和终态写入。完成任务重放直接返回已有结果。"
+    },
+    {
+      "issue": "具体装备产出被质量规则误拒",
+      "finding": "存在",
+      "resolution": "扩展终端、供电系统、传感器、载荷、电源等具体产出识别；保留主题关联检查和泛泛需求拒绝规则。"
+    },
+    {
+      "issue": "模型写出的网址被当成检索证据",
+      "finding": "存在",
+      "resolution": "仅采信实际供应商工具来源元数据；无网页来源时保留模型分析记录，verified 降为 inferred。"
+    },
+    {
+      "issue": "生成和录入 Query 必须先选择项目",
+      "finding": "存在",
+      "resolution": "允许省略项目，按用户事务锁创建或复用个人 Query 生成项目；同用户跨项目研究保留来源版本与快照。"
+    }
+  ],
+  "checks": {
+    "backend_regression": {
+      "passed": 125,
+      "failed": 0
+    },
+    "final_generator_and_postgresql_http_handler_checks": {
+      "passed": 17,
+      "failed": 0
+    },
+    "frontend_unit": {
+      "passed": 545,
+      "failed": 0
+    },
+    "frontend_lint": "passed",
+    "production_build": "passed",
+    "python_ruff": "passed",
+    "cloud_http_smoke": {
+      "projectless_create": "passed",
+      "private_isolation": "passed",
+      "shared_history_crud": "passed",
+      "concurrent_version_conflict": "passed",
+      "original_snapshot_and_actor": "passed",
+      "stale_delete": "passed",
+      "paid_model_calls": 0
+    },
+    "image_and_frontend_parity": {
+      "backend_image_matches_source": true,
+      "frontend": {
+        "local_files": 780,
+        "cloud_files": 781,
+        "only_local": [],
+        "only_cloud": [
+          "./50x.html"
+        ],
+        "different": [],
+        "frontend_files_identical": true
+      }
+    },
+    "readiness": "ready; degraded=false"
+  },
+  "browser": {
+    "desktop": "real local page verified editor opens v2 and retains fields; no user data edited",
+    "mobile": "requested 390x844; browser zoom yielded CSS 433x938; document and content have no horizontal overflow",
+    "cloud_browser": "existing browser session requires login; deployed API verified separately using actual HTTP authentication"
+  },
+  "cloud_existing_template_records": {
+    "count": 1,
+    "action": "preserved"
+  },
+  "cleanup": "one-time test users and data removed; zero paid model calls",
+  "rollback": {
+    "api_image": "deepquest-api:before-query-integrity-20261015",
+    "web_image": "deepquest-web:before-query-integrity-20261015",
+    "source_backup": "/opt/deep-research/migration-20261015/query-integrity-before/source.tar.gz"
+  }
+}

@@ -1,16 +1,19 @@
 import asyncio
 import copy
 import hashlib
-import unicodedata
+import json
 import os
 import re
 import tempfile
 import threading
 import time
+import unicodedata
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeout, wait
+from datetime import UTC, datetime
 from html import escape
 from contextlib import suppress
 from pathlib import Path, PurePosixPath
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
@@ -21,6 +24,7 @@ from langchain_core.tools import tool as langchain_tool
 from langgraph.prebuilt.tool_node import ToolRuntime
 from langgraph.types import Command, interrupt
 from pydantic import BaseModel, Field, StringConstraints
+from public_web_search_gateway import register_public_web_search
 
 from platform_core.agents.backends.paths import (
     VIRTUAL_PATH_PREFIX,
@@ -28,7 +32,8 @@ from platform_core.agents.backends.paths import (
 )
 from platform_core.agents.backends.sandbox import ProvisionerSandboxBackend
 from platform_core.agents.toolkits.registry import ToolExtraMetadata, _all_tool_instances, _extra_registry, tool
-from platform_core.config.options import system_options
+from platform_core.config.options import load_web_search_runtime_options, system_options
+from platform_core.services.searxng_service import normalize_unresponsive_engines
 from platform_core.services.web_search_coordinator import (
     antibot_delay,
     coordinated_search,
@@ -184,6 +189,10 @@ class DoubaoSearchInput(BaseModel):
     content_format: str = Field(
         default="text", description="正文返回格式，支持 'text' (纯文本) 或 'markdown' (Markdown 格式)，默认 'text'"
     )
+    fusion_strategy: Literal["adaptive", "parallel"] = Field(
+        default="adaptive",
+        description="网页融合策略；调研探索员首轮使用 parallel，使 Open WebSearch 与 SearXNG 立即并发",
+    )
 
 
 def _build_doubao_search_payload(
@@ -255,12 +264,13 @@ def _doubao_search(
     required_terms: list[str] | None = None,
     required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
+    fusion_strategy: str = "adaptive",
 ) -> dict:
     api_key = os.getenv("DOUBAO_SEARCH_API_KEY")
     if not api_key:
         return {"query": query, "results": [], "error": "DOUBAO_SEARCH_API_KEY 未配置"}
 
-    del required_terms, required_term_groups
+    del required_terms, required_term_groups, fusion_strategy
     payload = _build_doubao_search_payload(query, count, time_range, sites, block_hosts, content_format)
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
@@ -391,10 +401,11 @@ def _open_websearch(
     required_terms: list[str] | None = None,
     required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
+    fusion_strategy: str = "adaptive",
 ) -> dict:
     """通过随项目部署的 open-websearch daemon 执行多引擎检索。"""
 
-    del time_range, content_format
+    del time_range, content_format, fusion_strategy
     normalized_query = " ".join(str(query or "").split())[:500]
     site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
     site_hosts = [host for host in site_hosts if host]
@@ -412,8 +423,11 @@ def _open_websearch(
             "error": "OPEN_WEBSEARCH_URL 未配置或不是有效的 HTTP(S) 地址",
         }
 
-    timeout = _web_search_float_env("OPEN_WEBSEARCH_TIMEOUT_SECONDS", 15.0, minimum=3.0, maximum=60.0)
     coordinator = get_active_search_coordinator()
+    timeout = _web_search_float_env("OPEN_WEBSEARCH_TIMEOUT_SECONDS", 15.0, minimum=3.0, maximum=60.0)
+    wait_budget = getattr(coordinator, "wait_seconds", None)
+    if isinstance(wait_budget, int | float):
+        timeout = min(timeout, max(3.0, float(wait_budget)))
     delays = {
         engine: coordinator.engine_remaining(engine) if coordinator else 0 for engine in _open_websearch_engines()
     }
@@ -499,6 +513,200 @@ def _create_open_websearch():
     return _open_websearch
 
 
+def _parse_search_datetime(value: object) -> datetime | None:
+    """解析搜索后端常见 ISO 时间，无法确认时不猜测。"""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            parsed = datetime.strptime(text[:10], "%Y-%m-%d").replace(tzinfo=UTC)
+        except ValueError:
+            return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _parse_searxng_response(
+    query: str,
+    data: dict,
+    *,
+    count: int,
+    engines: list[str],
+    time_range: str | None = None,
+    sites: list[str] | None = None,
+    block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
+) -> dict:
+    """把 SearXNG JSON 响应规范为平台统一检索协议。"""
+    custom_range = re.fullmatch(r"(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})", str(time_range or ""))
+    range_start = range_end = None
+    if custom_range:
+        range_start = _parse_search_datetime(custom_range.group(1))
+        range_end = _parse_search_datetime(custom_range.group(2))
+
+    results = []
+    for item in data.get("results") or []:
+        if not isinstance(item, dict):
+            continue
+        url = str(item.get("url") or "").strip()
+        parsed_url = urlparse(url)
+        title = " ".join(BeautifulSoup(str(item.get("title") or ""), "html.parser").get_text(" ", strip=True).split())
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc or not title:
+            continue
+        published = _parse_search_datetime(item.get("publishedDate") or item.get("published_date"))
+        if custom_range and (
+            published is None
+            or range_start is None
+            or range_end is None
+            or not (range_start.date() <= published.date() <= range_end.date())
+        ):
+            continue
+        item_engines = item.get("engines") or item.get("engine") or []
+        if isinstance(item_engines, str):
+            item_engines = [item_engines]
+        result = {
+            "title": title[:500],
+            "url": url[:2000],
+            "content": " ".join(
+                BeautifulSoup(str(item.get("content") or ""), "html.parser").get_text(" ", strip=True).split()
+            )[:4000],
+            "site_name": _normalize_search_host(url),
+            "search_engines": [str(value) for value in item_engines if str(value).strip()],
+        }
+        if published is not None:
+            result["publish_time"] = published.isoformat()
+        results.append(result)
+        if len(results) >= max(20, min(int(count) * 3, 50)):
+            break
+
+    partial_failures = normalize_unresponsive_engines(data.get("unresponsive_engines"))
+    output = {
+        "query": query,
+        "results": results,
+        "provider": "searxng",
+        "search_endpoint": "searxng",
+        "requested_engines": engines,
+    }
+    if partial_failures:
+        output["partial_failures"] = partial_failures
+    if not results:
+        output["status"] = "degraded" if partial_failures else "empty"
+        if partial_failures:
+            output["error"] = "SearXNG 请求引擎未返回可用结果"
+    return _filter_search_results(
+        output,
+        query,
+        count=max(20, min(int(count) * 3, 50)),
+        sites=sites,
+        block_hosts=block_hosts,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
+    )
+
+
+def _searxng_search(
+    query: str,
+    count: int = 10,
+    time_range: str | None = None,
+    sites: list[str] | None = None,
+    block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
+    content_format: str = "text",
+    engines: list[str] | None = None,
+    language: str = "en",
+    timeout_seconds: int = 8,
+    policy_hash: str = "",
+) -> dict:
+    """通过内部 SearXNG 容器执行限定引擎检索。"""
+    del content_format, policy_hash
+    normalized_query = " ".join(str(query or "").split())[:500]
+    selected_engines = list(
+        dict.fromkeys(str(item).strip().casefold() for item in (engines or []) if str(item).strip())
+    )[:8]
+    if not selected_engines:
+        return {"query": normalized_query, "results": [], "provider": "searxng", "status": "empty"}
+
+    site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
+    blocked_hosts = [_normalize_search_host(site) for site in (block_hosts or [])[:5]]
+    search_query = normalized_query
+    if any(site_hosts):
+        search_query += " (" + " OR ".join(f"site:{host}" for host in site_hosts if host) + ")"
+    for host in blocked_hosts:
+        if host:
+            search_query += f" -site:{host}"
+
+    base_url = str(os.getenv("SEARXNG_URL") or "").strip().rstrip("/")
+    parsed_base_url = urlparse(base_url)
+    if parsed_base_url.scheme not in {"http", "https"} or not parsed_base_url.netloc:
+        return {
+            "query": normalized_query,
+            "results": [],
+            "provider": "searxng",
+            "status": "unavailable",
+            "error": "SEARXNG_URL 未配置或不是有效的 HTTP(S) 地址",
+        }
+
+    coordinator = get_active_search_coordinator()
+    engine_delays = {
+        engine: coordinator.engine_remaining(engine) if coordinator else 0.0 for engine in selected_engines
+    }
+    active_engines = [engine for engine, delay in engine_delays.items() if delay == 0]
+    if not active_engines:
+        return {
+            "query": normalized_query,
+            "results": [],
+            "provider": "searxng",
+            "status": "rate_limited",
+            "retry_after_seconds": min(engine_delays.values()),
+            "error": "SearXNG 引擎正在按限流响应冷却",
+        }
+
+    mapped_time_range = {
+        "oneday": "day",
+        "oneweek": "week",
+        "onemonth": "month",
+        "oneyear": "year",
+    }.get(str(time_range or "").casefold())
+    payload = {
+        "q": search_query,
+        "format": "json",
+        "engines": ",".join(active_engines),
+        "language": language,
+        "safesearch": "0",
+    }
+    if mapped_time_range:
+        payload["time_range"] = mapped_time_range
+
+    timeout = min(10.0, max(3.0, float(timeout_seconds or 8)))
+    with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+        response = client.post(f"{base_url}/search", data=payload)
+        response.raise_for_status()
+        data = response.json()
+    if not isinstance(data, dict):
+        return {
+            "query": normalized_query,
+            "results": [],
+            "provider": "searxng",
+            "status": "degraded",
+            "error": "SearXNG 返回无效 JSON 响应",
+        }
+    return _parse_searxng_response(
+        normalized_query,
+        data,
+        count=count,
+        engines=active_engines,
+        time_range=time_range,
+        sites=sites,
+        block_hosts=block_hosts,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
+    )
+
+
 def _decode_public_result_url(value: str) -> str:
     """还原 DuckDuckGo 跳转链接为可审计的原始来源 URL。"""
 
@@ -579,8 +787,9 @@ def _parse_public_search_response(
 
 
 def _looks_academic_query(query: str, sites: list[str] | None = None) -> bool:
+    """识别论文意图与高密度科学术语，供公网和 SearXNG 共享路由。"""
     detail = f"{query} {' '.join(sites or [])}".casefold()
-    return any(
+    explicit_academic = any(
         marker in detail
         for marker in (
             " ieee",
@@ -593,14 +802,103 @@ def _looks_academic_query(query: str, sites: list[str] | None = None) -> bool:
             "deep learning",
             "classification",
             "detection",
+            "experimental",
+            "experiment ",
+            "empirical",
+            "theoretical",
+            "simulation",
+            "evidence",
+            "mechanism",
+            "benchmark",
+            "dataset",
+            "methodology",
+            "meta-analysis",
+            "state of the art",
             "micro-doppler",
             "micro doppler",
             "论文",
             "期刊",
             "学术",
             "综述",
+            "实验",
+            "实证",
+            "理论",
+            "仿真",
+            "证据",
+            "机理",
+            "机制",
+            "数据集",
         )
     )
+    if explicit_academic:
+        return True
+
+    # 罕见技术术语往往不带 paper/journal 等显式提示。至少命中两个相互
+    # 独立的科学词根才进入学术 profile，避免把普通产品或新闻查询泛化。
+    scientific_roots = (
+        "photonic",
+        "photon",
+        "quantum",
+        "electron",
+        "exciton",
+        "moiré",
+        "moire",
+        "graphene",
+        "heterobilayer",
+        "semiconductor",
+        "superconductor",
+        "metamaterial",
+        "phonon",
+        "polariton",
+        "magnon",
+        "polaron",
+        "plasmon",
+        "plasmonic",
+        "antiferromagnet",
+        "ferromagnet",
+        "magneto-ionic",
+        "magnetoionic",
+        "protonation",
+        "exchange bias",
+        "spintronic",
+        "dzyaloshinskii",
+        "skyrmion",
+        "ferroelectric",
+        "multiferroic",
+        "nonreciprocal",
+        "hydrodynamic",
+        "spectroscopy",
+        "bandgap",
+        "terahertz",
+        "microwave",
+        "spin splitting",
+        "time crystal",
+        "拓扑",
+        "光子",
+        "量子",
+        "激子",
+        "石墨烯",
+        "半导体",
+        "超导",
+        "超材料",
+        "声子",
+        "极化激元",
+        "磁振子",
+        "磁子",
+        "磁离子",
+        "质子化",
+        "交换偏置",
+        "反铁磁",
+        "铁磁",
+        "自旋电子",
+        "斯格明子",
+        "铁电",
+        "多铁",
+        "非互易",
+        "能带",
+        "自旋劈裂",
+    )
+    return sum(1 for marker in scientific_roots if marker in detail) >= 2
 
 
 def _parse_crossref_search_response(query: str, data: dict, *, count: int) -> dict:
@@ -661,9 +959,11 @@ def _public_search(
     required_terms: list[str] | None = None,
     required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
+    fusion_strategy: str = "adaptive",
 ) -> dict:
     """无需专用 API Key 的公网检索兜底，确保深研始终可访问公开资料。"""
 
+    del fusion_strategy
     normalized_query = " ".join(str(query or "").split())[:500]
     site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
     site_hosts = [host for host in site_hosts if host]
@@ -883,6 +1183,10 @@ def _web_search_cache_key(provider_order: list[str], arguments: dict) -> tuple:
         tuple(tuple(str(term).casefold() for term in group) for group in (arguments.get("required_term_groups") or [])),
         str(arguments.get("content_format") or "text").casefold(),
         os.getenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo").casefold(),
+        str(arguments.get("_fusion_policy_hash") or ""),
+        str(arguments.get("_fusion_language") or ""),
+        tuple(str(item).casefold() for item in (arguments.get("_fusion_engines") or [])),
+        str(arguments.get("_fusion_strategy") or "adaptive"),
     )
 
 
@@ -1129,7 +1433,8 @@ def _rank_search_results(
                     continue
             coverage = max(coverage, min(2, len(terms)))
             score += 3
-        scored.append((score + authority * 2, score, coverage, item))
+        fusion_bonus = max(0.0, min(1.0, float(item.get("_fusion_score") or 0.0))) * 2
+        scored.append((score + authority * 2 + fusion_bonus, score, coverage, item))
     minimum_coverage = min(2, len(terms))
     ranked = [
         item
@@ -1191,7 +1496,11 @@ def _filter_search_results(
         query, scoped, required_terms=required_terms, required_term_groups=required_term_groups
     )
     filtered = int(result.get("filtered_irrelevant_count") or 0) + len(original) - len(relevant)
-    selected = [{**item, "source_tier": _search_source_tier(item)} for item in relevant[: max(1, min(int(count), 50))]]
+    selected = []
+    for item in relevant[: max(1, min(int(count), 50))]:
+        normalized = {key: value for key, value in item.items() if not key.startswith("_fusion_")}
+        normalized["source_tier"] = _search_source_tier(item)
+        selected.append(normalized)
     for index, item in enumerate(selected, 1):
         item["source_id"] = hashlib.sha256(_search_url_identity(str(item["url"])).encode()).hexdigest()[:16]
         item["citation"] = f'<cite source="{escape(str(item["url"]), quote=True)}" type="url">{index}</cite>'
@@ -1220,7 +1529,15 @@ def _filter_search_results(
 
 def _invoke_search_provider(provider: str, arguments: dict) -> dict:
     """跨 worker 协调原始供应商调用，避免子智能体并发造成限流。"""
-    return coordinated_search(provider, arguments, lambda: _invoke_raw_search_provider(provider, arguments))
+    coordination_wait = arguments.get("_coordination_wait_seconds")
+    if coordination_wait is None:
+        return coordinated_search(provider, arguments, lambda: _invoke_raw_search_provider(provider, arguments))
+    return coordinated_search(
+        provider,
+        arguments,
+        lambda: _invoke_raw_search_provider(provider, arguments),
+        wait_seconds=coordination_wait,
+    )
 
 
 def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
@@ -1231,7 +1548,9 @@ def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
     # query parameter.  Keeping it out of adapters also preserves compatibility
     # with third-party tools such as Tavily.
     provider_arguments = {
-        key: value for key, value in arguments.items() if key not in {"required_terms", "required_term_groups"}
+        key: value
+        for key, value in arguments.items()
+        if key not in {"required_terms", "required_term_groups", "fusion_strategy"} and not key.startswith("_")
     }
     if provider in {"open-websearch", "public", "doubao"}:
         provider_arguments.update(
@@ -1265,7 +1584,7 @@ def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
     return _normalize_provider_search_result(provider, str(arguments.get("query") or ""), raw)
 
 
-def _resilient_web_search(primary: str, arguments: dict) -> dict:
+def _legacy_resilient_web_search(primary: str, arguments: dict) -> dict:
     """Retry and fail over inside the tool, before the model sees a failure.
 
     The returned degraded payload is terminal for the current subtask.  It tells
@@ -1410,6 +1729,379 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
     }
 
 
+def _classify_fusion_query(arguments: dict, config: dict) -> dict:
+    """不调用模型，稳定选择语言、检索类别与 SearXNG 引擎。"""
+    query = str(arguments.get("query") or "")
+    detail = query.casefold()
+    has_han = bool(re.search(r"[\u4e00-\u9fff]", query))
+    has_latin = bool(re.search(r"[a-z]{2,}", detail))
+    language = "all" if has_han and has_latin else "zh-CN" if has_han else "en"
+    academic = _looks_academic_query(query, arguments.get("sites"))
+    recency = bool(arguments.get("time_range")) or any(
+        marker in detail
+        for marker in (
+            "最新",
+            "近期",
+            "今日",
+            "本周",
+            "新闻",
+            "动态",
+            "刚刚",
+            "latest",
+            "recent",
+            "today",
+            "breaking",
+            "news",
+        )
+    )
+    targeted = bool(arguments.get("sites")) or any(
+        marker in detail for marker in ("官方", "官网", "公告", "标准", "规范", "白皮书", "official", "standard")
+    )
+
+    categories = []
+    profile_fields = []
+    if academic:
+        categories.append("academic")
+        profile_fields.append("academic_engines")
+    if recency:
+        categories.append("news")
+        profile_fields.append("news_engines")
+    if targeted:
+        categories.append("official")
+        profile_fields.append("official_engines")
+    if has_han:
+        categories.append("mixed" if has_latin else "chinese")
+        profile_fields.append("chinese_engines")
+    if not categories:
+        categories.append("general")
+    profile_fields.append("general_engines")
+
+    engines = []
+    for field in profile_fields:
+        for engine in config.get(field) or []:
+            normalized = str(engine).strip().casefold()
+            if normalized and normalized not in engines:
+                engines.append(normalized)
+            if len(engines) == 8:
+                break
+        if len(engines) == 8:
+            break
+    return {
+        "language": language,
+        "categories": categories,
+        "engines": engines,
+        "official": targeted,
+        "strategy": str(arguments.get("_fusion_strategy") or "adaptive"),
+        "immediate_fusion": arguments.get("_fusion_strategy") == "parallel"
+        or has_han
+        or academic
+        or recency
+        or targeted,
+    }
+
+
+def _web_search_policy_hash(config: dict) -> str:
+    """稳定标识影响路由、缓存和排序的管理员配置。"""
+    raw = json.dumps(config, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def _needs_searxng_supplement(result: dict, profile: dict, config: dict) -> bool:
+    """判断 Open WebSearch 是否已达到当前查询的最低证据覆盖。"""
+    results = result.get("results") or []
+    filtered = int(result.get("filtered_irrelevant_count") or 0)
+    total_candidates = len(results) + filtered
+    filtered_ratio = filtered * 100 / total_candidates if total_candidates else 0
+    quality = result.get("source_quality") or {}
+    return bool(
+        len(results) < int(config["min_relevant_results"])
+        or int(result.get("distinct_domains") or 0) < int(config["min_distinct_domains"])
+        or (profile["official"] and int(quality.get("authoritative") or 0) == 0)
+        or filtered_ratio > int(config["max_filtered_ratio_percent"])
+        or result.get("partial_failures")
+        or result.get("status") not in {"ok", None}
+    )
+
+
+def _requires_searxng_complement(profile: dict) -> bool:
+    """中文、学术和显式并行检索必须等待垂直引擎补强。"""
+    categories = set(profile.get("categories") or [])
+    return bool(
+        profile.get("strategy") == "parallel"
+        or categories.intersection({"academic", "chinese", "mixed"})
+    )
+
+
+def _invoke_searxng_provider(arguments: dict, profile: dict, config: dict, policy_hash: str) -> dict:
+    """经共享协调器调用 SearXNG，配置身份参与 single-flight。"""
+    provider_arguments = {
+        **arguments,
+        "engines": profile["engines"],
+        "language": profile["language"],
+        "timeout_seconds": config["searxng_timeout_seconds"],
+        "policy_hash": policy_hash,
+        "_coordination_wait_seconds": config["total_timeout_seconds"],
+    }
+    coordinated_arguments = {key: value for key, value in provider_arguments.items() if not key.startswith("_")}
+    try:
+        return coordinated_search(
+            "searxng",
+            coordinated_arguments,
+            lambda: _searxng_search(**coordinated_arguments),
+            wait_seconds=config["total_timeout_seconds"],
+        )
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "query": arguments.get("query", ""),
+            "results": [],
+            "provider": "searxng",
+            **search_failure(exc),
+        }
+
+
+def _merge_fused_search_results(
+    query: str,
+    arguments: dict,
+    profile: dict,
+    config: dict,
+    lane_results: list[dict],
+    *,
+    searxng_attempted: bool,
+) -> dict:
+    """按规范 URL 合并两路结果，并用 RRF 作为检索先验。"""
+    rrf_k = int(config["rrf_k"])
+    merged: dict[str, dict] = {}
+    completed_providers = []
+    partial_failures: list[dict] = []
+    contributing_lanes = sum(bool(result.get("results")) for result in lane_results)
+    max_rrf = contributing_lanes / (rrf_k + 1) if contributing_lanes else 1.0
+
+    for result in lane_results:
+        provider = str(result.get("provider") or "open-websearch")
+        if result.get("_completed", True) and provider not in completed_providers:
+            completed_providers.append(provider)
+        for failure in result.get("partial_failures") or []:
+            if isinstance(failure, dict):
+                partial_failures.append(dict(failure))
+        if not result.get("results") and result.get("error"):
+            partial_failures.append({"provider": provider, "error": str(result["error"])[:300]})
+
+        for rank, item in enumerate(result.get("results") or [], 1):
+            if not isinstance(item, dict):
+                continue
+            identity = _search_url_identity(str(item.get("url") or ""))
+            if not identity:
+                continue
+            candidate = merged.get(identity)
+            item_engines = item.get("search_engines") or item.get("search_engine") or []
+            if isinstance(item_engines, str):
+                item_engines = [item_engines]
+            if candidate is None:
+                candidate = {
+                    **item,
+                    "providers": [provider],
+                    "search_engines": list(dict.fromkeys(str(value) for value in item_engines if str(value))),
+                    "_fusion_rrf": 0.0,
+                }
+                merged[identity] = candidate
+            else:
+                if provider not in candidate["providers"]:
+                    candidate["providers"].append(provider)
+                candidate["search_engines"] = list(
+                    dict.fromkeys([*candidate.get("search_engines", []), *(str(value) for value in item_engines)])
+                )
+                if len(str(item.get("content") or "")) > len(str(candidate.get("content") or "")):
+                    candidate["content"] = item.get("content")
+                if len(str(item.get("title") or "")) > len(str(candidate.get("title") or "")):
+                    candidate["title"] = item.get("title")
+                if not candidate.get("publish_time") and item.get("publish_time"):
+                    candidate["publish_time"] = item["publish_time"]
+            candidate["_fusion_rrf"] += 1 / (rrf_k + rank)
+
+    candidates = list(merged.values())
+    for item in candidates:
+        item["_fusion_score"] = min(1.0, float(item.pop("_fusion_rrf", 0.0)) / max_rrf)
+    candidates.sort(key=lambda item: float(item.get("_fusion_score") or 0.0), reverse=True)
+    fused = _filter_search_results(
+        {"query": query, "results": candidates, "provider": "fusion"},
+        query,
+        count=arguments.get("count", 10),
+        sites=arguments.get("sites"),
+        block_hosts=arguments.get("block_hosts"),
+        required_terms=arguments.get("required_terms"),
+        required_term_groups=arguments.get("required_term_groups"),
+    )
+    fused.update(
+        search_mode=(
+            "parallel_fusion"
+            if searxng_attempted and profile.get("strategy") == "parallel"
+            else "adaptive_fusion"
+            if searxng_attempted
+            else "open_only"
+        ),
+        query_profile={
+            "language": profile["language"],
+            "categories": profile["categories"],
+            "searxng_engines": profile["engines"] if searxng_attempted else [],
+        },
+        completed_providers=completed_providers,
+        attempted_providers=list(
+            dict.fromkeys(
+                provider
+                for result in lane_results
+                for provider in (result.get("attempted_providers") or [result.get("provider") or "open-websearch"])
+            )
+        ),
+    )
+    if partial_failures:
+        fused["partial_failures"] = partial_failures[-12:]
+    if fused.get("results"):
+        fused["status"] = "ok"
+        providers_with_results = sum(bool(result.get("results")) for result in lane_results)
+        fused["provider"] = (
+            "fusion"
+            if providers_with_results > 1
+            else next((str(result.get("provider")) for result in lane_results if result.get("results")), "fusion")
+        )
+    elif any(result.get("status") == "empty" and not result.get("error") for result in lane_results):
+        fused["status"] = "empty"
+        fused["next_action"] = "本次查询未找到有效命中；只针对尚未覆盖的证据缺口调整一次。"
+    else:
+        fused["status"] = "degraded"
+        fused["error"] = "Open WebSearch 与 SearXNG 均未返回可用结果"
+        fused["next_action"] = "停止网页同义重试，使用已有来源、AMiner 或已授权知识库继续并标注缺口。"
+    fused["queue_wait_seconds"] = max(
+        (float(result.get("queue_wait_seconds") or 0.0) for result in lane_results), default=0.0
+    )
+    return fused
+
+
+def _future_search_result(future: Future, provider: str, query: str) -> dict:
+    """将线程中的供应商异常转换为可融合的部分失败。"""
+    try:
+        result = future.result()
+        return result if isinstance(result, dict) else {"query": query, "provider": provider, "results": []}
+    except Exception as exc:  # noqa: BLE001
+        return {"query": query, "provider": provider, **search_failure(exc)}
+
+
+def _resilient_web_search(primary: str, arguments: dict) -> dict:
+    """在 Open WebSearch 的既有恢复链上自适应融合内部 SearXNG。"""
+    if primary != "open-websearch" or not str(os.getenv("SEARXNG_URL") or "").strip():
+        return _legacy_resilient_web_search(primary, arguments)
+    config = load_web_search_runtime_options()
+    if not config["adaptive_fusion_enabled"] or not config["searxng_enabled"]:
+        return _legacy_resilient_web_search(primary, arguments)
+
+    query = " ".join(str(arguments.get("query") or "").split())[:500]
+    arguments = {**arguments, "query": query}
+    profile = _classify_fusion_query(arguments, config)
+    if not profile["engines"]:
+        return _legacy_resilient_web_search(primary, arguments)
+
+    policy_hash = _web_search_policy_hash(config)
+    total_timeout = float(config["total_timeout_seconds"])
+    deadline = time.monotonic() + total_timeout
+    legacy_arguments = {
+        **arguments,
+        "_coordination_wait_seconds": total_timeout,
+        "_fusion_policy_hash": policy_hash,
+        "_fusion_language": profile["language"],
+        "_fusion_engines": profile["engines"],
+    }
+    executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="web-search-fusion")
+    open_future = executor.submit(_legacy_resilient_web_search, primary, legacy_arguments)
+    searx_future: Future | None = None
+    open_result: dict | None = None
+
+    if profile["immediate_fusion"]:
+        searx_future = executor.submit(_invoke_searxng_provider, arguments, profile, config, policy_hash)
+        try:
+            open_result = open_future.result(timeout=min(float(config["hedge_delay_seconds"]), total_timeout))
+        except FutureTimeout:
+            pass
+        except Exception as exc:  # noqa: BLE001
+            open_result = {"query": query, "provider": "open-websearch", **search_failure(exc)}
+        if (
+            open_result is not None
+            and not _requires_searxng_complement(profile)
+            and not _needs_searxng_supplement(open_result, profile, config)
+        ):
+            executor.shutdown(wait=False, cancel_futures=True)
+            return _merge_fused_search_results(
+                query,
+                arguments,
+                profile,
+                config,
+                [open_result],
+                searxng_attempted=False,
+            )
+    else:
+        try:
+            open_result = open_future.result(timeout=min(float(config["hedge_delay_seconds"]), total_timeout))
+        except FutureTimeout:
+            searx_future = executor.submit(_invoke_searxng_provider, arguments, profile, config, policy_hash)
+        except Exception as exc:  # noqa: BLE001
+            open_result = {"query": query, "provider": "open-websearch", **search_failure(exc)}
+        if open_result is not None and not _needs_searxng_supplement(open_result, profile, config):
+            executor.shutdown(wait=False, cancel_futures=True)
+            return _merge_fused_search_results(
+                query,
+                arguments,
+                profile,
+                config,
+                [open_result],
+                searxng_attempted=False,
+            )
+        if open_result is not None and searx_future is None:
+            searx_future = executor.submit(_invoke_searxng_provider, arguments, profile, config, policy_hash)
+
+    futures = [future for future in (open_future, searx_future) if future is not None]
+    remaining = max(0.0, deadline - time.monotonic())
+    done, pending = wait(futures, timeout=remaining)
+    lane_results = []
+    if open_result is not None:
+        lane_results.append(open_result)
+    elif open_future in done:
+        lane_results.append(_future_search_result(open_future, "open-websearch", query))
+    else:
+        lane_results.append(
+            {
+                "query": query,
+                "provider": "open-websearch",
+                "results": [],
+                "status": "unavailable",
+                "error": "总截止前未完成",
+                "_completed": False,
+            }
+        )
+    if searx_future is not None:
+        if searx_future in done:
+            lane_results.append(_future_search_result(searx_future, "searxng", query))
+        else:
+            lane_results.append(
+                {
+                    "query": query,
+                    "provider": "searxng",
+                    "results": [],
+                    "status": "unavailable",
+                    "error": "总截止前未完成",
+                    "_completed": False,
+                }
+            )
+    for future in pending:
+        future.cancel()
+    executor.shutdown(wait=False, cancel_futures=True)
+    return _merge_fused_search_results(
+        query,
+        arguments,
+        profile,
+        config,
+        lane_results,
+        searxng_attempted=searx_future is not None,
+    )
+
+
 def _create_resilient_web_search(primary: str):
     @langchain_tool("web_search", args_schema=DoubaoSearchInput, description=PUBLIC_SEARCH_DESCRIPTION)
     def resilient_web_search(
@@ -1421,6 +2113,7 @@ def _create_resilient_web_search(primary: str):
         required_terms: list[str] | None = None,
         required_term_groups: list[list[str]] | None = None,
         content_format: str = "text",
+        fusion_strategy: str = "adaptive",
     ) -> dict:
         return _resilient_web_search(
             primary,
@@ -1433,18 +2126,45 @@ def _create_resilient_web_search(primary: str):
                 "required_terms": required_terms,
                 "required_term_groups": required_term_groups,
                 "content_format": content_format,
+                "_fusion_strategy": fusion_strategy,
             },
         )
 
     return resilient_web_search
 
 
-def execute_public_web_search(query: str, *, count: int = 10, sites: list[str] | None = None) -> dict:
+def execute_public_web_search(
+    query: str,
+    *,
+    count: int = 10,
+    time_range: str | None = None,
+    sites: list[str] | None = None,
+    block_hosts: list[str] | None = None,
+    required_terms: list[str] | None = None,
+    required_term_groups: list[list[str]] | None = None,
+    fusion_strategy: str = "adaptive",
+) -> dict:
     """为平台页面提供统一公开检索入口，复用缓存、限流和供应商恢复。"""
     provider = _resolve_web_search_provider()
     if provider is None:
         return {"results": [], "status": "unavailable", "error": "公开检索尚未配置"}
-    return _resilient_web_search(provider, {"query": query, "count": count, "sites": sites})
+    return _resilient_web_search(
+        provider,
+        {
+            "query": query,
+            "count": count,
+            "time_range": time_range,
+            "sites": sites,
+            "block_hosts": block_hosts,
+            "required_terms": required_terms,
+            "required_term_groups": required_term_groups,
+            "content_format": "text",
+            "_fusion_strategy": fusion_strategy,
+        },
+    )
+
+
+register_public_web_search(execute_public_web_search)
 
 
 def _register_web_search_tool() -> None:
@@ -1726,6 +2446,8 @@ ASK_USER_QUESTION_DESCRIPTION = """
 7. 智能对话、深研对话的范围澄清必须调用本工具，不要只在正文列出澄清点。
    每题都有推荐项时，页面两分钟未作答会采用推荐项并继续；用户开始选择或填写后停止自动选择。
    没有推荐项或需要用户提供真实事实的纯问答不会自动回答；操作授权走专门审批机制。
+8. 必须在启动子智能体前完成关键澄清。同一轮不要同时调用 ask_user_question 和 subagent_start。
+   若已有子智能体运行，本工具会返回 deferred 而不打断它们；先等待或取消这些子任务，再重新提问。
 
 注意事项：
 1. 不要用这个工具询问“是否继续执行”“计划是否准备好”这类流程控制问题
@@ -1752,6 +2474,7 @@ def ask_user_question(
         "问题列表；纯问答格式 {question}，选择题格式 "
         "{question, options:[{label,value,description}], multi_select, allow_other, question_id(optional)}",
     ] = None,
+    runtime: ToolRuntime = None,
 ) -> dict:
     """向用户发起问题并等待回答。"""
     # 解析 questions 参数：如果是字符串，尝试解析为 JSON
@@ -1770,6 +2493,17 @@ def ask_user_question(
     if not normalized_questions:
         raise ValueError("questions 至少需要包含一个有效问题")
 
+    active_run_ids = _active_subagent_run_ids(runtime)
+    if active_run_ids:
+        return {
+            "questions": normalized_questions,
+            "answer": {},
+            "status": "deferred",
+            "reason": "active_subagents",
+            "active_subagent_run_ids": active_run_ids,
+            "message": "仍有子智能体运行；本次提问未中断执行。请先等待或取消这些子任务，再重新提问。",
+        }
+
     interrupt_payload = {
         "questions": normalized_questions,
         "source": "ask_user_question",
@@ -1780,3 +2514,19 @@ def ask_user_question(
         "questions": normalized_questions,
         "answer": answer,
     }
+
+
+def _active_subagent_run_ids(runtime: ToolRuntime | None) -> list[str]:
+    """从 checkpoint state 识别仍活跃的子 Run，不为提问终止执行树。"""
+
+    state = getattr(runtime, "state", None)
+    runs = state.get("subagent_runs") if isinstance(state, dict) else getattr(state, "subagent_runs", None)
+    active_statuses = {"pending", "running", "cancel_requested"}
+    active = []
+    for run in runs if isinstance(runs, list) else []:
+        if not isinstance(run, dict) or str(run.get("status") or "").casefold() not in active_statuses:
+            continue
+        run_id = str(run.get("run_id") or run.get("id") or "").strip()
+        if run_id and run_id not in active:
+            active.append(run_id)
+    return active

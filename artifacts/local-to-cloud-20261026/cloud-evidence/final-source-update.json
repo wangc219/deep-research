@@ -1,0 +1,13 @@
+{
+  "source_files": 3443,
+  "changed": [
+    "backend/package/platform_core/services/project_service.py",
+    "backend/test/integration/api/test_project_api.py",
+    "web/src/components/AgentChatComponent.vue",
+    "web/src/components/ProjectSelectionSection.vue",
+    "web/src/views/equipment/EquipmentDeepThinkingView.vue",
+    "web/test/unit/equipmentDeepViewIntegration.test.js"
+  ],
+  "added": [],
+  "removed": []
+}
