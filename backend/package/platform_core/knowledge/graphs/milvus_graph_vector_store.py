@@ -6,18 +6,23 @@ from functools import partial
 from typing import Any
 
 from pymilvus import (
+    AnnSearchRequest,
     Collection,
     CollectionSchema,
     DataType,
     FieldSchema,
     Function,
     FunctionType,
+    WeightedRanker,
     connections,
     db,
     utility,
 )
 
-from platform_core.knowledge.graphs.graph_utils import graph_entity_collection_name, graph_triple_collection_name
+from platform_core.knowledge.graphs.graph_utils import (
+    graph_entity_collection_name,
+    graph_triple_collection_name,
+)
 from platform_core.knowledge.implementations.milvus import (
     CONTENT_ANALYZER_PARAMS,
     CONTENT_SPARSE_FIELD,
@@ -27,6 +32,10 @@ from platform_core.knowledge.implementations.milvus import (
 from platform_core.models.embed import select_embedding_model
 from platform_core.models.providers.cache import model_cache
 from platform_core.utils import hashstr, logger
+
+GRAPH_DENSE_WEIGHT = 0.7
+GRAPH_BM25_WEIGHT = 0.3
+GRAPH_BM25_DROP_RATIO = 0.0
 
 
 class MilvusGraphVectorStore:
@@ -129,7 +138,11 @@ class MilvusGraphVectorStore:
         )
 
     def drop_graph_collections(self, kb_id: str) -> None:
-        for collection_name in [graph_entity_collection_name(kb_id), graph_triple_collection_name(kb_id)]:
+        for collection_name in [
+            graph_entity_collection_name(kb_id),
+            graph_triple_collection_name(kb_id),
+            f"{kb_id}_triple_preview",
+        ]:
             try:
                 if utility.has_collection(collection_name, using=self.connection_alias):
                     utility.drop_collection(collection_name, using=self.connection_alias)
@@ -159,6 +172,7 @@ class MilvusGraphVectorStore:
         return await _run_milvus_query_io(
             self._search_graph_collection_sync,
             collection_name,
+            query_text,
             query_embedding,
             max(top_k, 1),
             output_fields,
@@ -167,27 +181,44 @@ class MilvusGraphVectorStore:
     def _search_graph_collection_sync(
         self,
         collection_name: str,
+        query_text: str,
         query_embedding: list,
         top_k: int,
         output_fields: list[str],
     ) -> list[dict[str, Any]]:
         collection = Collection(name=collection_name, using=self.connection_alias)
         collection.load()
-        return self._search_loaded_collection(collection, query_embedding, top_k, output_fields)
+        return self._search_loaded_collection(collection, query_text, query_embedding, top_k, output_fields)
 
     def _search_loaded_collection(
         self,
         collection: Collection,
+        query_text: str,
         query_embedding: list,
         top_k: int,
         output_fields: list[str],
     ) -> list[dict[str, Any]]:
-        results = collection.search(
+        dense_request = AnnSearchRequest(
             data=query_embedding,
             anns_field="embedding",
             param={"metric_type": VECTOR_METRIC_TYPE, "params": {"nprobe": 10}},
             limit=top_k,
+        )
+        sparse_request = AnnSearchRequest(
+            data=[query_text],
+            anns_field=CONTENT_SPARSE_FIELD,
+            param={
+                "metric_type": "BM25",
+                "params": {"drop_ratio_search": GRAPH_BM25_DROP_RATIO},
+            },
+            limit=top_k,
+        )
+        results = collection.hybrid_search(
+            reqs=[dense_request, sparse_request],
+            rerank=WeightedRanker(GRAPH_DENSE_WEIGHT, GRAPH_BM25_WEIGHT),
+            limit=top_k,
             output_fields=output_fields,
+            consistency_level="Strong",
         )
         if not results or not results[0]:
             return []

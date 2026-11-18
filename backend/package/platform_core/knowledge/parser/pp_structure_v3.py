@@ -14,6 +14,12 @@ import requests
 
 from platform_core.knowledge.parser.base import BaseDocumentProcessor, DocumentParserException
 from platform_core.knowledge.parser.capabilities import get_parser_capability
+from platform_core.knowledge.parser.paddlex_layout import (
+    PaddleXLayoutPage,
+    build_paddlex_page_blocks,
+    extract_paddlex_layout_blocks,
+)
+from platform_core.knowledge.parser.result import ParsedDocument
 from platform_core.utils import logger
 
 _CAPABILITY = get_parser_capability("pp_structure_v3_ocr")
@@ -132,17 +138,18 @@ class PPStructureV3Parser(BaseDocumentProcessor):
         all_text_content = []
 
         # 解析每页结果
-        for page_result in layout_results:
+        for page_index, page_result in enumerate(layout_results):
+            page_text = ""
             # Markdown内容
             if "markdown" in page_result:
                 markdown = page_result["markdown"]
                 if markdown.get("text"):
-                    all_text_content.append(markdown["text"])
+                    page_text = str(markdown["text"])
+                    all_text_content.append(page_text)
 
             # 详细识别结果
-            if "prunedResult" in page_result:
-                pruned = page_result["prunedResult"]
-
+            pruned = page_result.get("prunedResult") or {}
+            if pruned:
                 # 表格识别
                 table_result = pruned.get("table_result", [])
                 total_tables += len(table_result)
@@ -150,6 +157,15 @@ class PPStructureV3Parser(BaseDocumentProcessor):
                 # 公式识别
                 formula_result = pruned.get("formula_result", [])
                 total_formulas += len(formula_result)
+
+            if page_text:
+                parsed_result["pages"].append(
+                    {
+                        "page_number": page_index + 1,
+                        "text": page_text,
+                        "layout_blocks": extract_paddlex_layout_blocks(pruned),
+                    }
+                )
 
         # 汇总全文内容
         parsed_result["full_text"] = "\n\n".join(all_text_content)
@@ -201,6 +217,10 @@ class PPStructureV3Parser(BaseDocumentProcessor):
             }
 
     def process_file(self, file_path: str, params: dict | None = None) -> str:
+        """兼容原字符串调用方。"""
+        return self.process_file_result(file_path, params).markdown
+
+    def process_file_result(self, file_path: str, params: dict | None = None) -> ParsedDocument:
         """
         使用 PP-Structure-V3 处理文档
 
@@ -212,7 +232,7 @@ class PPStructureV3Parser(BaseDocumentProcessor):
                 - use_seal_recognition: 启用印章识别 (默认: False)
 
         Returns:
-            str: 提取的 Markdown 文本
+            ParsedDocument: 提取的 Markdown、页级及可回切布局 Block
         """
         if not os.path.exists(file_path):
             raise DocumentParserException(f"文件不存在: {file_path}", self.get_service_name(), "file_not_found")
@@ -271,7 +291,32 @@ class PPStructureV3Parser(BaseDocumentProcessor):
             if summary:
                 logger.info(f"  统计: {summary.get('total_tables', 0)} 表格, {summary.get('total_formulas', 0)} 公式")
 
-            return text
+            layout_pages = [
+                PaddleXLayoutPage(
+                    page_number=int(page["page_number"]),
+                    text=str(page.get("text") or ""),
+                    layout_blocks=tuple(page.get("layout_blocks") or ()),
+                )
+                for page in result.get("pages") or []
+            ]
+            structured_markdown, blocks = build_paddlex_page_blocks(layout_pages)
+            if structured_markdown != text:
+                raise DocumentParserException(
+                    "PP-Structure-V3 结构化页与 Markdown 不一致",
+                    self.get_service_name(),
+                    "source_map_mismatch",
+                )
+
+            return ParsedDocument(
+                markdown=text,
+                parser_name=self.get_service_name(),
+                source_metadata={
+                    "file_extension": file_ext,
+                    "page_count": int(result.get("total_pages") or 0),
+                    "summary": dict(summary),
+                },
+                blocks=blocks,
+            )
 
         except DocumentParserException:
             raise

@@ -60,12 +60,21 @@ async def test_external_identifiers_are_recoverable_without_provider_or_budget_r
 
 
 @pytest.mark.asyncio
-async def test_jwt_and_bulk_post_are_official_rest_protocol():
-    """鉴权使用短期 JWT 原文，批量题录用 POST JSON。"""
+async def test_console_key_is_sent_directly_and_legacy_signature_is_only_an_auth_fallback():
+    """当前控制台 Key 直接发送；仅明确鉴权拒绝后兼容旧签名协议。"""
+
+    requests = []
 
     def handler(request):
+        requests.append(request)
         token = request.headers["Authorization"]
         assert not token.startswith("Bearer ")
+        assert request.headers["X-Platform"] == "codex"
+        assert request.headers["X-Skill-Name"] == "aminer-academic-search"
+        assert request.headers["X-Skill-Version"] == "1.7.1"
+        if len(requests) == 1:
+            assert token == "test-key-with-at-least-32-characters"
+            return httpx.Response(401)
         claims = jwt.decode(token, "test-key-with-at-least-32-characters", algorithms=["HS256"])
         assert claims["user_id"] == "test-user"
         assert claims["exp"] - claims["timestamp"] == 600
@@ -79,6 +88,7 @@ async def test_jwt_and_bulk_post_are_official_rest_protocol():
         transport=httpx.MockTransport(handler),
     )
     assert (await client.request("info", {"ids": ["paper-1"]}))["data"] == []
+    assert len(requests) == 2
 
 
 @pytest.mark.asyncio
@@ -123,6 +133,24 @@ async def test_official_question_search_uses_documented_post_protocol():
 
 
 @pytest.mark.asyncio
+async def test_paper_detail_uses_official_batch_endpoint_and_ids_payload():
+    """完整摘要按官方批量接口一次获取，避免逐篇请求放大延迟。"""
+
+    def handler(request):
+        assert request.method == "POST"
+        assert request.url.path.endswith("/paper/detail/batch")
+        assert json.loads(request.content) == {"ids": ["paper-1", "paper-2"]}
+        return httpx.Response(200, json={"code": 200, "success": True, "data": []})
+
+    client = AMinerClient(
+        {"user_id": "u", "api_key": "current-console-key"},
+        transport=httpx.MockTransport(handler),
+    )
+
+    assert (await client.request("detail", {"ids": ["paper-1", "paper-2"]}))["data"] == []
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("endpoint", ["search", "question_search", "title_search", "info", "detail", "references"])
 async def test_success_with_null_data_is_an_empty_result(endpoint):
     """真实供应商的成功空响应不能误触发故障降级。"""
@@ -149,7 +177,21 @@ async def test_official_console_token_is_sent_without_resigning(prefix):
         {"user_id": "test-user", "api_key": prefix + token},
         transport=httpx.MockTransport(handler),
     )
-    assert (await client.request("title_search", {"title": "public paper"}))["data"] == []
+    assert (await client.request("title_search", {"query": "public paper"}))["data"] == []
+
+
+@pytest.mark.asyncio
+async def test_expired_console_token_is_rejected_without_network_request():
+    """过期控制台 JWT 必须在本地给出可操作状态，不能继续消耗公网请求。"""
+    token = jwt.encode({"user_id": "test-user", "exp": 1}, "test-key-with-at-least-32-characters", algorithm="HS256")
+    transport = httpx.MockTransport(lambda _: pytest.fail("expired token must not reach the network"))
+    client = AMinerClient({"user_id": "test-user", "api_key": token}, transport=transport)
+
+    with pytest.raises(AMinerError) as error:
+        await client.request("title_search", {"query": "public paper"})
+
+    assert error.value.status == "auth_expired"
+    assert error.value.retryable is False
 
 
 @pytest.mark.asyncio
@@ -213,7 +255,7 @@ async def test_pagination_evidence_tiers_and_empty_references():
     assert service._request.call_args_list[0].args == ("search", {"page": 1, "size": 10, "keyword": "topic"})
     assert result["results"][0]["content_level"] == "partial_abstract"
     await service.search("known title", mode="title", page=2)
-    assert service._request.call_args_list[2].args == ("title_search", {"page": 2, "size": 10, "title": "known title"})
+    assert service._request.call_args_list[2].args == ("title_search", {"page": 2, "size": 10, "query": "known title"})
     references = await service.get_references("p")
     assert references["results"] == []
     assert references["relation"] == "references"
@@ -311,7 +353,7 @@ async def test_connection_uses_free_title_search_and_does_not_mutate_config(monk
     monkeypatch.setattr(module.AMinerClient, "request", request)
     result = await module.test_aminer_connection(object(), user_id="draft-user", api_key="draft-key")
     assert result["status"] == "ok"
-    request.assert_awaited_once_with("title_search", {"title": "Attention Is All You Need", "page": 1, "size": 1})
+    request.assert_awaited_once_with("title_search", {"query": "Attention Is All You Need", "page": 1, "size": 1})
     assert saved == {"user_id": "saved-user", "api_key": "saved-key"}
 
 
@@ -548,7 +590,7 @@ async def test_title_search_retries_one_distinctive_identifier_before_giving_up(
     result = await service.search("SwarmFuzz GPS spoofing attacks drone swarms", mode="title")
 
     assert result["results"][0]["id"] == "paper"
-    assert [call.args[1]["title"] for call in service._request.call_args_list[:2]] == [
+    assert [call.args[1]["query"] for call in service._request.call_args_list[:2]] == [
         "SwarmFuzz GPS spoofing attacks drone swarms",
         "SwarmFuzz",
     ]
@@ -568,6 +610,7 @@ async def test_free_metadata_limit_does_not_prevent_paid_detail_retrieval():
     result = await service.get_papers(["a", "a"])
     assert result["results"][0]["content_level"] == "abstract"
     assert result["failed_endpoint"] == "info"
+    assert service._request.call_args_list[1].args == ("detail", {"ids": ["a"]})
     assert result["missing_paper_ids"] == result["missing_abstract_ids"] == []
     assert service._request.await_count == 2
 

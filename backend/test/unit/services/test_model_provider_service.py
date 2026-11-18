@@ -5,7 +5,7 @@ import pytest
 
 os.environ.setdefault("OPENAI_API_KEY", "test-key")
 
-from platform_core.models.providers.builtin import BUILTIN_PROVIDERS
+from platform_core.models.providers.builtin import BUILTIN_PROVIDERS, build_local_embedding_provider
 from platform_core.models.providers.service import (
     _normalize_payload,
     _normalize_remote_model,
@@ -259,6 +259,36 @@ def test_builtin_provider_templates_default_to_openai_provider_type():
     }
     assert provider_types == {"openai"}
     assert all("ollama" not in provider["provider_id"] for provider in BUILTIN_PROVIDERS)
+
+
+def test_builtin_local_embedding_provider_is_local_and_dimensioned():
+    provider = next(item for item in BUILTIN_PROVIDERS if item["provider_id"] == "local-embedding")
+
+    assert provider["capabilities"] == ["embedding"]
+    assert provider["embedding_base_url"] == "http://local-embedding:8092/v1/embeddings"
+    assert provider["enabled_models"] == [
+        {
+            "id": "BAAI/bge-m3",
+            "type": "embedding",
+            "display_name": "BAAI/bge-m3 (Local)",
+            "source": "manual",
+            "dimension": 1024,
+            "batch_size": 8,
+        }
+    ]
+
+
+def test_local_embedding_provider_supports_host_mps_endpoint():
+    provider = build_local_embedding_provider("http://host.docker.internal:8093/v1/")
+
+    assert provider["base_url"] == "http://host.docker.internal:8093/v1"
+    assert provider["embedding_base_url"] == "http://host.docker.internal:8093/v1/embeddings"
+    assert provider["embedding_models_endpoint"] == "http://host.docker.internal:8093/v1/models"
+
+
+def test_local_embedding_provider_rejects_non_http_endpoint():
+    with pytest.raises(ValueError, match="必须是 HTTP"):
+        build_local_embedding_provider("host.docker.internal:8093/v1")
 
 
 def test_dashscope_catalog_covers_qwen_chat_embedding_and_rerank():

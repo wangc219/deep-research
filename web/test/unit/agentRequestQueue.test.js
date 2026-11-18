@@ -12,6 +12,7 @@ let useAgentRequestQueue
 let useAgentRunStream
 let dispatchRunEventChunks
 let useAgentStreamHandler
+let useApproval
 let MessageProcessor
 let getConversationDisplayItems
 let groupConversationContinuations
@@ -34,6 +35,7 @@ before(async () => {
   ;({ useAgentStreamHandler } = await server.ssrLoadModule(
     '/src/composables/useAgentStreamHandler.js'
   ))
+  ;({ useApproval } = await server.ssrLoadModule('/src/composables/useApproval.js'))
   ;({ default: MessageProcessor } = await server.ssrLoadModule('/src/utils/messageProcessor.js'))
   ;({ getConversationDisplayItems } = await server.ssrLoadModule('/src/utils/messageGrouping.js'))
   ;({ groupConversationContinuations } = await server.ssrLoadModule(
@@ -46,7 +48,7 @@ after(async () => {
   delete globalThis.localStorage
 })
 
-test('审批前后的工具和思考跨关联 Run 连续展示，正文仍独立', () => {
+test('审批前后的工具跨关联 Run 连续展示，内部推理不进入对话', () => {
   const runs = [
     { run_id: 'first', status: 'interrupted', timing: { created_at: '2026-09-16T00:00:00Z' } },
     {
@@ -96,7 +98,7 @@ test('审批前后的工具和思考跨关联 Run 连续展示，正文仍独立
   )
   assert.deepEqual(
     items[1].entries.map((entry) => (entry.type === 'tool' ? entry.toolCall.id : entry.content)),
-    ['t1', 'thinking1', 't2', 't3', 'thinking2', 't4']
+    ['t1', 't2', 't3', 't4']
   )
   assert.equal(items[2].message.content, '最终回答')
   assert.equal(runGroups.length, 2)
@@ -108,42 +110,95 @@ test('审批前后的工具和思考跨关联 Run 连续展示，正文仍独立
   assert.equal(getConversationDisplayItems(streaming[0])[1].key, items[1].key)
 })
 
-test('thinking 与相邻工具按顺序合并，正文和错误仍独立显示', () => {
+test('内部推理不展示，工具、正文和错误仍独立显示', () => {
   const messages = [
-    { id: 'a1', type: 'ai', reasoning_content: '先检查', tool_calls: [{ id: 't1', name: 'ls', args: {} }] },
-    { id: 'a2', type: 'ai', reasoning_content: '再确认', tool_calls: [{ id: 't2', name: 'read_file', args: {} }] },
+    {
+      id: 'a1',
+      type: 'ai',
+      reasoning_content: '先检查',
+      tool_calls: [{ id: 't1', name: 'ls', args: {} }]
+    },
+    {
+      id: 'a2',
+      type: 'ai',
+      reasoning_content: '再确认',
+      tool_calls: [{ id: 't2', name: 'read_file', args: {} }]
+    },
     { id: 'a3', type: 'ai', reasoning_content: '得到结论', content: '最终回答' }
   ]
   const items = getConversationDisplayItems({ messages })
-  assert.deepEqual(items.map((item) => item.type), ['tool-group', 'message'])
-  assert.deepEqual(items[0].entries.map((entry) => entry.type), ['reasoning', 'tool', 'reasoning', 'tool', 'reasoning'])
-  assert.deepEqual(items[0].entries.filter((entry) => entry.type === 'reasoning').map((entry) => entry.content), ['先检查', '再确认', '得到结论'])
+  assert.deepEqual(
+    items.map((item) => item.type),
+    ['tool-group', 'message']
+  )
+  assert.deepEqual(
+    items[0].entries.map((entry) => entry.type),
+    ['tool', 'tool']
+  )
   assert.equal(items[0].toolCalls.length, 2)
   assert.equal(items[1].message.content, '最终回答')
-  assert.equal(items[1].message.reasoning_content, '')
+  assert.equal(items[1].message.reasoning_content, '得到结论')
   assert.equal(messages[2].reasoning_content, '得到结论')
 
-  const thinkingOnly = getConversationDisplayItems({ messages: [{ id: 'a', type: 'ai', reasoning_content: '思考中' }] })
-  assert.equal(thinkingOnly.length, 1)
-  assert.equal(thinkingOnly[0].type, 'tool-group')
-  assert.equal(thinkingOnly[0].entries[0].content, '思考中')
-  assert.deepEqual(thinkingOnly[0].toolCalls, [])
+  const thinkingOnly = getConversationDisplayItems({
+    messages: [{ id: 'a', type: 'ai', reasoning_content: '思考中' }]
+  })
+  assert.deepEqual(thinkingOnly, [])
   assert.deepEqual(getConversationDisplayItems({ messages: [{ type: 'ai', content: '' }] }), [])
 
-  const failed = getConversationDisplayItems({ messages: [{ type: 'ai', reasoning_content: '检查中断', error_type: 'interrupted' }] })
-  assert.deepEqual(failed.map((item) => item.type), ['tool-group', 'message'])
-  assert.equal(failed[1].message.error_type, 'interrupted')
+  const failed = getConversationDisplayItems({
+    messages: [{ type: 'ai', reasoning_content: '检查中断', error_type: 'interrupted' }]
+  })
+  assert.deepEqual(
+    failed.map((item) => item.type),
+    ['message']
+  )
+  assert.equal(failed[0].message.error_type, 'interrupted')
 })
 
-test('同一消息的 thinking、正文和工具分段使用不同的稳定 key', () => {
-  const message = { id: 'mixed', type: 'ai', reasoning_content: '计划', content: '先查文件', tool_calls: [{ id: 't1', name: 'ls', args: {} }] }
+test('同一消息的正文和工具分段使用不同的稳定 key', () => {
+  const message = {
+    id: 'mixed',
+    type: 'ai',
+    reasoning_content: '计划',
+    content: '先查文件',
+    tool_calls: [{ id: 't1', name: 'ls', args: {} }]
+  }
   const items = getConversationDisplayItems({ messages: [message] })
-  assert.deepEqual(items.map((item) => item.type), ['tool-group', 'message', 'tool-group'])
-  assert.equal(new Set(items.map((item) => item.key)).size, 3)
-  assert.equal(items[0].entries[0].content, '计划')
-  assert.equal(items[2].entries[0].toolCall.id, 't1')
-  const updated = getConversationDisplayItems({ messages: [{ ...message, content: '先查文件，再整理' }] })
-  assert.deepEqual(updated.map((item) => item.key), items.map((item) => item.key))
+  assert.deepEqual(
+    items.map((item) => item.type),
+    ['message', 'tool-group']
+  )
+  assert.equal(new Set(items.map((item) => item.key)).size, 2)
+  assert.equal(items[0].message.content, '先查文件')
+  assert.equal(items[1].entries[0].toolCall.id, 't1')
+  const updated = getConversationDisplayItems({
+    messages: [{ ...message, content: '先查文件，再整理' }]
+  })
+  assert.deepEqual(
+    updated.map((item) => item.key),
+    items.map((item) => item.key)
+  )
+})
+
+test('流式内部推理不进入浏览器消息状态', () => {
+  const threadState = { onGoingConv: { msgChunks: {} } }
+  const { handleStreamChunk } = useAgentStreamHandler({ getThreadState: () => threadState })
+
+  handleStreamChunk(
+    {
+      status: 'loading',
+      run_id: 'run-reasoning',
+      stream_event: {
+        type: 'message_delta',
+        message_id: 'model-reasoning',
+        reasoning_content: '让我逐项检查内部规则。'
+      }
+    },
+    'thread-reasoning'
+  )
+
+  assert.deepEqual(threadState.onGoingConv.msgChunks, {})
 })
 
 test('当前工具语义流首块即显示，完整快照覆盖分片并关联同 Run 结果', () => {
@@ -205,6 +260,64 @@ test('当前工具语义流首块即显示，完整快照覆盖分片并关联�
   assert.equal(toolCalls[0].tool_call_result.content, 'notes')
   assert.equal(toolCalls[0].tool_call_result.run_id, 'run-tools')
   assert.equal(toolCalls[1].tool_call_result, null)
+})
+
+test('提问预告热更新显示且保持 Run 流，权威事件到达后原地解锁', () => {
+  const threadState = {
+    isStreaming: true,
+    replyLoadingVisible: true,
+    pendingRequestId: 'request-1',
+    pendingInterrupt: null,
+    onGoingConv: { msgChunks: {} }
+  }
+  const { approvalState, processApprovalInStream } = useApproval({
+    getThreadState: () => threadState
+  })
+  const { handleStreamChunk } = useAgentStreamHandler({
+    getThreadState: () => threadState,
+    processApprovalInStream,
+    currentAgentId: { value: 'agent-1' },
+    supportsFiles: { value: false },
+    streamSmoother: { flushThread: () => {} }
+  })
+  const question = {
+    question_id: 'scope',
+    question: '目标区规模是？',
+    options: [{ label: '中等（推荐）', value: 'medium' }]
+  }
+
+  const previewStopped = handleStreamChunk(
+    {
+      status: 'interaction_pending',
+      interaction_status: 'ask_user_question_required',
+      source: 'ask_user_question',
+      run_id: 'run-1',
+      questions: [question]
+    },
+    'thread-1'
+  )
+
+  assert.equal(previewStopped, false)
+  assert.equal(approvalState.showModal, true)
+  assert.equal(approvalState.ready, false)
+  assert.equal(threadState.isStreaming, true)
+  assert.equal(threadState.replyLoadingVisible, true)
+
+  const committedStopped = handleStreamChunk(
+    {
+      status: 'ask_user_question_required',
+      source: 'ask_user_question',
+      run_id: 'run-1',
+      questions: [question]
+    },
+    'thread-1'
+  )
+
+  assert.equal(committedStopped, false)
+  assert.equal(approvalState.ready, true)
+  assert.equal(threadState.isStreaming, true)
+  assert.equal(threadState.replyLoadingVisible, true)
+  assert.equal(threadState.pendingInterrupt.interruptedRunId, 'run-1')
 })
 
 test('只有单个完整工具事件且无正文时仍显示工具，旧 loading msg 不再消费', () => {

@@ -31,13 +31,16 @@ def _edge(
     military_value_dimensions=None,
     expected_capability_gain: str = "",
     application_direction: str = "",
+    applicable_conditions=None,
     uncertainty: str = "",
     expert_review_required: bool = False,
+    review_status: str = "accepted",
 ) -> dict:
     properties = {
         "evidence_count": evidence_count,
         "evidence_chunk_ids": chunks or [],
         "evidence_file_ids": files or [],
+        "review_status": review_status,
     }
     if claim_level is not None:
         properties["claim_level"] = claim_level
@@ -48,6 +51,7 @@ def _edge(
             "military_value_dimensions": military_value_dimensions or [],
             "expected_capability_gain": expected_capability_gain,
             "application_direction": application_direction,
+            "applicable_conditions": applicable_conditions or [],
             "uncertainty": uncertainty,
             "expert_review_required": expert_review_required,
         }
@@ -70,7 +74,10 @@ def _core_graph() -> dict:
                 "technology",
                 "自适应波束形成",
                 "技术",
-                attributes=[{"label": "技术指标", "text": "原文给出了旁瓣抑制指标"}],
+                attributes=[
+                    {"label": "技术指标", "text": "原文给出了旁瓣抑制指标"},
+                    {"label": "ResearchThread", "text": "main"},
+                ],
             ),
             _node("capability", "抗干扰能力", "能力"),
             _node("application", "复杂电磁环境感知", "应用"),
@@ -108,6 +115,63 @@ def test_discovers_complete_five_role_chain_and_removes_short_prefixes():
             "label": "技术指标",
             "text": "原文给出了旁瓣抑制指标",
         }
+    ]
+    assert path["research_inspiration"]["research_threads"] == {
+        "main": ["自适应波束形成"],
+        "side": [],
+        "parallel": [],
+    }
+    assert result["candidate_context"]["known_relations"] == [
+        {"source_entity_id": "capability", "target_entity_id": "application", "relation_type": "SUPPORTS"},
+        {"source_entity_id": "concept", "target_entity_id": "principle", "relation_type": "SUPPORTS"},
+        {"source_entity_id": "principle", "target_entity_id": "technology", "relation_type": "SUPPORTS"},
+        {"source_entity_id": "technology", "target_entity_id": "capability", "relation_type": "SUPPORTS"},
+    ]
+    assert result["summary"]["quality"] == {
+        "trusted_path_count": 1,
+        "hypothesis_path_count": 0,
+        "pending_review_count": 0,
+        "cross_document_path_count": 0,
+        "complete_semantic_chain_count": 1,
+        "mechanism_chain_count": 1,
+        "application_chain_count": 1,
+        "requirement_chain_count": 1,
+        "usable_semantic_closure_count": 1,
+        "invalid_relation_signature_count": 0,
+        "unique_source_count": 0,
+        "unique_relation_count": 4,
+        "average_semantic_coverage": 1.0,
+        "average_score": path["score"],
+    }
+
+
+def test_fine_grained_ontology_types_map_to_five_core_roles_without_collapsing_types():
+    graph = _core_graph()
+    type_by_id = {
+        "concept": "Concept",
+        "principle": "ScientificPrinciple",
+        "technology": "AlgorithmModel",
+        "capability": "Capability",
+        "application": "ProductSystem",
+    }
+    for node in graph["nodes"]:
+        node["type"] = type_by_id[node["id"]]
+
+    path = discover_paths(graph, "复杂环境感知需求", PathQueryOptions(max_hops=4, max_paths=1))["paths"][0]
+
+    assert [node["semantic_role"] for node in path["nodes"]] == [
+        "concept",
+        "principle",
+        "technology",
+        "capability",
+        "application",
+    ]
+    assert [node["type"] for node in path["nodes"]] == [
+        "Concept",
+        "ScientificPrinciple",
+        "AlgorithmModel",
+        "Capability",
+        "ProductSystem",
     ]
 
 
@@ -236,6 +300,7 @@ def test_fact_only_path_is_fact_and_aggregates_research_value_metadata():
                 confidence=0.86,
                 military_value_dimensions=["体系集成与互操作性", "复杂对抗环境适应性"],
                 application_direction="系统级集成验证",
+                applicable_conditions=["完成跨平台接口适配", "满足实时处理时延约束"],
                 uncertainty="仍需补充跨平台验证",
                 expert_review_required=True,
             ),
@@ -249,6 +314,7 @@ def test_fact_only_path_is_fact_and_aggregates_research_value_metadata():
     assert inspiration["military_value_dimensions"] == ["复杂对抗环境适应性", "体系集成与互操作性"]
     assert inspiration["expected_capability_gains"] == ["提升复杂环境适应能力"]
     assert inspiration["application_directions"] == ["应用 C", "系统级集成验证"]
+    assert inspiration["applicable_conditions"] == ["完成跨平台接口适配", "满足实时处理时延约束"]
     assert inspiration["uncertainties"] == ["仍需补充跨平台验证"]
     assert inspiration["expert_review_required"] is True
 
@@ -319,7 +385,24 @@ def test_aggregates_chunk_and_file_evidence():
         "chunk_ids": ["chunk_1", "chunk_2"],
         "file_ids": ["file_1", "file_2"],
         "support_level": "multi_source",
+        "review_statuses": ["accepted"],
+        "pending_relation_count": 0,
+        "pending_evidence": False,
     }
+
+
+def test_marks_pending_path_as_read_only_evidence_requiring_review():
+    graph = {
+        "nodes": [_node("a", "技术 A", "技术", relevance=1.0), _node("b", "能力 B", "能力")],
+        "edges": [_edge("e1", "a", "b", review_status="pending")],
+    }
+
+    path = discover_paths(graph, "技术 A", PathQueryOptions(max_hops=1, max_paths=1))["paths"][0]
+
+    assert path["pending_evidence"] is True
+    assert path["evidence"]["review_statuses"] == ["pending"]
+    assert path["evidence"]["pending_relation_count"] == 1
+    assert path["research_inspiration"]["expert_review_required"] is True
 
 
 def test_reports_missing_principle_capability_and_application_evidence():
@@ -344,3 +427,39 @@ def test_respects_hop_and_path_limits():
 
     assert len(result["paths"]) == 1
     assert len(result["paths"][0]["relations"]) <= 2
+
+
+def test_reports_practical_semantic_closures_and_valid_relation_signatures():
+    graph = {
+        "nodes": [
+            _node("principle", "分布式信息融合机理", "ScientificPrinciple", relevance=1.0),
+            _node("technology", "分布式态势感知技术", "KeyTechnology"),
+            _node("capability", "持续感知能力", "Capability"),
+            _node("application", "有人无人协同任务", "ApplicationScenario"),
+        ],
+        "edges": [
+            _edge("e1", "technology", "principle", "BASED_ON"),
+            _edge("e2", "technology", "capability", "ENABLES_CAPABILITY"),
+            _edge("e3", "capability", "application", "SUPPORTS_APPLICATION"),
+        ],
+    }
+
+    path = discover_paths(graph, "持续感知", PathQueryOptions(max_hops=3, max_paths=1))["paths"][0]
+
+    assert path["semantic_closures"] == ["mechanism_chain", "application_chain"]
+    assert path["relation_signature"] == {"valid_count": 3, "invalid_count": 0, "unknown_count": 0}
+
+
+def test_invalid_known_relation_signature_is_exposed_as_evidence_gap():
+    graph = {
+        "nodes": [
+            _node("principle", "协同控制机理", "ScientificPrinciple"),
+            _node("capability", "协同控制能力", "Capability", relevance=1.0),
+        ],
+        "edges": [_edge("invalid", "capability", "principle", "BASED_ON")],
+    }
+
+    path = discover_paths(graph, "协同控制", PathQueryOptions(max_hops=1, max_paths=1))["paths"][0]
+
+    assert path["relation_signature"]["invalid_count"] == 1
+    assert any("关系方向不合法" in gap for gap in path["evidence_gaps"])

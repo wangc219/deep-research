@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from platform_core.config.options import (
 )
 from platform_core.knowledge.parser.capabilities import OCR_FILE_EXTENSIONS, PARSER_CAPABILITIES, get_parser_capability
 from platform_core.knowledge.parser.factory import DocumentProcessorFactory
+from platform_core.knowledge.parser.result import ParsedDocument, normalize_parsed_document_text
 from platform_core.models.providers.service import get_model_provider_by_id, resolve_api_key
 
 
@@ -105,6 +107,15 @@ async def parse_document(
         StorageError: MinIO 文件读取失败。
     """
 
+    return (await parse_document_with_metadata(source, params=params, db=db)).markdown
+
+
+async def parse_document_with_metadata(
+    source: str,
+    params: dict[str, Any] | None = None,
+    db: AsyncSession | None = None,
+) -> ParsedDocument:
+    """解析文档并返回可安全持久化的解析器名称、版本与来源元数据。"""
     resolved_params = params
     suffix = Path(source.split("?", 1)[0]).suffix.lower()
     if suffix in OCR_FILE_EXTENSIONS:
@@ -113,9 +124,10 @@ async def parse_document(
         if engine_id != "disable" and suffix not in get_parser_capability(engine_id).supported_extensions:
             raise ValueError(f"OCR 引擎 {engine_id} 不支持文件类型 {suffix}")
 
-    from platform_core.knowledge.parser.unified import parse_resolved_document
+    from platform_core.knowledge.parser.unified import parse_resolved_document_result
 
-    return await parse_resolved_document(source=source, params=resolved_params)
+    parsed_document = await parse_resolved_document_result(source=source, params=resolved_params)
+    return normalize_parsed_document_text(parsed_document)
 
 
 async def check_all_ocr_health(db: AsyncSession) -> dict[str, Any]:
@@ -143,6 +155,21 @@ async def check_all_ocr_health(db: AsyncSession) -> dict[str, Any]:
 
 
 async def _build_processor_kwargs(db: AsyncSession, engine_id: str) -> dict[str, Any]:
+    if engine_id == "auto":
+        pp_structure_kwargs = await _build_processor_kwargs(db, "pp_structure_v3_ocr")
+        pp_structure_configured = bool(pp_structure_kwargs.get("server_url") or os.getenv("PADDLEX_URI"))
+        complex_engines = ["docling_pdf", "rapid_ocr"]
+        if pp_structure_configured:
+            complex_engines.insert(0, "pp_structure_v3_ocr")
+        return {
+            "scan_engine": "rapid_ocr",
+            "complex_engines": complex_engines,
+            "engine_kwargs": {
+                "rapid_ocr": {},
+                "docling_pdf": {},
+                "pp_structure_v3_ocr": pp_structure_kwargs,
+            },
+        }
     if engine_id == "mineru_ocr":
         opts = await mineru_ocr_host_opts.get(db)
         return {"server_url": opts["server_url"]} if opts["server_url"] else {}

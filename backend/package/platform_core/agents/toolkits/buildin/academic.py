@@ -277,6 +277,7 @@ async def parallel_research_search(
         required_terms=required_terms,
         required_term_groups=required_term_groups,
         fusion_strategy="parallel",
+        include_academic_sources=True,
     )
     academic_task = AcademicRetrievalService(runtime.context).search(
         query,

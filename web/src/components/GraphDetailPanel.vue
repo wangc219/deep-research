@@ -69,6 +69,17 @@
               </div>
             </template>
           </template>
+          <AuthoritativeGraphDetail
+            v-if="authoritativeEligible"
+            :type="type"
+            :detail="authoritativeDetail"
+            :loading="authoritativeLoading"
+            :loading-more="authoritativeLoadingMore"
+            :can-load-more="authoritativeCanLoadMore"
+            :load-more-error="authoritativeLoadMoreError"
+            :error="authoritativeError"
+            @load-more="$emit('load-more')"
+          />
         </template>
       </div>
     </div>
@@ -78,6 +89,7 @@
 <script setup>
 import { computed, reactive, watch, defineComponent, h } from 'vue'
 import { X } from '@lucide/vue'
+import AuthoritativeGraphDetail from '@/components/knowledge/AuthoritativeGraphDetail.vue'
 
 const STACK_THRESHOLD = 50
 const TRUNCATE_LIMIT = 100
@@ -130,10 +142,17 @@ const DetailValue = defineComponent({
 const props = defineProps({
   visible: Boolean,
   item: Object,
-  type: String
+  type: String,
+  authoritativeEligible: Boolean,
+  authoritativeDetail: { type: Object, default: null },
+  authoritativeLoading: Boolean,
+  authoritativeLoadingMore: Boolean,
+  authoritativeCanLoadMore: Boolean,
+  authoritativeLoadMoreError: { type: String, default: '' },
+  authoritativeError: { type: String, default: '' }
 })
 
-defineEmits(['close'])
+defineEmits(['close', 'load-more'])
 
 const expandedKeys = reactive(new Set())
 
@@ -171,7 +190,7 @@ const filteredEdgeProperties = computed(() => {
   position: absolute;
   top: 60px;
   left: 10px;
-  width: 280px;
+  width: min(380px, calc(100% - 20px));
   max-height: calc(100% - 60px);
   overflow-y: auto;
   z-index: 100;

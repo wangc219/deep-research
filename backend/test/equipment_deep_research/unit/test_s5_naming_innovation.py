@@ -11,6 +11,13 @@ def _explicit_contract(**overrides: object) -> dict[str, object]:
     value: dict[str, object] = {
         "direct_equipment": True,
         "weapon_object_specific": True,
+        "identity_contract_version": "single_weapon_v1",
+        "single_weapon_identity_closes": True,
+        "physical_main_body_specific": True,
+        "novel_principle_explicit": True,
+        "effect_carrier_closes": True,
+        "independent_deployment_and_testable": True,
+        "system_family_or_solution_bundle": False,
         "support_dependency_only": False,
         "known_science_consistent": True,
         "weapon_body_mechanism_closes": True,
@@ -86,7 +93,7 @@ def test_s5_partial_naming_result_does_not_treat_effective_score_as_mechanism() 
     assert weighted == 0.545
 
 
-def test_s5_name_quality_cannot_rescue_ordinary_mechanism() -> None:
+def test_s5_name_quality_does_not_change_mechanism_score_or_create_boolean_hard_gate() -> None:
     scores, _weighted = _s5_dimension_scores(
         {
             "dimension_scores": {
@@ -103,7 +110,7 @@ def test_s5_name_quality_cannot_rescue_ordinary_mechanism() -> None:
     )
 
     assert scores["innovation"] == 0.5125
-    assert not _s5_retain_passes_concrete_weapon_contract(
+    assert _s5_retain_passes_concrete_weapon_contract(
         _explicit_contract(
             ordinary_upgrade_or_function_packaging=True,
             naming_new_quality=1.0,
@@ -112,18 +119,49 @@ def test_s5_name_quality_cannot_rescue_ordinary_mechanism() -> None:
     )
 
 
-def test_s5_plain_but_accurate_name_can_survive_and_misaligned_name_cannot() -> None:
+def test_s5_name_diagnostics_never_become_a_controller_hard_gate() -> None:
     assert _s5_retain_passes_concrete_weapon_contract(
         _explicit_contract(
             naming_new_quality=0.20,
             naming_semantic_alignment=0.90,
         )
     )
-    assert not _s5_retain_passes_concrete_weapon_contract(
+    assert _s5_retain_passes_concrete_weapon_contract(
         _explicit_contract(
             naming_new_quality=1.0,
             naming_semantic_alignment=0.20,
         )
+    )
+
+
+def test_s5_identity_diagnostics_never_become_a_controller_hard_gate() -> None:
+    assert _s5_retain_passes_concrete_weapon_contract(
+        _explicit_contract(system_family_or_solution_bundle=True),
+        require_single_weapon_contract=True,
+    )
+    assert _s5_retain_passes_concrete_weapon_contract(
+        _explicit_contract(),
+        require_single_weapon_contract=True,
+        require_converged_candidate=True,
+    )
+    assert _s5_retain_passes_concrete_weapon_contract(
+        _explicit_contract(independent_deployment_and_testable=False),
+        require_single_weapon_contract=True,
+    )
+    assert _s5_retain_passes_concrete_weapon_contract(
+        {
+            "direct_equipment": True,
+            "weapon_object_specific": True,
+            "known_science_consistent": True,
+        },
+        require_single_weapon_contract=True,
+    )
+
+
+def test_s5_strict_identity_contract_accepts_domain_open_concrete_weapon() -> None:
+    assert _s5_retain_passes_concrete_weapon_contract(
+        _explicit_contract(),
+        require_single_weapon_contract=True,
     )
 
 

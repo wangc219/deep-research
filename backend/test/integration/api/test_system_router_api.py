@@ -148,6 +148,8 @@ async def test_ocr_options_and_config_options_permissions(
     options = options_response.json()
     assert options["default_engine"]
     assert options["engines"]
+    assert options["engines"][0]["engine_id"] == "auto"
+    assert options["engines"][0]["display_name"] == "智能路由（推荐）"
     assert {"endpoint", "credential_source", "credential_ref", "default_params"}.isdisjoint(options["engines"][0])
 
     denied_response = await test_client.get("/api/system/config/options", headers=standard_user["headers"])

@@ -23,6 +23,13 @@ def test_open_websearch_is_portable_and_shared_by_api_and_worker(filename):
     assert shared_environment["WEB_SEARCH_PROVIDER"] == "${WEB_SEARCH_PROVIDER:-open-websearch}"
     assert shared_environment["OPEN_WEBSEARCH_URL"] == "${OPEN_WEBSEARCH_URL:-http://open-websearch:3210}"
     assert shared_environment["OPEN_WEBSEARCH_ENGINES"] == "${OPEN_WEBSEARCH_ENGINES:-bing,duckduckgo}"
+    assert shared_environment["WEB_SEARCH_HYDRATION_ENABLED"] == "${WEB_SEARCH_HYDRATION_ENABLED:-true}"
+    assert shared_environment["WEB_SEARCH_HYDRATION_MIN_CONTENT_CHARS"] == (
+        "${WEB_SEARCH_HYDRATION_MIN_CONTENT_CHARS:-120}"
+    )
+    assert shared_environment["WEB_SEARCH_HYDRATION_TOTAL_SECONDS"] == ("${WEB_SEARCH_HYDRATION_TOTAL_SECONDS:-12}")
+    assert shared_environment["WEB_SEARCH_BROWSER_FALLBACK_RESULTS"] == "${WEB_SEARCH_BROWSER_FALLBACK_RESULTS:-1}"
+    assert shared_environment["WEB_SEARCH_BROWSER_TIMEOUT_MS"] == "${WEB_SEARCH_BROWSER_TIMEOUT_MS:-15000}"
     assert "open-websearch" in shared_environment["NO_PROXY"]
     assert "@sha256:" in service["image"]
     assert service["command"] == [
@@ -73,7 +80,25 @@ def test_searxng_settings_enable_only_json_and_the_reviewed_engine_catalog():
     assert settings["search"]["formats"] == ["json"]
     assert settings["server"]["limiter"] is False
     assert settings["server"]["public_instance"] is False
-    assert {"brave", "baidu", "sogou", "arxiv", "semantic scholar", "pubmed", "reuters"}.issubset(engines)
+    assert {
+        "brave",
+        "baidu",
+        "sogou",
+        "arxiv",
+        "crossref",
+        "openalex",
+        "semantic scholar",
+        "pubmed",
+        "reuters",
+    }.issubset(engines)
+    assert settings["outgoing"]["request_timeout"] == 5.0
+    assert settings["outgoing"]["max_request_timeout"] == 10.0
+    overrides = {item["name"]: item for item in settings["engines"]}
+    assert overrides["openalex"]["disabled"] is False
+    assert overrides["crossref"]["disabled"] is False
+    assert overrides["crossref"]["timeout"] == 8.0
+    assert overrides["openairepublications"]["timeout"] == 10.0
+    assert all(overrides[name]["timeout"] == 4.0 for name in ("brave", "baidu", "semantic scholar", "reuters"))
 
 
 def test_environment_migration_adds_one_independent_searxng_secret_idempotently(tmp_path):

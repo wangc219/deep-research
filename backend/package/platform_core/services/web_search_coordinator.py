@@ -158,7 +158,7 @@ def transient_engine_delay(result: dict) -> float:
             "http error 422",
         )
     ):
-        return max(30.0, float(os.getenv("WEB_SEARCH_ENGINE_FAILURE_COOLDOWN_SECONDS", "180")))
+        return max(15.0, float(os.getenv("WEB_SEARCH_ENGINE_FAILURE_COOLDOWN_SECONDS", "45")))
     return 0.0
 
 
@@ -262,9 +262,7 @@ class SearchCoordinator:
                     for failure in result.get("partial_failures") or []:
                         if isinstance(failure, dict) and failure.get("engine"):
                             engine_delay = (
-                                antibot_delay(failure)
-                                or rate_limit_delay(failure)
-                                or transient_engine_delay(failure)
+                                antibot_delay(failure) or rate_limit_delay(failure) or transient_engine_delay(failure)
                             )
                             if engine_delay:
                                 self.cool_engine(failure["engine"], engine_delay)

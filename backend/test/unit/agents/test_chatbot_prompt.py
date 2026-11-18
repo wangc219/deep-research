@@ -9,6 +9,12 @@ def test_chatbot_prompt_prefers_complete_explanatory_paragraphs():
     assert "详细的解释和背景信息" in PROMPT
 
 
+def test_chatbot_prompt_keeps_visible_progress_high_value():
+    assert "内部推理、自问自答" in PROMPT
+    assert "一至两句紧凑中文" in PROMPT
+    assert "不得粘贴检索清单、工具参数、内部校验规则" in PROMPT
+
+
 def test_chatbot_prompt_declares_workspace_visibility_and_default_write_boundary():
     prompt = build_prompt_with_context(
         SimpleNamespace(

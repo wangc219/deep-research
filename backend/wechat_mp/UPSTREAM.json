@@ -1,6 +1,9 @@
 {
   "project": "https://github.com/x554960766/wechat-mp-tools",
-  "version": "2.3.3",
+  "version": "2.3.6",
+  "commit": "d2ef35d78fe6c6bc663747af1f1cca71ad649295",
+  "baseline_version": "2.3.3",
+  "source_sha256_scope": "source_sha256 records the original 2.3.3 import baseline; 2.3.4-2.3.6 changes are selectively reimplemented for the platform runtime",
   "source_sha256": {
     "app_mp.py": "9fd665db7aedbb7fe395c9184168494fafdce6737aaa96b13fcba692281a9c26",
     "backend/account_pool.py": "c94b15d63a1bdec177b5848e4ac39a7d25665394d0c9807a2e303dcc7918e1d0",
@@ -47,6 +50,10 @@
   },
   "platform_adaptations": [
     "platform auth + per-user runtime",
+    "v2.3.4 QR polling continuity and startup debounce",
+    "v2.3.4 -2014 rate-limit circuit breaker",
+    "v2.3.5 publication metadata and quick date presets",
+    "v2.3.6 serve-file extension allowlist",
     "browser file operations and signed RSS resources",
     "same-origin embedded routing",
     "host design tokens and Lucide icons",

@@ -86,7 +86,7 @@ const handleCallback = async () => {
     message.success('登录成功')
 
     // 获取重定向路径并清理 OIDC 相关标记
-    const redirectPath = sessionStorage.getItem('oidc_redirect') || '/'
+    const redirectPath = sessionStorage.getItem('oidc_redirect') || '/agent'
     sessionStorage.removeItem('oidc_redirect')
     clearAutoStartAttempt()
 
@@ -95,13 +95,13 @@ const handleCallback = async () => {
     // 延迟跳转，让用户看到成功提示
     setTimeout(async () => {
       // 跳转
-      if (redirectPath === '/' || redirectPath === '/knowledge') {
+      if (redirectPath === '/' || redirectPath === '/agent') {
         try {
           await agentStore.initialize()
-          router.push('/knowledge')
+          router.push('/agent')
         } catch (err) {
           console.error('获取智能体信息失败:', err)
-          router.push('/knowledge')
+          router.push('/agent')
         }
       } else {
         router.push(redirectPath)
@@ -120,7 +120,7 @@ const handleCallback = async () => {
 onMounted(async () => {
   // 如果已登录，跳转到首页
   if (userStore.isLoggedIn) {
-    router.push('/knowledge')
+    router.push('/agent')
     return
   }
 

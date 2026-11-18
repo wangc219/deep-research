@@ -131,18 +131,8 @@ def test_worker_healthcheck_uses_explicit_development_and_production_contracts()
         compose = yaml.safe_load((project_root / filename).read_text())
 
         healthcheck = compose["services"]["worker"]["healthcheck"]["test"]
-        if healthcheck[0] == "CMD-SHELL":
-            import shlex
-            command = shlex.split(healthcheck[1])
-        else:
-            assert healthcheck[0] == "CMD"
-            command = healthcheck[1:]
-        expected = (
-            ["python", "-m", "server.worker_health"]
-            if filename == "compose.prod.yaml"
-            else ["arq", "--check", "server.worker_main.WorkerSettings"]
-        )
-        assert command[-3:] == expected
+        assert healthcheck == ["CMD", "python", "-m", "server.worker_health"]
+        assert compose["services"]["worker"]["healthcheck"]["interval"] == "30s"
 
 
 def test_worker_starts_owned_entrypoint_in_development_and_production():

@@ -13,6 +13,9 @@ from platform_core.storage.postgres.manager import (
 )
 from platform_core.storage.postgres.models_business import AgentRun
 from platform_core.storage.postgres.models_equipment import EquipmentResearchRun
+from platform_core.storage_migrations.v097_collection_artifact_category import (
+    COLLECTION_ARTIFACT_CATEGORY_SCHEMA_STATEMENTS,
+)
 
 
 def test_business_and_knowledge_metadata_are_disjoint():
@@ -25,6 +28,14 @@ def test_business_and_knowledge_metadata_are_disjoint():
     assert "knowledge_bases" in KnowledgeBase.metadata.tables
     assert "evaluation_runs" in KnowledgeBase.metadata.tables
     assert "users" not in KnowledgeBase.metadata.tables
+
+
+def test_collection_artifact_category_migration_is_idempotent_and_complete():
+    statements = "\n".join(COLLECTION_ARTIFACT_CATEGORY_SCHEMA_STATEMENTS)
+
+    assert "ADD COLUMN IF NOT EXISTS category_id VARCHAR(64)" in statements
+    assert "CREATE INDEX IF NOT EXISTS ix_collection_artifact_ingestions_category_id" in statements
+    assert "ADD CONSTRAINT fk_collection_artifact_ingestions_category" in statements
 
 
 @pytest.mark.asyncio
@@ -435,6 +446,8 @@ async def test_ensure_knowledge_schema_rebuilds_vectors_for_incomplete_legacy_ch
         "UPDATE knowledge_chunks SET graph_structure_indexed = TRUE "
         "WHERE graph_indexed IS TRUE AND graph_structure_indexed IS NOT TRUE"
     ) in statements
+    assert "extraction_result = 'null'::jsonb" in statements
+    assert "extraction_result <> 'null'::jsonb" in statements
     assert "mention.entity_id = entity.entity_id AND chunk.graph_indexed IS NOT TRUE" in statements
     assert "mention.triple_id = triple.triple_id AND chunk.graph_indexed IS NOT TRUE" in statements
     assert "THEN 'pending' ELSE 'indexed'" in statements

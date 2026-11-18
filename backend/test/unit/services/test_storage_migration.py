@@ -46,6 +46,26 @@ async def test_storage_migration_reads_legacy_schema_before_cutover(monkeypatch)
         ensure_knowledge_schema=lambda: _record(calls, "ensure_knowledge_schema"),
         upgrade_knowledge_schema_v5_to_v6=lambda: _record(calls, "knowledge_v6"),
         upgrade_knowledge_schema_v6_to_v7=lambda: _record(calls, "knowledge_v7"),
+        upgrade_knowledge_schema_v7_to_v8=lambda: _record(calls, "knowledge_v8"),
+        upgrade_knowledge_schema_v8_to_v9=lambda: _record(calls, "knowledge_v9"),
+        upgrade_knowledge_schema_v9_to_v10=lambda: _record(calls, "knowledge_v10"),
+        upgrade_knowledge_schema_v10_to_v11=lambda: _record(calls, "knowledge_v11"),
+        upgrade_knowledge_schema_v11_to_v12=lambda: _record(calls, "knowledge_v12"),
+        upgrade_knowledge_schema_v12_to_v13=lambda: _record(calls, "knowledge_v13"),
+        upgrade_knowledge_schema_v13_to_v14=lambda: _record(calls, "knowledge_v14"),
+        upgrade_knowledge_schema_v14_to_v15=lambda: _record(calls, "knowledge_v15"),
+        upgrade_knowledge_schema_v15_to_v16=lambda: _record(calls, "knowledge_v16"),
+        upgrade_knowledge_schema_v16_to_v17=lambda: _record(calls, "knowledge_v17"),
+        upgrade_knowledge_schema_v17_to_v18=lambda: _record(calls, "knowledge_v18"),
+        upgrade_knowledge_schema_v18_to_v19=lambda: _record(calls, "knowledge_v19"),
+        upgrade_knowledge_schema_v19_to_v20=lambda: _record(calls, "knowledge_v20"),
+        upgrade_knowledge_schema_v20_to_v21=lambda: _record(calls, "knowledge_v21"),
+        upgrade_knowledge_schema_v21_to_v22=lambda: _record(calls, "knowledge_v22"),
+        upgrade_knowledge_schema_v22_to_v23=lambda: _record(calls, "knowledge_v23"),
+        upgrade_knowledge_schema_v23_to_v24=lambda: _record(calls, "knowledge_v24"),
+        upgrade_knowledge_schema_v24_to_v25=lambda: _record(calls, "knowledge_v25"),
+        upgrade_knowledge_schema_v25_to_v26=lambda: _record(calls, "knowledge_v26"),
+        upgrade_knowledge_schema_v26_to_v27=lambda: _record(calls, "knowledge_v27"),
         setup_langgraph_checkpointer=lambda: _record(calls, "setup_langgraph_checkpointer"),
         get_async_session_context=session_context,
         close=lambda: _record(calls, "close"),
@@ -118,6 +138,26 @@ async def test_storage_migration_rejects_v071_schema_without_quiescence_proof(mo
         ensure_knowledge_schema=lambda: _record(calls, "knowledge_schema"),
         upgrade_knowledge_schema_v5_to_v6=lambda: _record(calls, "knowledge_v6"),
         upgrade_knowledge_schema_v6_to_v7=lambda: _record(calls, "knowledge_v7"),
+        upgrade_knowledge_schema_v7_to_v8=lambda: _record(calls, "knowledge_v8"),
+        upgrade_knowledge_schema_v8_to_v9=lambda: _record(calls, "knowledge_v9"),
+        upgrade_knowledge_schema_v9_to_v10=lambda: _record(calls, "knowledge_v10"),
+        upgrade_knowledge_schema_v10_to_v11=lambda: _record(calls, "knowledge_v11"),
+        upgrade_knowledge_schema_v11_to_v12=lambda: _record(calls, "knowledge_v12"),
+        upgrade_knowledge_schema_v12_to_v13=lambda: _record(calls, "knowledge_v13"),
+        upgrade_knowledge_schema_v13_to_v14=lambda: _record(calls, "knowledge_v14"),
+        upgrade_knowledge_schema_v14_to_v15=lambda: _record(calls, "knowledge_v15"),
+        upgrade_knowledge_schema_v15_to_v16=lambda: _record(calls, "knowledge_v16"),
+        upgrade_knowledge_schema_v16_to_v17=lambda: _record(calls, "knowledge_v17"),
+        upgrade_knowledge_schema_v17_to_v18=lambda: _record(calls, "knowledge_v18"),
+        upgrade_knowledge_schema_v18_to_v19=lambda: _record(calls, "knowledge_v19"),
+        upgrade_knowledge_schema_v19_to_v20=lambda: _record(calls, "knowledge_v20"),
+        upgrade_knowledge_schema_v20_to_v21=lambda: _record(calls, "knowledge_v21"),
+        upgrade_knowledge_schema_v21_to_v22=lambda: _record(calls, "knowledge_v22"),
+        upgrade_knowledge_schema_v22_to_v23=lambda: _record(calls, "knowledge_v23"),
+        upgrade_knowledge_schema_v23_to_v24=lambda: _record(calls, "knowledge_v24"),
+        upgrade_knowledge_schema_v24_to_v25=lambda: _record(calls, "knowledge_v25"),
+        upgrade_knowledge_schema_v25_to_v26=lambda: _record(calls, "knowledge_v26"),
+        upgrade_knowledge_schema_v26_to_v27=lambda: _record(calls, "knowledge_v27"),
         setup_langgraph_checkpointer=lambda: _record(calls, "checkpoint"),
         get_async_session_context=session_context,
         close=lambda: _record(calls, "close"),
@@ -198,6 +238,61 @@ async def test_current_schema_skips_schema_ddl(monkeypatch):
         f"version:knowledge:{storage_migration.KNOWLEDGE_SCHEMA_VERSION}",
     }.isdisjoint(calls)
     assert "converge:False" in calls
+
+
+@pytest.mark.asyncio
+async def test_knowledge_v22_runs_through_v27_before_recording_current_version(monkeypatch):
+    """v22 数据库依次执行相邻迁移，再登记当前知识 Schema 版本。"""
+    calls: list[str] = []
+    sessions = [_Session(), _Session()]
+
+    @asynccontextmanager
+    async def session_context():
+        yield sessions.pop(0)
+
+    manager = SimpleNamespace(
+        initialize=lambda: calls.append("initialize"),
+        schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
+        create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
+        get_schema_versions=lambda: _async_value(
+            {"business": storage_migration.BUSINESS_SCHEMA_VERSION, "knowledge": 22}
+        ),
+        record_schema_version=lambda domain, version: _record(calls, f"version:{domain}:{version}"),
+        upgrade_knowledge_schema_v22_to_v23=lambda: _record(calls, "knowledge_v23"),
+        upgrade_knowledge_schema_v23_to_v24=lambda: _record(calls, "knowledge_v24"),
+        upgrade_knowledge_schema_v24_to_v25=lambda: _record(calls, "knowledge_v25"),
+        upgrade_knowledge_schema_v25_to_v26=lambda: _record(calls, "knowledge_v26"),
+        upgrade_knowledge_schema_v26_to_v27=lambda: _record(calls, "knowledge_v27"),
+        get_async_session_context=session_context,
+        close=lambda: _record(calls, "close"),
+    )
+    monkeypatch.setattr(storage_migration, "pg_manager", manager)
+    monkeypatch.setattr(
+        storage_migration,
+        "read_v071_workdir_plan",
+        lambda _db: _async_value(V071WorkdirMigrationPlan(False, (), ())),
+    )
+    monkeypatch.setattr(storage_migration, "_legacy_skill_roots_exist", lambda: False)
+    monkeypatch.setattr(storage_migration, "_legacy_system_config_exists", lambda: False)
+    monkeypatch.setattr(storage_migration, "runtime_storage_requires_quiescence", lambda: False)
+    monkeypatch.setattr(
+        storage_migration,
+        "_converge_database_state",
+        lambda *, fail_nonterminal_runs: _record(calls, f"converge:{fail_nonterminal_runs}"),
+    )
+    monkeypatch.setattr(storage_migration, "migrate_shared_skills", lambda _db: _record(calls, "skills"))
+    monkeypatch.setattr(storage_migration, "mark_v071_skills_migrated", lambda: calls.append("mark_skills"))
+    monkeypatch.setattr(storage_migration, "migrate_runtime_storage_identity", lambda: calls.append("runtime_identity"))
+
+    await storage_migration.main()
+
+    version_call = f"version:knowledge:{storage_migration.KNOWLEDGE_SCHEMA_VERSION}"
+    assert calls.index("knowledge_v23") < calls.index(version_call)
+    assert calls.index("knowledge_v24") < calls.index(version_call)
+    assert calls.index("knowledge_v25") < calls.index(version_call)
+    assert calls.index("knowledge_v26") < calls.index(version_call)
+    assert calls.index("knowledge_v27") < calls.index(version_call)
+    assert calls[-1] == "close"
 
 
 @pytest.mark.asyncio
@@ -352,6 +447,26 @@ async def test_current_schema_does_not_rewrite_workdir_data(monkeypatch):
         ensure_knowledge_schema=lambda: _record(calls, "knowledge_schema"),
         upgrade_knowledge_schema_v5_to_v6=lambda: _record(calls, "knowledge_v6"),
         upgrade_knowledge_schema_v6_to_v7=lambda: _record(calls, "knowledge_v7"),
+        upgrade_knowledge_schema_v7_to_v8=lambda: _record(calls, "knowledge_v8"),
+        upgrade_knowledge_schema_v8_to_v9=lambda: _record(calls, "knowledge_v9"),
+        upgrade_knowledge_schema_v9_to_v10=lambda: _record(calls, "knowledge_v10"),
+        upgrade_knowledge_schema_v10_to_v11=lambda: _record(calls, "knowledge_v11"),
+        upgrade_knowledge_schema_v11_to_v12=lambda: _record(calls, "knowledge_v12"),
+        upgrade_knowledge_schema_v12_to_v13=lambda: _record(calls, "knowledge_v13"),
+        upgrade_knowledge_schema_v13_to_v14=lambda: _record(calls, "knowledge_v14"),
+        upgrade_knowledge_schema_v14_to_v15=lambda: _record(calls, "knowledge_v15"),
+        upgrade_knowledge_schema_v15_to_v16=lambda: _record(calls, "knowledge_v16"),
+        upgrade_knowledge_schema_v16_to_v17=lambda: _record(calls, "knowledge_v17"),
+        upgrade_knowledge_schema_v17_to_v18=lambda: _record(calls, "knowledge_v18"),
+        upgrade_knowledge_schema_v18_to_v19=lambda: _record(calls, "knowledge_v19"),
+        upgrade_knowledge_schema_v19_to_v20=lambda: _record(calls, "knowledge_v20"),
+        upgrade_knowledge_schema_v20_to_v21=lambda: _record(calls, "knowledge_v21"),
+        upgrade_knowledge_schema_v21_to_v22=lambda: _record(calls, "knowledge_v22"),
+        upgrade_knowledge_schema_v22_to_v23=lambda: _record(calls, "knowledge_v23"),
+        upgrade_knowledge_schema_v23_to_v24=lambda: _record(calls, "knowledge_v24"),
+        upgrade_knowledge_schema_v24_to_v25=lambda: _record(calls, "knowledge_v25"),
+        upgrade_knowledge_schema_v25_to_v26=lambda: _record(calls, "knowledge_v26"),
+        upgrade_knowledge_schema_v26_to_v27=lambda: _record(calls, "knowledge_v27"),
         setup_langgraph_checkpointer=lambda: _record(calls, "checkpoint"),
         get_async_session_context=session_context,
         close=lambda: _record(calls, "close"),

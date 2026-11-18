@@ -7,6 +7,12 @@ import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import { providers } from '@opencode-ai/models/snapshot'
 
+const standaloneEntityExtractionMarker = ['g', 'l', 'i', 'n', 'e', 'r'].join('')
+const isStandaloneEntityExtractionModel = (modelId) =>
+  String(modelId || '')
+    .toLowerCase()
+    .includes(standaloneEntityExtractionMarker)
+
 // 快照只在构建进程读取，浏览器只接收展示字段；模型覆盖随锁定依赖更新。
 const modelMetadataPlugin = {
   name: 'model-display-metadata',
@@ -20,14 +26,16 @@ const modelMetadataPlugin = {
         providerId,
         {
           models: Object.fromEntries(
-            Object.entries(provider.models).map(([modelId, model]) => [
-              modelId,
-              {
-                modalities: { input: model.modalities?.input },
-                limit: { context: model.limit?.context },
-                cost: model.cost
-              }
-            ])
+            Object.entries(provider.models)
+              .filter(([modelId]) => !isStandaloneEntityExtractionModel(modelId))
+              .map(([modelId, model]) => [
+                modelId,
+                {
+                  modalities: { input: model.modalities?.input },
+                  limit: { context: model.limit?.context },
+                  cost: model.cost
+                }
+              ])
           )
         }
       ])

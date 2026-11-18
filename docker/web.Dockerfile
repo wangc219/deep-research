@@ -24,13 +24,25 @@ EXPOSE 5173
 
 # 构建与开发复用同一锁定依赖层，不重复安装前端依赖。
 FROM development AS build-stage
+ARG VITE_ENABLE_KNOWLEDGE_GOVERNANCE=false
+ENV VITE_ENABLE_KNOWLEDGE_GOVERNANCE=${VITE_ENABLE_KNOWLEDGE_GOVERNANCE}
 RUN pnpm run build
 
 # 生产环境运行阶段
 FROM nginx:alpine AS production
+ARG RELEASE_ID=development
+ARG SOURCE_REVISION=unknown
+LABEL com.deepquest.release.id=${RELEASE_ID} \
+    com.deepquest.release.component=web \
+    org.opencontainers.image.revision=${SOURCE_REVISION}
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 755 {} \; \
-    && find /usr/share/nginx/html -type f -exec chmod 644 {} \;
+    && find /usr/share/nginx/html -type f -exec chmod 644 {} \; \
+    && case "${RELEASE_ID}" in *[!A-Za-z0-9._-]*) exit 2;; esac \
+    && case "${SOURCE_REVISION}" in *[!A-Za-z0-9._-]*) exit 2;; esac \
+    && printf '{"release_id":"%s","source_revision":"%s","component":"web"}\n' \
+        "${RELEASE_ID}" "${SOURCE_REVISION}" > /usr/share/nginx/html/release.json \
+    && chmod 644 /usr/share/nginx/html/release.json
 COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

@@ -74,7 +74,9 @@ async def _build_middlewares(context, backend):
                 max_retries=getattr(context, "model_retry_times", 2),
             ),
             ImageInputCompatibilityMiddleware(),
-            AcademicEvidenceMiddleware(),
+            # 主对话在供应商连续两次未按引用协议输出时降级交付，不能把整个
+            # streaming / resume Run 判为失败；未验证内容会被明确标为工程分析。
+            AcademicEvidenceMiddleware(graceful_fallback=True),
             ModelOutputMiddleware(),
             TokenUsageMiddleware(),
         ]
@@ -88,9 +90,7 @@ async def _build_middlewares(context, backend):
     middlewares.append(
         ToolExecutionGovernorMiddleware(
             max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
-            capacity_resolver=lambda: tool_parallelism_limit(
-                getattr(context, "max_parallel_tool_calls", 4)
-            ),
+            capacity_resolver=lambda: tool_parallelism_limit(getattr(context, "max_parallel_tool_calls", 4)),
         )
     )
     return middlewares

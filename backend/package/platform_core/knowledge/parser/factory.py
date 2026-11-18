@@ -10,6 +10,7 @@ from typing import Any
 
 from platform_core.knowledge.parser.base import BaseDocumentProcessor
 from platform_core.knowledge.parser.capabilities import PARSER_CAPABILITIES, get_parser_capability
+from platform_core.knowledge.parser.result import ParsedDocument
 from platform_core.utils import logger
 
 # 处理器实例缓存
@@ -97,6 +98,18 @@ class DocumentProcessorFactory:
         """
         processor = cls.get_processor(processor_type, **(processor_kwargs or {}))
         return processor.process_file(file_path, params)
+
+    @classmethod
+    def process_file_result(
+        cls,
+        processor_type: str,
+        file_path: str,
+        params: dict | None = None,
+        processor_kwargs: dict[str, Any] | None = None,
+    ) -> ParsedDocument:
+        """通过同一工厂端口返回可选 Block 位置的结构化结果。"""
+        processor = cls.get_processor(processor_type, **(processor_kwargs or {}))
+        return processor.process_file_result(file_path, params)
 
     @classmethod
     def check_health(cls, processor_type: str, **kwargs) -> dict[str, Any]:

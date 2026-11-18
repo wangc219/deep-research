@@ -9,10 +9,19 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from platform_core.repositories.conversation_repository import (
     ConversationRepository,
+    INTERNAL_CONVERSATION_CHANNELS,
+    INTERNAL_CONVERSATION_TITLE_PREFIXES,
     INVOCATION_CONVERSATION_SOURCES,
     MAX_CONVERSATION_TITLE_LENGTH,
 )
-from platform_core.storage.postgres.models_business import AgentRun, Base, Conversation, ConversationStats, Message, ToolCall
+from platform_core.storage.postgres.models_business import (
+    AgentRun,
+    Base,
+    Conversation,
+    ConversationStats,
+    Message,
+    ToolCall,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 
 pytestmark = pytest.mark.unit
@@ -337,7 +346,36 @@ async def test_only_state_proven_terminal_model_audit_keeps_tool_call_visible(co
 @pytest.mark.asyncio
 async def test_list_conversations_excludes_invocation_sources(conversation_session):
     normal, agent_call, agent_eval, _ = _seed_invocation_excluding_conversations()
-    conversation_session.add_all([normal, agent_call, agent_eval])
+    brief_research = Conversation(
+        thread_id="brief-thread-hidden",
+        project_id="project-brief-thread-hidden",
+        uid="user-a",
+        agent_id="deep-research",
+        title="简报调研探索 · 测试订阅",
+        status="active",
+        extra_metadata={"source": "innovation_brief", "channel": "internal"},
+    )
+    internal_research = Conversation(
+        thread_id="brief-thread-internal",
+        project_id="project-brief-thread-internal",
+        uid="user-a",
+        agent_id="deep-research",
+        title="内部调研任务",
+        status="active",
+        extra_metadata={"channel": "internal"},
+    )
+    legacy_research = Conversation(
+        thread_id="brief-thread-legacy",
+        project_id="project-brief-thread-legacy",
+        uid="user-a",
+        agent_id="deep-research",
+        title="简报调研探索 · 历史订阅",
+        status="active",
+        extra_metadata={},
+    )
+    conversation_session.add_all(
+        [normal, agent_call, agent_eval, brief_research, internal_research, legacy_research]
+    )
     await conversation_session.commit()
 
     repo = ConversationRepository(conversation_session)
@@ -346,6 +384,8 @@ async def test_list_conversations_excludes_invocation_sources(conversation_sessi
         limit=20,
         offset=0,
         exclude_sources=INVOCATION_CONVERSATION_SOURCES,
+        exclude_channels=INTERNAL_CONVERSATION_CHANNELS,
+        exclude_title_prefixes=INTERNAL_CONVERSATION_TITLE_PREFIXES,
     )
 
     assert [item.thread_id for item in items] == ["thread-normal"]
@@ -486,7 +526,42 @@ async def test_search_conversations_by_message_content_filters_user_status_and_t
 @pytest.mark.asyncio
 async def test_search_conversations_by_message_content_excludes_invocation_sources(conversation_session):
     normal, agent_call, agent_eval, now = _seed_invocation_excluding_conversations()
-    conversation_session.add_all([normal, agent_call, agent_eval])
+    brief_research = Conversation(
+        thread_id="brief-thread-search-hidden",
+        project_id="project-brief-thread-search-hidden",
+        uid="user-a",
+        agent_id="deep-research",
+        title="简报调研探索 · 测试订阅",
+        status="active",
+        created_at=now,
+        updated_at=now,
+        extra_metadata={"source": "innovation_brief", "channel": "internal"},
+    )
+    internal_research = Conversation(
+        thread_id="brief-thread-search-internal",
+        project_id="project-brief-thread-search-internal",
+        uid="user-a",
+        agent_id="deep-research",
+        title="内部调研任务",
+        status="active",
+        created_at=now,
+        updated_at=now,
+        extra_metadata={"channel": "internal"},
+    )
+    legacy_research = Conversation(
+        thread_id="brief-thread-search-legacy",
+        project_id="project-brief-thread-search-legacy",
+        uid="user-a",
+        agent_id="deep-research",
+        title="简报调研探索 · 历史订阅",
+        status="active",
+        created_at=now,
+        updated_at=now,
+        extra_metadata={},
+    )
+    conversation_session.add_all(
+        [normal, agent_call, agent_eval, brief_research, internal_research, legacy_research]
+    )
     await conversation_session.flush()
     conversation_session.add_all(
         [
@@ -505,6 +580,27 @@ async def test_search_conversations_by_message_content_excludes_invocation_sourc
                 message_type="text",
                 created_at=now,
             ),
+            Message(
+                conversation=brief_research,
+                role="user",
+                content="导航隐藏检查 brief",
+                message_type="text",
+                created_at=now,
+            ),
+            Message(
+                conversation=internal_research,
+                role="user",
+                content="导航隐藏检查 internal",
+                message_type="text",
+                created_at=now,
+            ),
+            Message(
+                conversation=legacy_research,
+                role="user",
+                content="导航隐藏检查 legacy",
+                message_type="text",
+                created_at=now,
+            ),
         ]
     )
     await conversation_session.commit()
@@ -516,6 +612,8 @@ async def test_search_conversations_by_message_content_excludes_invocation_sourc
         limit=20,
         offset=0,
         exclude_sources=INVOCATION_CONVERSATION_SOURCES,
+        exclude_channels=INTERNAL_CONVERSATION_CHANNELS,
+        exclude_title_prefixes=INTERNAL_CONVERSATION_TITLE_PREFIXES,
     )
 
     assert has_more is False

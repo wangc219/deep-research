@@ -45,6 +45,7 @@
       :supported-kb-types="supportedKbTypes"
       :personal-only="!userStore.isAdmin"
       @connect-zhipu="openZhipu"
+      @completed="handleDatabaseCreated"
     />
 
     <!-- 加载状态 -->
@@ -200,6 +201,18 @@ const filteredDatabases = computed(() => {
 const state = reactive({
   openNewDatabaseModel: false
 })
+
+const handleDatabaseCreated = (database, options = {}) => {
+  const createdId = database?.kb_id
+  if (!createdId) return
+  router.push({
+    path: `/extensions/knowledgebase/${createdId}`,
+    query: {
+      section: 'filetable',
+      ...(options.openUpload ? { action: 'upload' } : {})
+    }
+  })
+}
 
 // 支持的知识库类型
 const supportedKbTypes = ref({})

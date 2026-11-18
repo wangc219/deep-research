@@ -9,7 +9,12 @@ from platform_core.models.utils import parse_assistant_message_body
 from platform_core.permissions import has_global_business_access
 from platform_core.repositories.agent_repository import AgentRepository
 from platform_core.repositories.agent_run_repository import AgentRunRepository
-from platform_core.repositories.conversation_repository import INVOCATION_CONVERSATION_SOURCES, ConversationRepository
+from platform_core.repositories.conversation_repository import (
+    INTERNAL_CONVERSATION_CHANNELS,
+    INTERNAL_CONVERSATION_TITLE_PREFIXES,
+    INVOCATION_CONVERSATION_SOURCES,
+    ConversationRepository,
+)
 from platform_core.repositories.project_repository import ProjectRepository
 from platform_core.services.attachment_service import serialize_attachment
 from platform_core.services.project_service import create_implicit_project
@@ -241,6 +246,8 @@ async def list_threads_view(
         limit=limit,
         offset=offset,
         exclude_sources=INVOCATION_CONVERSATION_SOURCES,
+        exclude_channels=INTERNAL_CONVERSATION_CHANNELS,
+        exclude_title_prefixes=INTERNAL_CONVERSATION_TITLE_PREFIXES,
     )
 
     run_repo = AgentRunRepository(db)
@@ -284,6 +291,8 @@ async def search_threads_view(
         limit=limit,
         offset=offset,
         exclude_sources=INVOCATION_CONVERSATION_SOURCES,
+        exclude_channels=INTERNAL_CONVERSATION_CHANNELS,
+        exclude_title_prefixes=INTERNAL_CONVERSATION_TITLE_PREFIXES,
     )
 
     items = []

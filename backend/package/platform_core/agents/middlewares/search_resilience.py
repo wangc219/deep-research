@@ -22,17 +22,19 @@ from platform_core.research_policy import (
 from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
 
 
-_SEARCH_STOP_PROMPT = """# 公网检索熔断（本轮运行）
+_SEARCH_STOP_PROMPT = """# 公网检索停止规则（内部运行）
 公网检索在本轮已经达到调用预算，或所有后端均已返回持续故障。`web_search` 已被运行时移除。
 你必须立即停止重试 web_search 和同义改写，也不要向用户输出“继续尝试/course”等过程性话语。
 学术工具可用时仍可使用 AMiner 补充论文证据；其配置、健康和预算独立于网页搜索。
 仅本轮用户显式 @知识库且 `query_kbs` 可用、尚未检索时，最多调用一次做跨库检索；
 否则直接基于已获得来源和任务上下文完成当前子任务。
-如证据仍不足，在结果中简洁标注具体证据缺口后结束；不得因检索故障阻止交付。"""
+如证据仍不足，在对应判断附近标注具体待验证项后结束；不得因检索故障阻止交付。
+不得向用户复述“公网检索熔断/高度降级”，也不得生成独立的检索限制、证据边界或免责声明章节。"""
 
-_ACADEMIC_STOP_PROMPT = """# AMiner 检索降级（本轮运行）
+_ACADEMIC_STOP_PROMPT = """# 学术检索停止规则（内部运行）
 已不可用或达到调用上限的学术工具已从本轮移除。停止对这些工具的重试、同义改写和等待。
-继续使用仍可用的网页搜索、授权知识库或已有来源完成当前任务，必要时注明具体证据缺口。"""
+继续使用仍可用的网页搜索、授权知识库或已有来源完成当前任务，必要时在相关判断附近注明待验证项。
+不要把工具状态写成面向用户的独立章节或开场免责声明。"""
 
 _PLANNING_ONLY_PROMPT = """# 既有材料规划任务
 用户要求只把已经提供的任务书或材料转成计划，且明确不启动真实研究。本轮不调用 AMiner，也不把“证据门、算法、
@@ -58,11 +60,12 @@ web_search 已自适应融合 Open WebSearch 与 SearXNG，不要为两个网页
 
 优先直接相关的一手或高权威来源，核对对象、时间、条件、反例和适用边界。同 DOI、转载和跨渠道重复命中
 只算一项证据。技术问题可用 AMiner 发现论文并按需读取拟引用论文完整摘要；渠道为空或降级时继续其他来源，
-披露覆盖缺口，不把缺失解释为事实不存在。
+保留会改变判断的待验证项，不把缺失解释为事实不存在。
 
 新增检索不再改变判断、补齐因果链或降低关键不确定性时立即停止。运行时预算只用于防止失控，不是最低用量。
-交付紧凑证据包：高价值发现、对主研究判断的影响、真实引用、冲突、边界和仍影响结论的缺口。区分公开事实、
-论文结论、本地材料、跨域类比、工程推断和创新假设；不要输出检索过程或继续尝试的承诺，也不要调用 write_todos。"""
+交付紧凑证据包：高价值发现、对主研究判断的影响、真实引用、冲突、成立条件和仍影响结论的待验证项。区分公开事实、
+论文结论、本地材料、跨域类比、工程推断和创新假设；不要输出检索过程、独立“证据边界/检索限制”章节或继续尝试的承诺，
+也不要调用 write_todos。"""
 
 _TOOL_PROTOCOL_CORRECTION_PROMPT = """# 工具协议纠错
 上一响应把工具调用写成了可见的 DSML/XML 文本，因此没有被执行。禁止输出、解释或复述任何工具协议标记。
@@ -874,7 +877,15 @@ class SearchResilienceMiddleware(AgentMiddleware[Any, Any, Any]):
             with self._research_lock:
                 self.research_academic_papers.update(papers)
                 self.research_academic_abstracts.update(abstracts)
-        if status in {"disabled", "denied", "auth_failed", "rate_limited", "unavailable", "budget_exhausted"}:
+        if status in {
+            "disabled",
+            "denied",
+            "auth_expired",
+            "auth_failed",
+            "rate_limited",
+            "unavailable",
+            "budget_exhausted",
+        }:
             self.blocked_academic_tools.update(ACADEMIC_TOOL_NAMES)
         elif status in {"limit_reached", "configuration_changed", "in_progress"}:
             endpoint = payload.get("failed_endpoint")

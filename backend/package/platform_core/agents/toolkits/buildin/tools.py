@@ -34,6 +34,7 @@ from platform_core.agents.backends.sandbox import ProvisionerSandboxBackend
 from platform_core.agents.toolkits.registry import ToolExtraMetadata, _all_tool_instances, _extra_registry, tool
 from platform_core.config.options import load_web_search_runtime_options, system_options
 from platform_core.services.searxng_service import normalize_unresponsive_engines
+from platform_core.services.web_content_hydrator import hydrate_search_results
 from platform_core.services.web_search_coordinator import (
     antibot_delay,
     coordinated_search,
@@ -298,8 +299,8 @@ def _create_tavily_search():
     return TavilySearch(name="web_search")
 
 
-def _open_websearch_engines() -> list[str]:
-    """解析 daemon 多引擎列表，忽略迁移后残留的无效值。"""
+def _open_websearch_engines(query: str = "") -> list[str]:
+    """解析 daemon 多引擎列表，并为中文查询补充可配置的本土引擎。"""
 
     configured = os.getenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")
     engines = []
@@ -307,6 +308,10 @@ def _open_websearch_engines() -> list[str]:
         engine = value.strip().lower()
         if engine in _OPEN_WEBSEARCH_SUPPORTED_ENGINES and engine not in engines:
             engines.append(engine)
+    if re.search(r"[\u4e00-\u9fff]", query):
+        chinese_engine = os.getenv("OPEN_WEBSEARCH_CHINESE_ENGINE", "baidu").strip().lower()
+        if chinese_engine in _OPEN_WEBSEARCH_SUPPORTED_ENGINES and chinese_engine not in engines:
+            engines.append(chinese_engine)
     return engines or ["bing"]
 
 
@@ -405,7 +410,8 @@ def _open_websearch(
 ) -> dict:
     """通过随项目部署的 open-websearch daemon 执行多引擎检索。"""
 
-    del time_range, content_format, fusion_strategy
+    defer_hydration = content_format == "search_snippet"
+    del time_range, fusion_strategy
     normalized_query = " ".join(str(query or "").split())[:500]
     site_hosts = [_normalize_search_host(site) for site in (sites or [])[:20]]
     site_hosts = [host for host in site_hosts if host]
@@ -429,7 +435,8 @@ def _open_websearch(
     if isinstance(wait_budget, int | float):
         timeout = min(timeout, max(3.0, float(wait_budget)))
     delays = {
-        engine: coordinator.engine_remaining(engine) if coordinator else 0 for engine in _open_websearch_engines()
+        engine: coordinator.engine_remaining(engine) if coordinator else 0
+        for engine in _open_websearch_engines(normalized_query)
     }
     engines = [engine for engine, delay in delays.items() if delay == 0]
     if not engines:
@@ -496,12 +503,24 @@ def _open_websearch(
             "provider": "open-websearch",
             "error": "daemon 成功响应缺少 data",
         }
-    return _parse_open_websearch_response(
+    parsed = _parse_open_websearch_response(
         normalized_query,
         data,
         count=count,
         block_hosts=block_hosts,
         sites=sites,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
+    )
+    if not parsed.get("results") or defer_hydration:
+        return parsed
+    hydrated = hydrate_search_results(parsed["results"], max_results=min(max(1, int(count)), 10))
+    return _filter_search_results(
+        {**parsed, "results": hydrated},
+        normalized_query,
+        count=count,
+        sites=sites,
+        block_hosts=block_hosts,
         required_terms=required_terms,
         required_term_groups=required_term_groups,
     )
@@ -622,7 +641,8 @@ def _searxng_search(
     policy_hash: str = "",
 ) -> dict:
     """通过内部 SearXNG 容器执行限定引擎检索。"""
-    del content_format, policy_hash
+    defer_hydration = content_format == "search_snippet"
+    del policy_hash
     normalized_query = " ".join(str(query or "").split())[:500]
     selected_engines = list(
         dict.fromkeys(str(item).strip().casefold() for item in (engines or []) if str(item).strip())
@@ -681,7 +701,7 @@ def _searxng_search(
     if mapped_time_range:
         payload["time_range"] = mapped_time_range
 
-    timeout = min(10.0, max(3.0, float(timeout_seconds or 8)))
+    timeout = min(30.0, max(3.0, float(timeout_seconds or 15)))
     with httpx.Client(timeout=timeout, follow_redirects=False) as client:
         response = client.post(f"{base_url}/search", data=payload)
         response.raise_for_status()
@@ -694,12 +714,24 @@ def _searxng_search(
             "status": "degraded",
             "error": "SearXNG 返回无效 JSON 响应",
         }
-    return _parse_searxng_response(
+    parsed = _parse_searxng_response(
         normalized_query,
         data,
         count=count,
         engines=active_engines,
         time_range=time_range,
+        sites=sites,
+        block_hosts=block_hosts,
+        required_terms=required_terms,
+        required_term_groups=required_term_groups,
+    )
+    if not parsed.get("results") or defer_hydration:
+        return parsed
+    hydrated = hydrate_search_results(parsed["results"], max_results=max(1, int(count)))
+    return _filter_search_results(
+        {**parsed, "results": hydrated},
+        normalized_query,
+        count=count,
         sites=sites,
         block_hosts=block_hosts,
         required_terms=required_terms,
@@ -873,6 +905,12 @@ def _looks_academic_query(query: str, sites: list[str] | None = None) -> bool:
         "microwave",
         "spin splitting",
         "time crystal",
+        "autonomous underwater vehicle",
+        "underwater acoustic",
+        "acoustic sensing",
+        "hydroacoustic",
+        "sonar",
+        "auv",
         "拓扑",
         "光子",
         "量子",
@@ -897,6 +935,10 @@ def _looks_academic_query(query: str, sites: list[str] | None = None) -> bool:
         "非互易",
         "能带",
         "自旋劈裂",
+        "自主水下航行器",
+        "无人潜航器",
+        "水声",
+        "声呐",
     )
     return sum(1 for marker in scientific_roots if marker in detail) >= 2
 
@@ -960,6 +1002,7 @@ def _public_search(
     required_term_groups: list[list[str]] | None = None,
     content_format: str = "text",
     fusion_strategy: str = "adaptive",
+    academic_only: bool = False,
 ) -> dict:
     """无需专用 API Key 的公网检索兜底，确保深研始终可访问公开资料。"""
 
@@ -999,7 +1042,7 @@ def _public_search(
     coordinator = get_active_search_coordinator()
     retry_after = 0.0
     blocked_endpoints = set()
-    academic_query = _looks_academic_query(normalized_query, sites)
+    academic_query = academic_only or _looks_academic_query(normalized_query, sites)
     crossref_delay = coordinator.engine_remaining("crossref") if academic_query and coordinator else 0
     retry_after = max(retry_after, crossref_delay)
     if academic_query and not crossref_delay:
@@ -1030,6 +1073,24 @@ def _public_search(
                     coordinator.cool_engine("crossref", delay)
             failures.append({"endpoint": "crossref", "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
             logger.warning(f"Public search endpoint 'crossref' failed: {exc}")
+    if academic_only:
+        return {
+            "query": normalized_query,
+            "results": [],
+            "provider": "public",
+            "failures": failures,
+            **(
+                {
+                    "status": "rate_limited",
+                    "retry_after_seconds": retry_after,
+                    "error": "Crossref 学术补充入口临时限流",
+                }
+                if retry_after
+                else {"status": "empty"}
+                if any(item["error"] == "empty_response" for item in failures)
+                else {"status": "degraded", "error": "Crossref 学术补充入口暂不可用"}
+            ),
+        }
     for endpoint, url, endpoint_params in endpoints:
         remaining = coordinator.engine_remaining(endpoint) if coordinator else 0
         if remaining:
@@ -1187,6 +1248,8 @@ def _web_search_cache_key(provider_order: list[str], arguments: dict) -> tuple:
         str(arguments.get("_fusion_language") or ""),
         tuple(str(item).casefold() for item in (arguments.get("_fusion_engines") or [])),
         str(arguments.get("_fusion_strategy") or "adaptive"),
+        bool(arguments.get("_public_academic_only")),
+        bool(arguments.get("_include_academic_sources")),
     )
 
 
@@ -1434,7 +1497,8 @@ def _rank_search_results(
             coverage = max(coverage, min(2, len(terms)))
             score += 3
         fusion_bonus = max(0.0, min(1.0, float(item.get("_fusion_score") or 0.0))) * 2
-        scored.append((score + authority * 2 + fusion_bonus, score, coverage, item))
+        hydration_bonus = int(item.get("content_level") == "web_page" and item.get("hydration_verified") is True)
+        scored.append((score + authority * 2 + fusion_bonus + hydration_bonus, score, coverage, item))
     minimum_coverage = min(2, len(terms))
     ranked = [
         item
@@ -1510,6 +1574,15 @@ def _filter_search_results(
         "authoritative": sum(item.get("source_tier") == "authoritative" for item in selected),
         "other": sum(item.get("source_tier") != "authoritative" for item in selected),
     }
+    hydration_attempted = sum(item.get("content_hydrator") == "scrapling" for item in selected)
+    if hydration_attempted:
+        output.update(
+            hydration_attempted=hydration_attempted,
+            hydrated_count=sum(item.get("content_level") == "web_page" for item in selected),
+            browser_hydrated_count=sum(item.get("hydration_mode") == "browser" for item in selected),
+            hydration_cache_hits=sum(bool(item.get("hydration_cache_hit")) for item in selected),
+            hydration_rejected_count=sum(bool(item.get("hydration_rejected_reason")) for item in selected),
+        )
     if filtered:
         output["filtered_irrelevant_count"] = filtered
     if (
@@ -1556,6 +1629,8 @@ def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
         provider_arguments.update(
             {key: arguments[key] for key in ("required_terms", "required_term_groups") if arguments.get(key)}
         )
+    if provider == "public" and arguments.get("_public_academic_only"):
+        provider_arguments["academic_only"] = True
     tool = factory()
     raw_function = getattr(tool, "func", None)
     if callable(raw_function):
@@ -1736,7 +1811,7 @@ def _classify_fusion_query(arguments: dict, config: dict) -> dict:
     has_han = bool(re.search(r"[\u4e00-\u9fff]", query))
     has_latin = bool(re.search(r"[a-z]{2,}", detail))
     language = "all" if has_han and has_latin else "zh-CN" if has_han else "en"
-    academic = _looks_academic_query(query, arguments.get("sites"))
+    academic = bool(arguments.get("_include_academic_sources")) or _looks_academic_query(query, arguments.get("sites"))
     recency = bool(arguments.get("time_range")) or any(
         marker in detail
         for marker in (
@@ -1826,16 +1901,14 @@ def _needs_searxng_supplement(result: dict, profile: dict, config: dict) -> bool
 def _requires_searxng_complement(profile: dict) -> bool:
     """中文、学术和显式并行检索必须等待垂直引擎补强。"""
     categories = set(profile.get("categories") or [])
-    return bool(
-        profile.get("strategy") == "parallel"
-        or categories.intersection({"academic", "chinese", "mixed"})
-    )
+    return bool(profile.get("strategy") == "parallel" or categories.intersection({"academic", "chinese", "mixed"}))
 
 
 def _invoke_searxng_provider(arguments: dict, profile: dict, config: dict, policy_hash: str) -> dict:
     """经共享协调器调用 SearXNG，配置身份参与 single-flight。"""
     provider_arguments = {
         **arguments,
+        "content_format": "search_snippet",
         "engines": profile["engines"],
         "language": profile["language"],
         "timeout_seconds": config["searxng_timeout_seconds"],
@@ -1911,7 +1984,18 @@ def _merge_fused_search_results(
                     dict.fromkeys([*candidate.get("search_engines", []), *(str(value) for value in item_engines)])
                 )
                 if len(str(item.get("content") or "")) > len(str(candidate.get("content") or "")):
-                    candidate["content"] = item.get("content")
+                    for field in (
+                        "content",
+                        "content_hydrator",
+                        "content_level",
+                        "hydration_mode",
+                        "hydration_verified",
+                        "hydration_rejected_reason",
+                        "hydration_cache_hit",
+                        "search_redirect_url",
+                    ):
+                        if field in item:
+                            candidate[field] = item[field]
                 if len(str(item.get("title") or "")) > len(str(candidate.get("title") or "")):
                     candidate["title"] = item.get("title")
                 if not candidate.get("publish_time") and item.get("publish_time"):
@@ -1931,6 +2015,31 @@ def _merge_fused_search_results(
         required_terms=arguments.get("required_terms"),
         required_term_groups=arguments.get("required_term_groups"),
     )
+    if fused.get("results"):
+        fusion_scores = {
+            _search_url_identity(str(item.get("url") or "")): float(item.get("_fusion_score") or 0.0)
+            for item in candidates
+        }
+        hydration_candidates = [
+            {
+                **item,
+                "_fusion_score": fusion_scores.get(_search_url_identity(str(item.get("url") or "")), 0.0),
+            }
+            for item in fused["results"]
+        ]
+        hydrated = hydrate_search_results(
+            hydration_candidates,
+            max_results=min(max(1, int(arguments.get("count") or 10)), 10),
+        )
+        fused = _filter_search_results(
+            {**fused, "results": hydrated},
+            query,
+            count=arguments.get("count", 10),
+            sites=arguments.get("sites"),
+            block_hosts=arguments.get("block_hosts"),
+            required_terms=arguments.get("required_terms"),
+            required_term_groups=arguments.get("required_term_groups"),
+        )
     fused.update(
         search_mode=(
             "parallel_fusion"
@@ -1955,6 +2064,18 @@ def _merge_fused_search_results(
     )
     if partial_failures:
         fused["partial_failures"] = partial_failures[-12:]
+    quality_gaps = []
+    fused_results = fused.get("results") or []
+    if len(fused_results) < int(config["min_relevant_results"]):
+        quality_gaps.append("insufficient_results")
+    if int(fused.get("distinct_domains") or 0) < int(config["min_distinct_domains"]):
+        quality_gaps.append("insufficient_distinct_domains")
+    if not any(item.get("hydration_verified") is True for item in fused_results):
+        quality_gaps.append("no_verified_fulltext")
+    if partial_failures:
+        quality_gaps.append("partial_backend_failures")
+    fused["quality_status"] = "degraded" if quality_gaps else "healthy"
+    fused["quality_gaps"] = quality_gaps
     if fused.get("results"):
         fused["status"] = "ok"
         providers_with_results = sum(bool(result.get("results")) for result in lane_results)
@@ -2004,10 +2125,12 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
     deadline = time.monotonic() + total_timeout
     legacy_arguments = {
         **arguments,
+        "content_format": "search_snippet",
         "_coordination_wait_seconds": total_timeout,
         "_fusion_policy_hash": policy_hash,
         "_fusion_language": profile["language"],
         "_fusion_engines": profile["engines"],
+        "_public_academic_only": True,
     }
     executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="web-search-fusion")
     open_future = executor.submit(_legacy_resilient_web_search, primary, legacy_arguments)
@@ -2143,6 +2266,7 @@ def execute_public_web_search(
     required_terms: list[str] | None = None,
     required_term_groups: list[list[str]] | None = None,
     fusion_strategy: str = "adaptive",
+    include_academic_sources: bool = False,
 ) -> dict:
     """为平台页面提供统一公开检索入口，复用缓存、限流和供应商恢复。"""
     provider = _resolve_web_search_provider()
@@ -2160,6 +2284,7 @@ def execute_public_web_search(
             "required_term_groups": required_term_groups,
             "content_format": "text",
             "_fusion_strategy": fusion_strategy,
+            "_include_academic_sources": include_academic_sources,
         },
     )
 

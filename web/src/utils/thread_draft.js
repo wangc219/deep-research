@@ -14,6 +14,45 @@ export const DEFAULT_DRAFT_SCOPE = 'agent-chat'
 // 新建对话尚未取得线程 ID 时的草稿标识
 export const DRAFT_THREAD_ID = '__draft__'
 
+const normalizeComparableText = (value) =>
+  String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+
+const extractTextContent = (content) => {
+  if (typeof content === 'string') return content
+  if (Array.isArray(content)) return content.map(extractTextContent).filter(Boolean).join(' ')
+  if (!content || typeof content !== 'object') return ''
+  if (typeof content.text === 'string') return content.text
+  if ('content' in content) return extractTextContent(content.content)
+  return ''
+}
+
+const isUserMessage = (message) => {
+  const type = String(message?.type || '').toLowerCase()
+  const role = String(message?.role || '').toLowerCase()
+  return type === 'human' || type === 'user' || role === 'human' || role === 'user'
+}
+
+/**
+ * 判断恢复出的线程草稿是否其实已经作为用户消息持久化。
+ *
+ * 历史接口可能返回纯字符串或 OpenAI/LangChain 风格的 content blocks；这里只和
+ * human/user 消息做完整文本比较，避免因助手恰好输出相同文本而误删真实草稿。
+ *
+ * @param {string} draft 恢复到输入框的本地草稿
+ * @param {Array<object>} messages 当前线程已持久化的消息
+ */
+export const shouldDiscardPersistedThreadDraft = (draft, messages) => {
+  const normalizedDraft = normalizeComparableText(draft)
+  if (!normalizedDraft || !Array.isArray(messages)) return false
+
+  return messages.some((message) => {
+    if (!isUserMessage(message)) return false
+    return normalizeComparableText(extractTextContent(message.content)) === normalizedDraft
+  })
+}
+
 /**
  * 创建基于 localStorage 的线程草稿存储。
  *
@@ -83,6 +122,10 @@ export const createThreadDraftSession = (store, initialThreadId = '') => {
     // 由草稿发送创建新线程后，清理新建对话的临时草稿，避免已发送文本被再次还原
     clearDraftThread() {
       store.remove(DRAFT_THREAD_ID)
+    },
+    // 历史消息确认草稿已发送后，仅清理当前线程，其他会话的未发送输入不受影响
+    clearCurrentThread() {
+      store.remove(draftKey)
     }
   }
 }

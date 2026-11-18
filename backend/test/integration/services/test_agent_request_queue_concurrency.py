@@ -25,6 +25,7 @@ from platform_core.services import agent_request_queue_service
 from platform_core.services import context_compression_service
 from platform_core.services import run_worker
 from platform_core.services.input_message_service import build_chat_input_message
+from platform_core.services.workdir_service import WorkdirBinding
 from platform_core.storage.postgres.models_business import (
     AgentRun,
     AgentRunRequest,
@@ -448,6 +449,97 @@ async def test_concurrent_enqueue_dispatches_fifo_head(monkeypatch: pytest.Monke
         assert results_by_id[request_ids[0]].status == "dispatched"
         assert requests_by_id[request_ids[1]].status == "queued"
         assert results_by_id[request_ids[1]].status == "queued"
+    finally:
+        await _cleanup_queue_test_thread(session_factory, engine, thread_id)
+
+
+async def test_post_commit_dispatch_retry_recovers_current_head_immediately(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """首次派发竞争落空后，提交后的补派应在真实事务中立即创建并投递 Run。"""
+    thread_id = f"pytest-post-commit-retry-{uuid.uuid4()}"
+    uid = f"pytest-user-{uuid.uuid4()}"
+    request_id = f"post-commit-retry-{uuid.uuid4()}"
+    engine = create_async_engine(os.environ["POSTGRES_URL"], pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    dispatch_attempts: list[str | None] = []
+    enqueue_calls: list[str] = []
+    original_dispatch = agent_request_service.dispatch_ready_head
+
+    async def miss_once_then_dispatch(**kwargs):
+        dispatch_attempts.append(kwargs.get("expected_request_id"))
+        if len(dispatch_attempts) == 1:
+            return None
+        return await original_dispatch(**kwargs)
+
+    async def record_enqueue(run_id: str):
+        enqueue_calls.append(run_id)
+
+    monkeypatch.setattr(
+        agent_request_service,
+        "resolve_agent_run_config",
+        AsyncMock(return_value=("model", "default")),
+    )
+    monkeypatch.setattr(agent_request_service, "dispatch_ready_head", miss_once_then_dispatch)
+    monkeypatch.setattr(agent_request_service, "enqueue_agent_run", record_enqueue)
+    monkeypatch.setattr(agent_request_service, "ensure_bound_user_workdir", lambda *_args: None)
+
+    async with session_factory() as db:
+        conversation = await _queue_test_conversation(db, thread_id=thread_id, uid=uid)
+        db.add(conversation)
+        await db.commit()
+        binding = WorkdirBinding(
+            conversation_id=conversation.id,
+            thread_id=thread_id,
+            uid=uid,
+            project_id=str(conversation.project_id),
+            workdir_path=f"projects/{conversation.project_id}",
+            directory_mode="managed",
+        )
+
+    try:
+        async with session_factory() as db:
+            request, dispatch = await agent_request_service._persist_request(
+                db=db,
+                agent_item=MagicMock(),
+                agent_backend=MagicMock(),
+                request_input=AgentRequestInput(
+                    request_id=request_id,
+                    agent_slug="main",
+                    thread_id=thread_id,
+                    input_message=build_chat_input_message("hello"),
+                    queue_policy="enqueue",
+                    origin=RunOrigin(source="chat", channel="web"),
+                ),
+                current_user=SimpleNamespace(uid=uid),
+                workdir_binding=binding,
+            )
+            assert dispatch is None
+            await db.commit()
+            response = await agent_request_service.request_view(
+                repo=AgentRunRequestRepository(db),
+                request=request,
+            )
+
+            published = await agent_request_service._publish_committed_request(
+                response=response,
+                request=request,
+                dispatch=dispatch,
+                workdir_binding=binding,
+                db=db,
+            )
+
+        async with session_factory() as db:
+            persisted_request = await db.scalar(select(AgentRunRequest).where(AgentRunRequest.request_id == request_id))
+            persisted_run = await db.scalar(select(AgentRun).where(AgentRun.request_id == request_id))
+
+        assert dispatch_attempts == [None, request_id]
+        assert published["status"] == "dispatched"
+        assert published["run_id"] == persisted_run.id
+        assert published["request_events_url"] is None
+        assert persisted_request.status == "dispatched"
+        assert persisted_run.status == "pending"
+        assert enqueue_calls == [persisted_run.id]
     finally:
         await _cleanup_queue_test_thread(session_factory, engine, thread_id)
 

@@ -6,6 +6,7 @@ import asyncio
 import os
 import uuid
 from datetime import timedelta
+from functools import partial
 
 import pytest
 from sqlalchemy import text
@@ -19,6 +20,10 @@ from platform_core.repositories.evaluation_repository import EvaluationRepositor
 from platform_core.repositories.knowledge_file_repository import KnowledgeFileRepository
 from platform_core.repositories.task_repository import TaskRepository
 from platform_core.services import task_queue_service
+from platform_core.services.knowledge_task_service import (
+    finish_knowledge_file_task,
+    finish_knowledge_graph_task,
+)
 from platform_core.services.task_queue_service import finalize_task_failure
 from platform_core.services.task_service import TaskContext, Tasker
 from platform_core.storage.postgres.manager import PostgresManager
@@ -79,6 +84,38 @@ async def durable_task_schema(monkeypatch):
     monkeypatch.setattr(task_repository_module, "pg_manager", manager)
     monkeypatch.setattr(evaluation_repository_module, "pg_manager", manager)
     monkeypatch.setattr(knowledge_file_repository_module, "pg_manager", manager)
+
+    try:
+        yield manager
+    finally:
+        await scoped_engine.dispose()
+        async with admin_engine.begin() as connection:
+            await connection.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
+        await admin_engine.dispose()
+
+
+@pytest.fixture
+async def durable_task_only_schema(monkeypatch):
+    """只创建 Task 表，隔离验证不依赖知识治理表的续跑事务。"""
+    schema = f"pytest_durable_task_only_{uuid.uuid4().hex[:16]}"
+    admin_engine = create_async_engine(os.environ["POSTGRES_URL"], pool_pre_ping=True)
+    async with admin_engine.begin() as connection:
+        await connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+
+    scoped_engine = create_async_engine(
+        os.environ["POSTGRES_URL"],
+        pool_pre_ping=True,
+        connect_args={"server_settings": {"search_path": schema}},
+    )
+    async with scoped_engine.begin() as connection:
+        await connection.run_sync(TaskRecord.__table__.create)
+
+    manager = object.__new__(PostgresManager)
+    PostgresManager.__init__(manager)
+    manager.async_engine = scoped_engine
+    manager.AsyncSession = async_sessionmaker(scoped_engine, class_=AsyncSession, expire_on_commit=False)
+    manager._initialized = True
+    monkeypatch.setattr(task_repository_module, "pg_manager", manager)
 
     try:
         yield manager
@@ -416,7 +453,7 @@ async def test_full_worker_fails_legacy_task_through_current_domain_hook(
     )
     published = False
 
-    async def reject_publish(_task_id: str) -> None:
+    async def reject_publish(_task_id: str, **_kwargs) -> None:
         nonlocal published
         published = True
 
@@ -876,6 +913,125 @@ async def test_concurrent_dedupe_creates_one_active_task(durable_task_schema) ->
     reused = [(record.id, is_created) for record, is_created in results if not is_created]
     assert len(created) == 1
     assert reused == [(created[0][0], False)]
+
+
+async def test_knowledge_file_batch_success_atomically_creates_successor(durable_task_only_schema) -> None:
+    """父批次终态与游标后继任务必须在同一真实 PostgreSQL 事务提交。"""
+    now = utc_now_naive()
+    parent_id = uuid.uuid4().hex
+    payload = {
+        "kb_id": "pytest-kb",
+        "scope": "pending",
+        "action": "index",
+        "statuses": ["parsed", "error_indexing"],
+        "count": 1,
+        "params": {},
+        "operator_id": "pytest-user",
+        "after_file_id": "file_0100",
+        "task_file_limit": 100,
+    }
+    payload_match = {"kb_id": "pytest-kb", "scope": "pending", "action": "index"}
+    dedupe_key = Tasker._dedupe_key("knowledge_index", payload_match)
+    await TaskRepository().create(
+        parent_id,
+        {
+            **_task_data(dedupe_key=dedupe_key),
+            "name": "待入库文档入库 (pytest)",
+            "type": "knowledge_index",
+            "payload": {**payload, "after_file_id": None},
+        },
+    )
+    record, claimed = await TaskRepository().claim(
+        parent_id,
+        worker_id="owner-a",
+        lease_seconds=30,
+        now=now,
+    )
+    assert claimed is True
+    assert record is not None
+
+    result = {
+        "processed": 100,
+        "failed": 0,
+        "continuation": {"required": True, "payload": payload},
+    }
+    finished = await TaskRepository().finish_owned(
+        parent_id,
+        worker_id="owner-a",
+        status="success",
+        message="任务已完成",
+        result=result,
+        before_finish=partial(finish_knowledge_file_task, result=result),
+        now=now + timedelta(seconds=1),
+    )
+
+    assert finished is True
+    parent = await TaskRepository().get_by_id(parent_id)
+    assert parent.status == "success"
+    assert parent.dedupe_key is None
+    successor_id = parent.result["continuation"]["task_id"]
+    successor = await TaskRepository().get_by_id(successor_id)
+    assert successor.status == "pending"
+    assert successor.payload == payload
+    assert successor.dedupe_key == dedupe_key
+    assert parent.result["continuation"]["created"] is True
+
+
+async def test_knowledge_graph_batch_success_atomically_creates_successor(durable_task_only_schema) -> None:
+    """图谱父批次终态与后继批次必须在同一真实 PostgreSQL 事务提交。"""
+    now = utc_now_naive()
+    parent_id = uuid.uuid4().hex
+    payload = {
+        "kb_id": "pytest-kb",
+        "action": "build",
+        "operator_id": "pytest-user",
+        "chunk_limit": 500,
+    }
+    payload_match = {"kb_id": "pytest-kb"}
+    dedupe_key = Tasker._dedupe_key("knowledge_graph_index", payload_match)
+    await TaskRepository().create(
+        parent_id,
+        {
+            **_task_data(dedupe_key=dedupe_key),
+            "name": "图谱构建 (pytest)",
+            "type": "knowledge_graph_index",
+            "payload": payload,
+        },
+    )
+    record, claimed = await TaskRepository().claim(
+        parent_id,
+        worker_id="owner-a",
+        lease_seconds=30,
+        now=now,
+    )
+    assert claimed is True
+    assert record is not None
+
+    result = {
+        "success": 500,
+        "retryable_remaining": 1000,
+        "continuation": {"required": True, "payload": payload},
+    }
+    finished = await TaskRepository().finish_owned(
+        parent_id,
+        worker_id="owner-a",
+        status="success",
+        message="任务已完成",
+        result=result,
+        before_finish=partial(finish_knowledge_graph_task, result=result),
+        now=now + timedelta(seconds=1),
+    )
+
+    assert finished is True
+    parent = await TaskRepository().get_by_id(parent_id)
+    assert parent.status == "success"
+    assert parent.dedupe_key is None
+    successor_id = parent.result["continuation"]["task_id"]
+    successor = await TaskRepository().get_by_id(successor_id)
+    assert successor.status == "pending"
+    assert successor.payload == payload
+    assert successor.dedupe_key == dedupe_key
+    assert parent.result["continuation"]["created"] is True
 
 
 @pytest.mark.parametrize("capacity", [12, 20, 24])

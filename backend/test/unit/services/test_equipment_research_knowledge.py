@@ -474,6 +474,7 @@ async def test_durable_task_starts_domain_without_prefetching_knowledge(
             "artifact_relpath": "outputs/equipment-research/run-enterprise-1",
             "artifact_sha256": "digest",
             "model_usage": {},
+            "dynamic_delivery": {"s5_selected_count": 1, "s6_capability_count": 1},
         }
 
     monkeypatch.setattr(task.pg_manager, "get_async_session_context", session_context)

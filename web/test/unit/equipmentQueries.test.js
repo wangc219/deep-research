@@ -173,12 +173,12 @@ test('Query 进度展示耗时、请求、修复批次与恢复数量', async ()
   assert.match(text, /已保存 2\/6.*耗时 12 秒.*请求 3 批 \/ 修复 1 批.*恢复 2 条/)
 })
 
-test('Query 失败原因转为用户可执行的中文说明', () => {
+test('旧版 Query 硬校验失败明确提示按新规则重试', () => {
   const summary = generationErrorSummary({
     error: '仅 0/4 条通过校验；query is outside the supported weapon-equipment capability domain; query is not anchored to its weapon requirement'
   })
-  assert.match(summary, /质量校验未通过/)
-  assert.match(summary, /装备领域关键词/)
-  assert.match(summary, /共享核心对象/)
+  assert.match(summary, /旧版关键词\/字面锚点硬校验/)
+  assert.match(summary, /能力语言无需重复装备名/)
+  assert.match(summary, /点击“重试”/)
   assert.doesNotMatch(summary, /weapon-equipment/)
 })

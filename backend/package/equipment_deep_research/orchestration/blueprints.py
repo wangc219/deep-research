@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
+import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
-import re
 from typing import Any
-from collections.abc import Mapping, Sequence
 
 from equipment_deep_research.agents.orchestrator_prompt import (
     ORCHESTRATOR_PROMPT_VERSION,
 )
 from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.models import ResearchProblem
+from equipment_deep_research.domain.research_focus import branch_reference_focus
 from equipment_deep_research.orchestration.winning_swarm import (
     normalize_winning_swarm_policy,
 )
-from equipment_deep_research.domain.research_focus import branch_reference_focus
 
 
 @dataclass(frozen=True)
@@ -553,11 +553,10 @@ def build_discovery_blueprint(
 ) -> dict[str, Any]:
     model_blueprint = dict(model_blueprint or {})
     resolved = problem.resolved_discovery_branch()
-    requested_code = (
-        str(problem.discovery_branch)
-        if problem.discovery_branch != "auto"
-        else str(model_blueprint.get("primary_branch") or resolved["primary"])
-    )
+    if problem.discovery_branch != "auto":
+        requested_code = str(problem.discovery_branch)
+    else:
+        requested_code = str(model_blueprint.get("primary_branch") or resolved["primary"])
     code = requested_code if requested_code in BRANCH_BLUEPRINTS else str(resolved["primary"])
     spec = BRANCH_BLUEPRINTS[code]
     secondary_source = (
@@ -606,9 +605,11 @@ def build_discovery_blueprint(
         if not any(specialist in wave for wave in waves):
             waves.insert(max(0, len(waves) - 1), [specialist])
     driver_scores = _normalize_driver_scores(model_blueprint.get("driver_scores", []))
+    query_semantic_review = _normalize_query_semantic_review(model_blueprint.get("query_semantic_review", {}))
     structured_query_brief = _normalize_structured_query_brief(
         model_blueprint.get("structured_query_brief", {}),
         fallback=problem.structured_query_brief(),
+        semantic_review=query_semantic_review,
     )
     baseline_agent_plan = _normalize_baseline_agent_plan(
         model_blueprint.get("baseline_agent_plan", []),
@@ -701,6 +702,7 @@ def build_discovery_blueprint(
         "driver_scores": driver_scores,
         "unmatched_driver": unmatched_driver,
         "structured_query_brief": structured_query_brief,
+        "query_semantic_review": query_semantic_review,
         "reference_focus": branch_reference_focus(code),
         "focus_questions": _bounded_text_list(model_blueprint.get("focus_questions", []), limit=8),
         "assumptions": _bounded_text_list(model_blueprint.get("assumptions", []), limit=8),
@@ -715,10 +717,12 @@ def _normalize_structured_query_brief(
     value: Any,
     *,
     fallback: Mapping[str, Any],
+    semantic_review: Mapping[str, Any],
 ) -> dict[str, Any]:
     raw = dict(value) if isinstance(value, Mapping) else {}
     base = dict(fallback)
-    core_query = str(raw.get("core_query") or base.get("core_query", ""))[:500]
+    source_query = str(base.get("core_query", "")).strip()
+    core_query = source_query or str(value.get("core_query", "") if isinstance(value, Mapping) else "")
     supplement_summary = str(raw.get("supplement_summary") or base.get("supplement_summary", ""))[:1200]
     focus_questions = _bounded_text_list(
         raw.get("focus_questions") or base.get("focus_questions", []),
@@ -803,6 +807,39 @@ def _normalize_structured_query_brief(
                 "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
             )
         )[:300],
+        "query_alignment": {
+            "status": (
+                f"agent_{semantic_review.get('verdict')}"
+                if semantic_review.get("verdict") in {"aligned", "revise"}
+                else "not_reviewed"
+            ),
+            "reviewed_by": "auditor" if semantic_review.get("verdict") else "",
+        },
+    }
+
+
+def _normalize_query_semantic_review(value: Any) -> dict[str, Any]:
+    """规范化智能体语义校验记录，不在本地复判Query主题。"""
+
+    raw = dict(value) if isinstance(value, Mapping) else {}
+    verdict = str(raw.get("verdict", "")).strip().lower()
+    if verdict not in {"aligned", "revise"}:
+        return {}
+    contract_value = raw.get("query_contract")
+    contract = dict(contract_value) if isinstance(contract_value, Mapping) else {}
+    return {
+        "verdict": verdict,
+        "query_contract": {
+            "core_subjects_and_relations": _bounded_text_list(contract.get("core_subjects_and_relations", []), limit=8),
+            "requested_perspective": str(contract.get("requested_perspective", ""))[:700],
+            "requested_outcome": str(contract.get("requested_outcome", ""))[:700],
+            "must_preserve": _bounded_text_list(contract.get("must_preserve", []), limit=8),
+            "must_not_assume": _bounded_text_list(contract.get("must_not_assume", []), limit=8),
+            "open_unknowns": _bounded_text_list(contract.get("open_unknowns", []), limit=8),
+        },
+        "issues": _bounded_text_list(raw.get("issues", []), limit=8),
+        "rationale": str(raw.get("rationale", ""))[:1200],
+        "confidence": _bounded_confidence(raw.get("confidence"), fallback=0.0),
     }
 
 

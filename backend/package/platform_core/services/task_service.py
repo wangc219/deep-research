@@ -34,6 +34,7 @@ TERMINAL_STATUSES = TERMINAL_TASK_STATUSES
 PROGRESS_PERSIST_DELTA = 2.0
 TASKER_DEFAULT_TIMEOUT_SECONDS = float(os.getenv("TASKER_DEFAULT_TIMEOUT_SECONDS", 6 * 60 * 60))
 DURABLE_TASK_MAX_RUNNING = get_int_env("DURABLE_TASK_MAX_RUNNING", 4)
+INNOVATION_BRIEF_MAX_RUNNING = get_int_env("INNOVATION_BRIEF_MAX_RUNNING", 2)
 EQUIPMENT_TASK_LEASE_SECONDS = float(
     get_int_env(
         "EQUIPMENT_TASK_LEASE_SECONDS",
@@ -44,9 +45,15 @@ EQUIPMENT_TASK_LEASE_SECONDS = float(
 EQUIPMENT_TASK_CAPACITIES = {
     "wxchannels_transcribe": 1,
     "wxchannels_central_discover": 1,
+    "innovation_brief_generate": INNOVATION_BRIEF_MAX_RUNNING,
     EQUIPMENT_RESEARCH_TASK_TYPE: EQUIPMENT_RESEARCH_MAX_RUNNING,
     EQUIPMENT_QUERY_TASK_TYPE: EQUIPMENT_QUERY_MAX_RUNNING,
     EQUIPMENT_DEEP_TASK_TYPE: EQUIPMENT_DEEP_MAX_RUNNING,
+}
+BLOCKING_TASK_TYPES = {
+    "knowledge_parse",
+    "knowledge_index",
+    "knowledge_graph_index",
 }
 DURABLE_TASK_PUBLISH_BATCH = (
     DURABLE_TASK_MAX_RUNNING
@@ -65,10 +72,10 @@ async def resolve_task_capacity(task_type: str) -> int:
     budget = read_budget()
     if task_type != EQUIPMENT_RESEARCH_TASK_TYPE:
         if budget is not None:
-            if task_type == 'wxchannels_transcribe' and budget.get('memory_pressure'):
+            if task_type == "wxchannels_transcribe" and budget.get("memory_pressure"):
                 return 0
             if task_type not in EQUIPMENT_TASK_CAPACITIES:
-                return min(fallback, int(budget['bulk_slots']))
+                return min(fallback, int(budget["bulk_slots"]))
         return fallback
     try:
         configured = int((await system_options.get()).get("equipment_research_max_running") or fallback)
@@ -76,7 +83,7 @@ async def resolve_task_capacity(task_type: str) -> int:
         logger.warning("Failed to resolve live equipment research capacity; using startup fallback", exc_info=True)
         configured = fallback
     configured = min(max(configured, 1), EQUIPMENT_RESEARCH_CAPACITY_LIMIT)
-    return min(configured, int(budget['research_slots'])) if budget is not None else configured
+    return min(configured, int(budget["research_slots"])) if budget is not None else configured
 
 
 def resolve_task_lease_seconds(task_type: str) -> float:
@@ -87,7 +94,7 @@ def resolve_task_lease_seconds(task_type: str) -> float:
     ordinary short durable tasks keep the fast 30-second orphan recovery.
     """
 
-    if task_type in EQUIPMENT_TASK_CAPACITIES:
+    if task_type in EQUIPMENT_TASK_CAPACITIES or task_type in BLOCKING_TASK_TYPES:
         return EQUIPMENT_TASK_LEASE_SECONDS
     return TASK_LEASE_SECONDS
 
@@ -351,7 +358,7 @@ class Tasker:
     @staticmethod
     async def _publish_created_task(task: Task) -> None:
         try:
-            await publish_task(task.id)
+            await publish_task(task.id, task_type=task.type)
         except Exception:
             logger.error("Task publication failed; pending intent will be retried: task_id=%s", task.id, exc_info=True)
 
@@ -492,6 +499,15 @@ async def process_task(ctx: dict[str, Any], task_id: str) -> None:
     repo = TaskRepository()
     record = await repo.get_by_id(task_id)
     if record is None or record.status in TERMINAL_STATUSES:
+        return
+    allowed_task_type = str(ctx.get("durable_task_type_filter") or "")
+    if allowed_task_type and record.type != allowed_task_type:
+        logger.error(
+            "Durable Task reached the wrong dedicated worker: task_id=%s, type=%s, allowed_type=%s",
+            task_id,
+            record.type,
+            allowed_task_type,
+        )
         return
 
     handler_version = 1 if record.handler_version is None else int(record.handler_version)

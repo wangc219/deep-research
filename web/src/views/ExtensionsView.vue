@@ -17,7 +17,7 @@
     >
       <RouterLink
         to="/extensions"
-        :aria-current="!wxChannelsActive && !wechatArticlesActive ? 'page' : undefined"
+        :aria-current="libraryActive ? 'page' : undefined"
       >
         <BookOpen :size="28" />资料库
       </RouterLink>
@@ -33,12 +33,27 @@
       >
         <Newspaper :size="28" />公众号文章
       </RouterLink>
+      <RouterLink
+        v-if="knowledgeGovernanceEnabled"
+        :to="{ path: '/extensions', query: { tool: 'knowledge-governance' } }"
+        :aria-current="knowledgeGovernanceActive ? 'page' : undefined"
+      >
+        <DatabaseZap :size="28" />来源治理
+      </RouterLink>
+      <RouterLink
+        :to="{ path: '/extensions', query: { tool: 'innovation-briefs' } }"
+        :aria-current="innovationBriefsActive ? 'page' : undefined"
+      >
+        <Radar :size="28" />前沿简报
+      </RouterLink>
     </nav>
 
     <div v-if="!isDetailPage" class="extensions-content">
       <div v-if="activeTab === 'knowledge'" class="tab-panel">
         <WxChannelsView v-if="wxChannelsActive" />
         <WechatArticlesView v-else-if="wechatArticlesActive" />
+        <KnowledgeGovernanceView v-else-if="knowledgeGovernanceActive" />
+        <InnovationBriefsView v-else-if="innovationBriefsActive" />
         <DataBaseView v-else ref="knowledgeRef" embedded />
       </div>
       <div v-if="userStore.isAdmin && activeTab === 'tools'" class="tab-panel">
@@ -59,7 +74,7 @@
 <script setup>
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { BookOpen, Film, Newspaper } from '@lucide/vue'
+import { BookOpen, DatabaseZap, Film, Newspaper, Radar } from '@lucide/vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import AsyncViewError from '@/components/shared/AsyncViewError.vue'
 import { useUserStore } from '@/stores/user'
@@ -94,8 +109,33 @@ const WechatArticlesView = defineAsyncComponent({
   errorComponent: AsyncViewError,
   timeout: 20000
 })
+const knowledgeGovernanceEnabled =
+  import.meta.env.VITE_ENABLE_KNOWLEDGE_GOVERNANCE === 'true'
+const KnowledgeGovernanceView = knowledgeGovernanceEnabled
+  ? defineAsyncComponent({
+      loader: () => import('@/views/KnowledgeGovernanceView.vue'),
+      errorComponent: AsyncViewError,
+      timeout: 20000
+    })
+  : null
+const InnovationBriefsView = defineAsyncComponent({
+  loader: () => import('@/views/InnovationBriefsView.vue'),
+  errorComponent: AsyncViewError,
+  timeout: 20000
+})
 const wechatArticlesActive = computed(() => route.query.tool === 'wechat-articles')
 const wxChannelsActive = computed(() => route.query.tool === 'wxchannels')
+const knowledgeGovernanceActive = computed(
+  () => knowledgeGovernanceEnabled && route.query.tool === 'knowledge-governance'
+)
+const innovationBriefsActive = computed(() => route.query.tool === 'innovation-briefs')
+const libraryActive = computed(
+  () =>
+    !wxChannelsActive.value &&
+    !wechatArticlesActive.value &&
+    !knowledgeGovernanceActive.value &&
+    !innovationBriefsActive.value
+)
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()

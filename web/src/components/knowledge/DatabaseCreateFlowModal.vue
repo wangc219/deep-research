@@ -44,6 +44,56 @@
               placeholder="例如：产品资料库"
             />
           </div>
+          <div v-if="!zhipuSelected" class="form-section classification-section">
+            <div class="classification-heading">
+              <div>
+                <label>知识库主分类</label>
+                <small>按组织分类树选择一级或子级分类；后续来源和文档只能挂在该分支内。</small>
+              </div>
+              <a-button
+                v-if="userStore.isAdmin"
+                size="small"
+                :disabled="categoryLoading"
+                @click="openCategoryCreate"
+              >
+                新建分类节点
+              </a-button>
+            </div>
+            <a-tree-select
+              v-model:value="form.category_id"
+              allow-clear
+              show-search
+              tree-default-expand-all
+              tree-node-filter-prop="title"
+              :loading="categoryLoading"
+              :tree-data="categoryTreeData"
+              class="full-width"
+              placeholder="选择主分类；暂不确定可留空"
+            />
+            <small v-if="selectedCategoryLabel" class="selected-category-path">
+              当前分类：{{ selectedCategoryLabel }}
+            </small>
+            <a-alert
+              v-if="categoryLoadError"
+              type="error"
+              show-icon
+              message="分类树加载失败"
+              description="可重试加载；也可以暂时留空，知识库将归入未分类。"
+            >
+              <template #action>
+                <a-button size="small" :loading="categoryLoading" @click="loadCategories">
+                  重试
+                </a-button>
+              </template>
+            </a-alert>
+            <a-alert
+              v-else-if="!categoryLoading && !categoryTreeData.length"
+              type="warning"
+              show-icon
+              message="组织尚未建立分类树"
+              :description="userStore.isAdmin ? '可点击“新建分类节点”后直接选择；留空创建则归入未分类。' : '请联系管理员建立分类树；留空创建则归入未分类。'"
+            />
+          </div>
           <div class="form-section">
             <label>知识库类型 <b>*</b></label>
             <div class="type-options" role="radiogroup" aria-label="知识库类型">
@@ -188,6 +238,10 @@
                 <span class="summary-label">描述</span>
                 <span class="summary-value desc">{{ form.description.trim() }}</span>
               </div>
+              <div v-if="selectedCategoryLabel" class="summary-item">
+                <span class="summary-label">组织主分类</span>
+                <span class="summary-value">{{ selectedCategoryLabel }}</span>
+              </div>
             </div>
           </div>
           <a-alert
@@ -204,6 +258,13 @@
             :auto-select-user-dept="true"
             :require-read-scope="true"
           />
+          <label v-if="selectedTypeInfo?.supports_documents !== false" class="create-next-step">
+            <a-checkbox v-model:checked="continueWithUpload" />
+            <span>
+              <strong>创建后立即上传资料</strong>
+              <small>自动进入新知识库并打开上传窗口；上传时可一并完成解析、分块和向量入库。</small>
+            </span>
+          </label>
         </section>
       </main>
 
@@ -221,6 +282,54 @@
       </footer>
     </div>
   </a-modal>
+
+  <a-modal
+    v-model:open="categoryCreateOpen"
+    title="新建组织分类节点"
+    ok-text="创建并选择"
+    cancel-text="取消"
+    destroy-on-close
+    :closable="!categoryCreating"
+    :mask-closable="!categoryCreating"
+    :keyboard="!categoryCreating"
+    :confirm-loading="categoryCreating"
+    @ok="saveCategory"
+  >
+    <div class="category-create-form">
+      <div class="form-section">
+        <label for="category-create-name">分类名称 <b>*</b></label>
+        <a-input
+          id="category-create-name"
+          v-model:value="categoryForm.name"
+          placeholder="例如：新质作战技术"
+          @press-enter="saveCategory"
+        />
+      </div>
+      <div class="form-section">
+        <label>父分类</label>
+        <a-tree-select
+          v-model:value="categoryForm.parent_id"
+          allow-clear
+          show-search
+          tree-default-expand-all
+          tree-node-filter-prop="title"
+          :tree-data="categoryTreeData"
+          class="full-width"
+          placeholder="留空表示一级分类"
+        />
+        <small>选中父分类后，新节点会成为它的下一级分类。</small>
+      </div>
+      <div class="form-section">
+        <label for="category-create-description">分类说明</label>
+        <a-textarea
+          id="category-create-description"
+          v-model:value="categoryForm.description"
+          :rows="3"
+          placeholder="说明适用领域、边界或归类口径"
+        />
+      </div>
+    </div>
+  </a-modal>
 </template>
 
 <script setup>
@@ -233,8 +342,12 @@ import ShareConfigForm from '@/components/ShareConfigForm.vue'
 import { useChunkPresetOptions } from '@/composables/useChunkPresetOptions'
 import { useConfigStore } from '@/stores/config'
 import { useDatabaseStore } from '@/stores/database'
+import { useUserStore } from '@/stores/user'
+import { knowledgeGovernanceApi } from '@/apis/knowledge_governance_api'
 import { getKbTypeIcon, getKbTypeLabel } from '@/utils/kb_utils'
 import {
+  buildCategoryPathMap,
+  buildCategoryTreeData,
   buildDatabaseRequest,
   createDefaultShareConfig,
   createEmptyDatabaseForm,
@@ -250,6 +363,7 @@ const props = defineProps({
 const emit = defineEmits(['update:open', 'completed', 'connect-zhipu'])
 const configStore = useConfigStore()
 const databaseStore = useDatabaseStore()
+const userStore = useUserStore()
 const {
   chunkPresetSelectOptions: chunkPresetOptions,
   chunkPresetLoading,
@@ -263,12 +377,20 @@ const orderedKbTypes = computed(() => ({
   ...Object.fromEntries(Object.entries(props.supportedKbTypes).filter(([key]) => key !== 'milvus'))
 }))
 
-const stepLabels = ['类型', '配置', '权限']
+const stepLabels = ['基础与分类', '配置', '权限']
 const currentStep = ref(0)
 const zhipuSelected = ref(false)
 const form = reactive(createEmptyDatabaseForm(configStore.config?.embed_model))
 const shareConfig = ref(createDefaultShareConfig())
 const shareConfigFormRef = ref(null)
+const categoryLoading = ref(false)
+const categoryLoadError = ref(false)
+const categoryTreeData = ref([])
+const categoryPathMap = ref(new Map())
+const categoryCreateOpen = ref(false)
+const categoryCreating = ref(false)
+const continueWithUpload = ref(true)
+const categoryForm = reactive({ name: '', parent_id: null, description: '' })
 const creating = computed(() => databaseStore.state.creating)
 const selectedTypeInfo = computed(() => props.supportedKbTypes[form.kb_type] || null)
 const selectedTypeLabel = computed(
@@ -280,6 +402,9 @@ const selectedPresetLabel = computed(() => {
   const match = chunkPresetOptions.value?.find((o) => o.value === form.chunk_preset_id)
   return match?.label || form.chunk_preset_id
 })
+const selectedCategoryLabel = computed(
+  () => categoryPathMap.value.get(form.category_id) || ''
+)
 const configuredParamCount = computed(
   () =>
     createParamOptions.value.filter((field) => {
@@ -293,7 +418,10 @@ const footerSummary = computed(() => {
     const typeText = selectedTypeLabel.value
       ? `已选 ${selectedTypeLabel.value}`
       : '请选择知识库类型'
-    return form.name.trim() ? `${form.name.trim()} · ${typeText}` : typeText
+    const classification = selectedCategoryLabel.value || '未分类'
+    return form.name.trim()
+      ? `${form.name.trim()} · ${classification} · ${typeText}`
+      : `${classification} · ${typeText}`
   }
   if (currentStep.value === 1) return `${selectedTypeLabel.value} · ${form.name.trim()}`
   return `${selectedTypeLabel.value} · ${form.name.trim()}`
@@ -308,6 +436,9 @@ const reset = () => {
     ? { version: 2, read_scope: null, manage_scope: null }
     : createDefaultShareConfig()
   currentStep.value = 0
+  continueWithUpload.value = true
+  categoryCreateOpen.value = false
+  Object.assign(categoryForm, { name: '', parent_id: null, description: '' })
 }
 
 const selectType = (type) => {
@@ -317,6 +448,54 @@ const selectType = (type) => {
 const handleCancel = () => {
   if (creating.value) return
   emit('update:open', false)
+}
+const loadCategories = async () => {
+  categoryLoading.value = true
+  categoryLoadError.value = false
+  try {
+    const result = await knowledgeGovernanceApi.categories()
+    categoryTreeData.value = buildCategoryTreeData(result.items || [])
+    categoryPathMap.value = buildCategoryPathMap(result.items || [])
+  } catch {
+    categoryTreeData.value = []
+    categoryPathMap.value = new Map()
+    categoryLoadError.value = true
+  } finally {
+    categoryLoading.value = false
+  }
+}
+const openCategoryCreate = () => {
+  Object.assign(categoryForm, {
+    name: '',
+    parent_id: form.category_id || null,
+    description: ''
+  })
+  categoryCreateOpen.value = true
+}
+const saveCategory = async () => {
+  const name = categoryForm.name.trim()
+  if (!name) {
+    message.warning('请输入分类名称')
+    return
+  }
+  categoryCreating.value = true
+  try {
+    const created = await knowledgeGovernanceApi.createCategory({
+      name,
+      parent_id: categoryForm.parent_id || null,
+      description: categoryForm.description.trim(),
+      sort_order: 0,
+      active: true
+    })
+    await loadCategories()
+    form.category_id = created.id
+    categoryCreateOpen.value = false
+    message.success('分类已创建并选中')
+  } catch (cause) {
+    message.error(cause.message || '分类创建失败')
+  } finally {
+    categoryCreating.value = false
+  }
 }
 const goNext = () => {
   if (currentStep.value === 0) {
@@ -363,7 +542,9 @@ const handleCreate = async () => {
   try {
     const result = await databaseStore.createDatabase(request)
     if (!result) return
-    emit('completed', result)
+    emit('completed', result, {
+      openUpload: continueWithUpload.value && selectedTypeInfo.value?.supports_documents !== false
+    })
     emit('update:open', false)
   } catch {
     // Store 已展示错误，保留当前步骤和输入供用户修正。
@@ -376,6 +557,7 @@ watch(
     if (!open) return
     reset()
     loadChunkPresetOptions()
+    loadCategories()
   }
 )
 watch(
@@ -590,6 +772,34 @@ watch(
 .form-section label b {
   color: var(--color-error-500);
 }
+.classification-section {
+  padding: 12px;
+  border: 1px solid var(--gray-150);
+  border-radius: 8px;
+  background: var(--gray-0);
+}
+.classification-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.classification-heading > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.selected-category-path {
+  color: var(--main-color) !important;
+  font-weight: 500;
+}
+.category-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 4px;
+}
 .full-width {
   width: 100%;
 }
@@ -686,6 +896,31 @@ watch(
   color: var(--gray-600);
   line-height: 16px;
 }
+.create-next-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--main-100);
+  border-radius: 8px;
+  background: var(--main-10);
+  cursor: pointer;
+}
+.create-next-step > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.create-next-step strong {
+  color: var(--gray-900);
+  font-size: 13px;
+}
+.create-next-step small {
+  color: var(--gray-600);
+  font-size: 12px;
+  line-height: 18px;
+}
 .create-flow-footer {
   display: flex;
   align-items: center;
@@ -706,6 +941,10 @@ watch(
     grid-template-columns: 1fr;
   }
   .create-flow-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .classification-heading {
     align-items: stretch;
     flex-direction: column;
   }

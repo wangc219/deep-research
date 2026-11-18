@@ -54,7 +54,7 @@ test('只读连接器没有知识库详情入口并拒绝直接详情 URL', () =
   )
   assert.match(
     detailSource,
-    /action !== 'edit' \|\| loading \|\| !loaded \|\| !canManageDatabase\.value/
+    /!\['edit', 'upload'\]\.includes\(action\) \|\| loading \|\| !loaded \|\| !canManageDatabase\.value/
   )
   assert.match(detailSource, /@after-close="handleEditModalAfterClose"/)
   assert.match(
@@ -78,7 +78,7 @@ test('检索面板强制挂载以保留上传后的示例问题生成', () => {
   assert.match(detailSource, /key: 'query', label: '检索测试', icon: Search, forceRender: true/)
 })
 
-test('知识库详情串联上传、解析、入库、检索、图谱与评估工作流', () => {
+test('知识库详情串联上传、解析、入库、图谱抽取和创新发现工作流', () => {
   const detailSource = readSource('../../src/views/DataBaseInfoView.vue')
   const workflowSource = readSource(
     '../../src/components/knowledge/KnowledgeWorkflowOverview.vue'
@@ -89,13 +89,29 @@ test('知识库详情串联上传、解析、入库、检索、图谱与评估�
   assert.match(detailSource, /@parse="confirmBatchParse"/)
   assert.match(detailSource, /@index="confirmBatchIndex"/)
   assert.match(detailSource, /@navigate="handleActiveTabChange"/)
-  assert.match(workflowSource, /知识入库与质量链路/)
-  assert.match(workflowSource, /label: '资料'/)
+  assert.match(workflowSource, /从资料到知识图谱/)
+  assert.match(workflowSource, /label: '上传资料'/)
   assert.match(workflowSource, /label: '解析与分块'/)
   assert.match(workflowSource, /label: '向量入库'/)
-  assert.match(workflowSource, /label: '检索验证'/)
-  assert.match(workflowSource, /label: '持续评估'/)
-  assert.match(workflowSource, /知识图谱/)
+  assert.match(workflowSource, /label: '实体关系抽取'/)
+  assert.match(workflowSource, /label: '检索与创新'/)
+  assert.match(workflowSource, /轻量化 RAG 定向抽取与跨文档增强/)
+  assert.match(workflowSource, /自上\/自下创新预测/)
+})
+
+test('创建知识库后默认无缝进入上传，仍允许用户在创建前关闭', () => {
+  const listSource = readSource('../../src/views/DataBaseView.vue')
+  const detailSource = readSource('../../src/views/DataBaseInfoView.vue')
+  const createSource = readSource('../../src/components/knowledge/DatabaseCreateFlowModal.vue')
+
+  assert.match(createSource, /创建后立即上传资料/)
+  assert.match(createSource, /const continueWithUpload = ref\(true\)/)
+  assert.match(createSource, /openUpload: continueWithUpload\.value/)
+  assert.match(listSource, /@completed="handleDatabaseCreated"/)
+  assert.match(listSource, /action: 'upload'/)
+  assert.match(detailSource, /\['edit', 'upload'\]\.includes\(action\)/)
+  assert.match(detailSource, /action === 'upload' && isMilvus\.value/)
+  assert.match(detailSource, /showAddFilesModal\(\)/)
 })
 
 test('检索页在索引未就绪时显示原因和可执行下一步', () => {

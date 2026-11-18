@@ -58,11 +58,7 @@ def _user_facing_text_list(value: Any, *, limit: int) -> list[str]:
     they are simply not merged into fields later rendered as operational prose.
     """
 
-    return [
-        item
-        for item in _text_list(value, limit=limit)
-        if not _INTERNAL_WORKFLOW_COMMENTARY_RE.search(item)
-    ]
+    return [item for item in _text_list(value, limit=limit) if not _INTERNAL_WORKFLOW_COMMENTARY_RE.search(item)]
 
 
 def _user_facing_text(value: Any, *, limit: int) -> str:
@@ -70,12 +66,8 @@ def _user_facing_text(value: Any, *, limit: int) -> str:
     return "" if _INTERNAL_WORKFLOW_COMMENTARY_RE.search(text) else text
 
 
-_MECHANICAL_SUMMARY_START_RE = re.compile(
-    r"^(?:这是一(?:种|型|组)|它是|一种|该装备是|本装备是)"
-)
-_UNEXPLAINED_SUMMARY_ABBREVIATION_RE = re.compile(
-    r"(?<![A-Za-z0-9])(?:[A-Z]{2,}(?:[-/][A-Z0-9]+)*)(?![A-Za-z0-9])"
-)
+_MECHANICAL_SUMMARY_START_RE = re.compile(r"^(?:这是一(?:种|型|组)|它是|一种|该装备是|本装备是)")
+_UNEXPLAINED_SUMMARY_ABBREVIATION_RE = re.compile(r"(?<![A-Za-z0-9])(?:[A-Z]{2,}(?:[-/][A-Z0-9]+)*)(?![A-Za-z0-9])")
 
 
 def winning_summary_language_issues(value: Any) -> list[str]:
@@ -105,17 +97,14 @@ def winning_summary_language_issues(value: Any) -> list[str]:
 # This is an authoring principle rather than a maturity threshold. Frontier
 # weapons may be difficult or years away, but their causal chain still has to
 # obey known science and close through an actual weapon body.
-SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION = load_dynamic_winning_prompt(
-    "common", section="scientific_realizability"
-)
+SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION = load_dynamic_winning_prompt("common", section="scientific_realizability")
 
 
 # Proposal names are communication aids, never claims that a named programme
 # exists.  Keeping this rule next to swarm planning makes it available before
 # S6, where names otherwise arrive already template-shaped.
 QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
-    load_dynamic_winning_prompt("common", section="naming_convention")
-    + SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
+    load_dynamic_winning_prompt("common", section="naming_convention") + SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
 )
 
 
@@ -126,24 +115,13 @@ QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
 # reviewed catalog lives in common.md so model-facing text is not hidden in
 # execution code.
 def _load_combat_equipment_divergence_dimensions() -> tuple[dict[str, str], ...]:
-    value = load_dynamic_winning_json(
-        "common", section="common.combat_equipment_dimensions"
-    )
-    if not isinstance(value, list) or not all(
-        isinstance(item, Mapping) for item in value
-    ):
-        raise ValueError(
-            "dynamic resource section must be a JSON object list: common.combat_equipment_dimensions"
-        )
-    return tuple(
-        {str(key): str(item_value) for key, item_value in item.items()}
-        for item in value
-    )
+    value = load_dynamic_winning_json("common", section="common.combat_equipment_dimensions")
+    if not isinstance(value, list) or not all(isinstance(item, Mapping) for item in value):
+        raise ValueError("dynamic resource section must be a JSON object list: common.combat_equipment_dimensions")
+    return tuple({str(key): str(item_value) for key, item_value in item.items()} for item in value)
 
 
-COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS: tuple[dict[str, str], ...] = (
-    _load_combat_equipment_divergence_dimensions()
-)
+COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS: tuple[dict[str, str], ...] = _load_combat_equipment_divergence_dimensions()
 
 CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
     1: (),
@@ -230,23 +208,11 @@ def _frontloaded_role_governance(
     resource = load_dynamic_winning_json("common", section="role_governance")
     if not isinstance(resource, Mapping):
         raise ValueError("dynamic role_governance must be an object")
-    common_methods = [
-        str(item)
-        for item in resource.get("common_methodology", [])
-        if str(item).strip()
-    ]
-    common_gates = [
-        str(item)
-        for item in resource.get("common_quality_gates", [])
-        if str(item).strip()
-    ]
+    common_methods = [str(item) for item in resource.get("common_methodology", []) if str(item).strip()]
+    common_gates = [str(item) for item in resource.get("common_quality_gates", []) if str(item).strip()]
     nodes = resource.get("nodes", {})
     node_key = "S3_S4" if mission_node in {"S3", "S4"} else mission_node
-    node = (
-        nodes.get(node_key, nodes.get("default", {}))
-        if isinstance(nodes, Mapping)
-        else {}
-    )
+    node = nodes.get(node_key, nodes.get("default", {})) if isinstance(nodes, Mapping) else {}
     if not isinstance(node, Mapping):
         node = {}
     methods = [str(item) for item in node.get("methodology", []) if str(item).strip()]
@@ -296,9 +262,10 @@ def default_winning_swarm_policy(
         "s3_s4_candidate_maximum_per_session": 3 if dynamic_v2 else 3,
         # One seat contributes at most three concepts to the global pool.
         "s3_s4_candidate_pool_maximum_per_session": 3 if dynamic_v2 else 3,
-        # S3/S4 use one creative pass by default.  A second pass remains
-        # available via policy/env when the first pass is structurally empty.
-        "s3_s4_creative_passes": 1 if dynamic_v2 else 3,
+        # Reserve one bounded in-session reconstruction pass when the first
+        # draft does not close the single-weapon identity contract or the
+        # three-dimension trace. Complete first drafts still stop immediately.
+        "s3_s4_creative_passes": 2 if dynamic_v2 else 3,
         # Capacity is not a quota. The Query controller may activate any
         # smaller number of relevant S3/S4 dimension Agents.
         "s3_winning_thesis_capacity": 4 if dynamic_v2 else 0,
@@ -307,29 +274,20 @@ def default_winning_swarm_policy(
         # activated S3 set does not collapse after a sound semantic rejection. Every retry
         # still uses a thesis selected before S3; no local family filling.
         "s3_empty_reallocation_max": 2 if dynamic_v2 else 0,
-        # Dynamic-v2 treats six finalists as a delivery contract. S5 still
-        # owns semantic admission: the controller may not invent weak rows to
-        # fill the target, and must expose a failed quantity gate when fewer
-        # than six independently admissible candidates survive.
+        # Six finalists are the minimum delivery baseline, not the ceiling.
+        # S5 may keep additional high-quality, independently useful weapon
+        # concepts so every admitted direction can receive its own S6 card.
+        # The controller must never duplicate or resurrect weak rows merely
+        # to satisfy the minimum.
         "finalist_minimum": 6 if dynamic_v2 else 5 if quality_cluster else 2,
-        "finalist_maximum": 6 if dynamic_v2 else 7 if quality_cluster else 4,
-        "minimum_direct_combat_equipment": 2
-        if dynamic_v2
-        else 3
-        if quality_cluster
-        else 0,
-        "preferred_distinct_direct_equipment": (
-            3 if dynamic_v2 else 5 if quality_cluster else 0
-        ),
+        "finalist_maximum": 10 if dynamic_v2 else 7 if quality_cluster else 4,
+        "minimum_direct_combat_equipment": 2 if dynamic_v2 else 3 if quality_cluster else 0,
+        "preferred_distinct_direct_equipment": (3 if dynamic_v2 else 5 if quality_cluster else 0),
         "recursive_recruitment_allowed": False,
         "raw_session_sharing_allowed": False,
         "expert_judge_enabled": False if dynamic_v2 else quality_cluster,
         "expert_judge_required": False if dynamic_v2 else quality_cluster,
-        "expert_candidate_pool_maximum": 0
-        if dynamic_v2
-        else 10
-        if quality_cluster
-        else 8,
+        "expert_candidate_pool_maximum": 0 if dynamic_v2 else 10 if quality_cluster else 8,
         "foresight_first_enabled": quality_cluster,
         "frontier_evidence_relaxation": quality_cluster,
         "frontier_final_gate_minimum_score": 0.62,
@@ -453,12 +411,8 @@ def normalize_winning_swarm_policy(
                 maximum_instances,
                 int(base["mission_graph_max_instances"]),
             ),
-            "minimum_expected_gain": _bounded_float(
-                raw.get("minimum_expected_gain"), 0.0, 1.0, 0.03
-            ),
-            "breadth_hypothesis_minimum": _bounded_int(
-                raw.get("breadth_hypothesis_minimum"), 1, 12, 1
-            ),
+            "minimum_expected_gain": _bounded_float(raw.get("minimum_expected_gain"), 0.0, 1.0, 0.03),
+            "breadth_hypothesis_minimum": _bounded_int(raw.get("breadth_hypothesis_minimum"), 1, 12, 1),
             "breadth_hypothesis_maximum": _bounded_int(
                 raw.get("breadth_hypothesis_maximum"),
                 1,
@@ -498,13 +452,13 @@ def normalize_winning_swarm_policy(
             "finalist_minimum": _bounded_int(
                 raw.get("finalist_minimum"),
                 1,
-                7,
+                12 if dynamic_v2 else 7,
                 int(base["finalist_minimum"]),
             ),
             "finalist_maximum": _bounded_int(
                 raw.get("finalist_maximum"),
                 1,
-                7,
+                12 if dynamic_v2 else 7,
                 int(base["finalist_maximum"]),
             ),
             "minimum_direct_combat_equipment": _bounded_int(
@@ -521,18 +475,10 @@ def normalize_winning_swarm_policy(
             ),
             "recursive_recruitment_allowed": False,
             "raw_session_sharing_allowed": False,
-            "expert_judge_enabled": False
-            if dynamic_v2
-            else bool(raw.get("expert_judge_enabled", quality_cluster)),
-            "expert_judge_required": False
-            if dynamic_v2
-            else bool(raw.get("expert_judge_required", quality_cluster)),
-            "foresight_first_enabled": bool(
-                raw.get("foresight_first_enabled", quality_cluster)
-            ),
-            "frontier_evidence_relaxation": bool(
-                raw.get("frontier_evidence_relaxation", quality_cluster)
-            ),
+            "expert_judge_enabled": False if dynamic_v2 else bool(raw.get("expert_judge_enabled", quality_cluster)),
+            "expert_judge_required": False if dynamic_v2 else bool(raw.get("expert_judge_required", quality_cluster)),
+            "foresight_first_enabled": bool(raw.get("foresight_first_enabled", quality_cluster)),
+            "frontier_evidence_relaxation": bool(raw.get("frontier_evidence_relaxation", quality_cluster)),
             "frontier_final_gate_minimum_score": _bounded_float(
                 raw.get("frontier_final_gate_minimum_score"), 0.0, 1.0, 0.62
             ),
@@ -574,9 +520,7 @@ def normalize_winning_swarm_policy(
                 1.0,
                 0.42,
             ),
-            "expert_repair_enabled": False
-            if dynamic_v2
-            else bool(raw.get("expert_repair_enabled", quality_cluster)),
+            "expert_repair_enabled": False if dynamic_v2 else bool(raw.get("expert_repair_enabled", quality_cluster)),
             "expert_repair_max_candidates": 0
             if dynamic_v2
             else _bounded_int(
@@ -629,25 +573,19 @@ def normalize_winning_swarm_policy(
         ),
     )
     requested_archetypes = _text_list(raw.get("archetypes", []), limit=16)
-    allowed_archetypes = (
-        _DYNAMIC_V2_ARCHETYPE_IDS if dynamic_v2 else SWARM_SPECIALIST_ARCHETYPES.keys()
+    allowed_archetypes = _DYNAMIC_V2_ARCHETYPE_IDS if dynamic_v2 else SWARM_SPECIALIST_ARCHETYPES.keys()
+    base["archetypes"] = [item for item in requested_archetypes if item in allowed_archetypes] or sorted(
+        allowed_archetypes
     )
-    base["archetypes"] = [
-        item for item in requested_archetypes if item in allowed_archetypes
-    ] or sorted(allowed_archetypes)
     promotion = dict(base["promotion"])
     if isinstance(raw.get("promotion"), Mapping):
         promotion.update(dict(raw["promotion"]))
     promotion.update(
         {
-            "minimum_eligible_runs": max(
-                10, _bounded_int(promotion.get("minimum_eligible_runs"), 1, 1000, 10)
-            ),
+            "minimum_eligible_runs": max(10, _bounded_int(promotion.get("minimum_eligible_runs"), 1, 1000, 10)),
             "minimum_positive_increment_rate": max(
                 0.70,
-                _bounded_float(
-                    promotion.get("minimum_positive_increment_rate"), 0.0, 1.0, 0.70
-                ),
+                _bounded_float(promotion.get("minimum_positive_increment_rate"), 0.0, 1.0, 0.70),
             ),
             "maximum_evidence_hard_failures": 0,
             "maximum_permission_hard_failures": 0,
@@ -730,29 +668,17 @@ class WinningSwarmController:
             raise ValueError("dynamic role requires an archetype")
         catalog = _all_role_archetypes()
         spec = catalog.get(archetype, {})
-        display_name = str(
-            value.get("display_name") or spec.get("display_name") or archetype
-        ).strip()[:120]
+        display_name = str(value.get("display_name") or spec.get("display_name") or archetype).strip()[:120]
         purpose = str(value.get("purpose") or spec.get("purpose") or "").strip()[:600]
         if not purpose:
             raise ValueError("dynamic role requires a bounded purpose")
         permitted_skills = set(str(item) for item in allowed_skill_ids)
-        requested_skills = _text_list(
-            value.get("skill_ids", allowed_skill_ids), limit=8
-        )
+        requested_skills = _text_list(value.get("skill_ids", allowed_skill_ids), limit=8)
         skill_ids = [item for item in requested_skills if item in permitted_skills]
         permitted_tools = set(str(item) for item in allowed_tool_ids)
-        tool_ids = [
-            item
-            for item in _text_list(value.get("tool_ids", []), limit=12)
-            if item in permitted_tools
-        ]
-        residuals = _text_list(
-            value.get("trigger_residuals", spec.get("residuals", [])), limit=8
-        )
-        contract_defaults = load_dynamic_winning_json(
-            "common", section="contract_defaults"
-        )
+        tool_ids = [item for item in _text_list(value.get("tool_ids", []), limit=12) if item in permitted_tools]
+        residuals = _text_list(value.get("trigger_residuals", spec.get("residuals", [])), limit=8)
+        contract_defaults = load_dynamic_winning_json("common", section="contract_defaults")
         if not isinstance(contract_defaults, Mapping):
             raise ValueError("dynamic contract_defaults must be an object")
         methodology = _text_list(
@@ -776,15 +702,11 @@ class WinningSwarmController:
             ),
             limit=12,
         )
-        node_methods, node_gates, node_fields = _frontloaded_role_governance(
-            mission_node
-        )
+        node_methods, node_gates, node_fields = _frontloaded_role_governance(mission_node)
         methodology = list(dict.fromkeys([*methodology, *node_methods]))
         quality_gates = list(dict.fromkeys([*quality_gates, *node_gates]))
         output_fields = list(dict.fromkeys([*output_fields, *node_fields]))
-        contract_id = _stable_id(
-            "role-contract", archetype, mission_node, purpose, "|".join(quality_gates)
-        )
+        contract_id = _stable_id("role-contract", archetype, mission_node, purpose, "|".join(quality_gates))
         return WinningRoleContract(
             role_contract_id=contract_id,
             archetype=archetype,
@@ -834,9 +756,7 @@ class WinningSwarmController:
                 max(minimum, int(self.policy.get("mission_graph_max_instances", 21))),
             )
             target = _bounded_int(
-                target_instances
-                if target_instances is not None
-                else self.policy.get("mission_graph_target_instances"),
+                target_instances if target_instances is not None else self.policy.get("mission_graph_target_instances"),
                 minimum,
                 maximum,
                 min(12, maximum),
@@ -858,9 +778,7 @@ class WinningSwarmController:
                 target_instances=target,
                 maximum_instances=maximum,
             )
-            selected = [
-                (seat.mission_node, seat.archetype) for seat in first_wave.seats
-            ]
+            selected = [(seat.mission_node, seat.archetype) for seat in first_wave.seats]
         else:
             selected = []
             for node in MISSION_GRAPH_SEED_ARCHETYPES:
@@ -879,39 +797,25 @@ class WinningSwarmController:
         contracts: list[WinningRoleContract] = []
         instances: list[WinningAgentInstance] = []
         node_instances: dict[str, list[str]] = {f"S{step}": [] for step in range(1, 7)}
-        graph_prompt_resources = load_dynamic_winning_json(
-            "common", section="mission_graph_contracts"
-        )
+        graph_prompt_resources = load_dynamic_winning_json("common", section="mission_graph_contracts")
         if not isinstance(graph_prompt_resources, Mapping):
             raise ValueError("dynamic mission_graph_contracts must be an object")
         query_clauses = graph_prompt_resources.get("query_first_clause", {})
         if not isinstance(query_clauses, Mapping):
             raise ValueError("dynamic query_first_clause must be an object")
-        dynamic_methodology = _text_list(
-            graph_prompt_resources.get("dynamic_methodology", []), limit=8
-        )
+        dynamic_methodology = _text_list(graph_prompt_resources.get("dynamic_methodology", []), limit=8)
         dynamic_creative_methodology = _text_list(
             graph_prompt_resources.get("dynamic_creative_methodology", []), limit=8
         )
-        dynamic_s5_methodology = _text_list(
-            graph_prompt_resources.get("dynamic_s5_methodology", []), limit=8
-        )
-        dynamic_quality_gates = _text_list(
-            graph_prompt_resources.get("dynamic_quality_gates", []), limit=8
-        )
-        legacy_methodology = _text_list(
-            graph_prompt_resources.get("legacy_methodology", []), limit=8
-        )
-        legacy_quality_gates = _text_list(
-            graph_prompt_resources.get("legacy_quality_gates", []), limit=8
-        )
+        dynamic_s5_methodology = _text_list(graph_prompt_resources.get("dynamic_s5_methodology", []), limit=8)
+        dynamic_quality_gates = _text_list(graph_prompt_resources.get("dynamic_quality_gates", []), limit=8)
+        legacy_methodology = _text_list(graph_prompt_resources.get("legacy_methodology", []), limit=8)
+        legacy_quality_gates = _text_list(graph_prompt_resources.get("legacy_quality_gates", []), limit=8)
         s5_ordinal = 0
         for ordinal, (node, archetype) in enumerate(selected, start=1):
             spec = _all_role_archetypes()[archetype]
             dynamic_contract = execution_profile_id == "winning_swarm_dynamic_v2"
-            query_template = query_clauses.get(
-                "dynamic" if dynamic_contract else "legacy", ""
-            )
+            query_template = query_clauses.get("dynamic" if dynamic_contract else "legacy", "")
             query_first_clause = str(query_template).format(topic=topic)
             contract = self.govern_role_contract(
                 {
@@ -922,25 +826,13 @@ class WinningSwarmController:
                     "methodology": (
                         [
                             *dynamic_methodology,
-                            *(
-                                dynamic_creative_methodology
-                                if node in {"S3", "S4"}
-                                else []
-                            ),
-                            *(
-                                dynamic_s5_methodology
-                                if archetype == "independent_portfolio_reviewer"
-                                else []
-                            ),
+                            *(dynamic_creative_methodology if node in {"S3", "S4"} else []),
+                            *(dynamic_s5_methodology if archetype == "independent_portfolio_reviewer" else []),
                         ]
                         if dynamic_contract
                         else legacy_methodology
                     ),
-                    "quality_gates": (
-                        dynamic_quality_gates
-                        if dynamic_contract
-                        else legacy_quality_gates
-                    ),
+                    "quality_gates": (dynamic_quality_gates if dynamic_contract else legacy_quality_gates),
                 },
                 mission_node=node,
             )
@@ -961,10 +853,7 @@ class WinningSwarmController:
                     archetype=archetype,
                     display_name=(
                         f"S5跨池评审 Agent {chr(ord('A') + min(s5_ordinal, 25))}"
-                        if (
-                            self.policy.get("policy_id") == "winning_swarm_dynamic_v2"
-                            and node == "S5"
-                        )
+                        if (self.policy.get("policy_id") == "winning_swarm_dynamic_v2" and node == "S5")
                         else contract.display_name
                     ),
                     mission_node=node,
@@ -1019,8 +908,7 @@ class WinningSwarmController:
                 validation_ids = [
                     item.instance_id
                     for item in instances
-                    if item.mission_node == "S6"
-                    and item.archetype == "validation_experiment_designer"
+                    if item.mission_node == "S6" and item.archetype == "validation_experiment_designer"
                 ]
                 depends_on = [
                     *node_instances["S4"],
@@ -1047,11 +935,7 @@ class WinningSwarmController:
             resolved_instances.append(replace(instance, wave=wave))
         maximum_wave = max(wave_by_instance.values(), default=0)
         waves = [
-            [
-                instance.instance_id
-                for instance in resolved_instances
-                if instance.wave == wave_index
-            ]
+            [instance.instance_id for instance in resolved_instances if instance.wave == wave_index]
             for wave_index in range(1, maximum_wave + 1)
         ]
         return WinningMissionGraph(
@@ -1097,11 +981,7 @@ class WinningSwarmController:
             str(len(graph.agent_instances) + 1),
         )
         node = contract.mission_node
-        dependency_nodes = (
-            CORE_STEP_DEPENDENCIES.get(int(node[1:]), ())
-            if node.startswith("S")
-            else ()
-        )
+        dependency_nodes = CORE_STEP_DEPENDENCIES.get(int(node[1:]), ()) if node.startswith("S") else ()
         resolved_dependencies = (
             list(dict.fromkeys(str(item) for item in depends_on if str(item)))
             if depends_on is not None
@@ -1143,9 +1023,7 @@ class WinningSwarmController:
             s_node_seeds=seeds,
         )
 
-    def rewire_cross_pool_reviewers(
-        self, graph: WinningMissionGraph
-    ) -> WinningMissionGraph:
+    def rewire_cross_pool_reviewers(self, graph: WinningMissionGraph) -> WinningMissionGraph:
         """Point every cross-pool S5 reviewer at the live S3/S4 producer set."""
 
         producer_ids = [
@@ -1186,9 +1064,7 @@ class WinningSwarmController:
 
         node, archetype = recruit_archetype_for_gap(gap_axis, already_used=already_used)
         spec = _all_role_archetypes()[archetype]
-        graph_prompt_resources = load_dynamic_winning_json(
-            "common", section="mission_graph_contracts"
-        )
+        graph_prompt_resources = load_dynamic_winning_json("common", section="mission_graph_contracts")
         if not isinstance(graph_prompt_resources, Mapping):
             raise ValueError("dynamic mission_graph_contracts must be an object")
         query_clauses = graph_prompt_resources.get("query_first_clause", {})
@@ -1196,15 +1072,11 @@ class WinningSwarmController:
             raise ValueError("dynamic query_first_clause must be an object")
         query_template = query_clauses.get("dynamic", "")
         query_first_clause = str(query_template).format(topic=topic)
-        dynamic_methodology = _text_list(
-            graph_prompt_resources.get("dynamic_methodology", []), limit=8
-        )
+        dynamic_methodology = _text_list(graph_prompt_resources.get("dynamic_methodology", []), limit=8)
         dynamic_creative_methodology = _text_list(
             graph_prompt_resources.get("dynamic_creative_methodology", []), limit=8
         )
-        dynamic_quality_gates = _text_list(
-            graph_prompt_resources.get("dynamic_quality_gates", []), limit=8
-        )
+        dynamic_quality_gates = _text_list(graph_prompt_resources.get("dynamic_quality_gates", []), limit=8)
         contract = self.govern_role_contract(
             {
                 "archetype": archetype,
@@ -1246,9 +1118,7 @@ class WinningSwarmController:
     ) -> HypothesisLedgerVersion:
         ordered = sorted(hypotheses, key=lambda item: item.hypothesis_id)
         return HypothesisLedgerVersion(
-            ledger_id=_stable_id(
-                "hypothesis-ledger", *(item.hypothesis_id for item in ordered)
-            ),
+            ledger_id=_stable_id("hypothesis-ledger", *(item.hypothesis_id for item in ordered)),
             version=1,
             hypotheses=ordered,
             change_summary="initial_candidate_ledger",
@@ -1261,9 +1131,7 @@ class WinningSwarmController:
         contribution: WinningContribution,
     ) -> tuple[HypothesisLedgerVersion, MergeReceipt]:
         receipt_base = {
-            "receipt_id": _stable_id(
-                "merge-receipt", contribution.contribution_id, str(ledger.version)
-            ),
+            "receipt_id": _stable_id("merge-receipt", contribution.contribution_id, str(ledger.version)),
             "contribution_id": contribution.contribution_id,
             "hypothesis_id": contribution.hypothesis_id,
             "merge_target": contribution.merge_target,
@@ -1278,11 +1146,7 @@ class WinningSwarmController:
                 rebase_required=True,
             )
         hypothesis = next(
-            (
-                item
-                for item in ledger.hypotheses
-                if item.hypothesis_id == contribution.hypothesis_id
-            ),
+            (item for item in ledger.hypotheses if item.hypothesis_id == contribution.hypothesis_id),
             None,
         )
         conflicts: list[str] = []
@@ -1307,93 +1171,39 @@ class WinningSwarmController:
             hypothesis_id=contribution.hypothesis_id,
             merge_target=contribution.merge_target,
             findings=_text_list(patch.get("findings", []), limit=8),
-            mechanism_chain_updates=_user_facing_text_list(
-                patch.get("mechanism_chain_updates", []), limit=8
-            ),
-            direct_military_effects=_user_facing_text_list(
-                patch.get("direct_military_effects", []), limit=6
-            ),
-            equipment_forms=_user_facing_text_list(
-                patch.get("equipment_forms", []), limit=6
-            ),
-            project_function=_user_facing_text(
-                patch.get("project_function", ""), limit=700
-            ),
-            system_interfaces=_user_facing_text_list(
-                patch.get("system_interfaces", []), limit=8
-            ),
+            mechanism_chain_updates=_user_facing_text_list(patch.get("mechanism_chain_updates", []), limit=8),
+            direct_military_effects=_user_facing_text_list(patch.get("direct_military_effects", []), limit=6),
+            equipment_forms=_user_facing_text_list(patch.get("equipment_forms", []), limit=6),
+            project_function=_user_facing_text(patch.get("project_function", ""), limit=700),
+            system_interfaces=_user_facing_text_list(patch.get("system_interfaces", []), limit=8),
             novelty_delta=_user_facing_text(patch.get("novelty_delta", ""), limit=900),
-            frontier_principle=_user_facing_text(
-                patch.get("frontier_principle", ""), limit=320
-            ),
-            technology_discontinuity=_user_facing_text(
-                patch.get("technology_discontinuity", ""), limit=420
-            ),
-            technology_horizon=_user_facing_text(
-                patch.get("technology_horizon", ""), limit=120
-            ),
-            engineering_bottleneck=_user_facing_text(
-                patch.get("engineering_bottleneck", ""), limit=360
-            ),
-            original_paradigm=_user_facing_text(
-                patch.get("original_paradigm", ""), limit=900
-            ),
-            disruptive_shift=_user_facing_text(
-                patch.get("disruptive_shift", ""), limit=900
-            ),
-            independence_thesis=_user_facing_text(
-                patch.get("independence_thesis", ""), limit=900
-            ),
+            frontier_principle=_user_facing_text(patch.get("frontier_principle", ""), limit=320),
+            technology_discontinuity=_user_facing_text(patch.get("technology_discontinuity", ""), limit=420),
+            technology_horizon=_user_facing_text(patch.get("technology_horizon", ""), limit=120),
+            engineering_bottleneck=_user_facing_text(patch.get("engineering_bottleneck", ""), limit=360),
+            original_paradigm=_user_facing_text(patch.get("original_paradigm", ""), limit=900),
+            disruptive_shift=_user_facing_text(patch.get("disruptive_shift", ""), limit=900),
+            independence_thesis=_user_facing_text(patch.get("independence_thesis", ""), limit=900),
             naming_style=_user_facing_text(patch.get("naming_style", ""), limit=120),
-            core_disruptive_difference=_user_facing_text(
-                patch.get("core_disruptive_difference", ""), limit=900
-            ),
-            naming_rationale=_user_facing_text(
-                patch.get("naming_rationale", ""), limit=900
-            ),
+            core_disruptive_difference=_user_facing_text(patch.get("core_disruptive_difference", ""), limit=900),
+            naming_rationale=_user_facing_text(patch.get("naming_rationale", ""), limit=900),
             concise_winning_summary=_user_facing_text(
-                patch.get("concise_winning_summary")
-                or patch.get("reference_overview")
-                or "",
+                patch.get("concise_winning_summary") or patch.get("reference_overview") or "",
                 limit=1800,
             ),
-            decisive_advantage_thesis=_user_facing_text(
-                patch.get("decisive_advantage_thesis", ""), limit=900
-            ),
-            cross_query_distinction=_user_facing_text(
-                patch.get("cross_query_distinction", ""), limit=900
-            ),
-            evidence_boundary=_user_facing_text(
-                patch.get("evidence_boundary", ""), limit=800
-            ),
-            implementation_path=_user_facing_text(
-                patch.get("implementation_path", ""), limit=800
-            ),
+            decisive_advantage_thesis=_user_facing_text(patch.get("decisive_advantage_thesis", ""), limit=900),
+            cross_query_distinction=_user_facing_text(patch.get("cross_query_distinction", ""), limit=900),
+            evidence_boundary=_user_facing_text(patch.get("evidence_boundary", ""), limit=800),
+            implementation_path=_user_facing_text(patch.get("implementation_path", ""), limit=800),
             evidence_ids=list(contribution.evidence_ids),
-            counterevidence=_user_facing_text_list(
-                patch.get("counterevidence", []), limit=8
-            ),
-            adversary_adaptations=_user_facing_text_list(
-                patch.get("adversary_adaptations", []), limit=8
-            ),
-            failure_boundaries=_user_facing_text_list(
-                patch.get("failure_boundaries", []), limit=8
-            ),
-            trl_constraints=_user_facing_text_list(
-                patch.get("trl_constraints", []), limit=6
-            ),
-            cost_constraints=_user_facing_text_list(
-                patch.get("cost_constraints", []), limit=6
-            ),
-            industrial_constraints=_user_facing_text_list(
-                patch.get("industrial_constraints", []), limit=6
-            ),
-            cross_scenario_results=_user_facing_text_list(
-                patch.get("cross_scenario_results", []), limit=8
-            ),
-            validation_plan=_user_facing_text_list(
-                patch.get("validation_plan", []), limit=8
-            ),
+            counterevidence=_user_facing_text_list(patch.get("counterevidence", []), limit=8),
+            adversary_adaptations=_user_facing_text_list(patch.get("adversary_adaptations", []), limit=8),
+            failure_boundaries=_user_facing_text_list(patch.get("failure_boundaries", []), limit=8),
+            trl_constraints=_user_facing_text_list(patch.get("trl_constraints", []), limit=6),
+            cost_constraints=_user_facing_text_list(patch.get("cost_constraints", []), limit=6),
+            industrial_constraints=_user_facing_text_list(patch.get("industrial_constraints", []), limit=6),
+            cross_scenario_results=_user_facing_text_list(patch.get("cross_scenario_results", []), limit=8),
+            validation_plan=_user_facing_text_list(patch.get("validation_plan", []), limit=8),
             residuals_resolved=list(contribution.residuals_resolved),
             incremental_quality=contribution.incremental_quality,
             recommendation=contribution.recommendation,
@@ -1444,9 +1254,7 @@ class WinningSwarmController:
             replacement_fields: dict[str, Any] = {}
             for name, limit in list_limits.items():
                 if name in requested and name in patch:
-                    replacement_fields[name] = _text_list(
-                        patch.get(name, []), limit=limit
-                    )
+                    replacement_fields[name] = _text_list(patch.get(name, []), limit=limit)
             for name, limit in string_limits.items():
                 if name in requested and name in patch:
                     replacement_fields[name] = str(patch.get(name, "")).strip()[:limit]
@@ -1467,10 +1275,7 @@ class WinningSwarmController:
             changed_fields=sorted(str(key) for key in patch),
             quality_delta=round(contribution.incremental_quality, 4),
         )
-        hypotheses = [
-            updated if item.hypothesis_id == updated.hypothesis_id else item
-            for item in ledger.hypotheses
-        ]
+        hypotheses = [updated if item.hypothesis_id == updated.hypothesis_id else item for item in ledger.hypotheses]
         return HypothesisLedgerVersion(
             ledger_id=ledger.ledger_id,
             version=next_version,
@@ -1486,10 +1291,7 @@ class WinningSwarmController:
         contribution: WinningContribution,
         ledger: HypothesisLedgerVersion,
     ) -> WinningContribution:
-        if not any(
-            item.hypothesis_id == contribution.hypothesis_id
-            for item in ledger.hypotheses
-        ):
+        if not any(item.hypothesis_id == contribution.hypothesis_id for item in ledger.hypotheses):
             raise ValueError("cannot rebase contribution onto a missing hypothesis")
         return replace(
             contribution,
@@ -1520,16 +1322,10 @@ class WinningSwarmController:
                 "novelty": gate.score if gate.passed else 0.0,
                 "robustness": min(
                     1.0,
-                    (
-                        len(hypothesis.adversary_adaptations)
-                        + len(hypothesis.cross_scenario_results)
-                    )
-                    / 4,
+                    (len(hypothesis.adversary_adaptations) + len(hypothesis.cross_scenario_results)) / 4,
                 ),
                 "feasibility": 1.0
-                if hypothesis.trl_constraints
-                and hypothesis.cost_constraints
-                and hypothesis.industrial_constraints
+                if hypothesis.trl_constraints and hypothesis.cost_constraints and hypothesis.industrial_constraints
                 else 0.0,
             }
         hypothesis_ids = [item.hypothesis_id for item in ledger.hypotheses]
@@ -1557,9 +1353,7 @@ class WinningSwarmController:
                 (expert_assessments or {}).get(item.hypothesis_id),
             )
         ]
-        candidate_ids = list(
-            dict.fromkeys([*strictly_passed_ids, *pending_verification_ids])
-        )
+        candidate_ids = list(dict.fromkeys([*strictly_passed_ids, *pending_verification_ids]))
 
         def dominates(left: str, right: str) -> bool:
             dimensions = set(scores[left]) | set(scores[right])
@@ -1572,10 +1366,7 @@ class WinningSwarmController:
         front = [
             candidate
             for candidate in candidate_ids
-            if not any(
-                other != candidate and dominates(other, candidate)
-                for other in candidate_ids
-            )
+            if not any(other != candidate and dominates(other, candidate) for other in candidate_ids)
         ]
         front = _diverse_portfolio_order(
             front,
@@ -1624,17 +1415,10 @@ class WinningSwarmController:
         )[:maximum]
         rejected = [item for item in hypothesis_ids if item not in selected]
         reasons = {
-            item: [
-                other
-                for other in hypothesis_ids
-                if other != item and dominates(other, item)
-            ]
-            for item in rejected
+            item: [other for other in hypothesis_ids if other != item and dominates(other, item)] for item in rejected
         }
         return PortfolioDecision(
-            decision_id=_stable_id(
-                "portfolio-decision", ledger.ledger_id, str(ledger.version), *selected
-            ),
+            decision_id=_stable_id("portfolio-decision", ledger.ledger_id, str(ledger.version), *selected),
             ledger_id=ledger.ledger_id,
             ledger_version=ledger.version,
             pareto_front=front,
@@ -1714,8 +1498,7 @@ class WinningSwarmController:
         passed = [
             item
             for item in ledger.hypotheses
-            if item.hypothesis_id in expert_assessments
-            and expert_assessments[item.hypothesis_id].passed
+            if item.hypothesis_id in expert_assessments and expert_assessments[item.hypothesis_id].passed
         ]
         direct = [
             item
@@ -1729,22 +1512,18 @@ class WinningSwarmController:
         revisable = [
             item
             for item in ledger.hypotheses
-            if item.hypothesis_id in expert_assessments
-            and expert_assessments[item.hypothesis_id].verdict == "revise"
+            if item.hypothesis_id in expert_assessments and expert_assessments[item.hypothesis_id].verdict == "revise"
         ]
         passed_count = len(passed)
         direct_count = len(direct)
         distinct_direct_identity_count = len(direct_identity_counts)
-        assessed_count = sum(
-            item.hypothesis_id in expert_assessments for item in ledger.hypotheses
-        )
+        assessed_count = sum(item.hypothesis_id in expert_assessments for item in ledger.hypotheses)
         # The five-axis Codex clustering pass is the authority for semantic
         # independence.  Compatibility counters expose opaque identities,
         # never inferred equipment families, and never block readiness.
         independence_conflicts: list[dict[str, Any]] = []
         return {
-            "ready": bool(passed or revisable)
-            and assessed_count >= len(ledger.hypotheses),
+            "ready": bool(passed or revisable) and assessed_count >= len(ledger.hypotheses),
             "assessed_count": assessed_count,
             "passed_count": passed_count,
             "revise_count": len(revisable),
@@ -1761,9 +1540,7 @@ class WinningSwarmController:
             "preferred_distinct_direct_equipment": 0,
             "same_family_independence_conflicts": independence_conflicts,
             "family_breadth_is_preference": False,
-            "semantic_independence_authority": (
-                "independent_codex_five_axis_clustering"
-            ),
+            "semantic_independence_authority": ("independent_codex_five_axis_clustering"),
         }
 
     def select_unassessed_portfolio_candidates(
@@ -1777,20 +1554,12 @@ class WinningSwarmController:
 
         limit = max(
             0,
-            int(
-                maximum
-                if maximum is not None
-                else self.policy.get("expert_candidate_pool_maximum", 8)
-            ),
+            int(maximum if maximum is not None else self.policy.get("expert_candidate_pool_maximum", 8)),
         )
         if not limit:
             return []
         assessed_ids = set(expert_assessments)
-        candidate_ids = [
-            item.hypothesis_id
-            for item in ledger.hypotheses
-            if item.hypothesis_id not in assessed_ids
-        ]
+        candidate_ids = [item.hypothesis_id for item in ledger.hypotheses if item.hypothesis_id not in assessed_ids]
         # Preserve ledger order.  The next S5 Codex call, not a local score or
         # inferred equipment family, decides which candidates are valuable.
         return candidate_ids[:limit]
@@ -1842,9 +1611,7 @@ class WinningSwarmController:
             "engineering_feasibility": 0.01,
             "robustness": 0.01,
         }
-        weighted_score = round(
-            sum(scores[name] * weights[name] for name in dimension_names), 4
-        )
+        weighted_score = round(sum(scores[name] * weights[name] for name in dimension_names), 4)
         verdict = str(value.get("verdict", "revise")).strip().lower()
         if verdict not in {"pass", "revise", "reject"}:
             verdict = "revise"
@@ -1857,9 +1624,7 @@ class WinningSwarmController:
         rejection_reasons = _text_list(value.get("rejection_reasons", []), limit=8)
         if not passed and not rejection_reasons:
             rejection_reasons = ["独立Codex语义评审建议继续修改或暂不入选"]
-        evidence_ids = self.sanitize_evidence_ids(
-            value.get("evidence_ids", []), valid_evidence_ids
-        )
+        evidence_ids = self.sanitize_evidence_ids(value.get("evidence_ids", []), valid_evidence_ids)
         return WinningExpertAssessment(
             assessment_id=_stable_id(
                 "winning-expert-assessment",
@@ -1876,9 +1641,7 @@ class WinningSwarmController:
             weaknesses=_text_list(value.get("weaknesses", []), limit=8),
             rejection_reasons=rejection_reasons,
             residuals=model_residuals,
-            equipment_classification=str(
-                value.get("equipment_classification", "")
-            ).strip()[:120],
+            equipment_classification=str(value.get("equipment_classification", "")).strip()[:120],
             innovation_type=str(value.get("innovation_type", "")).strip()[:120],
             confidence=_bounded_float(value.get("confidence"), 0.0, 1.0, 0.0),
             evidence_ids=evidence_ids,
@@ -1908,9 +1671,7 @@ class WinningSwarmController:
         """Route an expert residual to the narrowest governed repair role."""
 
         scores = assessment.dimension_scores
-        if scores.get(
-            "equipment_capability_fit", 0.0
-        ) < 0.82 or assessment.equipment_classification in {
+        if scores.get("equipment_capability_fit", 0.0) < 0.82 or assessment.equipment_classification in {
             "system_link",
             "support",
             "non_materiel",
@@ -1934,8 +1695,7 @@ class WinningSwarmController:
             ]
         )
         if (
-            assessment.equipment_classification
-            in {"direct_combat", "unmanned_combat", "upgrade"}
+            assessment.equipment_classification in {"direct_combat", "unmanned_combat", "upgrade"}
             and scores.get("credibility", 0.0) < 0.70
             and any(term in residual_text for term in evidence_hardening_terms)
         ):
@@ -1944,10 +1704,7 @@ class WinningSwarmController:
             return "evidence_verifier"
         if scores.get("engineering_feasibility", 0.0) < 0.68:
             return "trl_cost_industrial_auditor"
-        if (
-            scores.get("innovation", 0.0) < 0.72
-            or scores.get("causal_coherence", 0.0) < 0.72
-        ):
+        if scores.get("innovation", 0.0) < 0.72 or scores.get("causal_coherence", 0.0) < 0.72:
             return "disruptive_mechanism_generator"
         if scores.get("robustness", 0.0) < 0.72:
             return "adversary_counter_adaptation_red_team"
@@ -1985,8 +1742,7 @@ class WinningSwarmController:
             group_rows = [
                 item
                 for item in ranked
-                if item.hypothesis_id not in selected_ids
-                and set(item.source_task_ids) & set(source_group)
+                if item.hypothesis_id not in selected_ids and set(item.source_task_ids) & set(source_group)
             ]
             for item in group_rows[: max(0, int(quota_per_priority_group))]:
                 selected.append(item)
@@ -2023,19 +1779,13 @@ class WinningSwarmController:
             )
             for step in CORE_STEP_DEPENDENCIES
         }
-        selected = {
-            int(step)
-            for step in active_steps
-            if str(step).isdigit() and int(step) in CORE_STEP_DEPENDENCIES
-        }
+        selected = {int(step) for step in active_steps if str(step).isdigit() and int(step) in CORE_STEP_DEPENDENCIES}
         pending = set(selected)
         satisfied = set(dependencies) - selected
         waves: list[tuple[int, ...]] = []
         while pending:
             ready = tuple(
-                step
-                for step in sorted(pending)
-                if all(dependency in satisfied for dependency in dependencies[step])
+                step for step in sorted(pending) if all(dependency in satisfied for dependency in dependencies[step])
             )
             if not ready:
                 raise ValueError("S1-S6 dependency graph cannot be scheduled")
@@ -2081,10 +1831,7 @@ class WinningSwarmController:
     ) -> dict[str, Any]:
         """Build an auditable logical/physical schedule for the six core Agents."""
 
-        modes = {
-            step: str((step_modes or {}).get(step, "standard"))
-            for step in CORE_STEP_DEPENDENCIES
-        }
+        modes = {step: str((step_modes or {}).get(step, "standard")) for step in CORE_STEP_DEPENDENCIES}
         dependencies = {
             step: tuple(
                 int(item)
@@ -2099,9 +1846,7 @@ class WinningSwarmController:
         )
         active = {step for wave in waves for step in wave}
         normalized_cohorts = [
-            [f"S{int(step)}" for step in cohort if int(step) in active]
-            for cohort in physical_cohorts
-            if cohort
+            [f"S{int(step)}" for step in cohort if int(step) in active] for cohort in physical_cohorts if cohort
         ]
         normalized_cohorts = [row for row in normalized_cohorts if row]
         return {
@@ -2110,9 +1855,7 @@ class WinningSwarmController:
                 for step, dependencies in dependencies.items()
             },
             "active_steps": [f"S{step}" for step in sorted(active)],
-            "skipped_or_reused_steps": [
-                f"S{step}" for step in CORE_STEP_DEPENDENCIES if step not in active
-            ],
+            "skipped_or_reused_steps": [f"S{step}" for step in CORE_STEP_DEPENDENCIES if step not in active],
             "step_modes": {f"S{step}": mode for step, mode in modes.items()},
             "logical_waves": [
                 {
@@ -2176,9 +1919,7 @@ class WinningSwarmController:
         if remaining == 0 or int(self.policy["max_waves"]) < 2:
             return []
         gates_by_id = {item.hypothesis_id: item for item in gates}
-        candidates = sorted(
-            hypotheses, key=lambda item: (-item.score, item.hypothesis_id)
-        )
+        candidates = sorted(hypotheses, key=lambda item: (-item.score, item.hypothesis_id))
         tasks: list[SpecialistTask] = []
         seen_pairs: set[tuple[str, str]] = set()
         for hypothesis in candidates:
@@ -2309,9 +2050,7 @@ class WinningSwarmController:
                 pruned.append(task)
             elif any(dependency in failed for dependency in task.depends_on):
                 pruned.append(task)
-            elif all(
-                dependency in completed_task_ids for dependency in task.depends_on
-            ):
+            elif all(dependency in completed_task_ids for dependency in task.depends_on):
                 ready.append(task)
         return ready, pruned
 
@@ -2327,9 +2066,57 @@ class WinningSwarmController:
             value.get("evidence_ids", value.get("evidence_refs", [])),
             valid_evidence_ids,
         )
-        raw_semantic_spine = value.get("semantic_spine") or value.get(
-            "winning_logic_spine"
+        generation_contract_complete = all(
+            str(value.get(key, "") or "").strip()
+            for key in (
+                "name",
+                "concise_winning_summary",
+                "single_weapon_identity",
+                "physical_main_body",
+                "novel_technical_principle",
+                "effect_carrier",
+                "principle_to_effect_chain",
+                "target_and_direct_effect",
+                "independent_deployment_boundary",
+                "independent_test_boundary",
+                "system_family_exclusion",
+            )
         )
+        promoted = dict(value)
+        generation_aliases = {
+            "single_weapon_identity": "primary_equipment_identity",
+            "physical_main_body": "equipment_form",
+            "novel_technical_principle": "frontier_principle",
+            "target_and_direct_effect": "target_and_direct_effect",
+            "system_family_exclusion": "cross_query_distinction",
+        }
+        for source_key, target_key in generation_aliases.items():
+            if not str(promoted.get(target_key, "") or "").strip():
+                promoted[target_key] = promoted.get(source_key, "")
+        if not promoted.get("mechanism_chain"):
+            chain = str(promoted.get("principle_to_effect_chain", "") or "").strip()
+            carrier = str(promoted.get("effect_carrier", "") or "").strip()
+            promoted["mechanism_chain"] = [
+                item
+                for item in (
+                    chain,
+                    f"效应载体：{carrier}" if carrier else "",
+                )
+                if item
+            ]
+        if not str(promoted.get("independence_thesis", "") or "").strip():
+            deployment = str(promoted.get("independent_deployment_boundary", "") or "").strip()
+            test = str(promoted.get("independent_test_boundary", "") or "").strip()
+            promoted["independence_thesis"] = "；".join(
+                item
+                for item in (
+                    f"独立部署边界：{deployment}" if deployment else "",
+                    f"独立试验边界：{test}" if test else "",
+                )
+                if item
+            )
+        value = promoted
+        raw_semantic_spine = value.get("semantic_spine") or value.get("winning_logic_spine")
         if isinstance(raw_semantic_spine, Mapping):
             # Keep the model-facing contract as one optional grouped object,
             # while accepting its compact aliases as first-class ledger
@@ -2357,9 +2144,7 @@ class WinningSwarmController:
         else:
             semantic_spine = _user_facing_text(raw_semantic_spine or "", limit=1200)
         changed_variable = _user_facing_text(
-            value.get("changed_confrontation_variable")
-            or value.get("changed_variable")
-            or semantic_spine,
+            value.get("changed_confrontation_variable") or value.get("changed_variable") or semantic_spine,
             limit=600,
         )
         mechanism_chain = _user_facing_text_list(
@@ -2369,9 +2154,7 @@ class WinningSwarmController:
         if not mechanism_chain and semantic_spine:
             mechanism_chain = [semantic_spine]
         direct_effects = _user_facing_text_list(
-            value.get(
-                "direct_military_effects", value.get("direct_military_effect", [])
-            ),
+            value.get("direct_military_effects", value.get("direct_military_effect", [])),
             limit=6,
         )
         if not direct_effects and semantic_spine:
@@ -2420,18 +2203,10 @@ class WinningSwarmController:
                 mechanism_chain = [semantic_spine]
             if not direct_effects:
                 direct_effects = [semantic_spine]
-        frontier_principle = _user_facing_text(
-            value.get("frontier_principle", ""), limit=320
-        )
-        technology_discontinuity = _user_facing_text(
-            value.get("technology_discontinuity", ""), limit=420
-        )
-        technology_horizon = _user_facing_text(
-            value.get("technology_horizon", ""), limit=120
-        )
-        engineering_bottleneck = _user_facing_text(
-            value.get("engineering_bottleneck", ""), limit=360
-        )
+        frontier_principle = _user_facing_text(value.get("frontier_principle", ""), limit=320)
+        technology_discontinuity = _user_facing_text(value.get("technology_discontinuity", ""), limit=420)
+        technology_horizon = _user_facing_text(value.get("technology_horizon", ""), limit=120)
+        engineering_bottleneck = _user_facing_text(value.get("engineering_bottleneck", ""), limit=360)
         novelty_parts = [
             _user_facing_text(
                 value.get("novelty_delta") or value.get("novelty") or "",
@@ -2444,20 +2219,12 @@ class WinningSwarmController:
             novelty_parts.append(f"不可由常规升级吸收：{technology_discontinuity}")
         if semantic_spine:
             novelty_parts.append(f"语义脊柱：{semantic_spine}")
-        novelty_delta = _user_facing_text(
-            "；".join(filter(None, novelty_parts)), limit=900
-        )
-        trl_constraints = _user_facing_text_list(
-            value.get("trl_constraints", []), limit=6
-        )
+        novelty_delta = _user_facing_text("；".join(filter(None, novelty_parts)), limit=900)
+        trl_constraints = _user_facing_text_list(value.get("trl_constraints", []), limit=6)
         if technology_horizon:
-            trl_constraints = _dedupe(
-                [f"前瞻窗口：{technology_horizon}", *trl_constraints], 6
-            )
+            trl_constraints = _dedupe([f"前瞻窗口：{technology_horizon}", *trl_constraints], 6)
         if engineering_bottleneck:
-            trl_constraints = _dedupe(
-                [f"关键工程瓶颈：{engineering_bottleneck}", *trl_constraints], 6
-            )
+            trl_constraints = _dedupe([f"关键工程瓶颈：{engineering_bottleneck}", *trl_constraints], 6)
         hypothesis_id = _stable_id(
             "hypothesis",
             title,
@@ -2470,10 +2237,7 @@ class WinningSwarmController:
             hypothesis_id=hypothesis_id,
             title=title,
             nearest_public_baseline=_user_facing_text(
-                value.get("nearest_public_baseline")
-                or value.get("current_baseline")
-                or value.get("baseline")
-                or "",
+                value.get("nearest_public_baseline") or value.get("current_baseline") or value.get("baseline") or "",
                 limit=900,
             ),
             changed_confrontation_variable=(changed_variable or reference_overview),
@@ -2485,77 +2249,41 @@ class WinningSwarmController:
             technology_horizon=technology_horizon,
             engineering_bottleneck=engineering_bottleneck,
             winning_angle_id=str(value.get("winning_angle_id", "")).strip()[:160],
-            combat_dimension=_user_facing_text(
-                value.get("combat_dimension", ""), limit=80
-            ),
-            dimension_winning_logic=_user_facing_text(
-                value.get("dimension_winning_logic", ""), limit=500
-            ),
-            original_paradigm=_user_facing_text(
-                value.get("original_paradigm", ""), limit=900
-            ),
-            disruptive_shift=_user_facing_text(
-                value.get("disruptive_shift", ""), limit=900
-            ),
+            combat_dimension=_user_facing_text(value.get("combat_dimension", ""), limit=80),
+            dimension_winning_logic=_user_facing_text(value.get("dimension_winning_logic", ""), limit=500),
+            original_paradigm=_user_facing_text(value.get("original_paradigm", ""), limit=900),
+            disruptive_shift=_user_facing_text(value.get("disruptive_shift", ""), limit=900),
             independence_thesis=_user_facing_text(
-                value.get("independence_thesis")
-                or value.get("unique_operational_role")
-                or "",
+                value.get("independence_thesis") or value.get("unique_operational_role") or "",
                 limit=900,
             ),
             project_function=project_function,
             reference_overview=reference_overview,
             naming_style=_user_facing_text(value.get("naming_style", ""), limit=120),
-            core_disruptive_difference=_user_facing_text(
-                value.get("core_disruptive_difference", ""), limit=900
-            ),
+            core_disruptive_difference=_user_facing_text(value.get("core_disruptive_difference", ""), limit=900),
             novelty_delta=novelty_delta,
-            naming_rationale=_user_facing_text(
-                value.get("naming_rationale", ""), limit=900
-            ),
-            decisive_advantage_thesis=_user_facing_text(
-                value.get("decisive_advantage_thesis", ""), limit=900
-            ),
-            cross_query_distinction=_user_facing_text(
-                value.get("cross_query_distinction", ""), limit=900
-            ),
-            system_interfaces=_user_facing_text_list(
-                value.get("system_interfaces", []), limit=8
-            ),
+            naming_rationale=_user_facing_text(value.get("naming_rationale", ""), limit=900),
+            decisive_advantage_thesis=_user_facing_text(value.get("decisive_advantage_thesis", ""), limit=900),
+            cross_query_distinction=_user_facing_text(value.get("cross_query_distinction", ""), limit=900),
+            system_interfaces=_user_facing_text_list(value.get("system_interfaces", []), limit=8),
             evidence_ids=evidence_ids,
-            counterevidence=_user_facing_text_list(
-                value.get("counterevidence", []), limit=8
-            ),
-            adversary_adaptations=_user_facing_text_list(
-                value.get("adversary_adaptations", []), limit=8
-            ),
-            failure_boundaries=_user_facing_text_list(
-                value.get("failure_boundaries", []), limit=8
-            ),
+            counterevidence=_user_facing_text_list(value.get("counterevidence", []), limit=8),
+            adversary_adaptations=_user_facing_text_list(value.get("adversary_adaptations", []), limit=8),
+            failure_boundaries=_user_facing_text_list(value.get("failure_boundaries", []), limit=8),
             trl_constraints=trl_constraints,
-            cost_constraints=_user_facing_text_list(
-                value.get("cost_constraints", []), limit=6
-            ),
-            industrial_constraints=_user_facing_text_list(
-                value.get("industrial_constraints", []), limit=6
-            ),
-            cross_scenario_results=_user_facing_text_list(
-                value.get("cross_scenario_results", []), limit=8
-            ),
-            validation_plan=_user_facing_text_list(
-                value.get("validation_plan", []), limit=8
-            ),
-            evidence_boundary=_user_facing_text(
-                value.get("evidence_boundary", ""), limit=800
-            ),
-            implementation_path=_user_facing_text(
-                value.get("implementation_path", ""), limit=800
-            ),
+            cost_constraints=_user_facing_text_list(value.get("cost_constraints", []), limit=6),
+            industrial_constraints=_user_facing_text_list(value.get("industrial_constraints", []), limit=6),
+            cross_scenario_results=_user_facing_text_list(value.get("cross_scenario_results", []), limit=8),
+            validation_plan=_user_facing_text_list(value.get("validation_plan", []), limit=8),
+            evidence_boundary=_user_facing_text(value.get("evidence_boundary", ""), limit=800),
+            implementation_path=_user_facing_text(value.get("implementation_path", ""), limit=800),
             merge_targets=[task.merge_target],
             source_task_ids=[task.task_id],
         )
         gate = self.evaluate_gate(hypothesis, stage="breadth")
         preflight_residuals = list(gate.residuals)
+        if not generation_contract_complete:
+            preflight_residuals.append("single_weapon_generation_contract_incomplete")
         return replace(
             hypothesis,
             residuals=_dedupe(preflight_residuals, 24),
@@ -2572,25 +2300,16 @@ class WinningSwarmController:
         if task.allow_child_spawn:
             raise ValueError("dynamic specialists may not recruit child agents")
         if not task.hypothesis_id or task.merge_target not in MERGE_TARGETS:
-            raise ValueError(
-                "specialist contribution requires hypothesis_id + merge_target"
-            )
+            raise ValueError("specialist contribution requires hypothesis_id + merge_target")
         reported_hypothesis = str(value.get("hypothesis_id") or task.hypothesis_id)
         reported_target = str(value.get("merge_target") or task.merge_target)
-        if (
-            reported_hypothesis != task.hypothesis_id
-            or reported_target != task.merge_target
-        ):
-            raise ValueError(
-                "specialist contribution crossed its declared merge boundary"
-            )
+        if reported_hypothesis != task.hypothesis_id or reported_target != task.merge_target:
+            raise ValueError("specialist contribution crossed its declared merge boundary")
         evidence_ids = self.sanitize_evidence_ids(
             value.get("evidence_ids", value.get("evidence_refs", [])),
             valid_evidence_ids,
         )
-        quality = _bounded_float(
-            value.get("incremental_quality", value.get("quality_delta")), 0.0, 1.0, 0.0
-        )
+        quality = _bounded_float(value.get("incremental_quality", value.get("quality_delta")), 0.0, 1.0, 0.0)
         recommendation = str(value.get("recommendation", "retain"))[:80]
         retention = self.contribution_retention_assessment(
             value,
@@ -2600,113 +2319,54 @@ class WinningSwarmController:
         )
         quality = float(retention["effective_quality"])
         accepted = bool(retention["accepted"])
-        direct_effects = _user_facing_text_list(
-            value.get("direct_military_effects", []), limit=6
-        )
-        project_function = _user_facing_text(
-            value.get("project_function", ""), limit=700
-        )
+        direct_effects = _user_facing_text_list(value.get("direct_military_effects", []), limit=6)
+        project_function = _user_facing_text(value.get("project_function", ""), limit=700)
         if not project_function and direct_effects:
             project_function = direct_effects[0][:700]
         return SpecialistContribution(
-            contribution_id=_stable_id(
-                "contribution", task.task_id, task.hypothesis_id
-            ),
+            contribution_id=_stable_id("contribution", task.task_id, task.hypothesis_id),
             task_id=task.task_id,
             agent_instance_id=task.agent_instance_id,
             hypothesis_id=task.hypothesis_id,
             merge_target=task.merge_target,
             findings=_text_list(value.get("findings", []), limit=8),
             replacement_title=normalize_weapon_candidate_title(
-                value.get("replacement_title")
-                or value.get("name")
-                or value.get("title")
-                or "",
+                value.get("replacement_title") or value.get("name") or value.get("title") or "",
                 value.get("equipment_forms", []),
             ),
-            mechanism_chain_updates=_user_facing_text_list(
-                value.get("mechanism_chain_updates", []), limit=8
-            ),
+            mechanism_chain_updates=_user_facing_text_list(value.get("mechanism_chain_updates", []), limit=8),
             direct_military_effects=direct_effects,
-            equipment_forms=_user_facing_text_list(
-                value.get("equipment_forms", []), limit=6
-            ),
+            equipment_forms=_user_facing_text_list(value.get("equipment_forms", []), limit=6),
             project_function=project_function,
-            system_interfaces=_user_facing_text_list(
-                value.get("system_interfaces", []), limit=8
-            ),
+            system_interfaces=_user_facing_text_list(value.get("system_interfaces", []), limit=8),
             novelty_delta=_user_facing_text(value.get("novelty_delta", ""), limit=900),
-            frontier_principle=_user_facing_text(
-                value.get("frontier_principle", ""), limit=320
-            ),
-            technology_discontinuity=_user_facing_text(
-                value.get("technology_discontinuity", ""), limit=420
-            ),
-            technology_horizon=_user_facing_text(
-                value.get("technology_horizon", ""), limit=120
-            ),
-            engineering_bottleneck=_user_facing_text(
-                value.get("engineering_bottleneck", ""), limit=360
-            ),
-            original_paradigm=_user_facing_text(
-                value.get("original_paradigm", ""), limit=900
-            ),
-            disruptive_shift=_user_facing_text(
-                value.get("disruptive_shift", ""), limit=900
-            ),
-            independence_thesis=_user_facing_text(
-                value.get("independence_thesis", ""), limit=900
-            ),
+            frontier_principle=_user_facing_text(value.get("frontier_principle", ""), limit=320),
+            technology_discontinuity=_user_facing_text(value.get("technology_discontinuity", ""), limit=420),
+            technology_horizon=_user_facing_text(value.get("technology_horizon", ""), limit=120),
+            engineering_bottleneck=_user_facing_text(value.get("engineering_bottleneck", ""), limit=360),
+            original_paradigm=_user_facing_text(value.get("original_paradigm", ""), limit=900),
+            disruptive_shift=_user_facing_text(value.get("disruptive_shift", ""), limit=900),
+            independence_thesis=_user_facing_text(value.get("independence_thesis", ""), limit=900),
             naming_style=_user_facing_text(value.get("naming_style", ""), limit=120),
-            core_disruptive_difference=_user_facing_text(
-                value.get("core_disruptive_difference", ""), limit=900
-            ),
-            naming_rationale=_user_facing_text(
-                value.get("naming_rationale", ""), limit=900
-            ),
+            core_disruptive_difference=_user_facing_text(value.get("core_disruptive_difference", ""), limit=900),
+            naming_rationale=_user_facing_text(value.get("naming_rationale", ""), limit=900),
             concise_winning_summary=_user_facing_text(
-                value.get("concise_winning_summary")
-                or value.get("reference_overview")
-                or "",
+                value.get("concise_winning_summary") or value.get("reference_overview") or "",
                 limit=1800,
             ),
-            decisive_advantage_thesis=_user_facing_text(
-                value.get("decisive_advantage_thesis", ""), limit=900
-            ),
-            cross_query_distinction=_user_facing_text(
-                value.get("cross_query_distinction", ""), limit=900
-            ),
-            evidence_boundary=_user_facing_text(
-                value.get("evidence_boundary", ""), limit=800
-            ),
-            implementation_path=_user_facing_text(
-                value.get("implementation_path", ""), limit=800
-            ),
+            decisive_advantage_thesis=_user_facing_text(value.get("decisive_advantage_thesis", ""), limit=900),
+            cross_query_distinction=_user_facing_text(value.get("cross_query_distinction", ""), limit=900),
+            evidence_boundary=_user_facing_text(value.get("evidence_boundary", ""), limit=800),
+            implementation_path=_user_facing_text(value.get("implementation_path", ""), limit=800),
             evidence_ids=evidence_ids,
-            counterevidence=_user_facing_text_list(
-                value.get("counterevidence", []), limit=8
-            ),
-            adversary_adaptations=_user_facing_text_list(
-                value.get("adversary_adaptations", []), limit=8
-            ),
-            failure_boundaries=_user_facing_text_list(
-                value.get("failure_boundaries", []), limit=8
-            ),
-            trl_constraints=_user_facing_text_list(
-                value.get("trl_constraints", []), limit=6
-            ),
-            cost_constraints=_user_facing_text_list(
-                value.get("cost_constraints", []), limit=6
-            ),
-            industrial_constraints=_user_facing_text_list(
-                value.get("industrial_constraints", []), limit=6
-            ),
-            cross_scenario_results=_user_facing_text_list(
-                value.get("cross_scenario_results", []), limit=8
-            ),
-            validation_plan=_user_facing_text_list(
-                value.get("validation_plan", []), limit=8
-            ),
+            counterevidence=_user_facing_text_list(value.get("counterevidence", []), limit=8),
+            adversary_adaptations=_user_facing_text_list(value.get("adversary_adaptations", []), limit=8),
+            failure_boundaries=_user_facing_text_list(value.get("failure_boundaries", []), limit=8),
+            trl_constraints=_user_facing_text_list(value.get("trl_constraints", []), limit=6),
+            cost_constraints=_user_facing_text_list(value.get("cost_constraints", []), limit=6),
+            industrial_constraints=_user_facing_text_list(value.get("industrial_constraints", []), limit=6),
+            cross_scenario_results=_user_facing_text_list(value.get("cross_scenario_results", []), limit=8),
+            validation_plan=_user_facing_text_list(value.get("validation_plan", []), limit=8),
             residuals_resolved=_text_list(value.get("residuals_resolved", []), limit=8),
             incremental_quality=quality,
             recommendation=recommendation,
@@ -2752,10 +2412,7 @@ class WinningSwarmController:
         concrete_equipment = bool(equipment_forms)
         mechanism_difference = bool(mechanism_updates or novelty)
         structured_weapon_delta = bool(
-            concrete_equipment
-            and direct_effects
-            and project_function
-            and mechanism_difference
+            concrete_equipment and direct_effects and project_function and mechanism_difference
         )
         generic_substantive = bool(
             structured_weapon_delta
@@ -2795,16 +2452,10 @@ class WinningSwarmController:
         if not contribution.accepted:
             return hypothesis
         if contribution.hypothesis_id != hypothesis.hypothesis_id:
-            raise ValueError(
-                "contribution hypothesis_id does not match ledger candidate"
-            )
+            raise ValueError("contribution hypothesis_id does not match ledger candidate")
         if contribution.merge_target not in MERGE_TARGETS:
             raise ValueError("invalid contribution merge_target")
-        residuals = [
-            item
-            for item in hypothesis.residuals
-            if item not in set(contribution.residuals_resolved)
-        ]
+        residuals = [item for item in hypothesis.residuals if item not in set(contribution.residuals_resolved)]
         replacement_title = contribution.replacement_title.strip()
         # S4/S5 renaming is a whole-candidate semantic decision authored by an
         # isolated Codex session.  Local suffix, length and keyword heuristics
@@ -2840,9 +2491,7 @@ class WinningSwarmController:
                 ],
                 8,
             ),
-            project_function=(
-                contribution.project_function or hypothesis.project_function
-            ),
+            project_function=(contribution.project_function or hypothesis.project_function),
             system_interfaces=_dedupe(
                 [
                     *hypothesis.system_interfaces,
@@ -2851,60 +2500,28 @@ class WinningSwarmController:
                 10,
             ),
             novelty_delta=contribution.novelty_delta or hypothesis.novelty_delta,
-            frontier_principle=(
-                contribution.frontier_principle or hypothesis.frontier_principle
-            ),
-            technology_discontinuity=(
-                contribution.technology_discontinuity
-                or hypothesis.technology_discontinuity
-            ),
-            technology_horizon=(
-                contribution.technology_horizon or hypothesis.technology_horizon
-            ),
-            engineering_bottleneck=(
-                contribution.engineering_bottleneck or hypothesis.engineering_bottleneck
-            ),
+            frontier_principle=(contribution.frontier_principle or hypothesis.frontier_principle),
+            technology_discontinuity=(contribution.technology_discontinuity or hypothesis.technology_discontinuity),
+            technology_horizon=(contribution.technology_horizon or hypothesis.technology_horizon),
+            engineering_bottleneck=(contribution.engineering_bottleneck or hypothesis.engineering_bottleneck),
             # Ordinary S4/S5 work may complete a missing thesis but cannot
             # silently rewrite the S3 identity. Explicit expert repair uses
             # replace_bounded_claims below when a full correction is needed.
-            original_paradigm=(
-                hypothesis.original_paradigm or contribution.original_paradigm
-            ),
-            disruptive_shift=(
-                hypothesis.disruptive_shift or contribution.disruptive_shift
-            ),
-            independence_thesis=(
-                hypothesis.independence_thesis or contribution.independence_thesis
-            ),
+            original_paradigm=(hypothesis.original_paradigm or contribution.original_paradigm),
+            disruptive_shift=(hypothesis.disruptive_shift or contribution.disruptive_shift),
+            independence_thesis=(hypothesis.independence_thesis or contribution.independence_thesis),
             naming_style=(hypothesis.naming_style or contribution.naming_style),
             core_disruptive_difference=(
-                hypothesis.core_disruptive_difference
-                or contribution.core_disruptive_difference
+                hypothesis.core_disruptive_difference or contribution.core_disruptive_difference
             ),
-            naming_rationale=(
-                contribution.naming_rationale or hypothesis.naming_rationale
-            ),
-            reference_overview=(
-                contribution.concise_winning_summary or hypothesis.reference_overview
-            ),
-            decisive_advantage_thesis=(
-                contribution.decisive_advantage_thesis
-                or hypothesis.decisive_advantage_thesis
-            ),
-            cross_query_distinction=(
-                contribution.cross_query_distinction
-                or hypothesis.cross_query_distinction
-            ),
-            evidence_boundary=contribution.evidence_boundary
-            or hypothesis.evidence_boundary,
-            implementation_path=contribution.implementation_path
-            or hypothesis.implementation_path,
-            evidence_ids=_dedupe(
-                [*hypothesis.evidence_ids, *contribution.evidence_ids], 24
-            ),
-            counterevidence=_dedupe(
-                [*hypothesis.counterevidence, *contribution.counterevidence], 12
-            ),
+            naming_rationale=(contribution.naming_rationale or hypothesis.naming_rationale),
+            reference_overview=(contribution.concise_winning_summary or hypothesis.reference_overview),
+            decisive_advantage_thesis=(contribution.decisive_advantage_thesis or hypothesis.decisive_advantage_thesis),
+            cross_query_distinction=(contribution.cross_query_distinction or hypothesis.cross_query_distinction),
+            evidence_boundary=contribution.evidence_boundary or hypothesis.evidence_boundary,
+            implementation_path=contribution.implementation_path or hypothesis.implementation_path,
+            evidence_ids=_dedupe([*hypothesis.evidence_ids, *contribution.evidence_ids], 24),
+            counterevidence=_dedupe([*hypothesis.counterevidence, *contribution.counterevidence], 12),
             adversary_adaptations=_dedupe(
                 [
                     *hypothesis.adversary_adaptations,
@@ -2912,15 +2529,9 @@ class WinningSwarmController:
                 ],
                 12,
             ),
-            failure_boundaries=_dedupe(
-                [*hypothesis.failure_boundaries, *contribution.failure_boundaries], 12
-            ),
-            trl_constraints=_dedupe(
-                [*hypothesis.trl_constraints, *contribution.trl_constraints], 10
-            ),
-            cost_constraints=_dedupe(
-                [*hypothesis.cost_constraints, *contribution.cost_constraints], 10
-            ),
+            failure_boundaries=_dedupe([*hypothesis.failure_boundaries, *contribution.failure_boundaries], 12),
+            trl_constraints=_dedupe([*hypothesis.trl_constraints, *contribution.trl_constraints], 10),
+            cost_constraints=_dedupe([*hypothesis.cost_constraints, *contribution.cost_constraints], 10),
             industrial_constraints=_dedupe(
                 [
                     *hypothesis.industrial_constraints,
@@ -2935,15 +2546,9 @@ class WinningSwarmController:
                 ],
                 12,
             ),
-            validation_plan=_dedupe(
-                [*hypothesis.validation_plan, *contribution.validation_plan], 12
-            ),
-            merge_targets=_dedupe(
-                [*hypothesis.merge_targets, contribution.merge_target], 7
-            ),
-            source_task_ids=_dedupe(
-                [*hypothesis.source_task_ids, contribution.task_id], 12
-            ),
+            validation_plan=_dedupe([*hypothesis.validation_plan, *contribution.validation_plan], 12),
+            merge_targets=_dedupe([*hypothesis.merge_targets, contribution.merge_target], 7),
+            source_task_ids=_dedupe([*hypothesis.source_task_ids, contribution.task_id], 12),
             residuals=residuals,
             status="challenging",
         )
@@ -2979,9 +2584,7 @@ class WinningSwarmController:
             and not self._contains_unsupported_precision(hypothesis)
         )
 
-    def evaluate_gate(
-        self, hypothesis: WinningHypothesis, *, stage: str
-    ) -> SwarmGateResult:
+    def evaluate_gate(self, hypothesis: WinningHypothesis, *, stage: str) -> SwarmGateResult:
         residuals: list[str] = []
         rejection_reasons: list[str] = []
         frontloaded_quality = self.policy.get("policy_id") in {
@@ -2989,16 +2592,10 @@ class WinningSwarmController:
             "swarm_quality_v1",
             "winning_swarm_quality_v1",
         }
-        frontier_allowance = bool(
-            frontloaded_quality
-            and self.qualifies_for_frontier_evidence_allowance(hypothesis)
-        )
+        frontier_allowance = bool(frontloaded_quality and self.qualifies_for_frontier_evidence_allowance(hypothesis))
         if not hypothesis.nearest_public_baseline.strip():
             residuals.append("baseline_missing")
-        if (
-            not hypothesis.changed_confrontation_variable.strip()
-            or not hypothesis.mechanism_chain
-        ):
+        if not hypothesis.changed_confrontation_variable.strip() or not hypothesis.mechanism_chain:
             residuals.append("causal_chain_broken")
         if not hypothesis.direct_military_effects:
             residuals.append("military_effect_missing")
@@ -3038,13 +2635,9 @@ class WinningSwarmController:
             # delivery blocker.
             if (
                 hypothesis.implementation_path == "upgrade"
-                and any(
-                    "-web-" in str(evidence_id)
-                    for evidence_id in hypothesis.evidence_ids
-                )
+                and any("-web-" in str(evidence_id) for evidence_id in hypothesis.evidence_ids)
                 and not any(
-                    str(evidence_id).startswith("ev-weapon_equipment-")
-                    for evidence_id in hypothesis.evidence_ids
+                    str(evidence_id).startswith("ev-weapon_equipment-") for evidence_id in hypothesis.evidence_ids
                 )
             ):
                 residuals.append("equipment_object_evidence_missing")
@@ -3052,11 +2645,7 @@ class WinningSwarmController:
             residuals.append("evidence_insufficient")
         if not hypothesis.adversary_adaptations or not hypothesis.failure_boundaries:
             residuals.append("counter_adaptation_unresolved")
-        if not (
-            hypothesis.trl_constraints
-            and hypothesis.cost_constraints
-            and hypothesis.industrial_constraints
-        ):
+        if not (hypothesis.trl_constraints and hypothesis.cost_constraints and hypothesis.industrial_constraints):
             residuals.append("engineering_feasibility_insufficient")
         if not hypothesis.cross_scenario_results:
             residuals.append("cross_scenario_unstable")
@@ -3102,11 +2691,7 @@ class WinningSwarmController:
                     "validation_route_missing": 0.03,
                 }
             )
-        score = 1.0 - sum(
-            weight
-            for residual, weight in dimension_weights.items()
-            if residual in residuals
-        )
+        score = 1.0 - sum(weight for residual, weight in dimension_weights.items() if residual in residuals)
         if "unsupported_precision" in residuals:
             score -= 0.20
         score = round(max(0.0, min(1.0, score)), 4)
@@ -3195,9 +2780,7 @@ class WinningSwarmController:
             "direct_result",
         )
         return [
-            name
-            for name, left_value, right_value in zip(names, left_axes, right_axes)
-            if left_value != right_value
+            name for name, left_value, right_value in zip(names, left_axes, right_axes) if left_value != right_value
         ]
 
     def same_family_independence_conflicts(
@@ -3233,9 +2816,7 @@ class WinningSwarmController:
         del minimum_similarity
         fingerprint = _semantic_identity_fingerprint(candidate)
         matches = [
-            governed
-            for governed in governed_candidates
-            if _semantic_identity_fingerprint(governed) == fingerprint
+            governed for governed in governed_candidates if _semantic_identity_fingerprint(governed) == fingerprint
         ]
         if len(matches) != 1:
             return ""
@@ -3262,8 +2843,7 @@ class WinningSwarmController:
             candidate
             for candidate in passing
             if not any(
-                other.hypothesis_id != candidate.hypothesis_id
-                and _dominates(other, candidate, gate_by_id)
+                other.hypothesis_id != candidate.hypothesis_id and _dominates(other, candidate, gate_by_id)
                 for other in passing
             )
         ]
@@ -3276,22 +2856,18 @@ class WinningSwarmController:
             gate = gate_by_id[candidate.hypothesis_id]
             if not gate.passed:
                 selection_reasons[candidate.hypothesis_id] = (
-                    list(gate.rejection_reasons)
-                    or list(gate.residuals)
-                    or ["独立Codex语义评审未将其纳入本轮组合"]
+                    list(gate.rejection_reasons) or list(gate.residuals) or ["独立Codex语义评审未将其纳入本轮组合"]
                 )
                 continue
             dominators = [
                 other.hypothesis_id
                 for other in passing
-                if other.hypothesis_id != candidate.hypothesis_id
-                and _dominates(other, candidate, gate_by_id)
+                if other.hypothesis_id != candidate.hypothesis_id and _dominates(other, candidate, gate_by_id)
             ]
             if dominators:
                 selection_reasons[candidate.hypothesis_id] = [
                     "经独立Codex语义评审保留，但被更强候选在质量得分、证据覆盖、"
-                    "反适应/跨场景稳健性或工程约束完整性上支配："
-                    + "、".join(dominators[:3])
+                    "反适应/跨场景稳健性或工程约束完整性上支配：" + "、".join(dominators[:3])
                 ]
             else:
                 selection_reasons[candidate.hypothesis_id] = [
@@ -3312,9 +2888,7 @@ class WinningSwarmController:
         finalists = [
             replace(
                 item,
-                status=(
-                    "finalist" if item.hypothesis_id in selected_ids else "rejected"
-                ),
+                status=("finalist" if item.hypothesis_id in selected_ids else "rejected"),
                 score=gate_by_id[item.hypothesis_id].score,
                 residuals=gate_by_id[item.hypothesis_id].residuals,
             )
@@ -3338,9 +2912,7 @@ class WinningSwarmController:
         values: Any,
         valid_evidence_ids: set[str],
     ) -> list[str]:
-        return [
-            item for item in _text_list(values, limit=32) if item in valid_evidence_ids
-        ]
+        return [item for item in _text_list(values, limit=32) if item in valid_evidence_ids]
 
     @staticmethod
     def is_direct_combat_equipment(
@@ -3384,8 +2956,7 @@ class WinningSwarmController:
             (
                 item
                 for item in assessments.values()
-                if item.passed
-                and item.equipment_classification not in direct_categories
+                if item.passed and item.equipment_classification not in direct_categories
             ),
             key=lambda item: (-item.weighted_score, item.hypothesis_id),
         )
@@ -3397,16 +2968,8 @@ class WinningSwarmController:
             ),
             key=lambda item: (-item.weighted_score, item.hypothesis_id),
         )
-        direct_revisions = [
-            item
-            for item in revisions
-            if item.equipment_classification in direct_categories
-        ]
-        other_revisions = [
-            item
-            for item in revisions
-            if item.equipment_classification not in direct_categories
-        ]
+        direct_revisions = [item for item in revisions if item.equipment_classification in direct_categories]
+        other_revisions = [item for item in revisions if item.equipment_classification not in direct_categories]
         # ``hypotheses`` is retained for API compatibility.  Repair priority
         # comes from the independent expert verdict, classification and score;
         # local code must not reshuffle it through an inferred weapon family.
@@ -3432,10 +2995,7 @@ class WinningSwarmController:
     ) -> dict[str, Any] | None:
         if not contribution.accepted:
             return None
-        if (
-            contribution.hypothesis_id != hypothesis_id
-            or contribution.merge_target != merge_target
-        ):
+        if contribution.hypothesis_id != hypothesis_id or contribution.merge_target != merge_target:
             return None
         return to_plain(contribution)
 
@@ -3542,11 +3102,7 @@ def _is_direct_combat_equipment(
 ) -> bool:
     """Reject support-only cards from satisfying the combat-equipment quota."""
 
-    classification = (
-        assessment.equipment_classification.strip().lower()
-        if assessment is not None
-        else ""
-    )
+    classification = assessment.equipment_classification.strip().lower() if assessment is not None else ""
     if classification in {"direct_combat", "unmanned_combat"}:
         return True
     if classification in {"system_link", "support", "support_only", "non_equipment"}:
@@ -3571,14 +3127,9 @@ def _dominates(
             min(1.0, len(item.evidence_ids) / 3),
             min(
                 1.0,
-                (len(item.adversary_adaptations) + len(item.cross_scenario_results))
-                / 4,
+                (len(item.adversary_adaptations) + len(item.cross_scenario_results)) / 4,
             ),
-            1.0
-            if item.trl_constraints
-            and item.cost_constraints
-            and item.industrial_constraints
-            else 0.0,
+            1.0 if item.trl_constraints and item.cost_constraints and item.industrial_constraints else 0.0,
         )
 
     left_vector = vector(left)
@@ -3600,9 +3151,7 @@ def _text_list(value: Any, *, limit: int) -> list[str]:
         rows = list(value)
     else:
         rows = []
-    return _dedupe(
-        [str(item).strip()[:1200] for item in rows if str(item).strip()], limit
-    )
+    return _dedupe([str(item).strip()[:1200] for item in rows if str(item).strip()], limit)
 
 
 def _clean_weapon_candidate_text(value: Any) -> str:
@@ -3670,9 +3219,7 @@ def normalize_weapon_candidate_title(
 
 
 def _dedupe(values: Sequence[str], limit: int) -> list[str]:
-    return list(dict.fromkeys(str(item) for item in values if str(item).strip()))[
-        :limit
-    ]
+    return list(dict.fromkeys(str(item) for item in values if str(item).strip()))[:limit]
 
 
 def _bounded_int(value: Any, minimum: int, maximum: int, fallback: int) -> int:
@@ -3683,9 +3230,7 @@ def _bounded_int(value: Any, minimum: int, maximum: int, fallback: int) -> int:
     return max(minimum, min(maximum, parsed))
 
 
-def _bounded_float(
-    value: Any, minimum: float, maximum: float, fallback: float
-) -> float:
+def _bounded_float(value: Any, minimum: float, maximum: float, fallback: float) -> float:
     try:
         parsed = float(value)
     except (TypeError, ValueError):

@@ -6,6 +6,26 @@ import { createThreadDraftStore } from '@/utils/thread_draft'
 
 const PAGE_SIZE = 100
 const threadDraftStore = createThreadDraftStore()
+const INTERNAL_THREAD_SOURCES = new Set(['innovation_brief', 'agent_call', 'agent_evaluation'])
+const INTERNAL_THREAD_CHANNELS = new Set(['internal'])
+const INTERNAL_THREAD_TITLE_PREFIXES = ['简报调研探索 ·']
+
+export function isInternalThread(thread) {
+  if (!thread || typeof thread !== 'object') return false
+  const metadata = thread.metadata && typeof thread.metadata === 'object' ? thread.metadata : {}
+  const source = String(metadata.source || '').trim()
+  const channel = String(metadata.channel || '').trim()
+  const title = String(thread.title || '').trim()
+  return (
+    INTERNAL_THREAD_SOURCES.has(source) ||
+    INTERNAL_THREAD_CHANNELS.has(channel) ||
+    INTERNAL_THREAD_TITLE_PREFIXES.some((prefix) => title.startsWith(prefix))
+  )
+}
+
+export function filterUserVisibleThreads(items) {
+  return Array.isArray(items) ? items.filter((thread) => !isInternalThread(thread)) : []
+}
 
 function countNonPinnedThreads(items) {
   let count = 0
@@ -21,6 +41,7 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
   const threadCreationInFlight = ref(false)
   const hasMoreThreads = ref(true)
   const isLoadingMoreThreads = ref(false)
+  const nextNonPinnedOffset = ref(0)
 
   const currentThread = computed(() => {
     if (!currentThreadId.value) return null
@@ -39,6 +60,11 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
 
   const upsertThread = (thread) => {
     if (!thread?.id) return
+    if (isInternalThread(thread)) {
+      threads.value = threads.value.filter((item) => item.id !== thread.id)
+      if (currentThreadId.value === thread.id) setCurrentThreadId(null)
+      return
+    }
     const index = threads.value.findIndex((item) => item.id === thread.id)
     if (index >= 0) {
       threads.value[index] = { ...threads.value[index], ...thread }
@@ -71,7 +97,9 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
     try {
       const fetchedThreads = await threadApi.getThreads(agentId, PAGE_SIZE, 0)
       if (!fetchedThreads) return
-      const statusById = new Map(fetchedThreads.map((thread) => [thread.id, thread.thread_status]))
+      const visibleThreads = filterUserVisibleThreads(fetchedThreads)
+      const statusById = new Map(visibleThreads.map((thread) => [thread.id, thread.thread_status]))
+      threads.value = threads.value.filter((thread) => !isInternalThread(thread))
       threads.value = threads.value.map((thread) => {
         const latestStatus = statusById.get(thread.id)
         if (!latestStatus) return thread
@@ -85,7 +113,8 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
   const loadThreads = async (agentId = null) => {
     try {
       const fetchedThreads = await threadApi.getThreads(agentId, PAGE_SIZE, 0)
-      threads.value = fetchedThreads || []
+      threads.value = filterUserVisibleThreads(fetchedThreads)
+      nextNonPinnedOffset.value = countNonPinnedThreads(fetchedThreads || [])
       hasMoreThreads.value = Boolean(fetchedThreads && countNonPinnedThreads(fetchedThreads) >= PAGE_SIZE)
       if (
         currentThreadId.value &&
@@ -106,12 +135,14 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
 
     isLoadingMoreThreads.value = true
     try {
-      const nonPinnedOffset = countNonPinnedThreads(threads.value)
+      const nonPinnedOffset = nextNonPinnedOffset.value
       const fetchedThreads = await threadApi.getThreads(agentId, PAGE_SIZE, nonPinnedOffset)
       if (fetchedThreads && fetchedThreads.length > 0) {
+        const visibleThreads = filterUserVisibleThreads(fetchedThreads)
+        nextNonPinnedOffset.value += countNonPinnedThreads(fetchedThreads)
         // 后端分页会重复返回置顶项，这里只追加列表中尚不存在的线程。
         const existingIds = new Set(threads.value.map((thread) => thread.id))
-        const newThreads = fetchedThreads.filter((thread) => !existingIds.has(thread.id))
+        const newThreads = visibleThreads.filter((thread) => !existingIds.has(thread.id))
         threads.value = [...threads.value, ...newThreads]
         hasMoreThreads.value = countNonPinnedThreads(fetchedThreads) >= PAGE_SIZE
       } else {
@@ -130,7 +161,7 @@ export const useChatThreadsStore = defineStore('chatThreads', () => {
 
     try {
       const thread = await threadApi.createThread(agentId, title, metadata, options)
-      if (thread) {
+      if (thread && !isInternalThread(thread)) {
         threads.value = [thread, ...threads.value.filter((item) => item.id !== thread.id)]
       }
       return thread

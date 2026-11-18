@@ -119,6 +119,10 @@
           </div>
         </div>
 
+        <p v-if="!ready" class="interaction-pending" role="status">
+          问题已实时到达，正在完成本轮状态提交…
+        </p>
+
         <div v-if="!isToolApproval && activeQuestion" class="question-block">
           <p v-if="activeQuestion.multiSelect" class="question-selection-hint">可选择多个选项</p>
 
@@ -211,7 +215,7 @@
             </template>
             <span v-else class="response-bar-spacer" aria-hidden="true"></span>
             <div class="question-inline-actions">
-              <button class="btn btn-skip" @click="handleSkip" :disabled="isProcessing">
+              <button class="btn btn-skip" @click="handleSkip" :disabled="isProcessing || !ready">
                 跳过
               </button>
               <button
@@ -237,7 +241,7 @@
           ref="toolRejectButtonRef"
           type="button"
           class="btn btn-reject"
-          :disabled="isProcessing"
+          :disabled="isProcessing || !ready"
           @click="handleToolDecision('reject')"
         >
           拒绝
@@ -245,7 +249,7 @@
         <button
           type="button"
           class="btn btn-approve"
-          :disabled="isProcessing"
+          :disabled="isProcessing || !ready"
           @click="handleToolDecision('approve')"
         >
           允许
@@ -294,6 +298,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   questions: { type: Array, default: () => [] },
   kind: { type: String, default: 'question' },
+  ready: { type: Boolean, default: true },
   autoRecommend: { type: Boolean, default: false },
   requestKey: { type: String, default: '' },
   actionRequests: { type: Array, default: () => [] }
@@ -547,7 +552,7 @@ const isQuestionComplete = (questionItem) =>
   isQuestionAnswered(questionItem) || isQuestionSkipped(questionItem)
 
 const isSubmitDisabled = computed(() => {
-  if (isProcessing.value) return true
+  if (isProcessing.value || !props.ready) return true
   if (normalizedQuestions.value.length === 0) return true
 
   return normalizedQuestions.value.some((questionItem) => !isQuestionComplete(questionItem))
@@ -620,7 +625,7 @@ const handleCancel = () => {
 }
 
 const handleSkip = () => {
-  if (isProcessing.value || !activeQuestion.value) return
+  if (isProcessing.value || !props.ready || !activeQuestion.value) return
   markInteracted()
 
   const questionId = activeQuestion.value.questionId
@@ -637,7 +642,7 @@ const handleSkip = () => {
 }
 
 const handleToolDecision = (decision) => {
-  if (isProcessing.value || !activeToolRequest.value) return
+  if (isProcessing.value || !props.ready || !activeToolRequest.value) return
 
   const nextDecisions = { ...toolDecisions.value, [activeToolIndex.value]: decision }
   toolDecisions.value = nextDecisions
@@ -660,7 +665,9 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
 
 const { countdown, manual, markInteracted } = useQuestionTimeout({
   visible: computed(() => props.visible),
-  enabled: computed(() => props.autoRecommend && !isToolApproval.value && !isProcessing.value),
+  enabled: computed(
+    () => props.ready && props.autoRecommend && !isToolApproval.value && !isProcessing.value
+  ),
   requestKey: computed(() => props.requestKey),
   questions: normalizedQuestions,
   submit: (answers) => {
@@ -746,6 +753,32 @@ const { countdown, manual, markInteracted } = useQuestionTimeout({
   color: var(--color-text-secondary);
   font-size: 13px;
   text-align: center;
+}
+
+.interaction-pending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.interaction-pending::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 14%, transparent);
+  content: '';
+  animation: interaction-pending-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes interaction-pending-pulse {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
 }
 
 .question-icon-button {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from sqlalchemy import delete, func, or_, select, true
@@ -35,6 +36,39 @@ EQUIPMENT_DEEP_JOB_TERMINAL_STATUSES = (
     "rejected",
     "interrupted",
 )
+
+
+def _strip_json_nul_escapes(encoded: str) -> str:
+    """仅移除 JSON 中代表真实 NUL 的奇数反斜杠转义。"""
+
+    output: list[str] = []
+    index = 0
+    while index < len(encoded):
+        if encoded[index] != "\\":
+            output.append(encoded[index])
+            index += 1
+            continue
+
+        slash_end = index
+        while slash_end < len(encoded) and encoded[slash_end] == "\\":
+            slash_end += 1
+        slash_count = slash_end - index
+        if encoded.startswith("u0000", slash_end) and slash_count % 2 == 1:
+            output.append("\\" * (slash_count - 1))
+            index = slash_end + len("u0000")
+            continue
+
+        output.append("\\" * slash_count)
+        index = slash_end
+
+    return "".join(output)
+
+
+def _postgres_json_safe(value: Any) -> Any:
+    """在最终 JSON 编码层移除 PostgreSQL JSONB 不支持的 NUL。"""
+
+    encoded = json.dumps(value, ensure_ascii=False)
+    return json.loads(_strip_json_nul_escapes(encoded))
 
 
 def _visible_clause(model, owner_uid: str | None, *, include_legacy: bool = False):
@@ -113,8 +147,8 @@ class EquipmentResearchRepository:
         event = EquipmentResearchEvent(
             run_id=run_id,
             sequence=await self.next_event_sequence(run_id),
-            event_type=event_type,
-            payload=payload,
+            event_type=str(_postgres_json_safe(event_type)),
+            payload=_postgres_json_safe(payload),
             created_at=utc_now_naive(),
         )
         self.session.add(event)
@@ -132,8 +166,8 @@ class EquipmentResearchRepository:
             EquipmentResearchEvent(
                 run_id=run_id,
                 sequence=first_sequence + index,
-                event_type=event_type,
-                payload=payload,
+                event_type=str(_postgres_json_safe(event_type)),
+                payload=_postgres_json_safe(payload),
                 created_at=utc_now_naive(),
             )
             for index, (event_type, payload) in enumerate(events)

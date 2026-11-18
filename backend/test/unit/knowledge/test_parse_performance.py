@@ -8,7 +8,7 @@ from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 from platform_core.knowledge.parser.rapid_ocr import RapidOCRParser
-from platform_core.knowledge.parser.local_ocr_pool import process_local_document
+from platform_core.knowledge.parser.local_ocr_pool import process_local_document, process_local_document_result
 from platform_core.services.knowledge_task_service import resolve_document_concurrency, run_document_batch
 
 
@@ -64,6 +64,27 @@ def test_large_scanned_image_does_not_skip_ocr_due_to_partial_text(tmp_path, mon
     ocr.assert_called_once()
 
 
+def test_rapid_ocr_result_preserves_text_and_ocr_page_spans(tmp_path, monkeypatch):
+    source = tmp_path / "mixed-spans.pdf"
+    make_text_pdf(source, blank_page=True)
+    parser = RapidOCRParser()
+    monkeypatch.setattr(parser, "process_image", Mock(return_value="OCR_SECOND_PAGE"))
+
+    result = parser.process_pdf_result(str(source))
+
+    assert result.source_metadata["page_count"] == 2
+    assert result.source_metadata["text_layer_pages"] == 1
+    assert result.source_metadata["ocr_pages"] == 1
+    assert [result.markdown[block.start_char : block.end_char] for block in result.blocks] == [
+        result.markdown.split("\n\n", 1)[0],
+        "OCR_SECOND_PAGE",
+    ]
+    assert [block.source_metadata["position_kind"] for block in result.blocks] == [
+        "pdf_text_layer_page",
+        "ocr_page",
+    ]
+
+
 @pytest.mark.asyncio
 async def test_spawned_ocr_processes_read_real_text_pdf(tmp_path):
     source = tmp_path / "searchable.pdf"
@@ -76,6 +97,13 @@ async def test_spawned_ocr_processes_read_real_text_pdf(tmp_path):
         30,
     )
     assert all("searchable text" in result for result in results)
+
+    structured = await asyncio.wait_for(
+        process_local_document_result(str(source), {"prefer_text_layer": True}),
+        30,
+    )
+    assert "searchable text" in structured.markdown
+    assert structured.blocks[0].page_number == 1
 
 
 @pytest.mark.asyncio

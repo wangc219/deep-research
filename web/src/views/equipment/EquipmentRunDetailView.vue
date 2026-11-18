@@ -638,8 +638,9 @@ const act = async (name, handler, successText, confirmText = '') => {
   if (confirmText && !(await confirm(confirmText))) return
   action.value = name
   try {
-    await handler(runId.value)
-    message.success(successText)
+    const updatedRun = await handler(runId.value)
+    if (updatedRun?.run_id === runId.value) run.value = updatedRun
+    if (successText) message.success(successText)
     await refresh()
   } catch (error) {
     message.error(error?.message || '操作失败')
@@ -770,7 +771,7 @@ watch(runId, (next, previous) => {
           <button type="button" @click="router.push('/models')">模型设置</button>
         </div>
 
-        <div v-if="run?.error" class="run-error-banner">
+        <div v-if="run?.status === 'failed' && run?.error" class="run-error-banner">
           <CircleAlert :size="16" />
           <span>{{ run.error }}</span>
         </div>
@@ -870,7 +871,7 @@ watch(runId, (next, previous) => {
           <span>{{ projectionNote }}</span>
         </div>
 
-        <section v-if="run?.status === 'failed' || workflow?.status === 'failed'" class="workflow-failure">
+        <section v-if="run?.status === 'failed'" class="workflow-failure">
           <CircleAlert :size="18" />
           <div>
             <b>{{ workflow?.failure?.phase ? `${workflow.failure.phase} 已停止` : '任务已停止' }}</b>

@@ -66,6 +66,7 @@ class AcademicRetrievalRepository:
         request_key: str,
         attempt_no: int,
         credential_scope: str,
+        cost_cents: int | None = None,
         adaptive_long_running: bool = False,
     ) -> AcademicReservation:
         """锁定配置与父 Run 后预占预算；调用方提交后才能发送 HTTP。"""
@@ -116,7 +117,8 @@ class AcademicRetrievalRepository:
             .group_by(AcademicRetrievalCall.endpoint)
         )
         used = list(costs.all())
-        _method, _path, cost, kind = ENDPOINTS[endpoint]
+        _method, _path, default_cost, kind = ENDPOINTS[endpoint]
+        cost = default_cost if cost_cents is None else max(0, int(cost_cents))
         spent = sum(int(row[2]) for row in used)
         budget_cents = int(config[f"{prefix}_budget_cents"])
         if budget_cents > 0 and spent + cost > budget_cents:

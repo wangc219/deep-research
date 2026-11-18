@@ -616,12 +616,12 @@ def apply_execution_profile_to_blueprint(
                 "s3_empty_reallocation_max": 2,
                 "s3_s4_candidate_maximum_per_session": 3,
                 "s3_s4_candidate_pool_maximum_per_session": 3,
-                # S5 is an innovation-first cut. The historical six-card value
-                # remains a dashboard preference only; admission has no floor,
-                # and rejected ordinary upgrades are never resurrected merely
-                # to fill the seven-card ceiling.
+                # S5 is an innovation-first cut. Six cards are the minimum
+                # delivery baseline; additional high-quality, independently
+                # useful concepts remain eligible up to the audited capacity.
+                # Rejected ordinary upgrades are never resurrected for count.
                 "finalist_minimum": 6,
-                "finalist_maximum": 6,
+                "finalist_maximum": 10,
                 "minimum_direct_combat_equipment": 2,
                 "preferred_distinct_direct_equipment": 3,
                 "expert_candidate_pool_maximum": 0,

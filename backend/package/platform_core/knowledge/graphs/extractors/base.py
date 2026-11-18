@@ -2,16 +2,26 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 from unicodedata import normalize
 
-from platform_core.knowledge.graphs.graph_utils import normalize_entity_name
+from platform_core.knowledge.graphs.graph_utils import normalize_entity_name, resolve_entity_naming
 
 from .defense_quality_contract import (
     DEFAULT_MAX_HYPOTHESES_PER_CHUNK,
     MAX_HYPOTHESES_PER_CHUNK,
     normalize_relation_metadata,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class GraphExtractionInput:
+    """一个保持原文与 Block 元数据绑定的抽取输入。"""
+
+    text: str
+    chunk_metadata: dict[str, Any] | None = None
+    candidate_entities: list[dict[str, Any]] | None = None
 
 
 class GraphExtractor(ABC):
@@ -23,6 +33,10 @@ class GraphExtractor(ABC):
     @abstractmethod
     async def extract(self, text: str, *, chunk_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         pass
+
+    async def extract_batch(self, inputs: list[GraphExtractionInput]) -> list[dict[str, Any]]:
+        """批量抽取；默认保持单条语义，支持批推理的适配器应覆盖。"""
+        return [await self.extract(item.text, chunk_metadata=item.chunk_metadata) for item in inputs]
 
     def validate_options(self) -> None:
         return None
@@ -47,10 +61,13 @@ MAX_RELATION_TYPE_LENGTH = 256
 
 
 def _is_persistable_entity(entity: dict[str, Any]) -> bool:
-    """实体名、归一化名与标签是否都能落进 knowledge_graph_entities 的列。"""
+    """实体须含语义字符，且名称、归一化名和标签均可安全落库。"""
+
+    text = entity["text"]
     return (
-        len(entity["text"]) <= MAX_ENTITY_NAME_LENGTH
-        and len(normalize_entity_name(entity["text"])) <= MAX_ENTITY_NAME_LENGTH
+        any(character.isalnum() for character in normalize("NFKC", text))
+        and len(text) <= MAX_ENTITY_NAME_LENGTH
+        and len(normalize_entity_name(text)) <= MAX_ENTITY_NAME_LENGTH
         and len(entity["label"]) <= MAX_ENTITY_LABEL_LENGTH
     )
 
@@ -89,6 +106,7 @@ def normalize_extraction_result(
             existing = normalized_entity
         else:
             _merge_attributes(existing, normalized_entity)
+            _merge_entity_naming(existing, normalized_entity)
 
         for ref in _entity_refs(entity, existing):
             entity_refs[ref] = existing
@@ -126,7 +144,11 @@ def normalize_extraction_result(
             dropped_relations += 1
             continue
         relation_metadata = normalize_relation_metadata(relation)
-        if relation_metadata["claim_level"] == "Fact" and not relation_metadata["evidence_quote"]:
+        if (
+            relation_metadata["claim_level"] == "Fact"
+            and not relation_metadata["evidence_quote"]
+            and not relation_metadata["evidence_spans"]
+        ):
             relation_metadata["claim_level"] = "Inference"
             relation_metadata["uncertainty"] = relation_metadata["uncertainty"] or "缺少可核验的原文证据短句"
         if relation_metadata["claim_level"] == "Hypothesis" and label not in {
@@ -136,15 +158,17 @@ def normalize_extraction_result(
             "POTENTIAL_FOR",
         }:
             label = "PREDICTED_LINK"
-        normalized_relations.append(
-            {
-                "source": source,
-                "target": target,
-                "text": text,
-                "label": label,
-                **relation_metadata,
-            }
-        )
+        normalized_relation = {
+            "source": source,
+            "target": target,
+            "text": text,
+            "label": label,
+            **relation_metadata,
+        }
+        model_sources = _normalize_model_sources(relation.get("model_sources"))
+        if model_sources:
+            normalized_relation["model_sources"] = model_sources
+        normalized_relations.append(normalized_relation)
 
     evidence_backed_entities = {
         _entity_key(endpoint)
@@ -192,28 +216,74 @@ def normalize_extraction_result(
 
 
 def verify_extraction_evidence(result: dict[str, Any], source_text: str) -> dict[str, Any]:
-    """核对事实引用；未匹配的关系保留为待复核推断，不冒充事实。"""
+    """由 Span 生成事实与推断证据；无法核验的候选固定进入待复核。"""
     source = "".join(normalize("NFKC", source_text).split())
     verified = 0
     reclassified = 0
+    grounded_inferences = 0
+    ungrounded_inferences = 0
     for relation in result["relations"]:
-        if relation["claim_level"] != "Fact":
+        if relation["claim_level"] == "Hypothesis":
             continue
+        span_quote = _quote_from_evidence_spans(relation.get("evidence_spans"), source_text)
+        if span_quote:
+            relation["evidence_quote"] = span_quote
         quote = "".join(normalize("NFKC", relation["evidence_quote"]).split())
-        if quote and quote in source:
+        quote_is_grounded = bool(quote and quote in source)
+        if relation["claim_level"] == "Inference":
+            if quote_is_grounded:
+                grounded_inferences += 1
+                continue
+            relation["confidence"] = min(relation["confidence"], 0.5)
+            relation["expert_review_required"] = True
+            relation["review_status"] = "pending"
+            uncertainty = relation["uncertainty"]
+            relation["uncertainty"] = f"{uncertainty}；推断证据未匹配当前分块，需复核".lstrip("；")
+            ungrounded_inferences += 1
+            continue
+        if quote_is_grounded:
             verified += 1
             continue
         relation["claim_level"] = "Inference"
         relation["confidence"] = min(relation["confidence"], 0.5)
         relation["expert_review_required"] = True
+        relation["review_status"] = "pending"
         uncertainty = relation["uncertainty"]
         relation["uncertainty"] = f"{uncertainty}；原文引用未匹配当前分块，需复核".lstrip("；")
         reclassified += 1
     result["metadata"]["evidence_verification"] = {
         "verified_facts": verified,
         "reclassified_facts": reclassified,
+        "grounded_inferences": grounded_inferences,
+        "ungrounded_inferences": ungrounded_inferences,
     }
     return result
+
+
+def _quote_from_evidence_spans(spans: Any, source_text: str) -> str:
+    """将模型返回的半开字符区间收敛为一段可逐字核验的原文。"""
+    if not isinstance(spans, list) or not spans:
+        return ""
+    starts = []
+    ends = []
+    for span in spans:
+        if not isinstance(span, dict):
+            return ""
+        start = span.get("start")
+        end = span.get("end")
+        if (
+            isinstance(start, bool)
+            or isinstance(end, bool)
+            or not isinstance(start, int)
+            or not isinstance(end, int)
+            or start < 0
+            or end <= start
+            or end > len(source_text)
+        ):
+            return ""
+        starts.append(start)
+        ends.append(end)
+    return source_text[min(starts) : max(ends)]
 
 
 def _normalize_relation_endpoint(
@@ -262,18 +332,42 @@ def _normalize_entity(entity: Any, path: str) -> dict[str, Any]:
         attr_text = str(attribute.get("text") or "").strip()
         if not attr_text:
             continue
-        normalized_attributes.append(
-            {
-                "text": attr_text,
-                "label": str(attribute.get("label") or "Attribute").strip() or "Attribute",
-            }
-        )
+        normalized_attribute = {
+            "text": attr_text,
+            "label": str(attribute.get("label") or "Attribute").strip() or "Attribute",
+        }
+        confidence = attribute.get("confidence")
+        if isinstance(confidence, int | float) and not isinstance(confidence, bool):
+            normalized_attribute["confidence"] = max(0.0, min(float(confidence), 1.0))
+        normalized_attributes.append(normalized_attribute)
 
-    return {
+    normalized = {
         "text": text,
         "label": str(entity.get("label") or "Entity").strip() or "Entity",
         "attributes": normalized_attributes,
     }
+    start = entity.get("start")
+    end = entity.get("end")
+    if isinstance(start, int) and not isinstance(start, bool) and isinstance(end, int) and not isinstance(end, bool):
+        if start >= 0 and end > start:
+            normalized["start"] = start
+            normalized["end"] = end
+    confidence = entity.get("confidence")
+    if isinstance(confidence, int | float) and not isinstance(confidence, bool):
+        normalized["confidence"] = max(0.0, min(float(confidence), 1.0))
+    model_sources = _normalize_model_sources(entity.get("model_sources"))
+    if model_sources:
+        normalized["model_sources"] = model_sources
+    if any(entity.get(field) for field in ("canonical_name", "raw_name", "aliases", "naming_rationale")):
+        normalized.update(
+            resolve_entity_naming(
+                text,
+                canonical_name=entity.get("canonical_name"),
+                aliases=entity.get("aliases"),
+                naming_rationale=entity.get("naming_rationale"),
+            )
+        )
+    return normalized
 
 
 def _entity_key(entity: dict[str, Any]) -> tuple[str, str]:
@@ -296,3 +390,23 @@ def _merge_attributes(target: dict[str, Any], source: dict[str, Any]) -> None:
         if attribute_key not in known_attributes:
             target.setdefault("attributes", []).append(attribute)
             known_attributes.add(attribute_key)
+
+
+def _merge_entity_naming(target: dict[str, Any], source: dict[str, Any]) -> None:
+    if not any(source.get(field) for field in ("canonical_name", "aliases", "naming_rationale")):
+        return
+    target.update(
+        resolve_entity_naming(
+            target["text"],
+            canonical_name=source.get("canonical_name") or target.get("canonical_name"),
+            aliases=[*(target.get("aliases") or []), *(source.get("aliases") or [])],
+            naming_rationale=source.get("naming_rationale") or target.get("naming_rationale"),
+        )
+    )
+
+
+def _normalize_model_sources(value: Any) -> list[str]:
+    """收敛多模型来源标记，供候选审核和运行误差分析。"""
+    if not isinstance(value, list):
+        return []
+    return list(dict.fromkeys(str(item).strip()[:128] for item in value if str(item or "").strip()))[:16]

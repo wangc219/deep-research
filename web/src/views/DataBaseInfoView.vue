@@ -330,6 +330,16 @@
                   :rows="4"
                 />
               </a-form-item>
+              <a-form-item label="组织主分类" name="category_id">
+                <a-select
+                  v-model:value="editForm.category_id"
+                  allow-clear
+                  :loading="categoryLoading"
+                  :options="categoryOptions"
+                  placeholder="未分类"
+                />
+                <small class="form-help">来源和文档只能使用该分类或其子分类。</small>
+              </a-form-item>
 
               <a-form-item v-if="database?.embedding_model_spec" label="Embedding 模型">
                 <div class="readonly-model-field">
@@ -464,6 +474,7 @@ import SearchConfigPanel from '@/components/SearchConfigPanel.vue'
 import AiTextarea from '@/components/AiTextarea.vue'
 import ShareConfigForm from '@/components/ShareConfigForm.vue'
 import { databaseApi } from '@/apis/knowledge_api'
+import { knowledgeGovernanceApi } from '@/apis/knowledge_governance_api'
 import { departmentApi } from '@/apis/department_api'
 import { authApi } from '@/apis/auth_api'
 import { useChunkPresetOptions } from '@/composables/useChunkPresetOptions'
@@ -1109,6 +1120,7 @@ const editShareConfig = ref({
 const editForm = reactive({
   name: '',
   description: '',
+  category_id: null,
   chunk_preset_id: DEFAULT_CHUNK_PRESET_ID,
   dify_api_url: '',
   dify_token: '',
@@ -1117,6 +1129,8 @@ const editForm = reactive({
   notion_data_source_id: '',
   notion_version: '2026-03-11'
 })
+const categoryOptions = ref([])
+const categoryLoading = ref(false)
 
 const rules = {
   name: [{ required: true, message: '请输入知识库名称' }]
@@ -1200,6 +1214,7 @@ const showEditModal = () => {
   editModalTab.value = 'basic'
   editForm.name = database.value.name || ''
   editForm.description = database.value.description || ''
+  editForm.category_id = database.value.category_id || null
   editForm.chunk_preset_id =
     database.value.additional_params?.chunk_preset_id || DEFAULT_CHUNK_PRESET_ID
   editForm.dify_api_url = database.value.additional_params?.dify_api_url || ''
@@ -1214,13 +1229,31 @@ const showEditModal = () => {
     manage_scope: null
   }
   editModalVisible.value = true
+  loadKnowledgeCategories()
+}
+
+const loadKnowledgeCategories = async () => {
+  categoryLoading.value = true
+  try {
+    const result = await knowledgeGovernanceApi.categories()
+    categoryOptions.value = (result.flat || [])
+      .filter((item) => item.active || item.id === editForm.category_id)
+      .map((item) => ({ value: item.id, label: item.active ? item.name : `${item.name}（已停用）` }))
+  } catch {
+    categoryOptions.value = []
+  } finally {
+    categoryLoading.value = false
+  }
 }
 
 watch(
   () => [route.query.action, detailLoading.value, isCurrentDatabaseLoaded.value],
   ([action, loading, loaded]) => {
-    if (action !== 'edit' || loading || !loaded || !canManageDatabase.value) return
-    showEditModal()
+    if (!['edit', 'upload'].includes(action) || loading || !loaded || !canManageDatabase.value) {
+      return
+    }
+    if (action === 'edit') showEditModal()
+    if (action === 'upload' && isMilvus.value) showAddFilesModal()
     router.replace({ path: route.path, query: { ...route.query, action: undefined } })
   },
   { immediate: true }
@@ -1243,6 +1276,7 @@ const handleEditSubmit = async () => {
     const updateData = {
       name: editForm.name,
       description: editForm.description,
+      category_id: editForm.category_id || null,
       additional_params: {},
       share_config: editShareConfig.value
     }

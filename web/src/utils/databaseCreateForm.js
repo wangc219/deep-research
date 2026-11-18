@@ -1,12 +1,39 @@
+import { DEFAULT_CHUNK_PRESET_ID } from './chunkUtils.js'
+
 export const createDefaultShareConfig = () => ({
   version: 2,
   read_scope: { access_level: 'global', department_ids: [], user_uids: [] },
   manage_scope: null
 })
 
+export const buildCategoryTreeData = (items = []) =>
+  items
+    .filter((item) => item?.active !== false)
+    .map((item) => ({
+      value: item.id,
+      key: item.id,
+      title: item.name,
+      label: item.name,
+      children: buildCategoryTreeData(item.children || [])
+    }))
+
+export const buildCategoryPathMap = (items = [], parentPath = '') => {
+  const result = new Map()
+  for (const item of items) {
+    if (item?.active === false) continue
+    const path = parentPath ? `${parentPath} / ${item.name}` : item.name
+    result.set(item.id, path)
+    for (const [id, childPath] of buildCategoryPathMap(item.children || [], path)) {
+      result.set(id, childPath)
+    }
+  }
+  return result
+}
+
 export const createEmptyDatabaseForm = (embeddingModel = '') => ({
   name: '',
   description: '',
+  category_id: null,
   embedding_model_spec: embeddingModel,
   kb_type: '',
   chunk_preset_id: DEFAULT_CHUNK_PRESET_ID,
@@ -62,6 +89,7 @@ export const buildDatabaseRequest = (form, typeInfo, shareConfig, defaultEmbeddi
     database_name: form.name.trim(),
     description: form.description?.trim() || '',
     kb_type: form.kb_type,
+    category_id: form.category_id || null,
     additional_params: additionalParams,
     share_config: shareConfig
   }
@@ -71,4 +99,3 @@ export const buildDatabaseRequest = (form, typeInfo, shareConfig, defaultEmbeddi
   }
   return request
 }
-import { DEFAULT_CHUNK_PRESET_ID } from './chunkUtils.js'

@@ -22,30 +22,11 @@ ENDPOINTS = {
     "semantic_search": ("POST", "/paper/qa/searchPro", 30, "search"),
     "title_search": ("GET", "/paper/search", 0, "free"),
     "info": ("POST", "/paper/info", 0, "free"),
-    "detail": ("GET", "/paper/detail", 1, "detail"),
+    "detail": ("POST", "/paper/detail/batch", 1, "detail"),
     "references": ("GET", "/paper/relation", 10, "reference"),
 }
-
-
-def aminer_credential_scope(config: dict[str, Any]) -> str:
-    """用不可逆摘要隔离凭证变更前后的检索缓存。"""
-    return hashlib.sha256(f"{config.get('user_id', '')}\0{config.get('api_key', '')}".encode()).hexdigest()
-
-
-def aminer_authorization_token(credentials: dict[str, Any], *, issued_at: int | None = None) -> str:
-    """复用控制台 Token，或用原始 Key 签发短期鉴权 Token。"""
-    credential = credentials["api_key"].strip()
-    if credential.lower().startswith("bearer "):
-        credential = credential[7:].strip()
-    if credential.startswith("eyJ") and credential.count(".") == 2:
-        return credential
-    now = issued_at if issued_at is not None else int(utc_now_naive().replace(tzinfo=UTC).timestamp())
-    return jwt.encode(
-        {"user_id": credentials["user_id"], "exp": now + 600, "timestamp": now},
-        credential,
-        algorithm="HS256",
-        headers={"sign_type": "SIGN"},
-    )
+AMINER_SKILL_NAME = "aminer-academic-search"
+AMINER_SKILL_VERSION = "1.7.1"
 
 
 class AMinerError(Exception):
@@ -55,6 +36,48 @@ class AMinerError(Exception):
         super().__init__(message)
         self.status = status
         self.retryable = retryable
+
+
+def aminer_credential_scope(config: dict[str, Any]) -> str:
+    """用不可逆摘要隔离凭证变更前后的检索缓存。"""
+    return hashlib.sha256(f"{config.get('user_id', '')}\0{config.get('api_key', '')}".encode()).hexdigest()
+
+
+def aminer_authorization_token(credentials: dict[str, Any], *, issued_at: int | None = None) -> str:
+    """优先复用当前控制台 Token，并在请求前拒绝已过期 JWT。"""
+    credential = credentials["api_key"].strip()
+    if credential.lower().startswith("bearer "):
+        credential = credential[7:].strip()
+    if credential.startswith("eyJ") and credential.count(".") == 2:
+        try:
+            claims = jwt.decode(credential, options={"verify_signature": False, "verify_exp": False})
+        except jwt.PyJWTError:
+            return credential
+        try:
+            expires_at = float(claims.get("exp"))
+        except (TypeError, ValueError):
+            expires_at = 0.0
+        now = issued_at if issued_at is not None else int(utc_now_naive().replace(tzinfo=UTC).timestamp())
+        if expires_at and expires_at <= now:
+            raise AMinerError("auth_expired", "AMiner 控制台 Token 已过期，请生成并保存新的 Token")
+        return credential
+    return credential
+
+
+def _legacy_authorization_token(credentials: dict[str, Any], *, issued_at: int | None = None) -> str | None:
+    """为旧版原始密钥保留一次短期签名回退，不影响当前控制台 Token。"""
+    credential = credentials["api_key"].strip()
+    if credential.lower().startswith("bearer "):
+        credential = credential[7:].strip()
+    if not credentials.get("user_id") or credential.startswith("eyJ") and credential.count(".") == 2:
+        return None
+    now = issued_at if issued_at is not None else int(utc_now_naive().replace(tzinfo=UTC).timestamp())
+    return jwt.encode(
+        {"user_id": credentials["user_id"], "exp": now + 600, "timestamp": now},
+        credential,
+        algorithm="HS256",
+        headers={"sign_type": "SIGN"},
+    )
 
 
 class AMinerClient:
@@ -74,12 +97,27 @@ class AMinerClient:
                 transport=self.transport,
                 follow_redirects=False,
             ) as client:
-                response = await client.request(
-                    method,
-                    f"{AMINER_BASE_URL}{path}",
-                    headers={"Authorization": token},
+                request_kwargs = {
+                    "method": method,
+                    "url": f"{AMINER_BASE_URL}{path}",
+                    "headers": {
+                        "Authorization": token,
+                        "X-Platform": "codex",
+                        "X-Skill-Name": AMINER_SKILL_NAME,
+                        "X-Skill-Version": AMINER_SKILL_VERSION,
+                    },
                     **({"json": payload} if method == "POST" else {"params": payload}),
-                )
+                }
+                response = await client.request(**request_kwargs)
+                if _is_auth_rejection(response):
+                    legacy_token = _legacy_authorization_token(self.credentials)
+                    if legacy_token and legacy_token != token:
+                        response = await client.request(
+                            **{
+                                **request_kwargs,
+                                "headers": {**request_kwargs["headers"], "Authorization": legacy_token},
+                            }
+                        )
         except httpx.RequestError as exc:
             raise AMinerError("unavailable", "AMiner 网络暂不可用", retryable=True) from exc
 
@@ -131,6 +169,17 @@ class AMinerClient:
         if data.get("success") is not True or code != "200" or not isinstance(data.get("data"), list):
             raise AMinerError("unavailable", "AMiner 返回了无效数据")
         return data
+
+
+def _is_auth_rejection(response: httpx.Response) -> bool:
+    """仅在明确鉴权拒绝时尝试旧签名，其他业务失败不重复请求。"""
+    if response.status_code in {401, 403}:
+        return True
+    try:
+        data = response.json()
+    except ValueError:
+        return False
+    return isinstance(data, dict) and str(data.get("code", "")) in {"40301", "40302", "40307", "40308"}
 
 
 def normalize_paper(item: dict[str, Any], *, retrieved_at: str | None = None) -> dict[str, Any]:

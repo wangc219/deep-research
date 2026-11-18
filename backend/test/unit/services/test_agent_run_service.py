@@ -154,7 +154,7 @@ async def test_get_agent_run_progress_returns_empty_progress_for_empty_events(mo
 
 
 @pytest.mark.asyncio
-async def test_get_agent_run_progress_extracts_recent_message_delta_events(monkeypatch: pytest.MonkeyPatch):
+async def test_get_agent_run_progress_omits_assistant_message_deltas(monkeypatch: pytest.MonkeyPatch):
     async def fake_list_recent_run_stream_events(run_id: str, *, limit: int):
         del run_id, limit
         return [
@@ -176,34 +176,52 @@ async def test_get_agent_run_progress_extracts_recent_message_delta_events(monke
     progress = await agent_run_service.get_agent_run_progress("run-1")
 
     assert progress["last_seq"] == "2-0"
-    assert progress["messages"] == [
-        {
-            "seq": "1-0",
-            "kind": "assistant_message",
-            "message_id": "msg-1",
-            "content": "hello",
-        },
-        {
-            "seq": "2-0",
-            "kind": "assistant_message",
-            "message_id": "msg-1",
-            "content": "world",
-        },
-        {
-            "seq": "2-0",
-            "kind": "assistant_message",
-            "message_id": "msg-2",
-            "content": "new",
-        },
-    ]
+    assert progress["messages"] == []
 
 
 @pytest.mark.asyncio
-async def test_get_agent_run_progress_keeps_latest_three_readable_items(monkeypatch: pytest.MonkeyPatch):
+async def test_get_agent_run_progress_omits_internal_reasoning(monkeypatch: pytest.MonkeyPatch):
+    async def fake_list_recent_run_stream_events(run_id: str, *, limit: int):
+        del run_id, limit
+        return [
+            _progress_event(
+                "1-0",
+                [
+                    _progress_chunk(
+                        {
+                            "type": "message_delta",
+                            "message_id": "msg-private",
+                            "reasoning_content": "让我逐项核对内部规则。",
+                        }
+                    )
+                ],
+            )
+        ]
+
+    monkeypatch.setattr(agent_run_service, "list_recent_run_stream_events", fake_list_recent_run_stream_events)
+
+    assert await agent_run_service.get_agent_run_progress("run-1") == {
+        "last_seq": "1-0",
+        "messages": [],
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_agent_run_progress_keeps_latest_three_tool_items(monkeypatch: pytest.MonkeyPatch):
     events = [
         _progress_event(
             f"{seq}-0",
-            [_progress_chunk({"type": "message_delta", "message_id": f"msg-{seq}", "content": f"message-{seq}"})],
+            [
+                _progress_chunk(
+                    {
+                        "type": "tool_call",
+                        "message_id": f"msg-{seq}",
+                        "tool_call_id": f"call-{seq}",
+                        "name": f"tool-{seq}",
+                        "args": {},
+                    }
+                )
+            ],
         )
         for seq in range(4, 0, -1)
     ]
@@ -217,7 +235,7 @@ async def test_get_agent_run_progress_keeps_latest_three_readable_items(monkeypa
     progress = await agent_run_service.get_agent_run_progress("run-1")
 
     assert progress["last_seq"] == "4-0"
-    assert [item["message_id"] for item in progress["messages"]] == ["msg-2", "msg-3", "msg-4"]
+    assert [item["tool_call_id"] for item in progress["messages"]] == ["call-2", "call-3", "call-4"]
 
 
 @pytest.mark.asyncio

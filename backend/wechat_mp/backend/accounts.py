@@ -6,6 +6,7 @@
 
 import re
 import html
+import logging
 import time
 import base64
 import urllib.parse
@@ -19,6 +20,7 @@ from backend.config import (
 from backend.account_pool import borrow_weread_session, account_pool, get_weread_session
 
 accounts_bp = Blueprint("accounts", __name__, url_prefix="/api/accounts")
+logger = logging.getLogger(__name__)
 
 
 def biz_to_book_id(fakeid_or_biz: str) -> str:
@@ -179,6 +181,7 @@ def search_accounts():
         
         # 智能重试循环 (支持 401 自动续期与 499 自动激活/轮换)
         resp = None
+        rate_limit_hits = 0
         for attempt in range(3):
             resp = s.get(url_mp, headers=headers, timeout=10)
             if resp.status_code == 200:
@@ -192,8 +195,23 @@ def search_accounts():
                     from backend.weread_signer import activate_terminal_session
                     activate_terminal_session(headers, session=s)
                 elif "-2014" in err_text:
-                    account_pool.report(acc_id, status_code=499, error_msg="频控 -2014")
-                    acc_id, vid, token, headers = borrow_weread_session()
+                    from backend.waterwall import record_failure, waterwall_hit
+
+                    record_failure(url_mp, resp.status_code, resp.headers, resp.text, "-2014")
+                    account_pool.report(
+                        acc_id,
+                        status_code=499,
+                        ret=-2014,
+                        error_msg="频控 -2014",
+                    )
+                    rate_limit_hits += 1
+                    if rate_limit_hits < 2:
+                        acc_id, vid, token, headers = borrow_weread_session()
+                        backoff_seconds = min(1.5, 0.5 * (2 ** attempt))
+                        time.sleep(backoff_seconds)
+                        continue
+                    waterwall_hit(url_mp, resp.status_code, "-2014")
+                    break
                 else:
                     break
             else:
@@ -218,8 +236,10 @@ def search_accounts():
                     "service_type": 1,
                 })
 
-        # 若 scope=2 无结果，拉取通用搜索作为补充
-        if not results:
+        # 若 scope=2 无结果且没有触发频控熔断，再拉取通用搜索作为补充。
+        from backend.waterwall import is_waterwall_active
+
+        if not results and not is_waterwall_active():
             url_gen = f"https://i.weread.qq.com/store/search?keyword={encoded_kw}&v=2&count=20"
             resp_gen = s.get(url_gen, headers=headers, timeout=10)
             if resp_gen.status_code == 200:

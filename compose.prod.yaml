@@ -5,6 +5,8 @@ x-api-worker-env: &api-worker-env
   RUNNING_IN_DOCKER: "true"
   UV_COMPILE_BYTECODE: "0"
   DEEP_RESEARCH_ENV: production
+  KNOWLEDGE_GRAPH_LIGHTWEIGHT_RAG_ONLY: "true"
+  DEEP_RESEARCH_SOURCE_GOVERNANCE_ENABLED: ${DEEP_RESEARCH_SOURCE_GOVERNANCE_ENABLED:-false}
   EQUIPMENT_DR_PROJECT_ROOT: /app
   EQUIPMENT_DR_OUTPUT_ROOT: /app/outputs/runs
   EQUIPMENT_DR_APP_DB: sqlite:////app/outputs/application.db
@@ -48,6 +50,19 @@ x-api-worker-env: &api-worker-env
   DEEP_RESEARCH_SKILL_PROJECTION_DIR: /app/skill-projections
   WEB_SEARCH_PROVIDER: ${WEB_SEARCH_PROVIDER:-open-websearch}
   WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS: ${WEB_SEARCH_ANTIBOT_COOLDOWN_SECONDS:-300}
+  WEB_SEARCH_HYDRATION_ENABLED: ${WEB_SEARCH_HYDRATION_ENABLED:-true}
+  WEB_SEARCH_HYDRATION_MAX_RESULTS: ${WEB_SEARCH_HYDRATION_MAX_RESULTS:-6}
+  WEB_SEARCH_HYDRATION_CONCURRENCY: ${WEB_SEARCH_HYDRATION_CONCURRENCY:-4}
+  WEB_SEARCH_HYDRATION_TIMEOUT_SECONDS: ${WEB_SEARCH_HYDRATION_TIMEOUT_SECONDS:-6}
+  WEB_SEARCH_HYDRATION_TOTAL_SECONDS: ${WEB_SEARCH_HYDRATION_TOTAL_SECONDS:-12}
+  WEB_SEARCH_HYDRATION_CONTENT_CHARS: ${WEB_SEARCH_HYDRATION_CONTENT_CHARS:-6000}
+  WEB_SEARCH_HYDRATION_MIN_CONTENT_CHARS: ${WEB_SEARCH_HYDRATION_MIN_CONTENT_CHARS:-120}
+  WEB_SEARCH_HYDRATION_CACHE_SECONDS: ${WEB_SEARCH_HYDRATION_CACHE_SECONDS:-900}
+  WEB_SEARCH_HYDRATION_DOMAIN_DELAY_SECONDS: ${WEB_SEARCH_HYDRATION_DOMAIN_DELAY_SECONDS:-0.25}
+  WEB_SEARCH_HYDRATION_DOMAIN_MAX_DELAY_SECONDS: ${WEB_SEARCH_HYDRATION_DOMAIN_MAX_DELAY_SECONDS:-4}
+  WEB_SEARCH_BROWSER_FALLBACK_ENABLED: ${WEB_SEARCH_BROWSER_FALLBACK_ENABLED:-true}
+  WEB_SEARCH_BROWSER_FALLBACK_RESULTS: ${WEB_SEARCH_BROWSER_FALLBACK_RESULTS:-1}
+  WEB_SEARCH_BROWSER_TIMEOUT_MS: ${WEB_SEARCH_BROWSER_TIMEOUT_MS:-15000}
   OPEN_WEBSEARCH_URL: ${OPEN_WEBSEARCH_URL:-http://open-websearch:3210}
   OPEN_WEBSEARCH_ENGINES: ${OPEN_WEBSEARCH_ENGINES:-bing,duckduckgo}
   OPEN_WEBSEARCH_TIMEOUT_SECONDS: ${OPEN_WEBSEARCH_TIMEOUT_SECONDS:-15}
@@ -116,6 +131,9 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+      args:
+        RELEASE_ID: ${DEEP_RESEARCH_RELEASE_ID:-development}
+        SOURCE_REVISION: ${DEEP_RESEARCH_SOURCE_REVISION:-unknown}
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-api:${DEEP_RESEARCH_VERSION:-0.7.3}
     working_dir: /app
     user: "1000:1000"
@@ -174,6 +192,9 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+      args:
+        RELEASE_ID: ${DEEP_RESEARCH_RELEASE_ID:-development}
+        SOURCE_REVISION: ${DEEP_RESEARCH_SOURCE_REVISION:-unknown}
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-api:${DEEP_RESEARCH_VERSION:-0.7.3}
     working_dir: /app
     user: "1000:1000"
@@ -193,6 +214,7 @@ services:
       <<: *api-worker-env
       DEEP_RESEARCH_RUNTIME_DIR: /app/runtime/worker
       DEEP_RESEARCH_USER_DATA_DIR: /app/user-data
+      WX_CHANNELS_TRANSCRIBE_CONCURRENCY: ${WX_CHANNELS_TRANSCRIBE_CONCURRENCY:-2}
       ARQ_MAX_JOBS: ${ARQ_MAX_JOBS:-140}
       REDIS_MAX_CONNECTIONS: ${WORKER_REDIS_MAX_CONNECTIONS:-256}
       POSTGRES_POOL_SIZE: ${WORKER_POSTGRES_POOL_SIZE:-120}
@@ -251,12 +273,33 @@ services:
   equipment-query-worker:
     extends:
       service: equipment-worker
-    command: python -m platform_core.services.equipment_worker_entry query worker --poll-interval 1
+    environment:
+      <<: *api-worker-env
+      DEEP_RESEARCH_RUNTIME_DIR: /app/runtime/equipment-query-worker
+      DEEP_RESEARCH_USER_DATA_DIR: /app/user-data
+      DURABLE_TASK_WORKER_KIND: equipment-query
+      ARQ_MAX_JOBS: ${EQUIPMENT_QUERY_MAX_JOBS:-4}
+      REDIS_MAX_CONNECTIONS: ${WORKER_REDIS_MAX_CONNECTIONS:-32}
+      POSTGRES_POOL_SIZE: ${WORKER_POSTGRES_POOL_SIZE:-8}
+      POSTGRES_MAX_OVERFLOW: ${WORKER_POSTGRES_MAX_OVERFLOW:-4}
+      POSTGRES_POOL_TIMEOUT_SECONDS: ${WORKER_POSTGRES_POOL_TIMEOUT_SECONDS:-30}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${WORKER_LANGGRAPH_POSTGRES_POOL_SIZE:-8}
+      LANGGRAPH_POSTGRES_POOL_TIMEOUT_SECONDS: ${WORKER_LANGGRAPH_POSTGRES_POOL_TIMEOUT_SECONDS:-30}
+    command: python -m platform_core.services.equipment_query_durable_worker
+    healthcheck:
+      test: ["CMD", "python", "-m", "server.worker_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 180s
 
   storage-migrator:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+      args:
+        RELEASE_ID: ${DEEP_RESEARCH_RELEASE_ID:-development}
+        SOURCE_REVISION: ${DEEP_RESEARCH_SOURCE_REVISION:-unknown}
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-api:${DEEP_RESEARCH_VERSION:-0.7.3}
     working_dir: /app
     user: "0:0"
@@ -347,6 +390,10 @@ services:
       context: .
       dockerfile: docker/web.Dockerfile
       target: production
+      args:
+        VITE_ENABLE_KNOWLEDGE_GOVERNANCE: ${VITE_ENABLE_KNOWLEDGE_GOVERNANCE:-false}
+        RELEASE_ID: ${DEEP_RESEARCH_RELEASE_ID:-development}
+        SOURCE_REVISION: ${DEEP_RESEARCH_SOURCE_REVISION:-unknown}
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-web:${DEEP_RESEARCH_VERSION:-0.7.3}
     ports:
       - "${DEEP_RESEARCH_WEB_PORT:-80}:80"
@@ -438,8 +485,6 @@ services:
       - "127.0.0.1:${DEEP_RESEARCH_MILVUS_HEALTH_PORT:-10091}:9091"
     image: milvusdb/milvus:v2.5.6
     command: ["milvus", "run", "standalone"]
-    security_opt:
-      - seccomp:unconfined
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000

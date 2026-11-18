@@ -8,12 +8,19 @@
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 import pypdfium2 as pdfium
 
 from platform_core.knowledge.parser.base import DocumentParserException
+
+
+# PDFium 进程级全局状态不支持同一进程内多线程并发打开文档。前置校验和
+# Docling PDF backend 必须共用这把锁，否则两段各自限流仍会互相重叠。
+PDFIUM_DOCUMENT_LOCK = threading.RLock()
 
 
 @dataclass(slots=True)
@@ -22,6 +29,29 @@ class PDFPageLoadIssue:
 
     page_number: int
     message: str
+
+
+def recover_pdf_bytes_after_eof(source: BinaryIO, *, force: bool = False) -> bytes | None:
+    """仅在内存中移除最终 EOF 后的附加数据，不修改来源文件。"""
+
+    source.seek(0, 2)
+    file_size = source.tell()
+    tail_size = min(file_size, 64 * 1024)
+    source.seek(file_size - tail_size)
+    tail = source.read(tail_size)
+    eof_index = tail.rfind(b"%%EOF")
+    if eof_index < 0:
+        return None
+
+    clean_end = file_size - tail_size + eof_index + len(b"%%EOF")
+    trailing_data = tail[eof_index + len(b"%%EOF") :]
+    if clean_end >= file_size or (not force and not trailing_data.strip()):
+        return None
+
+    source.seek(0)
+    prefix = source.read(clean_end - len(b"%%EOF"))
+    separator = b"" if prefix.endswith((b"\r", b"\n")) else b"\n"
+    return prefix + separator + b"%%EOF\n"
 
 
 def _format_page_numbers(page_numbers: list[int], *, limit: int = 8) -> str:
@@ -37,10 +67,19 @@ def _format_page_numbers(page_numbers: list[int], *, limit: int = 8) -> str:
 def validate_pdf_page_tree_loadable(file_path: str | Path) -> None:
     """校验 PDF 页树中的每一个页槽都能作为页面加载。"""
 
+    with PDFIUM_DOCUMENT_LOCK:
+        _validate_pdf_page_tree_loadable(file_path)
+
+
+def _validate_pdf_page_tree_loadable(file_path: str | Path) -> None:
+    """在持有 PDFium 进程锁时执行页面树校验。"""
+
     path = Path(file_path)
 
     try:
-        doc = pdfium.PdfDocument(str(path))
+        with path.open("rb") as source:
+            recovered_bytes = recover_pdf_bytes_after_eof(source)
+        doc = pdfium.PdfDocument(recovered_bytes if recovered_bytes is not None else str(path))
     except Exception as exc:  # noqa: BLE001
         # pypdfium2 打开加密 PDF 时抛 PdfiumError（消息含 password），无独立加密属性。
         if isinstance(exc, pdfium.PdfiumError) and "password" in str(exc).lower():

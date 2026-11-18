@@ -228,6 +228,35 @@ async def test_filters_completed_before_applying_new_video_limit(pipeline):
     assert "正文需要关注工程约束。" in text and "记得点赞" not in text
 
 
+async def test_resume_keeps_completed_checkpoint_and_continues_remaining_videos(pipeline):
+    context, storage, history, extracted = pipeline
+    context.payload["max_videos"] = 4
+    key = service.video_object_key("alice", "0")
+    storage.files[key] = b"existing"
+    storage.files[service.video_completion_key("alice", "0")] = b"{}"
+    history.append(
+        {
+            "id": context.task_id,
+            "result": {
+                "items": [
+                    {
+                        "index": 0,
+                        "oid": "0",
+                        "title": "简介0",
+                        "status": "completed",
+                    }
+                ]
+            },
+        }
+    )
+
+    result = await service.run_wxchannels_transcribe(context)
+
+    assert [oid for oid, _ in extracted] == ["1", "2", "3"]
+    assert result["completed_count"] == 4
+    assert result["items"][0]["oid"] == "0"
+
+
 async def test_orphaned_object_without_checkpoint_is_reprocessed(pipeline):
     context, storage, _, extracted = pipeline
     storage.files[service.video_object_key("alice", "0")] = b"orphan"
@@ -258,6 +287,35 @@ async def test_one_failure_does_not_stop_other_videos(pipeline, monkeypatch):
     assert result["failed_count"] == result["completed_count"] == 1
     assert len(storage.files) == 2
     assert not any(path.exists() for _, path in extracted)
+
+
+async def test_transcribes_two_videos_in_parallel_with_bounded_workers(pipeline, monkeypatch):
+    context, _, _, _ = pipeline
+    context.payload["max_videos"] = 4
+    monkeypatch.setenv("WX_CHANNELS_TRANSCRIBE_CONCURRENCY", "2")
+    active = 0
+    peak = 0
+    two_started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def transcribe(*args):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        if active == 2:
+            two_started.set()
+        await release.wait()
+        active -= 1
+        return {"text": "有效正文", "language": "zh", "confidence": 0.8}
+
+    monkeypatch.setattr(service, "transcribe_audio", transcribe)
+    execution = asyncio.create_task(service.run_wxchannels_transcribe(context))
+    await asyncio.wait_for(two_started.wait(), 1)
+    assert peak == 2
+    release.set()
+    result = await execution
+    assert result["transcription_concurrency"] == 2
+    assert result["completed_count"] == 4
 
 
 async def test_all_failures_fail_the_platform_task(pipeline, monkeypatch):

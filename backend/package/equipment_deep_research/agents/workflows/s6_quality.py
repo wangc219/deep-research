@@ -1,5 +1,5 @@
 """S6 capability-portrait normalization, validation and repair rules."""
-# ruff: noqa: F401, F821, F841
+# ruff: noqa: E402, F401, F821, F841
 
 from __future__ import annotations
 
@@ -1092,9 +1092,9 @@ def _s6_first_pass_quality_contract(
         },
         "portfolio": {
             "direction_count": (
-                "动态蜂群目标固定为6项：优先覆盖不同制胜维度；"
-                "互异维度不足时，以五轴身份差异优先、S5综合分次优补齐；"
-                "合格候选不足6项时必须标记数量门失败，不得按正常完成交付"
+                "动态蜂群以6项为最低交付基线而非上限：优先覆盖不同制胜维度；"
+                "达到基线后，仍应保留更多高质量、五轴身份互异且可独立验收的候选；"
+                "合格候选不足6项时必须如实标记数量缺口，不得用普通改型凑数"
             ),
             "membership_and_identity_locked_before_s6": True,
             "same_family_independence_rule": (
@@ -1110,7 +1110,7 @@ def _s6_first_pass_quality_contract(
             ],
             "missile_and_unmanned_must_be_separate_cards": ("only_when_both_are_query_aligned_and_selected"),
             "direct_weapon_portfolio_rule": (
-                "具体打击、歼灭、杀伤或反杀伤武器必须构成组合主体；动态蜂群按6项组合交付，但不设置固定武器类别配额"
+                "具体打击、歼灭、杀伤或反杀伤武器必须构成组合主体；动态蜂群至少交付6项，优质互异候选可继续入选，但不设置固定武器类别配额"
             ),
             "maximum_standalone_support_directions": ("由S5模型依据结构化Query语义决定，不由本地Query字符串分类"),
             "type_rule": ("升级或新研由query差距和对象证据决定，不为覆盖类型机械各生成一项"),

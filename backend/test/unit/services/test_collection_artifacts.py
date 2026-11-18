@@ -3,6 +3,8 @@
 from concurrent.futures import ThreadPoolExecutor
 import io
 import json
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 import zipfile
 
 import pytest
@@ -59,6 +61,100 @@ def test_concurrent_publication_preserves_edits_and_selected_resources(article_s
     assert not service.list_artifacts("someone-else", "wechat-articles")["items"]
     with pytest.raises(ValueError):
         service.archive_artifacts("someone-else", "wechat-articles", [item["id"]], str(output))
+
+
+def test_deleted_article_history_prunes_manifest_and_workspace_copy(article_source):
+    """删除公众号历史后，成果清单和沙盒副本同步消失。"""
+    uid, directory, _ = article_source
+    item = service.sync_articles(uid)["items"][0]
+    workspace = Workspace(uid)
+    assert workspace.stat_authorized_path(item["folder"], root=service.artifact_root("wechat-articles"))["is_dir"]
+
+    (directory / "download_history.json").write_text("[]")
+    result = service.sync_articles(uid)
+
+    assert result["items"] == []
+    assert service.read_manifest(uid, "wechat-articles")["items"] == {}
+    with pytest.raises(FileNotFoundError):
+        workspace.stat_authorized_path(item["folder"], root=service.artifact_root("wechat-articles"))
+
+
+@pytest.mark.asyncio
+async def test_record_projection_deletes_database_rows_missing_from_manifest(monkeypatch):
+    """成果清单删除后，持久成果与其级联入库状态不再残留。"""
+    stale = SimpleNamespace(artifact_key="deleted-artifact")
+    scalar_result = SimpleNamespace(all=lambda: [stale])
+    db = SimpleNamespace(
+        scalars=AsyncMock(return_value=scalar_result),
+        delete=AsyncMock(),
+        commit=AsyncMock(),
+    )
+    projection = {"items": [], "errors": [], "workspace_root": "/采集成果/公众号文章"}
+    monkeypatch.setattr(service, "list_artifacts_with_status", AsyncMock(return_value=projection))
+
+    result = await service.sync_artifact_records(
+        db,
+        uid="collection-test",
+        source="wechat-articles",
+        projection=projection,
+    )
+
+    assert result == projection
+    db.delete.assert_awaited_once_with(stale)
+    db.commit.assert_awaited_once()
+
+
+def test_archive_keeps_valid_files_and_reports_missing_optional_files(article_source, tmp_path):
+    """清单陈旧时继续打包有效文件，并把缺失项写入失败清单。"""
+    uid, _, _ = article_source
+    item = service.sync_articles(uid)["items"][0]
+    missing = f"{item['folder']}/missing.pdf"
+    with service.manifest(uid, "wechat-articles") as state:
+        state["items"][item["id"]]["files"].append(missing)
+
+    output = tmp_path / "partial.zip"
+    result = service.archive_artifacts(uid, "wechat-articles", [item["id"]], str(output))
+
+    assert result["written_files"] == 2
+    assert result["failed_items"][0]["path"] == missing
+    with zipfile.ZipFile(output) as archive:
+        assert "失败清单.json" in archive.namelist()
+        failures = json.loads(archive.read("失败清单.json"))["failures"]
+    assert failures[0]["id"] == item["id"]
+
+
+def test_archive_rejects_all_unavailable_with_structured_error(article_source, tmp_path):
+    """全部文件不可用时返回可定位的结构化错误。"""
+    uid, _, _ = article_source
+    item = service.sync_articles(uid)["items"][0]
+    workspace = Workspace(uid)
+    for path in item["files"]:
+        workspace.delete_authorized_path(path, root=item["folder"])
+
+    output = tmp_path / "unavailable.zip"
+    with pytest.raises(service.ArtifactArchiveError) as caught:
+        service.archive_artifacts(uid, "wechat-articles", [item["id"]], str(output))
+
+    assert caught.value.detail["code"] == "all_artifacts_unavailable"
+    assert caught.value.detail["failures"]
+    assert caught.value.detail["total_bytes"] == 0
+
+
+def test_archive_rejects_size_limit_with_exact_file(article_source, tmp_path, monkeypatch):
+    """超过 ZIP 上限时返回导致超限的成果、文件和字节数。"""
+    uid, _, _ = article_source
+    item = service.sync_articles(uid)["items"][0]
+    monkeypatch.setattr(service, "MAX_ARCHIVE_BYTES", 3)
+
+    output = tmp_path / "too-large.zip"
+    with pytest.raises(service.ArtifactArchiveError) as caught:
+        service.archive_artifacts(uid, "wechat-articles", [item["id"]], str(output))
+
+    detail = caught.value.detail
+    assert detail["code"] == "archive_too_large"
+    assert detail["total_bytes"] > detail["limit_bytes"] == 3
+    assert detail["failures"][-1]["id"] == item["id"]
+    assert detail["failures"][-1]["size"] > 0
 
 
 def test_source_symlink_never_leaves_private_download_root(article_source, tmp_path):

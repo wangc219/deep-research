@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  S_AGENT_ARCHITECTURE,
   buildEvidenceProjection,
   buildInteractionProjection,
   buildWinningProjection,
@@ -9,6 +10,14 @@ import {
   normalizeRunEvents,
   resolveWinningSwarm
 } from '../../src/views/equipment/run_detail_projection.js'
+
+test('S5 页面说明以六项为最低交付而不是硬上限', () => {
+  const s5 = S_AGENT_ARCHITECTURE.find((item) => item.step === 5)
+
+  assert.match(s5.task, /至少形成 6 个/)
+  assert.match(s5.task, /可继续入选/)
+  assert.doesNotMatch(s5.task, /最多 6 个/)
+})
 
 const platformRows = [
   {
@@ -187,6 +196,41 @@ test('旧交互快照不会遮住新事件，相同事件优先保留旧产物�
   assert.equal(merged.events[0].summary, '旧版完整记录')
   assert.equal(merged.events.at(-1).event_type, 'winning_reasoning_step_completed')
   assert.equal(merged.counts.events, 4)
+})
+
+test('恢复后的当前状态不会继续投影历史失败信息', () => {
+  const rows = [
+    ...platformRows,
+    {
+      run_id: 'run-new',
+      sequence: 5,
+      event_type: 'run_failed',
+      payload: { event_type: 'run_failed', summary: '旧失败信息' }
+    },
+    {
+      run_id: 'run-new',
+      sequence: 6,
+      event_type: 'run_resumed',
+      payload: { event_type: 'run_resumed', summary: '已恢复执行' }
+    }
+  ]
+  const fallback = buildInteractionProjection(rows, {
+    run_id: 'run-new',
+    status: 'queued',
+    error: '不应继续展示的旧错误'
+  })
+  const merged = mergeInteractionProjection(
+    {
+      events: [{ event_id: 'legacy-failed', event_type: 'run_failed', summary: '旧快照失败' }],
+      workflow: { status: 'failed', failure: { detail: '旧快照失败' } }
+    },
+    fallback
+  )
+
+  assert.equal(fallback.workflow.status, 'queued')
+  assert.deepEqual(fallback.workflow.failure, {})
+  assert.equal(merged.workflow.status, 'queued')
+  assert.deepEqual(merged.workflow.failure, {})
 })
 
 test('权威证据卡不会被较晚的事件引用覆盖', () => {

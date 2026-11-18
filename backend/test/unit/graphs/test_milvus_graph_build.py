@@ -16,8 +16,16 @@ from platform_core.knowledge.graphs.extractors.base import (
     MAX_ENTITY_NAME_LENGTH,
     MAX_RELATION_TYPE_LENGTH,
 )
+from platform_core.knowledge.graphs.extraction_cache import (
+    attach_extraction_cache_metadata,
+    build_extraction_cache_manifest,
+)
 from platform_core.knowledge.graphs.graph_utils import build_graph_payload
-from platform_core.knowledge.graphs.milvus_graph_service import MilvusGraphService
+from platform_core.knowledge.graphs.milvus_graph_service import (
+    MilvusGraphService,
+    build_graph_pipeline_stages,
+    build_query_pipeline_trace,
+)
 from platform_core.knowledge.graphs.milvus_graph_vector_store import MilvusGraphVectorStore
 import platform_core.knowledge.graphs.milvus_graph_vector_store as milvus_graph_vector_store_module
 from platform_core.storage.postgres.models_knowledge import KnowledgeGraphEntity, KnowledgeGraphTriple
@@ -39,6 +47,71 @@ def _raw_graph_edge(edge_id: str, source_id: str, target_id: str) -> dict:
         "target_id": target_id,
         "properties": {},
     }
+
+
+def test_graph_pipeline_stages_expose_authoritative_build_progress_and_warnings():
+    pipeline = build_graph_pipeline_stages(
+        configured=True,
+        total_chunks=10,
+        pending_chunks=2,
+        indexed_chunks=7,
+        structured_chunks=8,
+        extraction_counts={"pending": 2, "succeeded": 7, "failed": 1},
+        vector_counts={"pending": 1, "processing": 0, "indexed": 12, "failed": 1},
+        projection_counts={"pending": 1, "processing": 0, "completed": 7, "failed": 0},
+        entity_count=6,
+        relationship_count=4,
+        build_task_status="running",
+        build_task_progress=72,
+    )
+
+    stages = {item["key"]: item for item in pipeline["stages"]}
+    assert pipeline["contract_version"] == "lightrag-graph-pipeline-v1"
+    assert stages["document_parse"]["status"] == "completed"
+    assert stages["information_extraction"]["status"] == "warning"
+    assert stages["information_extraction"]["metrics"]["task_progress"] == 72
+    assert stages["authoritative_commit"]["metrics"]["relationship_count"] == 4
+    assert stages["graph_projection"]["status"] == "active"
+    assert stages["vector_projection"]["status"] == "warning"
+
+
+def test_query_pipeline_trace_marks_individual_retrieval_degradation():
+    trace = build_query_pipeline_trace(
+        requested_retrieval_mode="mix",
+        query_plan={"low_level_keywords": ["雷达"], "provenance": {"status": "completed"}},
+        entity_hits=[{"id": "entity-1"}],
+        triple_hits=[],
+        chunk_hits=[{"id": "chunk-1"}],
+        fusion={"entity_ids": ["entity-1"], "fusion_method": "reciprocal-rank-fusion-v1"},
+        retrieval_failures=[{"channel": "triple", "failure_type": "TimeoutError"}],
+        subgraph_node_count=3,
+        subgraph_edge_count=2,
+        candidate_path_count=2,
+        returned_path_count=1,
+        reranking={"provenance": {"status": "completed"}},
+    )
+
+    stages = {item["key"]: item for item in trace["stages"]}
+    assert trace["contract_version"] == "lightrag-query-trace-v1"
+    assert trace["degraded"] is True
+    assert stages["entity_retrieval"]["status"] == "completed"
+    assert stages["relation_retrieval"]["status"] == "warning"
+    assert stages["relation_retrieval"]["failure_channels"] == ["triple"]
+    assert stages["chunk_retrieval"]["count"] == 1
+    assert stages["path_search"]["count"] == 2
+    assert stages["path_reranking"]["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_projection_target_requires_embedding_model_before_destructive_rebuild():
+    service = MilvusGraphService(
+        kb_repo=SimpleNamespace(
+            get_by_kb_id=AsyncMock(return_value=SimpleNamespace(kb_type="milvus", embedding_model_spec=None))
+        )
+    )
+
+    with pytest.raises(ValueError, match="embedding_model_spec"):
+        await service.ensure_projection_target("kb_test")
 
 
 def test_graph_vector_store_uses_connection_alias_for_database_selection(monkeypatch):
@@ -81,6 +154,73 @@ def test_graph_vector_store_uses_connection_alias_for_database_selection(monkeyp
         ("create", "deep_research", {"using": "milvus-graph-test"}),
         ("use", "deep_research", {"using": "milvus-graph-test"}),
     ]
+
+
+@pytest.mark.asyncio
+async def test_pending_entity_vectors_apply_optional_extractive_evidence_summary():
+    records = [
+        {
+            "id": "entity-1",
+            "content": "宽带射频收发器",
+            "evidence_rows": [{"evidence_id": "relation-mention:9", "text": "频率捷变提高抗干扰能力"}],
+        }
+    ]
+    graph_repo = SimpleNamespace(
+        claim_vector_records=AsyncMock(return_value=("lease-1", records)),
+        mark_vector_records_indexed=AsyncMock(return_value=["entity-1"]),
+        finalize_graph_indexed_chunks=AsyncMock(return_value=1),
+    )
+    kb_repo = SimpleNamespace(
+        get_by_kb_id=AsyncMock(
+            return_value=SimpleNamespace(
+                kb_type="milvus",
+                embedding_model_spec="local:embedding",
+                additional_params={
+                    "graph_build_config": {
+                        "extractor_options": {
+                            "retrieval_evidence_summary": {
+                                "enabled": True,
+                                "model_spec": "local:military-chat",
+                            }
+                        }
+                    }
+                },
+            )
+        )
+    )
+    vector_store = SimpleNamespace(upsert_graph_records=AsyncMock())
+
+    class Selector:
+        options = None
+        closed = False
+
+        def __init__(self, options):
+            Selector.options = options
+
+        async def enhance_records(self, values):
+            enhanced = [dict(value) for value in values]
+            enhanced[0]["content"] += "\n检索证据摘录：\n- [relation-mention:9] 频率捷变提高抗干扰能力"
+            return enhanced
+
+        async def aclose(self):
+            Selector.closed = True
+
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=kb_repo,
+        graph_repo=graph_repo,
+        graph_vector_store=vector_store,
+        evidence_summary_selector_factory=Selector,
+    )
+
+    result = await service.index_pending_graph_vectors("kb_test", record_types=("entity",))
+
+    assert result == {"entity": {"claimed": 1, "indexed": 1, "failed": 0}}
+    assert Selector.options["model_spec"] == "local:military-chat"
+    assert Selector.closed is True
+    assert graph_repo.claim_vector_records.await_args.kwargs["include_evidence_rows"] is True
+    indexed = vector_store.upsert_graph_records.await_args.kwargs["records"]
+    assert "[relation-mention:9]" in indexed[0]["content"]
 
 
 def test_normalize_extraction_result_defaults_and_validates_refs():
@@ -225,6 +365,46 @@ def test_build_graph_payload_preserves_relation_quality_metadata():
     assert relation["expected_capability_gain"] == "提升抗干扰能力"
 
 
+def test_graph_records_use_llm_canonical_name_without_changing_raw_mention_span():
+    mention = "本文提出的复杂电磁环境宽带协同感知方法"
+    normalized = normalize_extraction_result(
+        {
+            "entities": [
+                {
+                    "text": mention,
+                    "label": "KeyTechnology",
+                    "start": 0,
+                    "end": len(mention),
+                    "canonical_name": "复杂电磁环境宽带协同感知技术",
+                    "raw_name": mention,
+                    "aliases": ["宽带协同感知"],
+                    "naming_rationale": "去除论文句式，保留环境限定与核心对象。",
+                }
+            ],
+            "relations": [],
+        },
+        "lightrag_primary",
+    )
+    payload = build_graph_payload(normalized)
+    service = MilvusGraphService.__new__(MilvusGraphService)
+
+    records = service._build_entity_records("kb_test", payload["entities"], payload)
+
+    assert payload["entities"][0]["text"] == mention
+    assert records[0]["mention_text"] == mention
+    assert records[0]["start_char"] == 0
+    assert records[0]["end_char"] == len(mention)
+    assert records[0]["name"] == "复杂电磁环境宽带协同感知技术"
+    assert records[0]["normalized_name"] == "复杂电磁环境宽带协同感知技术"
+    assert records[0]["aliases"] == ["宽带协同感知", mention]
+    assert records[0]["naming_rationale"].startswith("去除论文句式")
+    assert "实体名称：复杂电磁环境宽带协同感知技术" in records[0]["content"]
+    assert "实体类型：KeyTechnology" in records[0]["content"]
+    assert "语义角色：technology" in records[0]["content"]
+    assert "别名：宽带协同感知" in records[0]["content"]
+    assert "命名依据：去除论文句式" in records[0]["content"]
+
+
 # 真实案例的形状：模型把一整段摘要正文当成了实体。原文 1672 字符，而列是 varchar(512)。
 ABSTRACT_PARAGRAPH = (
     "Reliable engine-weight estimation at the conceptual design stage is critical to the "
@@ -258,6 +438,32 @@ def test_normalize_extraction_result_drops_over_long_entity_and_its_relations():
     assert [(relation["source"]["text"], relation["target"]["text"]) for relation in result["relations"]] == [
         ("WATE", "NASA")
     ]
+    assert result["metadata"]["dropped_entities"] == 1
+    assert result["metadata"]["dropped_relations"] == 1
+
+
+def test_normalize_extraction_result_drops_pure_ocr_symbols_but_keeps_technical_symbols():
+    result = normalize_extraction_result(
+        {
+            "entities": [
+                {"id": "junk", "text": "%’(", "label": "ApplicationScenario"},
+                {"id": "cpp", "text": "C++", "label": "AlgorithmModel"},
+                {"id": "band", "text": "5G", "label": "KeyTechnology"},
+            ],
+            "relations": [
+                {
+                    "source": "cpp",
+                    "target": "junk",
+                    "text": "排版损伤关系",
+                    "label": "APPLIED_TO",
+                }
+            ],
+        },
+        "lightrag_llm",
+    )
+
+    assert [entity["text"] for entity in result["entities"]] == ["C++", "5G"]
+    assert result["relations"] == []
     assert result["metadata"]["dropped_entities"] == 1
     assert result["metadata"]["dropped_relations"] == 1
 
@@ -599,8 +805,11 @@ def test_llm_graph_extractor_rejects_invalid_adjacent_context_options(option, va
         extractor.validate_options()
 
 
-def test_graph_extractor_factory_supports_only_llm_and_rejects_spacy():
-    assert GraphExtractorFactory.supported_types() == ["llm"]
+def test_graph_extractor_factory_supports_v1_and_v2_extractors_and_rejects_spacy():
+    assert GraphExtractorFactory.supported_types() == [
+        "llm",
+        "lightrag_primary",
+    ]
 
     with pytest.raises(ValueError, match="spacy"):
         GraphExtractorFactory.create("spacy", {"model": "zh_core_web_sm"})
@@ -683,6 +892,290 @@ async def test_graph_extraction_uses_nearest_previous_chunks_with_character_budg
     ]
 
 
+@pytest.mark.asyncio
+async def test_hybrid_extraction_loads_context_from_lightrag_enhancement_budget():
+    chunk = SimpleNamespace(chunk_id="chunk_2", file_id="file_1", chunk_index=2)
+    previous = [SimpleNamespace(chunk_id="chunk_1", chunk_index=1, content="前文定义了该系统。")]
+    chunk_repo = SimpleNamespace(list_preceding_chunks=AsyncMock(return_value=previous))
+    extractor = SimpleNamespace(
+        extractor_type="lightrag_primary",
+        options={
+            "primary": {"model_version": "lightrag"},
+            "llm_enhancement": {
+                "enabled": True,
+                "context_window_size": 1,
+                "context_max_chars": 500,
+            },
+        },
+    )
+
+    context = await MilvusGraphService(chunk_repo=chunk_repo)._load_preceding_context(chunk, extractor)
+
+    assert context == [{"chunk_id": "chunk_1", "chunk_index": 1, "content": "前文定义了该系统。"}]
+    chunk_repo.list_preceding_chunks.assert_awaited_once_with("file_1", 2, 1)
+
+
+@pytest.mark.asyncio
+async def test_v2_graph_extraction_reuses_only_matching_lineage_cache():
+    options = {
+        "endpoint": "http://ie-extractor:8011",
+        "model_version": "lightrag.5-multi-v1",
+        "ontology_version": "defense-kg-1.0",
+        "pipeline_revision": "hybrid-v2-r1",
+    }
+    chunk = SimpleNamespace(
+        chunk_id="chunk_1",
+        file_id="file_1",
+        chunk_index=0,
+        content="ADRV9009 提升感知能力。",
+        document_version=1,
+        parser_name="paddlex",
+        parser_version="3.1",
+        source_metadata={"document_content_hash": "doc-hash"},
+        extraction_result={"entities": [], "relations": [], "metadata": {}},
+        graph_extraction_details={"status": "succeeded", "attempt_count": 1},
+    )
+    manifest = build_extraction_cache_manifest(
+        chunk=chunk,
+        extractor_type="lightrag_primary",
+        extractor_options=options,
+    )
+    attach_extraction_cache_metadata(chunk.extraction_result, manifest)
+    extractor = SimpleNamespace(
+        extractor_type="lightrag_primary",
+        options=options,
+        extract=AsyncMock(side_effect=AssertionError("matching cache must be reused")),
+    )
+    chunk_repo = SimpleNamespace(
+        mark_graph_extraction_pending=AsyncMock(),
+        mark_graph_extraction_failed=AsyncMock(),
+        update_extraction_result=AsyncMock(),
+    )
+
+    result = await MilvusGraphService(chunk_repo=chunk_repo)._get_chunk_extraction_result("kb_test", chunk, extractor)
+
+    assert result["metadata"]["extraction_cache"]["key"]
+    extractor.extract.assert_not_awaited()
+    chunk_repo.update_extraction_result.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_v2_graph_extraction_rebuilds_when_model_lineage_changes():
+    old_options = {
+        "llm_enhancement": {"enabled": True, "model_spec": "local:lightrag-old"},
+        "ontology_version": "defense-kg-1.0",
+        "pipeline_revision": "hybrid-v2-r1",
+    }
+    new_options = {
+        **old_options,
+        "llm_enhancement": {"enabled": True, "model_spec": "local:lightrag-new"},
+    }
+    chunk = SimpleNamespace(
+        chunk_id="chunk_1",
+        file_id="file_1",
+        chunk_index=0,
+        content="ADRV9009 提升感知能力。",
+        document_version=1,
+        parser_name="paddlex",
+        parser_version="3.1",
+        source_metadata={"document_content_hash": "doc-hash"},
+        extraction_result={"entities": [], "relations": [], "metadata": {}},
+        graph_extraction_details={"status": "succeeded", "attempt_count": 1},
+    )
+    attach_extraction_cache_metadata(
+        chunk.extraction_result,
+        build_extraction_cache_manifest(
+            chunk=chunk,
+            extractor_type="lightrag_primary",
+            extractor_options=old_options,
+        ),
+    )
+    extractor = SimpleNamespace(
+        extractor_type="lightrag_primary",
+        options=new_options,
+        extract=AsyncMock(return_value={"entities": [], "relations": [], "metadata": {}}),
+    )
+    chunk_repo = SimpleNamespace(
+        mark_graph_extraction_pending=AsyncMock(),
+        mark_graph_extraction_failed=AsyncMock(),
+        update_extraction_result=AsyncMock(),
+    )
+
+    result = await MilvusGraphService(chunk_repo=chunk_repo)._get_chunk_extraction_result("kb_test", chunk, extractor)
+
+    extractor.extract.assert_awaited_once()
+    chunk_repo.update_extraction_result.assert_awaited_once_with("chunk_1", result, 1)
+    assert result["metadata"]["extraction_cache"]["manifest"]["model_versions"]["lightrag_primary"] == (
+        "local:lightrag-new"
+    )
+
+
+@pytest.mark.asyncio
+async def test_v2_batch_extraction_only_sends_cache_misses_and_preserves_chunk_order():
+    options = {
+        "endpoint": "http://ie-extractor:8011",
+        "model_version": "lightrag.5-multi-v1",
+        "ontology_version": "defense-kg-1.0",
+        "pipeline_revision": "hybrid-v2-r1",
+        "context_window_size": 0,
+        "extraction_options": {"batch_size": 4},
+    }
+    chunks = [
+        SimpleNamespace(
+            chunk_id=f"chunk_{index}",
+            file_id="file_1",
+            chunk_index=0,
+            content=f"文本 {index}",
+            document_version=1,
+            parser_name="paddlex",
+            parser_version="3.1",
+            source_metadata={"document_content_hash": "doc-hash"},
+            extraction_result=None,
+            graph_extraction_details={"status": "pending", "attempt_count": 0},
+        )
+        for index in range(1, 4)
+    ]
+    chunks[0].extraction_result = {"entities": [], "relations": [], "metadata": {}}
+    attach_extraction_cache_metadata(
+        chunks[0].extraction_result,
+        build_extraction_cache_manifest(
+            chunk=chunks[0],
+            extractor_type="lightrag_primary",
+            extractor_options=options,
+        ),
+    )
+    batch_outputs = [
+        {"entities": [], "relations": [], "metadata": {"block": "chunk_2"}},
+        {"entities": [], "relations": [], "metadata": {"block": "chunk_3"}},
+    ]
+    extractor = SimpleNamespace(
+        extractor_type="lightrag_primary",
+        options=options,
+        extract_batch=AsyncMock(return_value=batch_outputs),
+        extract=AsyncMock(side_effect=AssertionError("多块未命中必须走批量接口")),
+    )
+    persisted = {}
+
+    async def update_extraction_result(chunk_id, result, attempt):
+        persisted[chunk_id] = (result, attempt)
+
+    chunk_repo = SimpleNamespace(
+        mark_graph_extraction_pending=AsyncMock(),
+        mark_graph_extraction_failed=AsyncMock(),
+        update_extraction_result=AsyncMock(side_effect=update_extraction_result),
+    )
+    service = MilvusGraphService(chunk_repo=chunk_repo)
+
+    results = await service._get_chunk_extraction_results("kb_test", chunks, extractor)
+
+    batch_inputs = extractor.extract_batch.await_args.args[0]
+    assert [item.chunk_metadata["chunk_id"] for item in batch_inputs] == ["chunk_2", "chunk_3"]
+    assert [result["metadata"].get("block") for result in results] == [None, "chunk_2", "chunk_3"]
+    assert set(persisted) == {"chunk_2", "chunk_3"}
+    assert {attempt for _, attempt in persisted.values()} == {1}
+    extractor.extract.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_v2_batch_partial_validation_failure_does_not_overwrite_successful_chunk():
+    options = {
+        "endpoint": "http://ie-extractor:8011",
+        "model_version": "lightrag.5-multi-v1",
+        "ontology_version": "defense-kg-1.0",
+        "context_window_size": 0,
+    }
+    chunks = [
+        SimpleNamespace(
+            chunk_id=f"chunk_{index}",
+            file_id="file_1",
+            chunk_index=0,
+            content=f"文本 {index}",
+            extraction_result=None,
+            graph_extraction_details={"status": "pending", "attempt_count": 0},
+        )
+        for index in range(1, 3)
+    ]
+    extractor = SimpleNamespace(
+        extractor_type="lightrag_primary",
+        options=options,
+        extract_batch=AsyncMock(
+            return_value=[
+                {"entities": [], "relations": [], "metadata": {"block": "chunk_1"}},
+                {"entities": "invalid", "relations": []},
+            ]
+        ),
+        extract=AsyncMock(side_effect=ValueError("single block remains invalid")),
+    )
+    chunk_repo = SimpleNamespace(
+        mark_graph_extraction_pending=AsyncMock(),
+        mark_graph_extraction_failed=AsyncMock(),
+        update_extraction_result=AsyncMock(),
+    )
+    service = MilvusGraphService(chunk_repo=chunk_repo)
+
+    results = await service._get_chunk_extraction_results("kb_test", chunks, extractor)
+
+    assert results[0]["metadata"]["block"] == "chunk_1"
+    assert isinstance(results[1], ValueError)
+    chunk_repo.update_extraction_result.assert_awaited_once()
+    assert chunk_repo.update_extraction_result.await_args.args[0] == "chunk_1"
+    extractor.extract.assert_awaited_once()
+    assert extractor.extract.await_args.kwargs["chunk_metadata"]["chunk_id"] == "chunk_2"
+    chunk_repo.mark_graph_extraction_failed.assert_awaited_once_with(
+        "chunk_2",
+        2,
+        "single block remains invalid",
+    )
+
+
+def test_ie_graph_build_batch_size_comes_from_runtime_extraction_options():
+    assert (
+        MilvusGraphService._get_extraction_batch_size(
+            {
+                "extractor_type": "lightrag_primary",
+                "extractor_options": {"extraction_options": {"batch_size": 16}},
+            }
+        )
+        == 4
+    )
+    assert (
+        MilvusGraphService._get_extraction_batch_size(
+            {
+                "extractor_type": "lightrag_primary",
+                "extractor_options": {"primary": {"extraction_options": {"batch_size": 8}}},
+            }
+        )
+        == 4
+    )
+    assert (
+        MilvusGraphService._get_extraction_batch_size(
+            {"extractor_type": "llm", "extractor_options": {"batch_size": 64}}
+        )
+        == 1
+    )
+
+
+def test_lightrag_primary_batch_size_uses_bounded_agent_parallelism():
+    config = {
+        "extractor_type": "lightrag_primary",
+        "extractor_options": {
+            "orchestration_mode": "lightrag_primary",
+            "primary": {"extraction_options": {"batch_size": 2}},
+            "llm_enhancement": {"concurrency_count": 6},
+        },
+    }
+    oversized = {
+        "extractor_type": "lightrag_primary",
+        "extractor_options": {
+            "orchestration_mode": "lightrag_primary",
+            "llm_enhancement": {"concurrency_count": 64},
+        },
+    }
+
+    assert MilvusGraphService._get_extraction_batch_size(config) == 6
+    assert MilvusGraphService._get_extraction_batch_size(oversized) == 8
+
+
 def test_graph_query_deduplicates_cross_chunk_relation_mentions_by_triple_id():
     duplicate_one = _raw_graph_edge("neo4j-edge-1", "node-a", "node-b")
     duplicate_two = _raw_graph_edge("neo4j-edge-2", "node-a", "node-b")
@@ -750,7 +1243,8 @@ def test_llm_graph_extractor_focuses_on_substantive_defense_research_knowledge()
 async def test_graph_path_discovery_uses_semantic_entity_anchors():
     kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
     vector_store = SimpleNamespace(
-        search_entities=AsyncMock(return_value=[{"id": "entity-1", "score": 0.91, "content": "技术 A"}])
+        search_entities=AsyncMock(return_value=[{"id": "entity-1", "score": 0.91, "content": "技术 A"}]),
+        search_triples=AsyncMock(return_value=[]),
     )
     service = MilvusGraphService(
         kb_id="kb_test",
@@ -769,7 +1263,9 @@ async def test_graph_path_discovery_uses_semantic_entity_anchors():
     service.query_seed_subgraph.return_value["nodes"][0]["properties"].update(
         {"entity_id": "entity-1", "label": "技术"}
     )
+    service.query_seed_subgraph.return_value["nodes"][0]["type"] = "KeyTechnology"
     service.query_seed_subgraph.return_value["nodes"][1]["properties"]["label"] = "能力"
+    service.query_seed_subgraph.return_value["nodes"][1]["type"] = "Capability"
 
     result = await service.discover_paths(
         query="技术 A",
@@ -784,6 +1280,12 @@ async def test_graph_path_discovery_uses_semantic_entity_anchors():
         embedding_model_spec="test/embedding",
         top_k=6,
     )
+    vector_store.search_triples.assert_awaited_once_with(
+        kb_id="kb_test",
+        query_text="技术 A",
+        embedding_model_spec="test/embedding",
+        top_k=6,
+    )
     service.query_seed_subgraph.assert_awaited_once_with(
         "kb_test",
         entity_ids=["entity-1"],
@@ -791,9 +1293,427 @@ async def test_graph_path_discovery_uses_semantic_entity_anchors():
         max_depth=6,
         entity_only=True,
     )
-    assert result["summary"]["retrieval_mode"] == "semantic"
+    assert result["summary"]["retrieval_mode"] == "mix"
+    assert result["summary"]["requested_retrieval_mode"] == "mix"
+    assert result["summary"]["entity_hit_count"] == 1
+    assert result["summary"]["triple_hit_count"] == 0
+    assert result["summary"]["fusion_method"] == "reciprocal-rank-fusion-v1"
+    assert result["query_plan"]["provenance"]["status"] == "disabled"
     assert result["summary"]["subgraph_node_count"] == 2
-    assert result["paths"][0]["nodes"][0]["properties"]["query_relevance"] == 0.91
+    assert result["paths"][0]["nodes"][0]["properties"]["query_relevance"] == 1.0
+    assert result["query_analysis"]["analysis_version"] == "defense-requirement-analysis-v2"
+    assert result["query_analysis"]["entity_mappings"][0]["entity_id"] == "entity-1"
+
+
+@pytest.mark.asyncio
+async def test_graph_path_discovery_fuses_llm_planned_entity_and_triple_retrieval():
+    class _Planner:
+        def __init__(self, options):
+            self.options = options
+
+        async def plan(self, query):
+            return {
+                "query": query,
+                "low_level_keywords": ["相控阵雷达", "波束形成"],
+                "high_level_keywords": ["抗干扰机理"],
+                "capability_targets": ["复杂环境感知"],
+                "constraints": ["低功耗"],
+                "provenance": {"status": "completed"},
+            }
+
+        async def aclose(self):
+            return None
+
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    vector_store = SimpleNamespace(
+        search_entities=AsyncMock(return_value=[{"id": "entity-1", "score": 0.9}]),
+        search_triples=AsyncMock(
+            return_value=[
+                {
+                    "id": "triple-1",
+                    "source_id": "entity-2",
+                    "target_id": "entity-1",
+                    "score": 0.8,
+                }
+            ]
+        ),
+    )
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_vector_store=vector_store,
+        query_planner_factory=_Planner,
+    )
+    graph = {
+        "nodes": [
+            _raw_graph_node("node-a", name="技术 A"),
+            _raw_graph_node("node-b", name="能力 B"),
+        ],
+        "edges": [_raw_graph_edge("edge-a-b", "node-a", "node-b")],
+    }
+    graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "技术"})
+    graph["nodes"][0]["type"] = "KeyTechnology"
+    graph["nodes"][1]["properties"].update({"entity_id": "entity-2", "label": "能力"})
+    graph["nodes"][1]["type"] = "Capability"
+    service.query_seed_subgraph = AsyncMock(return_value=graph)
+
+    result = await service.discover_paths(
+        query="复杂环境感知",
+        retrieval_mode="hybrid",
+        query_enhancement={"enabled": True, "model_spec": "local:model"},
+    )
+
+    vector_store.search_entities.assert_awaited_once_with(
+        kb_id="kb_test",
+        query_text="复杂环境感知；相控阵雷达；波束形成",
+        embedding_model_spec="test/embedding",
+        top_k=6,
+    )
+    vector_store.search_triples.assert_awaited_once_with(
+        kb_id="kb_test",
+        query_text="复杂环境感知；抗干扰机理；低功耗",
+        embedding_model_spec="test/embedding",
+        top_k=6,
+    )
+    assert service.query_seed_subgraph.await_args.kwargs["entity_ids"] == ["entity-1", "entity-2"]
+    assert result["summary"]["retrieval_mode"] == "hybrid"
+    assert result["summary"]["entity_hit_count"] == 1
+    assert result["summary"]["triple_hit_count"] == 1
+    assert result["summary"]["query_planner_status"] == "completed"
+    assert result["query_plan"]["low_level_keywords"] == ["相控阵雷达", "波束形成"]
+
+
+@pytest.mark.asyncio
+async def test_hybrid_graph_path_discovery_runs_entity_and_triple_search_concurrently():
+    entity_started = asyncio.Event()
+    triple_started = asyncio.Event()
+
+    async def search_entities(**_kwargs):
+        entity_started.set()
+        await asyncio.wait_for(triple_started.wait(), timeout=0.5)
+        return [{"id": "entity-1", "score": 0.9}]
+
+    async def search_triples(**_kwargs):
+        triple_started.set()
+        await asyncio.wait_for(entity_started.wait(), timeout=0.5)
+        return [{"id": "triple-1", "source_id": "entity-1", "target_id": "entity-2", "score": 0.8}]
+
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_vector_store=SimpleNamespace(
+            search_entities=AsyncMock(side_effect=search_entities),
+            search_triples=AsyncMock(side_effect=search_triples),
+        ),
+    )
+    graph = {
+        "nodes": [
+            _raw_graph_node("node-a", name="技术 A"),
+            _raw_graph_node("node-b", name="能力 B"),
+        ],
+        "edges": [_raw_graph_edge("edge-a-b", "node-a", "node-b")],
+    }
+    graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "技术"})
+    graph["nodes"][0]["type"] = "KeyTechnology"
+    graph["nodes"][1]["properties"].update({"entity_id": "entity-2", "label": "能力"})
+    graph["nodes"][1]["type"] = "Capability"
+    service.query_seed_subgraph = AsyncMock(return_value=graph)
+
+    result = await asyncio.wait_for(service.discover_paths(query="技术 A"), timeout=1)
+
+    assert result["summary"]["requested_retrieval_mode"] == "mix"
+    assert result["summary"]["retrieval_mode"] == "mix"
+    assert result["summary"]["entity_hit_count"] == 1
+    assert result["summary"]["triple_hit_count"] == 1
+    assert result["summary"]["retrieval_failures"] == []
+
+
+@pytest.mark.asyncio
+async def test_mix_graph_path_discovery_runs_keyword_and_vector_channels_concurrently():
+    entity_started = asyncio.Event()
+    triple_started = asyncio.Event()
+    keyword_started = asyncio.Event()
+
+    async def wait_for_all():
+        await asyncio.wait_for(
+            asyncio.gather(entity_started.wait(), triple_started.wait(), keyword_started.wait()),
+            timeout=0.5,
+        )
+
+    async def search_entities(**_kwargs):
+        entity_started.set()
+        await wait_for_all()
+        return [{"id": "entity-1", "score": 0.9}]
+
+    async def search_triples(**_kwargs):
+        triple_started.set()
+        await wait_for_all()
+        return []
+
+    async def query_nodes(*_args, **_kwargs):
+        keyword_started.set()
+        await wait_for_all()
+        return {
+            "nodes": [_raw_graph_node("keyword-node", name="技术 A")],
+            "edges": [],
+        }
+
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_vector_store=SimpleNamespace(
+            search_entities=AsyncMock(side_effect=search_entities),
+            search_triples=AsyncMock(side_effect=search_triples),
+        ),
+    )
+    seed_graph = {
+        "nodes": [_raw_graph_node("seed-node", name="能力 B")],
+        "edges": [],
+    }
+    seed_graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "能力"})
+    service.query_seed_subgraph = AsyncMock(return_value=seed_graph)
+    service.query_nodes = AsyncMock(side_effect=query_nodes)
+
+    result = await asyncio.wait_for(service.discover_paths(query="技术 A", retrieval_mode="mix"), timeout=1)
+
+    assert entity_started.is_set() and triple_started.is_set() and keyword_started.is_set()
+    assert service.query_nodes.await_count == 1
+    assert result["summary"]["retrieval_mode"] == "mix"
+    assert result["summary"]["retrieval_failures"] == []
+
+
+@pytest.mark.parametrize("retrieval_mode", ["mix", "naive"])
+@pytest.mark.asyncio
+async def test_chunk_graph_path_discovery_adds_accepted_and_pending_entity_anchors(retrieval_mode):
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    graph_repo = SimpleNamespace(
+        list_entity_ids_by_chunk_ids=AsyncMock(
+            return_value={"chunk-accepted": ["entity-2"], "chunk-pending": ["entity-1"]}
+        )
+    )
+    chunk_retriever = AsyncMock(
+        return_value=[
+            {"content": "已审核证据", "metadata": {"chunk_id": "chunk-accepted"}, "score": 0.9},
+            {"content": "待审核候选", "metadata": {"chunk_id": "chunk-pending"}, "score": 0.8},
+        ]
+    )
+    vector_store = SimpleNamespace(
+        search_entities=AsyncMock(return_value=[]),
+        search_triples=AsyncMock(return_value=[]),
+    )
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_repo=graph_repo,
+        graph_vector_store=vector_store,
+        chunk_retriever=chunk_retriever,
+    )
+    graph = {
+        "nodes": [
+            _raw_graph_node("node-a", name="技术 A"),
+            _raw_graph_node("node-b", name="能力 B"),
+        ],
+        "edges": [_raw_graph_edge("edge-a-b", "node-a", "node-b")],
+    }
+    graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "技术"})
+    graph["nodes"][0]["type"] = "KeyTechnology"
+    graph["nodes"][1]["properties"].update({"entity_id": "entity-2", "label": "能力"})
+    graph["nodes"][1]["type"] = "Capability"
+    service.query_seed_subgraph = AsyncMock(return_value=graph)
+    service.query_nodes = AsyncMock(return_value={"nodes": [], "edges": []})
+
+    result = await service.discover_paths(query="复杂环境能力", retrieval_mode=retrieval_mode)
+
+    chunk_retriever.assert_awaited_once_with(kb_id="kb_test", query="复杂环境能力", top_k=6)
+    graph_repo.list_entity_ids_by_chunk_ids.assert_awaited_once_with(
+        kb_id="kb_test",
+        chunk_ids=["chunk-accepted", "chunk-pending"],
+        review_statuses=("accepted", "pending"),
+    )
+    service.query_seed_subgraph.assert_awaited_once()
+    assert service.query_seed_subgraph.await_args.kwargs["entity_ids"] == ["entity-2", "entity-1"]
+    assert result["summary"]["retrieval_mode"] == retrieval_mode
+    assert result["summary"]["chunk_hit_count"] == 2
+    assert result["summary"]["chunk_anchor_entity_count"] == 2
+    assert result["summary"]["retrieval_failures"] == []
+    if retrieval_mode == "naive":
+        vector_store.search_entities.assert_not_awaited()
+        vector_store.search_triples.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_mix_graph_uses_unified_relationship_collection_and_pending_chunk_anchors():
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    graph_repo = SimpleNamespace(
+        list_entity_ids_by_chunk_ids=AsyncMock(
+            return_value={"chunk-accepted": ["entity-1"], "chunk-pending": ["entity-2"]}
+        )
+    )
+    chunk_retriever = AsyncMock(
+        return_value=[
+            {"content": "已审核证据", "metadata": {"chunk_id": "chunk-accepted"}, "score": 0.9},
+            {"content": "待审核候选", "metadata": {"chunk_id": "chunk-pending"}, "score": 0.8},
+        ]
+    )
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_repo=graph_repo,
+        graph_vector_store=SimpleNamespace(
+            search_entities=AsyncMock(return_value=[]),
+            search_triples=AsyncMock(
+                return_value=[
+                    {
+                        "id": "triple-1",
+                        "source_id": "entity-1",
+                        "target_id": "entity-2",
+                    }
+                ]
+            ),
+        ),
+        chunk_retriever=chunk_retriever,
+    )
+    graph = {
+        "nodes": [
+            _raw_graph_node("node-a", name="技术 A"),
+            _raw_graph_node("node-b", name="能力 B"),
+        ],
+        "edges": [
+            {
+                **_raw_graph_edge("edge-a-b", "node-a", "node-b"),
+                "properties": {"review_status": "pending"},
+            }
+        ],
+    }
+    graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "技术"})
+    graph["nodes"][0]["type"] = "KeyTechnology"
+    graph["nodes"][1]["properties"].update({"entity_id": "entity-2", "label": "能力"})
+    graph["nodes"][1]["type"] = "Capability"
+    service.query_seed_subgraph = AsyncMock(return_value=graph)
+    service.query_nodes = AsyncMock(return_value={"nodes": [], "edges": []})
+
+    result = await service.discover_paths(
+        query="复杂环境能力",
+        retrieval_mode="mix",
+        review_scope="pending_preview",
+    )
+
+    graph_repo.list_entity_ids_by_chunk_ids.assert_awaited_once_with(
+        kb_id="kb_test",
+        chunk_ids=["chunk-accepted", "chunk-pending"],
+        review_statuses=("accepted", "pending"),
+    )
+    assert service.query_seed_subgraph.await_args.kwargs["entity_ids"] == ["entity-1", "entity-2"]
+    assert "review_scope" not in service.query_seed_subgraph.await_args.kwargs
+    assert "review_scope" not in service.query_nodes.await_args.kwargs
+    assert result["summary"]["review_scope"] == "all"
+    assert result["summary"]["triple_hit_count"] == 1
+    assert result["summary"]["relationship_vector_hit_count"] == 1
+    assert "preview_triple_hit_count" not in result["summary"]
+    assert result["summary"]["pending_evidence_path_count"] == 1
+    assert result["paths"][0]["pending_evidence"] is True
+
+
+@pytest.mark.asyncio
+async def test_mix_chunk_anchors_interleave_chunks_deduplicate_and_apply_global_limit():
+    chunk_ids = ["chunk-a", "chunk-b", "chunk-c"]
+    chunk_hits = [{"content": chunk_id, "metadata": {"chunk_id": chunk_id}, "score": 1.0} for chunk_id in chunk_ids]
+    anchors = {
+        "chunk-a": ["shared", *[f"a-{index}" for index in range(23)]],
+        "chunk-b": ["shared", *[f"b-{index}" for index in range(23)]],
+        "chunk-c": [f"c-{index}" for index in range(24)],
+    }
+    graph_repo = SimpleNamespace(list_entity_ids_by_chunk_ids=AsyncMock(return_value=anchors))
+    service = MilvusGraphService(
+        graph_repo=graph_repo,
+        chunk_retriever=AsyncMock(return_value=chunk_hits),
+    )
+
+    result = await service._retrieve_mix_chunk_anchors(
+        kb_id="kb_test",
+        query="抗干扰能力",
+        top_k=6,
+        review_scope="accepted",
+    )
+
+    entity_ids = [item["id"] for item in result["entity_hits"]]
+    assert len(entity_ids) == 48
+    assert len(set(entity_ids)) == 48
+    assert entity_ids[:6] == ["shared", "c-0", "a-0", "b-0", "c-1", "a-1"]
+    assert result["entity_hits"][0] == {
+        "id": "shared",
+        "chunk_id": "chunk-a",
+        "chunk_rank": 1,
+    }
+
+
+@pytest.mark.asyncio
+async def test_graph_path_discovery_overfetches_then_applies_closed_llm_reranking(monkeypatch):
+    captured = {}
+
+    def fake_discover(_graph, query, options):
+        captured["candidate_limit"] = options.max_paths
+        return {
+            "query": query,
+            "mode": "requirement_driven",
+            "paths": [
+                {"path_id": "p1", "score": 3.0, "nodes": [], "relations": [], "relation_ids": []},
+                {"path_id": "p2", "score": 2.0, "nodes": [], "relations": [], "relation_ids": []},
+                {"path_id": "p3", "score": 1.0, "nodes": [], "relations": [], "relation_ids": []},
+            ],
+            "candidate_context": {"known_relations": []},
+            "summary": {"returned_path_count": 3},
+        }
+
+    class Reranker:
+        def __init__(self, options):
+            captured["options"] = options
+
+        async def rerank(self, *, query, mode, paths):
+            captured["rerank_input"] = (query, mode, [path["path_id"] for path in paths])
+            return {
+                "paths": list(reversed(paths)),
+                "provenance": {
+                    "reranker_version": "defense-lightrag-path-reranker-v1",
+                    "status": "completed",
+                    "ranked_count": len(paths),
+                },
+            }
+
+        async def aclose(self):
+            captured["closed"] = True
+
+    monkeypatch.setattr(
+        "platform_core.knowledge.graphs.milvus_graph_service.discover_graph_paths",
+        fake_discover,
+    )
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec=None)
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        path_reranker_factory=Reranker,
+    )
+    service.query_nodes = AsyncMock(return_value={"nodes": [], "edges": []})
+
+    result = await service.discover_paths(
+        query="复杂电磁环境感知",
+        mode="requirement_driven",
+        max_paths=2,
+        path_reranking={"enabled": True, "model_spec": "local:military-chat"},
+    )
+
+    assert captured["candidate_limit"] == 6
+    assert captured["rerank_input"] == (
+        "复杂电磁环境感知",
+        "requirement_driven",
+        ["p1", "p2", "p3"],
+    )
+    assert captured["closed"] is True
+    assert [path["path_id"] for path in result["paths"]] == ["p3", "p2"]
+    assert result["summary"]["returned_path_count"] == 2
+    assert result["summary"]["path_reranker_status"] == "completed"
 
 
 @pytest.mark.asyncio
@@ -802,7 +1722,10 @@ async def test_graph_path_discovery_falls_back_to_keyword_query_when_vector_sear
     service = MilvusGraphService(
         kb_id="kb_test",
         kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
-        graph_vector_store=SimpleNamespace(search_entities=AsyncMock(side_effect=RuntimeError("offline"))),
+        graph_vector_store=SimpleNamespace(
+            search_entities=AsyncMock(side_effect=RuntimeError("offline")),
+            search_triples=AsyncMock(return_value=[]),
+        ),
     )
     fallback_graph = {
         "nodes": [
@@ -822,8 +1745,74 @@ async def test_graph_path_discovery_falls_back_to_keyword_query_when_vector_sear
         max_nodes=300,
         exclude_chunk=True,
     )
-    assert result["summary"]["retrieval_mode"] == "keyword"
+    assert result["summary"]["retrieval_mode"] == "mix"
+    assert result["summary"]["retrieval_degraded"] is True
+    assert result["summary"]["retrieval_failures"] == [{"channel": "entity", "failure_type": "RuntimeError"}]
     assert result["paths"]
+
+
+@pytest.mark.asyncio
+async def test_keyword_graph_exposes_exact_query_anchor_even_when_entity_is_isolated():
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec=None)
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+    )
+    isolated = _raw_graph_node("node-anchor", name="分布式自适应规划控制")
+    isolated["type"] = "KeyTechnology"
+    isolated["properties"].update(
+        {
+            "entity_id": "anchor-1",
+            "name": "分布式自适应规划控制",
+            "label": "KeyTechnology",
+        }
+    )
+    service.query_nodes = AsyncMock(return_value={"nodes": [isolated], "edges": []})
+
+    result = await service.discover_paths(query="分布式自适应规划控制")
+
+    assert result["paths"] == []
+    assert result["summary"]["keyword_entity_hit_count"] == 1
+    assert result["summary"]["explicit_query_anchor_count"] == 1
+    assert result["query_anchors"][0]["properties"]["entity_id"] == "anchor-1"
+    assert result["query_anchors"][0]["semantic_role"] == "technology"
+    assert result["query_anchors"][0]["matched_keyword"] == "分布式自适应规划控制"
+
+
+@pytest.mark.asyncio
+async def test_hybrid_graph_path_discovery_keeps_triple_channel_when_entity_channel_fails():
+    kb = SimpleNamespace(kb_type="milvus", embedding_model_spec="test/embedding")
+    vector_store = SimpleNamespace(
+        search_entities=AsyncMock(side_effect=RuntimeError("entity offline")),
+        search_triples=AsyncMock(return_value=[{"id": "triple-1", "source_id": "entity-1", "target_id": "entity-2"}]),
+    )
+    service = MilvusGraphService(
+        kb_id="kb_test",
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        graph_vector_store=vector_store,
+    )
+    graph = {
+        "nodes": [
+            _raw_graph_node("node-a", name="技术 A"),
+            _raw_graph_node("node-b", name="能力 B"),
+        ],
+        "edges": [_raw_graph_edge("edge-a-b", "node-a", "node-b")],
+    }
+    graph["nodes"][0]["properties"].update({"entity_id": "entity-1", "label": "技术"})
+    graph["nodes"][0]["type"] = "KeyTechnology"
+    graph["nodes"][1]["properties"].update({"entity_id": "entity-2", "label": "能力"})
+    graph["nodes"][1]["type"] = "Capability"
+    service.query_seed_subgraph = AsyncMock(return_value=graph)
+    service.query_nodes = AsyncMock()
+
+    result = await service.discover_paths(query="技术 A", retrieval_mode="hybrid")
+
+    service.query_seed_subgraph.assert_awaited_once()
+    service.query_nodes.assert_not_awaited()
+    assert result["summary"]["retrieval_mode"] == "global"
+    assert result["summary"]["triple_hit_count"] == 1
+    assert result["summary"]["retrieval_degraded"] is True
+    assert result["summary"]["retrieval_failures"] == [{"channel": "entity", "failure_type": "RuntimeError"}]
 
 
 @pytest.mark.asyncio
@@ -965,7 +1954,8 @@ async def test_graph_build_keeps_extraction_concurrency_full_while_writes_are_bl
         graph_repo=graph_repo,
         graph_vector_store=graph_vector_store,
     )
-    monkeypatch.setattr(service, "write_chunk_graph", lambda kb_id, chunk, result: ([], []))
+    monkeypatch.setattr(service, "prepare_chunk_graph_records", lambda kb_id, result: ({}, [], []))
+    monkeypatch.setattr(service, "project_chunk_graph", lambda *args: None)
 
     build_task = asyncio.create_task(service.build_pending_chunks("kb_test"))
     await asyncio.wait_for(all_extractions_finished.wait(), timeout=1)
@@ -1072,6 +2062,13 @@ async def test_graph_build_indexes_vectors_after_structure_write(monkeypatch):
         content="张三任职于公司",
         start_char_pos=0,
         end_char_pos=8,
+        document_version=2,
+        page_number=5,
+        block_type="paragraph",
+        heading_path=["3 系统设计", "3.2 信号处理"],
+        bbox=[10.0, 20.0, 500.0, 220.0],
+        parser_name="paddlex",
+        parser_version="3.0",
         extraction_result=normalize_extraction_result(
             {
                 "relations": [
@@ -1132,9 +2129,11 @@ async def test_graph_build_indexes_vectors_after_structure_write(monkeypatch):
         def __init__(self):
             self.pending = False
             self.indexed = False
+            self.projection_event = None
 
         async def upsert_chunk_graph(self, **kwargs):
             self.pending = True
+            self.projection_event = kwargs.get("projection_event")
 
         async def claim_vector_records(self, *, record_type, **kwargs):
             if record_type == "entity" and self.pending:
@@ -1172,9 +2171,11 @@ async def test_graph_build_indexes_vectors_after_structure_write(monkeypatch):
     )
     monkeypatch.setattr(
         service,
-        "write_chunk_graph",
-        lambda kb_id, chunk, result: ([{"entity_id": "entity_1"}], []),
+        "prepare_chunk_graph_records",
+        lambda kb_id, result: ({}, [{"entity_id": "entity_1"}], []),
     )
+    project_chunk_graph = MagicMock()
+    monkeypatch.setattr(service, "project_chunk_graph", project_chunk_graph)
 
     result = await service.build_pending_chunks("kb_test")
 
@@ -1185,10 +2186,16 @@ async def test_graph_build_indexes_vectors_after_structure_write(monkeypatch):
         "extraction_failed": 0,
         "write_failed": 0,
         "remaining": 0,
+        "batch_remaining": 0,
+        "retryable_remaining": 0,
         "vector_failed": 0,
         "verified_facts": 0,
         "evidence_review_required": 0,
     }
+    project_chunk_graph.assert_not_called()
+    assert graph_repo.projection_event is not None
+    assert graph_repo.projection_event["payload"]["kb_id"] == "kb_test"
+    assert graph_repo.projection_event["payload"]["chunk"]["chunk_id"] == "chunk_1"
     vector_store.upsert_graph_records.assert_awaited_once()
     assert chunk.graph_structure_indexed is True
     assert chunk.graph_indexed is True
@@ -1278,7 +2285,12 @@ async def test_graph_build_fails_after_three_vector_attempts(monkeypatch):
         graph_repo=graph_repo,
         graph_vector_store=SimpleNamespace(upsert_graph_records=AsyncMock(side_effect=RuntimeError("embed failed"))),
     )
-    monkeypatch.setattr(service, "write_chunk_graph", lambda kb_id, chunk, result: ([{"entity_id": "e"}], []))
+    monkeypatch.setattr(
+        service,
+        "prepare_chunk_graph_records",
+        lambda kb_id, result: ({}, [{"entity_id": "e"}], []),
+    )
+    monkeypatch.setattr(service, "project_chunk_graph", lambda *args: None)
 
     with pytest.raises(RuntimeError, match="vector_failed=1"):
         await service.build_pending_chunks("kb_test")
@@ -1351,12 +2363,140 @@ async def test_graph_reconcile_skips_completed_structure(monkeypatch):
         graph_repo=GraphRepo(),
         graph_vector_store=SimpleNamespace(upsert_graph_records=AsyncMock()),
     )
-    monkeypatch.setattr(service, "write_chunk_graph", MagicMock(side_effect=AssertionError("must not write")))
+    monkeypatch.setattr(
+        service,
+        "prepare_chunk_graph_records",
+        MagicMock(side_effect=AssertionError("must not write")),
+    )
 
     result = await service.build_pending_chunks("kb_test")
 
     assert result["success"] == 1
-    service.write_chunk_graph.assert_not_called()
+    service.prepare_chunk_graph_records.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_drain_pending_graph_vectors_does_not_enter_extraction_pipeline():
+    graph_repo = SimpleNamespace(
+        count_vector_statuses_by_kb_id=AsyncMock(
+            return_value={"pending": 0, "processing": 0, "indexed": 3, "failed": 0}
+        ),
+        finalize_graph_indexed_chunks=AsyncMock(return_value=2),
+    )
+    service = MilvusGraphService(graph_repo=graph_repo)
+    service.index_pending_graph_vectors = AsyncMock(
+        side_effect=[
+            {
+                "entity": {"claimed": 2, "indexed": 2, "failed": 0},
+                "triple": {"claimed": 1, "indexed": 1, "failed": 0},
+            },
+            {
+                "entity": {"claimed": 0, "indexed": 0, "failed": 0},
+                "triple": {"claimed": 0, "indexed": 0, "failed": 0},
+            },
+        ]
+    )
+
+    result = await service.drain_pending_graph_vectors("kb_test")
+
+    assert result == {
+        "kb_id": "kb_test",
+        "batches": 1,
+        "entity": {"claimed": 2, "indexed": 2, "failed": 0},
+        "triple": {"claimed": 1, "indexed": 1, "failed": 0},
+        "finalized_chunks": 2,
+        "vector_counts": {"pending": 0, "processing": 0, "indexed": 3, "failed": 0},
+    }
+    assert service.index_pending_graph_vectors.await_count == 2
+    graph_repo.finalize_graph_indexed_chunks.assert_awaited_once_with("kb_test")
+
+
+@pytest.mark.asyncio
+async def test_vector_index_race_removes_relation_that_became_inactive(monkeypatch):
+    chunk = SimpleNamespace(
+        id=1,
+        chunk_id="chunk_1",
+        graph_structure_indexed=True,
+        graph_indexed=False,
+        extraction_result={"entities": [], "relations": []},
+    )
+    kb = SimpleNamespace(
+        kb_type="milvus",
+        embedding_model_spec="test/embedding",
+        additional_params={
+            "graph_build_config": {
+                "locked": True,
+                "extractor_type": "llm",
+                "extractor_options": {"model_spec": "test/model", "concurrency_count": 1},
+            }
+        },
+    )
+
+    class ChunkRepo:
+        async def count_graph_pending_by_kb_id(self, kb_id):
+            return int(not chunk.graph_indexed)
+
+        async def count_graph_indexed_by_kb_id(self, kb_id):
+            return int(chunk.graph_indexed)
+
+        async def count_graph_extraction_statuses_by_kb_id(self, kb_id):
+            return {"pending": 0, "succeeded": 1, "failed": 0}
+
+        async def list_graph_pending_by_kb_id(self, kb_id, limit, *, after_id=0):
+            return [chunk] if chunk.id > after_id else []
+
+    class GraphRepo:
+        pending = True
+
+        async def upsert_chunk_graph(self, **kwargs):
+            raise AssertionError("vector repair must not rewrite graph structure")
+
+        async def claim_vector_records(self, *, record_type, **kwargs):
+            if record_type == "triple" and self.pending:
+                self.pending = False
+                return "token", [{"id": "triple_inactive", "content": "stale relation"}]
+            return "token", []
+
+        async def mark_vector_records_indexed(self, **kwargs):
+            # 权威关系在 Milvus upsert 期间失效，Repository 拒绝把它重新标为 indexed。
+            return []
+
+        async def mark_vector_records_failed(self, **kwargs):
+            raise AssertionError("vector indexing should succeed before lifecycle race is detected")
+
+        async def count_vector_statuses_by_kb_id(self, kb_id):
+            return {"pending": int(self.pending), "processing": 0, "indexed": 0, "failed": 0}
+
+        async def finalize_graph_indexed_chunks(self, kb_id):
+            chunk.graph_indexed = True
+            return 1
+
+    vector_store = SimpleNamespace(
+        upsert_graph_records=AsyncMock(),
+        delete_graph_records=AsyncMock(),
+    )
+    service = MilvusGraphService(
+        kb_repo=SimpleNamespace(get_by_kb_id=AsyncMock(return_value=kb)),
+        chunk_repo=ChunkRepo(),
+        graph_repo=GraphRepo(),
+        graph_vector_store=vector_store,
+    )
+    monkeypatch.setattr(
+        service,
+        "prepare_chunk_graph_records",
+        MagicMock(side_effect=AssertionError("must not write")),
+    )
+
+    result = await service.build_pending_chunks("kb_test")
+
+    assert result["success"] == 1
+    vector_store.upsert_graph_records.assert_awaited_once()
+    vector_store.delete_graph_records.assert_awaited_once_with(
+        "kb_test",
+        entity_ids=[],
+        triple_ids=["triple_inactive"],
+    )
+    service.prepare_chunk_graph_records.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -1430,6 +2570,44 @@ async def test_milvus_graph_service_configure_persists_updated_concurrency():
     assert status["relationship_count"] == 2
 
 
+@pytest.mark.asyncio
+async def test_milvus_graph_service_configure_rejects_semantic_change_after_authoritative_write():
+    kb = SimpleNamespace(
+        kb_type="milvus",
+        additional_params={
+            "graph_build_config": {
+                "locked": True,
+                "extractor_type": "llm",
+                "extractor_options": {"model_spec": "test/model-v1", "concurrency_count": 5},
+            }
+        },
+    )
+
+    class Repo:
+        async def get_by_kb_id(self, kb_id):
+            return kb
+
+        async def update(self, kb_id, data):
+            raise AssertionError("semantic drift must not be persisted")
+
+    chunk_repo = SimpleNamespace(
+        count_graph_structure_indexed_by_kb_id=AsyncMock(return_value=1),
+        count_graph_indexed_by_kb_id=AsyncMock(return_value=1),
+    )
+    service = MilvusGraphService(kb_repo=Repo(), chunk_repo=chunk_repo)
+
+    with pytest.raises(ValueError, match="显式图谱重建"):
+        await service.configure(
+            "kb_test",
+            extractor_type="llm",
+            extractor_options={"model_spec": "test/model-v2", "concurrency_count": 5},
+            created_by="user_1",
+        )
+
+    chunk_repo.count_graph_structure_indexed_by_kb_id.assert_awaited_once_with("kb_test")
+    chunk_repo.count_graph_indexed_by_kb_id.assert_awaited_once_with("kb_test")
+
+
 def test_graph_extraction_runtime_caps_siliconflow_without_rewriting_saved_config():
     """SiliconFlow 的历史高并发配置应当安全执行，且保留原值供界面告警。"""
     config = {
@@ -1465,6 +2643,36 @@ def test_graph_extraction_runtime_uses_safe_defaults_and_generic_ceiling():
 
     assert MilvusGraphService._get_worker_count(default_config) == 8
     assert MilvusGraphService._get_worker_count(high_config) == 64
+
+
+def test_lightrag_primary_runtime_uses_one_outer_worker_and_bounded_agent_slots(monkeypatch):
+    monkeypatch.setenv("GRAPH_HYBRID_EXTRACTION_CONCURRENCY", "4")
+    config = {
+        "extractor_type": "lightrag_primary",
+        "extractor_options": {
+            "orchestration_mode": "lightrag_primary",
+            "llm_enhancement": {
+                "model_spec": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+                "concurrency_count": 6,
+            },
+        },
+    }
+
+    runtime = MilvusGraphService._graph_extraction_runtime(config)
+
+    assert runtime == {
+        "configured_concurrency_count": 6,
+        "effective_concurrency_count": 6,
+        "concurrency_limit": 8,
+        "concurrency_capped": False,
+        "provider_id": "siliconflow-cn",
+        "parallelism_strategy": "bounded_chunk_fanout",
+        "extraction_worker_count": 1,
+        "agent_parallelism_configured": 6,
+        "agent_parallelism_effective": 6,
+        "chunk_batch_size": 6,
+    }
+    assert MilvusGraphService._get_worker_count(config) == 1
 
 
 @pytest.mark.asyncio
@@ -1508,6 +2716,15 @@ async def test_graph_status_reports_latest_successful_run_as_completed():
 
     assert status["build_task_status"] == "completed"
     assert status["build_task_progress"] == 100
+    assert status["pipeline_stages"]["contract_version"] == "lightrag-graph-pipeline-v1"
+    assert [item["key"] for item in status["pipeline_stages"]["stages"]] == [
+        "document_parse",
+        "information_extraction",
+        "entity_alignment",
+        "authoritative_commit",
+        "graph_projection",
+        "vector_projection",
+    ]
 
 
 def test_milvus_graph_service_writes_chunk_entity_and_relation():
@@ -1527,6 +2744,13 @@ def test_milvus_graph_service_writes_chunk_entity_and_relation():
         content="张三任职于公司",
         start_char_pos=0,
         end_char_pos=8,
+        document_version=2,
+        page_number=5,
+        block_type="paragraph",
+        heading_path=["3 系统设计", "3.2 信号处理"],
+        bbox=[10.0, 20.0, 500.0, 220.0],
+        parser_name="paddlex",
+        parser_version="3.0",
     )
 
     entities, triples = service.write_chunk_graph(
@@ -1567,8 +2791,16 @@ def test_milvus_graph_service_writes_chunk_entity_and_relation():
     assert any("MERGE (c:Chunk:MilvusKB:`kb_test`" in query for query in queries)
     assert any("MERGE (e:Entity:MilvusKB:`kb_test`" in query for query in queries)
     assert any("MERGE (source)-[r:RELATION" in query for query in queries)
+    chunk_call = next(call for call in tx.run.call_args_list if "MERGE (c:Chunk" in call.args[0])
+    assert chunk_call.kwargs["document_version"] == 2
+    assert chunk_call.kwargs["page_number"] == 5
+    assert chunk_call.kwargs["heading_path"] == ["3 系统设计", "3.2 信号处理"]
+    assert chunk_call.kwargs["bbox"] == [10.0, 20.0, 500.0, 220.0]
+    assert chunk_call.kwargs["parser_name"] == "paddlex"
+    assert chunk_call.kwargs["parser_version"] == "3.0"
     entity_call = next(call for call in tx.run.call_args_list if "MERGE (e:Entity" in call.args[0])
     assert entity_call.kwargs["attributes"] == '[{"text": "工程师", "label": "Occupation"}]'
+    assert entity_call.kwargs["review_status"] == "pending"
     relation_call = next(call for call in tx.run.call_args_list if "MERGE (source)-[r:RELATION" in call.args[0])
     assert relation_call.kwargs["claim_level"] == "Fact"
     assert relation_call.kwargs["confidence"] == 0.92
@@ -1576,8 +2808,269 @@ def test_milvus_graph_service_writes_chunk_entity_and_relation():
     assert relation_call.kwargs["military_value_dimensions"] == ["体系集成与互操作性"]
     assert relation_call.kwargs["expected_capability_gain"] == "提升协同效率"
     assert relation_call.kwargs["expert_review_required"] is True
+    assert relation_call.kwargs["review_status"] == "pending"
     assert "军事价值维度：体系集成与互操作性" in triples[0]["content"]
     assert "预期能力收益：提升协同效率" in triples[0]["content"]
+    assert "源实体：张三；类型：Person；角色：other" in triples[0]["content"]
+    assert "目标实体：公司；类型：Organization；角色：other" in triples[0]["content"]
+
+
+def test_review_status_outbox_projection_updates_exact_neo4j_mention():
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"updated": 1}
+    session = MagicMock()
+    session.__enter__.return_value = session
+    session.execute_write.side_effect = lambda func: func(tx)
+    driver = MagicMock()
+    driver.session.return_value = session
+    service = MilvusGraphService(neo4j_connection=SimpleNamespace(driver=driver))
+
+    service.project_projection_payload(
+        {
+            "event_type": "review_status",
+            "version": 1,
+            "kb_id": "kb_test",
+            "chunk_id": "chunk_1",
+            "target_type": "relation_mention",
+            "entity_id": None,
+            "triple_id": "triple_1",
+            "review_status": "accepted",
+            "decision_id": "decision_1",
+        }
+    )
+
+    query = tx.run.call_args.args[0]
+    assert "triple_id: $triple_id" in query
+    assert "r.review_status = $review_status" in query
+    assert tx.run.call_args.kwargs["chunk_id"] == "chunk_1"
+    assert tx.run.call_args.kwargs["triple_id"] == "triple_1"
+
+
+def test_relation_lifecycle_projection_updates_all_mentions():
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"updated": 2}
+    session = MagicMock()
+    session.__enter__.return_value = session
+    session.execute_write.side_effect = lambda func: func(tx)
+    driver = MagicMock()
+    driver.session.return_value = session
+    service = MilvusGraphService(neo4j_connection=SimpleNamespace(driver=driver))
+
+    service.project_projection_payload(
+        {
+            "event_type": "relation_lifecycle",
+            "version": 1,
+            "kb_id": "kb_test",
+            "triple_id": "triple_old",
+            "lifecycle_status": "superseded",
+            "superseded_by_triple_id": "triple_new",
+            "relation_version": 2,
+            "valid_to": "2026-10-30T00:00:00+00:00",
+            "reason": "新证据支持替代关系",
+        }
+    )
+
+    query = tx.run.call_args.args[0]
+    assert "relation.lifecycle_status = $lifecycle_status" in query
+    assert "relation.relation_version = $relation_version" in query
+    assert tx.run.call_args.kwargs["triple_id"] == "triple_old"
+    assert tx.run.call_args.kwargs["superseded_by_triple_id"] == "triple_new"
+
+
+@pytest.mark.asyncio
+async def test_relation_lifecycle_outbox_replay_updates_neo4j_and_removes_milvus_vector():
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"updated": 2}
+    session = MagicMock()
+    session.__enter__.return_value = session
+    session.execute_write.side_effect = lambda func: func(tx)
+    driver = MagicMock()
+    driver.session.return_value = session
+    event = {
+        "event_id": "event_lifecycle_1",
+        "kb_id": "kb_test",
+        "payload": {
+            "event_type": "relation_lifecycle",
+            "version": 1,
+            "kb_id": "kb_test",
+            "triple_id": "triple_old",
+            "lifecycle_status": "invalid",
+            "superseded_by_triple_id": None,
+            "relation_version": 2,
+            "valid_to": "2026-10-30T00:00:00+00:00",
+            "reason": "原始证据已被撤回",
+        },
+    }
+    graph_repo = SimpleNamespace(
+        claim_projection_events=AsyncMock(side_effect=[("lease_1", [event]), ("lease_2", [])]),
+        mark_projection_event_completed=AsyncMock(return_value=True),
+        mark_projection_event_failed=AsyncMock(return_value=True),
+    )
+    vector_store = SimpleNamespace(delete_graph_records=AsyncMock(return_value=None))
+    service = MilvusGraphService(
+        graph_repo=graph_repo,
+        graph_vector_store=vector_store,
+        neo4j_connection=SimpleNamespace(driver=driver),
+    )
+    service.index_pending_graph_vectors = AsyncMock(
+        return_value={
+            "entity": {"claimed": 2, "indexed": 2, "failed": 0},
+            "triple": {"claimed": 1, "indexed": 1, "failed": 0},
+        }
+    )
+
+    first_result = await service.replay_projection_outbox("kb_test", limit=20)
+    second_result = await service.replay_projection_outbox("kb_test", limit=20)
+
+    assert first_result == {"claimed": 1, "completed": 1, "failed": 0}
+    assert second_result == {"claimed": 0, "completed": 0, "failed": 0}
+    query = tx.run.call_args.args[0]
+    assert "relation.lifecycle_status = $lifecycle_status" in query
+    assert tx.run.call_args.kwargs["triple_id"] == "triple_old"
+    vector_store.delete_graph_records.assert_awaited_once_with(
+        "kb_test",
+        entity_ids=[],
+        triple_ids=["triple_old"],
+    )
+    graph_repo.mark_projection_event_completed.assert_awaited_once_with(
+        event_id="event_lifecycle_1",
+        lock_token="lease_1",
+    )
+    graph_repo.mark_projection_event_failed.assert_not_awaited()
+    service.index_pending_graph_vectors.assert_awaited_once_with("kb_test")
+
+
+@pytest.mark.asyncio
+async def test_entity_redirect_outbox_replay_removes_superseded_entity_vector():
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"updated": 1}
+    session = MagicMock()
+    session.__enter__.return_value = session
+    session.execute_write.side_effect = lambda func: func(tx)
+    driver = MagicMock()
+    driver.session.return_value = session
+    event = {
+        "event_id": "event_redirect_1",
+        "kb_id": "kb_test",
+        "payload": {
+            "event_type": "entity_redirect",
+            "version": 1,
+            "kb_id": "kb_test",
+            "source_entity_id": "entity_source",
+            "target_entity_ids": ["entity_target"],
+            "operation": "merge",
+            "redirect_id": "redirect_1",
+            "reason": "文档级类型治理",
+        },
+    }
+    graph_repo = SimpleNamespace(
+        claim_projection_events=AsyncMock(return_value=("lease_1", [event])),
+        mark_projection_event_completed=AsyncMock(return_value=True),
+        mark_projection_event_failed=AsyncMock(return_value=True),
+    )
+    vector_store = SimpleNamespace(delete_graph_records=AsyncMock(return_value=None))
+    service = MilvusGraphService(
+        graph_repo=graph_repo,
+        graph_vector_store=vector_store,
+        neo4j_connection=SimpleNamespace(driver=driver),
+    )
+    service.index_pending_graph_vectors = AsyncMock(return_value={})
+
+    result = await service.replay_projection_outbox("kb_test", limit=20)
+
+    assert result == {"claimed": 1, "completed": 1, "failed": 0}
+    vector_store.delete_graph_records.assert_awaited_once_with(
+        "kb_test",
+        entity_ids=["entity_source"],
+        triple_ids=[],
+    )
+    graph_repo.mark_projection_event_completed.assert_awaited_once_with(
+        event_id="event_redirect_1",
+        lock_token="lease_1",
+    )
+    graph_repo.mark_projection_event_failed.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    ("operation", "target_entity_ids", "expected_lifecycle"),
+    [
+        ("merge", ["entity_target"], "redirected"),
+        ("split", ["entity_target_1", "entity_target_2"], "split"),
+    ],
+)
+def test_entity_redirect_outbox_projection_updates_lifecycle_and_governance_edges(
+    operation,
+    target_entity_ids,
+    expected_lifecycle,
+):
+    tx = MagicMock()
+    tx.run.return_value.single.return_value = {"updated": len(target_entity_ids)}
+    session = MagicMock()
+    session.__enter__.return_value = session
+    session.execute_write.side_effect = lambda func: func(tx)
+    driver = MagicMock()
+    driver.session.return_value = session
+    service = MilvusGraphService(neo4j_connection=SimpleNamespace(driver=driver))
+
+    service.project_projection_payload(
+        {
+            "event_type": "entity_redirect",
+            "version": 1,
+            "kb_id": "kb_test",
+            "source_entity_id": "entity_source",
+            "target_entity_ids": target_entity_ids,
+            "operation": operation,
+            "redirect_id": "redirect_1",
+            "reason": "人工实体治理",
+        }
+    )
+
+    query = tx.run.call_args.args[0]
+    params = tx.run.call_args.kwargs
+    assert "ENTITY_REDIRECT" in query
+    assert "source.lifecycle_status = $lifecycle_status" in query
+    assert params["source_entity_id"] == "entity_source"
+    assert params["target_entity_ids"] == target_entity_ids
+    assert params["primary_target_entity_id"] == target_entity_ids[0]
+    assert params["lifecycle_status"] == expected_lifecycle
+    assert params["operation"] == operation
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "event_type": "entity_redirect",
+            "version": 1,
+            "kb_id": "kb_test",
+            "source_entity_id": "entity_source",
+            "target_entity_ids": ["entity_target_1", "entity_target_2"],
+            "operation": "merge",
+            "redirect_id": "redirect_1",
+        },
+        {
+            "event_type": "entity_redirect",
+            "version": 1,
+            "kb_id": "kb_test",
+            "source_entity_id": "entity_source",
+            "target_entity_ids": ["entity_target"],
+            "operation": "split",
+            "redirect_id": "redirect_1",
+        },
+    ],
+)
+def test_entity_redirect_projection_rejects_invalid_merge_and_split_payloads(payload):
+    service = MilvusGraphService(neo4j_connection=SimpleNamespace(driver=MagicMock()))
+
+    with pytest.raises(ValueError):
+        service.project_projection_payload(payload)
+
+
+@pytest.mark.parametrize("review_scope", ["accepted", "pending_preview"])
+def test_visible_entity_predicate_excludes_redirected_entities(review_scope):
+    predicate = MilvusGraphService._visible_node_predicate("node", review_scope)
+
+    assert "coalesce(node.lifecycle_status, 'active') = 'active'" in predicate
 
 
 def test_graph_vector_store_uses_idempotent_upsert():
@@ -1592,6 +3085,79 @@ def test_graph_vector_store_uses_idempotent_upsert():
 
     collection.upsert.assert_called_once_with([["entity_1"], ["entity"], [[0.1, 0.2]]])
     collection.insert.assert_not_called()
+
+
+def test_graph_vector_store_upserts_all_relationships_in_one_shape():
+    collection = MagicMock()
+    store = MilvusGraphVectorStore.__new__(MilvusGraphVectorStore)
+
+    store._upsert_triples(
+        collection,
+        [
+            {
+                "id": "triple-1",
+                "content": "技术 A 形成能力 B",
+                "source_id": "entity-a",
+                "target_id": "entity-b",
+            }
+        ],
+        [[0.1, 0.2]],
+    )
+
+    collection.upsert.assert_called_once_with(
+        [
+            ["triple-1"],
+            ["技术 A 形成能力 B"],
+            ["entity-a"],
+            ["entity-b"],
+            [[0.1, 0.2]],
+        ]
+    )
+
+
+def test_graph_vector_store_combines_dense_and_bm25_inside_each_graph_channel():
+    collection = MagicMock()
+    hit = SimpleNamespace(
+        distance=0.83,
+        entity=SimpleNamespace(
+            get=lambda field: {
+                "id": "entity_1",
+                "content": "宽带射频收发器\n实体类型：Component",
+            }.get(field)
+        ),
+    )
+    collection.hybrid_search.return_value = [[hit]]
+    store = MilvusGraphVectorStore.__new__(MilvusGraphVectorStore)
+
+    result = store._search_loaded_collection(
+        collection,
+        "宽带射频模块",
+        [[0.1, 0.2]],
+        7,
+        ["id", "content"],
+    )
+
+    assert result == [
+        {
+            "id": "entity_1",
+            "content": "宽带射频收发器\n实体类型：Component",
+            "score": 0.83,
+        }
+    ]
+    collection.load.assert_not_called()
+    collection.search.assert_not_called()
+    hybrid_call = collection.hybrid_search.call_args.kwargs
+    assert hybrid_call["limit"] == 7
+    assert hybrid_call["output_fields"] == ["id", "content"]
+    assert hybrid_call["consistency_level"] == "Strong"
+    assert hybrid_call["rerank"]._weights == [0.7, 0.3]
+    dense_request, sparse_request = hybrid_call["reqs"]
+    assert dense_request.anns_field == "embedding"
+    assert dense_request.data == [[0.1, 0.2]]
+    assert dense_request.param["metric_type"] == "COSINE"
+    assert sparse_request.anns_field == "content_sparse"
+    assert sparse_request.data == ["宽带射频模块"]
+    assert sparse_request.param["metric_type"] == "BM25"
 
 
 def test_milvus_graph_service_delete_file_graph_uses_scoped_streaming_queries():
@@ -1691,6 +3257,9 @@ def test_milvus_graph_service_build_query_uses_requested_depth(max_depth):
     assert "nodes(path)" in query
     assert "relationships(path)" in query
     assert "nodes(path)) + seeds AS nodes" in query
+    assert "coalesce(path_rel.review_status, 'pending') IN ['accepted', 'pending']" in query
+    assert "coalesce(path_rel.lifecycle_status, 'active') = 'active'" in query
+    assert "coalesce(mention.review_status, 'pending') IN ['accepted', 'pending']" in query
 
 
 def test_milvus_graph_service_build_query_excludes_chunks_from_entire_path():
@@ -1700,6 +3269,23 @@ def test_milvus_graph_service_build_query_excludes_chunks_from_entire_path():
 
     assert "NOT n:Chunk" in query
     assert "NOT path_node:Chunk" in query
+
+
+def test_milvus_graph_service_build_query_treats_legacy_preview_scope_as_unified():
+    service = MilvusGraphService()
+
+    query = service._build_query(
+        "kb_test",
+        "entity",
+        limit=20,
+        max_depth=3,
+        exclude_chunk=True,
+        review_scope="pending_preview",
+    )
+
+    assert "coalesce(mention.review_status, 'pending') IN ['accepted', 'pending']" in query
+    assert "coalesce(path_rel.review_status, 'pending') IN ['accepted', 'pending']" in query
+    assert "coalesce(path_rel.lifecycle_status, 'active') = 'active'" in query
 
 
 def test_milvus_graph_service_query_nodes_sync_returns_complete_multi_hop_path():

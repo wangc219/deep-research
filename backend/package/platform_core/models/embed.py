@@ -1,7 +1,10 @@
 import asyncio
+import hashlib
+import math
 import os
 import time
 from abc import ABC, abstractmethod
+from urllib.parse import urlparse
 
 import httpx
 import requests
@@ -12,8 +15,12 @@ from platform_core.utils import get_docker_safe_url, hashstr, logger
 
 EMBEDDING_RATE_LIMIT_MAX_RETRIES = 10
 EMBEDDING_TRANSIENT_MAX_RETRIES = 2
+EMBEDDING_LOCAL_TRANSIENT_MAX_RETRIES = 6
 EMBEDDING_RETRY_MAX_DELAY_SECONDS = 10.0
 EMBEDDING_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+EMBEDDING_REQUEST_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_REQUEST_TIMEOUT_SECONDS", "180"))
+if not math.isfinite(EMBEDDING_REQUEST_TIMEOUT_SECONDS) or not 1 <= EMBEDDING_REQUEST_TIMEOUT_SECONDS <= 1800:
+    raise RuntimeError("EMBEDDING_REQUEST_TIMEOUT_SECONDS must be between 1 and 1800")
 
 
 class BaseEmbeddingModel(ABC):
@@ -27,6 +34,7 @@ class BaseEmbeddingModel(ABC):
         api_key=None,
         model_id=None,
         batch_size=40,
+        request_timeout_seconds=None,
     ):
         base_url = base_url or url
         self.model = model or name or model_id
@@ -35,6 +43,12 @@ class BaseEmbeddingModel(ABC):
         self.base_url = get_docker_safe_url(base_url)
         self.api_key = os.getenv(api_key, api_key)
         self.batch_size = int(batch_size or 40)
+        timeout = (
+            EMBEDDING_REQUEST_TIMEOUT_SECONDS if request_timeout_seconds is None else float(request_timeout_seconds)
+        )
+        if not math.isfinite(timeout) or not 1 <= timeout <= 1800:
+            raise ValueError("request_timeout_seconds must be between 1 and 1800")
+        self.request_timeout_seconds = timeout
         self.embed_state = {}
 
     @abstractmethod
@@ -126,7 +140,12 @@ class OtherEmbedding(BaseEmbeddingModel):
         while True:
             try:
                 with ModelCallObservation(self.model_spec, "知识库嵌入") as observed:
-                    response = requests.post(self.base_url, json=payload, headers=self.headers, timeout=60)
+                    response = requests.post(
+                        self.base_url,
+                        json=payload,
+                        headers=self.headers,
+                        timeout=self.request_timeout_seconds,
+                    )
                     response.raise_for_status()
                     result = response.json()
                     observed.usage = result.get("usage") or {}
@@ -143,8 +162,13 @@ class OtherEmbedding(BaseEmbeddingModel):
                     time.sleep(delay)
                     continue
 
-                logger.error(f"Embedding request failed: {e}, {payload}")
-                raise ValueError(f"Embedding request failed: {e}")
+                summary = self._request_error_summary(e, response=getattr(e, "response", None))
+                logger.error(
+                    "Embedding request failed: "
+                    f"{summary}, model={self.model}, base_url={self.base_url}, "
+                    f"input_count={self._input_count(message)}"
+                )
+                raise ValueError(f"Embedding request failed: {summary}") from e
 
     async def aencode(self, message: list[str] | str) -> list[list[float]]:
         payload = self.build_payload(message)
@@ -154,7 +178,12 @@ class OtherEmbedding(BaseEmbeddingModel):
             while True:
                 try:
                     async with ModelCallObservation(self.model_spec, "知识库嵌入") as observed:
-                        response = await client.post(self.base_url, json=payload, headers=self.headers, timeout=60)
+                        response = await client.post(
+                            self.base_url,
+                            json=payload,
+                            headers=self.headers,
+                            timeout=self.request_timeout_seconds,
+                        )
                         response.raise_for_status()
                         result = response.json()
                         observed.usage = result.get("usage") or {}
@@ -170,14 +199,16 @@ class OtherEmbedding(BaseEmbeddingModel):
                         retry_index, delay = retry
                         await asyncio.sleep(delay)
                         continue
-                    raise
+                    summary = self._request_error_summary(e, response=e.response)
+                    raise ValueError(f"Embedding async request failed: {summary}") from e
                 except httpx.RequestError as e:
                     retry = self._prepare_retry(message, retry_index=retry_index, error=e)
                     if retry:
                         retry_index, delay = retry
                         await asyncio.sleep(delay)
                         continue
-                    raise ValueError(f"Embedding async request failed: {e}, {payload}, {self.base_url=}")
+                    summary = self._request_error_summary(e)
+                    raise ValueError(f"Embedding async request failed: {summary}") from e
 
     @staticmethod
     def _retry_delay_seconds(retry_index: int, retry_after: str | None = None) -> float:
@@ -204,11 +235,16 @@ class OtherEmbedding(BaseEmbeddingModel):
             logger.warning(
                 "Embedding request returned 400 Bad Request: "
                 f"model={self.model}, base_url={self.base_url}, input_count={len(messages)}, "
-                f"input_lengths={[len(item) for item in messages]}, body={response_text[:2000]}"
+                f"input_lengths={[len(item) for item in messages]}, "
+                f"response_body_bytes={len(response_text.encode('utf-8'))}, "
+                f"response_body_sha256={hashlib.sha256(response_text.encode('utf-8')).hexdigest()}"
             )
 
+        local_service_loading = self._is_local_embedding_service() and status_code in {None, 503}
         if status_code == 429:
             max_retries = EMBEDDING_RATE_LIMIT_MAX_RETRIES
+        elif local_service_loading:
+            max_retries = EMBEDDING_LOCAL_TRANSIENT_MAX_RETRIES
         elif status_code in EMBEDDING_RETRYABLE_STATUS_CODES or status_code is None:
             max_retries = EMBEDDING_TRANSIENT_MAX_RETRIES
         else:
@@ -224,14 +260,33 @@ class OtherEmbedding(BaseEmbeddingModel):
             "Retrying embedding request: "
             f"{reason}, model={self.model}, base_url={self.base_url}, "
             f"retry={next_retry_index}/{max_retries}, delay={delay:.1f}s, "
-            f"input_count={len(messages)}, body={response_text[:1000]}"
+            f"input_count={len(messages)}, response_body_bytes={len(response_text.encode('utf-8'))}"
         )
         return next_retry_index, delay
+
+    def _is_local_embedding_service(self) -> bool:
+        """识别受控本地 sidecar，允许覆盖模型冷启动窗口。"""
+        return (urlparse(self.base_url).hostname or "").lower() in {
+            "local-embedding",
+            "localhost",
+            "127.0.0.1",
+        }
+
+    @staticmethod
+    def _input_count(message: list[str] | str) -> int:
+        return 1 if isinstance(message, str) else len(message)
+
+    @staticmethod
+    def _request_error_summary(error: Exception, *, response=None) -> str:
+        status_code = getattr(response, "status_code", None)
+        status = f"status={status_code}, " if status_code is not None else ""
+        return f"{status}error_type={type(error).__name__}"
 
     @staticmethod
     def _extract_embeddings(result: dict) -> list[list[float]]:
         if not isinstance(result, dict) or "data" not in result:
-            raise ValueError(f"Embedding failed: Invalid response format {result}")
+            keys = sorted(str(key) for key in result) if isinstance(result, dict) else []
+            raise ValueError(f"Embedding failed: invalid response format type={type(result).__name__}, keys={keys}")
         return [item["embedding"] for item in result["data"]]
 
     @staticmethod

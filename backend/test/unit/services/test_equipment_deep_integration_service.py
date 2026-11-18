@@ -535,7 +535,8 @@ async def test_system_context_uses_bound_material_as_open_divergence_baseline(mo
     assert "required_terms" in prompt
     assert "AMiner" in prompt
     assert "完整摘要" in prompt
-    assert "高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界" in prompt
+    assert "高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—验证状态" in prompt
+    assert "不得生成独立的证据边界" in prompt
     assert "不创建或更新待办" in prompt
     assert "重述完整正文" in prompt
     assert "集中读取完整摘要" in prompt

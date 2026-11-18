@@ -53,7 +53,7 @@ export const S_AGENT_ARCHITECTURE = [
     step: 5,
     agent_id: 'winning_s5_gap',
     name: '创新颠覆候选组合评审 Agent',
-    task: '在同一制胜维度内择优，再跨维度覆盖互异关系；优先保留 5—6 个，最多 6 个。',
+    task: '先在同一制胜维度内择优，再跨维度覆盖互异关系；至少形成 6 个具体装备，优质且机制互异的候选可继续入选。',
     skills: ['gap_quantification', 'equipment_system_gap_assessment'],
     harness: 'winning_step_v1',
     semantics: ['同维度择优', '跨维度覆盖', '名称冻结']
@@ -370,7 +370,10 @@ export const buildInteractionProjection = (rows, run = {}) => {
     ...agents.map((agent) => agent.agent_id),
     ...dynamicMembers.map(dynamicMemberId)
   ])
-  const failedEvent = [...events].reverse().find((event) => /run_failed|audit_delivery_blocked/.test(event.event_type))
+  const currentFailed = run?.status === 'failed'
+  const failedEvent = currentFailed
+    ? [...events].reverse().find((event) => /run_failed|audit_delivery_blocked/.test(event.event_type))
+    : null
   const savepoints = events.filter((event) => event.event_type === 'savepoint').length
   return {
     run_id: run?.run_id || '',
@@ -388,7 +391,7 @@ export const buildInteractionProjection = (rows, run = {}) => {
       status: run?.status || '',
       failure: failedEvent
         ? { phase: failedEvent.details.phase, detail: failedEvent.summary || run?.error }
-        : run?.error
+        : currentFailed && run?.error
           ? { detail: run.error }
           : {},
       active_agent_ids: activeAgentIds,
@@ -587,6 +590,10 @@ export const mergeInteractionProjection = (legacyPayload, fallback) => {
     left.sequence - right.sequence || String(left.created_at).localeCompare(String(right.created_at))
   )
   const workflow = { ...fallback.workflow, ...objectValue(legacy.workflow) }
+  if (fallback.workflow?.status && fallback.workflow.status !== 'failed') {
+    workflow.status = fallback.workflow.status
+    workflow.failure = {}
+  }
   workflow.step_plan = arrayValue(workflow.step_plan).map((item) => ({
     ...item,
     result_summary: readableSummary(item.result_summary)

@@ -246,21 +246,11 @@ const copyToClipboard = async (text) => {
 }
 
 const processEntries = computed(() => {
-  const entries = []
-  if (parsedData.value.reasoning_content) {
-    entries.push({
-      type: 'reasoning',
-      key: 'reasoning',
-      content: parsedData.value.reasoning_content
-    })
-  }
-  return entries.concat(
-    validToolCalls.value.map((toolCall, index) => ({
-      type: 'tool',
-      key: toolCall.id || `tool-${index}`,
-      toolCall
-    }))
-  )
+  return validToolCalls.value.map((toolCall, index) => ({
+    type: 'tool',
+    key: toolCall.id || `tool-${index}`,
+    toolCall
+  }))
 })
 
 // 错误消息处理

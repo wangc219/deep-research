@@ -250,8 +250,22 @@ async def test_parse_pending_documents_enqueues_status_scoped_task(monkeypatch):
         )
         return ["file_1", "file_2"] if after_file_id is None else []
 
-    async def fake_parse_file(kb_id: str, file_id: str, operator_id: str | None = None, **_kwargs):
-        captured["parsed"].append({"kb_id": kb_id, "file_id": file_id, "operator_id": operator_id})
+    async def fake_parse_file(
+        kb_id: str,
+        file_id: str,
+        operator_id: str | None = None,
+        *,
+        allow_reparse: bool = False,
+        **_kwargs,
+    ):
+        captured["parsed"].append(
+            {
+                "kb_id": kb_id,
+                "file_id": file_id,
+                "operator_id": operator_id,
+                "allow_reparse": allow_reparse,
+            }
+        )
         return {"file_id": file_id, "status": "parsed"}
 
     async def fake_enqueue_unique_by_payload(**kwargs):
@@ -289,18 +303,28 @@ async def test_parse_pending_documents_enqueues_status_scoped_task(monkeypatch):
             "kb_id": "kb_1",
             "statuses": knowledge_router.PENDING_PARSE_STATUSES,
             "after_file_id": None,
-            "limit": knowledge_task_service.DOCUMENT_ACTION_BATCH_SIZE,
+            "limit": knowledge_task_service.DOCUMENT_ACTION_TASK_FILE_LIMIT,
         },
         {
             "kb_id": "kb_1",
             "statuses": knowledge_router.PENDING_PARSE_STATUSES,
             "after_file_id": "file_2",
-            "limit": knowledge_task_service.DOCUMENT_ACTION_BATCH_SIZE,
+            "limit": knowledge_task_service.DOCUMENT_ACTION_TASK_FILE_LIMIT - 2,
         },
     ]
     assert captured["parsed"] == [
-        {"kb_id": "kb_1", "file_id": "file_1", "operator_id": "uid-user"},
-        {"kb_id": "kb_1", "file_id": "file_2", "operator_id": "uid-user"},
+        {
+            "kb_id": "kb_1",
+            "file_id": "file_1",
+            "operator_id": "uid-user",
+            "allow_reparse": False,
+        },
+        {
+            "kb_id": "kb_1",
+            "file_id": "file_2",
+            "operator_id": "uid-user",
+            "allow_reparse": False,
+        },
     ]
 
 
@@ -312,9 +336,13 @@ async def test_reconcile_graph_build_mutates_state_only_after_unique_task_is_cre
             captured["reconcile"] = (kb_id, all_vectors)
             return {"kb_id": kb_id, "mode": "all_vectors", "reset_records": 2}
 
-        async def build_pending_chunks(self, kb_id: str, *, context):
-            captured["build"] = kb_id
-            return {"kb_id": kb_id, "success": 1}
+        async def drain_pending_graph_vectors(self, kb_id: str, *, context):
+            captured["vector_projection"] = kb_id
+            return {"kb_id": kb_id, "entity": {"indexed": 1}, "triple": {"indexed": 0}}
+
+    class FakePipelineService:
+        def __init__(self, *, graph_service):
+            self.graph_service = graph_service
 
     async def fake_has_running_graph_build_task(kb_id: str) -> bool:
         return False
@@ -331,6 +359,7 @@ async def test_reconcile_graph_build_mutates_state_only_after_unique_task_is_cre
     monkeypatch.setattr(knowledge_router.knowledge_base, "get_database_info", fake_get_database_info)
     monkeypatch.setattr(knowledge_router, "MilvusGraphService", FakeGraphService)
     monkeypatch.setattr(knowledge_task_service, "MilvusGraphService", FakeGraphService)
+    monkeypatch.setattr(knowledge_task_service, "KnowledgeGraphPipelineService", FakePipelineService)
     monkeypatch.setattr(knowledge_router.tasker, "enqueue_unique_by_payload", fake_enqueue_unique_by_payload)
 
     result = await knowledge_router.reconcile_graph_build(
@@ -351,8 +380,81 @@ async def test_reconcile_graph_build_mutates_state_only_after_unique_task_is_cre
     task_result = await knowledge_task_service.run_knowledge_graph(context)
 
     assert captured["reconcile"] == ("kb_1", True)
-    assert captured["build"] == "kb_1"
+    assert captured["vector_projection"] == "kb_1"
     assert task_result["reconcile"]["reset_records"] == 2
+    assert task_result["vector_projection"]["entity"]["indexed"] == 1
+    assert context.result == task_result
+
+
+async def test_rebuild_graph_projections_queues_safe_authoritative_task(monkeypatch):
+    captured = {}
+
+    class FakeGraphService:
+        pass
+
+    class FakeProjectionRebuildService:
+        def __init__(self, *, graph_service):
+            assert isinstance(graph_service, FakeGraphService)
+
+        async def rebuild(self, *, kb_id, context):
+            captured["rebuild"] = kb_id
+            return {
+                "kb_id": kb_id,
+                "graph_revision": "revision_1",
+                "projected_chunks": 2,
+                "vector_reconcile": {"reset_records": 3},
+            }
+
+    class FakePipelineService:
+        def __init__(self, *, graph_service):
+            raise AssertionError("投影重建不得进入抽取或文档增强流水线")
+
+    async def fake_has_running_graph_build_task(kb_id: str) -> bool:
+        return False
+
+    async def fake_get_database_info(kb_id: str) -> KnowledgeBaseDetail:
+        return _database_detail()
+
+    async def fake_enqueue_unique_by_payload(**kwargs):
+        captured["payload"] = kwargs["payload"]
+        captured["payload_match"] = kwargs["payload_match"]
+        assert "rebuild" not in captured
+        return SimpleNamespace(id="task_rebuild"), True
+
+    monkeypatch.setattr(knowledge_router, "_has_running_graph_build_task", fake_has_running_graph_build_task)
+    monkeypatch.setattr(knowledge_router.knowledge_base, "get_database_info", fake_get_database_info)
+    monkeypatch.setattr(knowledge_router.tasker, "enqueue_unique_by_payload", fake_enqueue_unique_by_payload)
+    monkeypatch.setattr(knowledge_task_service, "MilvusGraphService", FakeGraphService)
+    monkeypatch.setattr(
+        knowledge_task_service,
+        "KnowledgeGraphProjectionRebuildService",
+        FakeProjectionRebuildService,
+    )
+    monkeypatch.setattr(knowledge_task_service, "KnowledgeGraphPipelineService", FakePipelineService)
+
+    response = await knowledge_router.rebuild_graph_projections(
+        "kb_1",
+        current_user=SimpleNamespace(uid="uid-user"),
+    )
+
+    assert response == {
+        "message": "PostgreSQL 权威图投影重建任务已提交",
+        "status": "queued",
+        "task_id": "task_rebuild",
+    }
+    assert captured["payload"] == {
+        "kb_id": "kb_1",
+        "action": "rebuild_projections",
+        "operator_id": "uid-user",
+    }
+    assert captured["payload_match"] == {"kb_id": "kb_1"}
+    assert "rebuild" not in captured
+
+    context = FakeTaskContext(captured["payload"])
+    task_result = await knowledge_task_service.run_knowledge_graph(context)
+
+    assert captured["rebuild"] == "kb_1"
+    assert task_result["projected_chunks"] == 2
     assert context.result == task_result
 
 
@@ -375,6 +477,18 @@ async def test_retry_failed_graph_build_enqueues_scoped_task(monkeypatch):
                 "extraction_failed": 1,
             }
 
+    class FakePipelineService:
+        def __init__(self, *, graph_service):
+            self.graph_service = graph_service
+
+        async def build_pending_chunks(self, *, kb_id, context, started_by, failed_only=False):
+            assert started_by == "uid-user"
+            return await self.graph_service.build_pending_chunks(
+                kb_id,
+                context=context,
+                failed_only=failed_only,
+            )
+
     async def fake_has_running_graph_build_task(kb_id: str) -> bool:
         return False
 
@@ -390,6 +504,7 @@ async def test_retry_failed_graph_build_enqueues_scoped_task(monkeypatch):
     monkeypatch.setattr(knowledge_router.knowledge_base, "get_database_info", fake_get_database_info)
     monkeypatch.setattr(knowledge_router, "MilvusGraphService", FakeGraphService)
     monkeypatch.setattr(knowledge_task_service, "MilvusGraphService", FakeGraphService)
+    monkeypatch.setattr(knowledge_task_service, "KnowledgeGraphPipelineService", FakePipelineService)
     monkeypatch.setattr(knowledge_router.tasker, "enqueue_unique_by_payload", fake_enqueue_unique_by_payload)
 
     result = await knowledge_router.retry_failed_graph_extraction(
@@ -480,6 +595,158 @@ async def test_index_pending_documents_uses_pending_statuses_and_params(monkeypa
         {"kb_id": "kb_1", "file_id": "file_1", "operator_id": "uid-user", "params": params},
         {"kb_id": "kb_1", "file_id": "file_2", "operator_id": "uid-user", "params": params},
     ]
+
+
+async def test_pending_index_emits_cursor_continuation_at_task_file_limit(monkeypatch):
+    calls = []
+
+    async def fake_list_document_file_ids_by_statuses(kb_id: str, *, statuses, after_file_id, limit):
+        calls.append((kb_id, tuple(statuses), after_file_id, limit))
+        if after_file_id is None:
+            return ["file_1", "file_2"]
+        if after_file_id == "file_2":
+            return ["file_3"]
+        return []
+
+    async def fake_index_file(kb_id: str, file_id: str, **_kwargs):
+        return {"file_id": file_id, "status": "indexed"}
+
+    monkeypatch.setattr(knowledge_task_service, "DOCUMENT_ACTION_TASK_FILE_LIMIT", 2)
+    monkeypatch.setattr(
+        knowledge_task_service.knowledge_base,
+        "list_document_file_ids_by_statuses",
+        fake_list_document_file_ids_by_statuses,
+    )
+    monkeypatch.setattr(knowledge_task_service.knowledge_base, "index_file", fake_index_file)
+    context = FakeTaskContext(
+        {
+            "kb_id": "kb_1",
+            "scope": "pending",
+            "action": "index",
+            "statuses": ["parsed", "error_indexing"],
+            "count": 3,
+            "params": {},
+            "operator_id": "uid-user",
+        }
+    )
+
+    result = await knowledge_task_service.run_knowledge_index(context)
+
+    assert result["processed"] == 2
+    assert result["failed"] == 0
+    assert result["continuation"] == {
+        "required": True,
+        "remaining_estimate": 1,
+        "after_file_id": "file_2",
+        "payload": {
+            "kb_id": "kb_1",
+            "scope": "pending",
+            "action": "index",
+            "statuses": ["parsed", "error_indexing"],
+            "count": 1,
+            "params": {},
+            "operator_id": "uid-user",
+            "after_file_id": "file_2",
+            "task_file_limit": 2,
+        },
+    }
+    assert calls == [
+        ("kb_1", ("parsed", "error_indexing"), None, 2),
+        ("kb_1", ("parsed", "error_indexing"), "file_2", 1),
+    ]
+
+
+async def test_finish_knowledge_file_task_creates_durable_successor(monkeypatch):
+    captured = {}
+
+    class FakeSession:
+        async def flush(self):
+            captured["flushed"] = True
+
+    async def fake_create_unique_in_session(session, **kwargs):
+        captured["session"] = session
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(id="next_task"), True
+
+    monkeypatch.setattr(
+        knowledge_task_service.tasker,
+        "create_unique_in_session",
+        fake_create_unique_in_session,
+    )
+    payload = {
+        "kb_id": "kb_1",
+        "scope": "pending",
+        "action": "index",
+        "statuses": ["parsed", "error_indexing"],
+        "count": 1,
+        "params": {},
+        "operator_id": "uid-user",
+        "after_file_id": "file_2",
+        "task_file_limit": 2,
+    }
+    result = {"continuation": {"required": True, "payload": payload}}
+    record = SimpleNamespace(
+        id="current_task",
+        name="待入库文档入库 (测试知识库)",
+        dedupe_key="active-dedupe",
+    )
+    session = FakeSession()
+
+    await knowledge_task_service.finish_knowledge_file_task(session, record, result)
+
+    assert record.dedupe_key is None
+    assert captured["flushed"] is True
+    assert captured["session"] is session
+    assert captured["kwargs"] == {
+        "name": record.name,
+        "task_type": "knowledge_index",
+        "payload": payload,
+        "payload_match": {"kb_id": "kb_1", "scope": "pending", "action": "index"},
+    }
+    assert result["continuation"]["task_id"] == "next_task"
+    assert result["continuation"]["created"] is True
+
+
+async def test_finish_knowledge_graph_task_creates_durable_successor(monkeypatch):
+    captured = {}
+
+    class FakeSession:
+        async def flush(self):
+            captured["flushed"] = True
+
+    async def fake_create_unique_in_session(session, **kwargs):
+        captured["session"] = session
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(id="next_graph_task"), True
+
+    monkeypatch.setattr(
+        knowledge_task_service.tasker,
+        "create_unique_in_session",
+        fake_create_unique_in_session,
+    )
+    payload = {
+        "kb_id": "kb_1",
+        "action": "build",
+        "operator_id": "uid-user",
+        "chunk_limit": 500,
+    }
+    result = {"continuation": {"required": True, "payload": payload}}
+    record = SimpleNamespace(name="图谱构建 (测试知识库)", dedupe_key="active-dedupe")
+    session = FakeSession()
+
+    await knowledge_task_service.finish_knowledge_graph_task(session, record, result)
+
+    assert record.dedupe_key is None
+    assert captured["flushed"] is True
+    assert captured["session"] is session
+    assert captured["kwargs"] == {
+        "name": record.name,
+        "task_type": "knowledge_graph_index",
+        "payload": payload,
+        "payload_match": {"kb_id": "kb_1"},
+    }
+    assert result["continuation"]["task_id"] == "next_graph_task"
+    assert result["continuation"]["created"] is True
 
 
 async def test_rebuild_document_index_reindexes_all_indexed_files(monkeypatch):
@@ -794,8 +1061,22 @@ async def test_parse_documents_accepts_payload_with_params(monkeypatch):
     async def fake_update_file_params(kb_id: str, file_id: str, params: dict, operator_id: str | None = None):
         captured["updated"].append({"kb_id": kb_id, "file_id": file_id, "params": params, "operator_id": operator_id})
 
-    async def fake_parse_file(kb_id: str, file_id: str, operator_id: str | None = None, **_kwargs):
-        captured["parsed"].append({"kb_id": kb_id, "file_id": file_id, "operator_id": operator_id})
+    async def fake_parse_file(
+        kb_id: str,
+        file_id: str,
+        operator_id: str | None = None,
+        *,
+        allow_reparse: bool = False,
+        **_kwargs,
+    ):
+        captured["parsed"].append(
+            {
+                "kb_id": kb_id,
+                "file_id": file_id,
+                "operator_id": operator_id,
+                "allow_reparse": allow_reparse,
+            }
+        )
         return {"file_id": file_id, "status": "parsed"}
 
     async def fake_enqueue(name: str, task_type: str, payload: dict):
@@ -816,14 +1097,22 @@ async def test_parse_documents_accepts_payload_with_params(monkeypatch):
     params = {"ocr_engine": "rapid_ocr"}
     result = await knowledge_router.parse_documents(
         "kb_1",
-        payload=knowledge_router.ParseDocumentsRequest(file_ids=["file_1"], params=params),
+        payload=knowledge_router.ParseDocumentsRequest(file_ids=["file_1"], params=params, reparse=True),
         current_user=SimpleNamespace(uid="uid-user"),
     )
 
     assert result["status"] == "queued"
     assert captured["payload"]["params"] == params
+    assert captured["payload"]["reparse"] is True
     assert captured["updated"] == [{"kb_id": "kb_1", "file_id": "file_1", "params": params, "operator_id": "uid-user"}]
-    assert captured["parsed"] == [{"kb_id": "kb_1", "file_id": "file_1", "operator_id": "uid-user"}]
+    assert captured["parsed"] == [
+        {
+            "kb_id": "kb_1",
+            "file_id": "file_1",
+            "operator_id": "uid-user",
+            "allow_reparse": True,
+        }
+    ]
 
 
 async def test_parse_pending_documents_uses_params(monkeypatch):

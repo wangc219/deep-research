@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 from platform_core.config import get_int_env
@@ -14,6 +16,104 @@ from platform_core.utils.datetime_utils import format_utc_datetime, utc_now_naiv
 
 EQUIPMENT_QUERY_TASK_TYPE = "equipment_query_generation"
 EQUIPMENT_QUERY_MAX_RUNNING = get_int_env("EQUIPMENT_QUERY_MAX_RUNNING", 4)
+
+
+async def research_query_situation(
+    *,
+    topic: str,
+    supplemental_information: str,
+    reference_urls: tuple[str, ...],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """通过调研探索员同源检索通道收集近期态势牵引线索。"""
+
+    from platform_core.agents.toolkits.buildin.tools import execute_public_web_search
+    from public_web_search_gateway import register_public_web_search
+
+    register_public_web_search(execute_public_web_search)
+    current_year = datetime.now(UTC).year
+    subject = " ".join(str(topic or "").split())[:160]
+    scope_hint = " ".join(str(supplemental_information or "").split())[:100]
+    search_queries = [
+        f"{subject} 中国 {current_year - 1} {current_year} 安全态势 未来军事任务 武器装备需求",
+        f"{subject} 近两年 军事技术 装备试验 演训 能力变化 作战约束",
+        f"{subject} 国外公开项目 演习 装备形态 任务链 效能变化 中国任务约束{f' {scope_hint}' if scope_hint else ''}",
+    ]
+    reference_hosts = []
+    for reference_url in reference_urls:
+        try:
+            parsed_reference = urlsplit(reference_url)
+        except ValueError:
+            continue
+        if parsed_reference.scheme == "https" and parsed_reference.hostname:
+            reference_hosts.append(parsed_reference.hostname)
+    if reference_hosts:
+        search_queries.insert(0, f"site:{reference_hosts[0]} {subject} 近期态势 装备能力")
+
+    async def search(query: str) -> dict[str, Any]:
+        try:
+            return await asyncio.to_thread(
+                execute_public_web_search,
+                query,
+                count=8,
+                fusion_strategy="parallel",
+            )
+        except Exception as exc:
+            return {"query": query, "results": [], "status": "degraded", "error": type(exc).__name__}
+
+    envelopes = await asyncio.gather(*(search(query) for query in search_queries))
+    sources: list[dict[str, str]] = []
+    signals: list[str] = []
+    seen_urls: set[str] = set()
+    for query, envelope in zip(search_queries, envelopes, strict=True):
+        rows = envelope.get("results", []) if isinstance(envelope, dict) else []
+        if not isinstance(rows, list):
+            continue
+        accepted_for_query = 0
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            url = str(row.get("url") or "").strip()
+            try:
+                parsed = urlsplit(url)
+            except ValueError:
+                continue
+            if parsed.scheme != "https" or not parsed.hostname or url in seen_urls:
+                continue
+            title = " ".join(str(row.get("title") or "").split())[:300] or parsed.hostname
+            snippet = " ".join(str(row.get("content") or row.get("description") or row.get("snippet") or "").split())[
+                :700
+            ]
+            if not snippet:
+                continue
+            seen_urls.add(url)
+            sources.append({"title": title, "url": url, "snippet": snippet, "search_query": query})
+            signals.append(f"{title}：{snippet}")
+            accepted_for_query += 1
+            if accepted_for_query >= 3 or len(sources) >= 8:
+                break
+        if len(sources) >= 8:
+            break
+
+    summary = (
+        "调研探索员同源公开检索已返回近期态势、演训与技术发展线索，后续须将线索转译为"
+        "任务压力、能力缺口和装备需求，并保留事实/推演边界。"
+        if sources
+        else "调研探索员同源公开检索暂未返回可用来源；后续只能依据用户母题推演并标注证据缺口。"
+    )
+    grounding = {
+        "summary": summary,
+        "search_queries": search_queries,
+        "signals": signals,
+        "sources": [
+            {"title": item["title"], "url": item["url"], "relevance_note": item["snippet"]} for item in sources
+        ],
+    }
+    metadata = {
+        "web_sources": sources,
+        "research_lane": "research_explorer_public_search",
+        "reference_urls_considered": list(reference_urls),
+    }
+    return grounding, metadata
 
 
 async def run_equipment_query_generation(context) -> dict[str, Any]:
@@ -155,6 +255,20 @@ async def run_equipment_query_generation(context) -> dict[str, Any]:
     try:
         runtime = resolve_managed_equipment_model(str(job_payload.get("model_spec") or ""))
         provider = create_equipment_provider(runtime, isolation_key=f"query-gen-{generation_id}")
+
+        async def controlled_situation_research(**kwargs):
+            """检索期间持续响应 Durable Task 取消或 lease 丢失。"""
+
+            research_task = asyncio.create_task(research_query_situation(**kwargs))
+            try:
+                while not research_task.done():
+                    await asyncio.wait({research_task}, timeout=0.5)
+                    await context.raise_if_cancelled()
+                return await research_task
+            except BaseException:
+                research_task.cancel()
+                raise
+
         generator = ModelQueryGenerator(
             provider,
             provider_snapshot={
@@ -164,6 +278,7 @@ async def run_equipment_query_generation(context) -> dict[str, Any]:
             },
             model_options={"reasoning_effort": "medium"},
             default_profile="efficient",
+            situation_researcher=controlled_situation_research,
         )
         result = await generator.generate(
             topic=state["topic"],

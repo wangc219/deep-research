@@ -17,6 +17,7 @@ from platform_core.services import wechat_mp_service as mp
 from platform_core.storage.postgres.manager import pg_manager
 from platform_core.storage.postgres.models_business import Department, User
 from platform_core.storage.postgres.models_knowledge import KnowledgeBase
+from platform_core.storage.postgres.models_knowledge_governance import CollectionArtifactRecord
 from platform_core.utils.auth_utils import AuthUtils
 from platform_core.workspace.paths import user_workspace_dir
 from platform_core.knowledge.video_transcriber.utils.docx_exporter import write_video_docx
@@ -130,30 +131,16 @@ async def test_real_http_collection_workspace_and_import(tmp_path):
                 json={"kb_id": kb_id, "paths": [item["import_path"]]},
             )
             assert response.status_code in {403, 404}, response.text
-            for record in (item, video):
+            for source, record in (("wechat-articles", item), ("wxchannels", video)):
                 response = await client.post(
-                    "/api/knowledge/files/import-workspace",
+                    f"{BASE}/{source}/ingest",
                     headers=headers,
-                    json={"kb_id": kb_id, "paths": [record["import_path"]]},
+                    json={"kb_id": kb_id, "ids": [record["id"]]},
                 )
-                assert response.status_code == 200, response.text
-                staged = response.json()["items"][0]
-                response = await client.post(
-                    f"/api/knowledge/databases/{kb_id}/documents",
-                    headers=headers,
-                    json={
-                        "items": [staged["file_path"]],
-                        "params": {
-                            "content_type": "file",
-                            "auto_index": True,
-                            "content_hashes": {staged["file_path"]: staged["content_hash"]},
-                            "file_sizes": {staged["file_path"]: staged["size"]},
-                        },
-                    },
-                )
-                assert response.status_code == 200, response.text
-                assert response.json().get("task_id"), response.text
-                task_ids.append(response.json()["task_id"])
+                assert response.status_code == 202, response.text
+                payload = response.json()
+                assert payload["submitted"] == 1 and payload["items"][0]["status"] == "importing"
+                task_ids.append(payload["items"][0]["task_id"])
             # 实际等待解析与向量索引终态，不能把队列接收当作入库完成。
             for task_id in task_ids:
                 for _ in range(120):
@@ -164,6 +151,32 @@ async def test_real_http_collection_workspace_and_import(tmp_path):
                         break
                     await asyncio.sleep(0.5)
                 assert task["status"] == "success", task
+            response = await client.get(BASE + "/wechat-articles", headers=headers)
+            assert response.status_code == 200, response.text
+            imported = response.json()["items"][0]
+            assert imported["download_state"] == "imported"
+            assert imported["ingestions"][0]["knowledge_file_id"]
+
+            # 删除下载历史后再次同步，清单、沙盒副本和数据库成果事实同时收敛。
+            (directory / "download_history.json").write_text("[]")
+            shutil.rmtree(article)
+            projection = await asyncio.to_thread(artifacts.sync_articles, uid)
+            async with pg_manager.get_async_session_context() as db:
+                reconciled = await artifacts.sync_artifact_records(
+                    db,
+                    uid=uid,
+                    source="wechat-articles",
+                    projection=projection,
+                )
+                assert reconciled["items"] == []
+                persisted = await db.scalar(
+                    select(CollectionArtifactRecord).where(
+                        CollectionArtifactRecord.owner_uid == uid,
+                        CollectionArtifactRecord.source == "wechat-articles",
+                    )
+                )
+                assert persisted is None
+            assert not (user_workspace_dir(uid) / imported["folder"].lstrip("/")).exists()
         finally:
             for task_id in task_ids:
                 task_response = await client.get(f"/api/tasks/{task_id}", headers=headers)

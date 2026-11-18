@@ -14,6 +14,7 @@ from rapidocr import EngineType, LangDet, LangRec, ModelType, OCRVersion, RapidO
 
 from platform_core.knowledge.parser.base import BaseDocumentProcessor, OCRException
 from platform_core.knowledge.parser.capabilities import get_parser_capability
+from platform_core.knowledge.parser.result import ParsedBlock, ParsedDocument
 from platform_core.utils import logger
 
 _CAPABILITY = get_parser_capability("rapid_ocr")
@@ -129,6 +130,10 @@ class RapidOCRParser(BaseDocumentProcessor):
             raise OCRException(error_msg, self.get_service_name(), "processing_failed")
 
     def process_pdf(self, pdf_path: str, params: dict | None = None) -> str:
+        """兼容原字符串调用方。"""
+        return self.process_pdf_result(pdf_path, params).markdown
+
+    def process_pdf_result(self, pdf_path: str, params: dict | None = None) -> ParsedDocument:
         """
         处理 PDF 文件并提取文本 (流式处理,避免内存占用)
 
@@ -138,7 +143,7 @@ class RapidOCRParser(BaseDocumentProcessor):
                 - zoom_x: 渲染缩放倍数 (默认 2)
 
         Returns:
-            str: 提取的文本
+            ParsedDocument: 提取文本、页级 Span 与解析来源统计
         """
         if not os.path.exists(pdf_path):
             raise OCRException(f"PDF 文件不存在: {pdf_path}", self.get_service_name(), "file_not_found")
@@ -152,6 +157,7 @@ class RapidOCRParser(BaseDocumentProcessor):
 
         try:
             all_text = []
+            page_position_kinds: list[str] = []
             text_pages = 0
             with pdfium.PdfDocument(pdf_path) as pdf_doc:
                 total_pages = len(pdf_doc)
@@ -178,6 +184,7 @@ class RapidOCRParser(BaseDocumentProcessor):
                             ):
                                 text = candidate
                                 text_pages += 1
+                        position_kind = "pdf_text_layer_page" if text else "ocr_page"
                         if not text:
                             bitmap = page.render(scale=zoom_x)
                             try:
@@ -189,6 +196,7 @@ class RapidOCRParser(BaseDocumentProcessor):
                             finally:
                                 bitmap.close()
                         all_text.append(text)
+                        page_position_kinds.append(position_kind)
 
                     if (page_num + 1) % 10 == 0:
                         logger.info(f"已处理 {page_num + 1}/{total_pages} 页")
@@ -202,7 +210,34 @@ class RapidOCRParser(BaseDocumentProcessor):
                 total_pages,
                 time.monotonic() - started,
             )
-            return result_text
+            blocks: list[ParsedBlock] = []
+            offset = 0
+            for page_index, page_text in enumerate(all_text):
+                if page_index:
+                    offset += 2
+                start_char = offset
+                offset += len(page_text)
+                blocks.append(
+                    ParsedBlock(
+                        start_char=start_char,
+                        end_char=offset,
+                        page_number=page_index + 1,
+                        block_type="paragraph" if page_text else "empty",
+                        source_metadata={"position_kind": page_position_kinds[page_index]},
+                    )
+                )
+
+            return ParsedDocument(
+                markdown=result_text,
+                parser_name=self.get_service_name(),
+                source_metadata={
+                    "file_extension": ".pdf",
+                    "page_count": total_pages,
+                    "text_layer_pages": text_pages,
+                    "ocr_pages": total_pages - text_pages,
+                },
+                blocks=tuple(blocks),
+            )
 
         except OCRException:
             raise
@@ -231,3 +266,27 @@ class RapidOCRParser(BaseDocumentProcessor):
             return self.process_pdf(file_path, params)
         else:
             return self.process_image(file_path, params)
+
+    def process_file_result(self, file_path: str, params: dict | None = None) -> ParsedDocument:
+        """返回 PDF 页级或单图级原文位置。"""
+        file_ext = Path(file_path).suffix.lower()
+        if not self.supports_file_type(file_ext):
+            raise OCRException(f"不支持的文件类型: {file_ext}", self.get_service_name(), "unsupported_file_type")
+        if file_ext == ".pdf":
+            return self.process_pdf_result(file_path, params)
+
+        text = self.process_image(file_path, params)
+        return ParsedDocument(
+            markdown=text,
+            parser_name=self.get_service_name(),
+            source_metadata={"file_extension": file_ext, "page_count": 1},
+            blocks=(
+                ParsedBlock(
+                    start_char=0,
+                    end_char=len(text),
+                    page_number=1,
+                    block_type="paragraph" if text else "empty",
+                    source_metadata={"position_kind": "ocr_image"},
+                ),
+            ),
+        )

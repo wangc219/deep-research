@@ -11,7 +11,6 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 let server
 let BaseToolCall
 let ToolCallRenderer
-let ReasoningBlock
 let ToolCallsGroup
 let parseToolCallResult
 
@@ -31,9 +30,6 @@ before(async () => {
   ))
   ;({ default: ToolCallRenderer } = await server.ssrLoadModule(
     '/src/components/ToolCallingResult/ToolCallRenderer.vue'
-  ))
-  ;({ default: ReasoningBlock } = await server.ssrLoadModule(
-    '/src/components/ReasoningBlockComponent.vue'
   ))
   ;({ default: ToolCallsGroup } = await server.ssrLoadModule(
     '/src/components/ToolCallsGroupComponent.vue'
@@ -159,37 +155,47 @@ test('明确的 ToolMessage 错误不会被专用工具覆盖为完成', async (
   assert.doesNotMatch(html, /执行完成/)
 })
 
-test('思考描述显示最后一行，展开后保留完整内容', async () => {
-  const content = '先检查文件。\n再确认结果。'
-  const html = await render(ReasoningBlock, { content, isActive: true })
-  assert.match(html, /is-timeline/)
-  assert.match(html, /lucide-brain/)
-  assert.match(html, /思考/)
-  assert.match(html, /再确认结果。/)
-  assert.doesNotMatch(html, /先检查文件。/)
-  assert.match(html, /aria-expanded="false"/)
-  assert.doesNotMatch(html, /<p class="reasoning-content"/)
-  const expanded = await render(ReasoningBlock, { content, defaultExpanded: true })
-  assert.match(expanded, /<p class="reasoning-content"/)
-  assert.match(expanded, /先检查文件。\n再确认结果。/)
-  for (const text of [
-    '先检查文件。\r\n再确认结果。\r\n  ',
-    '再确认结果。',
-    '先检查文件。\r再确认结果。'
-  ]) {
-    const preview = await render(ReasoningBlock, { content: text, isActive: true })
-    assert.match(preview, /再确认结果。/)
-    assert.doesNotMatch(preview, /先检查文件。/)
-  }
-})
-
-test('纯思考过程的运行中摘要使用中文', async () => {
+test('原始推理不进入工具进展，真实工具仍然展示', async () => {
   const html = await render(ToolCallsGroup, {
-    entries: [{ type: 'reasoning', key: 'reasoning-1', content: '正在检查资料。' }],
+    entries: [
+      { type: 'reasoning', key: 'reasoning-1', content: '让我逐项检查内部规则。' },
+      {
+        type: 'tool',
+        key: 'tool-1',
+        toolCall: { id: 'tool-1', name: 'read_file', args: { path: '/report.md' } }
+      }
+    ],
+    toolCalls: [{ id: 'tool-1', name: 'read_file', args: { path: '/report.md' } }],
     isActive: true
   })
-  assert.match(html, /正在思考/)
-  assert.doesNotMatch(html, /Thinking\.\.\./)
+  assert.match(html, /read_file|读取文件/)
+  assert.doesNotMatch(html, /让我逐项检查内部规则|推理过程|正在思考/)
+})
+
+test('子智能体进度只展示真实工具动作，不展示消息或推理片段', async () => {
+  const html = await render(ToolCallRenderer, {
+    toolCall: {
+      id: 'subagent-progress',
+      name: 'subagent_status',
+      args: { run_id: 'child-run' },
+      tool_call_result: {
+        content: {
+          status: 'running',
+          progress: {
+            messages: [
+              { kind: 'assistant_reasoning', content: '让我重新检查。' },
+              { kind: 'assistant_message', content: '我可能需要重写。' },
+              { kind: 'tool_call', content: '调用工具 academic_search' }
+            ]
+          }
+        }
+      }
+    },
+    defaultExpanded: true
+  })
+
+  assert.match(html, /调用工具 academic_search/)
+  assert.doesNotMatch(html, /让我重新检查|我可能需要重写|思考|消息/)
 })
 
 test('子智能体运行失败在专用行和分组摘要中一致展示', async () => {

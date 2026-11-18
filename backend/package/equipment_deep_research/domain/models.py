@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, is_dataclass
-from datetime import datetime, UTC
-import re
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import uuid4
-
 
 ResearchRoute = Literal[
     "auto",
@@ -72,74 +71,26 @@ class ResearchProblem:
         """
 
         supplement = re.sub(r"\s+", " ", self.supplemental_information).strip()
-        if not supplement:
-            return {
-                "core_query": self.topic.strip(),
-                "supplement_present": False,
-                "focus_questions": [],
-                "expansion_dimensions": [],
-                "constraints_and_assumptions": [],
-                "combat_problem_frame": "",
-                "enemy_target_profile": [],
-                "battle_phase_and_constraints": [],
-                "required_direct_military_effects": [],
-                "weapon_design_variables": [],
-                "query_specific_weapon_architectures": [],
-                "equipment_project_hypotheses": [],
-                "rejected_template_anchors": [],
-            }
-
-        clauses = [item.strip(" ；;。") for item in re.split(r"(?<=[？?。；;])\s*", supplement) if item.strip(" ；;。")]
-        focus_questions = [item for item in clauses if "？" in item or "?" in item][:6]
-        if not focus_questions:
-            focus_questions = clauses[:4]
-
-        # Offline fallback stays intentionally generic.  In real runs the
-        # orchestrator derives Query-specific dimensions and equipment
-        # hypotheses from the complete input instead of matching a local list.
-        expansion_dimensions = [
-            "任务对象与直接效果",
-            "对手适应与失效边界",
-            "装备形态与工程约束",
-            "证据问题与淘汰条件",
-        ]
-        # Keep the offline handoff useful before a model has designed a
-        # query-specific blueprint.  These are transparent lexical signals in
-        # the user's own supplement, not conclusions about the topic.
-        if any(signal in supplement for signal in ("成本", "效费", "交换比", "单发", "拦截弹")):
-            expansion_dimensions.append("成本交换与效费比")
-        if any(signal in supplement for signal in ("量产", "万枚", "规模化", "弹药基数", "产能", "后勤")):
-            expansion_dimensions.append("规模化生产与工业动员")
-
-        constraints_and_assumptions = [
-            item
-            for item in clauses
-            if any(signal in item for signal in ("如果", "假设", "前提", "约束", "以下", "达到", "降至"))
-        ][:4]
-        dimension_summary = "、".join(expansion_dimensions[:4])
-        if len(expansion_dimensions) > 4:
-            dimension_summary += "等"
-        supplement_summary = (
-            f"补充研究聚焦{dimension_summary}；已提取{len(focus_questions)}个焦点问题"
-            f"和{len(constraints_and_assumptions)}项待验证约束/假设。"
-        )
-
         return {
             "core_query": self.topic.strip(),
-            "supplement_present": True,
-            "supplement_summary": supplement_summary[:1200],
-            "focus_questions": focus_questions,
-            "expansion_dimensions": expansion_dimensions,
-            "constraints_and_assumptions": constraints_and_assumptions,
+            "supplement_present": bool(supplement),
+            "supplement_summary": supplement[:1200],
+            "focus_questions": [],
+            "expansion_dimensions": [],
+            "constraints_and_assumptions": [str(item)[:500] for item in self.constraints[:6]],
             "combat_problem_frame": "",
             "enemy_target_profile": [],
             "battle_phase_and_constraints": [],
             "required_direct_military_effects": [],
+            "equipment_semantic_boundary": "",
+            "query_equipment_mode": "direct_combat",
+            "winning_problem_propositions": [],
             "weapon_design_variables": [],
             "query_specific_weapon_architectures": [],
+            "frontier_technology_hypotheses": [],
             "equipment_project_hypotheses": [],
             "rejected_template_anchors": [],
-            "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+            "handoff_rule": "原始Query与补充信息是任务合同；语义扩展由智能体完成，推断不得视为用户事实。",
         }
 
     def resolved_route(self) -> str:
@@ -196,8 +147,11 @@ class ResearchProblem:
             "primary": "A",
             "secondary": [],
             "confidence": 0.35,
-            "rationale": "自动模式不从Query字符串猜测分支；等待智能体discovery blueprint完成语义判定，A仅作为离线运行基座。",
+            "rationale": (
+                "自动模式不从Query字符串猜测分支；等待智能体discovery blueprint完成语义判定，A仅作为离线运行基座。"
+            ),
             "label": "新战法发现",
+            "source": "offline_fallback",
         }
 
 

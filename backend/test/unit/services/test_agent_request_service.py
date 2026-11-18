@@ -262,6 +262,90 @@ async def test_submit_agent_request_owns_commit_and_publication(monkeypatch: pyt
 
 
 @pytest.mark.asyncio
+async def test_committed_queued_request_retries_dispatch_without_waiting_for_reconciler(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    calls: list[tuple] = []
+
+    async def dispatch_ready_head(**kwargs):
+        calls.append(("recover", kwargs))
+        return svc.DispatchResult(
+            request_id="request-1",
+            run_id="run-recovered",
+            workdir_binding=kwargs["workdir_binding"],
+        )
+
+    monkeypatch.setattr(svc, "dispatch_ready_head", dispatch_ready_head)
+    monkeypatch.setattr(svc, "ensure_bound_user_workdir", lambda *_args: calls.append(("materialize",)))
+
+    async def enqueue(run_id):
+        calls.append(("enqueue", run_id))
+
+    monkeypatch.setattr(svc, "enqueue_agent_run", enqueue)
+
+    class Db:
+        async def commit(self):
+            calls.append(("commit",))
+
+    db = Db()
+    binding = WorkdirBinding(
+        conversation_id=1,
+        thread_id="thread-1",
+        uid="user-1",
+        project_id="project-1",
+        workdir_path="projects/project-1",
+        directory_mode="managed",
+    )
+    response = {
+        "request_id": "request-1",
+        "status": "queued",
+        "queue_position": 1,
+        "run_id": None,
+        "stream_url": None,
+        "request_events_url": "/api/agent/requests/request-1/events",
+    }
+
+    result = await svc._publish_committed_request(
+        response=response,
+        request=SimpleNamespace(
+            status="queued",
+            request_id="request-1",
+            uid="user-1",
+            agent_slug="agent-1",
+            conversation_thread_id="thread-1",
+        ),
+        dispatch=None,
+        workdir_binding=binding,
+        db=db,
+    )
+
+    assert calls == [
+        ("materialize",),
+        (
+            "recover",
+            {
+                "db": db,
+                "uid": "user-1",
+                "agent_slug": "agent-1",
+                "thread_id": "thread-1",
+                "workdir_binding": binding,
+                "expected_request_id": "request-1",
+            },
+        ),
+        ("commit",),
+        ("enqueue", "run-recovered"),
+    ]
+    assert result == {
+        **response,
+        "status": "dispatched",
+        "queue_position": None,
+        "run_id": "run-recovered",
+        "stream_url": "/api/agent/runs/run-recovered/events",
+        "request_events_url": None,
+    }
+
+
+@pytest.mark.asyncio
 async def test_submit_agent_request_requires_existing_conversation_for_web_chat(
     monkeypatch: pytest.MonkeyPatch,
 ):

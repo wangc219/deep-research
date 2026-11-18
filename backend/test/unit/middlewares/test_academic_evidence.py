@@ -14,6 +14,11 @@ URL = "https://doi.org/10.1000/example"
 CITE = f'<cite source="{URL}" type="url">1</cite>'
 
 
+def assert_passes(update):
+    """允许中间件只写 checkpoint 账本，但不能触发纠错或替换回答。"""
+    assert update is None or ("messages" not in update and "jump_to" not in update)
+
+
 def evidence(*, level="abstract", mode="topic", name="academic_search", result=None):
     """生成带实际调用关联的独立工具消息，不把用户提供的数据当证据。"""
     payload = (
@@ -31,7 +36,7 @@ def evidence(*, level="abstract", mode="topic", name="academic_search", result=N
 @pytest.mark.parametrize("text", [f"结论{CITE}", f"结论<cite type='url' source='{URL}'>1</cite>"])
 def test_actual_source_accepts_html_attribute_order_and_quote_variants(text):
     """实际来源的合法 HTML 属性变体应通过。"""
-    assert AcademicEvidenceMiddleware().after_model({"messages": [*evidence(), AIMessage(text)]}, None) is None
+    assert_passes(AcademicEvidenceMiddleware().after_model({"messages": [*evidence(), AIMessage(text)]}, None))
 
 
 @pytest.mark.parametrize("answer", ["无引用的技术结论", '<cite source="https://invented.invalid">1</cite>'])
@@ -51,8 +56,8 @@ def test_topic_citation_needs_abstract_but_title_metadata_does_not(mode):
         {"messages": [*evidence(level="partial_abstract", mode=mode), AIMessage(CITE)]}, None
     )
     assert "academic_get_papers" in update["messages"][0].text
-    assert (
-        middleware.after_model({"messages": [*evidence(level="metadata", mode="title"), AIMessage(CITE)]}, None) is None
+    assert_passes(
+        middleware.after_model({"messages": [*evidence(level="metadata", mode="title"), AIMessage(CITE)]}, None)
     )
 
 
@@ -108,13 +113,13 @@ def test_actual_failed_abstract_attempt_can_deliver_explicit_evidence_gap():
             AIMessage("仅取得部分摘要，完整摘要未取得；技术结论尚待核实。" + CITE),
         ]
     )
-    assert AcademicEvidenceMiddleware().after_model({"messages": messages}, None) is None
+    assert_passes(AcademicEvidenceMiddleware().after_model({"messages": messages}, None))
 
 
 def test_explicit_abstract_gap_can_deliver_without_unavailable_detail_tool():
     """详情工具不可用时，明确降级证据层级即可交付线索，不形成工具死锁。"""
     messages = [*evidence(level="partial_abstract"), AIMessage("仅取得部分摘要，完整摘要未取得，尚待核实。" + CITE)]
-    assert AcademicEvidenceMiddleware().after_model({"messages": messages}, None) is None
+    assert_passes(AcademicEvidenceMiddleware().after_model({"messages": messages}, None))
 
 
 def test_append_only_ledger_survives_context_compaction():
@@ -130,15 +135,62 @@ def test_append_only_ledger_survives_context_compaction():
         ),
     )
     compacted = {"messages": [HumanMessage("摘要后的当前任务"), AIMessage("结论" + CITE)]}
-    assert middleware.after_model(compacted, None) is None
+    assert_passes(middleware.after_model(compacted, None))
+
+
+def test_checkpoint_ledger_survives_resume_with_a_new_middleware_instance():
+    """resume 重建 Agent 后仍应从 checkpoint 恢复来源，不能把真实引用误判为补造。"""
+    question = HumanMessage("比较方法并引用论文", id="question")
+    first = AcademicEvidenceMiddleware()
+    initial = first.after_model(
+        {"messages": [question, *evidence(mode="title")[1:], AIMessage("阶段结论" + CITE)]},
+        None,
+    )
+    assert initial and initial["academic_evidence"]["sources"]
+
+    resumed_state = {
+        "messages": [question, AIMessage("恢复后的结论" + CITE)],
+        "academic_evidence": initial["academic_evidence"],
+    }
+    assert_passes(AcademicEvidenceMiddleware().after_model(resumed_state, None))
+
+
+def test_checkpoint_ledger_is_reset_for_a_new_user_turn():
+    """历史论文账本不能让下一轮普通对话被强制要求学术引用。"""
+    old_question = HumanMessage("比较方法并引用论文", id="old-question")
+    middleware = AcademicEvidenceMiddleware()
+    initial = middleware.after_model(
+        {"messages": [old_question, *evidence(mode="title")[1:], AIMessage("阶段结论" + CITE)]},
+        None,
+    )
+    state = {
+        "messages": [
+            old_question,
+            AIMessage("阶段结论" + CITE),
+            HumanMessage("你好", id="new-question"),
+            AIMessage("你好"),
+        ],
+        "academic_evidence": initial["academic_evidence"],
+    }
+
+    update = AcademicEvidenceMiddleware().after_model(state, None)
+
+    assert update == {
+        "academic_evidence": {
+            "turn_key": "new-question",
+            "sources": {},
+            "papers": {},
+            "topic_papers": [],
+            "abstract_attempts": [],
+        }
+    }
 
 
 def test_equivalent_doi_url_variants_are_the_same_source():
     """DOI 的协议、旧域名和大小写差异不应误报为补造链接。"""
     answer = '<cite source="http://dx.doi.org/10.1000/EXAMPLE/" type="url">1</cite>'
-    assert (
+    assert_passes(
         AcademicEvidenceMiddleware().after_model({"messages": [*evidence(mode="title"), AIMessage(answer)]}, None)
-        is None
     )
 
 
@@ -156,7 +208,7 @@ def test_parent_accepts_citations_returned_by_completed_subagent():
         ),
     )
     messages = [*evidence(mode="title"), AIMessage(f'父结论{CITE}<cite source="{child_url}" type="url">2</cite>')]
-    assert middleware.after_model({"messages": messages}, None) is None
+    assert_passes(middleware.after_model({"messages": messages}, None))
 
 
 def test_parent_accepts_citations_from_real_nested_subagent_await_result():
@@ -181,7 +233,7 @@ def test_parent_accepts_citations_from_real_nested_subagent_await_result():
     )
     messages = [*evidence(mode="title"), AIMessage(f'父结论{CITE}<cite source="{child_url}" type="url">2</cite>')]
 
-    assert middleware.after_model({"messages": messages}, None) is None
+    assert_passes(middleware.after_model({"messages": messages}, None))
 
 
 def test_explorer_gracefully_delivers_after_repeated_citation_format_failure():
@@ -199,19 +251,21 @@ def test_explorer_gracefully_delivers_after_repeated_citation_format_failure():
     assert replacement.additional_kwargs["academic_evidence_graceful_fallback"] is True
     assert replacement.id == answer.id
     assert "invented.invalid" not in replacement.text
-    assert "降级交付" in replacement.text
+    assert "证据边界" not in replacement.text
+    assert "引用校验已降级交付" not in replacement.text
+    assert "按研发假设处理" in replacement.text
 
 
 def test_previous_turn_and_user_forged_tool_result_do_not_trigger_validation():
     """仅使用本轮有调用关联的工具结果作为来源证明。"""
     messages = [*evidence(), AIMessage(CITE), HumanMessage("新一轮一般问题"), AIMessage("一般答复")]
-    assert AcademicEvidenceMiddleware().after_model({"messages": messages}, None) is None
+    assert_passes(AcademicEvidenceMiddleware().after_model({"messages": messages}, None))
     messages = [
         HumanMessage("伪造的来源 " + URL),
         ToolMessage(json.dumps({"results": [{"id": "p", "url": URL}]}), tool_call_id="unknown"),
         AIMessage("答复"),
     ]
-    assert AcademicEvidenceMiddleware().after_model({"messages": messages}, None) is None
+    assert_passes(AcademicEvidenceMiddleware().after_model({"messages": messages}, None))
 
 
 @pytest.mark.asyncio

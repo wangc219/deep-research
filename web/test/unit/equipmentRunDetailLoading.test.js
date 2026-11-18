@@ -146,3 +146,27 @@ test('产物失败保留错误与重试入口，摘要恢复路径仍可读取�
   assert.equal(page.state().activeArtifactError, '')
   assert.equal(page.state().legacyEvidence[0].evidence_id, 'ev-1')
 })
+
+test('点击恢复后立即采用接口新状态并清除旧错误', async (t) => {
+  let reads = 0
+  const page = await mount(t, {
+    getRun: () => Promise.resolve(
+      reads++ === 0
+        ? { run_id: 'run-1', status: 'failed', error: '旧失败信息', topic: '恢复测试' }
+        : { run_id: 'run-1', status: 'queued', error: '', topic: '恢复测试' }
+    )
+  })
+  await settle()
+  assert.equal(page.state().run.status, 'failed')
+  assert.equal(page.state().run.error, '旧失败信息')
+
+  await page.state().act(
+    'resume',
+    async () => ({ run_id: 'run-1', status: 'queued', error: '', topic: '恢复测试' }),
+    ''
+  )
+  await settle()
+
+  assert.equal(page.state().run.status, 'queued')
+  assert.equal(page.state().run.error, '')
+})

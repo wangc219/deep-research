@@ -15,6 +15,7 @@ from platform_core.knowledge.implementations.milvus import (
     VECTOR_METRIC_TYPE,
     MilvusKB,
 )
+from platform_core.knowledge.parser.result import ParsedBlock, ParsedDocument
 from platform_core.knowledge.read_models import KnowledgeBaseConfig
 
 EMBEDDING_MODEL_SPEC = "test-provider:test-embedding"
@@ -74,6 +75,18 @@ def make_kb(collection: FakeCollection) -> MilvusKB:
     kb._get_or_create_milvus_collection = get_collection
     kb._hydrate_chunk_sources = hydrate_chunk_sources
     return kb
+
+
+def test_indexing_error_summary_never_persists_chunk_or_sql_payload():
+    sensitive_detail = "INSERT INTO knowledge_chunks params=机密论文正文 supplier-response-body"
+
+    summary = milvus_module.safe_indexing_error_summary(RuntimeError(sensitive_detail))
+
+    assert summary.startswith("Indexing failed: error_type=RuntimeError")
+    assert f"detail_chars={len(sensitive_detail)}" in summary
+    assert "detail_sha256=" in summary
+    assert "机密论文正文" not in summary
+    assert "supplier-response-body" not in summary
 
 
 def test_init_connection_uses_the_same_alias_for_database_selection(monkeypatch):
@@ -363,7 +376,13 @@ def test_calculate_chunk_stats_counts_chunks_and_tokens():
 
 async def test_index_file_persists_chunk_stats(monkeypatch):
     kb = MilvusKB.__new__(MilvusKB)
-    file_repo = FakeKnowledgeFileRepository({"file-1": make_file_record()})
+    file_repo = FakeKnowledgeFileRepository(
+        {
+            "file-1": make_file_record(
+                processing_params={"chunk_parser_config": {"embed_model_id": "external-provider:legacy-model"}}
+            )
+        }
+    )
     patch_file_repository(monkeypatch, file_repo)
     collection = FakeCollection()
     deleted_files = []
@@ -388,21 +407,22 @@ async def test_index_file_persists_chunk_stats(monkeypatch):
 
     kb._get_or_create_milvus_collection = get_collection
     kb._read_markdown_from_minio = read_markdown
-    kb._split_text_into_chunks = lambda text, file_id, filename, params: chunks
+    split_params = []
+
+    def split_text(text, file_id, filename, params):
+        split_params.append(dict(params))
+        return chunks
+
+    kb._split_text_into_chunks = split_text
     kb._get_embedding_function = lambda embedding_model_spec: embedding_function
     kb.delete_file_chunks_only = delete_file_chunks_only
     kb._embed_and_store_chunks = embed_and_store_chunks
-
-    async def get_system_options(_option, _db=None):
-        return {"embed_model": EMBEDDING_MODEL_SPEC}
-
-    monkeypatch.setattr(type(milvus_module.system_options), "get", get_system_options)
 
     result = await kb.index_file(
         "db",
         "file-1",
         operator_id="user-1",
-        params={},
+        params={"chunk_parser_config": {"embed_model_id": "external-provider:request-model"}},
         embedding_model_spec=EMBEDDING_MODEL_SPEC,
         additional_params={},
     )
@@ -414,8 +434,162 @@ async def test_index_file_persists_chunk_stats(monkeypatch):
     assert result["chunk_count"] == 2
     assert result["token_count"] == count_tokens("alpha beta") + count_tokens("中文")
     assert file_repo.records["file-1"].chunk_count == result["chunk_count"]
+    assert split_params[0]["chunk_parser_config"]["embed_model_id"] == EMBEDDING_MODEL_SPEC
+    assert (
+        file_repo.conditional_update_calls[0][3]["processing_params"]["chunk_parser_config"]["embed_model_id"]
+        == EMBEDDING_MODEL_SPEC
+    )
     assert file_repo.conditional_update_calls[0][3]["status"] == FileStatus.INDEXING
     assert file_repo.conditional_update_calls[-1][3]["status"] == FileStatus.INDEXED
+
+
+async def test_parse_file_persists_parser_lineage(monkeypatch):
+    kb = MilvusKB.__new__(MilvusKB)
+    file_repo = FakeKnowledgeFileRepository(
+        {
+            "file-1": make_file_record(
+                markdown_file=None,
+                status=FileStatus.UPLOADED,
+                processing_params={"chunk_preset_id": "book"},
+            )
+        }
+    )
+    patch_file_repository(monkeypatch, file_repo)
+    parse_calls = []
+
+    async def parse_with_metadata(*, source, params):
+        parse_calls.append((source, dict(params)))
+        return ParsedDocument(
+            markdown="# 雷达系统\n\n宽带接收组件。",
+            parser_name="native_markdown",
+            parser_version="platform-unified-parser-v2",
+            source_metadata={"file_extension": ".md"},
+            blocks=(
+                ParsedBlock(
+                    start_char=8,
+                    end_char=17,
+                    page_number=1,
+                    block_type="paragraph",
+                ),
+            ),
+        )
+
+    async def save_markdown(kb_id, file_id, markdown):
+        assert (kb_id, file_id) == ("db", "file-1")
+        assert markdown.startswith("# 雷达系统")
+        return "minio://parsed/db/file-1.md"
+
+    monkeypatch.setattr(
+        "platform_core.services.ocr_service.parse_document_with_metadata",
+        parse_with_metadata,
+    )
+    monkeypatch.setattr(
+        "platform_core.storage.minio.get_minio_client",
+        lambda: types.SimpleNamespace(KB_BUCKETS={"images": "kb-images"}),
+    )
+    kb._save_markdown_to_minio = save_markdown
+
+    result = await kb.parse_file(
+        "db",
+        "file-1",
+        operator_id="user-1",
+        additional_params={},
+    )
+
+    assert parse_calls == [
+        (
+            "/tmp/demo.md",
+            {
+                "chunk_preset_id": "book",
+                "chunk_parser_config": {},
+                "chunk_engine_version": "ragflow_like_v1",
+                "image_bucket": "kb-images",
+                "image_prefix": "db/kb-images",
+            },
+        )
+    ]
+    assert result["status"] == FileStatus.PARSED
+    assert result["processing_params"] == {
+        "chunk_preset_id": "book",
+        "parser_name": "native_markdown",
+        "parser_version": "platform-unified-parser-v2",
+        "parser_source_metadata": {"file_extension": ".md"},
+        "parser_blocks": [
+            {
+                "start_char": 8,
+                "end_char": 17,
+                "page_number": 1,
+                "block_type": "paragraph",
+                "heading_path": [],
+                "bbox": None,
+                "source_metadata": {},
+            }
+        ],
+    }
+    persisted = file_repo.records["file-1"].processing_params
+    assert persisted == result["processing_params"]
+
+
+async def test_parse_file_requires_explicit_reparse_for_indexed_document(monkeypatch):
+    kb = MilvusKB.__new__(MilvusKB)
+    file_repo = FakeKnowledgeFileRepository(
+        {
+            "file-1": make_file_record(
+                markdown_file="minio://parsed/db/file-1.md",
+                status=FileStatus.INDEXED,
+            )
+        }
+    )
+    patch_file_repository(monkeypatch, file_repo)
+
+    with pytest.raises(ValueError, match="Cannot parse file with status 'indexed'"):
+        await kb.parse_file("db", "file-1", additional_params={})
+
+
+async def test_parse_file_allows_explicit_reparse_for_indexed_document(monkeypatch):
+    kb = MilvusKB.__new__(MilvusKB)
+    file_repo = FakeKnowledgeFileRepository(
+        {
+            "file-1": make_file_record(
+                markdown_file="minio://parsed/db/file-1.md",
+                status=FileStatus.INDEXED,
+            )
+        }
+    )
+    patch_file_repository(monkeypatch, file_repo)
+
+    async def parse_with_metadata(*, source, params):
+        del source, params
+        return ParsedDocument(
+            markdown="修复后的中文原文",
+            parser_name="rapid_ocr",
+            parser_version="rapidocr-v1",
+            blocks=(ParsedBlock(start_char=0, end_char=8, page_number=1),),
+        )
+
+    async def save_markdown(kb_id, file_id, markdown):
+        assert (kb_id, file_id, markdown) == ("db", "file-1", "修复后的中文原文")
+        return "minio://parsed/db/file-1.md"
+
+    monkeypatch.setattr(
+        "platform_core.services.ocr_service.parse_document_with_metadata",
+        parse_with_metadata,
+    )
+    monkeypatch.setattr(
+        "platform_core.storage.minio.get_minio_client",
+        lambda: types.SimpleNamespace(KB_BUCKETS={"images": "kb-images"}),
+    )
+    kb._save_markdown_to_minio = save_markdown
+
+    result = await kb.parse_file(
+        "db",
+        "file-1",
+        additional_params={},
+        allow_reparse=True,
+    )
+
+    assert result["status"] == FileStatus.PARSED
+    assert file_repo.records["file-1"].status == FileStatus.PARSED
 
 
 @pytest.mark.parametrize(
@@ -438,7 +612,10 @@ async def test_cancellation_marks_file_retryable(monkeypatch, operation, expecte
             started.set()
             await asyncio.Event().wait()
 
-        monkeypatch.setattr("platform_core.services.ocr_service.parse_document", cancelled_step)
+        monkeypatch.setattr(
+            "platform_core.services.ocr_service.parse_document_with_metadata",
+            cancelled_step,
+        )
         task = asyncio.create_task(
             kb.parse_file(
                 "db",
@@ -463,11 +640,6 @@ async def test_cancellation_marks_file_retryable(monkeypatch, operation, expecte
         kb._get_or_create_milvus_collection = get_collection
         kb._get_embedding_function = lambda embedding_model_spec: None
         kb._read_markdown_from_minio = cancelled_step
-
-        async def get_system_options(_option, _db=None):
-            return {"embed_model": EMBEDDING_MODEL_SPEC}
-
-        monkeypatch.setattr(type(milvus_module.system_options), "get", get_system_options)
         task = asyncio.create_task(
             kb.index_file(
                 "db",

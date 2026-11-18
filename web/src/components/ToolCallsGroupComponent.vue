@@ -37,13 +37,7 @@
       <div class="tool-calls-collapse-inner">
         <div class="tool-calls-panel">
           <div v-for="entry in displayEntries" :key="entry.key" class="tool-call-container">
-            <ReasoningBlockComponent
-              v-if="entry.type === 'reasoning'"
-              :content="entry.content"
-              :is-active="isActive && entry === displayEntries[displayEntries.length - 1]"
-            />
             <ToolCallRenderer
-              v-else
               :tool-call="entry.toolCall"
               appearance="timeline"
               :default-expanded="false"
@@ -60,7 +54,6 @@ import { computed, ref, watch, inject } from 'vue'
 import { ChevronDown, Atom } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
 import { useAgentStore } from '@/stores/agent'
-import ReasoningBlockComponent from '@/components/ReasoningBlockComponent.vue'
 import { ToolCallRenderer } from '@/components/ToolCallingResult'
 import {
   getToolCallId,
@@ -94,15 +87,12 @@ const normalizedToolCalls = computed(() => normalizeToolCalls(props.toolCalls))
 
 const displayEntries = computed(() =>
   props.entries.length
-    ? props.entries
+    ? props.entries.filter((entry) => entry.type === 'tool' && entry.toolCall)
     : normalizedToolCalls.value.map((toolCall, index) => ({
         type: 'tool',
         key: toolCall.id || `${getToolCallId(toolCall)}-${index}`,
         toolCall
       }))
-)
-const hasReasoning = computed(() =>
-  displayEntries.value.some((entry) => entry.type === 'reasoning')
 )
 const shouldCollapseToolCalls = computed(() => displayEntries.value.length > 0)
 const areToolCallsExpanded = ref(false)
@@ -146,8 +136,7 @@ const getToolCallLabel = (toolCall) => {
 }
 
 const toolCallsSummaryTitle = computed(() => {
-  if (normalizedToolCalls.value.length === 0) return props.isActive ? '正在思考' : '推理过程'
-  if (hasReasoning.value) return `推理与工具调用 · ${normalizedToolCalls.value.length} 个工具`
+  if (normalizedToolCalls.value.length === 0) return props.isActive ? '正在处理' : '执行进展'
   if (normalizedToolCalls.value.length === 1) {
     return `调用: ${getToolCallLabel(normalizedToolCalls.value[0])}`
   }

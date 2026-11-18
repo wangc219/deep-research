@@ -19,6 +19,7 @@ from equipment_deep_research.query_library.models import GeneratedCandidate, Sou
 from equipment_deep_research.query_library.quality import (
     coverage_plan,
     near_duplicate,
+    review_generated_candidate,
     sanitize_source_reference,
     validate_generated_candidate,
 )
@@ -289,7 +290,7 @@ def test_near_duplicate_normalizes_punctuation_and_spacing() -> None:
     )
 
 
-def test_quality_gate_rejects_title_without_auditable_demand_chain() -> None:
+def test_quality_preferences_are_advisory_without_auditable_demand_chain() -> None:
     candidate = GeneratedCandidate(
         coverage_slot=coverage_plan(1)[0],
         query="未来无人精确打击装备任务需求研究",
@@ -298,15 +299,16 @@ def test_quality_gate_rejects_title_without_auditable_demand_chain() -> None:
         source_references=(SourceReference(title="模型分析", source_kind="document"),),
     )
 
-    issues = validate_generated_candidate(
+    blocking_issues = validate_generated_candidate(
         candidate,
         expected_slot=coverage_plan(1)[0],
         existing_queries=[],
         accepted_queries=[],
     )
+    quality_notes = review_generated_candidate(candidate)
 
-    assert any("demand_chain.future_mission" in issue for issue in issues)
-    assert "quality_review.verdict must pass after self-revision" in issues
+    assert not blocking_issues
+    assert "demand_chain is unavailable and should be completed during research" in quality_notes
 
 
 def test_quality_gate_accepts_civil_emergency_equipment_domain_terms() -> None:
@@ -340,6 +342,143 @@ def test_quality_gate_accepts_civil_emergency_equipment_domain_terms() -> None:
         accepted_queries=[],
         topic="极端灾害场景下民用应急照明与便携供电设备的可靠性提升",
     )
+
+
+def test_quality_gate_accepts_remote_precision_strike_subject_variants() -> None:
+    cases = [
+        (
+            "技术驱动-技术现状与趋势",
+            "远程精打武器多模复合末制导抗干扰研究",
+            "远程精打武器末制导自主抗干扰能力",
+        ),
+        (
+            "体系实战-全链条制胜机理",
+            "远程精打杀伤链断点智能重构研究",
+            "远程精打杀伤链智能重构能力",
+        ),
+        (
+            "技术驱动-成熟度与发展规划",
+            "远程精打武器智能末段自主识别分级决策研究",
+            "远程精打武器末段自主识别与分级决策能力",
+        ),
+        (
+            "体系实战-跨域协同与战损韧性",
+            "跨域受损下远程精打任务接续装备研究",
+            "远程精打任务接续装备韧性保障能力",
+        ),
+    ]
+    for slot, query, weapon_requirement in cases:
+        candidate = GeneratedCandidate(
+            coverage_slot=slot,
+            query=query,
+            supplemental_information=(
+                "面向复杂对抗与跨域链路受扰场景，研究智能自主能力边界、公开基线、失效条件和可证伪验证，"
+                "形成与远程精打任务直接对应的装备能力需求。"
+            ),
+            generation_rationale="近期任务环境变化使远程精打装备的韧性与自主能力边界值得验证。",
+            source_references=(SourceReference(title="模型分析", source_kind="document"),),
+            demand_chain={
+                "situation_signal": "公开信号显示复杂电磁与跨域协同条件持续变化",
+                "future_mission": "未来任务要求远程精打链路在受扰条件下持续运转",
+                "task_constraint": "链路受损、识别不确定与末段窗口压缩共同制约任务",
+                "capability_gap": "现有能力难以兼顾自主判断、抗干扰和任务接续",
+                "weapon_requirement": weapon_requirement,
+                "evidence_status": "inferred",
+                "disconfirmation_condition": "若代表性试验表明现有能力已稳定满足约束则需求不成立",
+            },
+            quality_review={
+                "verdict": "pass",
+                "causal_specificity": "pass",
+                "differentiation": "pass",
+                "researchability": "pass",
+            },
+        )
+        assert not validate_generated_candidate(
+            candidate,
+            expected_slot=slot,
+            existing_queries=[],
+            accepted_queries=[],
+            topic="远程精打武器装备需求研究",
+        )
+
+
+def test_quality_gate_does_not_use_a_domain_keyword_allowlist() -> None:
+    candidate = GeneratedCandidate(
+        coverage_slot="颠覆逻辑-时间毁伤体系或伦理博弈",
+        query="认知孪生驱动分布式效应编排探索",
+        supplemental_information=(
+            "面向信息不完备与多节点决策冲突场景，探索认知孪生节点如何形成可审计的分布式效应编排，"
+            "比较替代形态、失效条件、公开基线和可证伪验证路径。"
+        ),
+        generation_rationale="该方向来自态势信号中的决策时延与节点冲突，值得独立验证其任务价值。",
+        source_references=(SourceReference(title="模型分析", source_kind="document"),),
+        demand_chain={
+            "situation_signal": "公开信号显示多节点决策冲突与信息不完备问题加剧",
+            "future_mission": "未来任务需要在局部信息条件下维持协同决策",
+            "task_constraint": "认知偏差与节点时延使集中式编排难以持续",
+            "capability_gap": "现有方法缺少可审计的分布式效应组织机制",
+            "weapon_requirement": "认知孪生节点编排与分布式效应生成机制",
+            "evidence_status": "inferred",
+            "disconfirmation_condition": "若对照试验不能降低冲突率与决策时延则假设不成立",
+        },
+        quality_review={
+            "verdict": "pass",
+            "causal_specificity": "pass",
+            "differentiation": "pass",
+            "researchability": "pass",
+        },
+    )
+
+    assert not validate_generated_candidate(
+        candidate,
+        expected_slot=candidate.coverage_slot,
+        existing_queries=[],
+        accepted_queries=[],
+        topic="复杂认知对抗中的新质效应组织方式",
+    )
+
+
+def test_named_subject_drift_is_left_to_agent_semantic_review() -> None:
+    candidate = GeneratedCandidate(
+        coverage_slot="技术驱动-技术现状与趋势",
+        query="气凝胶及其拓展技术装备创新机会研究",
+        supplemental_information=(
+            "研究无人蜂群饱和攻击的体系级反制方案，整合微波、激光、防空导弹和电子战手段，"
+            "比较拦截效费比并开展兵棋推演验证。"
+        ),
+        generation_rationale="高密度无人目标使多层防御体系值得研究。",
+        source_references=(SourceReference(title="模型分析", source_kind="document"),),
+        demand_chain={
+            "situation_signal": "无人蜂群威胁持续发展",
+            "future_mission": "应对饱和攻击",
+            "task_constraint": "目标数量大且反应窗口短",
+            "capability_gap": "现有防空体系交换成本过高",
+            "weapon_requirement": "多层反无人机拦截体系",
+            "evidence_status": "inferred",
+            "disconfirmation_condition": "若推演无法改善拦截率则需求不成立",
+        },
+        quality_review={
+            "verdict": "pass",
+            "causal_specificity": "pass",
+            "differentiation": "pass",
+            "researchability": "pass",
+        },
+    )
+
+    blocking_issues = validate_generated_candidate(
+        candidate,
+        expected_slot=candidate.coverage_slot,
+        existing_queries=[],
+        accepted_queries=[],
+        topic="从技术驱动维度研究气凝胶及其拓展技术",
+    )
+    quality_notes = review_generated_candidate(
+        candidate,
+        topic="从技术驱动维度研究气凝胶及其拓展技术",
+    )
+
+    assert not blocking_issues
+    assert not any("named subject" in note for note in quality_notes)
 
 
 def test_generation_profiles_bound_divergence_and_output_budgets() -> None:
@@ -411,6 +550,61 @@ def test_efficient_query_uses_one_call_without_unavailable_web_search_or_serial_
     assert options["phase"] == "query_generation"
     assert options["max_output_tokens"] >= 4096
     assert batches[0]["completed"] == batches[0]["total"] == 1
+
+
+def test_efficient_query_uses_situation_research_before_generation() -> None:
+    source = {
+        "title": "近期公开演训资料",
+        "url": "https://example.test/situation",
+        "snippet": "公开信息显示复杂电磁环境使远程精打链路的自主接续需求上升。",
+    }
+    query = "远程精打杀伤链断点智能重构研究"
+    row = {
+        "coverage_slot": coverage_plan(1)[0],
+        "query": query,
+        "supplemental_information": "面向复杂电磁环境研究智能自主杀伤链重构边界、装备能力缺口、失效条件和验证方法。",
+        "generation_rationale": "近期公开演训信号使远程精打任务接续能力值得研究。",
+        **_quality_fields(query),
+    }
+    row["demand_chain"]["weapon_requirement"] = "远程精打杀伤链智能重构装备能力"
+    provider = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps({"queries": [row]})))]]
+    )
+    calls = []
+
+    async def researcher(**kwargs):
+        calls.append(kwargs)
+        return (
+            {
+                "summary": "已检索近期态势。",
+                "search_queries": ["远程精打 近期态势"],
+                "signals": [source["snippet"]],
+                "sources": [source],
+            },
+            {"web_sources": [source], "research_lane": "research_explorer_public_search"},
+        )
+
+    stages = []
+    result = asyncio.run(
+        ModelQueryGenerator(
+            provider,
+            default_profile="efficient",
+            situation_researcher=researcher,
+        ).generate(
+            topic="远程精打武器装备需求研究",
+            supplemental_information="",
+            count=1,
+            existing_queries=[],
+            on_stage=stages.append,
+        )
+    )
+
+    assert len(calls) == 1
+    assert stages == ["web_validation", "query_generation"]
+    assert result.source_references[0].url == source["url"]
+    request = json.loads(provider.inputs[0][0][1].content)
+    assert request["grounding_signals"] == [source["snippet"]]
+    assert "不设领域关键词白名单" in request["validation_contracts"][0]["lexical_policy"]
 
 
 def test_query_stage_deadline_cancels_slow_stream_even_if_provider_has_no_timeout():
@@ -510,6 +704,7 @@ def test_batches_overlap_save_fast_results_and_repair_only_failed_slots():
 
 def test_planning_cache_reuse_requires_same_model_input_and_one_hour_ttl():
     from datetime import UTC, datetime, timedelta
+
     import pytest
     from equipment_deep_research.query_library.models import GenerationValidationError
 

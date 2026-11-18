@@ -7,7 +7,15 @@
     }"
   >
     <img class="hero-art-backdrop" :src="loginBgImage" alt="" aria-hidden="true" />
-    <img class="hero-art" :src="loginBgImage" alt="武器装备创新研究场景" fetchpriority="high" decoding="async" width="1448" height="844" />
+    <img
+      class="hero-art"
+      :src="loginBgImage"
+      alt="武器装备创新研究场景"
+      fetchpriority="high"
+      decoding="async"
+      width="1448"
+      height="844"
+    />
     <div class="hero-wash" aria-hidden="true"></div>
     <div v-if="serverStatus === 'error'" class="server-status-alert">
       <div class="alert-content">
@@ -554,11 +562,11 @@ const handleLogin = async () => {
     message.success('登录成功')
 
     // 获取重定向路径
-    const redirectPath = sessionStorage.getItem('redirect') || '/knowledge'
+    const redirectPath = sessionStorage.getItem('redirect') || '/agent'
     sessionStorage.removeItem('redirect') // 清除重定向信息
 
     // 身份就绪即可进入目标页，聊天配置由使用它的页面按需初始化。
-    router.push(redirectPath === '/' ? '/knowledge' : redirectPath)
+    router.push(redirectPath === '/' ? '/agent' : redirectPath)
   } catch (error) {
     console.error('登录失败:', error)
 
@@ -608,7 +616,7 @@ const handleRegister = async () => {
       password: registerForm.password
     })
     message.success('注册成功，已为你登录')
-    router.push('/knowledge')
+    router.push('/agent')
   } catch (error) {
     console.error('注册失败:', error)
     errorMessage.value = error.message || '注册失败，请检查填写信息'

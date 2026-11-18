@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from platform_core.agents.buildin.chatbot import graph as chatbot_graph
+from platform_core.agents.middlewares.academic_evidence import AcademicEvidenceMiddleware
 from platform_core.agents.tool_approval import create_tool_approval_middleware, normalize_tool_approval_mode
 
 PROJECT_ROOT = "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111"
@@ -77,10 +78,12 @@ async def test_chatbot_graph_assembles_approval_with_current_project(monkeypatch
 
     middlewares = await chatbot_graph._build_middlewares(context, object())
     approval = next(middleware for middleware in middlewares if hasattr(middleware, "interrupt_on"))
+    evidence_gate = next(middleware for middleware in middlewares if isinstance(middleware, AcademicEvidenceMiddleware))
 
     assert _requires_approval(approval, "write_file", f"{PROJECT_ROOT}/report.md") is False
     assert _requires_approval(approval, "write_file", "/home/gem/user-data/projects/other/report.md") is True
     assert _requires_approval(approval, "execute") is True
+    assert evidence_gate.graceful_fallback is True
 
 
 def test_always_trust_mode_does_not_build_approval_middleware():

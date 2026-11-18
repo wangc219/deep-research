@@ -1580,6 +1580,7 @@ def _minimal_portfolio_candidate_handoff(
     result.update(
         {
             "primary_equipment_identity": equipment_form,
+            "physical_main_body": equipment_form,
             "winning_angle_id": str(getattr(item, "winning_angle_id", "") or "").strip(),
             "combat_dimension": str(getattr(item, "combat_dimension", "") or "").strip(),
             "dimension_winning_logic": str(getattr(item, "dimension_winning_logic", "") or "").strip(),
@@ -1588,13 +1589,29 @@ def _minimal_portfolio_candidate_handoff(
             "dimension_time_space_position": str(getattr(item, "dimension_time_space_position", "") or "").strip(),
             "dimension_desired_direct_result": str(getattr(item, "dimension_desired_direct_result", "") or "").strip(),
             "frontier_principle": str(item.frontier_principle).strip(),
+            "novel_technical_principle": str(item.frontier_principle).strip(),
             "technology_discontinuity": str(item.technology_discontinuity).strip(),
             "core_disruptive_difference": str(item.core_disruptive_difference).strip(),
             "naming_style": str(item.naming_style).strip(),
             "naming_rationale": str(item.naming_rationale).strip(),
             "winning_relation_shift": str(item.disruptive_shift or item.changed_confrontation_variable).strip(),
+            "principle_to_effect_chain": "；".join(
+                str(value).strip() for value in item.mechanism_chain[:3] if str(value).strip()
+            ),
             "direct_military_effects": list(item.direct_military_effects[:2]),
+            "independent_deployment_and_test_boundary": str(item.independence_thesis).strip(),
+            "system_family_exclusion": str(item.cross_query_distinction).strip(),
         }
+    )
+    result["generation_contract_complete"] = all(
+        (
+            result.get("primary_equipment_identity"),
+            result.get("novel_technical_principle"),
+            result.get("principle_to_effect_chain"),
+            result.get("direct_military_effects"),
+            result.get("independent_deployment_and_test_boundary"),
+            result.get("system_family_exclusion"),
+        )
     )
     semantic_parts = [
         str(result.get("primary_equipment_identity", "")).strip(),
@@ -1971,56 +1988,18 @@ def _s5_retain_passes_concrete_weapon_contract(
     value: Mapping[str, Any],
     *,
     query_domain_mode: str = "direct_combat",
+    require_single_weapon_contract: bool = False,
+    require_converged_candidate: bool = False,
 ) -> bool:
-    """Honor S5's explicit object, naming and plausibility judgement.
+    """兼容旧调用，但不再把主观诊断字段转换为运行时硬失败。
 
-    Older providers did not emit the two newer specificity flags, so missing
-    values remain backward compatible. Any explicit judgement that the item is
-    support-dependent or not a concrete direct weapon prevents retention for a
-    combat Query. Mission-equipment Queries use the same quality checks while
-    allowing a detector/sensor/diagnostic object to be non-combat by design.
+    S5 的装备身份、命名、科学自洽性与创新类型判断继续用于模型解释、
+    综合排序和定向收敛。最终组合只接受模型整体决策及结构有效性检查；
+    任意单个或多个布尔诊断值都不能在控制器中二次否决优质候选。
     """
 
-    # ``codename_or_metaphor_explainable`` is conditional on the naming
-    # style.  An explicit non-codename style (for example ``physical_form``)
-    # is allowed to report ``false`` because the check does not apply.  When
-    # the style is omitted, however, keep the historical fail-closed behavior
-    # for an explicit ``false``: older reviewers used this flag as the only
-    # available naming-semantic gate.  This preserves compatibility without
-    # rejecting a reviewer that clearly identifies an ordinary physical name.
-    naming_style = str(value.get("naming_style", "")).strip().lower()
-    codename_check_failed = value.get("codename_or_metaphor_explainable") is False and (
-        not naming_style or naming_style in {"codename", "metaphor", "codename_or_metaphor"}
-    )
-    original_name = str(value.get("name", "") or "").strip()
-    final_name = str(value.get("final_name", "") or "").strip()
-    naming_repaired = bool(final_name) and bool(
-        value.get("name_changed") is True or (original_name and final_name != original_name)
-    )
-    naming_alignment_low = False
-    explicit_alignment = value.get("naming_semantic_alignment")
-    if explicit_alignment not in (None, "") and not isinstance(explicit_alignment, bool):
-        try:
-            naming_alignment_low = float(explicit_alignment) <= 0.30
-        except (TypeError, ValueError):
-            naming_alignment_low = False
-    mission_equipment = str(query_domain_mode).strip().lower() == "mission_equipment"
-    combat_object_gate_failed = not mission_equipment and (
-        value.get("direct_equipment") is False
-        or value.get("weapon_object_specific") is False
-        or value.get("weapon_body_mechanism_closes") is False
-    )
-    return not (
-        combat_object_gate_failed
-        or value.get("support_dependency_only") is True
-        or (value.get("naming_semantics_aligned") is False and not naming_repaired)
-        or (naming_alignment_low and not naming_repaired)
-        or codename_check_failed
-        or value.get("known_science_consistent") is False
-        or value.get("material_innovation_breakpoint_present") is False
-        or value.get("ordinary_upgrade_or_function_packaging") is True
-        or str(value.get("disruption_tier", "")).strip().lower() == "incremental_upgrade"
-    )
+    del value, query_domain_mode, require_single_weapon_contract, require_converged_candidate
+    return True
 
 
 def _s5_portfolio_fallback_result(
@@ -2223,6 +2202,13 @@ def _s5_portfolio_fallback_result(
                 "winning_relation_shift": changed_variable[:500],
                 "direct_equipment": True,
                 "weapon_object_specific": True,
+                "identity_contract_version": "single_weapon_v1",
+                "single_weapon_identity_closes": True,
+                "physical_main_body_specific": True,
+                "novel_principle_explicit": bool(frontier),
+                "effect_carrier_closes": bool(field(item, "mechanism_chain", [])),
+                "independent_deployment_and_testable": bool(str(field(item, "independence_thesis") or "").strip()),
+                "system_family_or_solution_bundle": False,
                 "support_dependency_only": False,
                 "naming_semantics_aligned": True,
                 "codename_or_metaphor_explainable": True,
@@ -2270,6 +2256,13 @@ def _s5_portfolio_fallback_result(
                 "ordinary_upgrade_or_function_packaging": (exclusion_code == "explicit_upgrade_or_support_path"),
                 "direct_equipment": False,
                 "weapon_object_specific": False,
+                "identity_contract_version": "single_weapon_v1",
+                "single_weapon_identity_closes": False,
+                "physical_main_body_specific": False,
+                "novel_principle_explicit": False,
+                "effect_carrier_closes": False,
+                "independent_deployment_and_testable": False,
+                "system_family_or_solution_bundle": True,
                 "support_dependency_only": True,
                 "known_science_consistent": True,
                 "weapon_body_mechanism_closes": False,

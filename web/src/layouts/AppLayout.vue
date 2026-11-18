@@ -1,12 +1,25 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, provide, watch, nextTick, defineAsyncComponent } from 'vue'
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  computed,
+  provide,
+  watch,
+  nextTick,
+  defineAsyncComponent
+} from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
+  ArrowRight,
   BarChart3,
+  BellRing,
   BookOpen,
+  ChevronDown,
   ClipboardList,
+  Compass,
   FileSearch,
   FileText,
   LibraryBig,
@@ -20,7 +33,8 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  Users
+  Users,
+  X
 } from '@lucide/vue'
 
 import { useConfigStore } from '@/stores/config'
@@ -39,6 +53,12 @@ import ConversationNavSection from '@/components/ConversationNavSection.vue'
 import EquipmentWorkflowNav from '@/components/equipment/EquipmentWorkflowNav.vue'
 import { searchWorkspaceFiles } from '@/apis/workspace_api'
 import { projectApi } from '@/apis/project_api'
+import { innovationBriefApi } from '@/apis/knowledge_governance_api'
+import {
+  briefPushSessionKey,
+  findLatestBriefForToday,
+  formatBriefTime
+} from '@/utils/innovationBriefPush'
 
 const TaskCenterDrawer = defineAsyncComponent(() => import('@/components/TaskCenterDrawer.vue'))
 const SettingsModal = defineAsyncComponent(() => import('@/components/SettingsModal.vue'))
@@ -72,6 +92,8 @@ const infoStore = useInfoStore()
 const projectsStore = useProjectsStore()
 const taskerStore = useTaskerStore()
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
 const { activeCount: activeCountRef, isDrawerOpen } = storeToRefs(taskerStore)
 const { projects, isLoading: projectsLoading, error: projectsError } = storeToRefs(projectsStore)
 const { threads, currentThreadId, hasMoreThreads, isLoadingMoreThreads, threadCreationInFlight } =
@@ -122,6 +144,48 @@ const handleSidebarKeydown = (event) => {
 }
 const conversationSearchOpen = ref(false)
 const projectPendingId = ref(null)
+const latestBriefPush = ref(null)
+let latestBriefPushLoading = false
+
+const dismissLatestBriefPush = () => {
+  latestBriefPush.value = null
+}
+
+const openLatestBriefPush = async () => {
+  const brief = latestBriefPush.value
+  if (!brief?.id) return
+  latestBriefPush.value = null
+  await router.push({
+    path: '/extensions',
+    query: { tool: 'innovation-briefs', brief: brief.id, from: 'login-push' }
+  })
+}
+
+const loadLatestBriefPush = async () => {
+  if (
+    !userStore.isLoggedIn ||
+    latestBriefPush.value ||
+    latestBriefPushLoading ||
+    typeof sessionStorage === 'undefined'
+  ) {
+    return
+  }
+  latestBriefPushLoading = true
+  try {
+    const result = await innovationBriefApi.briefs({ unread: true, page: 1, page_size: 20 })
+    const brief = findLatestBriefForToday(result.items, { unreadOnly: true })
+    if (!brief?.id) return
+
+    const sessionKey = briefPushSessionKey(userStore.userId || userStore.uid, brief.id)
+    if (sessionStorage.getItem(sessionKey)) return
+    sessionStorage.setItem(sessionKey, 'shown')
+    latestBriefPush.value = brief
+  } catch (error) {
+    console.warn('加载今日前沿简报推送失败:', error)
+  } finally {
+    latestBriefPushLoading = false
+  }
+}
 
 // Provide settings modal methods to child components
 const openSettingsModal = (tab) => {
@@ -166,16 +230,20 @@ onMounted(() => {
   // 服务端按当前身份返回可见任务。
   if (userStore.isLoggedIn) {
     taskerStore.loadTasks()
+    void loadLatestBriefPush()
   }
   startThreadStatusSync()
   startSessionRoleSync()
+  startBriefPushSync()
 })
 
 // 低频刷新侧边栏线程状态，让后台线程完成时也能从 loading 转为 ready/done。
 const THREAD_STATUS_SYNC_INTERVAL_MS = 12 * 1000
 const SESSION_ROLE_SYNC_INTERVAL_MS = 30 * 1000
+const BRIEF_PUSH_SYNC_INTERVAL_MS = 30 * 1000
 let threadStatusSyncTimer = null
 let sessionRoleSyncTimer = null
+let briefPushSyncTimer = null
 
 const startThreadStatusSync = () => {
   if (threadStatusSyncTimer) return
@@ -209,6 +277,14 @@ const startSessionRoleSync = () => {
   }, SESSION_ROLE_SYNC_INTERVAL_MS)
 }
 
+const startBriefPushSync = () => {
+  if (briefPushSyncTimer) return
+  briefPushSyncTimer = setInterval(() => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    void loadLatestBriefPush()
+  }, BRIEF_PUSH_SYNC_INTERVAL_MS)
+}
+
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   if (threadStatusSyncTimer) {
@@ -219,10 +295,12 @@ onUnmounted(() => {
     clearInterval(sessionRoleSyncTimer)
     sessionRoleSyncTimer = null
   }
+  if (briefPushSyncTimer) {
+    clearInterval(briefPushSyncTimer)
+    briefPushSyncTimer = null
+  }
 })
 
-const route = useRoute()
-const router = useRouter()
 watch(() => route.fullPath, closeMobileNav)
 
 const activeTaskCount = computed(() => activeCountRef.value || 0)
@@ -238,20 +316,56 @@ const isEquipmentRoute = computed(() => route.path.startsWith('/equipment/'))
 const mainList = computed(() => {
   const items = [
     {
-      name: '知识总览',
-      path: '/knowledge',
-      icon: BookOpen,
-      activeIcon: BookOpen,
-      preload: preloadKnowledgePortal
-    },
-    {
       name: '智能对话',
       path: '/agent',
       icon: MessageCirclePlus,
       activeIcon: MessageCirclePlus,
       preload: preloadAgent,
       action: true,
-      exactActive: true
+      exactActive: true,
+      primary: true,
+      primaryAction: true
+    },
+    {
+      name: '研究任务',
+      path: '/equipment/runs',
+      activePaths: ['/equipment/runs'],
+      icon: Radar,
+      activeIcon: Radar,
+      preload: preloadEquipmentRuns,
+      primary: true
+    },
+    {
+      name: '深研对话',
+      path: '/equipment/deep-thinking',
+      activePaths: ['/equipment/deep-thinking'],
+      icon: MessageCircle,
+      activeIcon: MessageCircle,
+      preload: preloadEquipmentDeepThinking,
+      primary: true
+    },
+    {
+      name: '能力画像',
+      path: '/equipment/capabilities',
+      icon: ClipboardList,
+      activeIcon: ClipboardList,
+      preload: preloadEquipmentCapabilities,
+      primary: true
+    },
+    {
+      name: '收藏',
+      path: '/equipment/favorites',
+      icon: Star,
+      activeIcon: Star,
+      preload: preloadEquipmentFavorites,
+      primary: true
+    },
+    {
+      name: '知识总览',
+      path: '/knowledge',
+      icon: BookOpen,
+      activeIcon: BookOpen,
+      preload: preloadKnowledgePortal
     },
     {
       name: '需求 Query',
@@ -261,41 +375,11 @@ const mainList = computed(() => {
       preload: preloadEquipmentQueries
     },
     {
-      name: '研究任务',
-      path: '/equipment/runs',
-      activePaths: ['/equipment/runs'],
-      icon: Radar,
-      activeIcon: Radar,
-      preload: preloadEquipmentRuns
-    },
-    {
-      name: '能力画像',
-      path: '/equipment/capabilities',
-      icon: ClipboardList,
-      activeIcon: ClipboardList,
-      preload: preloadEquipmentCapabilities
-    },
-    {
-      name: '深研对话',
-      path: '/equipment/deep-thinking',
-      activePaths: ['/equipment/deep-thinking'],
-      icon: MessageCircle,
-      activeIcon: MessageCircle,
-      preload: preloadEquipmentDeepThinking
-    },
-    {
       name: '研究报告',
       path: '/equipment/reports',
       icon: FileText,
       activeIcon: FileText,
       preload: preloadEquipmentReports
-    },
-    {
-      name: '收藏',
-      path: '/equipment/favorites',
-      icon: Star,
-      activeIcon: Star,
-      preload: preloadEquipmentFavorites
     }
   ]
 
@@ -354,8 +438,8 @@ const mainList = computed(() => {
   return items
 })
 
-const primaryNavItem = computed(() => mainList.value[0] || null)
-const secondaryNavItems = computed(() => mainList.value.slice(1))
+const primaryNavItems = computed(() => mainList.value.filter((item) => item.primary))
+const exploratoryNavItems = computed(() => mainList.value.filter((item) => !item.primary))
 
 const isNavItemActive = (item) => {
   const activePaths = item.activePaths || [item.path]
@@ -363,6 +447,14 @@ const isNavItemActive = (item) => {
     return activePaths.some((path) => route.path === path)
   }
   return activePaths.some((path) => route.path === path || route.path.startsWith(`${path}/`))
+}
+
+const exploreNavRequestedOpen = ref(false)
+const isExploreRouteActive = computed(() => exploratoryNavItems.value.some(isNavItemActive))
+const exploreNavOpen = computed(() => exploreNavRequestedOpen.value || isExploreRouteActive.value)
+
+const toggleExploreNav = () => {
+  exploreNavRequestedOpen.value = !exploreNavOpen.value
 }
 
 const preloadNavItem = (item) => {
@@ -597,26 +689,27 @@ provide('settingsModal', {
       <div class="sidebar-scroll" tabindex="0" aria-label="导航、项目与对话历史">
         <div class="nav">
           <RouterLink
-            v-if="primaryNavItem"
-            :to="primaryNavItem.path"
+            v-for="item in primaryNavItems"
+            :key="item.path"
+            :to="item.path"
             class="nav-item"
-            :class="{ active: isNavItemActive(primaryNavItem) }"
-            :active-class="primaryNavItem.action ? '' : 'active'"
-            @pointerenter="preloadNavItem(primaryNavItem)"
-            @focus="preloadNavItem(primaryNavItem)"
-            @click.stop
+            :class="{
+              active: isNavItemActive(item),
+              'primary-action': item.primaryAction
+            }"
+            :active-class="item.action ? '' : 'active'"
+            @pointerenter="preloadNavItem(item)"
+            @focus="preloadNavItem(item)"
           >
             <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
-              <template #title>{{ primaryNavItem.name }}</template>
+              <template #title>{{ item.name }}</template>
               <component
                 class="icon"
-                :is="
-                  isNavItemActive(primaryNavItem) ? primaryNavItem.activeIcon : primaryNavItem.icon
-                "
+                :is="isNavItemActive(item) ? item.activeIcon : item.icon"
                 size="18"
               />
             </a-tooltip>
-            <span class="nav-text">{{ primaryNavItem.name }}</span>
+            <span class="nav-text">{{ item.name }}</span>
           </RouterLink>
 
           <button
@@ -632,27 +725,50 @@ provide('settingsModal', {
             </a-tooltip>
           </button>
 
-          <RouterLink
-            v-for="(item, index) in secondaryNavItems"
-            :key="index"
-            :to="item.path"
-            v-show="!item.hidden"
-            class="nav-item"
-            :class="{ active: isNavItemActive(item) }"
-            :active-class="item.action ? '' : 'active'"
-            @pointerenter="preloadNavItem(item)"
-            @focus="preloadNavItem(item)"
+          <button
+            type="button"
+            class="nav-item explore-toggle"
+            :class="{ active: isExploreRouteActive, expanded: exploreNavOpen }"
+            :aria-expanded="exploreNavOpen"
+            aria-controls="exploratory-navigation"
+            @click.stop="toggleExploreNav"
           >
             <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
-              <template #title>{{ item.name }}</template>
-              <component
-                class="icon"
-                :is="isNavItemActive(item) ? item.activeIcon : item.icon"
-                size="18"
-              />
+              <template #title>更多功能</template>
+              <Compass class="icon" size="18" />
             </a-tooltip>
-            <span class="nav-text">{{ item.name }}</span>
-          </RouterLink>
+            <span class="nav-text">更多功能</span>
+            <ChevronDown class="explore-chevron" size="15" />
+          </button>
+
+          <div
+            v-if="exploreNavOpen"
+            id="exploratory-navigation"
+            class="exploratory-navigation"
+            aria-label="更多与探索性功能"
+          >
+            <RouterLink
+              v-for="item in exploratoryNavItems"
+              :key="item.path"
+              :to="item.path"
+              v-show="!item.hidden"
+              class="nav-item"
+              :class="{ active: isNavItemActive(item) }"
+              :active-class="item.action ? '' : 'active'"
+              @pointerenter="preloadNavItem(item)"
+              @focus="preloadNavItem(item)"
+            >
+              <a-tooltip placement="right" :open="sidebarCollapsed ? undefined : false">
+                <template #title>{{ item.name }}</template>
+                <component
+                  class="icon"
+                  :is="isNavItemActive(item) ? item.activeIcon : item.icon"
+                  size="18"
+                />
+              </a-tooltip>
+              <span class="nav-text">{{ item.name }}</span>
+            </RouterLink>
+          </div>
         </div>
         <div class="fill">
           <ConversationNavSection
@@ -735,6 +851,26 @@ provide('settingsModal', {
         </router-view>
       </div>
     </div>
+
+    <aside v-if="latestBriefPush" class="brief-login-push" aria-live="polite">
+      <div class="brief-login-push-icon"><BellRing size="20" /></div>
+      <div class="brief-login-push-copy">
+        <span>今日前沿已送达 · {{ formatBriefTime(latestBriefPush.created_at) }}</span>
+        <b>{{ latestBriefPush.title }}</b>
+        <p>{{ latestBriefPush.summary }}</p>
+        <button type="button" @click="openLatestBriefPush">
+          查看今日简报 <ArrowRight size="15" />
+        </button>
+      </div>
+      <button
+        type="button"
+        class="brief-login-push-close"
+        aria-label="关闭今日简报提醒"
+        @click="dismissLatestBriefPush"
+      >
+        <X size="17" />
+      </button>
+    </aside>
 
     <GlobalSearchModal
       v-if="conversationSearchOpen"
@@ -822,6 +958,95 @@ div.header,
 
 .app-route-stage > .app-navigation-page {
   min-width: 0;
+}
+
+.brief-login-push {
+  position: fixed;
+  z-index: 1100;
+  top: 18px;
+  right: 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--main-color) 24%, var(--gray-100));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-0) 96%, var(--main-20));
+  box-shadow: 0 16px 44px rgb(31 45 78 / 18%);
+  color: var(--gray-900);
+}
+
+.brief-login-push-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--main-30);
+  color: var(--main-color);
+}
+
+.brief-login-push-copy {
+  min-width: 0;
+
+  > span {
+    display: block;
+    color: var(--main-color);
+    font-size: 11px;
+    font-weight: 750;
+  }
+
+  > b {
+    display: block;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  > p {
+    display: -webkit-box;
+    margin: 5px 0 10px;
+    overflow: hidden;
+    color: var(--gray-600);
+    font-size: 12px;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--main-color);
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+}
+
+.brief-login-push-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--gray-50);
+    color: var(--gray-800);
+  }
 }
 
 :global(body.equipment-report-printing) .app-route-stage {
@@ -1034,6 +1259,21 @@ div.header,
       }
     }
 
+    &.explore-toggle {
+      margin-top: 6px;
+
+      .explore-chevron {
+        flex: 0 0 15px;
+        margin-left: auto;
+        color: var(--gray-500);
+        transition: transform 0.18s ease;
+      }
+
+      &.expanded .explore-chevron {
+        transform: rotate(180deg);
+      }
+    }
+
     &.warning {
       color: var(--color-error-500);
     }
@@ -1134,6 +1374,19 @@ div.header,
       }
     }
   }
+
+  .exploratory-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 2px 0 4px 10px;
+    padding-left: 6px;
+    border-left: 1px solid var(--gray-150);
+
+    .nav-item {
+      color: var(--gray-600);
+    }
+  }
 }
 
 .app-layout.sidebar-collapsed {
@@ -1199,6 +1452,10 @@ div.header,
         pointer-events: none;
       }
 
+      .explore-chevron {
+        display: none;
+      }
+
       &.user-info {
         padding: 0 @sidebar-collapsed-avatar-padding-x;
 
@@ -1212,10 +1469,23 @@ div.header,
         }
       }
     }
+
+    .exploratory-navigation {
+      width: 100%;
+      margin-left: 0;
+      padding-left: 0;
+      border-left: 0;
+    }
   }
 }
 
 @media (max-width: 768px) {
+  .brief-login-push {
+    top: max(10px, env(safe-area-inset-top));
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
+
   .app-layout {
     flex-direction: column;
     height: calc(100dvh - var(--site-footer-height));

@@ -5,7 +5,10 @@
 """
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, ClassVar
+
+from platform_core.knowledge.parser.result import ParsedDocument
 
 
 class DocumentProcessorException(Exception):
@@ -77,6 +80,14 @@ class BaseDocumentProcessor(ABC):
     def get_service_name(self) -> str:
         """返回 parser 声明的稳定服务标识。"""
         return self.service_name
+
+    def process_file_result(self, file_path: str, params: dict[str, Any] | None = None) -> ParsedDocument:
+        """返回结构化解析结果；未适配的解析器保持字符串接口兼容。"""
+        return ParsedDocument(
+            markdown=self.process_file(file_path, params),
+            parser_name=self.get_service_name(),
+            source_metadata={"file_extension": Path(file_path.split("?", 1)[0]).suffix.lower()},
+        )
 
     def supports_file_type(self, file_extension: str) -> bool:
         """

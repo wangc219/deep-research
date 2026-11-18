@@ -190,6 +190,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { File, MessageCircle, MessageCirclePlus, X } from '@lucide/vue'
 import { threadApi } from '@/apis'
+import { filterUserVisibleThreads } from '@/stores/chatThreads'
 import dayjs, { parseToShanghai } from '@/utils/time'
 import FileTypeIcon from '@/components/common/FileTypeIcon.vue'
 
@@ -418,7 +419,7 @@ const searchConversations = async ({ reset = false } = {}) => {
       offset
     })
     if (requestId !== searchRequestId) return
-    const items = response?.items || []
+    const items = filterUserVisibleThreads(response?.items)
     conversationResults.value = reset ? items : [...conversationResults.value, ...items]
     hasMore.value = Boolean(response?.has_more)
     selectedIndex.value =

@@ -94,6 +94,21 @@ class UserRepository:
             result = await session.execute(select(User).where(User.uid.in_(normalized_uids)))
             return list(result.scalars().all())
 
+    async def list_active_by_uids(self, uids: list[str]) -> list[User]:
+        """批量获取未软删除的指定用户，供角色分配等安全边界使用。"""
+        normalized_uids = sorted({str(uid).strip() for uid in uids if str(uid).strip()})
+        if not normalized_uids:
+            return []
+
+        async with self._session() as session:
+            result = await session.execute(
+                select(User).where(
+                    User.uid.in_(normalized_uids),
+                    User.is_deleted == 0,
+                )
+            )
+            return list(result.scalars().all())
+
     async def get_by_phone(self, phone: str) -> User | None:
         """根据手机号获取用户"""
         async with self._session() as session:

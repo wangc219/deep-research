@@ -180,6 +180,9 @@ const syncSelectedThreadFromRoute = async () => {
 
     const ok = await chatComponent.selectThreadFromRoute(threadId)
     if (ok === null) return
+    if (!threadId && !getRouteAgentId()) {
+      await agentStore.selectDefaultAgent()
+    }
     if (threadId && !ok) {
       await router.replace({ name: 'AgentComp' })
     }

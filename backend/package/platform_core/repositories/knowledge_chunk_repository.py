@@ -23,6 +23,14 @@ class KnowledgeChunkRepository:
         "end_char_pos",
         "start_token_pos",
         "end_token_pos",
+        "document_version",
+        "page_number",
+        "block_type",
+        "heading_path",
+        "bbox",
+        "parser_name",
+        "parser_version",
+        "source_metadata",
         "graph_indexed",
         "graph_extraction_details",
         "ent_ids",
@@ -215,7 +223,11 @@ class KnowledgeChunkRepository:
             return int(result.scalar() or 0)
 
     async def count_graph_pending_by_kb_id(self, kb_id: str) -> int:
-        return await self._count_by_kb_id(kb_id, KnowledgeChunk.graph_indexed.is_not(True))
+        return await self._count_by_kb_id(
+            kb_id,
+            KnowledgeChunk.graph_indexed.is_not(True),
+            KnowledgeChunk.graph_excluded.is_not(True),
+        )
 
     async def count_graph_extraction_failed_by_kb_id(self, kb_id: str) -> int:
         """统计尚未入图且抽取失败的 Chunk。"""
@@ -223,6 +235,7 @@ class KnowledgeChunkRepository:
         return await self._count_by_kb_id(
             kb_id,
             KnowledgeChunk.graph_indexed.is_not(True),
+            KnowledgeChunk.graph_excluded.is_not(True),
             status == "failed",
         )
 
@@ -246,6 +259,7 @@ class KnowledgeChunkRepository:
                 .where(
                     KnowledgeChunk.kb_id == kb_id,
                     KnowledgeChunk.graph_indexed.is_not(True),
+                    KnowledgeChunk.graph_excluded.is_not(True),
                     KnowledgeChunk.id > after_id,
                 )
                 .order_by(KnowledgeChunk.id.asc())
@@ -268,6 +282,7 @@ class KnowledgeChunkRepository:
                 .where(
                     KnowledgeChunk.kb_id == kb_id,
                     KnowledgeChunk.graph_indexed.is_not(True),
+                    KnowledgeChunk.graph_excluded.is_not(True),
                     status == "failed",
                     KnowledgeChunk.id > after_id,
                 )
@@ -282,16 +297,22 @@ class KnowledgeChunkRepository:
         extraction_result: dict[str, Any],
         attempt_count: int = 1,
     ) -> None:
+        metadata = extraction_result.get("metadata") if isinstance(extraction_result, dict) else None
+        cache = metadata.get("extraction_cache") if isinstance(metadata, dict) else None
+        details: dict[str, Any] = {
+            "status": "succeeded",
+            "attempt_count": attempt_count,
+        }
+        if isinstance(cache, dict):
+            details["cache_key"] = cache.get("key")
+            details["cache_manifest"] = cache.get("manifest")
         async with pg_manager.get_async_session_context() as session:
             await session.execute(
                 update(KnowledgeChunk)
                 .where(KnowledgeChunk.chunk_id == chunk_id)
                 .values(
                     extraction_result=extraction_result,
-                    graph_extraction_details={
-                        "status": "succeeded",
-                        "attempt_count": attempt_count,
-                    },
+                    graph_extraction_details=details,
                 )
             )
 

@@ -61,3 +61,39 @@ async def test_compact_event_count_remains_complete_with_large_postgres_history(
     assert result["events"][0]["event_id"] == "event-0"
     assert result["events"][-1]["event_id"] == "event-2479"
     assert repo.list_events.await_count == 1
+
+
+def test_resumed_workflow_keeps_historical_failure_only_in_event_audit() -> None:
+    """当前状态恢复后，旧 run_failed 不再投影为正在失败。"""
+
+    run = SimpleNamespace(
+        id="run-resumed",
+        status="queued",
+        payload={},
+        error="旧失败信息",
+        topic="恢复测试",
+        research_route="auto",
+    )
+    events = [
+        {
+            "event_id": "failed",
+            "sequence": 1,
+            "event_type": "run_failed",
+            "actor": "orchestrator",
+            "summary": "旧失败信息",
+            "details": {"phase": "synthesizing"},
+        },
+        {
+            "event_id": "resumed",
+            "sequence": 2,
+            "event_type": "run_resumed",
+            "actor": "orchestrator",
+            "summary": "已恢复执行",
+            "details": {"status": "queued"},
+        },
+    ]
+
+    workflow = service._research_interaction_workflow(events, run=run, summary={})
+
+    assert workflow["status"] == "queued"
+    assert workflow["failure"] == {}

@@ -573,6 +573,36 @@ async def test_update_database_additional_params_merge_keeps_chunk_preset(
     assert info_response.json()["additional_params"]["chunk_preset_id"] == "qa"
 
 
+async def test_update_empty_database_embedding_model_spec(test_client, admin_headers):
+    create_response = await test_client.post(
+        "/api/knowledge/databases",
+        json={
+            "database_name": f"pytest_embedding_switch_{uuid.uuid4().hex[:6]}",
+            "description": "empty embedding switch",
+            "embedding_model_spec": "siliconflow-cn:Pro/BAAI/bge-m3",
+            "kb_type": "milvus",
+        },
+        headers=admin_headers,
+    )
+    assert create_response.status_code == 200, create_response.text
+    kb_id = create_response.json()["kb_id"]
+    try:
+        update_response = await test_client.put(
+            f"/api/knowledge/databases/{kb_id}",
+            json={
+                "name": create_response.json()["name"],
+                "description": "local-only embedding",
+                "embedding_model_spec": "local-embedding:BAAI/bge-m3",
+            },
+            headers=admin_headers,
+        )
+        assert update_response.status_code == 200, update_response.text
+        assert update_response.json()["database"]["embedding_model_spec"] == "local-embedding:BAAI/bge-m3"
+    finally:
+        delete_response = await test_client.delete(f"/api/knowledge/databases/{kb_id}", headers=admin_headers)
+        assert delete_response.status_code == 200, delete_response.text
+
+
 async def test_knowledge_routes_enforce_permissions(test_client, standard_user, knowledge_database):
     kb_id = knowledge_database["kb_id"]
 

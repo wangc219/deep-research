@@ -34,6 +34,7 @@ JSON 格式：
       "military_value_dimensions": ["允许的军事价值维度"],
       "expected_capability_gain": "预期能力收益",
       "application_direction": "应用或转化方向",
+      "applicable_conditions": ["关系成立所需的原文适用条件或边界"],
       "uncertainty": "边界条件与不确定性",
       "expert_review_required": false
     }
@@ -75,6 +76,8 @@ DEFAULT_ENABLE_HYPOTHESIS_EXTRACTION = True
 DEFAULT_EXTRACTION_MAX_TOKENS = 8192
 MAX_EXTRACTION_OUTPUT_TOKENS = 32768
 DEFAULT_EXTRACTION_THINKING_BUDGET = 2048
+DEFAULT_TRUNCATION_RETRIES = 2
+MAX_TRUNCATION_RETRIES = 2
 
 
 class ExtractionOutputTruncatedError(ValueError):
@@ -155,6 +158,7 @@ class LLMGraphExtractor(GraphExtractor):
         if self.options.get("model_params") is not None and not isinstance(self.options["model_params"], dict):
             raise ValueError("LLM 抽取器 model_params 必须是对象")
         self._resolve_model_params()
+        self._resolve_truncation_retries()
         self._resolve_context_window_size()
         self._resolve_context_max_chars()
         self._resolve_enable_hypothesis_extraction()
@@ -208,13 +212,35 @@ class LLMGraphExtractor(GraphExtractor):
             raise ValueError(f"LLM 抽取器 max_hypotheses_per_chunk 必须在 0 到 {MAX_HYPOTHESES_PER_CHUNK} 之间")
         return value
 
+    def _resolve_truncation_retries(self) -> int:
+        """限制因输出截断触发的指数预算重试次数。"""
+
+        raw = self.options.get("max_truncation_retries", DEFAULT_TRUNCATION_RETRIES)
+        if isinstance(raw, bool) or not isinstance(raw, int) or not 0 <= raw <= MAX_TRUNCATION_RETRIES:
+            raise ValueError(f"max_truncation_retries 必须是 0 到 {MAX_TRUNCATION_RETRIES} 之间的整数")
+        return raw
+
     async def extract(self, text: str, *, chunk_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         self.validate_options()
         prompt = self._build_prompt(text, chunk_metadata=chunk_metadata)
+        return await self.complete_json(prompt, chunk_metadata=chunk_metadata)
+
+    async def complete_json(
+        self,
+        prompt: str,
+        *,
+        chunk_metadata: dict[str, Any] | None = None,
+        required_keys: tuple[str, ...] = ("relations", "entities"),
+    ) -> dict[str, Any]:
+        """复用受控模型连接完成一次严格 JSON 调用。"""
+        if not required_keys or any(not str(key).strip() for key in required_keys):
+            raise ValueError("required_keys 必须包含至少一个非空 JSON 字段")
+        self.validate_options()
         params = self._resolve_model_params()
         budget = params["max_tokens"]
-        # 只有供应商明确报告截断才提高预算，最多补跑两次，避免静默丢失关系。
-        for attempt in range(3):
+        # 只有供应商明确报告截断才提高预算；本地小模型可配置为零次，避免长输出指数放大延迟。
+        truncation_retries = self._resolve_truncation_retries()
+        for attempt in range(truncation_retries + 1):
             model = self._models.get(budget)
             if model is None:
                 model = select_model(
@@ -241,7 +267,7 @@ class LLMGraphExtractor(GraphExtractor):
                 getattr(response, "usage", {}),
             )
             if str(getattr(response, "finish_reason", "")).lower() in {"length", "max_tokens"}:
-                if budget >= MAX_EXTRACTION_OUTPUT_TOKENS or attempt == 2:
+                if budget >= MAX_EXTRACTION_OUTPUT_TOKENS or attempt == truncation_retries:
                     break
                 budget = min(budget * 2, MAX_EXTRACTION_OUTPUT_TOKENS)
                 continue
@@ -249,8 +275,9 @@ class LLMGraphExtractor(GraphExtractor):
             if not content or not content.strip():
                 raise ValueError("模型返回空抽取内容")
             parsed = json_repair.loads(content)
-            if not isinstance(parsed, dict) or not any(key in parsed for key in ("relations", "entities")):
-                raise ValueError("模型未返回实体或关系 JSON")
+            if not isinstance(parsed, dict) or not any(key in parsed for key in required_keys):
+                expected = "、".join(required_keys)
+                raise ValueError(f"模型未返回要求的 JSON 字段：{expected}")
             return parsed
         raise ExtractionOutputTruncatedError(f"抽取输出被截断，已尝试提高预算至 {budget} tokens")
 

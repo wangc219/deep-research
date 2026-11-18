@@ -16,20 +16,53 @@ import import_legacy_sqlite as migration  # noqa: E402
 from import_legacy_sqlite import _connect, inventory  # noqa: E402
 
 
-def test_legacy_sqlite_inventory_uses_real_query_tables() -> None:
-    report = inventory(
-        ROOT / "outputs" / "application.db",
-        ROOT / "outputs" / "query-library.db",
-        ROOT / "outputs" / "runs",
+def test_legacy_sqlite_inventory_uses_real_query_tables(tmp_path: Path) -> None:
+    """迁移盘点覆盖正式表名，但不依赖开发机上的真实业务数据库。"""
+    app_db = tmp_path / "application.db"
+    query_db = tmp_path / "query-library.db"
+    with sqlite3.connect(app_db) as conn:
+        conn.execute("CREATE TABLE runs (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+        conn.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            ("sqlite-run", json.dumps({"topic": "库内任务", "status": "completed"})),
+        )
+        for table in (
+            "runtime_events",
+            "favorites",
+            "capability_versions",
+            "deep_sessions",
+            "deep_messages",
+            "deep_jobs",
+            "deep_branches",
+            "deep_steers",
+        ):
+            conn.execute(f'CREATE TABLE "{table}" (id INTEGER PRIMARY KEY)')
+            conn.execute(f'INSERT INTO "{table}" VALUES (1)')
+    with sqlite3.connect(query_db) as conn:
+        for table in (
+            "query_library_items",
+            "query_library_revisions",
+            "query_generation_jobs",
+        ):
+            conn.execute(f'CREATE TABLE "{table}" (id INTEGER PRIMARY KEY)')
+            conn.execute(f'INSERT INTO "{table}" VALUES (1)')
+    run_root = tmp_path / "runs" / "artifact-only"
+    run_root.mkdir(parents=True)
+    (run_root / "round_summary.json").write_text(
+        json.dumps({"problem": {"topic": "仅产物任务"}}),
+        encoding="utf-8",
     )
+
+    report = inventory(app_db, query_db, tmp_path / "runs")
+
     assert report["runs"] == report["sqlite_runs"] + report["output_only_runs"]
-    assert report["sqlite_runs"] >= 1
-    assert report["output_only_runs"] >= 1
-    assert report["events"] >= 1
-    assert report["queries"] >= 1
-    assert report["query_revisions"] >= 1
-    assert report["query_generation_jobs"] >= 1
-    assert report["capability_versions"] >= 1
+    assert report["sqlite_runs"] == 1
+    assert report["output_only_runs"] == 1
+    assert report["events"] == 1
+    assert report["queries"] == 1
+    assert report["query_revisions"] == 1
+    assert report["query_generation_jobs"] == 1
+    assert report["capability_versions"] == 1
     assert "worker_heartbeats" in report["skipped_tables"]
 
 

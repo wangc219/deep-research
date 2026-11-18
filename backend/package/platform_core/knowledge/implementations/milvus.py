@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import os
 import time
 import traceback
@@ -21,7 +22,6 @@ from pymilvus import (
     utility,
 )
 
-from platform_core.config.options import system_options
 from platform_core.knowledge.base import FileStatus, KnowledgeBase
 from platform_core.knowledge.chunking.ragflow_like.dispatcher import chunk_markdown
 from platform_core.knowledge.chunking.ragflow_like.nlp import count_tokens
@@ -43,6 +43,16 @@ _milvus_query_offload_semaphore_refs: dict[
     int,
     tuple[weakref.ReferenceType[asyncio.AbstractEventLoop], weakref.ReferenceType[asyncio.Semaphore]],
 ] = {}
+
+
+def safe_indexing_error_summary(error: BaseException) -> str:
+    """生成不含 Chunk 正文、SQL 参数或供应商响应体的稳定错误摘要。"""
+    detail = str(error)
+    detail_bytes = detail.encode("utf-8", errors="replace")
+    return (
+        f"Indexing failed: error_type={type(error).__name__}, "
+        f"detail_chars={len(detail)}, detail_sha256={hashlib.sha256(detail_bytes).hexdigest()}"
+    )
 
 
 def _get_milvus_query_offload_semaphore() -> asyncio.Semaphore:
@@ -540,6 +550,7 @@ class MilvusKB(KnowledgeBase):
         collection = await self._get_existing_milvus_collection(kb_id)
         if collection is None:
             return 0
+
         def count_current_rows():
             collection.load()
             rows = collection.query(expr="", output_fields=["count(*)"], consistency_level="Strong", timeout=10)
@@ -569,6 +580,14 @@ class MilvusKB(KnowledgeBase):
                 "end_char_pos": chunk.get("end_char_pos"),
                 "start_token_pos": chunk.get("start_token_pos"),
                 "end_token_pos": chunk.get("end_token_pos"),
+                "document_version": int(chunk.get("document_version") or 1),
+                "page_number": chunk.get("page_number"),
+                "block_type": chunk.get("block_type"),
+                "heading_path": list(chunk.get("heading_path") or []),
+                "bbox": chunk.get("bbox"),
+                "parser_name": chunk.get("parser_name"),
+                "parser_version": chunk.get("parser_version"),
+                "source_metadata": dict(chunk.get("source_metadata") or {}),
                 "graph_indexed": bool(chunk.get("graph_indexed", False)),
                 "ent_ids": chunk.get("ent_ids"),
                 "tags": chunk.get("tags"),
@@ -745,6 +764,9 @@ class MilvusKB(KnowledgeBase):
             file_processing_params=file_meta.get("processing_params"),
             request_params=params,
         )
+        chunk_parser_config = dict(params.get("chunk_parser_config") or {})
+        chunk_parser_config["embed_model_id"] = embedding_model_spec
+        params["chunk_parser_config"] = chunk_parser_config
         file_repo = KnowledgeFileRepository()
         owner_filter = (
             {"processing_task_id": processing_task_id, "processing_owner": processing_owner}
@@ -800,12 +822,11 @@ class MilvusKB(KnowledgeBase):
         logger.debug(f"[index_file] file_id={file_id}, processing_params={params}")
 
         try:
-            chunk_parser_config = dict(params.get("chunk_parser_config") or {})
-            chunk_parser_config.setdefault("embed_model_id", (await system_options.get())["embed_model"])
-            params["chunk_parser_config"] = chunk_parser_config
             # Read markdown
             markdown_content = await self._read_markdown_from_minio(file_meta["markdown_file"])
             filename = file_meta.get("filename")
+            if file_meta.get("content_hash"):
+                params["document_content_hash"] = str(file_meta["content_hash"])
 
             # Split
             chunks = self._split_text_into_chunks(markdown_content, file_id, filename, params)
@@ -851,8 +872,12 @@ class MilvusKB(KnowledgeBase):
                 current_task = asyncio.current_task()
                 if current_task is not None and current_task.cancelling():
                     current_task.uncancel()
-            error_msg = "File indexing was cancelled" if isinstance(e, asyncio.CancelledError) else str(e)
-            logger.error(f"Indexing failed for {file_id}: {error_msg}")
+            error_msg = (
+                "File indexing was cancelled"
+                if isinstance(e, asyncio.CancelledError)
+                else safe_indexing_error_summary(e)
+            )
+            logger.error("Indexing failed for {}: {}", file_id, error_msg)
             update_data = {
                 "status": FileStatus.ERROR_INDEXING,
                 "error_message": error_msg,

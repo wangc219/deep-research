@@ -37,6 +37,19 @@ fi
 TASK_ACTION="${1:-up}"
 if [[ $# -gt 0 ]]; then shift; fi
 
+if [[ "$TASK_MODE" == prod && "$TASK_ACTION" =~ ^(start|build|update)$ ]]; then
+  TASK_RELEASE_ID="${DEEP_RESEARCH_RELEASE_ID:-}"
+  TASK_SOURCE_REVISION="${DEEP_RESEARCH_SOURCE_REVISION:-}"
+  if [[ -z "$TASK_RELEASE_ID" || -z "$TASK_SOURCE_REVISION" ]]; then
+    echo '生产构建必须显式设置 DEEP_RESEARCH_RELEASE_ID 与 DEEP_RESEARCH_SOURCE_REVISION。' >&2
+    exit 2
+  fi
+  if [[ ! "$TASK_RELEASE_ID" =~ ^[A-Za-z0-9._-]+$ || ! "$TASK_SOURCE_REVISION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo '生产发布号与源码指纹只能包含字母、数字、点、下划线和连字符。' >&2
+    exit 2
+  fi
+fi
+
 # start 是面向用户的一键入口。仅在默认本地配置缺失或安全项不完整时运行初始化，
 # 避免每次启动都重复扫描和拉取基础镜像。
 if [[ "$TASK_ACTION" == "start" ]]; then

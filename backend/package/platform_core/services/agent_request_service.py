@@ -24,6 +24,7 @@ from platform_core.repositories.project_repository import ProjectRepository
 from platform_core.services.agent_request_queue_service import (
     DELIVERY_STATUS_QUEUED,
     DELIVERY_STATUS_REJECTED,
+    REQUEST_STATUS_DISPATCHED,
     REQUEST_STATUS_QUEUED,
     REQUEST_STATUS_REJECTED,
     DispatchResult,
@@ -161,9 +162,7 @@ async def submit_agent_request(
     if conversation is not None and conversation.uid != str(current_user.uid):
         if not has_global_business_access(current_user):
             raise HTTPException(status_code=404, detail="对话线程不存在")
-        execution_user = await db.scalar(
-            select(User).where(User.uid == str(conversation.uid), User.is_deleted == 0)
-        )
+        execution_user = await db.scalar(select(User).where(User.uid == str(conversation.uid), User.is_deleted == 0))
         if execution_user is None:
             raise HTTPException(status_code=404, detail="对话线程不存在")
 
@@ -320,11 +319,55 @@ async def submit_agent_request(
         owner_uid=str(conversation.uid),
     )
     await db.commit()
+    return await _publish_committed_request(
+        response=response,
+        request=request,
+        dispatch=dispatch,
+        workdir_binding=workdir_binding,
+        db=db,
+    )
+
+
+async def _publish_committed_request(
+    *,
+    response: dict[str, Any],
+    request: AgentRunRequest,
+    dispatch: DispatchResult | None,
+    workdir_binding: WorkdirBinding,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """提交后立即投递或补派，避免瞬时竞争退化到周期恢复。"""
     if workdir_binding.materialize_managed:
         ensure_bound_user_workdir(workdir_binding.uid, workdir_binding.workdir_path)
+
     if dispatch is not None:
         await enqueue_agent_run(dispatch.run_id)
-    return response
+        return response
+
+    if request.status != REQUEST_STATUS_QUEUED:
+        return response
+
+    recovered = await dispatch_ready_head(
+        db=db,
+        uid=request.uid,
+        agent_slug=request.agent_slug,
+        thread_id=request.conversation_thread_id,
+        workdir_binding=workdir_binding,
+        expected_request_id=request.request_id,
+    )
+    if not recovered:
+        return response
+
+    await db.commit()
+    await enqueue_agent_run(recovered.run_id)
+    return {
+        **response,
+        "status": REQUEST_STATUS_DISPATCHED,
+        "queue_position": None,
+        "run_id": recovered.run_id,
+        "stream_url": f"/api/agent/runs/{recovered.run_id}/events",
+        "request_events_url": None,
+    }
 
 
 async def _persist_request(
@@ -537,9 +580,7 @@ async def _supersede_latest_question(
 ) -> dict[str, Any]:
     """隐藏最新问题的既有分支并删除其反馈，保留 Run 审计事实。"""
     target = await db.scalar(
-        select(Message)
-        .where(Message.id == message_id, Message.conversation_id == conversation_id)
-        .with_for_update()
+        select(Message).where(Message.id == message_id, Message.conversation_id == conversation_id).with_for_update()
     )
     if target is None or target.role != "user" or target.message_type == SUPERSEDED_MESSAGE_TYPE:
         raise queue_conflict("replace_message_not_found", "只能编辑当前线程最新一条用户消息")

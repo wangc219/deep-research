@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
 import asyncio
-import inspect
 import hashlib
-import time
+import inspect
 import json
 import logging
+import time
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import replace
+from datetime import UTC, datetime
 from typing import Any
 
 from equipment_deep_research.providers.base import ModelMessage, ModelProvider
@@ -24,9 +25,9 @@ from equipment_deep_research.query_library.quality import (
     coverage_tasks,
     dedupe_sources,
     sanitize_source_reference,
+    review_generated_candidate,
     validate_generated_candidate,
 )
-
 
 RESEARCH_FOCUS_REQUIREMENTS = (
     "默认以中国为研究主体，围绕中国当前安全态势及未来军事任务开展战略层面的装备能力研究；"
@@ -127,11 +128,13 @@ class ModelQueryGenerator:
         provider_snapshot: Mapping[str, Any] | None = None,
         model_options: Mapping[str, Any] | None = None,
         default_profile: str = "balanced",
+        situation_researcher: Callable[..., Any] | None = None,
     ) -> None:
         self.provider = provider
         self.provider_snapshot = dict(provider_snapshot or _snapshot(provider))
         self.model_options = dict(model_options or {})
         self.default_profile = default_profile
+        self.situation_researcher = situation_researcher
 
     async def generate(
         self,
@@ -165,7 +168,7 @@ class ModelQueryGenerator:
         cache_identity = hashlib.sha256(
             json.dumps(
                 {
-                    "version": 3,
+                    "version": 5,
                     "provider": self.provider_snapshot,
                     "options": self.model_options,
                     "profile": generation_profile,
@@ -222,8 +225,31 @@ class ModelQueryGenerator:
         else:
             capabilities = getattr(self.provider, "capabilities", None)
             can_search = not callable(capabilities) or capabilities().hosted_web_search
-            await emit(on_stage, "web_validation" if can_search else "context_analysis")
-            if generation_profile == "efficient" and not can_search:
+            researched_grounding: dict[str, Any] = {}
+            researched_metadata: dict[str, Any] = {}
+            if self.situation_researcher is not None:
+                await emit(on_stage, "web_validation")
+                try:
+                    researched = self.situation_researcher(
+                        topic=topic,
+                        supplemental_information=supplemental_information,
+                        reference_urls=reference_urls,
+                    )
+                    if inspect.isawaitable(researched):
+                        researched = await researched
+                    if isinstance(researched, tuple) and len(researched) == 2:
+                        researched_grounding = dict(researched[0] or {})
+                        researched_metadata = dict(researched[1] or {})
+                    elif isinstance(researched, Mapping):
+                        researched_grounding = dict(researched)
+                except Exception as exc:
+                    logger.warning("Query situation research unavailable; continuing without it: %s", exc)
+            else:
+                await emit(on_stage, "web_validation" if can_search else "context_analysis")
+
+            if generation_profile == "efficient" and _has_research_grounding(researched_grounding):
+                grounding, metadata = researched_grounding, researched_metadata
+            elif generation_profile == "efficient" and not can_search:
                 # 无联网能力时不额外调用一次模型伪装成公开检索。
                 grounding, metadata = (
                     {
@@ -235,10 +261,19 @@ class ModelQueryGenerator:
                     {},
                 )
             else:
+                if self.situation_researcher is not None:
+                    await emit(on_stage, "web_validation")
                 grounding, metadata = await self._ground(
                     topic=topic,
                     supplemental_information=supplemental_information,
                     reference_urls=reference_urls,
+                    research_context=researched_grounding,
+                )
+                grounding, metadata = _merge_research_grounding(
+                    grounding,
+                    metadata,
+                    researched_grounding,
+                    researched_metadata,
                 )
             cached.update(
                 grounding=grounding,
@@ -363,6 +398,15 @@ class ModelQueryGenerator:
                         if issues:
                             rejection_notes.append(f"{slot}（{candidate.query[:60]}）: {'; '.join(issues)}")
                             continue
+                        quality_notes = review_generated_candidate(candidate, topic=topic)
+                        if quality_notes:
+                            candidate = replace(
+                                candidate,
+                                quality_review={
+                                    **candidate.quality_review,
+                                    "system_notes": "；".join(quality_notes)[:1500],
+                                },
+                            )
                         try:
                             await emit(on_candidate, candidate)
                         except GenerationValidationError as exc:
@@ -404,6 +448,7 @@ class ModelQueryGenerator:
         topic: str,
         supplemental_information: str,
         reference_urls: tuple[str, ...],
+        research_context: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         autonomous_discovery = _is_autonomous_discovery(supplemental_information)
         generation_profile = _generation_profile(supplemental_information, default=self.default_profile)
@@ -438,12 +483,14 @@ class ModelQueryGenerator:
             "topic": topic,
             "supplemental_information": supplemental_information,
             "reference_urls": list(reference_urls),
+            "research_explorer_context": dict(research_context or {}),
             "task": task,
             "output_contract": [
                 *RESEARCH_FOCUS_REQUIREMENTS,
                 "situation_assessment按作战环境、变化驱动、未来任务、对手约束、现有能力缺口、技术机会和不确定性组织。",
                 "事实、合理推演和未知项分开表达；没有公开证据时不得把推演写成事实。",
                 "signals必须写成‘变化信号→任务压力→潜在缺口’而不是关键词列表。",
+                "优先吸收research_explorer_context中的近期检索发现；它是选题牵引线索，仍须区分事实、推演与未知项。",
             ],
         }
         messages = (
@@ -613,6 +660,7 @@ class ModelQueryGenerator:
             "demand_hypotheses": hypotheses,
             "allowed_sources": [item.to_dict() for item in sources],
             "coverage_tasks": list(coverage_tasks(remaining_slots)),
+            "validation_contracts": [_generation_validation_contract(slot, topic) for slot in remaining_slots],
             "already_accepted_queries": [item.query for item in accepted],
             "previous_rejections": rejection_notes[-12:],
             "attempt": attempt + 1,
@@ -626,15 +674,23 @@ class ModelQueryGenerator:
                 "coverage_slot只是思考发生维度，不是最终装备目录；若与母题缺少直接因果关系，应换用同槽位下更相关的研究矛盾，不能机械套用示例。",
                 "优先从demand_hypotheses中选择任务价值高且彼此差异最大的牵引链；必要时可综合或提出新链，但不得跳过因果说明。",
                 "生成每条标题前至少比较两个候选方向，按因果具体性、任务价值、与已有Query差异度、可研究性择优，只输出胜出项。",
+                "打开研究维度：可从任务链断点、杀伤链或保障链接续、目标与环境变化、接敌关系、效应机理、"
+                "平台/弹药/载荷形态、末段自主识别决策、跨域协同、战损恢复、成本交换和工业补充等方向自由发散；"
+                "这些仅是非穷尽启发，不是必选目录、固定分类或关键词门槛。",
+                "允许标题直接使用‘杀伤链重构、任务接续、末段自主识别’等能力与机理语言；"
+                "只要完整需求链能说明其装备研发价值，就不要求重复母题中的装备名称，也不要求标题与weapon_requirement共享字面词。",
                 "demand_chain必须完整复述胜出项的六段因果链并标注evidence_status；不得用‘提升能力’等套话代替具体缺口。",
                 "完成标题后进行反向质检：若移除态势信号后标题仍完全成立，说明牵引不够具体，必须重写。"
                 "默认军事范围内，偏离军事任务的民用灾害命题必须替换；quality_review仅在三项均通过后verdict=pass。",
                 "generation_rationale说明为何值得现在研究，关联态势或威胁、任务价值与能力缺口；"
                 "supplemental_information明确待深研的核心问题、公开证据缺口与验证路径。",
                 "每个coverage_slot只生成一条中文短Query，作为研究任务标题使用。",
-                "标题、补充信息与demand_chain.weapon_requirement须使用一致的具体装备主体词，"
-                "weapon_requirement明确写出装备能力或体系效能需求，不能只写抽象技术趋势。",
-                "技术驱动-技术现状与趋势及体系实战-全链条制胜机理槽位，须在标题或补充信息中明确研究智能、自主或算法能力及其边界。",
+                "标题、补充信息与demand_chain.weapon_requirement须在语义和因果上指向同一研究对象，"
+                "但允许同义转述、新概念和模型发散出的新装备形态，不要求命中固定领域词或共享字面关键词。",
+                "若Query标题或用户母题明确命名了材料、技术、平台等研究对象（例如‘X及其拓展技术’），"
+                "supplemental_information和demand_chain必须逐字保留该命名对象；不得借用同批其他候选的威胁、场景或验证方案。",
+                "逐条执行validation_contracts中的生成前语义自审：从完整需求链提高装备研究相关性、母题相关性和槽位贡献，"
+                "不得为通过校验而堆砌‘智能、装备、体系’等关键词；系统不会用这些质量偏好在生成后硬性淘汰候选。",
                 "Query优先控制在18至25个汉字，语义确有需要时可在14至30个字符内浮动，采用‘对象+条件/能力+研究’形式。",
                 "不要把分析维度、预期输出和多项并列要求堆进Query；这些内容全部写入supplemental_information。",
                 "supplemental_information用80至220个汉字说明研究边界、关键维度、失效条件和预期装备能力输出。",
@@ -649,6 +705,14 @@ class ModelQueryGenerator:
                 "若allowed_sources只有态势研判或模型分析记录（source_kind=document），sources可留空；"
                 "系统会保留该说明，绝不能伪造HTTPS URL。",
                 "避免具体目标选择、攻击步骤、武器制造参数等可操作伤害指导。",
+                *(
+                    [
+                        "这是校验修复轮。只重写previous_rejections涉及的槽位；逐项消除拒绝原因后再输出，"
+                        "不得原样返回上一轮被拒标题。"
+                    ]
+                    if attempt > 0
+                    else []
+                ),
                 "只输出严格JSON。",
             ],
         }
@@ -695,6 +759,65 @@ class ModelQueryGenerator:
             "_provider_structured_retry_attempts": 0 if profile == "efficient" else 1,
             **({"_disable_hidden_reasoning": True} if profile == "efficient" else {}),
         }
+
+
+def _generation_validation_contract(slot: str, topic: str) -> dict[str, Any]:
+    """要求模型做语义自审，不把开放领域收窄成关键词白名单。"""
+
+    return {
+        "coverage_slot": slot,
+        "topic": topic,
+        "lexical_policy": "不设领域关键词白名单、装备名重复要求或字面同词门槛，允许能力语言、同义表达与新概念。",
+        "semantic_review": [
+            "完整因果链是否落到可独立论证的装备能力、形态或体系架构",
+            "标题与母题、weapon_requirement是否语义一致而非关键词拼接",
+            "是否体现本coverage_slot的独立研究贡献",
+            "是否保留智能体从态势信号发散出的非显然高价值方向",
+            "命名研究对象是否逐字贯穿标题、补充分析和需求链，且未混入同批其他Query的内容",
+        ],
+    }
+
+
+def _has_research_grounding(grounding: Mapping[str, Any]) -> bool:
+    return bool(grounding.get("signals") or grounding.get("sources"))
+
+
+def _merge_research_grounding(
+    grounding: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+    researched_grounding: Mapping[str, Any],
+    researched_metadata: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """合并调研探索线索与模型研判，并保留真实检索来源元数据。"""
+
+    merged = dict(grounding)
+    for key, limit in (("search_queries", 8), ("signals", 24)):
+        values: list[str] = []
+        for source in (researched_grounding, grounding):
+            for value in _string_list(source.get(key, [])):
+                if value not in values:
+                    values.append(value)
+        merged[key] = values[:limit]
+    if not str(merged.get("summary") or "").strip():
+        merged["summary"] = str(researched_grounding.get("summary") or "")
+
+    merged_metadata = dict(metadata)
+    web_sources: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+    for source_metadata in (researched_metadata, metadata):
+        rows = source_metadata.get("web_sources", [])
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            url = str(row.get("url") or "").strip()
+            if not url or url in seen_urls:
+                continue
+            seen_urls.add(url)
+            web_sources.append(dict(row))
+    merged_metadata["web_sources"] = web_sources[:8]
+    return merged, merged_metadata
 
 
 async def _collect_stream(

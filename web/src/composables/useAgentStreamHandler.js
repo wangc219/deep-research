@@ -15,15 +15,12 @@ const streamEventToMessageChunk = (streamEvent) => {
   if (!messageId) return null
 
   if (streamEvent.type === 'message_delta') {
-    const chunk = {
+    if (!streamEvent.content) return null
+    return {
       id: messageId,
       type: 'AIMessageChunk',
-      content: streamEvent.content || ''
+      content: streamEvent.content
     }
-    if (streamEvent.reasoning_content) {
-      chunk.reasoning_content = streamEvent.reasoning_content
-    }
-    return chunk
   }
 
   if (streamEvent.type === 'tool_call' || streamEvent.type === 'tool_call_delta') {
@@ -185,12 +182,13 @@ export function useAgentStreamHandler({
         }
         return true
 
-      case 'ask_user_question_required':
+      case 'interaction_pending':
       case 'human_approval_required':
+      case 'ask_user_question_required':
         streamSmoother?.flushThread(threadId)
-        threadState.replyLoadingVisible = false
         console.log(`${debugPrefix}[approval_required]`, {
           threadId,
+          status,
           currentAgentId: unref(currentAgentId)
         })
         // 使用审批 composable 处理审批请求

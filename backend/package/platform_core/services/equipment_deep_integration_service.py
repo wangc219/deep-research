@@ -399,7 +399,7 @@ async def build_system_context(
             "具体装备本体—接敌关系—作用载体与机理—作用对象—可观察直接战果—敌方原有应对为何失配’，名称必须体现创新核心和"
             "可识别的具体武器身份。用户未指定数量时，先在内部比较至少三种不同装备架构，最终只交付1至3个真正成立且彼此正交的候选，宁缺毋滥。"
             "当用户明确要求经过调研形成、提出、设计或发散新质创新武器装备时，先完成强研究路径，把高价值发现提炼为"
-            "真正改变未来作战制衡与打赢判断的开放生成上下文，并以实现证据和不可跨越边界约束，"
+            "真正改变未来作战制衡与打赢判断的开放生成上下文，并把公开事实、工程推演和创新假设分层，"
             "再直接生成聚焦候选；不得先自由堆概念后靠字段、"
             "检查表或引用事后修补，也不得把论文摘要或网页摘录拼接成装备方案。"
             "此类单轮强研究不创建或更新待办；多个正交制胜子问题就是执行计划。最终正文所在响应不得调用write_todos或其他工具；"
@@ -426,8 +426,9 @@ async def build_system_context(
                 "网页检索通常用1至2个required_terms锚定核心身份对象，避免把三个不同证据点强制同页共现；每个探索员至少争取2个直接相关的一手或高权威网页来源，"
                 "优先政府/军队、标准、论文出版页和原厂，已有原始来源时不用聚合媒体或转载页代替，同一论文转载只算一个来源。涉及技术实现的子问题必须使用AMiner并读取拟引用论文完整摘要。"
                 "每个探索员取得4至6条高价值发现即简洁交付，不写检索过程和重复背景；Websearch通常3至5次，AMiner通常1至2次互补主题发现、必要时1次标题校正，"
-                "只读取1至3篇强相关论文完整摘要。等待结果后由主智能体按‘高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—证据边界’"
+                "只读取1至3篇强相关论文完整摘要。等待结果后由主智能体按‘高价值发现—改变的制胜关系—约束的装备身份/构型/技术路线—验证状态’"
                 "综合并提炼为生成上下文，再直接创造聚焦候选。"
+                "不得生成独立的证据边界、检索限制或工具降级章节；验证状态紧邻对应判断表达，缺少同名现役装备或论文不得淘汰创新候选。"
                 "综合时以实际交付的论文题目、摘要层级和来源为准；单个分支为空不得覆盖其他分支已取得的论文证据。含DSML、XML、"
                 "tool_calls或invoke的可见协议文本不算有效交付。"
                 "若全部探索员未取得完整摘要且技术实现仍是候选成立的关键，主智能体在生成前直接补做一轮简短AMiner检索，"
@@ -795,24 +796,24 @@ async def _branch_context(*, db: AsyncSession, user: User, payload: dict[str, An
 def _project_run(run, *, compact: bool = False) -> dict[str, Any]:
     payload = dict(run.payload or {})
     payload_keys = (
-        "summary",
-        "research_focus",
-        "selected_agent_ids",
-        "discovery_branch",
-        "capability_count",
-    ) if compact else (
-        "summary",
-        "result",
-        "research_focus",
-        "selected_agent_ids",
-        "discovery_branch",
-        "capability_count",
+        (
+            "summary",
+            "research_focus",
+            "selected_agent_ids",
+            "discovery_branch",
+            "capability_count",
+        )
+        if compact
+        else (
+            "summary",
+            "result",
+            "research_focus",
+            "selected_agent_ids",
+            "discovery_branch",
+            "capability_count",
+        )
     )
-    projected_payload = {
-        key: _bounded_value(payload[key], depth=0)
-        for key in payload_keys
-        if key in payload
-    }
+    projected_payload = {key: _bounded_value(payload[key], depth=0) for key in payload_keys if key in payload}
     if compact and isinstance(payload.get("result"), Mapping):
         result = payload["result"]
         projected_payload["result"] = {
@@ -833,31 +834,31 @@ def _project_run(run, *, compact: bool = False) -> dict[str, Any]:
 def _project_capability(value: dict[str, Any], *, compact: bool = False) -> dict[str, Any]:
     snapshot = value.get("snapshot") if isinstance(value.get("snapshot"), dict) else {}
     snapshot_keys = (
-        "version_no",
-        "status",
-        "source",
-        "name",
-        "capability_name",
-        "evidence_refs",
-        "hypothesis_id",
-        "card_binding_id",
-    ) if compact else (
-        "version_no",
-        "status",
-        "source",
-        "name",
-        "capability_name",
-        "capability_image",
-        "rationale",
-        "evidence_refs",
-        "hypothesis_id",
-        "card_binding_id",
+        (
+            "version_no",
+            "status",
+            "source",
+            "name",
+            "capability_name",
+            "evidence_refs",
+            "hypothesis_id",
+            "card_binding_id",
+        )
+        if compact
+        else (
+            "version_no",
+            "status",
+            "source",
+            "name",
+            "capability_name",
+            "capability_image",
+            "rationale",
+            "evidence_refs",
+            "hypothesis_id",
+            "card_binding_id",
+        )
     )
-    projected = {
-        key: _bounded_value(snapshot[key], depth=0)
-        for key in snapshot_keys
-        if key in snapshot
-    }
+    projected = {key: _bounded_value(snapshot[key], depth=0) for key in snapshot_keys if key in snapshot}
     return {
         "version_id": value.get("version_id"),
         "run_id": value.get("run_id"),

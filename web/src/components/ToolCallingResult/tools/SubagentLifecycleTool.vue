@@ -118,11 +118,11 @@ const TOOL_LABELS = {
 }
 
 const PROGRESS_KIND_LABELS = {
-  assistant_message: '消息',
-  assistant_reasoning: '思考',
   tool_call: '工具',
   tool_call_delta: '工具'
 }
+
+const VISIBLE_PROGRESS_KINDS = new Set(Object.keys(PROGRESS_KIND_LABELS))
 
 const STATUS_LABELS = {
   busy: '忙碌',
@@ -227,7 +227,10 @@ const progressMessages = computed(() => {
   const value = parsedResult.value?.progress?.messages
   if (!Array.isArray(value)) return []
   return value
-    .filter((message) => String(message?.content || '').trim())
+    .filter(
+      (message) =>
+        VISIBLE_PROGRESS_KINDS.has(message?.kind) && String(message?.content || '').trim()
+    )
     .slice(0, 3)
     .map((message) => ({
       ...message,

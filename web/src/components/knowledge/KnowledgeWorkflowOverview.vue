@@ -7,7 +7,7 @@
         </span>
         <div>
           <div class="knowledge-workflow-title-row">
-            <h2 id="knowledge-workflow-title">知识入库与质量链路</h2>
+            <h2 id="knowledge-workflow-title">从资料到知识图谱</h2>
             <span class="knowledge-health" :data-tone="health.tone">{{ health.label }}</span>
           </div>
           <p>{{ health.description }}</p>
@@ -98,6 +98,7 @@
 import { computed } from 'vue'
 import {
   BarChart3,
+  BrainCircuit,
   Check,
   ChevronRight,
   Database,
@@ -163,8 +164,8 @@ const health = computed(() => {
   if (count('indexed_count') > 0 && indexSearchable.value) {
     return {
       tone: 'ready',
-      label: '可检索',
-      description: '向量索引已就绪，建议通过检索测试和 RAG 评估持续校验质量。'
+      label: '知识已就绪',
+      description: '向量索引已就绪，可继续抽取实体关系，并开展多跳检索与创新发现。'
     }
   }
   return {
@@ -189,7 +190,7 @@ const primaryAction = computed(() => {
     return { event: 'upload', label: '上传资料', icon: FileUp }
   }
   if (count('indexed_count') > 0) {
-    return { event: 'navigate', label: '验证检索质量', icon: Search }
+    return { event: 'navigate', label: '进入图谱抽取', icon: BrainCircuit, tab: 'graph' }
   }
   return null
 })
@@ -208,7 +209,7 @@ const pipelineSteps = computed(() => {
   return [
     {
       key: 'source',
-      label: '资料',
+      label: '上传资料',
       value: `${formatCount(files)} 个文件`,
       hint: files ? '原始资料已进入知识库' : '支持文档、表格、演示稿与网页',
       state: files ? 'done' : 'pending',
@@ -245,22 +246,22 @@ const pipelineSteps = computed(() => {
             : null
     },
     {
-      key: 'verify',
-      label: '检索验证',
-      value: indexReady ? '可开始验证' : '尚未就绪',
-      hint: '检查召回片段、相似度与重排序效果',
+      key: 'graph',
+      label: '实体关系抽取',
+      value: indexReady ? '可开始构建' : '等待知识入库',
+      hint: indexReady
+        ? '轻量化 RAG 定向抽取与跨文档增强'
+        : '入库完成后配置图谱抽取',
       state: indexReady ? 'ready' : 'pending',
-      action: indexReady ? { event: 'navigate', label: '测试检索', tab: 'query' } : null
+      action: indexReady ? { event: 'navigate', label: '进入图谱构建', tab: 'graph' } : null
     },
     {
-      key: 'evaluate',
-      label: '持续评估',
-      value: indexReady ? '建立评估基线' : '等待索引',
-      hint: '用问答集量化召回与回答质量',
+      key: 'discover',
+      label: '检索与创新',
+      value: indexReady ? '可开始分析' : '等待图谱准备',
+      hint: '语义检索、多跳链路及自上/自下创新预测',
       state: indexReady ? 'ready' : 'pending',
-      action: props.canManage && indexReady
-        ? { event: 'navigate', label: '进入评估', tab: 'evaluation' }
-        : null
+      action: indexReady ? { event: 'navigate', label: '多跳与创新发现', tab: 'graph' } : null
     }
   ]
 })
@@ -276,7 +277,7 @@ const runStepAction = (action) => {
 const runPrimaryAction = () => {
   if (!primaryAction.value) return
   if (primaryAction.value.event === 'navigate') {
-    emit('navigate', 'query')
+    emit('navigate', primaryAction.value.tab || 'query')
     return
   }
   emit(primaryAction.value.event)
@@ -630,14 +631,20 @@ const runPrimaryAction = () => {
   }
 
   .knowledge-pipeline {
-    grid-template-columns: repeat(5, minmax(150px, 1fr));
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    overflow: visible;
   }
 
-  .knowledge-pipeline-step {
+  .knowledge-pipeline-step,
+  .knowledge-pipeline-step + .knowledge-pipeline-step {
     min-height: 96px;
+    border: 1px solid var(--gray-150);
+    border-radius: 9px;
+  }
+
+  .knowledge-pipeline-step:last-child {
+    grid-column: 1 / -1;
   }
 
   .knowledge-config-summary {
@@ -655,6 +662,16 @@ const runPrimaryAction = () => {
   .knowledge-workflow-links {
     width: 100%;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .knowledge-pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-pipeline-step:last-child {
+    grid-column: auto;
   }
 }
 </style>

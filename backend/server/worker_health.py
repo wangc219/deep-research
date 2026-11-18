@@ -3,13 +3,14 @@
 import os
 from redis import Redis
 from platform_core.services.run_scheduling import agent_health_key, worker_kind
+from platform_core.services.task_queue_service import durable_task_worker_health_key
 
 
 def main() -> None:
     """健康事实需存在且 TTL 合法；连接与读取失败返回非零。"""
     interval = float(os.getenv("WORKER_HEALTH_INTERVAL_SECONDS", "5"))
     with Redis.from_url(os.environ["REDIS_URL"], socket_timeout=2, socket_connect_timeout=2) as client:
-        key = agent_health_key(worker_kind())
+        key = durable_task_worker_health_key() or agent_health_key(worker_kind())
         value, ttl = client.get(key), client.pttl(key)
         if not value or not 0 < ttl <= (interval + 1) * 1000:
             raise SystemExit(1)

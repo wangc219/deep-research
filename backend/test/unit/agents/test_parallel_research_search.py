@@ -109,6 +109,7 @@ async def test_parallel_research_tool_runs_web_fusion_and_aminer_concurrently(mo
 
     assert elapsed < 0.18
     assert calls["web"][1]["fusion_strategy"] == "parallel"
+    assert calls["web"][1]["include_academic_sources"] is True
     assert calls["aminer"][1]["limit"] == 5
     assert calls["aminer"][1]["mode"] == "precision"
     assert result["completed_providers"] == ["open-websearch", "searxng", "aminer"]

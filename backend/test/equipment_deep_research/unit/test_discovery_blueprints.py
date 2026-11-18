@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
-
-from equipment_deep_research.agents.registry import AgentDef
-from equipment_deep_research.agents.registry import AgentRegistry
+from equipment_deep_research.agents.registry import AgentDef, AgentRegistry
+from equipment_deep_research.agents.workflows.orchestrator import (
+    design_discovery_blueprint,
+)
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.blueprints import (
     BRANCH_BLUEPRINTS,
@@ -43,7 +45,7 @@ def test_maximized_waves_run_all_dependency_ready_agents_together() -> None:
 
 
 def test_real_baseline_contract_runs_four_research_agents_before_synthesis() -> None:
-    root = Path(__file__).parents[3]
+    root = Path(__file__).parents[4]
     registry = AgentRegistry.load(root / "configs/equipment_deep_research/agents.yaml")
     selected = registry.select_agents(
         [
@@ -184,6 +186,133 @@ def test_concise_benchmark_queries_use_model_branch_decision(
     assert blueprint["primary_branch"] == branch
 
 
+def test_independent_agent_review_replaces_cross_topic_blueprint() -> None:
+    query = "从技术驱动维度，气凝胶及其拓展的相关技术在装备概念创新方面存在哪些高潜力的机会"
+    calls: list[tuple[str, dict]] = []
+
+    class Host:
+        supports_agent_runtime = True
+        provider_kind = "fake"
+
+        async def _run_core_json(self, agent, _prompt, payload, _schema, _tokens, *, phase):
+            calls.append((phase, payload))
+            if phase == "blueprint_design":
+                return json.dumps(
+                    {
+                        "primary_branch": "F",
+                        "structured_query_brief": {
+                            "core_query": "研究无人蜂群饱和攻击的体系级反制方案",
+                            "combat_problem_frame": "比较不同拦截方案的效费比。",
+                            "focus_questions": ["如何处理高密度目标流？"],
+                        },
+                    },
+                    ensure_ascii=False,
+                )
+            assert agent == "auditor"
+            assert payload["original_query"] == query
+            return json.dumps(
+                {
+                    "verdict": "revise",
+                    "query_contract": {
+                        "core_subjects_and_relations": ["气凝胶及拓展技术—装备概念创新机会"],
+                        "requested_perspective": "技术驱动",
+                        "requested_outcome": "识别高潜力机会",
+                        "must_preserve": ["气凝胶及其拓展技术"],
+                        "must_not_assume": ["特定对手或无人蜂群场景"],
+                        "open_unknowns": ["具体装备场景与工程边界"],
+                    },
+                    "issues": ["候选蓝图把研究对象替换成了无人蜂群反制"],
+                    "corrected_blueprint": {
+                        "primary_branch": "D",
+                        "structured_query_brief": {
+                            "core_query": query,
+                            "combat_problem_frame": "研究气凝胶及拓展技术与装备概念创新机会之间的映射。",
+                            "focus_questions": ["哪些技术能力可形成高潜力装备概念？"],
+                        },
+                    },
+                    "rationale": "修正研究对象和研究视角。",
+                    "confidence": 0.97,
+                },
+                ensure_ascii=False,
+            )
+
+    model_blueprint = design_discovery_blueprint(Host(), {"topic": query})
+    blueprint = build_discovery_blueprint(
+        ResearchProblem(query),
+        model_blueprint=model_blueprint,
+    )
+
+    assert [phase for phase, _ in calls] == [
+        "blueprint_design",
+        "blueprint_alignment_review",
+    ]
+    assert blueprint["primary_branch"] == "D"
+    assert blueprint["structured_query_brief"]["core_query"] == query
+    assert "气凝胶" in blueprint["structured_query_brief"]["combat_problem_frame"]
+    assert "无人蜂群" not in json.dumps(
+        blueprint["structured_query_brief"], ensure_ascii=False
+    )
+    assert blueprint["query_semantic_review"]["verdict"] == "revise"
+    assert blueprint["structured_query_brief"]["query_alignment"]["status"] == "agent_revise"
+
+
+def test_independent_agent_review_keeps_aligned_blueprint() -> None:
+    candidate = {
+        "primary_branch": "D",
+        "structured_query_brief": {"combat_problem_frame": "围绕新材料自主分析应用机会。"},
+    }
+
+    class Host:
+        supports_agent_runtime = True
+        provider_kind = "fake"
+
+        async def _run_core_json(self, _agent, _prompt, _payload, _schema, _tokens, *, phase):
+            if phase == "blueprint_design":
+                return json.dumps(candidate, ensure_ascii=False)
+            return json.dumps(
+                {
+                    "verdict": "aligned",
+                    "query_contract": {
+                        "core_subjects_and_relations": ["新材料—应用机会"],
+                        "requested_perspective": "开放分析",
+                        "requested_outcome": "机会识别",
+                        "must_preserve": ["新材料"],
+                        "must_not_assume": [],
+                        "open_unknowns": [],
+                    },
+                    "issues": [],
+                    "corrected_blueprint": {},
+                    "rationale": "主题和目标一致。",
+                    "confidence": 0.94,
+                },
+                ensure_ascii=False,
+            )
+
+    result = design_discovery_blueprint(Host(), {"topic": "新材料应用机会"})
+
+    assert result["primary_branch"] == "D"
+    assert result["structured_query_brief"] == candidate["structured_query_brief"]
+    assert result["query_semantic_review"]["verdict"] == "aligned"
+
+
+def test_unavailable_semantic_review_discards_unreviewed_model_blueprint() -> None:
+    class Host:
+        supports_agent_runtime = True
+        provider_kind = "fake"
+
+        async def _run_core_json(self, _agent, _prompt, _payload, _schema, _tokens, *, phase):
+            if phase == "blueprint_design":
+                return json.dumps({"primary_branch": "F"})
+            raise TimeoutError("review timeout")
+
+    host = Host()
+    result = design_discovery_blueprint(host, {"topic": "任意强主题Query"})
+
+    assert result == {}
+    assert host._last_blueprint_runtime["status"] == "model_limited"
+    assert host._last_blueprint_runtime["fallback"] is True
+
+
 @pytest.mark.parametrize(
     "topic",
     [
@@ -223,14 +352,8 @@ def test_supplement_is_compressed_and_influences_blueprint_semantics() -> None:
     brief = blueprint["structured_query_brief"]
 
     assert brief["supplement_present"] is True
-    assert brief["expansion_dimensions"] == [
-        "任务对象与直接效果",
-        "对手适应与失效边界",
-        "装备形态与工程约束",
-        "证据问题与淘汰条件",
-        "成本交换与效费比",
-        "规模化生产与工业动员",
-    ]
+    assert brief["supplement_summary"] == problem.supplemental_information
+    assert brief["expansion_dimensions"] == []
     assert "international_situation" in blueprint["initial_baseline_agent_ids"]
 
 
@@ -239,7 +362,7 @@ def test_model_query_brief_preserves_bounded_combat_weapon_divergence_fields() -
         ResearchProblem("强电磁压制下精确打击任务续接装备研究"),
         model_blueprint={
             "structured_query_brief": {
-                "combat_problem_frame": "在敌防空节点短时开机与导航拒止并存时续接纵深火力。",
+                "combat_problem_frame": "精确打击任务在敌防空节点短时开机与导航拒止并存时续接纵深火力。",
                 "enemy_target_profile": [f"目标{i}" for i in range(10)],
                 "battle_phase_and_constraints": [f"阶段{i}" for i in range(12)],
                 "required_direct_military_effects": [f"战果{i}" for i in range(9)],
@@ -276,7 +399,7 @@ def test_model_query_brief_preserves_bounded_combat_weapon_divergence_fields() -
     )
 
     brief = blueprint["structured_query_brief"]
-    assert brief["combat_problem_frame"].startswith("在敌防空节点")
+    assert brief["combat_problem_frame"].startswith("精确打击任务")
     assert len(brief["enemy_target_profile"]) == 6
     assert len(brief["battle_phase_and_constraints"]) == 8
     assert len(brief["required_direct_military_effects"]) == 6
@@ -299,7 +422,7 @@ def test_model_query_brief_preserves_compact_open_winning_problem_graph() -> Non
         model_blueprint={
             "structured_query_brief": {
                 "equipment_semantic_boundary": (
-                    "具体战斗装备必须直接承担接敌和效应，链路与软件只作为接口。"
+                    "时敏精确打击必须由具体战斗装备直接承担接敌和效应，链路与软件只作为接口。"
                 ),
                 "winning_problem_propositions": [
                     {
@@ -318,7 +441,7 @@ def test_model_query_brief_preserves_compact_open_winning_problem_graph() -> Non
     )
 
     brief = blueprint["structured_query_brief"]
-    assert brief["equipment_semantic_boundary"].startswith("具体战斗装备")
+    assert brief["equipment_semantic_boundary"].startswith("时敏精确打击")
     assert len(brief["winning_problem_propositions"]) == 6
     assert brief["winning_problem_propositions"][0] == {
         "target_and_phase": "目标与阶段0",

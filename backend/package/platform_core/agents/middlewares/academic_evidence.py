@@ -5,14 +5,21 @@ import re
 import threading
 from collections.abc import Awaitable, Callable
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, NotRequired
 from urllib.parse import unquote, urlsplit, urlunsplit
 
+from langchain.agents import AgentState
 from langchain.agents.middleware.types import AgentMiddleware, hook_config
 from langchain.tools.tool_node import ToolCallRequest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
+
+
+class AcademicEvidenceState(AgentState):
+    """把当前用户轮次的证据账本持久化进 LangGraph checkpoint。"""
+
+    academic_evidence: NotRequired[dict[str, Any]]
 
 
 class _Citations(HTMLParser):
@@ -119,6 +126,8 @@ def _strip_unknown_citations(text: str, sources: dict[str, str]) -> str:
 class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
     """学术检索后的最终答复必须引用实际来源，最多允许两次纠正。"""
 
+    state_schema = AcademicEvidenceState
+
     def __init__(self, *, graceful_fallback: bool = False):
         self.graceful_fallback = graceful_fallback
         self._lock = threading.Lock()
@@ -126,9 +135,11 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
         self._papers: dict[str, dict[str, Any]] = {}
         self._topic_papers: set[str] = set()
         self._abstract_attempts: set[str] = set()
+        self._turn_key = ""
 
     def wrap_tool_call(self, request: ToolCallRequest, handler: Callable[[ToolCallRequest], Any]) -> Any:
         """工具完成时追加证据谱系，避免长上下文压缩后丢失真实来源。"""
+        self._activate_turn(_turn_key(getattr(request, "state", {}).get("messages", [])))
         result = handler(request)
         self._record_tool_result(request.tool_call, result)
         return result
@@ -139,6 +150,7 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
         handler: Callable[[ToolCallRequest], Awaitable[Any]],
     ) -> Any:
         """异步工具链路使用同一追加式证据账本。"""
+        self._activate_turn(_turn_key(getattr(request, "state", {}).get("messages", [])))
         result = await handler(request)
         self._record_tool_result(request.tool_call, result)
         return result
@@ -186,13 +198,27 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                 }:
                     self._topic_papers.add(item["id"])
 
+    def _activate_turn(self, turn_key: str) -> None:
+        """同一图实例进入新用户轮次时清空内存账本，避免历史论文误触发门禁。"""
+        if not turn_key or turn_key == self._turn_key:
+            return
+        with self._lock:
+            if self._turn_key and self._turn_key != turn_key:
+                self._sources.clear()
+                self._papers.clear()
+                self._topic_papers.clear()
+                self._abstract_attempts.clear()
+            self._turn_key = turn_key
+
     @hook_config(can_jump_to=["model"])
     def after_model(self, state, runtime):
         """仅检查本轮实际执行过的工具结果，不把用户文本当作来源证明。"""
         messages = state["messages"]
         answer = messages[-1]
-        if not isinstance(answer, AIMessage) or answer.tool_calls or not answer.text.strip():
+        if not isinstance(answer, AIMessage):
             return None
+        turn_key = _turn_key(messages)
+        self._activate_turn(turn_key)
         start = next(
             (
                 i
@@ -205,11 +231,14 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
         )
         turn = messages[start:]
         calls = {call["id"]: call for message in turn if isinstance(message, AIMessage) for call in message.tool_calls}
+        persisted = state.get("academic_evidence")
+        if not isinstance(persisted, dict) or persisted.get("turn_key") != turn_key:
+            persisted = {}
         with self._lock:
-            papers = dict(self._papers)
-            sources = dict(self._sources)
-            topic_papers = set(self._topic_papers)
-            abstract_attempts = set(self._abstract_attempts)
+            papers = {**dict(persisted.get("papers") or {}), **self._papers}
+            sources = {**dict(persisted.get("sources") or {}), **self._sources}
+            topic_papers = set(persisted.get("topic_papers") or []) | self._topic_papers
+            abstract_attempts = set(persisted.get("abstract_attempts") or []) | self._abstract_attempts
         for message in turn:
             if not isinstance(message, ToolMessage):
                 continue
@@ -255,8 +284,16 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                     "semantic",
                 }:
                     topic_papers.add(item["id"])
-        if not papers:
-            return None
+        ledger = {
+            "turn_key": turn_key,
+            "sources": sources,
+            "papers": papers,
+            "topic_papers": sorted(topic_papers),
+            "abstract_attempts": sorted(abstract_attempts),
+        }
+        state_update = {"academic_evidence": ledger} if ledger != persisted else {}
+        if answer.tool_calls or not answer.text.strip() or not papers:
+            return state_update or None
         citations = _Citations()
         citations.feed(answer.text)
         problems = []
@@ -278,16 +315,20 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                 + ", ".join(sorted(missing))
             )
         if not problems:
-            return None
+            return state_update or None
         recoveries = sum(
             isinstance(message, HumanMessage) and bool(message.additional_kwargs.get("academic_evidence_recovery"))
             for message in turn
         )
         if recoveries >= 2 and self.graceful_fallback:
             fallback = _strip_unknown_citations(answer.text, sources).rstrip()
+            qualification = []
+            if not citations.urls or any(_canonical_url(url) not in sources for url in citations.urls):
+                qualification.append("未带可追溯引用的具体性能、成熟度和装备化状态按研发假设处理")
             if missing:
-                fallback += "\n\n[证据边界：部分论文仅取得题录或部分摘要，相关结论作为待核验线索，不视为全文证实。]"
-            fallback += "\n\n[引用校验已降级交付：未能确认的引用不作为本证据包的事实依据。]"
+                qualification.append("仅取得题录或部分摘要的论文只用于技术启发，不视为全文验证")
+            if qualification:
+                fallback += "\n\n" + "；".join(qualification) + "。"
             # 保留供应商 Model lifecycle 的 message id 与响应元数据。Run 终态持久化
             # 依靠该 id 将最终 State 投影回本次模型调用；生成一个无 id 的新消息会让
             # 已完成的探索员在最后一步被误判为“最终输出无法关联”。
@@ -300,7 +341,7 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
                     },
                 }
             )
-            return {"messages": [replacement]}
+            return {**state_update, "messages": [replacement]}
         if recoveries >= 2:
             raise RuntimeError("学术证据校验未通过，本轮回答未完成：" + "；".join(problems))
         allowed = "\n".join(
@@ -308,11 +349,13 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
             for index, (url, item) in enumerate(list(papers.items())[:24], start=1)
         )
         return {
+            **state_update,
             "messages": [
                 HumanMessage(
                     "上一答复未通过学术证据校验："
                     + "；".join(problems)
-                    + "。请依据已取得内容修正，不增加未经验证的论断或来源。详情读取失败时收窄结论并明确证据缺口。\n"
+                    + "。请依据已取得内容修正，不增加未经验证的论断或来源。每个事实论断都要紧邻对应引用；"
+                    + "没有直接证据的内容必须明确标注为推断、工程分析或待核验。详情读取失败时收窄结论并明确证据缺口。\n"
                     + "以下是本轮已取得论文来源的可复制清单（用于纠错，不代表只有这些来源；不得据此缩减已验证范围）：\n"
                     + allowed,
                     additional_kwargs={"academic_evidence_recovery": True},
@@ -325,3 +368,18 @@ class AcademicEvidenceMiddleware(AgentMiddleware[Any, Any, Any]):
     async def aafter_model(self, state, runtime):
         """异步图沿用相同的来源和有界恢复规则。"""
         return self.after_model(state, runtime)
+
+
+def _turn_key(messages: list[Any]) -> str:
+    """构造可跨 resume 保持、又能区分新用户轮次的稳定键。"""
+    humans = [
+        message
+        for message in messages
+        if isinstance(message, HumanMessage)
+        and not message.additional_kwargs.get("academic_evidence_recovery")
+        and not message.additional_kwargs.get("model_output_recovery")
+    ]
+    if not humans:
+        return ""
+    latest = humans[-1]
+    return str(latest.id or f"{len(humans)}:{latest.text}")

@@ -43,6 +43,7 @@ from platform_core.permissions import (
     resolve_knowledge_base_permission,
 )
 from platform_core.services.knowledge_folder_service import knowledge_folder_service
+from platform_core.services.knowledge_graph_pipeline_service import KnowledgeGraphPipelineService
 from platform_core.services.ocr_service import parse_document
 from platform_core.services.task_service import tasker
 from platform_core.services.workspace_service import read_workspace_file_bytes
@@ -54,6 +55,11 @@ from platform_core.utils.upload_utils import MAX_UPLOAD_SIZE_BYTES, read_upload_
 from server.utils.auth_middleware import get_admin_user, get_db, get_required_user
 from server.routers.wxchannels_router import router as wxchannels_router
 from server.routers.collection_artifact_router import router as collection_artifact_router
+from server.routers.knowledge_governance_router import (
+    router as knowledge_governance_router,
+    source_governance_enabled,
+)
+from server.routers.innovation_brief_router import router as innovation_brief_router
 from sqlalchemy.ext.asyncio import AsyncSession
 from server.utils.knowledge_response import serialize_knowledge_base, serialize_knowledge_base_list
 from server.utils.knowledge_permissions import (
@@ -67,6 +73,9 @@ knowledge = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 knowledge.include_router(wxchannels_router)
 knowledge.include_router(collection_artifact_router)
+if source_governance_enabled():
+    knowledge.include_router(knowledge_governance_router)
+knowledge.include_router(innovation_brief_router)
 
 
 ACTIVE_GRAPH_BUILD_STATUSES = {"pending", "running"}
@@ -81,9 +90,11 @@ PRIVATE_KNOWLEDGE_SHARE_CONFIG = {"version": 2, "read_scope": None, "manage_scop
 class UpdateDatabaseRequest(BaseModel):
     name: str
     description: str
+    embedding_model_spec: str | None = None
     llm_model_spec: str | None = None
     additional_params: dict | None = None
     share_config: dict | None = None
+    category_id: str | None = None
 
 
 class WorkspaceImportRequest(BaseModel):
@@ -103,6 +114,7 @@ class MoveDocumentRequest(BaseModel):
 class ParseDocumentsRequest(BaseModel):
     file_ids: list[str] = Field(default_factory=list)
     params: dict | None = None
+    reparse: bool = False
 
 
 class PendingParseDocumentsRequest(BaseModel):
@@ -299,7 +311,9 @@ async def create_database(
     additional_params: dict | None = Body(None),
     llm_model_spec: str | None = Body(None),
     share_config: dict | None = Body(None),
+    category_id: str | None = Body(None),
     current_user: User = Depends(get_required_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """创建知识库"""
     logger.debug(
@@ -309,6 +323,16 @@ async def create_database(
     )
     try:
         effective_share_config = _knowledge_create_share_config(current_user, share_config)
+        from platform_core.services.knowledge_governance_service import (
+            ensure_organization_category,
+            user_tenant_id,
+        )
+
+        await ensure_organization_category(
+            db,
+            tenant_id=user_tenant_id(current_user),
+            category_id=category_id,
+        )
         database_info = await knowledge_base.create_database(
             database_name,
             description,
@@ -318,6 +342,7 @@ async def create_database(
             share_config=effective_share_config,
             created_by=current_user.uid,
             created_by_department_id=current_user.department_id,
+            category_id=category_id,
             **(additional_params or {}),
         )
 
@@ -463,13 +488,16 @@ async def update_database_info(
     kb_id: str,
     data: UpdateDatabaseRequest,
     current_user: User = Depends(require_knowledge_base_manage),
+    db: AsyncSession = Depends(get_db),
 ):
     """更新知识库信息"""
     logger.debug(
-        f"[update_database_info] 接收到的参数: name={data.name}, llm_model_spec={data.llm_model_spec}, "
+        f"[update_database_info] 接收到的参数: name={data.name}, "
+        f"embedding_model_spec={data.embedding_model_spec}, llm_model_spec={data.llm_model_spec}, "
         f"additional_params={data.additional_params}, share_config={data.share_config}"
     )
     try:
+        update_embedding_model_spec = "embedding_model_spec" in data.model_fields_set
         update_llm_model_spec = "llm_model_spec" in data.model_fields_set
 
         effective_share_config = await _knowledge_update_share_config(current_user, kb_id, data.share_config)
@@ -477,13 +505,28 @@ async def update_database_info(
             kb_id,
             data.name,
             data.description,
-            data.llm_model_spec,
+            data.embedding_model_spec,
+            update_embedding_model_spec=update_embedding_model_spec,
+            llm_model_spec=data.llm_model_spec,
             update_llm_model_spec=update_llm_model_spec,
             additional_params=data.additional_params,
             share_config=effective_share_config,
             operator_uid=current_user.uid,
             operator_department_id=current_user.department_id,
         )
+        if "category_id" in data.model_fields_set:
+            from platform_core.services.knowledge_governance_service import (
+                assign_knowledge_base_category,
+                user_tenant_id,
+            )
+
+            await assign_knowledge_base_category(
+                db,
+                tenant_id=user_tenant_id(current_user),
+                kb_id=kb_id,
+                category_id=data.category_id,
+            )
+            database = await knowledge_base.get_database_info(kb_id)
         return {"message": "更新成功", "database": serialize_knowledge_base(database)}
     except HTTPException:
         raise
@@ -527,8 +570,8 @@ async def configure_graph_build(
     current_user: User = Depends(require_knowledge_base_manage),
 ):
     try:
-        config = await MilvusGraphService().configure(
-            kb_id,
+        config = await KnowledgeGraphPipelineService().configure(
+            kb_id=kb_id,
             extractor_type=data.get("extractor_type"),
             extractor_options=data.get("extractor_options") or {},
             created_by=current_user.uid,
@@ -705,6 +748,42 @@ async def reconcile_graph_build(
     except Exception as e:
         logger.error(f"提交图谱向量索引修复任务失败 {e}, {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"提交图谱向量索引修复任务失败: {e}")
+
+
+@knowledge.post("/databases/{kb_id}/graph-build/rebuild-projections")
+async def rebuild_graph_projections(
+    kb_id: str,
+    current_user: User = Depends(require_knowledge_base_manage),
+):
+    """仅从 PostgreSQL 权威状态重建 Neo4j/Milvus，不删除权威知识。"""
+    try:
+        if await _has_running_graph_build_task(kb_id):
+            raise HTTPException(status_code=409, detail="该知识库已有正在运行的图谱构建任务")
+
+        database = await knowledge_base.get_database_info(kb_id)
+        if not database:
+            raise HTTPException(status_code=404, detail=f"知识库 {kb_id} 不存在")
+
+        task, created = await tasker.enqueue_unique_by_payload(
+            name=f"重建图谱投影 ({database.name})",
+            task_type=GRAPH_TASK_TYPE,
+            payload={"kb_id": kb_id, "action": "rebuild_projections", "operator_id": current_user.uid},
+            payload_match={"kb_id": kb_id},
+        )
+        if not created:
+            raise HTTPException(status_code=409, detail="该知识库已有正在运行的图谱构建任务")
+        return {
+            "message": "PostgreSQL 权威图投影重建任务已提交",
+            "status": "queued",
+            "task_id": task.id,
+        }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"提交图谱投影重建任务失败 {e}, {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"提交图谱投影重建任务失败: {e}") from e
 
 
 @knowledge.get("/databases/{kb_id}/export")
@@ -949,6 +1028,7 @@ async def _enqueue_document_action_task(
     operator_id: str,
     db_info: KnowledgeBaseDetail,
     action: str,
+    reparse: bool = False,
 ) -> dict:
     """提交管理端指定文件的解析或入库任务。"""
     label = "解析" if action == "parse" else "入库"
@@ -961,6 +1041,7 @@ async def _enqueue_document_action_task(
                 "file_ids": file_ids,
                 "params": params,
                 "operator_id": operator_id,
+                "reparse": reparse,
             },
         )
         return {"message": f"{label}任务已提交", "status": "queued", "task_id": task.id}
@@ -1041,6 +1122,7 @@ async def parse_documents(
         operator_id=current_user.uid,
         db_info=db_info,
         action="parse",
+        reparse=payload.reparse if isinstance(payload, ParseDocumentsRequest) else False,
     )
 
 

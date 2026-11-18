@@ -3,6 +3,7 @@
 # 由 AST 扫描 backend/{auth,accounts,articles,account_pool,proxy,rss_scheduler,
 # rss_feed,downloader,weread_signer,config,runtime}.py 得出，只保留真正用到的：
 #   flask / flask_cors / requests / bs4 / playwright / certifi
+# Markdown 预览额外使用 markdown-it-py，并禁用原始 HTML 渲染。
 #
 # 平台镜像安装 playwright 和 Chromium，支持 PDF 导出。
 #
@@ -14,5 +15,6 @@ flask>=3.0
 flask-cors>=4.0
 requests[socks]>=2.31
 beautifulsoup4>=4.12
+markdown-it-py>=3.0
 playwright>=1.40
 certifi

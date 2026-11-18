@@ -68,7 +68,6 @@ from equipment_deep_research.agents.workflows.winning_flows.helpers import (
     _s5_merge_target_is_valid,
     _s5_naming_assessment,
     _s5_portfolio_fallback_result,
-    _s5_retain_passes_concrete_weapon_contract,
     _targeted_expert_feedback,
 )
 from equipment_deep_research.agents.workflows.winning_flows.naming import (
@@ -106,18 +105,19 @@ def _dynamic_finalist_target(
     policy: Mapping[str, Any],
     accumulated: Mapping[str, Any],
 ) -> tuple[int, dict[str, Any]]:
-    """Resolve the S5/S6 portfolio size without turning it into a hard gate.
+    """Resolve the minimum delivery and quality-expansion capacity.
 
-    Dynamic-v2 normally selects six finalists.  When the user explicitly asks
-    for a portfolio size, that contract must survive the Mission Graph rather
-    than being overwritten by the profile default.  A shortage remains a
-    limited, truthfully disclosed delivery; this function never fabricates or
-    duplicates candidates to satisfy the number.
+    Dynamic-v2 normally requires at least six finalists while allowing more
+    independently useful concepts through S5.  When the user explicitly asks
+    for a portfolio size or range, that contract survives the Mission Graph.
+    A shortage remains a limited, truthfully disclosed delivery; this function
+    never fabricates or duplicates candidates to satisfy the number.
     """
 
-    default_target = min(
-        max(1, int(policy.get("finalist_minimum", 6))),
-        max(1, int(policy.get("finalist_maximum", 7))),
+    default_minimum = max(1, int(policy.get("finalist_minimum", 6)))
+    default_maximum = max(
+        default_minimum,
+        int(policy.get("finalist_maximum", default_minimum)),
     )
     raw_contract = accumulated.get("candidate_count_contract", {})
     contract = dict(raw_contract) if isinstance(raw_contract, Mapping) else {}
@@ -126,13 +126,25 @@ def _dynamic_finalist_target(
     except (TypeError, ValueError):
         requested_target = 0
     explicit = bool(contract.get("explicit")) and requested_target > 0
-    target = requested_target if explicit else default_target
-    return target, {
+    if explicit:
+        minimum = max(1, int(contract.get("minimum", requested_target) or requested_target))
+        maximum = max(
+            minimum,
+            int(contract.get("maximum", requested_target) or requested_target),
+        )
+        target = min(maximum, max(minimum, requested_target))
+        source = str(contract.get("source", "user_query"))
+    else:
+        minimum = default_minimum
+        target = default_minimum
+        maximum = default_maximum
+        source = "profile_default"
+    return minimum, {
         "explicit": explicit,
-        "minimum": int(contract.get("minimum", target) or target) if explicit else 0,
+        "minimum": minimum,
         "target": target,
-        "maximum": int(contract.get("maximum", target) or target) if explicit else 0,
-        "source": str(contract.get("source", "none")) if explicit else "profile_default",
+        "maximum": maximum,
+        "source": source,
     }
 
 
@@ -186,21 +198,9 @@ def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
     def identity(raw: Any) -> str:
         fallback_label = ""
         if isinstance(raw, Mapping):
-            code = str(
-                raw.get("dimension_code")
-                or raw.get("code")
-                or raw.get("winning_dimension_code")
-                or ""
-            ).strip()
-            label = str(
-                raw.get("combat_dimension")
-                or raw.get("label")
-                or raw.get("dimension")
-                or ""
-            ).strip()
-            angle = str(
-                raw.get("winning_angle_id") or raw.get("angle_id") or ""
-            ).strip()
+            code = str(raw.get("dimension_code") or raw.get("code") or raw.get("winning_dimension_code") or "").strip()
+            label = str(raw.get("combat_dimension") or raw.get("label") or raw.get("dimension") or "").strip()
+            angle = str(raw.get("winning_angle_id") or raw.get("angle_id") or "").strip()
             if code and not is_transport_marker(code):
                 raw, fallback_label = code, label
             elif label and not is_transport_marker(label):
@@ -231,13 +231,19 @@ def _s3_s4_first_pass_structurally_complete(
 ) -> tuple[bool, set[str]]:
     """Return the structural early-stop result for one creative pass.
 
-    ``True`` means at least one candidate has the compact required fields and
-    the model declared/adopted three distinct dimensions.  This helper does
-    not score quality or decide admission; those decisions remain in S5.
+    ``True`` means at least one candidate has the complete generation-time
+    single-weapon contract and the model declared/adopted three distinct
+    dimensions. This helper does not infer semantics from words or score the
+    candidate; it only prevents an unfinished creative draft from becoming the
+    accepted output of the generation session.
     """
 
     payload = parsed if isinstance(parsed, Mapping) else {}
-    rows = list(candidate_rows or [])
+    rows = [
+        item
+        for item in (candidate_rows or [])
+        if isinstance(item, Mapping) and _s3_s4_generation_contract_complete(item)
+    ]
     if not rows:
         raw_rows = payload.get("hypotheses", [])
         if isinstance(raw_rows, list):
@@ -247,6 +253,7 @@ def _s3_s4_first_pass_structurally_complete(
                 if isinstance(item, Mapping)
                 and str(item.get("name", "") or item.get("title", "")).strip()
                 and str(item.get("concise_winning_summary", "")).strip()
+                and _s3_s4_generation_contract_complete(item)
             ]
     declarations: list[Any] = []
     considered = payload.get("considered_dimensions", [])
@@ -256,13 +263,103 @@ def _s3_s4_first_pass_structurally_complete(
     if isinstance(selections, list):
         declarations.extend(selections)
     for row in rows:
-        if any(
-            str(row.get(key, "")).strip()
-            for key in ("dimension_code", "combat_dimension", "winning_angle_id")
-        ):
+        if any(str(row.get(key, "")).strip() for key in ("dimension_code", "combat_dimension", "winning_angle_id")):
             declarations.append(row)
     identities = _s3_s4_structural_dimension_identities(declarations)
     return bool(rows) and len(identities) >= 3, identities
+
+
+def _s3_s4_generation_contract_complete(value: Mapping[str, Any]) -> bool:
+    """检查创作会话是否已形成完整的单一武器语义合同。"""
+
+    required = (
+        "name",
+        "concise_winning_summary",
+        "single_weapon_identity",
+        "physical_main_body",
+        "novel_technical_principle",
+        "effect_carrier",
+        "principle_to_effect_chain",
+        "target_and_direct_effect",
+        "independent_deployment_boundary",
+        "independent_test_boundary",
+        "system_family_exclusion",
+    )
+    return all(str(value.get(key, "") or "").strip() for key in required)
+
+
+def _s5_candidate_needs_convergence(item: WinningHypothesis) -> bool:
+    """判断S3/S4草案是否仍缺少单一武器的关键语义闭环。"""
+
+    return "single_weapon_generation_contract_incomplete" in item.residuals or not all(
+        (
+            str(item.title).strip(),
+            any(str(value).strip() for value in item.equipment_forms),
+            str(item.frontier_principle).strip(),
+            any(str(value).strip() for value in item.mechanism_chain),
+            any(str(value).strip() for value in item.direct_military_effects),
+            str(item.independence_thesis).strip(),
+            str(item.cross_query_distinction).strip(),
+        )
+    )
+
+
+def _s5_converged_candidate(
+    item: WinningHypothesis,
+    review: Mapping[str, Any],
+) -> WinningHypothesis:
+    """把S5对不完整草案的一次收敛结果投影回原候选身份。"""
+
+    raw = review.get("converged_candidate", {})
+    if not isinstance(raw, Mapping) or not _s3_s4_generation_contract_complete(raw):
+        return item
+
+    physical_main_body = str(raw.get("physical_main_body", "")).strip()
+    effect_carrier = str(raw.get("effect_carrier", "")).strip()
+    chain = str(raw.get("principle_to_effect_chain", "")).strip()
+    deployment = str(raw.get("independent_deployment_boundary", "")).strip()
+    test_boundary = str(raw.get("independent_test_boundary", "")).strip()
+    return replace(
+        item,
+        title=str(raw.get("name", "")).strip(),
+        reference_overview=str(raw.get("concise_winning_summary", "")).strip(),
+        equipment_forms=[physical_main_body],
+        project_function=str(raw.get("single_weapon_identity", "")).strip(),
+        frontier_principle=str(raw.get("novel_technical_principle", "")).strip(),
+        mechanism_chain=[
+            value
+            for value in (
+                chain,
+                f"效应载体：{effect_carrier}" if effect_carrier else "",
+            )
+            if value
+        ],
+        direct_military_effects=[str(raw.get("target_and_direct_effect", "")).strip()],
+        independence_thesis="；".join(
+            (
+                f"独立部署边界：{deployment}",
+                f"独立试验边界：{test_boundary}",
+            )
+        ),
+        cross_query_distinction=str(raw.get("system_family_exclusion", "")).strip(),
+        novelty_delta=(
+            f"新质技术原理：{str(raw.get('novel_technical_principle', '')).strip()}；"
+            f"{str(raw.get('system_family_exclusion', '')).strip()}"
+        )[:900],
+        residuals=[value for value in item.residuals if value != "single_weapon_generation_contract_incomplete"],
+    )
+
+
+def _s5_portfolio_order_passes_candidate_floor(
+    candidate: WinningHypothesis,
+    review: Mapping[str, Any],
+    *,
+    query_domain_mode: str,
+) -> bool:
+    """组合名单是模型的整体语义结论，不再接受本地布尔硬门复判。"""
+
+    del candidate, review, query_domain_mode
+    return True
 
 
 def _reconcile_cross_pool_s5_reviews(
@@ -270,23 +367,41 @@ def _reconcile_cross_pool_s5_reviews(
     reviews: Sequence[Mapping[str, Any]],
     *,
     query_domain_mode: str,
+    minimum_eligible: int = 0,
 ) -> dict[str, Any]:
     """在完整候选池上稳定聚合并发 S5 评审结果。"""
 
-    candidate_by_id = {
-        item.hypothesis_id: item
-        for item in candidates
-        if str(item.hypothesis_id).strip()
-    }
+    candidate_by_id = {item.hypothesis_id: item for item in candidates if str(item.hypothesis_id).strip()}
     candidate_ids = set(candidate_by_id)
-    rows_by_id: dict[str, list[dict[str, Any]]] = {
-        candidate_id: [] for candidate_id in candidate_ids
-    }
+    rows_by_id: dict[str, list[dict[str, Any]]] = {candidate_id: [] for candidate_id in candidate_ids}
     positive_ids: set[str] = set()
     merge_edges: list[tuple[str, str]] = []
     omitted_by_reviewer: dict[str, list[str]] = {}
     invalid_rows: list[dict[str, str]] = []
+    portfolio_rescued_rows: list[dict[str, str]] = []
     portfolio_positions: dict[str, list[int]] = {}
+    reviewed_candidate_ids: set[str] = set()
+
+    title_candidates: dict[str, set[str]] = {}
+    for candidate_id, candidate in candidate_by_id.items():
+        normalized_title = re.sub(r"\s+", "", str(candidate.title or "")).casefold()
+        if normalized_title:
+            title_candidates.setdefault(normalized_title, set()).add(candidate_id)
+
+    def resolve_candidate_id(value: Any) -> str:
+        """将评审结果中的ID或唯一标题解析为当前候选。"""
+
+        raw_value = value
+        if isinstance(value, Mapping):
+            raw_value = (
+                value.get("hypothesis_id") or value.get("candidate_id") or value.get("name") or value.get("title") or ""
+            )
+        candidate_id = str(raw_value or "").strip()
+        if candidate_id in candidate_ids:
+            return candidate_id
+        normalized = re.sub(r"\s+", "", candidate_id).casefold()
+        title_matches = title_candidates.get(normalized, set())
+        return next(iter(title_matches)) if len(title_matches) == 1 else ""
 
     for review in sorted(
         (item for item in reviews if isinstance(item, Mapping)),
@@ -300,42 +415,44 @@ def _reconcile_cross_pool_s5_reviews(
         for raw in raw_decisions:
             if not isinstance(raw, Mapping):
                 continue
-            candidate_id = str(raw.get("hypothesis_id", "")).strip()
-            if candidate_id in candidate_ids:
+            candidate_id = resolve_candidate_id(raw)
+            if candidate_id:
                 decisions_by_id[candidate_id] = raw
         omitted_by_reviewer[reviewer_id] = sorted(candidate_ids - set(decisions_by_id))
 
+        portfolio_ids: set[str] = set()
         raw_order = review.get("portfolio_order", [])
         if isinstance(raw_order, list):
             for position, value in enumerate(raw_order, start=1):
-                candidate_id = str(value).strip()
-                if candidate_id in candidate_ids:
+                candidate_id = resolve_candidate_id(value)
+                if candidate_id:
+                    portfolio_ids.add(candidate_id)
                     portfolio_positions.setdefault(candidate_id, []).append(position)
+        reviewed_candidate_ids.update(portfolio_ids)
 
         for candidate_id, raw in decisions_by_id.items():
+            reviewed_candidate_ids.add(candidate_id)
             reported_decision = str(raw.get("decision", "")).strip().lower()
             decision = reported_decision
             target_id = str(raw.get("merge_target_hypothesis_id", "")).strip()
             contract_passed = False
+            portfolio_contract_passed = False
             invalid_reason = ""
+            candidate_floor_passed = _s5_portfolio_order_passes_candidate_floor(
+                candidate_by_id[candidate_id],
+                raw,
+                query_domain_mode=query_domain_mode,
+            )
+            if candidate_id in portfolio_ids:
+                portfolio_contract_passed = candidate_floor_passed
             if decision not in {"retain", "reject", "merge"}:
                 decision = "reject"
                 invalid_reason = "invalid_decision"
-            elif decision == "merge" and (
-                not target_id
-                or target_id == candidate_id
-                or target_id not in candidate_ids
-            ):
+            elif decision == "merge" and (not target_id or target_id == candidate_id or target_id not in candidate_ids):
                 decision = "reject"
                 invalid_reason = "invalid_merge_target"
             elif decision in {"retain", "merge"}:
-                contract_passed = _s5_retain_passes_concrete_weapon_contract(
-                    raw,
-                    query_domain_mode=query_domain_mode,
-                )
-                if not contract_passed:
-                    decision = "reject"
-                    invalid_reason = "concrete_weapon_contract_failed"
+                contract_passed = True
 
             dimension_scores, weighted_score = _s5_dimension_scores(raw)
             try:
@@ -351,6 +468,11 @@ def _reconcile_cross_pool_s5_reviews(
                 "hypothesis_id": candidate_id,
                 "reported_decision": reported_decision,
                 "decision": decision,
+                "decision_positive": decision in {"retain", "merge"},
+                "portfolio_positive": portfolio_contract_passed,
+                "portfolio_position": (
+                    min(portfolio_positions.get(candidate_id, [])) if candidate_id in portfolio_ids else None
+                ),
                 "merge_target_hypothesis_id": target_id if decision == "merge" else "",
                 "reason": str(raw.get("reason", "")).strip()[:500],
                 "contract_passed": contract_passed,
@@ -358,20 +480,19 @@ def _reconcile_cross_pool_s5_reviews(
                 "weighted_score": weighted_score,
                 "innovation_priority": innovation_priority,
                 "disruption_tier": str(raw.get("disruption_tier", "")).strip(),
-                "displaced_operational_mode": str(
-                    raw.get("displaced_operational_mode", "")
-                ).strip()[:500],
-                "new_operational_mode": str(
-                    raw.get("new_operational_mode", "")
-                ).strip()[:500],
-                "winning_relation_shift": str(
-                    raw.get("winning_relation_shift", "")
-                ).strip()[:500],
+                "displaced_operational_mode": str(raw.get("displaced_operational_mode", "")).strip()[:500],
+                "new_operational_mode": str(raw.get("new_operational_mode", "")).strip()[:500],
+                "winning_relation_shift": str(raw.get("winning_relation_shift", "")).strip()[:500],
                 "naming_assessment": naming_assessment,
                 "innovation_basis": _s5_innovation_basis(
                     raw,
                     dimension_scores=dimension_scores,
                     naming_assessment=naming_assessment,
+                ),
+                "converged_candidate": (
+                    dict(raw.get("converged_candidate", {}))
+                    if isinstance(raw.get("converged_candidate", {}), Mapping)
+                    else {}
                 ),
             }
             rows_by_id[candidate_id].append(normalized)
@@ -383,7 +504,7 @@ def _reconcile_cross_pool_s5_reviews(
                         "reason": invalid_reason,
                     }
                 )
-            if decision in {"retain", "merge"}:
+            if decision in {"retain", "merge"} or portfolio_contract_passed:
                 positive_ids.add(candidate_id)
             if decision == "merge":
                 merge_edges.append((candidate_id, target_id))
@@ -395,13 +516,7 @@ def _reconcile_cross_pool_s5_reviews(
     score_keys = ("innovation", "demand", "feasibility", "effectiveness", "development")
     for candidate_id, rows in rows_by_id.items():
         dimension_scores = {
-            key: average(
-                [
-                    float(row["dimension_scores"][key])
-                    for row in rows
-                    if key in row["dimension_scores"]
-                ]
-            )
+            key: average([float(row["dimension_scores"][key]) for row in rows if key in row["dimension_scores"]])
             for key in score_keys
             if any(key in row["dimension_scores"] for row in rows)
         }
@@ -416,15 +531,22 @@ def _reconcile_cross_pool_s5_reviews(
         )
         aggregates[candidate_id] = {
             "review_count": len(rows),
-            "positive_review_count": sum(
-                row["decision"] in {"retain", "merge"} for row in rows
-            ),
+            "positive_review_count": sum(bool(row["decision_positive"] or row["portfolio_positive"]) for row in rows),
+            "decision_positive_review_count": sum(bool(row["decision_positive"]) for row in rows),
+            "portfolio_positive_review_count": sum(bool(row["portfolio_positive"]) for row in rows),
             "reject_review_count": sum(row["decision"] == "reject" for row in rows),
+            "selection_signal_source": (
+                "decision_and_portfolio"
+                if any(row["decision_positive"] for row in rows) and any(row["portfolio_positive"] for row in rows)
+                else "decision"
+                if any(row["decision_positive"] for row in rows)
+                else "portfolio_order"
+                if any(row["portfolio_positive"] for row in rows)
+                else "none"
+            ),
             "dimension_scores": dimension_scores,
             "weighted_score": average([float(row["weighted_score"]) for row in rows]),
-            "innovation_priority": average(
-                [float(row["innovation_priority"]) for row in rows]
-            ),
+            "innovation_priority": average([float(row["innovation_priority"]) for row in rows]),
             "best_row": best_row,
             "review_rows": rows,
         }
@@ -455,9 +577,7 @@ def _reconcile_cross_pool_s5_reviews(
     def representative_rank(candidate_id: str) -> tuple[float, float, int, float, str]:
         aggregate = aggregates[candidate_id]
         best_row = aggregate.get("best_row", {})
-        tier = _s5_disruption_tier_rank(
-            best_row.get("disruption_tier"), aggregate["innovation_priority"]
-        )
+        tier = _s5_disruption_tier_rank(best_row.get("disruption_tier"), aggregate["innovation_priority"])
         return (
             float(aggregate["weighted_score"]),
             float(aggregate["innovation_priority"]),
@@ -475,6 +595,29 @@ def _reconcile_cross_pool_s5_reviews(
         for member in members:
             if member != representative:
                 merge_map[member] = representative
+
+    target = max(0, int(minimum_eligible or 0))
+    if target and len(eligible_ids) < target:
+        backfill_candidates = sorted(
+            (max(members, key=representative_rank) for members in groups.values() if not (members & positive_ids)),
+            key=representative_rank,
+            reverse=True,
+        )
+        for candidate_id in backfill_candidates:
+            if len(eligible_ids) >= target:
+                break
+            eligible_ids.add(candidate_id)
+            portfolio_rescued_rows.append(
+                {
+                    "reviewer_id": "target-backfill",
+                    "hypothesis_id": candidate_id,
+                    "reason": (
+                        "target_shortfall_recovered_from_reviewed_candidate"
+                        if candidate_id in reviewed_candidate_ids
+                        else "target_shortfall_recovered_from_s3_s4_candidate_pool"
+                    ),
+                }
+            )
 
     ordered_hints = {
         candidate_id: position
@@ -498,6 +641,7 @@ def _reconcile_cross_pool_s5_reviews(
         "portfolio_order_hints": ordered_hints,
         "omitted_by_reviewer": omitted_by_reviewer,
         "invalid_rows": invalid_rows,
+        "portfolio_rescued_rows": portfolio_rescued_rows,
         "reviewer_count": len(reviews),
     }
 
@@ -532,9 +676,7 @@ def _s5_diverse_six_order(
             "；".join(item.direct_military_effects[:3]),
             "；".join(item.equipment_forms[:2]),
         )
-        return tuple(
-            re.sub(r"\s+", "", str(value or "")).casefold() for value in values
-        )
+        return tuple(re.sub(r"\s+", "", str(value or "")).casefold() for value in values)
 
     def identity_overlap(left: WinningHypothesis, right: WinningHypothesis) -> float:
         left_parts = identity_components(left)
@@ -562,9 +704,7 @@ def _s5_diverse_six_order(
     while len(selected) < limit and remaining:
         ranked = [
             (
-                max(
-                    (identity_overlap(item, chosen) for chosen in selected), default=0.0
-                ),
+                max((identity_overlap(item, chosen) for chosen in selected), default=0.0),
                 score_rank(item),
                 item,
             )
@@ -580,9 +720,7 @@ def _s5_diverse_six_order(
         )
         selected.append(chosen)
         selected_ids.add(chosen.hypothesis_id)
-        remaining = [
-            item for item in remaining if item.hypothesis_id != chosen.hypothesis_id
-        ]
+        remaining = [item for item in remaining if item.hypothesis_id != chosen.hypothesis_id]
         backfill_audit.append(
             {
                 "hypothesis_id": chosen.hypothesis_id,
@@ -631,12 +769,8 @@ async def execute_dynamic_mission_graph(
     repair_reserve = 0
     bounds = resolve_dynamic_v2_instance_bounds(
         minimum_instances=swarm_controller.policy.get("mission_graph_min_instances", 8),
-        target_instances=swarm_controller.policy.get(
-            "mission_graph_target_instances", 10
-        ),
-        maximum_instances=swarm_controller.policy.get(
-            "mission_graph_max_instances", 21
-        ),
+        target_instances=swarm_controller.policy.get("mission_graph_target_instances", 10),
+        maximum_instances=swarm_controller.policy.get("mission_graph_max_instances", 21),
         hard_maximum_instances=swarm_controller.policy.get("max_dynamic_instances", 21),
         reserved_instances=repair_reserve,
     )
@@ -646,9 +780,7 @@ async def execute_dynamic_mission_graph(
         execution_profile_id=str(shared["execution_profile_id"]),
         target_instances=target_instances,
         query_theses=(
-            shared.get("structured_query_brief", {}).get(
-                "equipment_project_hypotheses", []
-            )
+            shared.get("structured_query_brief", {}).get("equipment_project_hypotheses", [])
             if isinstance(shared.get("structured_query_brief", {}), Mapping)
             else []
         ),
@@ -694,6 +826,7 @@ async def execute_dynamic_mission_graph(
     candidate_displaced_modes: dict[str, str] = {}
     candidate_new_operational_modes: dict[str, str] = {}
     candidate_winning_relation_shifts: dict[str, str] = {}
+    candidate_s5_convergences: dict[str, WinningHypothesis] = {}
     portfolio_order_hints: dict[str, int] = {}
     portfolio_order_sequence = 0
     cross_pool_s5_reviews: list[dict[str, Any]] = []
@@ -715,9 +848,7 @@ async def execute_dynamic_mission_graph(
         "candidate_count_after": 0,
         "merged_count": 0,
         "merge_map": {},
-        "representative_selection": (
-            "最高S5加权综合分；同分时沿用候选账本分数、证据数和稳定ID"
-        ),
+        "representative_selection": ("最高S5加权综合分；同分时沿用候选账本分数、证据数和稳定ID"),
         "status": "not_run",
     }
     s3_active_instances_materialized = False
@@ -769,9 +900,7 @@ async def execute_dynamic_mission_graph(
             except (TypeError, ValueError):
                 used_calls = 0
             try:
-                used_tokens = int(
-                    getattr(host, "_budget_consumed_swarm_tokens", 0) or 0
-                )
+                used_tokens = int(getattr(host, "_budget_consumed_swarm_tokens", 0) or 0)
             except (TypeError, ValueError):
                 used_tokens = 0
             configured_calls = budgets.get("maximum_swarm_model_calls")
@@ -789,18 +918,12 @@ async def execute_dynamic_mission_graph(
             )
         try:
             remaining_calls = (
-                max(0, int(configured_calls) - used_calls)
-                if configured_calls is not None
-                else graph_capacity
+                max(0, int(configured_calls) - used_calls) if configured_calls is not None else graph_capacity
             )
         except (TypeError, ValueError):
             remaining_calls = graph_capacity
         try:
-            remaining_tokens = (
-                max(0.0, float(token_limit) - used_tokens)
-                if token_limit is not None
-                else None
-            )
+            remaining_tokens = max(0.0, float(token_limit) - used_tokens) if token_limit is not None else None
         except (TypeError, ValueError):
             remaining_tokens = None
 
@@ -833,11 +956,7 @@ async def execute_dynamic_mission_graph(
         """Interleave S3/S4 so either group can receive active dimensions."""
 
         by_node = {
-            node: [
-                item
-                for item in graph.agent_instances
-                if item.mission_node == node and not item.hypothesis_id
-            ]
+            node: [item for item in graph.agent_instances if item.mission_node == node and not item.hypothesis_id]
             for node in ("S3", "S4")
         }
         rows: list[WinningAgentInstance] = []
@@ -851,9 +970,7 @@ async def execute_dynamic_mission_graph(
         """Resolve the bounded per-seat naming slots from the dynamic policy."""
 
         try:
-            configured = int(
-                swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)
-            )
+            configured = int(swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3))
         except (TypeError, ValueError):
             configured = 3
         # Dynamic-v2's public contract is one-to-three candidates per seat.
@@ -908,10 +1025,7 @@ async def execute_dynamic_mission_graph(
             order = row.get("candidate_order")
             if not isinstance(order, list) or len(order) != candidate_count:
                 return None
-        return {
-            str(key): dict(value) if isinstance(value, Mapping) else value
-            for key, value in candidate.items()
-        }
+        return {str(key): dict(value) if isinstance(value, Mapping) else value for key, value in candidate.items()}
 
     # Allocate the complete six-seat portfolio once, immediately after the
     # graph is known.  The same object is used by every creative iteration and
@@ -938,12 +1052,8 @@ async def execute_dynamic_mission_graph(
         "winning_s3_s4_naming_plan_allocated",
         actor="winning_swarm_controller",
         graph_id=graph.graph_id,
-        assignment_version=str(
-            naming_plan.get("assignment_version", NAMING_ASSIGNMENT_VERSION)
-        ),
-        allocation_mode=str(
-            naming_plan.get("allocation_mode", "portfolio_deterministic_balanced")
-        ),
+        assignment_version=str(naming_plan.get("assignment_version", NAMING_ASSIGNMENT_VERSION)),
+        allocation_mode=str(naming_plan.get("allocation_mode", "portfolio_deterministic_balanced")),
         seed_digest=str(naming_plan.get("seed_digest", "")),
         seat_count=len(producer_ids),
         candidate_count_per_seat=naming_candidate_count,
@@ -970,8 +1080,7 @@ async def execute_dynamic_mission_graph(
     # assignment mapping.  Unlike the legacy helper, these rows are open slot
     # envelopes rather than fixed D1--D7 packs.
     dimension_assignments = {
-        seat: dict(portfolio.get("primary_dimension", {}))
-        for seat, portfolio in dimension_portfolios.items()
+        seat: dict(portfolio.get("primary_dimension", {})) for seat, portfolio in dimension_portfolios.items()
     }
 
     async def _refresh_winning_angle_assignments_once() -> None:
@@ -1023,18 +1132,14 @@ async def execute_dynamic_mission_graph(
             # Keep the pre-generation transport tolerant of both that
             # contract and the historical verbose seed names.
             seed_mechanism = str(
-                seed.get("mechanism_thesis")
-                or seed.get("breakpoint")
-                or seed.get("combat_problem", "")
+                seed.get("mechanism_thesis") or seed.get("breakpoint") or seed.get("combat_problem", "")
             ).strip()
             seed_variable = str(
                 seed.get("changed_confrontation_variable")
                 or seed.get("changed_variable")
                 or seed.get("enemy_advantage", "")
             ).strip()
-            seed_result = str(
-                seed.get("direct_military_result") or seed.get("direct_effect", "")
-            ).strip()
+            seed_result = str(seed.get("direct_military_result") or seed.get("direct_effect", "")).strip()
             # Normalize aliases once so all similarity/fallback logic sees
             # the same semantic spine regardless of which producer schema
             # emitted it.
@@ -1043,9 +1148,7 @@ async def execute_dynamic_mission_graph(
                 "mechanism_thesis": seed_mechanism,
                 "changed_confrontation_variable": seed_variable,
                 "direct_military_result": seed_result,
-                "target_and_phase": str(
-                    seed.get("target_and_phase") or seed.get("combat_problem", "")
-                ).strip(),
+                "target_and_phase": str(seed.get("target_and_phase") or seed.get("combat_problem", "")).strip(),
             }
             spine = tuple(
                 str(seed.get(key, "")).strip().casefold()
@@ -1106,26 +1209,15 @@ async def execute_dynamic_mission_graph(
                     # A blueprint title is only an internal planning label;
                     # it must not become an S3 naming seed.
                     "project_name": "",
-                    "equipment_form_hypothesis": str(
-                        thesis.get("equipment_form", "")
-                    ).strip(),
+                    "equipment_form_hypothesis": str(thesis.get("equipment_form", "")).strip(),
                     "target_and_phase": str(thesis.get("target_and_phase", "")).strip(),
                     "mechanism_thesis": str(
-                        thesis.get("project_function")
-                        or thesis.get("query_causal_link", "")
+                        thesis.get("project_function") or thesis.get("query_causal_link", "")
                     ).strip(),
-                    "changed_confrontation_variable": str(
-                        thesis.get("query_causal_link", "")
-                    ).strip(),
-                    "direct_military_result": str(
-                        thesis.get("direct_military_effect", "")
-                    ).strip(),
-                    "competing_explanation": str(
-                        thesis.get("competing_explanation", "")
-                    ).strip(),
-                    "adversary_adaptation": str(
-                        thesis.get("adversary_adaptation", "")
-                    ).strip(),
+                    "changed_confrontation_variable": str(thesis.get("query_causal_link", "")).strip(),
+                    "direct_military_result": str(thesis.get("direct_military_effect", "")).strip(),
+                    "competing_explanation": str(thesis.get("competing_explanation", "")).strip(),
+                    "adversary_adaptation": str(thesis.get("adversary_adaptation", "")).strip(),
                     "failure_boundary": str(thesis.get("failure_boundary", "")).strip(),
                 }
             )
@@ -1135,38 +1227,22 @@ async def execute_dynamic_mission_graph(
                     "angle_id": f"frontier-angle-{index}",
                     "source": "query_frontier_technology_hypothesis",
                     "project_name": "",
-                    "equipment_form_hypothesis": str(
-                        thesis.get("equipment_implication", "")
-                    ).strip(),
+                    "equipment_form_hypothesis": str(thesis.get("equipment_implication", "")).strip(),
                     "target_and_phase": "",
-                    "mechanism_thesis": str(
-                        thesis.get("query_causal_link", "")
-                    ).strip(),
+                    "mechanism_thesis": str(thesis.get("query_causal_link", "")).strip(),
                     "changed_confrontation_variable": str(
-                        thesis.get("disruptive_delta")
-                        or thesis.get("conventional_absorption_limit", "")
+                        thesis.get("disruptive_delta") or thesis.get("conventional_absorption_limit", "")
                     ).strip(),
-                    "direct_military_result": str(
-                        thesis.get("direct_military_effect", "")
-                    ).strip(),
-                    "frontier_principle": str(
-                        thesis.get("enabling_principle", "")
-                    ).strip(),
+                    "direct_military_result": str(thesis.get("direct_military_effect", "")).strip(),
+                    "frontier_principle": str(thesis.get("enabling_principle", "")).strip(),
                     "technology_discontinuity": str(
-                        thesis.get("disruptive_delta")
-                        or thesis.get("conventional_absorption_limit", "")
+                        thesis.get("disruptive_delta") or thesis.get("conventional_absorption_limit", "")
                     ).strip(),
-                    "technology_horizon": str(
-                        thesis.get("technology_horizon", "")
-                    ).strip(),
-                    "engineering_bottleneck": str(
-                        thesis.get("engineering_bottleneck", "")
-                    ).strip(),
+                    "technology_horizon": str(thesis.get("technology_horizon", "")).strip(),
+                    "engineering_bottleneck": str(thesis.get("engineering_bottleneck", "")).strip(),
                     "competing_explanation": "",
                     "adversary_adaptation": "",
-                    "failure_boundary": str(
-                        thesis.get("disconfirming_condition", "")
-                    ).strip(),
+                    "failure_boundary": str(thesis.get("disconfirming_condition", "")).strip(),
                 }
             )
         for index, seed in enumerate(distinct_seeds, start=1):
@@ -1178,28 +1254,16 @@ async def execute_dynamic_mission_graph(
                     "equipment_form_hypothesis": "",
                     "target_and_phase": str(seed.get("target_and_phase", "")).strip(),
                     "mechanism_thesis": str(seed.get("mechanism_thesis", "")).strip(),
-                    "changed_confrontation_variable": str(
-                        seed.get("changed_confrontation_variable", "")
-                    ).strip(),
-                    "direct_military_result": str(
-                        seed.get("direct_military_result", "")
-                    ).strip(),
-                    "competing_explanation": str(
-                        seed.get("competing_explanation", "")
-                    ).strip(),
-                    "adversary_adaptation": str(
-                        seed.get("adversary_adaptation", "")
-                    ).strip(),
+                    "changed_confrontation_variable": str(seed.get("changed_confrontation_variable", "")).strip(),
+                    "direct_military_result": str(seed.get("direct_military_result", "")).strip(),
+                    "competing_explanation": str(seed.get("competing_explanation", "")).strip(),
+                    "adversary_adaptation": str(seed.get("adversary_adaptation", "")).strip(),
                     "failure_boundary": str(seed.get("failure_boundary", "")).strip(),
                 }
             )
-        angle_candidates = [
-            item for item in angle_candidates if angle_semantic_text(item)
-        ]
+        angle_candidates = [item for item in angle_candidates if angle_semantic_text(item)]
         reviewer_observations = [
-            dict(item)
-            for item in angle_candidates
-            if item.get("source") == "s1_s2_query_reasoning"
+            dict(item) for item in angle_candidates if item.get("source") == "s1_s2_query_reasoning"
         ]
         active_angle_ids: list[str] = []
         reserve_angle_ids: list[str] = []
@@ -1219,9 +1283,7 @@ async def execute_dynamic_mission_graph(
         # theses.  Do not hard-code zero: the old value silently discarded
         # valid alternatives and made selector output look like empty slots.
         try:
-            configured_reserve = int(
-                swarm_controller.policy.get("s3_s4_reserve_angle_target", 2)
-            )
+            configured_reserve = int(swarm_controller.policy.get("s3_s4_reserve_angle_target", 2))
         except (TypeError, ValueError):
             configured_reserve = 2
         reserve_target = max(
@@ -1272,9 +1334,7 @@ async def execute_dynamic_mission_graph(
                             "changed_confrontation_variable": (
                                 f"{shared.get('topic', '')}的未覆盖战场关系（开放问题{open_seed_ordinal}，待模型推演）"
                             ),
-                            "direct_military_result": (
-                                "请模型提出不同于现有候选的可证伪直接军事结果"
-                            ),
+                            "direct_military_result": ("请模型提出不同于现有候选的可证伪直接军事结果"),
                         }
                     )
                     open_seed_ordinal += 1
@@ -1295,12 +1355,8 @@ async def execute_dynamic_mission_graph(
                         "query": shared.get("topic", ""),
                         "open_angle_seeds": [
                             {
-                                "battlefield_relationship": str(
-                                    item.get("changed_confrontation_variable", "")
-                                ).strip(),
-                                "desired_direct_result": str(
-                                    item.get("direct_military_result", "")
-                                ).strip(),
+                                "battlefield_relationship": str(item.get("changed_confrontation_variable", "")).strip(),
+                                "desired_direct_result": str(item.get("direct_military_result", "")).strip(),
                             }
                             # The selector must see the complete upstream
                             # angle surface (Query theses, frontier signals,
@@ -1319,11 +1375,7 @@ async def execute_dynamic_mission_graph(
                 selection = _parse_json_object(selection_text)
                 valid_ids = {str(item["angle_id"]) for item in angle_candidates}
                 active_angle_ids = list(
-                    dict.fromkeys(
-                        str(item)
-                        for item in selection.get("active_angle_ids", [])
-                        if str(item) in valid_ids
-                    )
+                    dict.fromkeys(str(item) for item in selection.get("active_angle_ids", []) if str(item) in valid_ids)
                 )[:angle_capacity]
                 # New lightweight selector contract returns open_hints;
                 # retain compatibility with the historical replacement
@@ -1333,9 +1385,7 @@ async def execute_dynamic_mission_graph(
                     for index, item in enumerate(lightweight_hints, start=1):
                         if not isinstance(item, Mapping):
                             continue
-                        relationship = str(
-                            item.get("battlefield_relationship", "")
-                        ).strip()
+                        relationship = str(item.get("battlefield_relationship", "")).strip()
                         result = str(item.get("desired_direct_result", "")).strip()
                         if not relationship and not result:
                             continue
@@ -1371,9 +1421,7 @@ async def execute_dynamic_mission_graph(
                         "source": "pre_generation_reviewer_exploration_problem",
                         "project_name": "",
                         "equipment_form_hypothesis": "",
-                        "activation": str(item.get("activation", "active"))
-                        .strip()
-                        .lower(),
+                        "activation": str(item.get("activation", "active")).strip().lower(),
                         **{
                             key: str(item.get(key, "")).strip()
                             for key in (
@@ -1401,20 +1449,14 @@ async def execute_dynamic_mission_graph(
                     and str(item.get("direct_military_result", "")).strip()
                 ]
                 legacy_replacement_angles = [
-                    item
-                    for item in normalized_replacements
-                    if item.get("activation") != "reserve"
+                    item for item in normalized_replacements if item.get("activation") != "reserve"
                 ][:angle_capacity]
                 replacement_angles.extend(legacy_replacement_angles)
                 replacement_angles = replacement_angles[:angle_capacity]
                 replacement_reserve_angles = [
-                    item
-                    for item in normalized_replacements
-                    if item.get("activation") == "reserve"
+                    item for item in normalized_replacements if item.get("activation") == "reserve"
                 ][:reserve_target]
-                active_selection_succeeded = bool(
-                    active_angle_ids or replacement_angles
-                )
+                active_selection_succeeded = bool(active_angle_ids or replacement_angles)
                 if not active_selection_succeeded:
                     emit_swarm_event(
                         "winning_pre_generation_active_angle_selection_fallback",
@@ -1424,19 +1466,13 @@ async def execute_dynamic_mission_graph(
                         error_message=(
                             "lightweight selector returned no usable open hints; continuing from S1/S2 seeds"
                         ),
-                        fallback_source=(
-                            "s1_s2_reasoning_seeds"
-                            if angle_candidates
-                            else "query_only"
-                        ),
+                        fallback_source=("s1_s2_reasoning_seeds" if angle_candidates else "query_only"),
                     )
                 angle_selection_audit = {
                     "query_equipment_blueprint": query_equipment_blueprint,
                     "selection_reasons": selection.get("selection_reasons", []),
                     "rejected_angle_groups": selection.get("rejected_angle_groups", []),
-                    "technology_discontinuity_audit": selection.get(
-                        "technology_discontinuity_audit", {}
-                    ),
+                    "technology_discontinuity_audit": selection.get("technology_discontinuity_audit", {}),
                     "stop_reason": selection.get("stop_reason", ""),
                 }
                 emit_swarm_event(
@@ -1449,9 +1485,7 @@ async def execute_dynamic_mission_graph(
                         for item in replacement_angles
                         if str(item.get("combat_dimension", "")).strip()
                     ],
-                    rule=load_dynamic_winning_prompt(
-                        "common", section="s3_s4.angle_selection_audit_rule"
-                    ),
+                    rule=load_dynamic_winning_prompt("common", section="s3_s4.angle_selection_audit_rule"),
                 )
             except Exception as exc:
                 emit_swarm_event(
@@ -1460,17 +1494,11 @@ async def execute_dynamic_mission_graph(
                     graph_id=graph.graph_id,
                     failure_type=type(exc).__name__,
                     error_message=str(exc)[:300],
-                    fallback_source=(
-                        "s1_s2_reasoning_seeds" if angle_candidates else "query_only"
-                    ),
+                    fallback_source=("s1_s2_reasoning_seeds" if angle_candidates else "query_only"),
                 )
 
         angle_by_id = {str(item["angle_id"]): item for item in angle_candidates}
-        selected_active = [
-            dict(angle_by_id[angle_id])
-            for angle_id in active_angle_ids
-            if angle_id in angle_by_id
-        ]
+        selected_active = [dict(angle_by_id[angle_id]) for angle_id in active_angle_ids if angle_id in angle_by_id]
         if replacement_angles:
             selected_active = []
         for replacement in replacement_angles:
@@ -1483,8 +1511,7 @@ async def execute_dynamic_mission_graph(
         remaining_angles = [
             dict(item)
             for item in angle_candidates
-            if str(item["angle_id"])
-            not in {str(selected["angle_id"]) for selected in selected_active}
+            if str(item["angle_id"]) not in {str(selected["angle_id"]) for selected in selected_active}
         ]
         while remaining_angles and len(selected_active) < angle_capacity:
             occupied_texts = [angle_semantic_text(item) for item in selected_active]
@@ -1526,11 +1553,7 @@ async def execute_dynamic_mission_graph(
             """Flatten selector dimension envelopes without prescribing codes."""
 
             if isinstance(value, Mapping):
-                nested = (
-                    value.get("dimensions")
-                    or value.get("dimension_slots")
-                    or value.get("slots")
-                )
+                nested = value.get("dimensions") or value.get("dimension_slots") or value.get("slots")
                 if isinstance(nested, list):
                     return list(nested)
                 return [dict(value)]
@@ -1555,9 +1578,7 @@ async def execute_dynamic_mission_graph(
                 for seat_key, values in container.items():
                     token = str(seat_key).strip()
                     if token in {item.instance_id for item in producers}:
-                        dimension_hints_by_seat.setdefault(token, []).extend(
-                            _dimension_hint_rows(values)
-                        )
+                        dimension_hints_by_seat.setdefault(token, []).extend(_dimension_hint_rows(values))
                     elif token.isdigit():
                         position = int(token)
                         target = (
@@ -1568,9 +1589,7 @@ async def execute_dynamic_mission_graph(
                             else ""
                         )
                         if target:
-                            dimension_hints_by_seat.setdefault(target, []).extend(
-                                _dimension_hint_rows(values)
-                            )
+                            dimension_hints_by_seat.setdefault(target, []).extend(_dimension_hint_rows(values))
             elif isinstance(container, list):
                 for row in container:
                     if not isinstance(row, Mapping):
@@ -1582,11 +1601,7 @@ async def execute_dynamic_mission_graph(
                         or row.get("producer_id")
                         or row.get("seat_index")
                     )
-                    nested = (
-                        row.get("dimensions")
-                        or row.get("dimension_slots")
-                        or row.get("slots")
-                    )
+                    nested = row.get("dimensions") or row.get("dimension_slots") or row.get("slots")
                     if seat_key is not None and nested is not None:
                         token = str(seat_key).strip()
                         target = token
@@ -1600,9 +1615,7 @@ async def execute_dynamic_mission_graph(
                                 else ""
                             )
                         if target in {item.instance_id for item in producers}:
-                            dimension_hints_by_seat.setdefault(target, []).extend(
-                                _dimension_hint_rows(nested)
-                            )
+                            dimension_hints_by_seat.setdefault(target, []).extend(_dimension_hint_rows(nested))
                         else:
                             dimension_hints_global.extend(_dimension_hint_rows(nested))
                     else:
@@ -1631,15 +1644,12 @@ async def execute_dynamic_mission_graph(
                         **dict(row),
                         "source": "selector_open_hint",
                         "winning_logic": str(
-                            row.get("winning_logic")
-                            or row.get("battlefield_relationship", "")
+                            row.get("winning_logic") or row.get("battlefield_relationship", "")
                         ).strip(),
                     }
                 )
         dimension_hint_payload: Mapping[str, Any] | Sequence[Any] | None = (
-            dimension_hints_by_seat
-            if dimension_hints_by_seat
-            else dimension_hints_global
+            dimension_hints_by_seat if dimension_hints_by_seat else dimension_hints_global
         )
         dimension_portfolios = _s3_s4_open_dimension_slots(
             dimension_assignment_seed,
@@ -1648,8 +1658,7 @@ async def execute_dynamic_mission_graph(
             dimensions_per_seat=3,
         )
         dimension_assignments = {
-            seat: dict(portfolio.get("primary_dimension", {}))
-            for seat, portfolio in dimension_portfolios.items()
+            seat: dict(portfolio.get("primary_dimension", {})) for seat, portfolio in dimension_portfolios.items()
         }
         # Attach the three open slots to each selected Query angle.  The angle
         # itself remains model/upstream authored; only missing metadata is
@@ -1661,39 +1670,25 @@ async def execute_dynamic_mission_graph(
             primary = dict(portfolio.get("primary_dimension", {}))
             hydrated = dict(angle)
             hydrated["open"] = True
-            hydrated["dimension_portfolio"] = [
-                dict(item) for item in portfolio.get("dimension_portfolio", [])
-            ]
-            hydrated["alternate_dimensions"] = [
-                dict(item) for item in portfolio.get("alternate_dimensions", [])
-            ]
+            hydrated["dimension_portfolio"] = [dict(item) for item in portfolio.get("dimension_portfolio", [])]
+            hydrated["alternate_dimensions"] = [dict(item) for item in portfolio.get("alternate_dimensions", [])]
             hydrated["dimension_codes"] = list(portfolio.get("dimension_codes", []))
             hydrated["dimension_labels"] = list(portfolio.get("dimension_labels", []))
-            hydrated["reference_dimension_codes"] = list(
-                portfolio.get("reference_dimension_codes", [])
-            )
-            hydrated["reference_only_dimension_codes"] = list(
-                portfolio.get("reference_dimension_codes", [])
-            )
+            hydrated["reference_dimension_codes"] = list(portfolio.get("reference_dimension_codes", []))
+            hydrated["reference_only_dimension_codes"] = list(portfolio.get("reference_dimension_codes", []))
             hydrated["dimension_slot_count"] = int(portfolio.get("slot_count", 3) or 3)
-            hydrated["dimension_selection_rule"] = str(
-                portfolio.get("dimension_selection_rule", "")
-            )
+            hydrated["dimension_selection_rule"] = str(portfolio.get("dimension_selection_rule", ""))
             # Keep model-authored dimensions if present; otherwise expose an
             # open first-slot label solely as an audit/dispatch hint.
             if not str(hydrated.get("combat_dimension", "")).strip():
                 hydrated["combat_dimension"] = str(
                     primary.get("label")
-                    or load_dynamic_winning_prompt(
-                        "common", section="s3_s4.open_dimension_fallback"
-                    )
+                    or load_dynamic_winning_prompt("common", section="s3_s4.open_dimension_fallback")
                 )
             if not str(hydrated.get("dimension_code", "")).strip():
                 hydrated["dimension_code"] = str(primary.get("code", ""))
             if not str(hydrated.get("dimension_winning_logic", "")).strip():
-                hydrated["dimension_winning_logic"] = str(
-                    primary.get("winning_logic", "")
-                )
+                hydrated["dimension_winning_logic"] = str(primary.get("winning_logic", ""))
             for key in (
                 "task_chain_breakpoint",
                 "battlefield_relationship",
@@ -1718,24 +1713,13 @@ async def execute_dynamic_mission_graph(
         # If the semantic reviewer was unavailable, retain a bounded
         # least-similar reserve set for intentional empty returns.
         if not selected_reserves and not active_selection_succeeded:
-            reserve_remaining = [
-                item
-                for item in remaining_angles
-                if str(item["angle_id"]) not in selected_active_ids
-            ]
+            reserve_remaining = [item for item in remaining_angles if str(item["angle_id"]) not in selected_active_ids]
             while reserve_remaining and len(selected_reserves) < reserve_target:
-                occupied = [
-                    angle_semantic_text(item)
-                    for item in [*selected_active, *selected_reserves]
-                ]
+                occupied = [angle_semantic_text(item) for item in [*selected_active, *selected_reserves]]
                 selected = min(
                     reserve_remaining,
                     key=lambda item: max(
-                        (
-                            _capability_text_similarity(angle_semantic_text(item), text)
-                            for text in occupied
-                            if text
-                        ),
+                        (_capability_text_similarity(angle_semantic_text(item), text) for text in occupied if text),
                         default=0.0,
                     ),
                 )
@@ -1766,24 +1750,15 @@ async def execute_dynamic_mission_graph(
             if not unused_seed_indices:
                 return {}
             thesis_text = angle_semantic_text(thesis)
-            occupied_texts = [
-                angle_semantic_text(item)
-                for item in occupied
-                if angle_semantic_text(item)
-            ]
+            occupied_texts = [angle_semantic_text(item) for item in occupied if angle_semantic_text(item)]
 
             def rank(index: int) -> tuple[float, float, int]:
                 seed_text = angle_semantic_text(distinct_seeds[index])
                 similarity_to_thesis = (
-                    _capability_text_similarity(seed_text, thesis_text)
-                    if seed_text and thesis_text
-                    else 0.0
+                    _capability_text_similarity(seed_text, thesis_text) if seed_text and thesis_text else 0.0
                 )
                 maximum_occupied_similarity = max(
-                    (
-                        _capability_text_similarity(seed_text, item)
-                        for item in occupied_texts
-                    ),
+                    (_capability_text_similarity(seed_text, item) for item in occupied_texts),
                     default=0.0,
                 )
                 # A blueprint-backed session prefers the S1/S2 seed
@@ -1819,30 +1794,18 @@ async def execute_dynamic_mission_graph(
                     # from Query.
                     "active": True,
                     "open_dimension_slots": True,
-                    "dimension_slot_count": int(
-                        open_portfolio.get("slot_count", 3) or 3
-                    ),
+                    "dimension_slot_count": int(open_portfolio.get("slot_count", 3) or 3),
                     "dimension_portfolio": [
                         dict(item)
                         for item in open_portfolio.get("dimension_portfolio", [])
                         if isinstance(item, Mapping)
                     ],
                     "dimension_codes": list(open_portfolio.get("dimension_codes", [])),
-                    "reference_dimension_codes": list(
-                        open_portfolio.get("reference_dimension_codes", [])
-                    ),
-                    "reference_only_dimension_codes": list(
-                        open_portfolio.get("reference_dimension_codes", [])
-                    ),
-                    "primary_dimension": dict(
-                        open_portfolio.get("primary_dimension", {})
-                    ),
-                    "primary_dimension_code": str(
-                        open_portfolio.get("primary_dimension_code", "")
-                    ),
-                    "primary_dimension_label": str(
-                        open_portfolio.get("primary_dimension_label", "")
-                    ),
+                    "reference_dimension_codes": list(open_portfolio.get("reference_dimension_codes", [])),
+                    "reference_only_dimension_codes": list(open_portfolio.get("reference_dimension_codes", [])),
+                    "primary_dimension": dict(open_portfolio.get("primary_dimension", {})),
+                    "primary_dimension_code": str(open_portfolio.get("primary_dimension_code", "")),
+                    "primary_dimension_label": str(open_portfolio.get("primary_dimension_label", "")),
                     "project_name": "",
                     "equipment_form_hypothesis": "",
                     "target_and_phase": "",
@@ -1853,9 +1816,7 @@ async def execute_dynamic_mission_graph(
                     "adversary_adaptation": "",
                     "failure_boundary": "",
                     "reserved_other_angles": [],
-                    "rule": load_dynamic_winning_prompt(
-                        "common", section="s3_s4.angle_assignment_inactive_rule"
-                    ),
+                    "rule": load_dynamic_winning_prompt("common", section="s3_s4.angle_assignment_inactive_rule"),
                 }
                 seat_dimension_traces[instance.instance_id] = [
                     str(item.get("code", ""))
@@ -1887,13 +1848,10 @@ async def execute_dynamic_mission_graph(
                 "project_name": "",
                 "combat_dimension": str(thesis.get("combat_dimension", "")).strip(),
                 "dimension_code": str(thesis.get("dimension_code", "")).strip(),
-                "dimension_winning_logic": str(
-                    thesis.get("dimension_winning_logic", "")
-                ).strip(),
+                "dimension_winning_logic": str(thesis.get("dimension_winning_logic", "")).strip(),
                 "query_equipment_blueprint": dict(query_equipment_blueprint),
                 "equipment_form_hypothesis": str(
-                    thesis.get("equipment_form_hypothesis")
-                    or thesis.get("equipment_form", "")
+                    thesis.get("equipment_form_hypothesis") or thesis.get("equipment_form", "")
                 ).strip(),
                 "target_and_phase": str(thesis.get("target_and_phase", "")).strip(),
                 "mechanism_thesis": str(
@@ -1913,50 +1871,34 @@ async def execute_dynamic_mission_graph(
                     or seed.get("direct_military_result", "")
                 ).strip(),
                 "novelty_search_question": str(
-                    thesis.get("novelty_search_question")
-                    or seed.get("novelty_search_question", "")
+                    thesis.get("novelty_search_question") or seed.get("novelty_search_question", "")
                 ).strip(),
                 "exclusion_boundary": str(
-                    thesis.get("exclusion_boundary")
-                    or seed.get("exclusion_boundary", "")
+                    thesis.get("exclusion_boundary") or seed.get("exclusion_boundary", "")
                 ).strip(),
-                "post_divergence_seed_provocations": list(
-                    thesis.get("post_divergence_seed_provocations", [])
-                ),
-                "post_divergence_frontier_provocations": list(
-                    thesis.get("post_divergence_frontier_provocations", [])
-                ),
+                "post_divergence_seed_provocations": list(thesis.get("post_divergence_seed_provocations", [])),
+                "post_divergence_frontier_provocations": list(thesis.get("post_divergence_frontier_provocations", [])),
                 "frontier_principle": str(
-                    thesis.get("frontier_principle")
-                    or seed.get("frontier_principle", "")
+                    thesis.get("frontier_principle") or seed.get("frontier_principle", "")
                 ).strip(),
                 "technology_discontinuity": str(
-                    thesis.get("technology_discontinuity")
-                    or seed.get("technology_discontinuity", "")
+                    thesis.get("technology_discontinuity") or seed.get("technology_discontinuity", "")
                 ).strip(),
                 "technology_horizon": str(
-                    thesis.get("technology_horizon")
-                    or seed.get("technology_horizon", "")
+                    thesis.get("technology_horizon") or seed.get("technology_horizon", "")
                 ).strip(),
                 "engineering_bottleneck": str(
-                    thesis.get("engineering_bottleneck")
-                    or seed.get("engineering_bottleneck", "")
+                    thesis.get("engineering_bottleneck") or seed.get("engineering_bottleneck", "")
                 ).strip(),
                 "competing_explanation": str(
-                    thesis.get("competing_explanation")
-                    or seed.get("competing_explanation", "")
+                    thesis.get("competing_explanation") or seed.get("competing_explanation", "")
                 ).strip(),
                 "adversary_adaptation": str(
-                    thesis.get("adversary_adaptation")
-                    or seed.get("adversary_adaptation", "")
+                    thesis.get("adversary_adaptation") or seed.get("adversary_adaptation", "")
                 ).strip(),
-                "failure_boundary": str(
-                    thesis.get("failure_boundary") or seed.get("failure_boundary", "")
-                ).strip(),
+                "failure_boundary": str(thesis.get("failure_boundary") or seed.get("failure_boundary", "")).strip(),
                 "reserved_other_angles": list(reserved),
-                "rule": load_dynamic_winning_prompt(
-                    "common", section="s3_s4.angle_assignment_shared_rule"
-                ),
+                "rule": load_dynamic_winning_prompt("common", section="s3_s4.angle_assignment_shared_rule"),
             }
             # Three open slots are the durable seat contract.  Their labels
             # and relationships come from selector/Query analysis; the first
@@ -1967,16 +1909,12 @@ async def execute_dynamic_mission_graph(
             if not str(assignment.get("combat_dimension", "")).strip():
                 assignment["combat_dimension"] = str(
                     primary.get("label")
-                    or load_dynamic_winning_prompt(
-                        "common", section="s3_s4.open_dimension_fallback"
-                    )
+                    or load_dynamic_winning_prompt("common", section="s3_s4.open_dimension_fallback")
                 ).strip()
             if not str(assignment.get("dimension_code", "")).strip():
                 assignment["dimension_code"] = str(primary.get("code", "")).strip()
             if not str(assignment.get("dimension_winning_logic", "")).strip():
-                assignment["dimension_winning_logic"] = str(
-                    primary.get("winning_logic", "")
-                ).strip()
+                assignment["dimension_winning_logic"] = str(primary.get("winning_logic", "")).strip()
             assignment["primary_dimension_code"] = str(
                 primary.get("code", assignment.get("dimension_code", ""))
             ).strip()
@@ -1985,14 +1923,10 @@ async def execute_dynamic_mission_graph(
             ).strip()
             assignment["primary_dimension"] = primary
             assignment["alternate_dimensions"] = [
-                dict(item)
-                for item in portfolio.get("alternate_dimensions", [])
-                if isinstance(item, Mapping)
+                dict(item) for item in portfolio.get("alternate_dimensions", []) if isinstance(item, Mapping)
             ]
             assignment["dimension_portfolio"] = [
-                dict(item)
-                for item in portfolio.get("dimension_portfolio", [])
-                if isinstance(item, Mapping)
+                dict(item) for item in portfolio.get("dimension_portfolio", []) if isinstance(item, Mapping)
             ]
             assignment["dimension_codes"] = list(
                 portfolio.get(
@@ -2000,19 +1934,11 @@ async def execute_dynamic_mission_graph(
                     [assignment["primary_dimension_code"]],
                 )
             )
-            assignment["reference_dimension_codes"] = list(
-                portfolio.get("reference_dimension_codes", [])
-            )
-            assignment["reference_only_dimension_codes"] = list(
-                portfolio.get("reference_dimension_codes", [])
-            )
-            assignment["dimension_slot_count"] = int(
-                portfolio.get("slot_count", 3) or 3
-            )
+            assignment["reference_dimension_codes"] = list(portfolio.get("reference_dimension_codes", []))
+            assignment["reference_only_dimension_codes"] = list(portfolio.get("reference_dimension_codes", []))
+            assignment["dimension_slot_count"] = int(portfolio.get("slot_count", 3) or 3)
             assignment["open_dimension_slots"] = True
-            assignment["dimension_selection_rule"] = str(
-                portfolio.get("dimension_selection_rule", "")
-            ).strip()
+            assignment["dimension_selection_rule"] = str(portfolio.get("dimension_selection_rule", "")).strip()
             for package_key in (
                 "task_chain_breakpoint",
                 "battlefield_relationship",
@@ -2022,17 +1948,13 @@ async def execute_dynamic_mission_graph(
                 "forward_winning_question",
                 "exclusion_boundary",
             ):
-                assignment[package_key] = str(
-                    primary.get(package_key, assignment.get(package_key, ""))
-                ).strip()
+                assignment[package_key] = str(primary.get(package_key, assignment.get(package_key, ""))).strip()
             # Keep the historical aliases populated for downstream handoffs.
             assignment["changed_confrontation_variable"] = str(
-                assignment.get("changed_confrontation_variable")
-                or assignment.get("battlefield_relationship", "")
+                assignment.get("changed_confrontation_variable") or assignment.get("battlefield_relationship", "")
             ).strip()
             assignment["direct_military_result"] = str(
-                assignment.get("direct_military_result")
-                or assignment.get("desired_direct_result", "")
+                assignment.get("direct_military_result") or assignment.get("desired_direct_result", "")
             ).strip()
             winning_angle_assignments[instance.instance_id] = assignment
             seat_dimension_traces[instance.instance_id] = [
@@ -2043,9 +1965,7 @@ async def execute_dynamic_mission_graph(
             reserved.append(
                 {
                     "assignment_id": assignment["assignment_id"],
-                    "changed_confrontation_variable": assignment[
-                        "changed_confrontation_variable"
-                    ],
+                    "changed_confrontation_variable": assignment["changed_confrontation_variable"],
                     "mechanism_thesis": assignment["mechanism_thesis"],
                     "direct_military_result": assignment["direct_military_result"],
                     "frontier_principle": assignment["frontier_principle"],
@@ -2057,22 +1977,16 @@ async def execute_dynamic_mission_graph(
         for instance_id, assignment in winning_angle_assignments.items():
             own_id = str(assignment.get("assignment_id", ""))
             assignment["reserved_other_angles"] = [
-                dict(item)
-                for item in reserved
-                if str(item.get("assignment_id", "")) != own_id
+                dict(item) for item in reserved if str(item.get("assignment_id", "")) != own_id
             ]
         emit_swarm_event(
             "winning_pre_generation_angle_portfolio_planned",
             actor="winning_swarm_controller",
             graph_id=graph.graph_id,
-            assigned_angle_count=sum(
-                bool(item.get("active", True))
-                for item in winning_angle_assignments.values()
-            ),
+            assigned_angle_count=sum(bool(item.get("active", True)) for item in winning_angle_assignments.values()),
             s3_capacity_slot_count=len(winning_angle_assignments),
             inactive_capacity_slot_count=sum(
-                not bool(item.get("active", True))
-                for item in winning_angle_assignments.values()
+                not bool(item.get("active", True)) for item in winning_angle_assignments.values()
             ),
             reserve_angle_count=0,
             # D7 is carried as an optional source-forward reference prompt
@@ -2082,38 +1996,21 @@ async def execute_dynamic_mission_graph(
             reference_only_dimension_codes=["D7"],
             reference_dimension_role="advisory_reference_only_not_hard_topic",
             dimension_mode="model_derived_open_slots",
-            dimensions_per_seat={
-                instance_id: list(codes)
-                for instance_id, codes in seat_dimension_traces.items()
-            },
+            dimensions_per_seat={instance_id: list(codes) for instance_id, codes in seat_dimension_traces.items()},
             reference_dimensions_per_seat={
-                instance_id: list(
-                    winning_angle_assignments.get(instance_id, {}).get(
-                        "reference_dimension_codes", []
-                    )
-                )
+                instance_id: list(winning_angle_assignments.get(instance_id, {}).get("reference_dimension_codes", []))
                 for instance_id in seat_dimension_traces
-                if winning_angle_assignments.get(instance_id, {}).get(
-                    "reference_dimension_codes", []
-                )
+                if winning_angle_assignments.get(instance_id, {}).get("reference_dimension_codes", [])
             },
-            dimension_catalog_size=len(
-                _s3_s4_dimension_catalog(
-                    next(iter(winning_angle_assignments.values()), {})
-                )
-            ),
-            dimension_assignment_rule=load_dynamic_winning_prompt(
-                "common", section="s3_s4.dimension_assignment_rule"
-            ),
+            dimension_catalog_size=len(_s3_s4_dimension_catalog(next(iter(winning_angle_assignments.values()), {}))),
+            dimension_assignment_rule=load_dynamic_winning_prompt("common", section="s3_s4.dimension_assignment_rule"),
             assigned_angles=[
                 {
                     "assignment_id": item.get("assignment_id", ""),
                     "dimension_code": item.get("dimension_code", ""),
                     "combat_dimension": item.get("combat_dimension", ""),
                     "dimension_winning_logic": item.get("dimension_winning_logic", ""),
-                    "changed_confrontation_variable": item.get(
-                        "changed_confrontation_variable", ""
-                    ),
+                    "changed_confrontation_variable": item.get("changed_confrontation_variable", ""),
                     "mechanism_thesis": item.get("mechanism_thesis", ""),
                     "direct_military_result": item.get("direct_military_result", ""),
                 }
@@ -2121,9 +2018,7 @@ async def execute_dynamic_mission_graph(
                 if bool(item.get("active", True))
             ],
             reserve_angles=[],
-            rule=load_dynamic_winning_prompt(
-                "common", section="s3_s4.seat_dispatch_rule"
-            ),
+            rule=load_dynamic_winning_prompt("common", section="s3_s4.seat_dispatch_rule"),
             selection_audit=angle_selection_audit,
         )
 
@@ -2137,9 +2032,7 @@ async def execute_dynamic_mission_graph(
             # No await occurs between the guard and task assignment,
             # so all concurrently awakened S3 producers observe the
             # same task on the single asyncio event loop.
-            winning_angle_refresh_task = asyncio.create_task(
-                _refresh_winning_angle_assignments_once()
-            )
+            winning_angle_refresh_task = asyncio.create_task(_refresh_winning_angle_assignments_once())
         await asyncio.shield(winning_angle_refresh_task)
 
     async def materialize_active_s3_instances() -> None:
@@ -2169,9 +2062,7 @@ async def execute_dynamic_mission_graph(
             ],
             active_instance_count=(len(seeds.get("S3", [])) + len(seeds.get("S4", []))),
             unused_capacity_count=0,
-            rule=load_dynamic_winning_prompt(
-                "common", section="s3_s4.materialized_rule"
-            ),
+            rule=load_dynamic_winning_prompt("common", section="s3_s4.materialized_rule"),
         )
 
     def task_for_instance(instance: WinningAgentInstance) -> SpecialistTask:
@@ -2191,9 +2082,7 @@ async def execute_dynamic_mission_graph(
             # resources.  The executor only injects runtime values here;
             # changing these defaults must not require a code edit or worker
             # redeploy beyond the normal prompt-cache refresh.
-            purpose_defaults = load_dynamic_winning_json(
-                "common", section="s3_s4.task_purpose_defaults"
-            )
+            purpose_defaults = load_dynamic_winning_json("common", section="s3_s4.task_purpose_defaults")
             if not isinstance(purpose_defaults, Mapping):
                 purpose_defaults = {}
 
@@ -2201,9 +2090,7 @@ async def execute_dynamic_mission_graph(
                 return str(purpose_defaults.get(key, "") or "").strip()
 
             dimension_catalog = _s3_s4_dimension_catalog(assignment)
-            dimension_catalog_text = "；".join(
-                f"{item['code']} {item['label']}" for item in dimension_catalog
-            )
+            dimension_catalog_text = "；".join(f"{item['code']} {item['label']}" for item in dimension_catalog)
             display_name = f"开放创新武器 Agent {label}"
             semantic_parts = [
                 str(assignment.get("combat_dimension", "")).strip(),
@@ -2244,41 +2131,22 @@ async def execute_dynamic_mission_graph(
                     result,
                     boundary,
                 ) = semantic_parts
-                purpose = load_dynamic_winning_prompt(
-                    "common", section="s3_s4.task_purpose"
-                ).format(
+                purpose = load_dynamic_winning_prompt("common", section="s3_s4.task_purpose").format(
                     target=target or purpose_default("target"),
                     dimension=dimension or purpose_default("dimension"),
-                    dimension_logic=dimension_logic
-                    or purpose_default("dimension_logic"),
+                    dimension_logic=dimension_logic or purpose_default("dimension_logic"),
                     dimension_catalog=dimension_catalog_text
-                    or load_dynamic_winning_prompt(
-                        "common", section="s3_s4.open_dimension_fallback"
-                    ),
-                    task_breakpoint=task_breakpoint
-                    or purpose_default("task_breakpoint"),
+                    or load_dynamic_winning_prompt("common", section="s3_s4.open_dimension_fallback"),
+                    task_breakpoint=task_breakpoint or purpose_default("task_breakpoint"),
                     battlefield_relationship=(
-                        battlefield_relationship
-                        or changed_variable
-                        or purpose_default("battlefield_relationship")
+                        battlefield_relationship or changed_variable or purpose_default("battlefield_relationship")
                     ),
-                    engagement_geometry=engagement_geometry
-                    or purpose_default("engagement_geometry"),
-                    time_space_position=time_space_position
-                    or phase
-                    or purpose_default("time_space_position"),
-                    desired_result=desired_result
-                    or result
-                    or purpose_default("desired_result"),
-                    forward_question=(
-                        forward_question or purpose_default("forward_question")
-                    ),
-                    exclusion_boundary=(
-                        exclusion_boundary or purpose_default("exclusion_boundary")
-                    ),
-                ) + load_dynamic_winning_prompt(
-                    "common", section="task_for_instance.purpose.1"
-                )
+                    engagement_geometry=engagement_geometry or purpose_default("engagement_geometry"),
+                    time_space_position=time_space_position or phase or purpose_default("time_space_position"),
+                    desired_result=desired_result or result or purpose_default("desired_result"),
+                    forward_question=(forward_question or purpose_default("forward_question")),
+                    exclusion_boundary=(exclusion_boundary or purpose_default("exclusion_boundary")),
+                ) + load_dynamic_winning_prompt("common", section="task_for_instance.purpose.1")
         elif (
             instance.mission_node == "S5"
             and instance.archetype == "independent_portfolio_reviewer"
@@ -2288,19 +2156,13 @@ async def execute_dynamic_mission_graph(
             try:
                 reviewer_position = producers.index(
                     next(
-                        (
-                            producer
-                            for producer in producers
-                            if producer.instance_id in instance.depends_on
-                        ),
+                        (producer for producer in producers if producer.instance_id in instance.depends_on),
                         producers[0],
                     )
                 )
             except ValueError:
                 reviewer_position = 0
-            display_name = (
-                f"S5创新评分 Agent {chr(ord('A') + min(reviewer_position, 25))}"
-            )
+            display_name = f"S5创新评分 Agent {chr(ord('A') + min(reviewer_position, 25))}"
         output_budget = (
             2400
             if instance.archetype == "independent_portfolio_reviewer"
@@ -2346,9 +2208,7 @@ async def execute_dynamic_mission_graph(
         # creation; keeping the guard here prevents a direct caller or a
         # resume race from issuing an unintended full-ledger S5 request.
         requested_scope = {
-            canonical_candidate_id(value)
-            for value in candidate_scope
-            if value is not None and str(value).strip()
+            canonical_candidate_id(value) for value in candidate_scope if value is not None and str(value).strip()
         }
         effective_requested_scope = (
             requested_scope & effective_scope_for_instance(instance, ledger_snapshot)
@@ -2420,9 +2280,7 @@ async def execute_dynamic_mission_graph(
         # instance carries a hypothesis_id and follows the patch/repair path,
         # so it still needs its scoped ledger context. Keep the full snapshot
         # path for downstream reviewers, where the ledger is actual model input.
-        context_free_node = str(
-            swarm_controller.policy.get("policy_id")
-        ) == "winning_swarm_dynamic_v2" and (
+        context_free_node = str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2" and (
             instance.mission_node in {"S1", "S2"}
             or (instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id)
         )
@@ -2432,11 +2290,7 @@ async def execute_dynamic_mission_graph(
             candidate_snapshot: list[dict[str, Any]] = []
             candidate_semantic_spine: dict[str, Any] = {}
         else:
-            ledger_candidates = (
-                list(ledger_snapshot.hypotheses)
-                if ledger_snapshot is not None
-                else list(hypotheses)
-            )
+            ledger_candidates = list(ledger_snapshot.hypotheses) if ledger_snapshot is not None else list(hypotheses)
             # Validation designers only need the candidate branches
             # produced by their declared dependencies.  The old S6
             # exception sent the complete ledger to every validation
@@ -2450,48 +2304,30 @@ async def execute_dynamic_mission_graph(
             if is_dynamic_paired_reviewer(instance):
                 candidate_scope = effective_requested_scope
                 ledger_candidates = [
-                    item
-                    for item in ledger_candidates
-                    if canonical_candidate_id(item.hypothesis_id) in candidate_scope
+                    item for item in ledger_candidates if canonical_candidate_id(item.hypothesis_id) in candidate_scope
                 ]
             elif candidate_scope:
-                ledger_candidates = [
-                    item
-                    for item in ledger_candidates
-                    if item.hypothesis_id in candidate_scope
-                ]
+                ledger_candidates = [item for item in ledger_candidates if item.hypothesis_id in candidate_scope]
             if instance.archetype == "independent_portfolio_reviewer":
                 # The portfolio reviewer consumes the minimal candidate card
                 # plus a separate semantic spine.  Do not first build the
                 # larger generic handoff only to overwrite it immediately.
-                candidate_snapshot = [
-                    _minimal_portfolio_candidate_handoff(item)
-                    for item in ledger_candidates
-                ]
+                candidate_snapshot = [_minimal_portfolio_candidate_handoff(item) for item in ledger_candidates]
                 candidate_semantic_spine = {
                     str(item.hypothesis_id): {
                         key: value
-                        for key, value in _minimal_portfolio_candidate_handoff(
-                            item, rich=True
-                        ).items()
-                        if key
-                        not in {"hypothesis_id", "name", "concise_winning_summary"}
+                        for key, value in _minimal_portfolio_candidate_handoff(item, rich=True).items()
+                        if key not in {"hypothesis_id", "name", "concise_winning_summary"}
                     }
                     for item in ledger_candidates
                 }
             else:
-                candidate_snapshot = [
-                    _compact_swarm_candidate_handoff(item) for item in ledger_candidates
-                ]
+                candidate_snapshot = [_compact_swarm_candidate_handoff(item) for item in ledger_candidates]
                 # Non-reviewer roles do not receive a semantic spine in the
                 # generic envelope; avoid computing rich handoffs for them.
                 candidate_semantic_spine = {}
-        candidate_handoff_chars = len(
-            json.dumps(candidate_snapshot, ensure_ascii=False)
-        )
-        evidence_handoff_chars = len(
-            json.dumps(compact_evidence_index, ensure_ascii=False)
-        )
+        candidate_handoff_chars = len(json.dumps(candidate_snapshot, ensure_ascii=False))
+        evidence_handoff_chars = len(json.dumps(compact_evidence_index, ensure_ascii=False))
         # Fresh S1/S2/S3/S4 branches replace this legacy all-purpose envelope
         # below, so defer its large prompt/contract construction.  A
         # reallocated S3/S4 instance may carry a hypothesis_id and takes the
@@ -2539,14 +2375,8 @@ async def execute_dynamic_mission_graph(
                     "mission_objective": graph.mission_objective,
                 },
                 "equipment_portfolio_contract": {
-                    "selection_rule": (
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.selection_rule.1"
-                        )
-                    ),
-                    "minimum_direct_combat_equipment": (
-                        1 if query_domain["requires_direct_combat_weapon"] else 0
-                    ),
+                    "selection_rule": (load_dynamic_winning_prompt("common", section="call_instance.selection_rule.1")),
+                    "minimum_direct_combat_equipment": (1 if query_domain["requires_direct_combat_weapon"] else 0),
                     "minimum_query_equipment": 1,
                     "direct_equipment_definition": (
                         query_domain["subject_label"]
@@ -2558,96 +2388,60 @@ async def execute_dynamic_mission_graph(
                         + "作为主体。"
                     ),
                     "priority_lanes": [
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.priority_lanes.1"
-                        ),
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.priority_lanes.2"
-                        ),
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.priority_lanes.3"
-                        ),
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.priority_lanes.4"
-                        ),
+                        load_dynamic_winning_prompt("common", section="call_instance.priority_lanes.1"),
+                        load_dynamic_winning_prompt("common", section="call_instance.priority_lanes.2"),
+                        load_dynamic_winning_prompt("common", section="call_instance.priority_lanes.3"),
+                        load_dynamic_winning_prompt("common", section="call_instance.priority_lanes.4"),
                     ],
                     "priority_lane_rule": (
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.priority_lane_rule.1"
-                        )
+                        load_dynamic_winning_prompt("common", section="call_instance.priority_lane_rule.1")
                     ),
                     "disruptive_lenses": [
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.1"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.1"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.1"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.1"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.1"
                             ),
                         },
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.2"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.2"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.2"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.2"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.2"
                             ),
                         },
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.3"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.3"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.3"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.3"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.3"
                             ),
                         },
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.4"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.4"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.4"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.4"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.4"
                             ),
                         },
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.5"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.5"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.5"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.5"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.5"
                             ),
                         },
                         {
-                            "logic": load_dynamic_winning_prompt(
-                                "common", section="call_instance.logic.6"
-                            ),
-                            "shift": load_dynamic_winning_prompt(
-                                "common", section="call_instance.shift.6"
-                            ),
+                            "logic": load_dynamic_winning_prompt("common", section="call_instance.logic.6"),
+                            "shift": load_dynamic_winning_prompt("common", section="call_instance.shift.6"),
                             "essential_change": load_dynamic_winning_prompt(
                                 "common", section="call_instance.essential_change.6"
                             ),
                         },
                     ],
                     "disruptive_lens_rule": (
-                        load_dynamic_winning_prompt(
-                            "common", section="call_instance.disruptive_lens_rule.1"
-                        )
+                        load_dynamic_winning_prompt("common", section="call_instance.disruptive_lens_rule.1")
                     ),
                 },
                 "role_contract": _dynamic_role_contract_handoff(contract, task),
@@ -2657,9 +2451,7 @@ async def execute_dynamic_mission_graph(
                     "version": ledger_snapshot.version if ledger_snapshot else 0,
                     "hypotheses": candidate_snapshot,
                     "semantic_spine": (
-                        candidate_semantic_spine
-                        if instance.archetype == "independent_portfolio_reviewer"
-                        else {}
+                        candidate_semantic_spine if instance.archetype == "independent_portfolio_reviewer" else {}
                     ),
                     "allowed_hypothesis_ids": sorted(candidate_scope),
                     "handoff_schema": (
@@ -2681,8 +2473,7 @@ async def execute_dynamic_mission_graph(
                     for seed in reasoning_seeds_by_instance.get(dependency, [])
                 ][: 6 if instance.mission_node in {"S3", "S4"} else 12],
             }
-            if not context_free_node
-            and instance.archetype != "independent_portfolio_reviewer"
+            if not context_free_node and instance.archetype != "independent_portfolio_reviewer"
             else {}
         )
         targeted_feedback = _targeted_expert_feedback(
@@ -2739,11 +2530,7 @@ async def execute_dynamic_mission_graph(
                     )
                 },
                 "upstream_reasoning_seeds": upstream_seeds,
-                "open_challenge": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.open_challenge.1"
-                    )
-                ),
+                "open_challenge": (load_dynamic_winning_prompt("common", section="call_instance.open_challenge.1")),
                 **(
                     {
                         "expert_review_feedback": _compact_prompt_value(
@@ -2785,11 +2572,7 @@ async def execute_dynamic_mission_graph(
                     "allowed_hypothesis_ids": sorted(candidate_scope),
                     "handoff_schema": "portfolio_semantic_spine_v2",
                 },
-                **(
-                    {"coverage_matrix": coverage_for_review}
-                    if coverage_for_review
-                    else {}
-                ),
+                **({"coverage_matrix": coverage_for_review} if coverage_for_review else {}),
                 **(
                     {
                         "expert_review_feedback": _compact_prompt_value(
@@ -2817,15 +2600,9 @@ async def execute_dynamic_mission_graph(
                 common_input.pop("military_value_handoff", None)
         if instance.mission_node in {"S1", "S2"}:
             common_input["equipment_portfolio_contract"] = {
-                "selection_rule": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.selection_rule.2"
-                    )
-                ),
+                "selection_rule": (load_dynamic_winning_prompt("common", section="call_instance.selection_rule.2")),
                 "direct_equipment_definition": (
-                    query_domain["subject_label"]
-                    + "；"
-                    + query_domain["direct_effect_label"]
+                    query_domain["subject_label"] + "；" + query_domain["direct_effect_label"]
                 ),
                 "query_domain_contract": query_domain,
                 "free_divergence_first": True,
@@ -2834,18 +2611,12 @@ async def execute_dynamic_mission_graph(
         if instance.mission_node == "S6":
             common_input["s6_release_preflight"] = {
                 "identity_and_scene": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.identity_and_scene.1"
-                    )
+                    load_dynamic_winning_prompt("common", section="call_instance.identity_and_scene.1")
                 ),
                 "evidence_boundary": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.evidence_boundary.1"
-                    )
+                    load_dynamic_winning_prompt("common", section="call_instance.evidence_boundary.1")
                 ),
-                "quality_basis": load_dynamic_winning_prompt(
-                    "common", section="call_instance.quality_basis.1"
-                ),
+                "quality_basis": load_dynamic_winning_prompt("common", section="call_instance.quality_basis.1"),
             }
         if instance.mission_node == "S6" and baseline_boundaries:
             common_input["baseline_availability_boundaries"] = list(baseline_boundaries)
@@ -2854,9 +2625,7 @@ async def execute_dynamic_mission_graph(
             )
         if instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id:
             await refresh_winning_angle_assignments()
-            dimension_assignment = dict(
-                winning_angle_assignments.get(instance.instance_id, {})
-            )
+            dimension_assignment = dict(winning_angle_assignments.get(instance.instance_id, {}))
             creative_handoff = creative_military_value_handoff()
             occupied_sibling_concepts: list[dict[str, Any]] = []
             live_coverage = None
@@ -2872,18 +2641,14 @@ async def execute_dynamic_mission_graph(
                             "name": candidate.title,
                             "winning_angle_id": candidate.winning_angle_id,
                             "combat_dimension": candidate.combat_dimension,
-                            "equipment_form": "；".join(candidate.equipment_forms[:2])[
-                                :220
-                            ],
+                            "equipment_form": "；".join(candidate.equipment_forms[:2])[:220],
                             "mechanism": "；".join(candidate.mechanism_chain[:3])[:300],
                             "core_difference": (
                                 candidate.core_disruptive_difference
                                 or candidate.disruptive_shift
                                 or candidate.changed_confrontation_variable
                             )[:240],
-                            "direct_effect": "；".join(
-                                candidate.direct_military_effects[:2]
-                            )[:220],
+                            "direct_effect": "；".join(candidate.direct_military_effects[:2])[:220],
                         }
                     )
             mission = assign_scout_mission(
@@ -2911,21 +2676,14 @@ async def execute_dynamic_mission_graph(
             open_hint_result = str(
                 dimension_assignment.get("desired_direct_result")
                 or dimension_assignment.get("direct_military_result", "")
-                or (
-                    "、".join(mission.labels(mission.focus_values))
-                    + "形成可证伪的直接军事结果"
-                )
+                or ("、".join(mission.labels(mission.focus_values)) + "形成可证伪的直接军事结果")
             ).strip()
-            steer_instruction = load_dynamic_winning_prompt(
-                "common", section="coverage_steer.instruction"
-            ).format(
+            steer_instruction = load_dynamic_winning_prompt("common", section="coverage_steer.instruction").format(
                 axis_label=mission.axis_label,
-                focus_labels="、".join(mission.labels(mission.focus_values))
-                or "尚未覆盖的互补轴",
+                focus_labels="、".join(mission.labels(mission.focus_values)) or "尚未覆盖的互补轴",
                 avoid_labels="、".join(mission.labels(mission.avoid_values)) or "无",
                 occupied="；".join(mission.occupied_cluster_keys) or "无",
-                salient="、".join(mission.labels(mission.query_salient_values))
-                or "Query未显式锁定单轴",
+                salient="、".join(mission.labels(mission.query_salient_values)) or "Query未显式锁定单轴",
             )
             common_input = {
                 "execution_profile_id": shared.get("execution_profile_id", ""),
@@ -2943,20 +2701,10 @@ async def execute_dynamic_mission_graph(
                     "trigger_residuals": list(task.trigger_residuals),
                     "allow_child_spawn": False,
                     "military_expert_creative_contract": {
-                        "role": (
-                            load_dynamic_winning_prompt(
-                                "common", section="call_instance.role.1"
-                            )
-                        ),
-                        "diversity": (
-                            load_dynamic_winning_prompt(
-                                "common", section="call_instance.diversity.1"
-                            )
-                        ),
+                        "role": (load_dynamic_winning_prompt("common", section="call_instance.role.1")),
+                        "diversity": (load_dynamic_winning_prompt("common", section="call_instance.diversity.1")),
                         "naming_reference": (
-                            load_dynamic_winning_prompt(
-                                "common", section="call_instance.naming_reference.1"
-                            )
+                            load_dynamic_winning_prompt("common", section="call_instance.naming_reference.1")
                         ),
                     },
                 },
@@ -2973,9 +2721,7 @@ async def execute_dynamic_mission_graph(
                         # D1--D7 assignment; the actual dimensions remain
                         # the model's choice and are carried in the slots.
                         "winning_dimension_package": {
-                            "code": load_dynamic_winning_prompt(
-                                "common", section="s3_s4.open_dimension_package_code"
-                            ),
+                            "code": load_dynamic_winning_prompt("common", section="s3_s4.open_dimension_package_code"),
                             "dimension": str(
                                 dimension_assignment.get("combat_dimension")
                                 or load_dynamic_winning_prompt(
@@ -2990,42 +2736,24 @@ async def execute_dynamic_mission_graph(
                                     section="s3_s4.open_dimension_package_logic",
                                 )
                             ),
-                            "task_chain_breakpoint": str(
-                                dimension_assignment.get("task_chain_breakpoint", "")
-                            ),
-                            "engagement_geometry": str(
-                                dimension_assignment.get("engagement_geometry", "")
-                            ),
-                            "time_space_position": str(
-                                dimension_assignment.get("time_space_position", "")
-                            ),
-                            "desired_direct_result": str(
-                                dimension_assignment.get("desired_direct_result", "")
-                            ),
+                            "task_chain_breakpoint": str(dimension_assignment.get("task_chain_breakpoint", "")),
+                            "engagement_geometry": str(dimension_assignment.get("engagement_geometry", "")),
+                            "time_space_position": str(dimension_assignment.get("time_space_position", "")),
+                            "desired_direct_result": str(dimension_assignment.get("desired_direct_result", "")),
                             "forward_winning_question": str(
                                 dimension_assignment.get("forward_winning_question")
-                                or load_dynamic_winning_prompt(
-                                    "common", section="s3_s4.open_dimension_fallback"
-                                )
+                                or load_dynamic_winning_prompt("common", section="s3_s4.open_dimension_fallback")
                             ),
-                            "exclusion_boundary": str(
-                                dimension_assignment.get("exclusion_boundary", "")
-                            ),
-                            "primary_dimension": dict(
-                                dimension_assignment.get("primary_dimension", {})
-                            ),
+                            "exclusion_boundary": str(dimension_assignment.get("exclusion_boundary", "")),
+                            "primary_dimension": dict(dimension_assignment.get("primary_dimension", {})),
                             "alternate_dimensions": [
                                 dict(item)
-                                for item in dimension_assignment.get(
-                                    "alternate_dimensions", []
-                                )
+                                for item in dimension_assignment.get("alternate_dimensions", [])
                                 if isinstance(item, Mapping)
                             ],
                             "dimension_portfolio": [
                                 dict(item)
-                                for item in dimension_assignment.get(
-                                    "dimension_portfolio", []
-                                )
+                                for item in dimension_assignment.get("dimension_portfolio", [])
                                 if isinstance(item, Mapping)
                             ],
                             # ``open_slot_items`` is the explicit list form;
@@ -3033,31 +2761,21 @@ async def execute_dynamic_mission_graph(
                             # for provider compatibility.
                             "open_slot_items": [
                                 dict(item)
-                                for item in dimension_assignment.get(
-                                    "dimension_portfolio", []
-                                )
+                                for item in dimension_assignment.get("dimension_portfolio", [])
                                 if isinstance(item, Mapping)
                             ],
-                            "dimensions_per_seat": list(
-                                dimension_assignment.get("dimension_codes", [])
-                            ),
+                            "dimensions_per_seat": list(dimension_assignment.get("dimension_codes", [])),
                             "slot_count": 3,
                             "open_slots": True,
                             "open_slots_enabled": True,
                             "reference_dimension_codes": list(
-                                dimension_assignment.get(
-                                    "reference_dimension_codes", []
-                                )
+                                dimension_assignment.get("reference_dimension_codes", [])
                             ),
                             "reference_only_dimension_codes": list(
-                                dimension_assignment.get(
-                                    "reference_dimension_codes", []
-                                )
+                                dimension_assignment.get("reference_dimension_codes", [])
                             ),
                             "dimension_mode": "model_derived_open_slots",
-                            "seat_rule": load_dynamic_winning_prompt(
-                                "common", section="s3_s4.seat_rule"
-                            ),
+                            "seat_rule": load_dynamic_winning_prompt("common", section="s3_s4.seat_rule"),
                         }
                     }
                 ),
@@ -3067,11 +2785,7 @@ async def execute_dynamic_mission_graph(
                 "occupied_s3_boundary_rule": load_dynamic_winning_prompt(
                     "common", section="s3_s4.occupied_boundary_rule"
                 ),
-                **(
-                    {"military_value_handoff": creative_handoff}
-                    if creative_handoff["claims"]
-                    else {}
-                ),
+                **({"military_value_handoff": creative_handoff} if creative_handoff["claims"] else {}),
                 **(
                     {
                         "expert_review_feedback": _compact_prompt_value(
@@ -3104,9 +2818,7 @@ async def execute_dynamic_mission_graph(
             output_schema["hypotheses"] = [
                 {
                     **hypothesis_template,
-                    "name": load_dynamic_winning_prompt(
-                        "common", section=f"call_instance.name.{index}"
-                    ),
+                    "name": load_dynamic_winning_prompt("common", section=f"call_instance.name.{index}"),
                     "concise_winning_summary": load_dynamic_winning_prompt(
                         "common",
                         section=f"call_instance.concise_winning_summary.{index}",
@@ -3118,9 +2830,7 @@ async def execute_dynamic_mission_graph(
             phase = "winning_swarm_dynamic_seed"
         else:
             if instance.archetype != "independent_portfolio_reviewer":
-                raise RuntimeError(
-                    "dynamic-v2 S5 only permits the independent portfolio reviewer"
-                )
+                raise RuntimeError("dynamic-v2 S5 only permits the independent portfolio reviewer")
             phase = "winning_swarm_dynamic_portfolio_review_fast"
             # S5 remains a compact selection pass, but receives the
             # semantic spine separately so creative names are judged
@@ -3165,10 +2875,7 @@ async def execute_dynamic_mission_graph(
             ),
             **runtime_contract,
         )
-        if (
-            instance.mission_node == "S5"
-            and instance.archetype == "independent_portfolio_reviewer"
-        ):
+        if instance.mission_node == "S5" and instance.archetype == "independent_portfolio_reviewer":
             emit_swarm_event(
                 "winning_s5_parallel_score_started",
                 actor=instance.instance_id,
@@ -3191,14 +2898,10 @@ async def execute_dynamic_mission_graph(
             instruction
             if instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id
             else (
-                load_dynamic_winning_prompt(
-                    "common", section="call_instance.system_prompt.2"
-                )
+                load_dynamic_winning_prompt("common", section="call_instance.system_prompt.2")
                 + task.purpose
                 + instruction
-                + load_dynamic_winning_prompt(
-                    "common", section="call_instance.system_prompt.1"
-                )
+                + load_dynamic_winning_prompt("common", section="call_instance.system_prompt.1")
             )
         )
         # S3/S4 use at most two creative calls. The first returns a compact
@@ -3228,9 +2931,7 @@ async def execute_dynamic_mission_graph(
                 identities = _s3_s4_structural_dimension_identities([value])
                 if not identities:
                     continue
-                existing = _s3_s4_structural_dimension_identities(
-                    creative_considered_dimensions
-                )
+                existing = _s3_s4_structural_dimension_identities(creative_considered_dimensions)
                 if identities & existing:
                     continue
                 creative_considered_dimensions.append(value)
@@ -3256,20 +2957,12 @@ async def execute_dynamic_mission_graph(
             iteration_system = system_prompt
             iteration_phase = phase
             if instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id:
-                seat_assignment = dict(
-                    naming_plan.get("assignments", {}).get(instance.instance_id, {})
-                )
+                seat_assignment = dict(naming_plan.get("assignments", {}).get(instance.instance_id, {}))
                 # The portfolio plan is allocated once per graph. Reuse the
                 # exact assignment across creative iterations and retries.
                 iteration_input["random_naming_style_assignment"] = seat_assignment
-                iteration_system += load_dynamic_winning_prompt(
-                    "common", section="call_instance.iteration_system.1"
-                )
-            if (
-                creative_history
-                or creative_dimension_selections
-                or creative_considered_dimensions
-            ):
+                iteration_system += load_dynamic_winning_prompt("common", section="call_instance.iteration_system.1")
+            if creative_history or creative_dimension_selections or creative_considered_dimensions:
                 if creative_history:
                     iteration_input["previous_creative_draft"] = creative_history[-1]
                 # Keep the legacy single-row field above for provider
@@ -3278,24 +2971,18 @@ async def execute_dynamic_mission_graph(
                 # dimensions instead of rediscovering only the last row.
                 iteration_input["previous_creative_draft_batch"] = {
                     "hypotheses": [dict(row) for row in creative_history],
-                    "dimension_selections": [
-                        dict(row) for row in creative_dimension_selections
-                    ],
+                    "dimension_selections": [dict(row) for row in creative_dimension_selections],
                     "considered_dimensions": list(creative_considered_dimensions),
                 }
                 iteration_input["session_candidate_pool"] = [
                     {
                         "name": str(row.get("name", "") or row.get("title", "")),
-                        "concise_winning_summary": str(
-                            row.get("concise_winning_summary", "")
-                        ),
+                        "concise_winning_summary": str(row.get("concise_winning_summary", "")),
                     }
                     for row in creative_pool_by_name.values()
                 ][-3:]
                 iteration_input["creative_iteration"] = creative_iteration
-                iteration_system += load_dynamic_winning_prompt(
-                    "common", section="call_instance.iteration_system.2"
-                )
+                iteration_system += load_dynamic_winning_prompt("common", section="call_instance.iteration_system.2")
             try:
                 iteration_text = await host._run_core_json(
                     runtime_agent_id,
@@ -3350,18 +3037,14 @@ async def execute_dynamic_mission_graph(
                     continue
                 raise ValueError(f"{instance.instance_id} returned invalid JSON")
             if instance.mission_node in {"S3", "S4"}:
-                raw_dimension_selections = parsed_iteration.get(
-                    "dimension_selections", []
-                )
+                raw_dimension_selections = parsed_iteration.get("dimension_selections", [])
                 if isinstance(raw_dimension_selections, list):
                     # Some providers place the only dimension declarations in
                     # the sidecar array. Preserve those declarations for the
                     # bounded second pass as well; the structural gate and
                     # S5 resolver already treat both locations equivalently.
                     parsed_dimension_selections = [
-                        dict(item)
-                        for item in raw_dimension_selections
-                        if isinstance(item, Mapping)
+                        dict(item) for item in raw_dimension_selections if isinstance(item, Mapping)
                     ][:3]
                     if parsed_dimension_selections:
                         creative_dimension_selections = parsed_dimension_selections
@@ -3371,9 +3054,7 @@ async def execute_dynamic_mission_graph(
                 # redundant second pass before the model's concrete choices
                 # are seen.
                 append_creative_dimensions(raw_dimension_selections)
-                raw_considered_dimensions = parsed_iteration.get(
-                    "considered_dimensions", []
-                )
+                raw_considered_dimensions = parsed_iteration.get("considered_dimensions", [])
                 append_creative_dimensions(raw_considered_dimensions)
             if instance.mission_node in {"S3", "S4"}:
                 emit_swarm_event(
@@ -3384,11 +3065,7 @@ async def execute_dynamic_mission_graph(
                     creative_iteration=creative_iteration,
                     candidate_maximum_per_session=max(
                         1,
-                        int(
-                            swarm_controller.policy.get(
-                                "s3_s4_candidate_maximum_per_session", 3
-                            )
-                        ),
+                        int(swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)),
                     ),
                     separate_precommit_model_call=False,
                     candidate_count=len(
@@ -3396,13 +3073,9 @@ async def execute_dynamic_mission_graph(
                         if isinstance(parsed_iteration.get("hypotheses", []), list)
                         else []
                     ),
-                    rule=load_dynamic_winning_prompt(
-                        "common", section="s3_s4.post_generation_rule"
-                    ),
+                    rule=load_dynamic_winning_prompt("common", section="s3_s4.post_generation_rule"),
                     naming_assignment={
-                        "assignment_version": naming_plan.get(
-                            "assignment_version", NAMING_ASSIGNMENT_VERSION
-                        ),
+                        "assignment_version": naming_plan.get("assignment_version", NAMING_ASSIGNMENT_VERSION),
                         "codes": [
                             str(row.get("code", ""))
                             for row in naming_plan.get("assignments", {})
@@ -3417,11 +3090,7 @@ async def execute_dynamic_mission_graph(
                     iteration_rows = []
                 session_candidate_maximum = max(
                     1,
-                    int(
-                        swarm_controller.policy.get(
-                            "s3_s4_candidate_maximum_per_session", 3
-                        )
-                    ),
+                    int(swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)),
                 )
                 usable_rows = [
                     dict(row)
@@ -3433,16 +3102,10 @@ async def execute_dynamic_mission_graph(
                 if usable_rows:
                     # Retain the bounded batch from this one creative call.
                     for row in usable_rows:
-                        name_key = str(
-                            row.get("name", "") or row.get("title", "")
-                        ).strip()
+                        name_key = str(row.get("name", "") or row.get("title", "")).strip()
                         if name_key:
                             creative_pool_by_name[name_key] = row
-                    pool_cap = int(
-                        swarm_controller.policy.get(
-                            "s3_s4_candidate_pool_maximum_per_session", 3
-                        )
-                    )
+                    pool_cap = int(swarm_controller.policy.get("s3_s4_candidate_pool_maximum_per_session", 3))
                     pooled_rows = list(creative_pool_by_name.values())[-pool_cap:]
                     creative_result = {
                         **parsed_iteration,
@@ -3456,11 +3119,9 @@ async def execute_dynamic_mission_graph(
                     # structural gate: field presence plus three distinct
                     # declared/adopted dimensions.  S5 still owns all
                     # semantic quality, independence and admission decisions.
-                    first_pass_complete, dimension_identities = (
-                        _s3_s4_first_pass_structurally_complete(
-                            parsed_iteration,
-                            usable_rows,
-                        )
+                    first_pass_complete, dimension_identities = _s3_s4_first_pass_structurally_complete(
+                        parsed_iteration,
+                        usable_rows,
                     )
                     if creative_iteration == 1 and first_pass_complete:
                         emit_swarm_event(
@@ -3472,9 +3133,7 @@ async def execute_dynamic_mission_graph(
                             candidate_count=len(usable_rows),
                             dimension_count=len(dimension_identities),
                             dimension_identities=sorted(dimension_identities),
-                            rule=load_dynamic_winning_prompt(
-                                "common", section="call_instance.early_stop_rule.1"
-                            ),
+                            rule=load_dynamic_winning_prompt("common", section="call_instance.early_stop_rule.1"),
                         )
                         break
                 elif creative_result is None:
@@ -3497,11 +3156,7 @@ async def execute_dynamic_mission_graph(
             raw_candidate_count = len(raw_hypotheses)
             candidate_maximum = max(
                 1,
-                int(
-                    swarm_controller.policy.get(
-                        "s3_s4_candidate_maximum_per_session", 3
-                    )
-                ),
+                int(swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)),
             )
             candidate_pool_maximum = max(
                 candidate_maximum,
@@ -3526,38 +3181,28 @@ async def execute_dynamic_mission_graph(
                     retained_candidate_count=len(raw_hypotheses),
                     candidate_maximum_per_session=candidate_maximum,
                     candidate_pool_maximum_per_session=candidate_pool_maximum,
-                    reason=(
-                        "质量优先：每个S3/S4创作会话只保留最强候选，避免把同构变体带入S5"
-                    ),
+                    reason=("质量优先：每个S3/S4创作会话只保留最强候选，避免把同构变体带入S5"),
                 )
             language_failures = [
                 {
                     "position": position,
                     "name": str(item.get("name", "")).strip(),
                     "summary": str(item.get("concise_winning_summary", "")).strip(),
-                    "issues": winning_summary_language_issues(
-                        item.get("concise_winning_summary", "")
-                    ),
+                    "issues": winning_summary_language_issues(item.get("concise_winning_summary", "")),
                 }
                 for position, item in enumerate(raw_hypotheses, start=1)
                 if isinstance(item, Mapping)
-                and winning_summary_language_issues(
-                    item.get("concise_winning_summary", "")
-                )
+                and winning_summary_language_issues(item.get("concise_winning_summary", ""))
             ]
             name_failures = [
                 {
                     "position": position,
                     "name": str(item.get("name", "") or item.get("title", "")).strip(),
-                    "issues": _s3_s4_name_authoring_issues(
-                        item.get("name", "") or item.get("title", "")
-                    ),
+                    "issues": _s3_s4_name_authoring_issues(item.get("name", "") or item.get("title", "")),
                 }
                 for position, item in enumerate(raw_hypotheses, start=1)
                 if isinstance(item, Mapping)
-                and _s3_s4_name_authoring_issues(
-                    item.get("name", "") or item.get("title", "")
-                )
+                and _s3_s4_name_authoring_issues(item.get("name", "") or item.get("title", ""))
             ]
             if name_failures:
                 emit_swarm_event(
@@ -3567,9 +3212,7 @@ async def execute_dynamic_mission_graph(
                     mission_node=instance.mission_node,
                     failure_count=len(name_failures),
                     failures=name_failures[:4],
-                    rule=load_dynamic_winning_prompt(
-                        "common", section="s3_s4.name_diagnostic_rule"
-                    ),
+                    rule=load_dynamic_winning_prompt("common", section="s3_s4.name_diagnostic_rule"),
                 )
             # Language/name diagnostics are recorded above but do not trigger
             # a second S3/S4 model call.  The seat is intentionally one-shot;
@@ -3602,9 +3245,7 @@ async def execute_dynamic_mission_graph(
         if ledger is not None:
             # Preserve already merged S4-S6 fields when a slower S3
             # branch publishes an additional candidate.
-            candidates_by_id.update(
-                {item.hypothesis_id: item for item in ledger.hypotheses}
-            )
+            candidates_by_id.update({item.hypothesis_id: item for item in ledger.hypotheses})
         # Do not perform local lexical or score-based admission before S5.
         # Producer IDs are already unique; S5 owns semantic merge/reject
         # decisions against the complete portfolio.
@@ -3614,27 +3255,18 @@ async def execute_dynamic_mission_graph(
         # flight.  Early score/id truncation invalidated already-issued
         # candidate scopes and produced unknown_hypothesis_id rejects.
         unique = list(unique)
-        id_remap = {
-            str(item["source_hypothesis_id"]): str(item["target_hypothesis_id"])
-            for item in semantic_merges
-        }
+        id_remap = {str(item["source_hypothesis_id"]): str(item["target_hypothesis_id"]) for item in semantic_merges}
         for source_id, target_id in id_remap.items():
             candidate_id_aliases[source_id] = canonical_candidate_id(target_id)
         for source_id in list(candidate_id_aliases):
-            candidate_id_aliases[source_id] = canonical_candidate_id(
-                candidate_id_aliases[source_id]
-            )
+            candidate_id_aliases[source_id] = canonical_candidate_id(candidate_id_aliases[source_id])
         for instance_id, scoped_ids in list(instance_hypothesis_ids.items()):
-            instance_hypothesis_ids[instance_id] = {
-                canonical_candidate_id(item) for item in scoped_ids
-            }
+            instance_hypothesis_ids[instance_id] = {canonical_candidate_id(item) for item in scoped_ids}
         state.swarm_merges.extend(semantic_merges)
         state.swarm_hypotheses.update({item.hypothesis_id: item for item in unique})
         if ledger is None:
             ledger = swarm_controller.create_ledger(unique)
-        elif {item.hypothesis_id for item in ledger.hypotheses} != {
-            item.hypothesis_id for item in unique
-        }:
+        elif {item.hypothesis_id for item in ledger.hypotheses} != {item.hypothesis_id for item in unique}:
             ledger = HypothesisLedgerVersion(
                 ledger_id=ledger.ledger_id,
                 version=ledger.version + 1,
@@ -3667,9 +3299,7 @@ async def execute_dynamic_mission_graph(
             # never pre-trim the durable ledger with a local quota.
             initial_expert_review_scope = None
             return
-        pool_maximum = int(
-            swarm_controller.policy.get("expert_candidate_pool_maximum", 8)
-        )
+        pool_maximum = int(swarm_controller.policy.get("expert_candidate_pool_maximum", 8))
         if ledger is None:
             return
         if len(ledger.hypotheses) <= pool_maximum:
@@ -3688,9 +3318,7 @@ async def execute_dynamic_mission_graph(
             complete_candidate_count=len(ledger.hypotheses),
             review_candidate_count=len(retained),
             review_candidate_ids=sorted(initial_expert_review_scope),
-            rule=load_dynamic_winning_prompt(
-                "common", section="s3_s4.review_capacity_rule"
-            ),
+            rule=load_dynamic_winning_prompt("common", section="s3_s4.review_capacity_rule"),
         )
 
     async def semantic_cluster_candidate_ledger(
@@ -3738,9 +3366,7 @@ async def execute_dynamic_mission_graph(
         # defensive fallback also protects compatibility stubs that return a
         # freshly reconstructed candidate object with the same ID.
         clustered = [
-            source_by_id.get(item.hypothesis_id, item)
-            for item in clustered
-            if getattr(item, "hypothesis_id", "")
+            source_by_id.get(item.hypothesis_id, item) for item in clustered if getattr(item, "hypothesis_id", "")
         ]
         live_source_ids = set(source_by_id)
         valid_merges: list[dict[str, str]] = []
@@ -3761,10 +3387,7 @@ async def execute_dynamic_mission_graph(
                 {
                     "source_hypothesis_id": source_id,
                     "target_hypothesis_id": target_id,
-                    "reason": str(
-                        raw_merge.get("reason")
-                        or "independent_codex_five_axis_semantic_cluster"
-                    )[:240],
+                    "reason": str(raw_merge.get("reason") or "independent_codex_five_axis_semantic_cluster")[:240],
                 }
             )
 
@@ -3773,9 +3396,7 @@ async def execute_dynamic_mission_graph(
         # hypothesis score, but S5's weighted score is the authoritative
         # portfolio signal.  Re-select the representative here so provider
         # fallbacks and test doubles obey the same contract.
-        parent: dict[str, str] = {
-            item.hypothesis_id: item.hypothesis_id for item in source_candidates
-        }
+        parent: dict[str, str] = {item.hypothesis_id: item.hypothesis_id for item in source_candidates}
 
         def find(value: str) -> str:
             root = value
@@ -3802,20 +3423,14 @@ async def execute_dynamic_mission_graph(
             candidate_id: str,
         ) -> tuple[float, float, int, float, int, str]:
             try:
-                weighted = float(
-                    candidate_weighted_scores.get(candidate_id, float("-inf"))
-                )
+                weighted = float(candidate_weighted_scores.get(candidate_id, float("-inf")))
             except (TypeError, ValueError):
                 weighted = float("-inf")
             try:
-                priority = float(
-                    candidate_innovation_priorities.get(candidate_id, 0.0) or 0.0
-                )
+                priority = float(candidate_innovation_priorities.get(candidate_id, 0.0) or 0.0)
             except (TypeError, ValueError):
                 priority = 0.0
-            tier = _s5_disruption_tier_rank(
-                candidate_disruption_tiers.get(candidate_id), priority
-            )
+            tier = _s5_disruption_tier_rank(candidate_disruption_tiers.get(candidate_id), priority)
             try:
                 base_score = float(source_by_id[candidate_id].score or 0.0)
             except (KeyError, TypeError, ValueError):
@@ -3840,9 +3455,7 @@ async def execute_dynamic_mission_graph(
         for source_id, target_id in canonical_merge_map.items():
             candidate_id_aliases[source_id] = target_id
         for source_id in list(candidate_id_aliases):
-            candidate_id_aliases[source_id] = canonical_candidate_id(
-                candidate_id_aliases[source_id]
-            )
+            candidate_id_aliases[source_id] = canonical_candidate_id(candidate_id_aliases[source_id])
 
         # Merge all per-candidate S5 metadata into the canonical target.  A
         # target normally already is the highest S5-scoring row (because of
@@ -3859,9 +3472,7 @@ async def execute_dynamic_mission_graph(
                 target_score = float(candidate_weighted_scores[target_id])
             except (KeyError, TypeError, ValueError):
                 target_score = None
-            source_is_better = source_score is not None and (
-                target_score is None or source_score > target_score
-            )
+            source_is_better = source_score is not None and (target_score is None or source_score > target_score)
             if source_score is not None:
                 candidate_weighted_scores[target_id] = max(
                     target_score if target_score is not None else source_score,
@@ -3869,17 +3480,11 @@ async def execute_dynamic_mission_graph(
                 )
             if source_is_better:
                 if source_id in candidate_dimension_scores:
-                    candidate_dimension_scores[target_id] = dict(
-                        candidate_dimension_scores[source_id]
-                    )
+                    candidate_dimension_scores[target_id] = dict(candidate_dimension_scores[source_id])
                 if source_id in candidate_innovation_bases:
-                    candidate_innovation_bases[target_id] = candidate_innovation_bases[
-                        source_id
-                    ]
+                    candidate_innovation_bases[target_id] = candidate_innovation_bases[source_id]
                 if source_id in candidate_naming_assessments:
-                    candidate_naming_assessments[target_id] = dict(
-                        candidate_naming_assessments[source_id]
-                    )
+                    candidate_naming_assessments[target_id] = dict(candidate_naming_assessments[source_id])
             else:
                 candidate_dimension_scores.setdefault(
                     target_id,
@@ -3889,22 +3494,15 @@ async def execute_dynamic_mission_graph(
                     target_id,
                     candidate_innovation_bases.get(source_id, ""),
                 )
-                if (
-                    target_id not in candidate_naming_assessments
-                    and source_id in candidate_naming_assessments
-                ):
-                    candidate_naming_assessments[target_id] = dict(
-                        candidate_naming_assessments[source_id]
-                    )
+                if target_id not in candidate_naming_assessments and source_id in candidate_naming_assessments:
+                    candidate_naming_assessments[target_id] = dict(candidate_naming_assessments[source_id])
             if source_id in candidate_innovation_priorities:
                 candidate_innovation_priorities[target_id] = max(
                     candidate_innovation_priorities.get(target_id, 0.0),
                     candidate_innovation_priorities[source_id],
                 )
             if source_id in candidate_innovation_bases:
-                candidate_innovation_bases.setdefault(
-                    target_id, candidate_innovation_bases[source_id]
-                )
+                candidate_innovation_bases.setdefault(target_id, candidate_innovation_bases[source_id])
             source_tier = _s5_disruption_tier_rank(
                 candidate_disruption_tiers.get(source_id),
                 candidate_innovation_priorities.get(source_id),
@@ -3915,9 +3513,7 @@ async def execute_dynamic_mission_graph(
             )
             if source_tier > target_tier:
                 if candidate_disruption_tiers.get(source_id):
-                    candidate_disruption_tiers[target_id] = candidate_disruption_tiers[
-                        source_id
-                    ]
+                    candidate_disruption_tiers[target_id] = candidate_disruption_tiers[source_id]
                 for mapping, default in (
                     (candidate_displaced_modes, ""),
                     (candidate_new_operational_modes, ""),
@@ -3935,9 +3531,7 @@ async def execute_dynamic_mission_graph(
                         mapping[target_id] = mapping[source_id]
             if source_id in portfolio_order_hints:
                 current_hint = portfolio_order_hints.get(target_id, 10**9)
-                portfolio_order_hints[target_id] = min(
-                    current_hint, portfolio_order_hints[source_id]
-                )
+                portfolio_order_hints[target_id] = min(current_hint, portfolio_order_hints[source_id])
             for mapping in (
                 candidate_innovation_priorities,
                 candidate_innovation_bases,
@@ -3989,24 +3583,17 @@ async def execute_dynamic_mission_graph(
         live_ids = {item.hypothesis_id for item in clustered}
         for instance_id, scoped_ids in list(instance_hypothesis_ids.items()):
             instance_hypothesis_ids[instance_id] = {
-                canonical_candidate_id(item)
-                for item in scoped_ids
-                if canonical_candidate_id(item) in live_ids
+                canonical_candidate_id(item) for item in scoped_ids if canonical_candidate_id(item) in live_ids
             }
         for instance_id, scoped_ids in list(review_targets_by_instance.items()):
             review_targets_by_instance[instance_id] = {
-                canonical_candidate_id(item)
-                for item in scoped_ids
-                if canonical_candidate_id(item) in live_ids
+                canonical_candidate_id(item) for item in scoped_ids if canonical_candidate_id(item) in live_ids
             }
         reviewed_candidate_ids.intersection_update(live_source_ids | live_ids)
-        reviewed_candidate_ids.update(
-            canonical_candidate_id(item) for item in list(reviewed_candidate_ids)
-        )
+        reviewed_candidate_ids.update(canonical_candidate_id(item) for item in list(reviewed_candidate_ids))
         pending_incremental_review_ids.intersection_update(live_source_ids | live_ids)
         pending_incremental_review_ids.update(
-            canonical_candidate_id(item)
-            for item in list(pending_incremental_review_ids)
+            canonical_candidate_id(item) for item in list(pending_incremental_review_ids)
         )
         # A semantic merge is not a rejection.  Remove only its source alias
         # from the rejection set; genuine S5 rejects remain auditable.
@@ -4026,9 +3613,7 @@ async def execute_dynamic_mission_graph(
             source_id = row["source_hypothesis_id"]
             target_id = canonical_merge_map.get(
                 source_id,
-                canonical_merge_map.get(
-                    row["target_hypothesis_id"], row["target_hypothesis_id"]
-                ),
+                canonical_merge_map.get(row["target_hypothesis_id"], row["target_hypothesis_id"]),
             )
             if source_id == target_id:
                 continue
@@ -4059,9 +3644,7 @@ async def execute_dynamic_mission_graph(
                 state.swarm_merges.append(item)
                 known_merge_keys.add(merge_key)
                 emit_swarm_event("hypothesis_merged", **item)
-        if {item.hypothesis_id for item in clustered} != {
-            item.hypothesis_id for item in ledger.hypotheses
-        }:
+        if {item.hypothesis_id for item in clustered} != {item.hypothesis_id for item in ledger.hypotheses}:
             ledger = HypothesisLedgerVersion(
                 ledger_id=ledger.ledger_id,
                 version=ledger.version + 1,
@@ -4098,24 +3681,18 @@ async def execute_dynamic_mission_graph(
         ledger_snapshot: HypothesisLedgerVersion | None,
     ) -> set[str]:
         if item.instance_id in review_targets_by_instance:
-            return {
-                canonical_candidate_id(value)
-                for value in review_targets_by_instance[item.instance_id]
-            }
+            return {canonical_candidate_id(value) for value in review_targets_by_instance[item.instance_id]}
         if item.hypothesis_id:
             return {canonical_candidate_id(item.hypothesis_id)}
         if (
             item.archetype == "independent_portfolio_reviewer"
             and ledger_snapshot is not None
             and (
-                str(swarm_controller.policy.get("policy_id"))
-                != "winning_swarm_dynamic_v2"
+                str(swarm_controller.policy.get("policy_id")) != "winning_swarm_dynamic_v2"
                 or not is_dynamic_paired_reviewer(item)
             )
         ):
-            return {
-                hypothesis.hypothesis_id for hypothesis in ledger_snapshot.hypotheses
-            }
+            return {hypothesis.hypothesis_id for hypothesis in ledger_snapshot.hypotheses}
         return {
             canonical_candidate_id(hypothesis_id)
             for dependency in item.depends_on
@@ -4155,10 +3732,7 @@ async def execute_dynamic_mission_graph(
             return scope
         if ledger_snapshot is None:
             return set()
-        live_ids = {
-            canonical_candidate_id(hypothesis.hypothesis_id)
-            for hypothesis in ledger_snapshot.hypotheses
-        }
+        live_ids = {canonical_candidate_id(hypothesis.hypothesis_id) for hypothesis in ledger_snapshot.hypotheses}
         return {candidate_id for candidate_id in scope if candidate_id in live_ids}
 
     def skip_empty_dynamic_reviewers() -> None:
@@ -4207,35 +3781,26 @@ async def execute_dynamic_mission_graph(
         nonlocal previous_coverage_cluster_keys, last_coverage_signature
         nonlocal consecutive_low_novelty
         nonlocal contracts, pending
-        max_recruits = int(
-            swarm_controller.policy.get("coverage_expand_max_recruits", 2)
-        )
+        max_recruits = int(swarm_controller.policy.get("coverage_expand_max_recruits", 2))
         if coverage_recruitment_cutoff or coverage_recruitment_used >= max_recruits:
             return
         # ``running_instances`` stores ``(instance, scope, batch)`` tuples so
         # the scheduler can retain the immutable candidate snapshot and
         # execution batch alongside the role.  Inspect the first tuple member
         # here instead of treating the value as a ``WinningAgentInstance``.
-        if any(
-            running_item.mission_node == "S5"
-            for running_item, _scope, _batch in running_instances.values()
-        ):
+        if any(running_item.mission_node == "S5" for running_item, _scope, _batch in running_instances.values()):
             return
         if ledger is None or not ledger.hypotheses:
             return
         completed_creators = [
             item
             for item in graph.agent_instances
-            if item.mission_node in {"S3", "S4"}
-            and item.instance_id in completed_instances
+            if item.mission_node in {"S3", "S4"} and item.instance_id in completed_instances
         ]
         pending_only_reviewers = pending and all(
-            item.archetype == "independent_portfolio_reviewer"
-            for item in pending.values()
+            item.archetype == "independent_portfolio_reviewer" for item in pending.values()
         )
-        if len(completed_creators) < 2 and not (
-            pending_only_reviewers and not running_instances
-        ):
+        if len(completed_creators) < 2 and not (pending_only_reviewers and not running_instances):
             return
         snapshot = build_coverage_snapshot(
             ledger.hypotheses,
@@ -4258,14 +3823,8 @@ async def execute_dynamic_mission_graph(
             else:
                 consecutive_low_novelty = 0
             last_coverage_signature = coverage_signature
-        used_archetypes = tuple(
-            item.archetype
-            for item in graph.agent_instances
-            if item.mission_node in {"S3", "S4"}
-        )
-        remaining_instances = max(
-            0, graph.maximum_instances - len(graph.agent_instances)
-        )
+        used_archetypes = tuple(item.archetype for item in graph.agent_instances if item.mission_node in {"S3", "S4"})
+        remaining_instances = max(0, graph.maximum_instances - len(graph.agent_instances))
         budget = _remaining_swarm_budget(remaining_instances)
         mandatory_pending_calls = len(pending)
         recruit_call_capacity = min(
@@ -4279,16 +3838,8 @@ async def execute_dynamic_mission_graph(
             snapshot,
             remaining_instances=remaining_instances,
             remaining_calls=recruit_call_capacity,
-            remaining_tokens=(
-                float(budget["remaining_tokens"])
-                if budget["remaining_tokens"] is not None
-                else None
-            ),
-            remaining_time=(
-                float(budget["remaining_time"])
-                if budget["remaining_time"] is not None
-                else None
-            ),
+            remaining_tokens=(float(budget["remaining_tokens"]) if budget["remaining_tokens"] is not None else None),
+            remaining_time=(float(budget["remaining_time"]) if budget["remaining_time"] is not None else None),
             already_used_archetypes=used_archetypes,
             consecutive_low_novelty=consecutive_low_novelty,
         )
@@ -4378,10 +3929,7 @@ async def execute_dynamic_mission_graph(
         if (
             s1_s2_finished
             and not s3_active_instances_materialized
-            and any(
-                item.mission_node in {"S3", "S4"} and not item.hypothesis_id
-                for item in pending.values()
-            )
+            and any(item.mission_node in {"S3", "S4"} and not item.hypothesis_id for item in pending.values())
         ):
             await materialize_active_s3_instances()
         # A creator may legitimately return no candidate.  Retire only its
@@ -4396,23 +3944,16 @@ async def execute_dynamic_mission_graph(
             ledger is not None
             and not running_instances
             and pending
-            and all(
-                item.archetype == "independent_portfolio_reviewer"
-                for item in pending.values()
-            )
+            and all(item.archetype == "independent_portfolio_reviewer" for item in pending.values())
         ):
             # Do not pre-merge or pre-trim the dynamic candidate pool. Each
             # paired S5 call owns only its producer's candidate scope; the
             # final five-to-six ordering is applied after all scores arrive.
             compact_candidate_ledger_for_review()
         s3_creator_ids = {
-            item.instance_id
-            for item in graph.agent_instances
-            if item.mission_node == "S3" and not item.hypothesis_id
+            item.instance_id for item in graph.agent_instances if item.mission_node == "S3" and not item.hypothesis_id
         }
-        s3_terminal_ids = s3_creator_ids.intersection(
-            completed_instances | failed_instances
-        )
+        s3_terminal_ids = s3_creator_ids.intersection(completed_instances | failed_instances)
         # S3 and S4 are equal creative pools.  Both become runnable as soon as
         # the shared S1/S2 reasoning boundary is complete; S4 must not wait for
         # an S3 answer, otherwise it is biased toward rephrasing the first
@@ -4424,9 +3965,7 @@ async def execute_dynamic_mission_graph(
             s4_boundary_ready
             and not s4_incremental_boundary_opened
             and any(
-                item.mission_node == "S4"
-                and not item.hypothesis_id
-                and item.instance_id in pending
+                item.mission_node == "S4" and not item.hypothesis_id and item.instance_id in pending
                 for item in graph.agent_instances
             )
         ):
@@ -4438,9 +3977,7 @@ async def execute_dynamic_mission_graph(
                 completed_s3_instance_ids=sorted(s3_terminal_ids),
                 remaining_s3_instance_ids=sorted(s3_creator_ids - s3_terminal_ids),
                 parallel_start=True,
-                rule=load_dynamic_winning_prompt(
-                    "common", section="s3_s4.incremental_boundary_rule"
-                ),
+                rule=load_dynamic_winning_prompt("common", section="s3_s4.incremental_boundary_rule"),
             )
 
         def _creative_dispatch_priority(item: WinningAgentInstance) -> int:
@@ -4467,9 +4004,7 @@ async def execute_dynamic_mission_graph(
             }:
                 if item.mission_node in {"S3", "S4"} and not item.hypothesis_id:
                     creative_rank = 0
-                elif is_dynamic_paired_reviewer(item) and bool(
-                    effective_scope_for_instance(item, ledger)
-                ):
+                elif is_dynamic_paired_reviewer(item) and bool(effective_scope_for_instance(item, ledger)):
                     creative_rank = 1
                 else:
                     creative_rank = 2
@@ -4497,27 +4032,16 @@ async def execute_dynamic_mission_graph(
                 and (
                     item.mission_node not in {"S3", "S4"}
                     or all(
-                        seed_instance.instance_id
-                        in completed_instances | failed_instances
+                        seed_instance.instance_id in completed_instances | failed_instances
                         for seed_instance in graph.agent_instances
-                        if seed_instance.mission_node in {"S1", "S2"}
-                        and not seed_instance.hypothesis_id
+                        if seed_instance.mission_node in {"S1", "S2"} and not seed_instance.hypothesis_id
                     )
                 )
+                and (item.mission_node not in {"S5", "S6"} or ledger is not None and bool(ledger.hypotheses))
                 and (
-                    item.mission_node not in {"S5", "S6"}
-                    or ledger is not None
-                    and bool(ledger.hypotheses)
+                    item.archetype != "independent_portfolio_reviewer" or ledger is not None and bool(ledger.hypotheses)
                 )
-                and (
-                    item.archetype != "independent_portfolio_reviewer"
-                    or ledger is not None
-                    and bool(ledger.hypotheses)
-                )
-                and (
-                    not is_dynamic_paired_reviewer(item)
-                    or bool(effective_scope_for_instance(item, ledger))
-                )
+                and (not is_dynamic_paired_reviewer(item) or bool(effective_scope_for_instance(item, ledger)))
             ),
             key=_ready_dispatch_key,
         )
@@ -4578,9 +4102,7 @@ async def execute_dynamic_mission_graph(
                 )
                 running_instances[call] = (item, inherited_scope, batch_index)
                 running_started_at[call] = monotonic()
-            maximum_observed_concurrency = max(
-                maximum_observed_concurrency, len(running_instances)
-            )
+            maximum_observed_concurrency = max(maximum_observed_concurrency, len(running_instances))
         if not running_instances:
             continue
         # Do not wait forever without a durable event.  This is an
@@ -4613,9 +4135,7 @@ async def execute_dynamic_mission_graph(
                         "mission_node": item.mission_node,
                         "archetype": item.archetype,
                         "batch": batch,
-                        "elapsed_seconds": round(
-                            now - running_started_at.get(task, now), 1
-                        ),
+                        "elapsed_seconds": round(now - running_started_at.get(task, now), 1),
                     }
                     for task, (item, _scope, batch) in running_instances.items()
                 ],
@@ -4623,9 +4143,7 @@ async def execute_dynamic_mission_graph(
             )
             continue
         for completed_call in done:
-            instance, candidate_scope, instance_batch = running_instances.pop(
-                completed_call
-            )
+            instance, candidate_scope, instance_batch = running_instances.pop(completed_call)
             running_started_at.pop(completed_call, None)
             try:
                 outcome: object = completed_call.result()
@@ -4638,9 +4156,7 @@ async def execute_dynamic_mission_graph(
             if isinstance(outcome, BaseException):
                 retry_count = dynamic_instance_retry_counts.get(instance.instance_id, 0)
                 if retry_count < 1:
-                    dynamic_instance_retry_counts[instance.instance_id] = (
-                        retry_count + 1
-                    )
+                    dynamic_instance_retry_counts[instance.instance_id] = retry_count + 1
                     completed_instances.discard(instance.instance_id)
                     pending[instance.instance_id] = instance
                     emit_swarm_event(
@@ -4665,8 +4181,7 @@ async def execute_dynamic_mission_graph(
                     fallback_scope = (
                         set(candidate_scope)
                         if is_dynamic_paired_reviewer(instance)
-                        else candidate_scope
-                        or {item.hypothesis_id for item in ledger.hypotheses}
+                        else candidate_scope or {item.hypothesis_id for item in ledger.hypotheses}
                     )
                     if not fallback_scope:
                         emit_swarm_event(
@@ -4679,33 +4194,22 @@ async def execute_dynamic_mission_graph(
                         )
                         continue
                     is_cross_pool_reviewer = (
-                        str(swarm_controller.policy.get("policy_id"))
-                        == "winning_swarm_dynamic_v2"
+                        str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2"
                         and len(instance.depends_on) > 1
                     )
                     fallback_result = (
                         {
                             "decisions": [],
                             "portfolio_order": [],
-                            "portfolio_summary": (
-                                "S5模型不可用；本评审席位不投票，不以本地回退分补齐组合。"
-                            ),
+                            "portfolio_summary": ("S5模型不可用；本评审席位不投票，不以本地回退分补齐组合。"),
                             "_s5_transport_unavailable": True,
                         }
                         if is_cross_pool_reviewer
                         else _s5_portfolio_fallback_result(
-                            [
-                                item
-                                for item in ledger.hypotheses
-                                if item.hypothesis_id in fallback_scope
-                            ],
+                            [item for item in ledger.hypotheses if item.hypothesis_id in fallback_scope],
                             maximum=min(
                                 7,
-                                int(
-                                    swarm_controller.policy.get(
-                                        "finalist_maximum", 7
-                                    )
-                                ),
+                                int(swarm_controller.policy.get("finalist_maximum", 7)),
                             ),
                         )
                     )
@@ -4723,7 +4227,7 @@ async def execute_dynamic_mission_graph(
                             if isinstance(row, Mapping)
                         ),
                         reason=(
-                            "跨池S5模型不可用；该席位不投票，禁止用本地回退分补齐5—6项。"
+                            "跨池S5模型不可用；该席位不投票，禁止用本地回退分补齐最低组合或扩展候选。"
                             if is_cross_pool_reviewer
                             else "S5仅负责创新颠覆判断；模型不可用时按S3/S4既有候选语义保守排序，不补写武器属性。"
                         ),
@@ -4765,9 +4269,7 @@ async def execute_dynamic_mission_graph(
                 if not isinstance(raw_reasoning_seeds, list):
                     raw_reasoning_seeds = []
                 reasoning_seeds_by_instance[instance.instance_id] = [
-                    dict(item)
-                    for item in raw_reasoning_seeds
-                    if isinstance(item, Mapping)
+                    dict(item) for item in raw_reasoning_seeds if isinstance(item, Mapping)
                 ][:8]
                 instance_hypothesis_ids[instance.instance_id] = set()
                 emit_swarm_event(
@@ -4785,9 +4287,7 @@ async def execute_dynamic_mission_graph(
                 raw_considered_dimensions = result.get("considered_dimensions", [])
                 if not isinstance(raw_considered_dimensions, list):
                     raw_considered_dimensions = []
-                assignment_for_trace = winning_angle_assignments.get(
-                    instance.instance_id, {}
-                )
+                assignment_for_trace = winning_angle_assignments.get(instance.instance_id, {})
                 allowed_codes = {
                     str(item.get("code", "")).strip().upper()
                     for item in _s3_s4_dimension_catalog(assignment_for_trace)
@@ -4841,14 +4341,9 @@ async def execute_dynamic_mission_graph(
                             or ""
                         ).strip()
                         label = str(
-                            value.get("combat_dimension")
-                            or value.get("label")
-                            or value.get("dimension")
-                            or ""
+                            value.get("combat_dimension") or value.get("label") or value.get("dimension") or ""
                         ).strip()
-                        angle = str(
-                            value.get("winning_angle_id") or value.get("angle_id") or ""
-                        ).strip()
+                        angle = str(value.get("winning_angle_id") or value.get("angle_id") or "").strip()
                         # A mapping with ``dimension_code=OTHER`` and a
                         # richer label is one authored relation, not the
                         # generic OTHER bucket.  Pass the label as the
@@ -4860,10 +4355,7 @@ async def execute_dynamic_mission_graph(
                             value = label
                         elif (
                             angle
-                            and (
-                                "::" in angle
-                                or angle.casefold().startswith("self-proposed:")
-                            )
+                            and ("::" in angle or angle.casefold().startswith("self-proposed:"))
                             and not _is_controller_dimension_marker(angle)
                         ):
                             # Resolver-generated angle ids append the
@@ -4893,9 +4385,7 @@ async def execute_dynamic_mission_graph(
                 realized_trace: set[str] = set()
                 ignored_dimension_markers: list[str] = []
                 raw_dimension_labels: list[str] = []
-                raw_dimension_selections_for_trace = result.get(
-                    "dimension_selections", []
-                )
+                raw_dimension_selections_for_trace = result.get("dimension_selections", [])
                 if not isinstance(raw_dimension_selections_for_trace, list):
                     raw_dimension_selections_for_trace = []
                 # Providers may put the declaration in considered_dimensions,
@@ -4941,14 +4431,10 @@ async def execute_dynamic_mission_graph(
                     # persisted legacy assignment can still provide a real
                     # authored fallback; generated OPEN-* ids are markers and
                     # are deliberately excluded.
-                    fallback = _trace_dimension_token(
-                        assignment_for_trace.get("primary_dimension_code", "")
-                    )
+                    fallback = _trace_dimension_token(assignment_for_trace.get("primary_dimension_code", ""))
                     if fallback:
                         realized_trace = {fallback}
-                seat_realized_dimensions.setdefault(instance.instance_id, set()).update(
-                    realized_trace
-                )
+                seat_realized_dimensions.setdefault(instance.instance_id, set()).update(realized_trace)
                 emit_swarm_event(
                     "winning_s3_s4_multidimensional_reasoning_recorded",
                     actor=instance.instance_id,
@@ -4959,19 +4445,13 @@ async def execute_dynamic_mission_graph(
                     custom_dimensions_allowed=True,
                     raw_declared_dimensions=raw_dimension_labels,
                     ignored_dimension_markers=ignored_dimension_markers,
-                    primary_dimension=str(
-                        assignment_for_trace.get("primary_dimension_code", "")
-                    ),
+                    primary_dimension=str(assignment_for_trace.get("primary_dimension_code", "")),
                     minimum_dimension_comparison=3,
                     dimension_trace_complete=len(realized_trace) >= 3,
                 )
                 candidate_maximum = max(
                     1,
-                    int(
-                        swarm_controller.policy.get(
-                            "s3_s4_candidate_maximum_per_session", 3
-                        )
-                    ),
+                    int(swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)),
                 )
                 candidate_pool_maximum = max(
                     candidate_maximum,
@@ -4995,9 +4475,7 @@ async def execute_dynamic_mission_graph(
                     # repeated, mechanically assembled candidate board.
                     added_count = 0
                     emit_swarm_event(
-                        "winning_specialized_seed_authored"
-                        if raw_rows
-                        else "winning_specialized_seed_empty",
+                        "winning_specialized_seed_authored" if raw_rows else "winning_specialized_seed_empty",
                         actor=instance.instance_id,
                         graph_id=graph.graph_id,
                         archetype=instance.archetype,
@@ -5005,15 +4483,11 @@ async def execute_dynamic_mission_graph(
                         candidate_count=len(raw_rows),
                         stop_reason=str(result.get("stop_reason", ""))[:300],
                         quality_residuals=[
-                            str(item)[:240]
-                            for item in result.get("quality_residuals", [])
-                            if str(item).strip()
+                            str(item)[:240] for item in result.get("quality_residuals", []) if str(item).strip()
                         ][:4],
                     )
                 produced_ids: set[str] = set()
-                assignment = dict(
-                    winning_angle_assignments.get(instance.instance_id, {})
-                )
+                assignment = dict(winning_angle_assignments.get(instance.instance_id, {}))
                 raw_dimension_selections = result.get("dimension_selections", [])
                 if not isinstance(raw_dimension_selections, list):
                     raw_dimension_selections = []
@@ -5028,18 +4502,14 @@ async def execute_dynamic_mission_graph(
                         position = 0
                     if position > 0:
                         dimension_sidecars_by_position[position] = sidecar
-                    sidecar_name = str(
-                        sidecar.get("name") or sidecar.get("candidate_name") or ""
-                    ).strip()
+                    sidecar_name = str(sidecar.get("name") or sidecar.get("candidate_name") or "").strip()
                     if sidecar_name:
                         dimension_sidecars_by_name[sidecar_name] = sidecar
                 # Dynamic S3/S4 is intentionally quality-first: extra
                 # model rows do not enter the ledger. S5 still owns the
                 # authoritative semantic merge/reject decision over the
                 # compact complete pool.
-                for ordinal, raw in enumerate(
-                    raw_rows[:candidate_pool_maximum], start=1
-                ):
+                for ordinal, raw in enumerate(raw_rows[:candidate_pool_maximum], start=1):
                     if not isinstance(raw, Mapping):
                         continue
                     summary = str(raw.get("concise_winning_summary", "")).strip()
@@ -5072,9 +4542,7 @@ async def execute_dynamic_mission_graph(
                             residuals=summary_issues,
                             blocking=False,
                         )
-                    candidate_name = str(
-                        raw.get("name", "") or raw.get("title", "")
-                    ).strip()
+                    candidate_name = str(raw.get("name", "") or raw.get("title", "")).strip()
                     sidecar = dimension_sidecars_by_position.get(ordinal) or (
                         dimension_sidecars_by_name.get(candidate_name)
                     )
@@ -5107,30 +4575,19 @@ async def execute_dynamic_mission_graph(
                     # one seat can enter different S5 competition lanes.
                     candidate = replace(
                         candidate,
-                        winning_angle_id=(
-                            candidate.winning_angle_id
-                            or resolved_dimension["winning_angle_id"]
-                        ),
-                        combat_dimension=(
-                            candidate.combat_dimension
-                            or resolved_dimension["combat_dimension"]
-                        ),
+                        winning_angle_id=(candidate.winning_angle_id or resolved_dimension["winning_angle_id"]),
+                        combat_dimension=(candidate.combat_dimension or resolved_dimension["combat_dimension"]),
                         dimension_winning_logic=(
-                            candidate.dimension_winning_logic
-                            or resolved_dimension["dimension_winning_logic"]
+                            candidate.dimension_winning_logic or resolved_dimension["dimension_winning_logic"]
                         ),
                         changed_confrontation_variable=(
                             candidate.changed_confrontation_variable
                             or str(assignment.get("task_chain_breakpoint", "")).strip()
                         ),
                     )
-                    resolved_code = str(
-                        resolved_dimension.get("dimension_code", "")
-                    ).strip()
+                    resolved_code = str(resolved_dimension.get("dimension_code", "")).strip()
                     if resolved_code:
-                        seat_realized_dimensions.setdefault(
-                            instance.instance_id, set()
-                        ).add(resolved_code)
+                        seat_realized_dimensions.setdefault(instance.instance_id, set()).add(resolved_code)
                     if resolved_code == "D7":
                         emit_swarm_event(
                             "winning_s3_s4_source_forward_candidate_realized",
@@ -5141,9 +4598,7 @@ async def execute_dynamic_mission_graph(
                             dimension_code=resolved_code,
                             winning_angle_id=candidate.winning_angle_id,
                         )
-                    admission = swarm_controller.evaluate_gate(
-                        candidate, stage="targeted"
-                    )
+                    admission = swarm_controller.evaluate_gate(candidate, stage="targeted")
                     # Local gates are diagnostic only for creative S3/S4
                     # output. S5 owns semantic admission, merge and reject
                     # decisions using the complete Query and portfolio.
@@ -5175,12 +4630,8 @@ async def execute_dynamic_mission_graph(
                         ),
                         naming_rationale=str(raw.get("naming_rationale", "")).strip(),
                         naming_style=str(raw.get("naming_style", "")).strip(),
-                        core_disruptive_difference=str(
-                            raw.get("core_disruptive_difference", "")
-                        ).strip(),
-                        concise_winning_summary=str(
-                            raw.get("concise_winning_summary", "")
-                        ).strip(),
+                        core_disruptive_difference=str(raw.get("core_disruptive_difference", "")).strip(),
+                        concise_winning_summary=str(raw.get("concise_winning_summary", "")).strip(),
                         naming_owner="s3_s4_codex",
                         naming_assignment=(
                             dict(
@@ -5198,30 +4649,21 @@ async def execute_dynamic_mission_graph(
                         ),
                     )
                 id_remap = refresh_candidate_ledger()
-                resolved_ids = {
-                    id_remap.get(hypothesis_id, hypothesis_id)
-                    for hypothesis_id in produced_ids
-                }
+                resolved_ids = {id_remap.get(hypothesis_id, hypothesis_id) for hypothesis_id in produced_ids}
                 known_ledger_ids = {item.hypothesis_id for item in ledger.hypotheses}
                 instance_hypothesis_ids[instance.instance_id] = {
-                    hypothesis_id
-                    for hypothesis_id in resolved_ids
-                    if hypothesis_id in known_ledger_ids
+                    hypothesis_id for hypothesis_id in resolved_ids if hypothesis_id in known_ledger_ids
                 } or set(candidate_scope)
                 incremental_ids = set(instance_hypothesis_ids[instance.instance_id])
                 if incremental_ids:
-                    known_incremental_ids = {
-                        item.hypothesis_id for item in ledger.hypotheses
-                    }
+                    known_incremental_ids = {item.hypothesis_id for item in ledger.hypotheses}
                     incremental_ids &= known_incremental_ids
                     instance_hypothesis_ids[instance.instance_id] = set(incremental_ids)
                     # Retain bookkeeping for audit compatibility. The paired
                     # S5 reviewer is scheduled as soon as this creator scope
                     # is ready; the controller later merges all score slices
                     # for the global five-to-six decision.
-                    pending_incremental_review_ids.update(
-                        incremental_ids - reviewed_candidate_ids
-                    )
+                    pending_incremental_review_ids.update(incremental_ids - reviewed_candidate_ids)
             else:
                 if ledger is None:
                     continue
@@ -5232,13 +4674,11 @@ async def execute_dynamic_mission_graph(
                     known_ids = {item.hypothesis_id for item in ledger.hypotheses}
                     required_ids = (
                         set(candidate_scope)
-                        if str(swarm_controller.policy.get("policy_id"))
-                        == "winning_swarm_dynamic_v2"
+                        if str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2"
                         else set(candidate_scope) or set(known_ids)
                     )
                     is_cross_pool_reviewer = (
-                        str(swarm_controller.policy.get("policy_id"))
-                        == "winning_swarm_dynamic_v2"
+                        str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2"
                         and len(instance.depends_on) > 1
                     )
                     if not raw_decisions and required_ids:
@@ -5272,16 +4712,13 @@ async def execute_dynamic_mission_graph(
                                 ),
                                 retry_count=0,
                                 retained_candidate_count=0,
-                                reason=(
-                                    "跨池S5空结果按不投票处理；不以本地回退分补齐5—6项。"
-                                ),
+                                reason=("跨池S5空结果按不投票处理；不以本地回退分补齐最低组合或扩展候选。"),
                             )
                         else:
                             fallback_scope = (
                                 set(candidate_scope)
                                 if is_dynamic_paired_reviewer(instance)
-                                else candidate_scope
-                                or {item.hypothesis_id for item in ledger.hypotheses}
+                                else candidate_scope or {item.hypothesis_id for item in ledger.hypotheses}
                             )
                             if not fallback_scope:
                                 emit_swarm_event(
@@ -5294,18 +4731,10 @@ async def execute_dynamic_mission_graph(
                                 )
                                 continue
                             fallback_result = _s5_portfolio_fallback_result(
-                                [
-                                    item
-                                    for item in ledger.hypotheses
-                                    if item.hypothesis_id in fallback_scope
-                                ],
+                                [item for item in ledger.hypotheses if item.hypothesis_id in fallback_scope],
                                 maximum=min(
                                     7,
-                                    int(
-                                        swarm_controller.policy.get(
-                                            "finalist_maximum", 7
-                                        )
-                                    ),
+                                    int(swarm_controller.policy.get("finalist_maximum", 7)),
                                 ),
                             )
                             raw_decisions = fallback_result.get("decisions", [])
@@ -5317,9 +4746,7 @@ async def execute_dynamic_mission_graph(
                                 graph_id=graph.graph_id,
                                 mission_node="S5",
                                 failure_type="empty_decision_envelope",
-                                error_message=(
-                                    "S5 reviewer returned no decisions for a non-empty candidate pool"
-                                ),
+                                error_message=("S5 reviewer returned no decisions for a non-empty candidate pool"),
                                 retry_count=0,
                                 retained_candidate_count=sum(
                                     str(row.get("decision", "")).lower() == "retain"
@@ -5339,29 +4766,18 @@ async def execute_dynamic_mission_graph(
                             {
                                 "reviewer_id": instance.instance_id,
                                 "candidate_scope": sorted(candidate_scope),
-                                "decisions": [
-                                    dict(row)
-                                    for row in raw_decisions
-                                    if isinstance(row, Mapping)
-                                ],
+                                "decisions": [dict(row) for row in raw_decisions if isinstance(row, Mapping)],
                                 "portfolio_order": [
-                                    str(value)
-                                    for value in result.get("portfolio_order", [])
-                                    if str(value).strip()
+                                    str(value) for value in result.get("portfolio_order", []) if str(value).strip()
                                 ],
-                                "portfolio_summary": str(
-                                    result.get("portfolio_summary", "")
-                                )[:500],
+                                "portfolio_summary": str(result.get("portfolio_summary", ""))[:500],
                             }
                         )
                         reviewed_now = {
                             canonical_candidate_id(str(row.get("hypothesis_id", "")))
                             for row in raw_decisions
                             if isinstance(row, Mapping)
-                            and canonical_candidate_id(
-                                str(row.get("hypothesis_id", ""))
-                            )
-                            in known_ids
+                            and canonical_candidate_id(str(row.get("hypothesis_id", ""))) in known_ids
                         }
                         reviewed_candidate_ids.update(reviewed_now)
                         pending_incremental_review_ids.difference_update(reviewed_now)
@@ -5372,17 +4788,11 @@ async def execute_dynamic_mission_graph(
                             graph_id=graph.graph_id,
                             reviewed_candidate_ids=sorted(reviewed_now),
                             omitted_candidate_ids=sorted(required_ids - reviewed_now),
-                            remaining_candidate_ids=sorted(
-                                pending_incremental_review_ids
-                            ),
+                            remaining_candidate_ids=sorted(pending_incremental_review_ids),
                             portfolio_order=[
-                                str(value)
-                                for value in result.get("portfolio_order", [])
-                                if str(value).strip()
+                                str(value) for value in result.get("portfolio_order", []) if str(value).strip()
                             ],
-                            portfolio_summary=str(result.get("portfolio_summary", ""))[
-                                :500
-                            ],
+                            portfolio_summary=str(result.get("portfolio_summary", ""))[:500],
                             aggregation_pending=True,
                         )
                         continue
@@ -5398,9 +4808,7 @@ async def execute_dynamic_mission_graph(
                     for raw in raw_decisions:
                         if not isinstance(raw, Mapping):
                             continue
-                        candidate_id = canonical_candidate_id(
-                            str(raw.get("hypothesis_id", ""))
-                        )
+                        candidate_id = canonical_candidate_id(str(raw.get("hypothesis_id", "")))
                         if candidate_id not in required_ids:
                             continue
                         if candidate_id in decisions_by_id:
@@ -5419,9 +4827,7 @@ async def execute_dynamic_mission_graph(
                                 "innovation_priority": 0.0,
                                 "disruption_tier": "incremental_upgrade",
                             }
-                        raw_decisions = [
-                            decisions_by_id[item] for item in sorted(required_ids)
-                        ]
+                        raw_decisions = [decisions_by_id[item] for item in sorted(required_ids)]
                         emit_swarm_event(
                             "winning_full_pool_portfolio_review_repaired",
                             actor=instance.instance_id,
@@ -5442,25 +4848,15 @@ async def execute_dynamic_mission_graph(
                     for raw in raw_decisions:
                         if not isinstance(raw, Mapping):
                             continue
-                        source_id = canonical_candidate_id(
-                            str(raw.get("hypothesis_id", ""))
-                        )
-                        if source_id not in known_ids or (
-                            candidate_scope and source_id not in candidate_scope
-                        ):
+                        source_id = canonical_candidate_id(str(raw.get("hypothesis_id", "")))
+                        if source_id not in known_ids or (candidate_scope and source_id not in candidate_scope):
                             continue
                         review_rows_by_id[source_id] = raw
                         decision = str(raw.get("decision", "")).strip().lower()
-                        target_id = canonical_candidate_id(
-                            str(raw.get("merge_target_hypothesis_id", ""))
-                        )
+                        target_id = canonical_candidate_id(str(raw.get("merge_target_hypothesis_id", "")))
                         reviewed_now.add(source_id)
                         current_candidate = next(
-                            (
-                                item
-                                for item in ledger.hypotheses
-                                if item.hypothesis_id == source_id
-                            ),
+                            (item for item in ledger.hypotheses if item.hypothesis_id == source_id),
                             None,
                         )
                         reviewer_priority: float | None = None
@@ -5476,29 +4872,15 @@ async def execute_dynamic_mission_graph(
                             except (TypeError, ValueError):
                                 reviewer_priority = None
                         if reviewer_priority is not None:
-                            candidate_innovation_priorities[source_id] = (
-                                reviewer_priority
-                            )
+                            candidate_innovation_priorities[source_id] = reviewer_priority
                         naming_assessment = _s5_naming_assessment(raw)
                         candidate_naming_assessments[source_id] = {
-                            "naming_assessment_status": naming_assessment.get(
-                                "status", "unassessed"
-                            ),
-                            "s5_innovation_mechanism_score": naming_assessment.get(
-                                "s5_innovation_mechanism_score"
-                            ),
-                            "naming_new_quality": naming_assessment.get(
-                                "naming_new_quality"
-                            ),
-                            "naming_semantic_alignment": naming_assessment.get(
-                                "naming_semantic_alignment"
-                            ),
-                            "naming_semantics_aligned": raw.get(
-                                "naming_semantics_aligned"
-                            ),
-                            "effective_innovation": naming_assessment.get(
-                                "effective_innovation"
-                            ),
+                            "naming_assessment_status": naming_assessment.get("status", "unassessed"),
+                            "s5_innovation_mechanism_score": naming_assessment.get("s5_innovation_mechanism_score"),
+                            "naming_new_quality": naming_assessment.get("naming_new_quality"),
+                            "naming_semantic_alignment": naming_assessment.get("naming_semantic_alignment"),
+                            "naming_semantics_aligned": raw.get("naming_semantics_aligned"),
+                            "effective_innovation": naming_assessment.get("effective_innovation"),
                             "naming_anchor": naming_assessment.get("naming_anchor", ""),
                             "naming_reason": naming_assessment.get("naming_reason", ""),
                         }
@@ -5513,30 +4895,18 @@ async def execute_dynamic_mission_graph(
                             if current_candidate is not None
                             else reviewer_priority or 0.0
                         )
-                        disruption_tier = (
-                            str(raw.get("disruption_tier", "") or "").strip().lower()
-                        )
+                        disruption_tier = str(raw.get("disruption_tier", "") or "").strip().lower()
                         if disruption_tier:
                             candidate_disruption_tiers[source_id] = disruption_tier
-                        displaced_mode = str(
-                            raw.get("displaced_operational_mode", "") or ""
-                        ).strip()[:500]
-                        new_operational_mode = str(
-                            raw.get("new_operational_mode", "") or ""
-                        ).strip()[:500]
-                        relation_shift = str(
-                            raw.get("winning_relation_shift", "") or ""
-                        ).strip()[:500]
+                        displaced_mode = str(raw.get("displaced_operational_mode", "") or "").strip()[:500]
+                        new_operational_mode = str(raw.get("new_operational_mode", "") or "").strip()[:500]
+                        relation_shift = str(raw.get("winning_relation_shift", "") or "").strip()[:500]
                         if displaced_mode:
                             candidate_displaced_modes[source_id] = displaced_mode
                         if new_operational_mode:
-                            candidate_new_operational_modes[source_id] = (
-                                new_operational_mode
-                            )
+                            candidate_new_operational_modes[source_id] = new_operational_mode
                         if relation_shift:
-                            candidate_winning_relation_shifts[source_id] = (
-                                relation_shift
-                            )
+                            candidate_winning_relation_shifts[source_id] = relation_shift
                         candidate_innovation_bases[source_id] = _s5_innovation_basis(
                             raw,
                             dimension_scores=dimension_scores,
@@ -5557,9 +4927,7 @@ async def execute_dynamic_mission_graph(
                         # responses and hallucinated merge targets.
                         if decision not in {"retain", "reject", "merge"}:
                             decision = "reject"
-                            decision_reason = (
-                                f"{decision_reason}；S5返回未知决策，按未通过准入处理"
-                            ).strip("；")[:500]
+                            decision_reason = (f"{decision_reason}；S5返回未知决策，按未通过准入处理").strip("；")[:500]
                             rejection_stage = "full_pool_s5_invalid_decision"
                             portfolio_rejected_ids.add(source_id)
                             emit_swarm_event(
@@ -5598,60 +4966,19 @@ async def execute_dynamic_mission_graph(
                                 reason=decision_reason,
                             )
 
-                        if decision in {
-                            "retain",
-                            "merge",
-                        } and not _s5_retain_passes_concrete_weapon_contract(
-                            raw,
-                            query_domain_mode=query_domain["mode"],
-                        ):
-                            decision = "reject"
-                            rejection_stage = "full_pool_s5_portfolio_contract_gate"
-                            portfolio_rejected_ids.add(source_id)
-                            rejection_recorded = True
-                            decision_reason = (
-                                f"{decision_reason}；S5具体武器/科学闭合/命名语义准入未通过"
-                            ).strip("；")[:500]
-                            state.swarm_rejections.append(
-                                {
-                                    "hypothesis_id": source_id,
-                                    "reason": decision_reason,
-                                    "stage": rejection_stage,
-                                }
-                            )
-                            emit_swarm_event(
-                                "winning_s5_contract_gate_rejected",
-                                actor=instance.instance_id,
-                                graph_id=graph.graph_id,
-                                hypothesis_id=source_id,
-                                reported_decision=reported_decision,
-                                reason=decision_reason,
-                                naming_assessment=naming_assessment,
-                            )
-                        if decision == "merge" and (
-                            target_id in known_ids and target_id != source_id
-                        ):
+                        if decision == "merge" and (target_id in known_ids and target_id != source_id):
                             candidate_id_aliases[source_id] = target_id
                             candidate_innovation_priorities[target_id] = max(
                                 candidate_innovation_priorities.get(target_id, 0.0),
                                 innovation_priority,
                             )
-                            target_naming_assessment = candidate_naming_assessments.get(
-                                target_id, {}
-                            )
+                            target_naming_assessment = candidate_naming_assessments.get(target_id, {})
                             if (
                                 naming_assessment.get("status") == "assessed"
-                                and target_naming_assessment.get(
-                                    "naming_assessment_status"
-                                )
-                                != "assessed"
+                                and target_naming_assessment.get("naming_assessment_status") != "assessed"
                             ):
-                                candidate_naming_assessments[target_id] = dict(
-                                    candidate_naming_assessments[source_id]
-                                )
-                            if weighted_score > candidate_weighted_scores.get(
-                                target_id, -1.0
-                            ):
+                                candidate_naming_assessments[target_id] = dict(candidate_naming_assessments[source_id])
+                            if weighted_score > candidate_weighted_scores.get(target_id, -1.0):
                                 candidate_dimension_scores[target_id] = dimension_scores
                                 candidate_weighted_scores[target_id] = weighted_score
                             source_tier_rank = _s5_disruption_tier_rank(
@@ -5664,21 +4991,13 @@ async def execute_dynamic_mission_graph(
                             )
                             if source_tier_rank > target_tier_rank:
                                 if disruption_tier:
-                                    candidate_disruption_tiers[target_id] = (
-                                        disruption_tier
-                                    )
+                                    candidate_disruption_tiers[target_id] = disruption_tier
                                 if displaced_mode:
-                                    candidate_displaced_modes[target_id] = (
-                                        displaced_mode
-                                    )
+                                    candidate_displaced_modes[target_id] = displaced_mode
                                 if new_operational_mode:
-                                    candidate_new_operational_modes[target_id] = (
-                                        new_operational_mode
-                                    )
+                                    candidate_new_operational_modes[target_id] = new_operational_mode
                                 if relation_shift:
-                                    candidate_winning_relation_shifts[target_id] = (
-                                        relation_shift
-                                    )
+                                    candidate_winning_relation_shifts[target_id] = relation_shift
                             if candidate_innovation_bases[source_id]:
                                 candidate_innovation_bases.setdefault(
                                     target_id,
@@ -5704,10 +5023,22 @@ async def execute_dynamic_mission_graph(
                                     }
                                 )
                         elif decision == "retain":
-                            # S5 owns only innovation/disruption
-                            # disposition.  Candidate identity and name
-                            # are frozen by S3/S4 and must flow through
-                            # unchanged.
+                            if current_candidate is not None:
+                                converged = _s5_converged_candidate(
+                                    current_candidate,
+                                    raw,
+                                )
+                                if converged != current_candidate:
+                                    candidate_s5_convergences[source_id] = converged
+                                    emit_swarm_event(
+                                        "winning_s5_candidate_converged",
+                                        actor=instance.instance_id,
+                                        graph_id=graph.graph_id,
+                                        hypothesis_id=source_id,
+                                        original_name=current_candidate.title,
+                                        converged_name=converged.title,
+                                        reason="incomplete_s3_s4_single_weapon_contract",
+                                    )
                             retained_ids.add(source_id)
                         else:
                             continue
@@ -5717,28 +5048,18 @@ async def execute_dynamic_mission_graph(
                             graph_id=graph.graph_id,
                             hypothesis_id=source_id,
                             decision=decision,
-                            merge_target_hypothesis_id=(
-                                target_id if decision == "merge" else ""
-                            ),
+                            merge_target_hypothesis_id=(target_id if decision == "merge" else ""),
                             reason=decision_reason,
                             independent_axis=str(raw.get("independent_axis", ""))[:120],
                             direct_equipment=bool(raw.get("direct_equipment", False)),
                             reported_decision=reported_decision,
                             innovation_priority=innovation_priority,
                             innovation_basis=candidate_innovation_bases[source_id],
-                            dimension_scores=candidate_dimension_scores.get(
-                                source_id, {}
-                            ),
-                            weighted_score=candidate_weighted_scores.get(
-                                source_id, 0.0
-                            ),
+                            dimension_scores=candidate_dimension_scores.get(source_id, {}),
+                            weighted_score=candidate_weighted_scores.get(source_id, 0.0),
                             disruption_tier=disruption_tier,
-                            material_innovation_breakpoint_present=raw.get(
-                                "material_innovation_breakpoint_present"
-                            ),
-                            ordinary_upgrade_or_function_packaging=raw.get(
-                                "ordinary_upgrade_or_function_packaging"
-                            ),
+                            material_innovation_breakpoint_present=raw.get("material_innovation_breakpoint_present"),
+                            ordinary_upgrade_or_function_packaging=raw.get("ordinary_upgrade_or_function_packaging"),
                             displaced_operational_mode=displaced_mode,
                             new_operational_mode=new_operational_mode,
                             winning_relation_shift=relation_shift,
@@ -5760,10 +5081,6 @@ async def execute_dynamic_mission_graph(
                             (candidate_id, row)
                             for candidate_id, row in review_rows_by_id.items()
                             if str(row.get("decision", "")).strip().lower() == "retain"
-                            and _s5_retain_passes_concrete_weapon_contract(
-                                row,
-                                query_domain_mode=query_domain["mode"],
-                            )
                         ]
                         rescue_rows.sort(
                             key=lambda item: (
@@ -5775,9 +5092,7 @@ async def execute_dynamic_mission_graph(
                             ),
                             reverse=True,
                         )
-                        rescue_ids = [
-                            candidate_id for candidate_id, _ in rescue_rows[:7]
-                        ]
+                        rescue_ids = [candidate_id for candidate_id, _ in rescue_rows[:7]]
                         if rescue_ids:
                             retained_ids.update(rescue_ids)
                             portfolio_rejected_ids.difference_update(rescue_ids)
@@ -5798,15 +5113,20 @@ async def execute_dynamic_mission_graph(
                             continue
                         if canonical_id not in portfolio_order_hints:
                             portfolio_order_sequence += 1
-                            portfolio_order_hints[canonical_id] = (
-                                portfolio_order_sequence
-                            )
-                    if retained_ids != known_ids:
+                            portfolio_order_hints[canonical_id] = portfolio_order_sequence
+                    if retained_ids != known_ids or any(
+                        candidate_id in candidate_s5_convergences for candidate_id in retained_ids
+                    ):
                         updated_hypotheses: list[WinningHypothesis] = []
                         for item in ledger.hypotheses:
                             if item.hypothesis_id not in retained_ids:
                                 continue
-                            updated_hypotheses.append(item)
+                            updated_hypotheses.append(
+                                candidate_s5_convergences.get(
+                                    item.hypothesis_id,
+                                    item,
+                                )
+                            )
                         ledger = HypothesisLedgerVersion(
                             ledger_id=ledger.ledger_id,
                             version=ledger.version + 1,
@@ -5830,13 +5150,9 @@ async def execute_dynamic_mission_graph(
                         reviewed_candidate_ids=sorted(reviewed_now),
                         remaining_candidate_ids=sorted(pending_incremental_review_ids),
                         portfolio_order=[
-                            str(value)
-                            for value in result.get("portfolio_order", [])
-                            if str(value).strip()
+                            str(value) for value in result.get("portfolio_order", []) if str(value).strip()
                         ],
-                        portfolio_summary=str(result.get("portfolio_summary", ""))[
-                            :500
-                        ],
+                        portfolio_summary=str(result.get("portfolio_summary", ""))[:500],
                     )
                     emit_swarm_event(
                         "winning_full_pool_portfolio_review_completed",
@@ -5845,13 +5161,9 @@ async def execute_dynamic_mission_graph(
                         reviewed_candidate_ids=sorted(reviewed_now),
                         remaining_candidate_ids=sorted(pending_incremental_review_ids),
                         portfolio_order=[
-                            str(value)
-                            for value in result.get("portfolio_order", [])
-                            if str(value).strip()
+                            str(value) for value in result.get("portfolio_order", []) if str(value).strip()
                         ],
-                        portfolio_summary=str(result.get("portfolio_summary", ""))[
-                            :500
-                        ],
+                        portfolio_summary=str(result.get("portfolio_summary", ""))[:500],
                         compatibility_alias=True,
                     )
                     continue
@@ -5868,24 +5180,16 @@ async def execute_dynamic_mission_graph(
                     hypothesis_id = canonical_candidate_id(reported_hypothesis_id)
                     if hypothesis_id not in known_ids:
                         obsolete_candidate = next(
-                            (
-                                item
-                                for item in hypotheses
-                                if item.hypothesis_id == reported_hypothesis_id
-                            ),
+                            (item for item in hypotheses if item.hypothesis_id == reported_hypothesis_id),
                             None,
                         )
                         if obsolete_candidate is not None:
-                            semantic_target = (
-                                swarm_controller.semantic_hypothesis_match(
-                                    obsolete_candidate,
-                                    ledger.hypotheses,
-                                )
+                            semantic_target = swarm_controller.semantic_hypothesis_match(
+                                obsolete_candidate,
+                                ledger.hypotheses,
                             )
                             if semantic_target:
-                                candidate_id_aliases[reported_hypothesis_id] = (
-                                    semantic_target
-                                )
+                                candidate_id_aliases[reported_hypothesis_id] = semantic_target
                                 hypothesis_id = semantic_target
                     if hypothesis_id != reported_hypothesis_id:
                         emit_swarm_event(
@@ -5902,11 +5206,7 @@ async def execute_dynamic_mission_graph(
                             hypothesis_id=hypothesis_id,
                         )
                         continue
-                    if (
-                        instance.mission_node != "S6"
-                        and candidate_scope
-                        and hypothesis_id not in candidate_scope
-                    ):
+                    if instance.mission_node != "S6" and candidate_scope and hypothesis_id not in candidate_scope:
                         emit_swarm_event(
                             "winning_contribution_rejected",
                             actor=instance.instance_id,
@@ -5915,9 +5215,7 @@ async def execute_dynamic_mission_graph(
                             allowed_hypothesis_ids=sorted(candidate_scope),
                         )
                         continue
-                    reported_target = str(
-                        raw.get("merge_target") or instance.merge_target
-                    )
+                    reported_target = str(raw.get("merge_target") or instance.merge_target)
                     if reported_target != instance.merge_target:
                         emit_swarm_event(
                             "winning_contribution_rejected",
@@ -5934,11 +5232,7 @@ async def execute_dynamic_mission_graph(
                     except (TypeError, ValueError):
                         quality = 0.0
                     recommendation = str(raw.get("recommendation", "retain"))[:80]
-                    findings = [
-                        str(item)
-                        for item in raw.get("findings", [])
-                        if str(item).strip()
-                    ][:8]
+                    findings = [str(item) for item in raw.get("findings", []) if str(item).strip()][:8]
                     evidence_ids = swarm_controller.sanitize_evidence_ids(
                         raw.get("evidence_ids", raw.get("evidence_refs", [])),
                         set(valid_reference_ids),
@@ -5979,17 +5273,11 @@ async def execute_dynamic_mission_graph(
                     # locks guarantee disjoint candidate/target writes.
                     # Sibling completions therefore commute; advance the
                     # local ledger base without replaying a Codex session.
-                    merge_base_version = (
-                        ledger.version
-                        if instance.mission_node in {"S4", "S5"}
-                        else base_version
-                    )
+                    merge_base_version = ledger.version if instance.mission_node in {"S4", "S5"} else base_version
                     contribution = WinningContribution(
                         contribution_id=(
                             "winning-contribution-"
-                            + sha256(
-                                f"{instance.instance_id}:{hypothesis_id}:{ordinal}".encode()
-                            ).hexdigest()[:16]
+                            + sha256(f"{instance.instance_id}:{hypothesis_id}:{ordinal}".encode()).hexdigest()[:16]
                         ),
                         agent_instance_id=instance.instance_id,
                         role_contract_id=instance.role_contract_id,
@@ -6000,15 +5288,11 @@ async def execute_dynamic_mission_graph(
                         quality_dimensions={
                             "incremental_quality": effective_quality,
                             "reported_incremental_quality": quality,
-                            "structured_weapon_delta": (
-                                1.0 if retention["structured_weapon_delta"] else 0.0
-                            ),
+                            "structured_weapon_delta": (1.0 if retention["structured_weapon_delta"] else 0.0),
                         },
                         evidence_ids=evidence_ids,
                         residuals_resolved=[
-                            str(item)
-                            for item in raw.get("residuals_resolved", [])
-                            if str(item).strip()
+                            str(item) for item in raw.get("residuals_resolved", []) if str(item).strip()
                         ][:8],
                         incremental_quality=effective_quality,
                         recommendation=recommendation,
@@ -6023,9 +5307,7 @@ async def execute_dynamic_mission_graph(
                         merge_target=instance.merge_target,
                         base_ledger_version=base_version,
                     )
-                    ledger_after, receipt = swarm_controller.merge_contribution(
-                        ledger, contribution
-                    )
+                    ledger_after, receipt = swarm_controller.merge_contribution(ledger, contribution)
                     merge_receipts.append(receipt)
                     if receipt.rebase_required:
                         emit_swarm_event(
@@ -6035,12 +5317,8 @@ async def execute_dynamic_mission_graph(
                             from_version=contribution.base_ledger_version,
                             to_version=ledger.version,
                         )
-                        contribution = swarm_controller.rebase_contribution(
-                            contribution, ledger
-                        )
-                        ledger_after, receipt = swarm_controller.merge_contribution(
-                            ledger, contribution
-                        )
+                        contribution = swarm_controller.rebase_contribution(contribution, ledger)
+                        ledger_after, receipt = swarm_controller.merge_contribution(ledger, contribution)
                         merge_receipts.append(receipt)
                     ledger = ledger_after
                     emit_swarm_event(
@@ -6059,6 +5337,10 @@ async def execute_dynamic_mission_graph(
             source_candidates,
             cross_pool_s5_reviews,
             query_domain_mode=str(query_domain["mode"]),
+            minimum_eligible=_dynamic_finalist_target(
+                swarm_controller.policy,
+                accumulated,
+            )[0],
         )
         cross_pool_s5_audit = {
             "status": "completed",
@@ -6068,9 +5350,11 @@ async def execute_dynamic_mission_graph(
             "merge_map": reconciliation["merge_map"],
             "omitted_by_reviewer": reconciliation["omitted_by_reviewer"],
             "invalid_rows": reconciliation["invalid_rows"],
+            "portfolio_rescued_rows": reconciliation["portfolio_rescued_rows"],
             "aggregation_rule": (
                 "完整候选池独立评审；五维分取多评审均值；遗漏不等同判退；"
-                "至少一个有效保留/合并意见方可准入；同构组保留均分最高候选"
+                "逐条保留/合并或组合名单均为正向信号；主观布尔只参与解释与排序，"
+                "不形成运行时硬失败门；同构组保留均分最高候选"
             ),
         }
         portfolio_order_hints.update(reconciliation["portfolio_order_hints"])
@@ -6078,6 +5362,7 @@ async def execute_dynamic_mission_graph(
         rejected_ids = set(reconciliation["rejected_hypothesis_ids"])
         merge_map = dict(reconciliation["merge_map"])
         aggregates = reconciliation["aggregates"]
+        source_candidates_by_id = {item.hypothesis_id: item for item in source_candidates}
 
         for invalid_row in reconciliation["invalid_rows"]:
             invalid_reason = str(invalid_row.get("reason", ""))
@@ -6086,8 +5371,6 @@ async def execute_dynamic_mission_graph(
             stage = (
                 "full_pool_s5_invalid_merge_target"
                 if invalid_reason == "invalid_merge_target"
-                else "full_pool_s5_portfolio_contract_gate"
-                if invalid_reason == "concrete_weapon_contract_failed"
                 else "full_pool_s5_invalid_decision"
             )
             state.swarm_rejections.append(
@@ -6110,43 +5393,51 @@ async def execute_dynamic_mission_graph(
                     review_vote_only=True,
                 )
 
+        for rescued_row in reconciliation["portfolio_rescued_rows"]:
+            emit_swarm_event(
+                "winning_s5_portfolio_signal_recovered",
+                actor=str(rescued_row.get("reviewer_id", "")) or "s5-reviewer",
+                graph_id=graph.graph_id,
+                hypothesis_id=str(rescued_row.get("hypothesis_id", "")),
+                reason=str(rescued_row.get("reason", "")),
+                hard_failure_present=False,
+            )
+
         for candidate_id, aggregate in aggregates.items():
-            candidate_dimension_scores[candidate_id] = dict(
-                aggregate.get("dimension_scores", {})
-            )
-            candidate_weighted_scores[candidate_id] = float(
-                aggregate.get("weighted_score", 0.0) or 0.0
-            )
-            candidate_innovation_priorities[candidate_id] = float(
-                aggregate.get("innovation_priority", 0.0) or 0.0
-            )
+            candidate_dimension_scores[candidate_id] = dict(aggregate.get("dimension_scores", {}))
+            candidate_weighted_scores[candidate_id] = float(aggregate.get("weighted_score", 0.0) or 0.0)
+            candidate_innovation_priorities[candidate_id] = float(aggregate.get("innovation_priority", 0.0) or 0.0)
             best_row = aggregate.get("best_row", {})
             if not isinstance(best_row, Mapping):
                 best_row = {}
+            current_candidate = source_candidates_by_id.get(candidate_id)
+            if current_candidate is not None and candidate_id in eligible_ids:
+                converged = _s5_converged_candidate(current_candidate, best_row)
+                if converged != current_candidate:
+                    candidate_s5_convergences[candidate_id] = converged
+                    emit_swarm_event(
+                        "winning_s5_candidate_converged",
+                        actor=str(best_row.get("reviewer_id", "")) or "winning_swarm_independent_portfolio_reviewer",
+                        graph_id=graph.graph_id,
+                        hypothesis_id=candidate_id,
+                        original_name=current_candidate.title,
+                        converged_name=converged.title,
+                        reason="incomplete_s3_s4_single_weapon_contract",
+                    )
             naming_assessment = best_row.get("naming_assessment", {})
             if not isinstance(naming_assessment, Mapping):
                 naming_assessment = {}
             candidate_naming_assessments[candidate_id] = {
-                "naming_assessment_status": naming_assessment.get(
-                    "status", "unassessed"
-                ),
-                "s5_innovation_mechanism_score": naming_assessment.get(
-                    "s5_innovation_mechanism_score"
-                ),
+                "naming_assessment_status": naming_assessment.get("status", "unassessed"),
+                "s5_innovation_mechanism_score": naming_assessment.get("s5_innovation_mechanism_score"),
                 "naming_new_quality": naming_assessment.get("naming_new_quality"),
-                "naming_semantic_alignment": naming_assessment.get(
-                    "naming_semantic_alignment"
-                ),
+                "naming_semantic_alignment": naming_assessment.get("naming_semantic_alignment"),
                 "effective_innovation": naming_assessment.get("effective_innovation"),
                 "naming_anchor": naming_assessment.get("naming_anchor", ""),
                 "naming_reason": naming_assessment.get("naming_reason", ""),
             }
-            candidate_innovation_bases[candidate_id] = str(
-                best_row.get("innovation_basis", "")
-            )
-            candidate_disruption_tiers[candidate_id] = str(
-                best_row.get("disruption_tier", "")
-            )
+            candidate_innovation_bases[candidate_id] = str(best_row.get("innovation_basis", ""))
+            candidate_disruption_tiers[candidate_id] = str(best_row.get("disruption_tier", ""))
             for mapping, field_name in (
                 (candidate_displaced_modes, "displaced_operational_mode"),
                 (candidate_new_operational_modes, "new_operational_mode"),
@@ -6163,18 +5454,15 @@ async def execute_dynamic_mission_graph(
                 graph_id=graph.graph_id,
                 hypothesis_id=candidate_id,
                 review_count=int(aggregate.get("review_count", 0) or 0),
-                positive_review_count=int(
-                    aggregate.get("positive_review_count", 0) or 0
-                ),
+                positive_review_count=int(aggregate.get("positive_review_count", 0) or 0),
+                decision_positive_review_count=int(aggregate.get("decision_positive_review_count", 0) or 0),
+                portfolio_positive_review_count=int(aggregate.get("portfolio_positive_review_count", 0) or 0),
                 reject_review_count=int(aggregate.get("reject_review_count", 0) or 0),
+                selection_signal_source=str(aggregate.get("selection_signal_source", "none")),
                 dimension_scores=candidate_dimension_scores[candidate_id],
                 weighted_score=candidate_weighted_scores[candidate_id],
                 disposition=(
-                    "merge"
-                    if candidate_id in merge_map
-                    else "retain"
-                    if candidate_id in eligible_ids
-                    else "reject"
+                    "merge" if candidate_id in merge_map else "retain" if candidate_id in eligible_ids else "reject"
                 ),
                 merge_target_hypothesis_id=merge_map.get(candidate_id, ""),
             )
@@ -6184,7 +5472,7 @@ async def execute_dynamic_mission_graph(
             merge_row = {
                 "source_hypothesis_id": source_id,
                 "target_hypothesis_id": target_id,
-                "reason": "cross_pool_s5_winning_dimension_isomorphism",
+                "reason": "cross_pool_s5_winning_mechanism_isomorphism",
             }
             state.swarm_merges.append(merge_row)
             emit_swarm_event("hypothesis_merged", **merge_row)
@@ -6193,17 +5481,17 @@ async def execute_dynamic_mission_graph(
             state.swarm_rejections.append(
                 {
                     "hypothesis_id": candidate_id,
-                    "reason": "并发S5聚合后无有效保留意见或未通过具体装备准入合同",
+                    "reason": "并发S5聚合后无有效逐条或组合保留信号",
                     "stage": "cross_pool_s5_reconciliation",
                 }
             )
 
         retained_hypotheses = [
-            item for item in source_candidates if item.hypothesis_id in eligible_ids
+            candidate_s5_convergences.get(item.hypothesis_id, item)
+            for item in source_candidates
+            if item.hypothesis_id in eligible_ids
         ]
-        if {item.hypothesis_id for item in retained_hypotheses} != {
-            item.hypothesis_id for item in source_candidates
-        }:
+        if {item.hypothesis_id for item in retained_hypotheses} != {item.hypothesis_id for item in source_candidates}:
             ledger = HypothesisLedgerVersion(
                 ledger_id=ledger.ledger_id,
                 version=ledger.version + 1,
@@ -6253,22 +5541,23 @@ async def execute_dynamic_mission_graph(
                 scope_id="dynamic-v2-closeout",
                 changed_hypothesis_ids=None,
             )
-    # Freeze the requested number of finalists when the Query carries an
-    # explicit count contract; otherwise retain the dynamic-v2 six-card
-    # default. Distinct dimensions come first, then the least-overlapping
-    # admitted five-axis identities with S5 score as tie-break.
-    finalist_target, finalist_count_contract = _dynamic_finalist_target(
+    # Six is the normal delivery baseline, not a selection ceiling. Keep every
+    # independently useful S5 winner up to the quality-expansion capacity.
+    # An explicit Query count/range overrides both values. Distinct dimensions
+    # come first, then the least-overlapping admitted five-axis identities with
+    # S5 score as tie-break.
+    finalist_minimum, finalist_count_contract = _dynamic_finalist_target(
         swarm_controller.policy,
         accumulated,
     )
-    maximum = finalist_target
+    maximum = int(finalist_count_contract["maximum"])
     ordered_hypotheses, portfolio_diversity_audit = _s5_diverse_six_order(
         ledger.hypotheses,
         weighted_scores=candidate_weighted_scores,
         innovation_priorities=candidate_innovation_priorities,
         disruption_tiers=candidate_disruption_tiers,
         portfolio_order_hints=portfolio_order_hints,
-        target=finalist_target,
+        target=maximum,
     )
     selected_ids_ordered = [item.hypothesis_id for item in ordered_hypotheses]
     selected_ids = set(selected_ids_ordered)
@@ -6276,30 +5565,18 @@ async def execute_dynamic_mission_graph(
     # a paired S5 reject or a close-out semantic merge.  Count against that
     # durable universe so UI/audit consumers see a truthful rejected count;
     # the previous hard-coded zero hid both kinds of disposition.
-    all_authored_ids = {
-        item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")
-    }
+    all_authored_ids = {item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")}
     all_authored_ids.update(candidate_id_aliases)
     all_authored_ids.update(portfolio_rejected_ids)
-    rejected_ids_ordered = [
-        item for item in sorted(all_authored_ids) if item not in selected_ids
-    ]
+    rejected_ids_ordered = [item for item in sorted(all_authored_ids) if item not in selected_ids]
     # Keep active-ledger ordering first for compatibility, then append merged
     # or pre-ledger rejects in stable ID order.
-    active_rejected_ids = [
-        item.hypothesis_id
-        for item in ledger.hypotheses
-        if item.hypothesis_id not in selected_ids
-    ]
-    rejected_ids_ordered = list(
-        dict.fromkeys([*active_rejected_ids, *rejected_ids_ordered])
-    )
+    active_rejected_ids = [item.hypothesis_id for item in ledger.hypotheses if item.hypothesis_id not in selected_ids]
+    rejected_ids_ordered = list(dict.fromkeys([*active_rejected_ids, *rejected_ids_ordered]))
     decision = PortfolioDecision(
         decision_id=(
             "portfolio-decision-"
-            + sha256(
-                f"{ledger.ledger_id}:{ledger.version}:{'|'.join(selected_ids_ordered)}".encode()
-            ).hexdigest()[:16]
+            + sha256(f"{ledger.ledger_id}:{ledger.version}:{'|'.join(selected_ids_ordered)}".encode()).hexdigest()[:16]
         ),
         ledger_id=ledger.ledger_id,
         ledger_version=ledger.version,
@@ -6314,24 +5591,11 @@ async def execute_dynamic_mission_graph(
                         candidate_innovation_priorities.get(item.hypothesis_id),
                     )
                 ),
-                "weighted_comprehensive_score": candidate_weighted_scores.get(
-                    item.hypothesis_id, 0.0
-                ),
+                "weighted_comprehensive_score": candidate_weighted_scores.get(item.hypothesis_id, 0.0),
+                **{f"s5_{key}": value for key, value in candidate_dimension_scores.get(item.hypothesis_id, {}).items()},
                 **{
-                    f"s5_{key}": value
-                    for key, value in candidate_dimension_scores.get(
-                        item.hypothesis_id, {}
-                    ).items()
-                },
-                **{
-                    (
-                        "s5_innovation_mechanism_score"
-                        if key == "s5_innovation_mechanism_score"
-                        else f"s5_{key}"
-                    ): value
-                    for key, value in candidate_naming_assessments.get(
-                        item.hypothesis_id, {}
-                    ).items()
+                    ("s5_innovation_mechanism_score" if key == "s5_innovation_mechanism_score" else f"s5_{key}"): value
+                    for key, value in candidate_naming_assessments.get(item.hypothesis_id, {}).items()
                     if key
                     in {
                         "s5_innovation_mechanism_score",
@@ -6350,10 +5614,10 @@ async def execute_dynamic_mission_graph(
         },
         dominance_reasons={},
         expert_assessment_ids=[],
-        quality_judge_passed=len(selected_ids_ordered) >= finalist_target,
+        quality_judge_passed=len(selected_ids_ordered) >= finalist_minimum,
         status=(
             "accepted_by_full_pool_s5"
-            if len(selected_ids_ordered) >= finalist_target
+            if len(selected_ids_ordered) >= finalist_minimum
             else "limited_insufficient_s5_finalists"
         ),
         requires_human_review=False,
@@ -6369,9 +5633,7 @@ async def execute_dynamic_mission_graph(
         repaired_count=0,
         issues=[],
     )
-    final_hypotheses = [
-        item for item in ordered_hypotheses if item.hypothesis_id in selected_ids
-    ]
+    final_hypotheses = [item for item in ordered_hypotheses if item.hypothesis_id in selected_ids]
 
     def capability_direction(
         item: WinningHypothesis,
@@ -6396,20 +5658,14 @@ async def execute_dynamic_mission_graph(
         # not claim that the public sources validate this particular concept.
         baseline = (
             item.nearest_public_baseline.strip()
-            or load_dynamic_winning_prompt(
-                "common", section="s6.dynamic_defaults.baseline"
-            ).strip()
+            or load_dynamic_winning_prompt("common", section="s6.dynamic_defaults.baseline").strip()
         )
         evidence_boundary = (
             item.evidence_boundary.strip()
-            or load_dynamic_winning_prompt(
-                "common", section="s6.dynamic_defaults.evidence_boundary"
-            ).strip()
+            or load_dynamic_winning_prompt("common", section="s6.dynamic_defaults.evidence_boundary").strip()
         )
         validation_plan = list(item.validation_plan[:8]) or [
-            load_dynamic_winning_prompt(
-                "common", section="s6.dynamic_defaults.validation"
-            ).strip()
+            load_dynamic_winning_prompt("common", section="s6.dynamic_defaults.validation").strip()
         ]
         card = {
             "hypothesis_id": item.hypothesis_id,
@@ -6425,9 +5681,7 @@ async def execute_dynamic_mission_graph(
             "query_relevance": (
                 f"通过改变“{item.changed_confrontation_variable}”，在当前任务链中形成{military_value}。"
             ),
-            "concise_winning_summary": (
-                item.reference_overview or item.disruptive_shift or mechanism
-            ),
+            "concise_winning_summary": (item.reference_overview or item.disruptive_shift or mechanism),
             "mechanism_chain": list(item.mechanism_chain[:5]),
             "frontier_principle": item.frontier_principle,
             "disruptive_shift": item.disruptive_shift,
@@ -6450,51 +5704,32 @@ async def execute_dynamic_mission_graph(
             ),
             "innovation_basis": candidate_innovation_bases.get(
                 item.hypothesis_id,
-                item.core_disruptive_difference
-                or item.disruptive_shift
-                or item.novelty_delta,
+                item.core_disruptive_difference or item.disruptive_shift or item.novelty_delta,
             ),
-            "s5_dimension_scores": candidate_dimension_scores.get(
-                item.hypothesis_id, {}
-            ),
+            "s5_dimension_scores": candidate_dimension_scores.get(item.hypothesis_id, {}),
             "s5_weighted_score": candidate_weighted_scores.get(item.hypothesis_id, 0.0),
             **candidate_naming_assessments.get(item.hypothesis_id, {}),
             "disruption_tier": candidate_disruption_tiers.get(item.hypothesis_id, ""),
-            "displaced_operational_mode": candidate_displaced_modes.get(
-                item.hypothesis_id, ""
-            ),
-            "new_operational_mode": candidate_new_operational_modes.get(
-                item.hypothesis_id, ""
-            ),
-            "winning_relation_shift": candidate_winning_relation_shifts.get(
-                item.hypothesis_id, ""
-            ),
-            "direct_combat_equipment": bool(
-                query_domain["requires_direct_combat_weapon"]
-            ),
+            "displaced_operational_mode": candidate_displaced_modes.get(item.hypothesis_id, ""),
+            "new_operational_mode": candidate_new_operational_modes.get(item.hypothesis_id, ""),
+            "winning_relation_shift": candidate_winning_relation_shifts.get(item.hypothesis_id, ""),
+            "direct_combat_equipment": bool(query_domain["requires_direct_combat_weapon"]),
             "equipment_classification": (
-                "direct_combat"
-                if query_domain["requires_direct_combat_weapon"]
-                else "mission_equipment"
+                "direct_combat" if query_domain["requires_direct_combat_weapon"] else "mission_equipment"
             ),
             "query_domain_mode": query_domain["mode"],
         }
-        return {
-            key: value for key, value in card.items() if value not in (None, "", [], {})
-        }
+        return {key: value for key, value in card.items() if value not in (None, "", [], {})}
 
     raw_equipment_portfolio = [
-        capability_direction(item, position)
-        for position, item in enumerate(final_hypotheses, start=1)
+        capability_direction(item, position) for position, item in enumerate(final_hypotheses, start=1)
     ]
 
     # S5 is a portfolio decision only. The previous per-card handoff
     # contract was a second heavy authoring pass that recreated evidence,
     # TRL, indicators and semantic classification. S6 receives the
     # already-frozen candidate spine directly.
-    equipment_portfolio: list[dict[str, Any]] = [
-        dict(card) for card in raw_equipment_portfolio
-    ]
+    equipment_portfolio: list[dict[str, Any]] = [dict(card) for card in raw_equipment_portfolio]
     # Keep the S5 disposition counters mutually intelligible: a semantic
     # merge is not a rejection, while a retained candidate that falls past
     # the six-card portfolio target is an overflow disposition.  The legacy
@@ -6510,9 +5745,7 @@ async def execute_dynamic_mission_graph(
         for candidate_id in portfolio_rejected_ids
         if candidate_id and candidate_id not in merged_source_ids
     }
-    authored_ids = {
-        item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")
-    }
+    authored_ids = {item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")}
     authored_ids.update(candidate_id_aliases)
     authored_ids.update(portfolio_rejected_ids)
     overflow_ids = {
@@ -6530,32 +5763,30 @@ async def execute_dynamic_mission_graph(
         actor="winning_swarm_independent_portfolio_reviewer",
         graph_id=graph.graph_id,
         selected_count=len(equipment_portfolio),
+        finalist_target=finalist_minimum,
+        finalist_capacity=maximum,
         rejected_count=s5_rejected_count + overflow_count,
         s5_rejected_count=s5_rejected_count,
         merged_source_count=merged_source_count,
         overflow_count=overflow_count,
-        status=(
-            "completed"
-            if len(equipment_portfolio) >= finalist_target
-            else "limited_insufficient_finalists"
+        status=("completed" if len(equipment_portfolio) >= finalist_minimum else "limited_insufficient_finalists"),
+        shortage_reason=(
+            ""
+            if len(equipment_portfolio) >= finalist_minimum
+            else "eligible_portfolio_below_target_after_model_selection_or_merges"
         ),
         contract_owner="s5_full_pool_portfolio_reviewer",
         pre_freeze_naming_repair_allowed=False,
         post_freeze_naming_mutation_allowed=False,
     )
     query_domain_mode = str(query_domain.get("mode", "direct_combat"))
-    direct_combat_count = sum(
-        bool(item.get("direct_combat_equipment")) for item in equipment_portfolio
-    )
+    direct_combat_count = sum(bool(item.get("direct_combat_equipment")) for item in equipment_portfolio)
     mission_equipment_count = sum(
-        str(item.get("equipment_classification", "")).strip().lower()
-        == "mission_equipment"
+        str(item.get("equipment_classification", "")).strip().lower() == "mission_equipment"
         for item in equipment_portfolio
     )
     direct_hypotheses = list(final_hypotheses)
-    direct_equipment_family_counts = swarm_controller.equipment_family_counts(
-        direct_hypotheses
-    )
+    direct_equipment_family_counts = swarm_controller.equipment_family_counts(direct_hypotheses)
     distinct_direct_equipment_family_count = len(direct_equipment_family_counts)
     complete_handoff_count = sum(
         all(
@@ -6569,9 +5800,7 @@ async def execute_dynamic_mission_graph(
         )
         for item in equipment_portfolio
     )
-    s6_handoff_gate_passed = complete_handoff_count == len(
-        equipment_portfolio
-    ) and bool(equipment_portfolio)
+    s6_handoff_gate_passed = complete_handoff_count == len(equipment_portfolio) and bool(equipment_portfolio)
     equipment_family_counts = swarm_controller.equipment_family_counts(final_hypotheses)
     equipment_family_count = len(equipment_family_counts)
     maximum_same_family_count = max(
@@ -6597,29 +5826,18 @@ async def execute_dynamic_mission_graph(
     )
     direct_equipment_diversity_passed = True
     domain_main_body_count = (
-        mission_equipment_count
-        if query_domain_mode == "mission_equipment"
-        else direct_combat_count
+        mission_equipment_count if query_domain_mode == "mission_equipment" else direct_combat_count
     )
-    domain_main_body_passed = domain_main_body_count >= max(
-        1, (len(equipment_portfolio) + 1) // 2
-    )
+    domain_main_body_passed = domain_main_body_count >= max(1, (len(equipment_portfolio) + 1) // 2)
     # Keep the legacy field for consumers that still render it, but make it a
     # non-blocking diagnostic for mission-equipment Queries. The domain-neutral
     # field below is the authoritative portfolio check.
-    direct_combat_main_body_passed = (
-        True if query_domain_mode == "mission_equipment" else domain_main_body_passed
-    )
-    remote_precision_present = any(
-        _is_remote_precision_portfolio_direction(item) for item in equipment_portfolio
-    )
-    portfolio_quantity_shortfall = max(0, finalist_target - len(equipment_portfolio))
-    portfolio_quality_gate_passed = (
-        len(equipment_portfolio) >= finalist_target and s6_handoff_gate_passed
-    )
+    direct_combat_main_body_passed = True if query_domain_mode == "mission_equipment" else domain_main_body_passed
+    remote_precision_present = any(_is_remote_precision_portfolio_direction(item) for item in equipment_portfolio)
+    portfolio_quantity_shortfall = max(0, finalist_minimum - len(equipment_portfolio))
+    portfolio_quality_gate_passed = len(equipment_portfolio) >= finalist_minimum and s6_handoff_gate_passed
     direct_equipment_diversity_limited = bool(
-        not direct_equipment_diversity_passed
-        and distinct_direct_equipment_family_count > 0
+        not direct_equipment_diversity_passed and distinct_direct_equipment_family_count > 0
     )
     diversity_only_warning = bool(
         direct_equipment_diversity_limited
@@ -6630,9 +5848,7 @@ async def execute_dynamic_mission_graph(
     )
     state.dynamic_outputs = [
         {
-            "agent_instance_id": item.source_task_ids[-1]
-            if item.source_task_ids
-            else "winning_mission_graph",
+            "agent_instance_id": item.source_task_ids[-1] if item.source_task_ids else "winning_mission_graph",
             "hypothesis_id": item.hypothesis_id,
             "display_name": item.title,
             "merge_target": "convergence",
@@ -6667,21 +5883,13 @@ async def execute_dynamic_mission_graph(
                 ),
                 innovation_basis=candidate_innovation_bases.get(
                     item.hypothesis_id,
-                    item.core_disruptive_difference
-                    or item.disruptive_shift
-                    or item.novelty_delta,
+                    item.core_disruptive_difference or item.disruptive_shift or item.novelty_delta,
                 ),
                 **candidate_naming_assessments.get(item.hypothesis_id, {}),
                 disruption_tier=candidate_disruption_tiers.get(item.hypothesis_id, ""),
-                displaced_operational_mode=candidate_displaced_modes.get(
-                    item.hypothesis_id, ""
-                ),
-                new_operational_mode=candidate_new_operational_modes.get(
-                    item.hypothesis_id, ""
-                ),
-                winning_relation_shift=candidate_winning_relation_shifts.get(
-                    item.hypothesis_id, ""
-                ),
+                displaced_operational_mode=candidate_displaced_modes.get(item.hypothesis_id, ""),
+                new_operational_mode=candidate_new_operational_modes.get(item.hypothesis_id, ""),
+                winning_relation_shift=candidate_winning_relation_shifts.get(item.hypothesis_id, ""),
                 s6_eligible=True,
             )
         else:
@@ -6692,7 +5900,7 @@ async def execute_dynamic_mission_graph(
                 selection_status="reference",
                 selection_reason_code="not_retained_by_full_pool_s5",
                 selection_reason=(
-                    "未通过S5具体武器、科学闭合或创新断点准入，不进入S6画像撰写。"
+                    "未进入S5模型最终组合，或与更强候选合并，不进入S6画像撰写。"
                     if item.hypothesis_id in portfolio_rejected_ids
                     else "已通过S5全池校准，但按颠覆层级与创新优先排序后超出本轮S6并行写卡容量，保留为参考武器。"
                     if item.hypothesis_id in candidate_innovation_priorities
@@ -6704,21 +5912,13 @@ async def execute_dynamic_mission_graph(
                 ),
                 innovation_basis=candidate_innovation_bases.get(
                     item.hypothesis_id,
-                    item.core_disruptive_difference
-                    or item.disruptive_shift
-                    or item.novelty_delta,
+                    item.core_disruptive_difference or item.disruptive_shift or item.novelty_delta,
                 ),
                 **candidate_naming_assessments.get(item.hypothesis_id, {}),
                 disruption_tier=candidate_disruption_tiers.get(item.hypothesis_id, ""),
-                displaced_operational_mode=candidate_displaced_modes.get(
-                    item.hypothesis_id, ""
-                ),
-                new_operational_mode=candidate_new_operational_modes.get(
-                    item.hypothesis_id, ""
-                ),
-                winning_relation_shift=candidate_winning_relation_shifts.get(
-                    item.hypothesis_id, ""
-                ),
+                displaced_operational_mode=candidate_displaced_modes.get(item.hypothesis_id, ""),
+                new_operational_mode=candidate_new_operational_modes.get(item.hypothesis_id, ""),
+                winning_relation_shift=candidate_winning_relation_shifts.get(item.hypothesis_id, ""),
                 s6_eligible=False,
             )
         candidate_lineage.append(row)
@@ -6732,35 +5932,22 @@ async def execute_dynamic_mission_graph(
             instance_id: {
                 "open": bool(assignment.get("open_dimension_slots", True)),
                 "slot_count": int(assignment.get("dimension_slot_count", 3) or 3),
-                "primary_dimension_code": str(
-                    assignment.get("primary_dimension_code", "")
-                ),
-                "primary_dimension_label": str(
-                    assignment.get("primary_dimension_label", "")
-                ),
+                "primary_dimension_code": str(assignment.get("primary_dimension_code", "")),
+                "primary_dimension_label": str(assignment.get("primary_dimension_label", "")),
                 "dimension_codes": list(assignment.get("dimension_codes", [])),
-                "reference_dimension_codes": list(
-                    assignment.get("reference_dimension_codes", [])
-                ),
-                "reference_only_dimension_codes": list(
-                    assignment.get("reference_dimension_codes", [])
-                ),
+                "reference_dimension_codes": list(assignment.get("reference_dimension_codes", [])),
+                "reference_only_dimension_codes": list(assignment.get("reference_dimension_codes", [])),
                 "dimension_portfolio": [
-                    dict(item)
-                    for item in assignment.get("dimension_portfolio", [])
-                    if isinstance(item, Mapping)
+                    dict(item) for item in assignment.get("dimension_portfolio", []) if isinstance(item, Mapping)
                 ],
             }
             for instance_id, assignment in winning_angle_assignments.items()
         },
         "seat_realized_dimensions": {
-            instance_id: sorted(values)
-            for instance_id, values in seat_realized_dimensions.items()
+            instance_id: sorted(values) for instance_id, values in seat_realized_dimensions.items()
         },
         "dimension_mode": "multi_dimensional_per_seat",
-        "dimension_catalog_size": len(
-            _s3_s4_dimension_catalog(next(iter(winning_angle_assignments.values()), {}))
-        ),
+        "dimension_catalog_size": len(_s3_s4_dimension_catalog(next(iter(winning_angle_assignments.values()), {}))),
         "candidate_id_aliases": dict(sorted(candidate_id_aliases.items())),
         "candidate_lineage": candidate_lineage,
         "hypothesis_ledger": to_plain(ledger),
@@ -6776,19 +5963,19 @@ async def execute_dynamic_mission_graph(
         "portfolio_quality_gate": {
             "passed": portfolio_quality_gate_passed,
             "direction_count": len(equipment_portfolio),
-            "target_direction_count": finalist_target,
+            "target_direction_count": finalist_minimum,
+            "minimum_direction_count": finalist_minimum,
+            "quality_expansion_capacity": maximum,
             "candidate_count_contract": {
                 **finalist_count_contract,
                 "actual": len(equipment_portfolio),
                 "met": (
-                    finalist_count_contract["minimum"]
-                    <= len(equipment_portfolio)
-                    <= finalist_count_contract["maximum"]
+                    finalist_count_contract["minimum"] <= len(equipment_portfolio) <= finalist_count_contract["maximum"]
                     if finalist_count_contract["explicit"]
-                    else len(equipment_portfolio) >= finalist_target
+                    else len(equipment_portfolio) >= finalist_minimum
                 ),
             },
-            "quantity_gate_passed": len(equipment_portfolio) >= finalist_target,
+            "quantity_gate_passed": len(equipment_portfolio) >= finalist_minimum,
             "quantity_shortfall": portfolio_quantity_shortfall,
             "direct_combat_equipment_count": direct_combat_count,
             "mission_equipment_count": mission_equipment_count,
@@ -6801,15 +5988,9 @@ async def execute_dynamic_mission_graph(
             "equipment_family_count": equipment_family_count,
             "equipment_family_counts": equipment_family_counts,
             "direct_equipment_family_counts": (direct_equipment_family_counts),
-            "distinct_direct_equipment_family_count": (
-                distinct_direct_equipment_family_count
-            ),
-            "preferred_distinct_direct_equipment": (
-                preferred_distinct_direct_equipment
-            ),
-            "available_distinct_direct_equipment_family_count": (
-                distinct_direct_equipment_family_count
-            ),
+            "distinct_direct_equipment_family_count": (distinct_direct_equipment_family_count),
+            "preferred_distinct_direct_equipment": (preferred_distinct_direct_equipment),
+            "available_distinct_direct_equipment_family_count": (distinct_direct_equipment_family_count),
             "direct_equipment_diversity_passed": (direct_equipment_diversity_passed),
             "direct_equipment_diversity_limited": (direct_equipment_diversity_limited),
             "direct_equipment_diversity_warning": (
@@ -6838,12 +6019,11 @@ async def execute_dynamic_mission_graph(
                 f"多选制：{len(cross_pool_s5_reviews)}个跨池S5评审对完整候选池独立五维评分，"
                 "统一判定制胜维度同构并在同构组内保留高分候选；"
                 "先覆盖不同制胜维度，维度不足时选择五轴身份重叠更低者，"
-                f"同等差异下按综合分补齐{finalist_target}项，再由S6逐卡并发撰写能力画像"
+                f"以{finalist_minimum}项为最低交付基线，并允许优质互异候选继续入选至"
+                f"{maximum}项，再由S6逐卡并发撰写能力画像"
             ),
-            "s6_card_capacity": finalist_target,
-            "direct_combat_equipment_must_be_main_body": (
-                query_domain_mode == "direct_combat"
-            ),
+            "s6_card_capacity": len(equipment_portfolio),
+            "direct_combat_equipment_must_be_main_body": (query_domain_mode == "direct_combat"),
         },
         "execution_batches": execution_batches,
         "events_version": "winning_swarm_dynamic_v2",
@@ -6852,8 +6032,7 @@ async def execute_dynamic_mission_graph(
         "s5_decision_scope": "innovation_disruption_only",
         "s5_scoring_mode": "parallel_cross_pool_then_stable_reconciliation",
         "s5_reviewer_count": sum(
-            item.archetype == "independent_portfolio_reviewer"
-            and item.mission_node == "S5"
+            item.archetype == "independent_portfolio_reviewer" and item.mission_node == "S5"
             for item in graph.agent_instances
         ),
         "s6_selection_limit": maximum,
@@ -6890,9 +6069,7 @@ async def execute_dynamic_mission_graph(
         ledger_version=ledger.version,
         selected_hypothesis_ids=decision.selected_hypothesis_ids,
         rejected_hypothesis_ids=decision.rejected_hypothesis_ids,
-        final_equipment_portfolio=_compact_equipment_portfolio_event(
-            equipment_portfolio
-        ),
+        final_equipment_portfolio=_compact_equipment_portfolio_event(equipment_portfolio),
         portfolio_quality_gate=accumulated["winning_swarm"]["portfolio_quality_gate"],
         swarm_summary=_compact_swarm_event_summary(accumulated["winning_swarm"]),
     )

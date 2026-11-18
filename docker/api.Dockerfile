@@ -132,6 +132,12 @@ COPY backend/video_collector /app/video_collector
 ENV HOME=/home/platform \
     RAPIDOCR_MODEL_DIR=/home/platform/.cache/rapidocr/models
 
+ARG RELEASE_ID=development
+ARG SOURCE_REVISION=unknown
+LABEL com.deepquest.release.id=${RELEASE_ID} \
+    com.deepquest.release.component=api \
+    org.opencontainers.image.revision=${SOURCE_REVISION}
+
 USER 1000:1000
 
 ENTRYPOINT ["/usr/local/bin/deep-research-entrypoint"]

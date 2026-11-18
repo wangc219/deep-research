@@ -306,6 +306,7 @@
                   :visible="currentApprovalModalVisible"
                   :questions="currentApprovalQuestions"
                   :kind="approvalState.kind"
+                  :ready="approvalState.ready"
                   :auto-recommend="approvalState.kind === 'question' && approvalState.source === 'ask_user_question'"
                   :request-key="`${approvalState.threadId || ''}:${approvalState.interruptedRunId || ''}`"
                   :action-requests="approvalState.actionRequests"
@@ -953,7 +954,8 @@ import {
   DEFAULT_DRAFT_SCOPE,
   DRAFT_THREAD_ID,
   createThreadDraftStore,
-  createThreadDraftSession
+  createThreadDraftSession,
+  shouldDiscardPersistedThreadDraft
 } from '@/utils/thread_draft'
 import { ScrollController } from '@/utils/scrollController'
 import {
@@ -2993,6 +2995,18 @@ const fetchThreadMessages = async ({ agentId, threadId, delay = 0 }) => {
   }
 }
 
+// 历史会话恢复时，本地存储可能残留已经发送成功的原始提示词。只有当恢复文本与
+// 当前线程的持久化用户消息完全一致时才清理，真正未发送的草稿继续保留。
+const discardAlreadySentRestoredDraft = (threadId) => {
+  if (currentChatId.value !== threadId) return false
+  if (!shouldDiscardPersistedThreadDraft(userInput.value, threadMessages.value[threadId])) {
+    return false
+  }
+  threadDraftSession.clearCurrentThread()
+  userInput.value = ''
+  return true
+}
+
 // 把草稿线程的选择迁移到真实线程：真实线程未设值时才覆盖，迁移后删除草稿。
 const promoteDraftSelection = (selectionByThread, threadId) => {
   const draft = selectionByThread[DRAFT_MODEL_KEY]
@@ -3352,6 +3366,7 @@ const selectChat = async (chatId) => {
   chatUIStore.isLoadingMessages = true
   try {
     await fetchThreadMessages({ agentId: targetAgentId, threadId: chatId })
+    discardAlreadySentRestoredDraft(chatId)
     void chatThreadsStore.markThreadViewed(chatId)
   } catch (error) {
     handleChatError(error, 'load')

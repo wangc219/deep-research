@@ -29,6 +29,7 @@ def isolate_provider_adapters_from_distributed_scheduler(monkeypatch):
     # 融合用例再在各自测试内显式启用，避免测试结果依赖执行机环境。
     monkeypatch.delenv("SEARXNG_URL", raising=False)
     monkeypatch.setattr(search_module, "coordinated_search", lambda provider, arguments, call: call())
+    monkeypatch.setattr(search_module, "hydrate_search_results", lambda results, **_kwargs: results)
 
 
 def test_provider_failover_calls_raw_function_without_nested_tool_lifecycle(monkeypatch):
@@ -284,6 +285,76 @@ def test_open_websearch_normalizes_daemon_results(monkeypatch):
     ]
     assert result["source_quality"] == {"authoritative": 1, "other": 0}
     assert result["partial_failures"][0]["engine"] == "startpage"
+
+
+def test_open_websearch_adds_baidu_only_for_chinese_queries(monkeypatch):
+    monkeypatch.setenv("OPEN_WEBSEARCH_URL", "http://open-websearch:3210")
+    monkeypatch.setenv("OPEN_WEBSEARCH_ENGINES", "bing,duckduckgo")
+    response = MagicMock(status_code=200)
+    response.json.return_value = {
+        "status": "ok",
+        "data": {
+            "results": [
+                {
+                    "title": "无人潜航器水声探测技术",
+                    "url": "https://example.cn/auv-sonar",
+                    "description": "无人潜航器水声探测新技术",
+                    "engine": "baidu",
+                }
+            ]
+        },
+    }
+
+    with patch("httpx.Client.post", return_value=response) as mock_post:
+        chinese = search_module._open_websearch.func(query="无人潜航器 水声探测", count=5)
+        search_module._open_websearch.func(query="autonomous underwater vehicle sonar", count=5)
+
+    assert chinese["results"][0]["search_engine"] == "baidu"
+    assert mock_post.call_args_list[0].kwargs["json"]["engines"] == ["bing", "duckduckgo", "baidu"]
+    assert mock_post.call_args_list[1].kwargs["json"]["engines"] == ["bing", "duckduckgo"]
+
+
+def test_open_websearch_recomputes_citation_and_source_quality_after_scrapling_hydration(monkeypatch):
+    """Scrapling 还原搜索跳转后，引用和来源分层必须使用真实原始地址。"""
+    monkeypatch.setenv("OPEN_WEBSEARCH_URL", "http://open-websearch:3210")
+    monkeypatch.setenv("OPEN_WEBSEARCH_ENGINES", "baidu")
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {
+        "status": "ok",
+        "data": {
+            "results": [
+                {
+                    "title": "Navy autonomous underwater vehicle program",
+                    "url": "http://www.baidu.com/link?url=opaque",
+                    "description": "autonomous underwater vehicle program",
+                    "engine": "baidu",
+                }
+            ]
+        },
+    }
+    monkeypatch.setattr(
+        search_module,
+        "hydrate_search_results",
+        lambda results, **_kwargs: [
+            {
+                **results[0],
+                "url": "https://www.navy.mil/research/auv",
+                "content": "Navy autonomous underwater vehicle program evidence",
+                "content_hydrator": "scrapling",
+            }
+        ],
+    )
+
+    with patch("httpx.Client.post", return_value=response):
+        result = search_module._open_websearch.func(query="autonomous underwater vehicle program", count=5)
+
+    item = result["results"][0]
+    assert item["url"] == "https://www.navy.mil/research/auv"
+    assert item["source_tier"] == "authoritative"
+    assert item["citation"] == '<cite source="https://www.navy.mil/research/auv" type="url">1</cite>'
+    assert result["distinct_domains"] == 1
+    assert result["source_quality"] == {"authoritative": 1, "other": 0}
 
 
 def test_open_websearch_surfaces_daemon_error(monkeypatch):
@@ -589,6 +660,30 @@ def test_public_search_reaches_bing_when_sogou_and_duckduckgo_are_blocked():
     ]
 
 
+def test_fusion_public_fallback_uses_crossref_without_public_html_engines(monkeypatch):
+    """融合链已拥有 Open WebSearch 与 SearXNG，不再浪费截止时间直连公网 HTML。"""
+    monkeypatch.setattr(
+        search_module,
+        "_search_crossref",
+        lambda *_args, **_kwargs: {
+            "query": "radar field test",
+            "provider": "public",
+            "search_endpoint": "crossref",
+            "results": [],
+        },
+    )
+    public_html = MagicMock(side_effect=AssertionError("must not call Sogou, DuckDuckGo or Bing HTML"))
+    monkeypatch.setattr("httpx.Client.get", public_html)
+
+    result = search_module._invoke_raw_search_provider(
+        "public",
+        {"query": "radar field test", "count": 5, "_public_academic_only": True},
+    )
+
+    assert result["status"] == "empty"
+    public_html.assert_not_called()
+
+
 def test_resilient_search_fails_over_before_model_sees_error(monkeypatch):
     _reset_web_search_runtime_state()
     monkeypatch.setenv("TAVILY_API_KEY", "tavily-key")
@@ -845,6 +940,8 @@ def _fusion_config(**overrides):
         ("latest radar news", "en", {"news"}, True),
         ("radar official standard", "en", {"official"}, True),
         ("radar signal processing", "en", {"general"}, False),
+        ("low cost expendable AUV shallow water acoustic sensing", "en", {"academic"}, True),
+        ("无人潜航器 水声 声呐探测", "zh-CN", {"academic", "chinese"}, True),
         (
             "photonic time crystal nonreciprocal microwave amplification",
             "en",
@@ -865,6 +962,17 @@ def test_fusion_query_classification_is_deterministic(query, expected_language, 
     assert expected_categories.issubset(profile["categories"])
     assert profile["immediate_fusion"] is immediate
     assert len(profile["engines"]) <= 8
+
+
+def test_three_channel_first_pass_forces_searxng_academic_engines_for_general_query():
+    profile = search_module._classify_fusion_query(
+        {"query": "radar field test", "_include_academic_sources": True},
+        _fusion_config(),
+    )
+
+    assert "academic" in profile["categories"]
+    assert profile["engines"][:3] == ["arxiv", "semantic scholar", "pubmed"]
+    assert profile["immediate_fusion"] is True
 
 
 def test_searxng_response_normalizes_dates_failures_and_strict_custom_range():
@@ -912,6 +1020,12 @@ def test_searxng_response_normalizes_dates_failures_and_strict_custom_range():
 def test_searxng_posts_form_with_profiles_and_search_operators(monkeypatch):
     monkeypatch.setenv("SEARXNG_URL", "http://searxng:8080/")
     monkeypatch.setattr(search_module, "get_active_search_coordinator", lambda: None)
+    hydration_limits = []
+    monkeypatch.setattr(
+        search_module,
+        "hydrate_search_results",
+        lambda results, **kwargs: hydration_limits.append(kwargs["max_results"]) or results,
+    )
     response = MagicMock()
     response.json.return_value = {
         "results": [
@@ -945,6 +1059,7 @@ def test_searxng_posts_form_with_profiles_and_search_operators(monkeypatch):
         "time_range": "week",
     }
     assert result["provider"] == "searxng"
+    assert hydration_limits == [5]
 
 
 def test_rrf_fusion_merges_canonical_urls_metadata_and_preserves_hard_constraints():
@@ -967,6 +1082,10 @@ def test_rrf_fusion_merges_canonical_urls_metadata_and_preserves_hard_constraint
                 "url": "https://example.org/paper",
                 "content": "counter UAV field test with measured assessment results",
                 "search_engines": ["brave"],
+                "content_hydrator": "scrapling",
+                "content_level": "web_page",
+                "hydration_mode": "http",
+                "hydration_verified": True,
             },
             {
                 "title": "Counter UAV field test program",
@@ -993,6 +1112,11 @@ def test_rrf_fusion_merges_canonical_urls_metadata_and_preserves_hard_constraint
     assert merged["title"] == "Counter UAV field test and assessment"
     assert merged["providers"] == ["open-websearch", "searxng"]
     assert merged["search_engines"] == ["bing", "brave"]
+    assert merged["content_level"] == "web_page"
+    assert merged["hydration_verified"] is True
+    assert result["hydration_attempted"] == result["hydrated_count"] == 1
+    assert result["quality_status"] == "degraded"
+    assert set(result["quality_gaps"]) == {"insufficient_results", "insufficient_distinct_domains"}
     assert all(not key.startswith("_fusion_") for item in result["results"] for key in item)
 
 

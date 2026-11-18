@@ -58,6 +58,28 @@ async def test_truncation_never_saves_partial_json(monkeypatch):
     assert factory.call_count == 2
 
 
+@pytest.mark.asyncio
+async def test_local_model_can_fail_fast_on_truncation_without_exponential_retry(monkeypatch):
+    factory = Mock(
+        return_value=SimpleNamespace(
+            call=AsyncMock(return_value=SimpleNamespace(content='{"relations": []}', finish_reason="length"))
+        )
+    )
+    monkeypatch.setattr("platform_core.knowledge.graphs.extractors.llm.select_model", factory)
+    extractor = LLMGraphExtractor(
+        {
+            "model_spec": "local-lightrag:model",
+            "max_output_tokens": 2048,
+            "max_truncation_retries": 0,
+        }
+    )
+
+    with pytest.raises(ExtractionOutputTruncatedError):
+        await extractor.extract("长文本")
+
+    assert factory.call_count == 1
+
+
 @pytest.mark.parametrize(
     "params",
     [
@@ -65,6 +87,7 @@ async def test_truncation_never_saves_partial_json(monkeypatch):
         {"max_output_tokens": 65536},
         {"enable_thinking": "false"},
         {"model_params": {"extra_body": []}},
+        {"max_truncation_retries": 3},
     ],
 )
 def test_invalid_performance_options_rejected(params):
@@ -117,7 +140,12 @@ def test_fact_quotes_are_checked_without_dropping_relations():
     assert verified["relations"][0]["claim_level"] == "Fact"
     assert verified["relations"][1]["claim_level"] == "Inference"
     assert verified["relations"][1]["expert_review_required"] is True
-    assert verified["metadata"]["evidence_verification"] == {"verified_facts": 1, "reclassified_facts": 1}
+    assert verified["metadata"]["evidence_verification"] == {
+        "verified_facts": 1,
+        "reclassified_facts": 1,
+        "grounded_inferences": 0,
+        "ungrounded_inferences": 0,
+    }
 
 
 @pytest.mark.asyncio

@@ -4,6 +4,7 @@
 const DownloadPage = {
     downloadTaskId: null,
     _pollTimer: null,
+    includePdf: false,
 
     render() {
         return `
@@ -35,6 +36,10 @@ const DownloadPage = {
                     <button class="btn btn-secondary" onclick="DownloadPage.pasteFromClipboard()">
                         📋 粘贴
                     </button>
+                    <label style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);">
+                        <input type="checkbox" id="url-include-pdf" onchange="DownloadPage.setIncludePdf(this.checked)">
+                        同时生成 PDF（可选）
+                    </label>
                 </div>
             </div>
 
@@ -83,7 +88,7 @@ const DownloadPage = {
 
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="DownloadPage.saveContentFilter()">保存过滤设置</button>
-                    <button class="btn btn-secondary" onclick="DownloadPage.applyFilterToExisting()">应用到已下载文章</button>
+                    <button class="btn btn-secondary" onclick="DownloadPage.applyFilterToExisting()">应用到历史 HTML 下载</button>
                 </div>
             </div>
 
@@ -131,7 +136,15 @@ const DownloadPage = {
     // ── 内容过滤设置 ────────────────────────────────────────
 
     async init() {
+        this.includePdf = localStorage.getItem('wechat-article-include-pdf') === 'true';
+        const toggle = document.getElementById('url-include-pdf');
+        if (toggle) toggle.checked = this.includePdf;
         await this.loadContentFilter();
+    },
+
+    setIncludePdf(value) {
+        this.includePdf = Boolean(value);
+        localStorage.setItem('wechat-article-include-pdf', String(this.includePdf));
     },
 
     _cfValue(id) {
@@ -209,9 +222,9 @@ const DownloadPage = {
                 return;
             }
             Modal.confirm(
-                '应用到已下载文章',
-                '将扫描 ' + preview.scanned + ' 篇，改写 ' + preview.changed +
-                ' 篇（原文会备份为 .html.bak，正文会重算）。确定继续？',
+                '应用到历史 HTML 下载',
+                '仅处理旧版长期保存的 HTML。将扫描 ' + preview.scanned + ' 篇，改写 ' + preview.changed +
+                ' 篇（原文会备份为 .html.bak，正文会重算；新的 Markdown-only 成果不受影响）。确定继续？',
                 async () => {
                     try {
                         const r = await API.post('/api/wechat-mp/app/api/articles/content-filter/apply-existing', { dry_run: false });
@@ -264,7 +277,7 @@ const DownloadPage = {
         }
 
         try {
-            const data = await API.articles.downloadByUrl(urls);
+            const data = await API.articles.downloadByUrl(urls, this.includePdf);
             this.downloadTaskId = data.task_id;
             Toast.success(data.message);
 

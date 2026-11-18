@@ -252,6 +252,7 @@ class KnowledgeBase(ABC):
         operator_id: str | None = None,
         *,
         additional_params: dict[str, Any],
+        allow_reparse: bool = False,
         processing_task_id: str | None = None,
         processing_owner: str | None = None,
     ) -> dict:
@@ -272,6 +273,15 @@ class KnowledgeBase(ABC):
             FileStatus.ERROR_PARSING,
             "failed",  # Legacy status
         }
+        if allow_reparse:
+            allowed_statuses.update(
+                {
+                    FileStatus.PARSED,
+                    FileStatus.ERROR_INDEXING,
+                    FileStatus.INDEXED,
+                    "done",  # Legacy indexed status
+                }
+            )
 
         from platform_core.repositories.knowledge_file_repository import KnowledgeFileRepository
 
@@ -323,7 +333,7 @@ class KnowledgeBase(ABC):
             raise ValueError(message)
 
         try:
-            from platform_core.services.ocr_service import parse_document
+            from platform_core.services.ocr_service import parse_document_with_metadata
 
             # Prepare params
             params = resolve_processing_params(
@@ -335,10 +345,11 @@ class KnowledgeBase(ABC):
             params["image_bucket"] = get_minio_client().KB_BUCKETS["images"]
             params["image_prefix"] = f"{kb_id}/kb-images"
 
-            markdown_content = await parse_document(
+            parsed_document = await parse_document_with_metadata(
                 source=file_path,
                 params=params,
             )
+            markdown_content = parsed_document.markdown
 
             # Save Markdown to MinIO
             markdown_file_path = await self._save_markdown_to_minio(kb_id, file_id, markdown_content)
@@ -348,12 +359,23 @@ class KnowledgeBase(ABC):
             file_meta["markdown_file"] = markdown_file_path
             file_meta["error"] = None
             file_meta["updated_at"] = utc_isoformat()
+            processing_params = dict(file_meta.get("processing_params") or {})
+            processing_params.update(
+                {
+                    "parser_name": parsed_document.parser_name,
+                    "parser_version": parsed_document.parser_version,
+                    "parser_source_metadata": parsed_document.source_metadata,
+                    "parser_blocks": [block.as_dict() for block in parsed_document.blocks],
+                }
+            )
+            file_meta["processing_params"] = processing_params
             if operator_id:
                 file_meta["updated_by"] = operator_id
             update_data = {
                 "status": FileStatus.PARSED,
                 "markdown_file": markdown_file_path,
                 "error_message": None,
+                "processing_params": processing_params,
                 "processing_task_id": None,
                 "processing_owner": None,
             }

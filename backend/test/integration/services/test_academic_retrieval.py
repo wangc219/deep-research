@@ -593,23 +593,24 @@ async def test_live_model_routes_and_executes_academic_tools(
             return httpx.Response(200, json={"code": 40307, "success": False, "data": []})
         path = http_requests[-1]["path"]
         if path == "search":
-            title = payload["title"].lower()
+            title = payload["query"].lower()
             selected = "probe-flash" if "flash" in title else "probe-sparse" if "sparse" in title else "probe-attention"
             data = [papers[selected]]
         elif path == "search/pro":
             data = list(papers.values())
         elif path == "info":
             data = [papers[paper_id] for paper_id in payload["ids"] if paper_id in papers]
-        elif path == "detail":
-            paper = papers[payload["id"]]
+        elif path == "detail/batch":
             data = [
                 {
-                    **paper,
-                    "abstract": paper["abstract_slice"]
+                    **papers[paper_id],
+                    "abstract": papers[paper_id]["abstract_slice"]
                     + " The reported results are bounded to the paper's evaluated settings; "
                     "hardware and workload affect speedups. This abstract does not establish "
                     "a universal twofold inference speedup, nor provide deployment measurements.",
                 }
+                for paper_id in payload["ids"]
+                if paper_id in papers
             ]
         else:
             data = [
@@ -754,14 +755,14 @@ async def test_live_model_routes_and_executes_academic_tools(
     for request in http_requests:
         if request["path"] in {"search", "search/pro"}:
             assert request["payload"]["page"] == ("1" if request["path"] == "search" else "0")
-            query_key = "title" if request["path"] == "search" else "keyword"
+            query_key = "query" if request["path"] == "search" else "keyword"
             assert any(
                 any(
                     request["payload"][query_key] == query
                     or (query, request["payload"][query_key]) in normalized_queries
                     for query in [call["args"]["query"], *call["args"].get("related_queries", [])]
                 )
-                and call["args"].get("mode", "topic") == ("title" if query_key == "title" else "topic")
+                and call["args"].get("mode", "topic") == ("title" if request["path"] == "search" else "topic")
                 for call in searches
             )
     if case == "technology_auth_failure":

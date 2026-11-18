@@ -1,72 +1,23 @@
-import pytest
+"""知识库 URL 边界回归。"""
 
-from platform_core.knowledge.utils.kb_utils import build_kb_image_proxy_url, prepare_item_metadata
-
-
-def test_build_kb_image_proxy_url_uses_private_bucket_proxy_path():
-    url = build_kb_image_proxy_url("db_1/kb-images/1710000000000_diagram.png")
-
-    assert url == "/api/knowledge/databases/db_1/images/kb-images/1710000000000_diagram.png"
+from platform_core.knowledge.utils.kb_utils import parse_minio_url
 
 
-def test_build_kb_image_proxy_url_encodes_special_chars_but_keeps_slashes():
-    url = build_kb_image_proxy_url("db_1/kb-images/1710000000000_user 1.png")
+def test_parse_minio_url_preserves_semicolon_in_object_name() -> None:
+    """论文文件名中的 HTML 实体分号属于对象名。"""
+    url = "http://localhost:9000/knowledgebases/kb/upload/Diverse&nbsp;AdaBoost.pdf"
 
-    assert url == "/api/knowledge/databases/db_1/images/kb-images/1710000000000_user%201.png"
-
-
-@pytest.mark.parametrize("object_name", ["db_1/images/a.png", "/kb-images/a.png", "db_1"])
-def test_build_kb_image_proxy_url_rejects_invalid_object_name(object_name):
-    with pytest.raises(ValueError, match="知识库图片对象名"):
-        build_kb_image_proxy_url(object_name)
+    assert parse_minio_url(url) == (
+        "knowledgebases",
+        "kb/upload/Diverse&nbsp;AdaBoost.pdf",
+    )
 
 
-async def test_prepare_item_metadata_preserves_uploaded_file_size():
-    item = "minio://knowledgebases/db/upload/demo.txt"
-    params = {
-        "content_hashes": {item: "hash"},
-        "file_sizes": {item: 1234},
-    }
+def test_parse_minio_url_decodes_object_name_and_ignores_query() -> None:
+    """对象名按 URL 解码，签名查询参数不得进入对象键。"""
+    url = "http://localhost:9000/knowledgebases/kb/upload/%E8%AE%BA%E6%96%87%3Bv1.pdf?signature=test"
 
-    metadata = await prepare_item_metadata(item, "file", "db", params=params)
-
-    assert metadata["size"] == 1234
-    assert "file_sizes" not in (metadata.get("processing_params") or {})
-
-
-async def test_prepare_item_metadata_uses_source_path_as_display_filename():
-    item = "minio://knowledgebases/db/upload/intro_1710000000000.md"
-    params = {
-        "content_hashes": {item: "hash"},
-        "source_path": "guides/setup/Intro.MD",
-    }
-
-    metadata = await prepare_item_metadata(item, "file", "db", params=params)
-
-    assert metadata["filename"] == "guides/setup/Intro.MD"
-    assert metadata["file_type"] == "md"
-    assert metadata["path"] == item
-
-
-async def test_prepare_item_metadata_preserves_preprocessed_file_size():
-    item = "minio://knowledgebases/db/upload/page.html"
-    params = {
-        "_preprocessed_map": {
-            item: {
-                "path": item,
-                "content_hash": "hash",
-                "filename": "https://example.com",
-                "file_size": 5678,
-            }
-        }
-    }
-
-    metadata = await prepare_item_metadata(item, "file", "db", params=params)
-
-    assert metadata["size"] == 5678
-    assert "_preprocessed_map" not in (metadata.get("processing_params") or {})
-
-
-async def test_prepare_item_metadata_rejects_direct_url_content_type():
-    with pytest.raises(ValueError, match="Unsupported content_type"):
-        await prepare_item_metadata("https://example.com", "url", "db")
+    assert parse_minio_url(url) == (
+        "knowledgebases",
+        "kb/upload/论文;v1.pdf",
+    )

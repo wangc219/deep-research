@@ -27,6 +27,8 @@ x-cloud-api-build: &cloud-api-build
   cache_to:
     - type=local,dest=${CLOUD_BUILDKIT_CACHE_TO:-/var/cache/deepquest-buildkit/api/next},mode=max
   args:
+    RELEASE_ID: ${DEEP_RESEARCH_RELEASE_ID:-development}
+    SOURCE_REVISION: ${DEEP_RESEARCH_SOURCE_REVISION:-unknown}
     GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
     UV_PYTHON_INSTALL_MIRROR: ${CLOUD_UV_PYTHON_INSTALL_MIRROR:-https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone}
     VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}

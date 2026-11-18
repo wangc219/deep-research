@@ -159,6 +159,9 @@ async def prepare_item_metadata(item: str, content_type: str, kb_id: str, params
         "content_hash": content_hash,
         "size": file_size,
         "parent_id": params.get("parent_id") if params else None,
+        "category_id": params.get("category_id") if params else None,
+        "source_id": params.get("source_id") if params else None,
+        "source_item_id": params.get("source_item_id") if params else None,
     }
 
     # 保存处理参数到元数据
@@ -272,10 +275,10 @@ def parse_minio_url(file_path: str) -> tuple[str, str]:
         ValueError: 如果无法解析URL
     """
     try:
-        from urllib.parse import unquote, urlparse
+        from urllib.parse import unquote, urlsplit
 
-        # 解析URL
-        parsed_url = urlparse(file_path)
+        # urlsplit 不会把对象名中的分号误识别成 URL params。
+        parsed_url = urlsplit(file_path)
 
         # 对于 minio:// 协议，bucket名称在netloc中
         if parsed_url.scheme == "minio":

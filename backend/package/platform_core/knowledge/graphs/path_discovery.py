@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from platform_core.knowledge.graphs.core_semantic_roles import RESEARCH_THREAD_TYPES, core_role_for_entity_type
+from platform_core.knowledge.graphs.defense_ontology import DEFENSE_ONTOLOGY_V1, validate_relation_types
 from platform_core.knowledge.graphs.graph_utils import normalize_entity_name
 from platform_core.utils import hashstr
 
@@ -106,18 +108,136 @@ def discover_paths(
     ranked = sorted(candidates, key=lambda item: _path_score(item, nodes_by_id), reverse=True)
     maximal_paths = _maximal_non_contained_paths(ranked, options.max_paths)
     paths = [_serialize_path(path, nodes_by_id, query, options.mode) for path in maximal_paths]
+    quality_summary = _path_quality_summary(paths)
     return {
         "query": query,
         "mode": _resolve_mode(query, options.mode),
         "paths": paths,
+        "candidate_context": {
+            "known_relations": _known_relations(nodes_by_id, edges),
+        },
         "summary": {
             "anchor_count": len(anchors),
             "candidate_path_count": len(candidates),
             "returned_path_count": len(paths),
             "max_hops": options.max_hops,
             "combinations_enabled": options.include_combinations,
+            "quality": quality_summary,
         },
     }
+
+
+def _path_quality_summary(paths: list[dict[str, Any]]) -> dict[str, Any]:
+    """汇总路径质量、证据覆盖和审核风险，供界面统一呈现。"""
+    if not paths:
+        return {
+            "trusted_path_count": 0,
+            "hypothesis_path_count": 0,
+            "pending_review_count": 0,
+            "cross_document_path_count": 0,
+            "complete_semantic_chain_count": 0,
+            "mechanism_chain_count": 0,
+            "application_chain_count": 0,
+            "requirement_chain_count": 0,
+            "usable_semantic_closure_count": 0,
+            "invalid_relation_signature_count": 0,
+            "unique_source_count": 0,
+            "unique_relation_count": 0,
+            "average_semantic_coverage": 0.0,
+            "average_score": 0.0,
+        }
+
+    unique_files: set[str] = set()
+    unique_relations: set[str] = set()
+    semantic_coverage = 0.0
+    total_score = 0.0
+    trusted_path_count = 0
+    hypothesis_path_count = 0
+    pending_review_count = 0
+    cross_document_path_count = 0
+    complete_semantic_chain_count = 0
+    mechanism_chain_count = 0
+    application_chain_count = 0
+    requirement_chain_count = 0
+    usable_semantic_closure_count = 0
+    invalid_relation_signature_count = 0
+
+    for path in paths:
+        evidence = path.get("evidence") or {}
+        file_ids = {str(item) for item in evidence.get("file_ids") or [] if str(item)}
+        relation_ids = {str(item) for item in path.get("relation_ids") or [] if str(item)}
+        unique_files.update(file_ids)
+        unique_relations.update(relation_ids)
+
+        coverage = float(path.get("semantic_coverage") or 0.0)
+        semantic_coverage += coverage
+        total_score += float(path.get("score") or 0.0)
+        if coverage >= 1.0:
+            complete_semantic_chain_count += 1
+        closures = set(path.get("semantic_closures") or [])
+        mechanism_chain_count += "mechanism_chain" in closures
+        application_chain_count += "application_chain" in closures
+        requirement_chain_count += "requirement_chain" in closures
+        usable_semantic_closure_count += bool(closures)
+        invalid_relation_signature_count += int((path.get("relation_signature") or {}).get("invalid_count") or 0)
+        if len(file_ids) > 1:
+            cross_document_path_count += 1
+        if bool(path.get("pending_evidence")):
+            pending_review_count += 1
+
+        if str(path.get("claim_level") or "").strip().lower() == "hypothesis":
+            hypothesis_path_count += 1
+        elif not path.get("pending_evidence"):
+            trusted_path_count += 1
+
+    path_count = len(paths)
+    return {
+        "trusted_path_count": trusted_path_count,
+        "hypothesis_path_count": hypothesis_path_count,
+        "pending_review_count": pending_review_count,
+        "cross_document_path_count": cross_document_path_count,
+        "complete_semantic_chain_count": complete_semantic_chain_count,
+        "mechanism_chain_count": mechanism_chain_count,
+        "application_chain_count": application_chain_count,
+        "requirement_chain_count": requirement_chain_count,
+        "usable_semantic_closure_count": usable_semantic_closure_count,
+        "invalid_relation_signature_count": invalid_relation_signature_count,
+        "unique_source_count": len(unique_files),
+        "unique_relation_count": len(unique_relations),
+        "average_semantic_coverage": round(semantic_coverage / path_count, 3),
+        "average_score": round(total_score / path_count, 4),
+    }
+
+
+def _known_relations(
+    nodes_by_id: dict[str, dict[str, Any]],
+    edges: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """为缺失边发现提供紧凑的既有关系索引，避免重复预测现有直接边。"""
+    result: set[tuple[str, str, str]] = set()
+    for edge in edges:
+        source = nodes_by_id.get(str(edge.get("source_id") or ""))
+        target = nodes_by_id.get(str(edge.get("target_id") or ""))
+        source_id = _stable_entity_id(source)
+        target_id = _stable_entity_id(target)
+        relation_type = str(edge.get("type") or "").strip().upper()
+        if source_id and target_id and relation_type:
+            result.add((source_id, target_id, relation_type))
+    return [
+        {
+            "source_entity_id": source_id,
+            "target_entity_id": target_id,
+            "relation_type": relation_type,
+        }
+        for source_id, target_id, relation_type in sorted(result)
+    ]
+
+
+def _stable_entity_id(node: dict[str, Any] | None) -> str:
+    if not node:
+        return ""
+    properties = node.get("properties") or {}
+    return str(properties.get("entity_id") or node.get("entity_id") or node.get("id") or "").strip()
 
 
 def _build_adjacency(
@@ -236,7 +356,7 @@ def _maximal_non_contained_paths(paths: list[_CandidatePath], limit: int) -> lis
         ):
             continue
         maximal_paths.append(path)
-    return maximal_paths[: max(1, min(limit, 10))]
+    return maximal_paths[: max(1, min(limit, 30))]
 
 
 def _serialize_path(
@@ -274,16 +394,34 @@ def _serialize_path(
 
     distinct_roles = {role for role, names in role_names.items() if names}
     semantic_coverage = len(distinct_roles) / len(CORE_ROLE_ORDER)
+    semantic_closures = _semantic_closures(path, nodes_by_id)
+    relation_signature = _relation_signature_summary(path, nodes_by_id)
     route_kind = _path_route_kind(path)
     claim_level = _path_claim_level(path)
     evidence_gaps = _evidence_gaps(role_names, route_kind, mention_count)
+    if not semantic_closures:
+        evidence_gaps.append("尚未形成原理—技术—能力、技术—能力—应用或需求—能力—应用语义闭环")
+    if relation_signature["invalid_count"]:
+        evidence_gaps.append("存在本体端点类型或关系方向不合法的已知关系，需要重新抽取或专家复核")
     military_value_dimensions = _collect_relation_list(path, "military_value_dimensions")
     expected_capability_gains = _collect_relation_text(path, "expected_capability_gain")
     relation_application_directions = _collect_relation_text(path, "application_direction")
+    applicable_conditions = _collect_relation_list(path, "applicable_conditions")
     uncertainties = _collect_relation_text(path, "uncertainty")
     expert_review_required = claim_level == "Hypothesis" or any(
         bool(_edge_properties(step.edge).get("expert_review_required")) for step in path.steps
     )
+    review_statuses = list(
+        dict.fromkeys(
+            str(_edge_properties(step.edge).get("review_status") or "pending").strip().lower() for step in path.steps
+        )
+    )
+    pending_relation_count = sum(
+        str(_edge_properties(step.edge).get("review_status") or "pending").strip().lower() != "accepted"
+        for step in path.steps
+    )
+    pending_evidence = pending_relation_count > 0
+    expert_review_required = expert_review_required or pending_evidence
     path_id = hashstr(
         ":".join(str(step.edge["id"]) for step in path.steps),
         length=20,
@@ -294,8 +432,11 @@ def _serialize_path(
         "mode": _resolve_mode(query, mode),
         "score": round(_path_score(path, nodes_by_id), 4),
         "semantic_coverage": round(semantic_coverage, 3),
+        "semantic_closures": semantic_closures,
+        "relation_signature": relation_signature,
         "route_kind": route_kind,
         "claim_level": claim_level,
+        "pending_evidence": pending_evidence,
         "is_maximal": True,
         "nodes": nodes,
         "relations": relations,
@@ -305,6 +446,9 @@ def _serialize_path(
             "chunk_ids": list(dict.fromkeys(chunk_ids)),
             "file_ids": list(dict.fromkeys(file_ids)),
             "support_level": "multi_source" if len(set(file_ids)) > 1 else "single_source",
+            "review_statuses": review_statuses,
+            "pending_relation_count": pending_relation_count,
+            "pending_evidence": pending_evidence,
         },
         "evidence_gaps": evidence_gaps,
         "research_inspiration": {
@@ -315,7 +459,9 @@ def _serialize_path(
             "application_directions": list(
                 dict.fromkeys([*role_names["application"], *relation_application_directions])
             ),
+            "applicable_conditions": applicable_conditions,
             "combination_basis": _combination_basis(path, nodes_by_id),
+            "research_threads": _collect_research_threads(nodes),
             "value_signals": _collect_value_signals(nodes),
             "military_value_dimensions": military_value_dimensions,
             "expected_capability_gains": expected_capability_gains,
@@ -339,6 +485,10 @@ def _path_score(path: _CandidatePath, nodes_by_id: dict[str, dict[str, Any]]) ->
     capability_gain_count = len(_collect_relation_text(path, "expected_capability_gain"))
     uncertainty_count = len(_collect_relation_text(path, "uncertainty"))
     hypothesis_penalty = 0.28 if _path_claim_level(path) == "Hypothesis" else 0.0
+    closure_bonus = min(len(_semantic_closures(path, nodes_by_id)), 3) * 0.32
+    relation_signature = _relation_signature_summary(path, nodes_by_id)
+    signature_bonus = min(int(relation_signature["valid_count"]), 4) * 0.04
+    signature_penalty = min(int(relation_signature["invalid_count"]), 3) * 0.45
     return (
         path.anchor_score * 1.5
         + coverage * 2.2
@@ -349,9 +499,73 @@ def _path_score(path: _CandidatePath, nodes_by_id: dict[str, dict[str, Any]]) ->
         + average_confidence * 0.25
         + min(military_value_count, 4) * 0.05
         + min(capability_gain_count, 2) * 0.08
+        + closure_bonus
+        + signature_bonus
         - min(uncertainty_count, 3) * 0.05
+        - signature_penalty
         - hypothesis_penalty
     )
+
+
+def _semantic_closures(path: _CandidatePath, nodes_by_id: dict[str, dict[str, Any]]) -> list[str]:
+    """识别可用于检索和创新审核的局部语义闭环，不强求五类齐全。"""
+
+    links: set[frozenset[str]] = set()
+    for step in path.steps:
+        source = nodes_by_id.get(str(step.edge.get("source_id") or ""))
+        target = nodes_by_id.get(str(step.edge.get("target_id") or ""))
+        source_role = _semantic_role(source or {})
+        target_role = _semantic_role(target or {})
+        if source_role and target_role:
+            links.add(frozenset((source_role, target_role)))
+
+    def linked(left: str, right: str) -> bool:
+        return frozenset((left, right)) in links
+
+    mechanism = linked("principle", "technology") and linked("technology", "capability")
+    application = (linked("technology", "capability") or linked("principle", "capability")) and (
+        linked("capability", "application") or linked("technology", "application")
+    )
+    requirement = any(linked("concept", role) for role in ("principle", "technology", "capability")) and any(
+        linked(role, "application") for role in ("technology", "capability")
+    )
+    return [
+        name
+        for name, present in (
+            ("mechanism_chain", mechanism),
+            ("application_chain", application),
+            ("requirement_chain", requirement),
+        )
+        if present
+    ]
+
+
+def _relation_signature_summary(
+    path: _CandidatePath,
+    nodes_by_id: dict[str, dict[str, Any]],
+) -> dict[str, int]:
+    """按版本化本体检查已知关系方向；未知扩展关系保持中性。"""
+
+    valid_count = 0
+    invalid_count = 0
+    unknown_count = 0
+    for step in path.steps:
+        relation_type = str(step.edge.get("type") or "").strip().upper()
+        relation = DEFENSE_ONTOLOGY_V1.relation_type_by_code.get(relation_type)
+        if relation is None:
+            unknown_count += 1
+            continue
+        source = nodes_by_id.get(str(step.edge.get("source_id") or ""), {})
+        target = nodes_by_id.get(str(step.edge.get("target_id") or ""), {})
+        if validate_relation_types(str(source.get("type") or ""), relation_type, str(target.get("type") or "")):
+            valid_count += 1
+        else:
+            invalid_count += 1
+    return {
+        "valid_count": valid_count,
+        "invalid_count": invalid_count,
+        "unknown_count": unknown_count,
+    }
 
 
 def _step_priority(step: _TraversalStep, nodes_by_id: dict[str, dict[str, Any]]) -> float:
@@ -364,7 +578,11 @@ def _step_priority(step: _TraversalStep, nodes_by_id: dict[str, dict[str, Any]])
 
 
 def _semantic_role(node: dict[str, Any]) -> str:
-    node_type = normalize_entity_name(str(node.get("type") or ""))
+    raw_type = str(node.get("type") or "")
+    governed_role = core_role_for_entity_type(raw_type)
+    if governed_role:
+        return governed_role
+    node_type = normalize_entity_name(raw_type)
     if node_type in CORE_ROLE_ALIASES:
         return CORE_ROLE_ALIASES[node_type]
     for alias, role in CORE_ROLE_ALIASES.items():
@@ -499,6 +717,24 @@ def _collect_value_signals(nodes: list[dict[str, Any]]) -> list[dict[str, str]]:
                 }
             )
     return signals
+
+
+def _collect_research_threads(nodes: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """按文献主线、辅线和并行线聚合路径实体，不扩写事实。"""
+    grouped: dict[str, list[str]] = {thread: [] for thread in RESEARCH_THREAD_TYPES}
+    for node in nodes:
+        name = str(node.get("name") or "").strip()
+        if not name:
+            continue
+        for attribute in (node.get("properties") or {}).get("attributes") or []:
+            if not isinstance(attribute, dict):
+                continue
+            if str(attribute.get("label") or "").strip().casefold() != "researchthread":
+                continue
+            thread = str(attribute.get("text") or "").strip().lower()
+            if thread in grouped and name not in grouped[thread]:
+                grouped[thread].append(name)
+    return grouped
 
 
 def _evidence_gaps(role_names: dict[str, list[str]], route_kind: str, mention_count: int) -> list[str]:

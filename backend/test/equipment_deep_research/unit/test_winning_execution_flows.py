@@ -224,7 +224,8 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
     assert "S5独立组合评审" in s5_prompt
     assert "完整候选池" in s5_prompt
     assert "不得只在单一创作者切片内打分" in s5_prompt
-    assert "S5只负责决定候选入选、合并或淘汰" in s5_prompt
+    assert "S5负责候选入选、合并或淘汰" in s5_prompt
+    assert "执行一次兜底收敛" in s5_prompt
     assert "只能在候选入选后由S6为每张卡生成一次" in s5_prompt
     assert "coverage_steer" in load_dynamic_winning_prompt("S3")
     assert "{axis_label}" in load_dynamic_winning_prompt("common", section="coverage_steer.instruction")
@@ -329,7 +330,7 @@ def test_flow_modules_do_not_import_their_coordinator_or_inject_globals():
                 assert node.func.id not in {"globals", "exec"}, path
 
 
-def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
+def test_dynamic_mission_graph_uses_markdown_and_backfills_all_rejects(monkeypatch):
     import json
 
     from equipment_deep_research.agents.workflows.winning_flows.dynamic_swarm import (
@@ -366,6 +367,15 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
                                     "此项为隔离执行流的固定样本，用于验证输入传递和候选聚合，"
                                     "并在组合评审中统一判退，不构成任何实际装备方案。"
                                 ),
+                                "single_weapon_identity": f"独立试验武器{self.count}",
+                                "physical_main_body": f"载具弹体{self.count}",
+                                "novel_technical_principle": f"差异物理机理{self.count}",
+                                "effect_carrier": f"效应载荷{self.count}",
+                                "principle_to_effect_chain": f"机理{self.count}经载荷形成直接效应",
+                                "target_and_direct_effect": f"对目标{self.count}形成可观察压制",
+                                "independent_deployment_boundary": f"单装部署单元{self.count}",
+                                "independent_test_boundary": f"独立靶试验收{self.count}",
+                                "system_family_exclusion": f"不依赖外部体系节点{self.count}",
                             }
                         ]
                     }
@@ -428,13 +438,14 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
         assert "mechanism" in axes
         event_names = [args[0] for args, _ in events if args]
         assert "winning_semantic_cluster_skipped" in event_names
-        assert not accumulated["winning_swarm"]["final_equipment_portfolio"]
+        assert len(accumulated["winning_swarm"]["final_equipment_portfolio"]) == 6
         quantity_gate = accumulated["winning_swarm"]["portfolio_quality_gate"]
-        assert quantity_gate["passed"] is False
-        assert quantity_gate["quantity_gate_passed"] is False
+        assert quantity_gate["quantity_gate_passed"] is True
         assert quantity_gate["target_direction_count"] == 6
-        assert quantity_gate["quantity_shortfall"] == 6
-        assert accumulated["winning_swarm"]["stop_reason"] == ("mission_graph_limited_insufficient_s5_finalists")
+        assert quantity_gate["quantity_shortfall"] == 0
+        assert len(
+            accumulated["winning_swarm"]["cross_pool_s5_audit"]["portfolio_rescued_rows"]
+        ) == 6
         planned = [details for args, details in events if args and args[0] == "winning_mission_graph_planned"]
         assert planned
         # The normalized dynamic-v2 policy targets ten first-wave seats.  This
@@ -773,6 +784,15 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
                             {
                                 "name": f"独立前出装备{self.creator_count}",
                                 "concise_winning_summary": ("在当前任务链断点前出部署并直接形成可观察战果。"),
+                                "single_weapon_identity": "可独立部署的单体前出武器",
+                                "physical_main_body": "单体前出武器整装",
+                                "novel_technical_principle": "前沿效应原理",
+                                "effect_carrier": "物理效应载荷",
+                                "principle_to_effect_chain": "整装→前沿原理→效应载荷→目标状态改变→直接战果",
+                                "target_and_direct_effect": "使目标停止执行当前任务",
+                                "independent_deployment_boundary": "一件完整前出武器",
+                                "independent_test_boundary": "单件装备闭环效应试验",
+                                "system_family_exclusion": "单件整装独立完成作用，不依赖装备集合",
                             }
                         ]
                     },
@@ -799,6 +819,13 @@ def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeyp
                                 "hypothesis_id": candidate_id,
                                 "decision": "retain",
                                 "reason": "保留独立候选",
+                                "identity_contract_version": "single_weapon_v1",
+                                "single_weapon_identity_closes": True,
+                                "physical_main_body_specific": True,
+                                "novel_principle_explicit": True,
+                                "effect_carrier_closes": True,
+                                "independent_deployment_and_testable": True,
+                                "system_family_or_solution_bundle": False,
                             }
                         )
                 return json.dumps(

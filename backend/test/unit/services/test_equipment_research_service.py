@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import HTTPException
 from platform_core.services import equipment_research_service as service
+from platform_core.services.equipment_research_task import _validate_dynamic_delivery
 from platform_core.storage.postgres.models_equipment import EquipmentResearchRun
 
 
@@ -31,6 +32,49 @@ def test_capability_delivery_projection_removes_legacy_authoring_narration() -> 
     assert "solution_thesis" not in overview
     assert "core_innovation_thesis" not in overview
     assert decision in overview
+
+
+def test_dynamic_delivery_requires_s5_and_s6_counts_to_match() -> None:
+    run = EquipmentResearchRun(
+        id="dynamic-run",
+        project_id="project-1",
+        owner_uid="owner",
+        topic="动态蜂群研究",
+        research_route="new_winning_mechanism",
+        status="reporting",
+        payload={"execution_profile_id": "winning_swarm_dynamic_v2"},
+    )
+
+    _validate_dynamic_delivery(
+        run,
+        {
+            "dynamic_delivery": {
+                "s5_selected_count": 7,
+                "s6_capability_count": 7,
+            }
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="S5未形成"):
+        _validate_dynamic_delivery(
+            run,
+            {
+                "dynamic_delivery": {
+                    "s5_selected_count": 0,
+                    "s6_capability_count": 0,
+                }
+            },
+        )
+    with pytest.raises(RuntimeError, match="S5=7，S6=6"):
+        _validate_dynamic_delivery(
+            run,
+            {
+                "dynamic_delivery": {
+                    "s5_selected_count": 7,
+                    "s6_capability_count": 6,
+                }
+            },
+        )
 
 
 @pytest.mark.asyncio
@@ -112,6 +156,64 @@ async def test_cancel_run_commits_business_state_before_cancelling_durable_task(
     )
     tasker.cancel_task.assert_awaited_once_with(task.id)
     publish.assert_awaited_once_with(run.id, event.to_dict())
+
+
+@pytest.mark.asyncio
+async def test_resume_run_clears_historical_error_before_enqueue(monkeypatch) -> None:
+    """恢复进入 queued 时旧错误只保留在审计事件，不再作为当前状态返回。"""
+
+    run = SimpleNamespace(
+        id="run-failed",
+        owner_uid="owner",
+        status="failed",
+        error="旧的 PostgreSQL NUL 写入失败",
+        payload={"model_spec": "fake:model"},
+        updated_at=None,
+        readonly=False,
+        legacy_source_id=None,
+        import_batch_id=None,
+    )
+    run.to_dict = lambda: {
+        "run_id": run.id,
+        "owner_uid": run.owner_uid,
+        "status": run.status,
+        "error": run.error,
+        "payload": dict(run.payload),
+        "artifact_counts": {},
+    }
+    event = SimpleNamespace(to_dict=lambda: {"event_type": "run_resumed"})
+    repository = SimpleNamespace(append_event=AsyncMock(return_value=event))
+
+    async def enqueue(*_args, **_kwargs):
+        assert run.error == ""
+        assert run.status == "queued"
+
+    monkeypatch.setattr(service, "_require_run", AsyncMock(return_value=run))
+    monkeypatch.setattr(service, "_bind_live_model", AsyncMock())
+    monkeypatch.setattr(service, "EquipmentResearchRepository", lambda _db: repository)
+    monkeypatch.setattr(
+        service,
+        "audit_superadmin_personal_resource_write",
+        AsyncMock(),
+    )
+    enqueue_mock = AsyncMock(side_effect=enqueue)
+    monkeypatch.setattr(service, "_enqueue", enqueue_mock)
+    monkeypatch.setattr(service, "_publish_stream", AsyncMock())
+
+    result = await service.resume_run(
+        db=SimpleNamespace(),
+        user=SimpleNamespace(uid="owner", role="user"),
+        run_id=run.id,
+    )
+
+    assert result["status"] == "queued"
+    assert result["error"] == ""
+    repository.append_event.assert_awaited_once_with(
+        run.id,
+        "run_resumed",
+        {"status": "queued", "actor": "owner"},
+    )
+    enqueue_mock.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -581,6 +683,96 @@ async def test_deep_context_options_projects_cards_and_only_reference_candidates
             "equipment_forms": ["区域拦截弹"],
             "overview": "用于与正式装备进行横向比较。",
             "score": 0.3,
+        }
+    ]
+
+
+def test_reference_weapons_fall_back_to_current_run_agent_sessions(
+    monkeypatch, tmp_path
+) -> None:
+    """根轨迹缺失候选事件时，从当前 Run 的会话轨迹恢复参考武器。"""
+
+    run_id = "run-agent-session-reference"
+    run_root = tmp_path / run_id
+    sessions = run_root / "agent_sessions"
+    sessions.mkdir(parents=True)
+    candidate_events = [
+        {
+            "event_type": "winning_candidate_branch_created",
+            "hypothesis_id": "hyp-reference",
+            "title": "声振任务接续无人艇",
+            "primary_equipment_identity": "声振任务接续无人艇",
+            "equipment_forms": ["无人艇"],
+            "concise_winning_summary": "节点受损后接续声学压制作战任务。",
+            "score": 0.73,
+        },
+        {
+            "type": "TraceEvent",
+            "payload": {
+                "event_type": "winning_candidate_branch_created",
+                "payload": {
+                    "event_type": "winning_candidate_branch_created",
+                    "hypothesis_id": "hyp-formal",
+                    "title": "正式能力装备",
+                    "score": 0.91,
+                },
+            },
+        },
+        {
+            "type": "TraceEvent",
+            "payload": {
+                "event_type": "winning_full_pool_portfolio_decision_aggregated",
+                "payload": {
+                    "event_type": "winning_full_pool_portfolio_decision_aggregated",
+                    "hypothesis_id": "hyp-reference",
+                    "disposition": "reject",
+                    "reason": "本轮未进入正式六项组合。",
+                },
+            },
+        },
+    ]
+    (sessions / "winning-agent-a.jsonl").write_text(
+        "\n".join(json.dumps(item, ensure_ascii=False) for item in candidate_events),
+        encoding="utf-8",
+    )
+    outside = tmp_path / "outside.jsonl"
+    outside.write_text(
+        json.dumps(
+            {
+                "event_type": "winning_candidate_branch_created",
+                "hypothesis_id": "hyp-outside",
+                "title": "不应读取的越界候选",
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (sessions / "winning-agent-symlink.jsonl").symlink_to(outside)
+    (run_root / "round_summary.json").write_text(
+        json.dumps({"winning_swarm": {}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    run = SimpleNamespace(
+        id=run_id,
+        owner_uid="user-1",
+        payload={},
+        artifact_relpath="",
+    )
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path))
+
+    result = service._load_reference_weapons(run, {"hyp-formal"})
+
+    assert result == [
+        {
+            "hypothesis_id": "hyp-reference",
+            "title": "声振任务接续无人艇",
+            "primary_equipment_identity": "声振任务接续无人艇",
+            "equipment_forms": ["无人艇"],
+            "overview": "节点受损后接续声学压制作战任务。",
+            "score": 0.73,
+            "selection_status": "reference",
+            "s6_eligible": False,
+            "selection_reason": "本轮未进入正式六项组合。",
         }
     ]
 

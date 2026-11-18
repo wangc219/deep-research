@@ -12,7 +12,20 @@ const ArticlesPage = {
     currentPage: 0,
     pageSize: 20,
     total: 0,
+    totalExact: false,
+    totalPages: null,
+    totalPagesExact: false,
+    confirmedTotalPages: null,
+    minimumTotalPages: 1,
+    pageCountLoading: false,
+    _pageCountToken: 0,
+    includePdf: false,
+    stateFilter: 'all',
     keyword: '',
+    dateSearchStart: 0,
+    dateSearchEnd: 0,
+    searchScanned: 0,
+    searchScanComplete: true,
     downloadTaskId: null,
     _pollTimer: null,
 
@@ -43,7 +56,7 @@ const ArticlesPage = {
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                             <input type="text" class="form-input" id="search-article-input"
-                                   placeholder="搜索文章标题..."
+                                   placeholder="全局搜索该公众号全部文章标题..."
                                    onkeydown="if(event.key==='Enter') ArticlesPage.searchArticles()">
                         </div>
                         <button class="btn btn-secondary btn-sm" onclick="ArticlesPage.searchArticles()">搜索</button>
@@ -58,13 +71,34 @@ const ArticlesPage = {
                         <input type="date" class="form-input" id="article-start-date">
                         <span class="article-date-separator">至</span>
                         <input type="date" class="form-input" id="article-end-date">
+                        <select class="form-input" id="article-quick-date" onchange="ArticlesPage.onQuickDateChange(this.value)" style="width:auto;padding:4px 8px;font-size:.85rem;cursor:pointer;">
+                            <option value="">快捷日期</option>
+                            <option value="today">今天</option>
+                            <option value="3days">近3天</option>
+                            <option value="7days">近7天</option>
+                            <option value="30days">近30天</option>
+                            <option value="this_month">本月</option>
+                        </select>
+                        <button class="btn btn-secondary btn-sm" onclick="ArticlesPage.searchDateRange()">按时间搜索</button>
                         <button class="btn btn-primary btn-sm" onclick="ArticlesPage.downloadDateRange()">按时间下载</button>
                         <button class="btn btn-secondary btn-sm" onclick="ArticlesPage.clearDateFilter()">重置</button>
+                        <label style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:.85rem;">
+                            <input type="checkbox" id="article-include-pdf" onchange="ArticlesPage.setIncludePdf(this.checked)">
+                            同时生成 PDF（可选）
+                        </label>
+                        <select class="form-input" id="article-state-filter" style="width:auto;" onchange="ArticlesPage.setStateFilter(this.value)">
+                            <option value="all">全部状态</option>
+                            <option value="not_downloaded">未下载</option>
+                            <option value="downloaded">已下载未入库</option>
+                            <option value="importing">入库中</option>
+                            <option value="imported">已入库</option>
+                            <option value="failed">失败</option>
+                        </select>
                         
                         <!-- 多选操作控制按钮组 -->
                         <div id="multi-select-actions" style="display: none; align-items: center; gap: 8px; margin-left: auto;">
-                            <button class="btn btn-secondary btn-sm" onclick="ArticlesPage.selectAllLoaded()" title="全选所有已翻页加载的文章">
-                                ☑️ 全选已加载 (<span id="loaded-total-count">0</span>)
+                            <button class="btn btn-secondary btn-sm" id="btn-select-all-loaded" onclick="ArticlesPage.selectAllLoaded()" title="全选所有已翻页加载且尚未下载的文章">
+                                ☑️ 全选未下载 (<span id="selectable-total-count">0</span>)
                             </button>
                             <button class="btn btn-secondary btn-sm" onclick="ArticlesPage.clearSelection()">
                                 ❌ 取消全选
@@ -126,13 +160,18 @@ const ArticlesPage = {
     },
 
     async init(params = {}) {
+        this.includePdf = localStorage.getItem('wechat-article-include-pdf') === 'true';
         await this.loadAccountSelector();
+        const pdfToggle = document.getElementById('article-include-pdf');
+        if (pdfToggle) pdfToggle.checked = this.includePdf;
         if (params.fakeid && params.name) {
             this.selectAccount(params.fakeid, params.name);
         }
     },
 
     destroy() {
+        this._pageCountToken++;
+        this.pageCountLoading = false;
         if (this._pollTimer) {
             clearInterval(this._pollTimer);
             this._pollTimer = null;
@@ -175,6 +214,18 @@ const ArticlesPage = {
         this.loadedArticlesMap.clear();
         this.selectionMode = 'single';
         this.keyword = '';
+        this.dateSearchStart = 0;
+        this.dateSearchEnd = 0;
+        this.searchScanned = 0;
+        this.searchScanComplete = true;
+        this.total = 0;
+        this.totalExact = false;
+        this.totalPages = null;
+        this.totalPagesExact = false;
+        this.confirmedTotalPages = null;
+        this.minimumTotalPages = 1;
+        this.pageCountLoading = true;
+        const pageCountToken = ++this._pageCountToken;
 
         // 高亮选中的公众号
         document.querySelectorAll('.account-selector-btn').forEach(btn => {
@@ -187,13 +238,44 @@ const ArticlesPage = {
         
         const startDateEl = document.getElementById('article-start-date');
         const endDateEl = document.getElementById('article-end-date');
+        const quickDateEl = document.getElementById('article-quick-date');
         if (startDateEl) startDateEl.value = '';
         if (endDateEl) endDateEl.value = '';
+        if (quickDateEl) quickDateEl.value = '';
         
         this.updateSelectedCount();
         this.updateModeUI();
 
         await this.loadArticles();
+        void this.loadConfirmedPageCount(fakeid, pageCountToken);
+    },
+
+    async loadConfirmedPageCount(fakeid, token) {
+        try {
+            const data = await API.articles.pageCount(fakeid, this.pageSize);
+            if (token !== this._pageCountToken || fakeid !== this.currentFakeid) return;
+            const totalPages = Number(data.total_pages);
+            if (data.total_pages_exact !== true || !Number.isInteger(totalPages) || totalPages < 1) return;
+
+            this.confirmedTotalPages = totalPages;
+            this.totalPages = totalPages;
+            this.totalPagesExact = true;
+            this.minimumTotalPages = totalPages;
+            this.canMsgContinue = this.currentPage + 1 < totalPages ? 1 : 0;
+            Object.entries(this.pageCache).forEach(([pageIndex, cached]) => {
+                cached.totalPages = totalPages;
+                cached.totalPagesExact = true;
+                cached.minimumTotalPages = totalPages;
+                cached.canMsgContinue = Number(pageIndex) + 1 < totalPages ? 1 : 0;
+            });
+        } catch (_err) {
+            // 总页数统计失败不阻断文章浏览，继续展示保守的“至少 N 页”。
+        } finally {
+            if (token === this._pageCountToken && fakeid === this.currentFakeid) {
+                this.pageCountLoading = false;
+                this.updatePagination();
+            }
+        }
     },
 
     async loadArticles() {
@@ -204,7 +286,19 @@ const ArticlesPage = {
             const cached = this.pageCache[this.currentPage];
             this.articles = cached.articles;
             this.total = cached.total;
+            this.totalExact = cached.totalExact;
+            this.totalPages = cached.totalPages;
+            this.totalPagesExact = cached.totalPagesExact;
+            this.minimumTotalPages = cached.minimumTotalPages;
             this.canMsgContinue = cached.canMsgContinue;
+            this.searchScanned = cached.searchScanned || 0;
+            this.searchScanComplete = cached.searchScanComplete !== false;
+            if (!this.hasActiveSearch() && this.confirmedTotalPages) {
+                this.totalPages = this.confirmedTotalPages;
+                this.totalPagesExact = true;
+                this.minimumTotalPages = this.confirmedTotalPages;
+                this.canMsgContinue = this.currentPage + 1 < this.confirmedTotalPages ? 1 : 0;
+            }
             this.renderArticles();
             this.updatePagination();
             this.updateSelectedCount();
@@ -215,22 +309,71 @@ const ArticlesPage = {
 
         try {
             const begin = this.currentPage * this.pageSize;
-            const data = await API.articles.list(this.currentFakeid, begin, this.pageSize, this.keyword);
+            const data = this.hasActiveSearch()
+                ? await API.articles.search(
+                    this.currentFakeid,
+                    this.keyword,
+                    begin,
+                    this.pageSize,
+                    this.currentName,
+                    this.dateSearchStart,
+                    this.dateSearchEnd
+                )
+                : await API.articles.list(this.currentFakeid, begin, this.pageSize, '', this.currentName);
 
             this.articles = data.articles || [];
+            if (!this.hasActiveSearch() && data.terminal_empty === true && this.currentPage > 0) {
+                this.confirmedTotalPages = Math.max(1, Number(data.total_pages) || this.currentPage);
+                this.currentPage = this.confirmedTotalPages - 1;
+                const lastPage = this.pageCache[this.currentPage];
+                if (lastPage) {
+                    lastPage.canMsgContinue = 0;
+                    lastPage.totalPages = this.confirmedTotalPages;
+                    lastPage.totalPagesExact = true;
+                    lastPage.minimumTotalPages = this.confirmedTotalPages;
+                }
+                Toast.info(`已加载全部历史文章，共 ${this.confirmedTotalPages} 页`);
+                await this.loadArticles();
+                return;
+            }
+
             this.total = data.total || 0;
+            this.totalExact = data.total_exact === true;
+            this.totalPages = data.total_pages || null;
+            this.totalPagesExact = data.total_pages_exact === true;
+            this.minimumTotalPages = data.minimum_total_pages || (this.currentPage + 1);
             this.canMsgContinue = data.can_msg_continue !== undefined ? data.can_msg_continue : (this.articles.length > 0 ? 1 : 0);
+            this.searchScanned = this.hasActiveSearch() ? (data.scanned || 0) : 0;
+            this.searchScanComplete = this.hasActiveSearch() ? data.scan_complete !== false : true;
+
+            if (this.totalPagesExact && this.totalPages) {
+                this.confirmedTotalPages = this.totalPages;
+            }
+            if (!this.hasActiveSearch() && this.confirmedTotalPages) {
+                this.totalPages = this.confirmedTotalPages;
+                this.totalPagesExact = true;
+                this.minimumTotalPages = this.confirmedTotalPages;
+                if (this.currentPage + 1 >= this.confirmedTotalPages) {
+                    this.canMsgContinue = 0;
+                }
+            }
 
             // 写入页码缓存
             this.pageCache[this.currentPage] = {
                 articles: this.articles,
                 total: this.total,
-                canMsgContinue: this.canMsgContinue
+                totalExact: this.totalExact,
+                totalPages: this.totalPages,
+                totalPagesExact: this.totalPagesExact,
+                minimumTotalPages: this.minimumTotalPages,
+                canMsgContinue: this.canMsgContinue,
+                searchScanned: this.searchScanned,
+                searchScanComplete: this.searchScanComplete
             };
 
             // 索引到已加载列表映射，供跨页多选与全选使用
             this.articles.forEach((article, idx) => {
-                const globalIdx = this.currentPage * this.pageSize + idx;
+                const globalIdx = this.currentPage * 1000 + idx;
                 this.loadedArticlesMap.set(globalIdx, article);
             });
 
@@ -327,22 +470,47 @@ const ArticlesPage = {
     renderArticles() {
         const container = document.getElementById('articles-list');
 
+        const hasSearch = this.hasActiveSearch();
+        const searchKind = this.keyword && this.dateSearchStart
+            ? '标题与时间范围'
+            : (this.dateSearchStart ? '时间范围' : '标题');
+
         if (this.articles.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <h3 class="empty-state-title">没有找到文章</h3>
-                    <p class="empty-state-desc">${this.keyword ? '尝试其他搜索关键字' : '该公众号暂无文章'}</p>
+                    <p class="empty-state-desc">${hasSearch
+                        ? (this.searchScanComplete ? `已按${searchKind}搜索该公众号全部历史文章，请调整筛选条件` : '上游分页提前中断，未能完成全部历史文章搜索，请稍后重试')
+                        : '该公众号暂无文章'}</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = this.articles.map((article, idx) => {
-            const globalIdx = this.currentPage * this.pageSize + idx;
+        const searchStatus = hasSearch ? `
+            <div class="article-search-status" style="margin-bottom: 12px; color: var(--text-muted); font-size: 0.88rem;">
+                ${this.searchScanComplete
+                    ? `已按${searchKind}全局扫描 ${this.searchScanned} 篇历史文章`
+                    : `已扫描 ${this.searchScanned} 篇，但上游分页提前中断；结果可能不完整`}
+            </div>
+        ` : '';
+        container.innerHTML = searchStatus + this.articles.map((article, idx) => {
+            if (this.stateFilter !== 'all' && article.download_state !== this.stateFilter) return '';
+            const globalIdx = this.currentPage * 1000 + idx;
             const isSelected = this.selectedArticles.has(globalIdx);
             const time = article.update_time
                 ? new Date(article.update_time * 1000).toLocaleDateString('zh-CN')
                 : '';
+            const state = article.download_state || 'not_downloaded';
+            const stateLabels = {
+                not_downloaded: '未下载',
+                downloaded: '已下载未入库',
+                importing: '入库中',
+                imported: '已入库',
+                failed: article.failure_stage === 'ingest' ? '入库失败' : '下载失败',
+            };
+            const stateLabel = `${article.download_scope === 'global' ? '全局' : ''}${stateLabels[state] || state}`;
+            const stateClass = state === 'failed' ? 'badge-error' : state === 'imported' ? 'badge-success' : 'badge-info';
 
             return `
                 <div class="article-item ${isSelected ? 'selected' : ''}" data-idx="${globalIdx}" onclick="ArticlesPage.handleArticleClick(${globalIdx}, ${idx}, event)">
@@ -371,7 +539,13 @@ const ArticlesPage = {
                             ${time ? `<span>📅 ${time}</span>` : ''}
                             ${article.author ? `<span>✍️ ${article.author}</span>` : ''}
                             ${article.is_original ? '<span class="badge badge-info" style="font-size: 0.7rem;">原创</span>' : ''}
+                            <span class="badge ${stateClass}" style="font-size:0.7rem;">${stateLabel}</span>
                         </div>
+                        ${article.ingest_task_id ? `<div class="article-meta" style="margin-top:4px;font-size:0.72rem;color:var(--text-muted);">
+                            <span>知识库 ${article.target_kb_id || '-'}</span>
+                            <span>任务 ${article.ingest_task_id}</span>
+                            ${article.knowledge_file_id ? `<span>文件 ${article.knowledge_file_id}</span>` : ''}
+                        </div>` : ''}
                     </div>
                     <div class="article-actions" style="display: flex; gap: 8px; align-items: center;">
                         ${article.link ? `
@@ -379,7 +553,7 @@ const ArticlesPage = {
                                 🌐 打开原文
                             </a>
                         ` : ''}
-                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); ArticlesPage.downloadSingle(${idx})">下载</button>
+                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); ArticlesPage.downloadSingle(${idx})">${state === 'downloaded' || state === 'imported' ? '重新下载' : '下载'}</button>
                     </div>
                 </div>
             `;
@@ -429,11 +603,20 @@ const ArticlesPage = {
 
     updateSelectedCount() {
         const countEl = document.getElementById('selected-count');
-        const loadedTotalEl = document.getElementById('loaded-total-count');
+        const selectableTotalEl = document.getElementById('selectable-total-count');
+        const selectAllBtn = document.getElementById('btn-select-all-loaded');
         const btn = document.getElementById('btn-download-selected');
+        const selectableCount = Array.from(this.loadedArticlesMap.values())
+            .filter(article => this.isBatchSelectable(article)).length;
         if (countEl) countEl.textContent = this.selectedArticles.size;
-        if (loadedTotalEl) loadedTotalEl.textContent = this.loadedArticlesMap.size;
+        if (selectableTotalEl) selectableTotalEl.textContent = selectableCount;
+        if (selectAllBtn) selectAllBtn.disabled = selectableCount === 0;
         if (btn) btn.disabled = this.selectedArticles.size === 0;
+    },
+
+    isBatchSelectable(article) {
+        const state = article?.download_state || 'not_downloaded';
+        return !['downloaded', 'importing', 'imported'].includes(state);
     },
 
     selectAllLoaded() {
@@ -441,12 +624,25 @@ const ArticlesPage = {
             Toast.warning('当前暂无已加载的文章');
             return;
         }
+        let selectableCount = 0;
+        let skippedCount = 0;
         this.loadedArticlesMap.forEach((article, globalIdx) => {
-            this.selectedArticles.add(globalIdx);
+            if (this.isBatchSelectable(article)) {
+                this.selectedArticles.add(globalIdx);
+                selectableCount++;
+            } else {
+                this.selectedArticles.delete(globalIdx);
+                skippedCount++;
+            }
         });
         this.renderArticles();
         this.updateSelectedCount();
-        Toast.success(`已选中所有已加载的 ${this.selectedArticles.size} 篇文章`);
+        if (selectableCount === 0) {
+            Toast.info('已加载文章均已下载或正在入库，无需重复选择');
+            return;
+        }
+        const skipped = skippedCount ? `，已跳过 ${skippedCount} 篇已处理文章` : '';
+        Toast.success(`已选中 ${selectableCount} 篇未下载文章${skipped}`);
     },
 
     clearSelection() {
@@ -456,28 +652,62 @@ const ArticlesPage = {
         Toast.info('已取消选择');
     },
 
-    searchArticles() {
-        const input = document.getElementById('search-article-input');
-        this.keyword = input?.value.trim() || '';
-        this.currentPage = 0;
-        this.selectedArticles.clear();
-        this.pageCache = {};
-        this.loadedArticlesMap.clear();
-        this.loadArticles();
+    hasActiveSearch() {
+        return Boolean(this.keyword || (this.dateSearchStart && this.dateSearchEnd));
     },
 
-    clearSearch() {
-        document.getElementById('search-article-input').value = '';
-        this.keyword = '';
-        const startDateEl = document.getElementById('article-start-date');
-        const endDateEl = document.getElementById('article-end-date');
-        if (startDateEl) startDateEl.value = '';
-        if (endDateEl) endDateEl.value = '';
+    resetSearchPagination() {
         this.currentPage = 0;
         this.selectedArticles.clear();
         this.pageCache = {};
         this.loadedArticlesMap.clear();
-        this.loadArticles();
+        this.confirmedTotalPages = null;
+        this.pageCountLoading = false;
+        this._pageCountToken++;
+    },
+
+    async searchArticles() {
+        const input = document.getElementById('search-article-input');
+        const startValue = document.getElementById('article-start-date')?.value || '';
+        const endValue = document.getElementById('article-end-date')?.value || '';
+        if (Boolean(startValue) !== Boolean(endValue)) {
+            Toast.warning('请选择完整的开始和结束日期');
+            return;
+        }
+
+        const range = startValue && endValue ? this.getDateRange() : null;
+        if (range?.error) {
+            Toast.warning(range.error);
+            return;
+        }
+        this.keyword = input?.value.trim() || '';
+        this.dateSearchStart = range?.startTimestamp || 0;
+        this.dateSearchEnd = range?.endTimestamp || 0;
+        this.resetSearchPagination();
+        if (!this.hasActiveSearch()) this.pageCountLoading = true;
+        const pageCountToken = this._pageCountToken;
+        await this.loadArticles();
+        if (!this.hasActiveSearch()) {
+            void this.loadConfirmedPageCount(this.currentFakeid, pageCountToken);
+        }
+    },
+
+    async clearSearch() {
+        document.getElementById('search-article-input').value = '';
+        this.keyword = '';
+        this.dateSearchStart = 0;
+        this.dateSearchEnd = 0;
+        const startDateEl = document.getElementById('article-start-date');
+        const endDateEl = document.getElementById('article-end-date');
+        const quickDateEl = document.getElementById('article-quick-date');
+        if (startDateEl) startDateEl.value = '';
+        if (endDateEl) endDateEl.value = '';
+        if (quickDateEl) quickDateEl.value = '';
+        this.resetSearchPagination();
+        this.pageCountLoading = true;
+        const pageCountToken = this._pageCountToken;
+        await this.loadArticles();
+        void this.loadConfirmedPageCount(this.currentFakeid, pageCountToken);
     },
 
     getDateRange() {
@@ -488,17 +718,92 @@ const ArticlesPage = {
         }
         const startTimestamp = Math.floor(new Date(startVal + 'T00:00:00').getTime() / 1000);
         const endTimestamp = Math.floor(new Date(endVal + 'T23:59:59').getTime() / 1000);
+        if (!Number.isFinite(startTimestamp) || !Number.isFinite(endTimestamp)) {
+            return { error: '日期格式无效，请重新选择' };
+        }
         if (startTimestamp > endTimestamp) {
             return { error: '开始日期不能晚于结束日期' };
         }
         return { startTimestamp, endTimestamp };
     },
 
-    clearDateFilter() {
+    onQuickDateChange(type) {
+        if (!type) return;
         const startInput = document.getElementById('article-start-date');
         const endInput = document.getElementById('article-end-date');
+        if (!startInput || !endInput) return;
+
+        const now = new Date();
+        const formatDate = date => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        let start = new Date(now);
+        if (type === '3days') start.setDate(start.getDate() - 2);
+        if (type === '7days') start.setDate(start.getDate() - 6);
+        if (type === '30days') start.setDate(start.getDate() - 29);
+        if (type === 'this_month') start = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        startInput.value = formatDate(start);
+        endInput.value = formatDate(now);
+    },
+
+    async searchDateRange() {
+        if (!this.currentFakeid) {
+            Toast.warning('请先选择公众号');
+            return;
+        }
+        const range = this.getDateRange();
+        if (!range) {
+            Toast.warning('请选择完整的开始和结束日期');
+            return;
+        }
+        if (range.error) {
+            Toast.warning(range.error);
+            return;
+        }
+
+        const input = document.getElementById('search-article-input');
+        this.keyword = input?.value.trim() || '';
+        this.dateSearchStart = range.startTimestamp;
+        this.dateSearchEnd = range.endTimestamp;
+        this.resetSearchPagination();
+        await this.loadArticles();
+        Toast.success(this.keyword ? '已按标题与时间范围筛选' : '已按时间范围筛选');
+    },
+
+    async clearDateFilter() {
+        const startInput = document.getElementById('article-start-date');
+        const endInput = document.getElementById('article-end-date');
+        const quickSelect = document.getElementById('article-quick-date');
         if (startInput) startInput.value = '';
         if (endInput) endInput.value = '';
+        if (quickSelect) quickSelect.value = '';
+
+        const hadActiveDateSearch = Boolean(this.dateSearchStart && this.dateSearchEnd);
+        this.dateSearchStart = 0;
+        this.dateSearchEnd = 0;
+        if (!hadActiveDateSearch) return;
+
+        this.resetSearchPagination();
+        if (!this.keyword) this.pageCountLoading = true;
+        const pageCountToken = this._pageCountToken;
+        await this.loadArticles();
+        if (!this.keyword) {
+            void this.loadConfirmedPageCount(this.currentFakeid, pageCountToken);
+        }
+    },
+
+    setIncludePdf(value) {
+        this.includePdf = Boolean(value);
+        localStorage.setItem('wechat-article-include-pdf', String(this.includePdf));
+    },
+
+    setStateFilter(value) {
+        this.stateFilter = value || 'all';
+        this.renderArticles();
     },
 
     updatePagination() {
@@ -511,7 +816,15 @@ const ArticlesPage = {
         const hasNext = (this.canMsgContinue === 1 || this.canMsgContinue === undefined) && this.articles.length > 0;
 
         paginationEl.style.display = (this.articles.length > 0 || this.currentPage > 0) ? 'flex' : 'none';
-        infoEl.textContent = `第 ${currentPageNum} 页 · 本页 ${this.articles.length} 篇`;
+        if (this.totalPagesExact && this.totalPages) {
+            infoEl.textContent = this.totalExact
+                ? `第 ${currentPageNum} / ${this.totalPages} 页 · 共 ${this.total} 篇`
+                : `第 ${currentPageNum} / ${this.totalPages} 页`;
+        } else if (this.pageCountLoading) {
+            infoEl.textContent = `第 ${currentPageNum} 页 / 正在统计总页数…（至少 ${Math.max(currentPageNum, this.minimumTotalPages)} 页）`;
+        } else {
+            infoEl.textContent = `第 ${currentPageNum} 页 / 至少 ${Math.max(currentPageNum, this.minimumTotalPages)} 页`;
+        }
         prevBtn.disabled = this.currentPage <= 0;
         nextBtn.disabled = !hasNext;
     },
@@ -524,7 +837,7 @@ const ArticlesPage = {
     },
 
     nextPage() {
-        if (this.articles.length > 0) {
+        if (this.articles.length > 0 && this.canMsgContinue !== 0) {
             this.currentPage++;
             this.loadArticles();
         }
@@ -539,7 +852,7 @@ const ArticlesPage = {
 
     async downloadArticles(articles) {
         try {
-            const data = await API.articles.download(articles, this.currentName);
+            const data = await API.articles.download(articles, this.currentName, this.includePdf);
             this.startTask(data);
         } catch (err) {
             // error shown by API
@@ -591,6 +904,7 @@ const ArticlesPage = {
                 end_time: range.endTimestamp,
                 keyword: this.keyword,
                 page_size: this.pageSize,
+                include_pdf: this.includePdf,
             });
             this.startTask(data);
         } catch (err) {
@@ -654,6 +968,8 @@ const ArticlesPage = {
             badge.className = 'badge badge-success';
             badge.textContent = '已完成';
             Toast.success(`下载完成！成功 ${completed} 篇，失败 ${failed} 篇`);
+            this.pageCache = {};
+            setTimeout(() => this.loadArticles(), 0);
         } else if (task.status === 'failed') {
             badge.className = 'badge badge-error';
             badge.textContent = '失败';

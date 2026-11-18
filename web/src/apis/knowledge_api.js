@@ -372,6 +372,10 @@ export const graphBuildApi = {
 
   reconcile: async (kbId, mode = 'failed') => {
     return apiAdminPost(graphBuildUrl(kbId, 'reconcile'), { mode })
+  },
+
+  rebuildProjections: async (kbId) => {
+    return apiAdminPost(graphBuildUrl(kbId, 'rebuild-projections'), {})
   }
 }
 

@@ -266,6 +266,56 @@ test('未审查的 409 服务端详情仍使用通用安全文案', async () => 
   })
 })
 
+test('成果 ZIP 409 仅透传白名单字段并移除服务器路径和内部错误', async () => {
+  await withServer(async (server) => {
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          detail: {
+            code: 'archive_too_large',
+            message: '包含内部实现信息',
+            total_bytes: 600000000,
+            limit_bytes: 524288000,
+            failures: [
+              {
+                id: 'artifact-1',
+                title: '测试文章',
+                path: '/采集成果/公众号文章/目录/文章.md',
+                size: 1234,
+                error: '/srv/private/secret.txt: permission denied',
+                internal: 'secret'
+              }
+            ]
+          }
+        }),
+        { status: 409, headers: { 'content-type': 'application/json' } }
+      )
+
+    const { apiRequest } = await server.ssrLoadModule('/src/apis/base.js')
+
+    await assert.rejects(apiRequest('/api/archive', {}, false), (error) => {
+      assert.equal(error.message, '批量下载超过 500 MB，请减少所选成果')
+      assert.deepEqual(error.response.data.detail, {
+        code: 'archive_too_large',
+        message: '批量下载超过 500 MB，请减少所选成果',
+        failures: [
+          {
+            id: 'artifact-1',
+            title: '测试文章',
+            path: '公众号文章/目录/文章.md',
+            size: 1234,
+            error: '文件不可用或已移除'
+          }
+        ],
+        total_bytes: 600000000,
+        limit_bytes: 524288000
+      })
+      assert.equal(JSON.stringify(error.response.data).includes('/srv/private'), false)
+      return true
+    })
+  })
+})
+
 test('用户管理分页 API 只请求当前页并编码服务端筛选条件', async () => {
   await withServer(async (server) => {
     storageValues.set('user_token', 'test-token')

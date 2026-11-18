@@ -7,6 +7,8 @@ use_default_settings:
       - sogou
       - sogou wechat
       - arxiv
+      - crossref
+      - openalex
       - semantic scholar
       - openairepublications
       - pubmed
@@ -28,13 +30,39 @@ server:
   image_proxy: false
 
 outgoing:
-  request_timeout: 3.0
-  max_request_timeout: 8.0
+  request_timeout: 5.0
+  max_request_timeout: 10.0
   pool_connections: 100
   enable_http2: true
 
 engines:
+  - name: brave
+    timeout: 4.0
+  - name: brave.news
+    timeout: 4.0
+  - name: baidu
+    timeout: 4.0
+  - name: semantic scholar
+    timeout: 4.0
+  - name: reuters
+    timeout: 4.0
   - name: wikipedia
+    timeout: 4.0
     display_type: [infobox, list]
   - name: wikidata
+    timeout: 4.0
     display_type: [infobox, list]
+  - name: openalex
+    disabled: false
+    timeout: 5.0
+  - name: crossref
+    disabled: false
+    timeout: 8.0
+  - name: arxiv
+    timeout: 8.0
+  - name: openairepublications
+    timeout: 10.0
+  - name: pubmed
+    timeout: 8.0
+  - name: europepmc
+    timeout: 8.0

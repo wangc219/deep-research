@@ -687,8 +687,10 @@ const HistoryPage = {
                                         ${origUrl ? `
                                             <button type="button" class="history-card-action action-original" data-url="${origUrl}" onclick="event.stopPropagation(); HistoryPage.openOriginal(this.dataset.url)">原文链接</button>
                                         ` : ''}
-                                        ${(item.success && !isVideo) ? `
+                                        ${(item.success && !isVideo && item.has_markdown !== false) ? `
                                             <button type="button" class="history-card-action action-md" data-path="${path}" onclick="event.stopPropagation(); HistoryPage.openFile(this.dataset.path, 'md')">打开 MD</button>
+                                        ` : ''}
+                                        ${(item.success && !isVideo && item.has_pdf) ? `
                                             <button type="button" class="history-card-action action-pdf" data-path="${path}" onclick="event.stopPropagation(); HistoryPage.openFile(this.dataset.path, 'pdf')">打开 PDF</button>
                                         ` : ''}
                                         ${item.success ? `
@@ -800,10 +802,12 @@ const HistoryPage = {
                             原文链接
                         </button>
                     ` : ''}
-                    ${!isVideo ? `
+                    ${!isVideo && item.has_markdown !== false ? `
                     <button class="btn btn-secondary btn-sm" data-path="${path}" onclick="HistoryPage.openFile(this.dataset.path, 'md')" style="padding: 4px 10px; font-size: 0.78rem;">
                         📝 打开 MD
                     </button>
+                    ` : ''}
+                    ${!isVideo && item.has_pdf ? `
                     <button class="btn btn-secondary btn-sm" data-path="${path}" onclick="HistoryPage.openFile(this.dataset.path, 'pdf')" style="padding: 4px 10px; font-size: 0.78rem;">
                         📕 打开 PDF
                     </button>
@@ -882,7 +886,7 @@ const HistoryPage = {
 
         const parts = relativeDir.split('/');
         const folderName = parts[parts.length - 1] || title;
-        const filename = `${folderName}.html`;
+        const filename = `${folderName}.md`;
 
         const encodedDir = relativeDir
             .split('/')

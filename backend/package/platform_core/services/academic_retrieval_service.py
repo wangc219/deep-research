@@ -15,6 +15,7 @@ from platform_core.repositories.academic_retrieval_repository import AcademicRet
 from platform_core.services.aminer_client import (
     AMinerClient,
     AMinerError,
+    ENDPOINTS,
     aminer_credential_scope,
     deduplicate_papers,
     normalize_paper,
@@ -79,7 +80,7 @@ metadata 是题录，partial_abstract 是部分摘要，abstract 是完整摘要
 一般问题无需学术检索，非学术公开事实继续使用 web_search，内部事实使用授权知识库。把用户已经提供的任务书、
 材料或要求转成推进计划/实施方案时，不因文本里出现“研究、证据门、算法、材料”等词自动检索；只有用户明确要求
 补充外部论文依据或方案中的关键技术事实确需核验时才检索。
-AMiner 返回 disabled/auth_failed/rate_limited/unavailable/budget_exhausted 时停止对此服务的重试或同义改写。
+AMiner 返回 disabled/auth_expired/auth_failed/rate_limited/unavailable/budget_exhausted 时停止对此服务的重试或同义改写。
 转用网页、知识库和已有证据完成回答。
 limit_reached 表示当前接口额度用尽；不要反复调用该接口。配置更改或相同请求执行中时使用已有证据，不等待或循环尝试。
 """
@@ -269,7 +270,7 @@ async def test_aminer_connection(db, *, user_id: str | None = None, api_key: str
         return {"status": "not_configured", "message": "请填写 AMiner 用户 ID 和 API Key"}
     try:
         await AMinerClient(credentials).request(
-            "title_search", {"title": "Attention Is All You Need", "page": 1, "size": 1}
+            "title_search", {"query": "Attention Is All You Need", "page": 1, "size": 1}
         )
     except AMinerError as exc:
         return {"status": exc.status, "message": str(exc)}
@@ -325,7 +326,7 @@ class AcademicRetrievalService:
         responses, coverage, groups, errors = [], [], [], []
         for term in queries:
             payload = {"page": min(page, 10) if mode == "title" else page - 1, "size": limit}
-            payload["title" if mode == "title" else "keyword"] = term
+            payload["query" if mode == "title" else "keyword"] = term
             if mode != "title" and order != "relevance":
                 payload["order"] = "year" if order == "recent" else "n_citation"
             if mode == "precision":
@@ -550,18 +551,16 @@ class AcademicRetrievalService:
         errors = [] if info["status"] == "ok" else [{**info, "endpoint": "info"}]
         responses = [info]
         if full_abstract:
-            for paper_id in ids:
-                detail = await self._request("detail", {"id": paper_id})
-                responses.append(detail)
-                if detail["status"] != "ok":
-                    errors.append({**detail, "endpoint": "detail"})
-                    break
-                for item in detail["data"]:
-                    if (
-                        isinstance(item, dict)
-                        and str(item.get("id") or item.get("_id") or item.get("paper_id")) == paper_id
-                    ):
-                        papers.append(normalize_paper(item, retrieved_at=detail.get("retrieved_at")))
+            detail = await self._request("detail", {"ids": ids})
+            responses.append(detail)
+            if detail["status"] != "ok":
+                errors.append({**detail, "endpoint": "detail"})
+            else:
+                papers.extend(
+                    normalize_paper(item, retrieved_at=detail.get("retrieved_at"))
+                    for item in detail["data"]
+                    if isinstance(item, dict) and str(item.get("id") or item.get("_id") or item.get("paper_id")) in ids
+                )
         result = self._result({"status": "ok"}, papers=papers)
         obtained_ids = {paper["id"] for paper in papers}
         complete_ids = {paper["id"] for paper in papers if paper["content_level"] == "abstract"}
@@ -640,6 +639,11 @@ class AcademicRetrievalService:
                     request_key=request_key,
                     attempt_no=attempt_no,
                     credential_scope=scope,
+                    cost_cents=(
+                        ENDPOINTS[endpoint][2] * max(1, len(payload.get("ids") or []))
+                        if endpoint == "detail"
+                        else ENDPOINTS[endpoint][2]
+                    ),
                     adaptive_long_running=(
                         getattr(self.context, "research_budget_mode", None) == RESEARCH_BUDGET_ADAPTIVE_LONG_RUNNING
                     ),

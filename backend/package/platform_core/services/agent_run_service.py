@@ -333,15 +333,7 @@ def _progress_message_from_chunk(chunk: dict, *, seq: str) -> dict | None:
 
     content = ""
     kind = ""
-    if stream_type == "message_delta":
-        content = (
-            stream_event.get("content")
-            or stream_event.get("reasoning_content")
-            or stream_event.get("additional_reasoning_content")
-            or ""
-        )
-        kind = "assistant_message" if stream_event.get("content") else "assistant_reasoning"
-    elif stream_type in {"tool_call", "tool_call_delta"}:
+    if stream_type in {"tool_call", "tool_call_delta"}:
         tool_name = str(stream_event.get("name") or stream_event.get("tool_call_id") or "工具").strip()
         content = f"调用工具 {tool_name}" if stream_type == "tool_call" else f"正在准备工具 {tool_name}"
         kind = stream_type

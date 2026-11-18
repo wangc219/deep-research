@@ -376,16 +376,31 @@ def _run_domain(
                 capability_images = [dict(item) for item in loaded_capabilities if isinstance(item, dict)]
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             logger.exception("equipment capability images could not be loaded: %s", capability_path)
+    summary: dict[str, Any] = {}
     summary_path = run_root / "round_summary.json"
-    if capability_images and summary_path.is_file() and not summary_path.is_symlink():
+    if summary_path.is_file() and not summary_path.is_symlink():
         try:
-            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            loaded_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_summary, dict):
+                summary = loaded_summary
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            logger.exception("equipment round summary could not be loaded: %s", summary_path)
+    if capability_images and summary:
+        try:
             capability_images = enrich_capabilities_with_s5_scores(
                 capability_images,
-                summary if isinstance(summary, dict) else {},
+                summary,
             )
-        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        except (TypeError, ValueError):
             logger.exception("equipment S5 scorecards could not be loaded: %s", summary_path)
+    winning_swarm = summary.get("winning_swarm", {})
+    winning_swarm = winning_swarm if isinstance(winning_swarm, dict) else {}
+    portfolio_gate = winning_swarm.get("portfolio_quality_gate", {})
+    portfolio_gate = portfolio_gate if isinstance(portfolio_gate, dict) else {}
+    try:
+        s5_selected_count = int(portfolio_gate.get("direction_count", 0) or 0)
+    except (TypeError, ValueError):
+        s5_selected_count = 0
     return {
         "result": result,
         "events": events,
@@ -393,6 +408,10 @@ def _run_domain(
         "artifact_sha256": digest,
         "model_usage": model_usage,
         "capability_images": capability_images,
+        "dynamic_delivery": {
+            "s5_selected_count": s5_selected_count,
+            "s6_capability_count": len(capability_images),
+        },
     }
 
 
@@ -526,6 +545,31 @@ async def _persist_formal_capability_versions(
     return inserted
 
 
+def _validate_dynamic_delivery(
+    run: EquipmentResearchRun,
+    result: dict[str, Any],
+) -> None:
+    """阻止S5空组合或S6漏卡被静默标记为完整完成。"""
+
+    run_payload = dict(run.payload or {})
+    if str(run_payload.get("execution_profile_id", "")) != "winning_swarm_dynamic_v2":
+        return
+    delivery = result.get("dynamic_delivery", {})
+    delivery = delivery if isinstance(delivery, dict) else {}
+    try:
+        selected_count = int(delivery.get("s5_selected_count", 0) or 0)
+        capability_count = int(delivery.get("s6_capability_count", 0) or 0)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("动态蜂群S5/S6交付计数无效，可恢复后重试") from exc
+    if selected_count <= 0:
+        raise RuntimeError("动态蜂群S5未形成可交给S6的装备组合，可恢复后重试")
+    if capability_count != selected_count:
+        raise RuntimeError(
+            "动态蜂群S6能力画像数量与S5入选数不一致："
+            f"S5={selected_count}，S6={capability_count}；可恢复后仅补齐缺失画像"
+        )
+
+
 async def run_equipment_research(context) -> dict[str, Any]:
     """执行 equipment_research Durable Task。"""
     payload = dict(context.payload or {})
@@ -565,6 +609,7 @@ async def run_equipment_research(context) -> dict[str, Any]:
         if current_status != "planning":
             return {"status": current_status or "missing", "run_id": run_id}
         result = await _run_domain_cancellable(run, resume=action == "resume")
+        _validate_dynamic_delivery(run, result)
         await _append_events(run_id, result.get("events") or [])
         completed = await _set_status(
             run_id,

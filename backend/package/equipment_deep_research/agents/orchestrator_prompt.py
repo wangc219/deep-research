@@ -1,4 +1,5 @@
 """Versioned prompt contracts for the JS-equipment research orchestrator."""
+# ruff: noqa: E501
 
 from __future__ import annotations
 
@@ -9,8 +10,7 @@ from equipment_deep_research.domain.research_focus import (
     REFERENCE_DEDUP_RULES,
 )
 
-
-ORCHESTRATOR_PROMPT_VERSION = "2.9"
+ORCHESTRATOR_PROMPT_VERSION = "2.12"
 
 
 BRANCH_CATALOG = """
@@ -52,6 +52,11 @@ ORCHESTRATOR_BASE_PROMPT = f"""
 - A-H 分支只提供方法模板，不代表固定基线 Agent 套餐。只有用户输入明确需要某项能力，或缺少该能力会使核心交付无法成立时，才把对应 Agent 纳入首轮；其余角色标记为回调候选。
 - 多条参考方向必须实行唯一主归属：每条只进入一个A-H分支或一个多源基线Agent；其他角色只消费结构化交接，不得复制同一研究任务。
 - 事实、用户假设、模型推断、未知和冲突必须分开；主控阶段不需要也不得编造研究证据。
+- 原始Query是不可改写的任务合同。若Query明确命名技术、材料、平台或研究对象，该对象必须贯穿core_query、问题框架、
+  焦点问题和后续交接；禁止用历史任务、示例、相邻批次或常见威胁模板替换。无法建立直接因果关系时留空并标为未知，
+  不得擅自补成无人蜂群、防空反导、精确打击等具体场景。
+- 即使Query没有使用“X及其”或引号，也必须保留其去除“研究、分析、装备、技术、机会”等框架词后的强主题、关键约束
+  和对象关系；允许同义推演与新概念，但至少要给出与原主题直接、可审计的语义连接。
 - 不读取其他 Agent 原始会话，只消费注册表、结构化 Packet、coverage、checkpoint、trace 摘要和预算状态。
 - 每次重规划必须给出可执行变化；没有信息增益或没有合法变化时停止。
 - 输出决策依据和审计字段，不输出隐藏思维过程；严格遵守调用方给定的 JSON schema。
@@ -130,6 +135,8 @@ BLUEPRINT_FAST_PROMPT = f"""
 从完整 Query 和补充信息判断任务对象、阶段、约束、任务链断点与待验证假设。A-H 只选一个主分支、最多两个次分支，
 最多给出三个 driver_scores；分支判断必须依据完整语义和驱动源，不能依据关键词计数。OTHER 只在 A-H 与 available_agents
 确实无法覆盖独立驱动时使用 unmatched_driver；已有 Agent 可覆盖时 custom_blueprint 为空、dynamic_subagents 为空。
+Query若明确写出“技术驱动维度”等A-H驱动声明，必须保持该声明为主分支。技术机会或装备概念创新类Query未指定对手、
+战场和任务阶段时，不得虚构单一威胁场景；combat_problem_frame等字段可写为待研究的多场景映射问题，相关目标列表可留空。
 
 {BRANCH_CATALOG}
 
@@ -151,6 +158,21 @@ changeable_variable、mechanism_search_question、direct_military_result、exclu
 unmatched_driver、rationale、focus_questions、assumptions、hard_constraints、structured_query_brief、meta_triggers、
 baseline_agent_plan、custom_blueprint、dynamic_subagents、confidence。数组只保留高信息量项，理由用短句。
 研究仅限公开来源下的战略、能力、装备市场与防御性需求；不得输出实时目标定位、攻击步骤、规避防护方法或制造参数。
+""".strip()
+
+
+BLUEPRINT_ALIGNMENT_REVIEW_PROMPT = """
+你是独立的研究任务语义校验智能体。你没有参与候选蓝图生成，只负责把原始Query及补充信息与候选蓝图逐项对照。
+请自主理解完整语义、对象关系、研究视角、期望产出、显式边界和未知项；不得使用关键词计数、字符串包含、领域词表或
+历史任务模板代替语义判断。A-H只是运行方法，不得反向改写用户真正要研究的主题。
+
+重点检查：候选蓝图是否换了研究对象，是否把未给出的对手、威胁、场景或方案当成事实，是否漏掉用户明确的研究视角与
+目标，是否让焦点问题、Agent计划或结构化简报偏离Query。不得因为Query出现“装备”等通用词，就默认补成无人蜂群、
+防空反导、精确打击或其他熟悉任务。
+
+先输出query_contract，明确核心对象及关系、用户研究视角、期望产出、必须保留内容、不得擅自假设内容和开放未知项。
+若候选蓝图完整对齐，verdict=aligned且corrected_blueprint为空对象；若存在任何会导致下游串题的偏差，verdict=revise，
+直接给出完整corrected_blueprint。修正版仍只做研究任务编排，不提前生成研究结论。只输出严格JSON，不使用Markdown。
 """.strip()
 
 
@@ -248,6 +270,23 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
 }
 
 
+BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA: dict[str, Any] = {
+    "verdict": "aligned|revise",
+    "query_contract": {
+        "core_subjects_and_relations": ["原始Query中的核心对象及其关系"],
+        "requested_perspective": "用户要求采用的研究视角或驱动方式",
+        "requested_outcome": "用户期望回答或交付的结果",
+        "must_preserve": ["下游任何改写都必须保留的语义"],
+        "must_not_assume": ["原始输入未给出、不得擅自补成事实的内容"],
+        "open_unknowns": ["应交由研究验证而不是在蓝图阶段预设的未知项"],
+    },
+    "issues": ["候选蓝图与Query之间的具体偏差；无偏差时为空"],
+    "corrected_blueprint": BLUEPRINT_OUTPUT_SCHEMA,
+    "rationale": "校验结论的简洁、可审计依据",
+    "confidence": "0..1",
+}
+
+
 AGENT_SELECTION_OUTPUT_SCHEMA: dict[str, Any] = {
     "task_analysis": ["任务子问题与所需专业能力"],
     "selected_agent_ids": ["candidate agent_id"],
@@ -298,6 +337,8 @@ META_REPLAN_OUTPUT_SCHEMA: dict[str, Any] = {
 def orchestrator_system_prompt(phase: str) -> str:
     if phase == "blueprint_design":
         return BLUEPRINT_FAST_PROMPT
+    if phase == "blueprint_alignment_review":
+        return BLUEPRINT_ALIGNMENT_REVIEW_PROMPT
     instruction = PHASE_INSTRUCTIONS.get(phase, "")
     return (
         f"{ORCHESTRATOR_BASE_PROMPT}\n\n当前阶段：{phase}\n{instruction}\n只输出严格 JSON，不要使用 Markdown 代码围栏。"
@@ -306,6 +347,7 @@ def orchestrator_system_prompt(phase: str) -> str:
 
 __all__ = [
     "AGENT_SELECTION_OUTPUT_SCHEMA",
+    "BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA",
     "BLUEPRINT_OUTPUT_SCHEMA",
     "META_REPLAN_OUTPUT_SCHEMA",
     "ORCHESTRATOR_PROMPT_VERSION",

@@ -1,6 +1,7 @@
 """视频号转 Word 用例，共享平台任务、用户权限与私有对象存储。"""
 
 import asyncio
+import copy
 import hashlib
 import json
 import os
@@ -355,9 +356,13 @@ async def transcribe_audio(audio: Path, output: Path, language: str, timeout: in
     env = dict(os.environ)
     package_root = str(Path(__file__).resolve().parents[2])
     env["PYTHONPATH"] = package_root + os.pathsep + env.get("PYTHONPATH", "")
-    env.setdefault("OMP_NUM_THREADS", "2")
-    env.setdefault("MKL_NUM_THREADS", "2")
-    from platform_core.services.resource_budget import register_asr_process, unregister_asr_process
+    concurrency = video_transcription_concurrency()
+    from platform_core.services.resource_budget import asr_threads, register_asr_process, unregister_asr_process
+
+    process_threads = max(1, asr_threads() // concurrency)
+    env["OMP_NUM_THREADS"] = str(process_threads)
+    env["MKL_NUM_THREADS"] = str(process_threads)
+    env["VIDEO_ASR_PROCESS_CONCURRENCY"] = str(concurrency)
 
     for punctuation in (False, True):
         arguments = ["--punctuate"] if punctuation else []
@@ -399,6 +404,23 @@ async def transcribe_audio(audio: Path, output: Path, language: str, timeout: in
     if not isinstance(result.get("text"), str) or not result["text"].strip():
         raise WxChannelsError("未识别到有效语音")
     return result
+
+
+def video_transcription_concurrency() -> int:
+    """按配置和当前资源预算限制单任务并行识别进程数。"""
+    try:
+        configured = int(os.getenv("WX_CHANNELS_TRANSCRIBE_CONCURRENCY", "2"))
+    except ValueError:
+        configured = 2
+    configured = max(1, min(configured, 4))
+    host_limit = max(1, (os.cpu_count() or 1) // 2)
+
+    from platform_core.services.resource_budget import read_budget
+
+    budget = read_budget()
+    if budget and budget.get("memory_pressure"):
+        return 1
+    return min(configured, host_limit)
 
 
 async def run_wxchannels_transcribe(context: TaskContext) -> dict:
@@ -487,13 +509,37 @@ async def run_wxchannels_transcribe(context: TaskContext) -> dict:
         if payload["max_videos"] is not None:
             pending = pending[: max(0, payload["max_videos"] - len(carried))]
         result["total_count"] = len(pending)
+        concurrency = min(video_transcription_concurrency(), max(1, len(pending)))
+        result["transcription_concurrency"] = concurrency
+        base_index = len(result["items"])
+        pending_items = [
+            {
+                "index": base_index + index,
+                "oid": video.oid,
+                "title": video.title,
+                "status": "queued",
+            }
+            for index, video in enumerate(pending)
+        ]
+        result["items"].extend(pending_items)
         await context.set_result(result)
-        for index, video in enumerate(pending):
+        await context.set_progress(0, f"并行转写 0/{len(pending)}（并发 {concurrency}）")
+        result_lock = asyncio.Lock()
+        queue = asyncio.Queue()
+        finished_count = 0
+        cancelled = False
+        for pair in zip(pending, pending_items, strict=True):
+            queue.put_nowait(pair)
+
+        async def persist_result() -> None:
+            await context.set_result(copy.deepcopy(result))
+
+        async def process_video(video, item) -> None:
+            nonlocal cancelled, finished_count
             await context.raise_if_cancelled()
-            item = {"index": len(result["items"]), "oid": video.oid, "title": video.title, "status": "extracting"}
-            result["items"].append(item)
-            await context.set_result(result)
-            await context.set_progress(index / len(pending) * 100, f"提取音频 {index + 1}/{len(pending)}")
+            async with result_lock:
+                item["status"] = "extracting"
+                await persist_result()
             try:
                 with TemporaryDirectory(prefix="knowledge_video_") as temporary:
                     folder = Path(temporary)
@@ -505,9 +551,9 @@ async def run_wxchannels_transcribe(context: TaskContext) -> dict:
                             timeout_seconds=payload["timeout_seconds"],
                         ),
                     )
-                    item["status"] = "transcribing"
-                    await context.set_result(result)
-                    await context.set_message(f"语音转写 {index + 1}/{len(pending)}")
+                    async with result_lock:
+                        item["status"] = "transcribing"
+                        await persist_result()
                     transcript = await cancellable(
                         context,
                         transcribe_audio(
@@ -533,24 +579,53 @@ async def run_wxchannels_transcribe(context: TaskContext) -> dict:
                         payload["account"],
                     )
                     uploaded = await store_video_document(owner_uid, video.oid, document.read_bytes(), storage)
-                    item.update(
-                        transcript,
-                        status="completed",
-                        object_key=uploaded.object_name,
-                        filename=video_filename(video.title, video.oid),
-                        workspace_path=artifact["primary_path"],
-                    )
-                    result["completed_count"] += 1
+                    async with result_lock:
+                        item.update(
+                            transcript,
+                            status="completed",
+                            object_key=uploaded.object_name,
+                            filename=video_filename(video.title, video.oid),
+                            workspace_path=artifact["primary_path"],
+                        )
+                        result["completed_count"] += 1
             except asyncio.CancelledError:
-                item.update(status="cancelled", error="任务已停止，可重新提交未完成视频")
-                await context.set_result(result)
+                cancelled = True
+                try:
+                    async with result_lock:
+                        item.update(status="cancelled", error="任务已停止，可自动续跑未完成视频")
+                        await persist_result()
+                except asyncio.CancelledError:
+                    pass
                 raise
             except Exception:
-                logger.exception("视频号转写失败 task={} item={}", context.task_id, index)
-                item.update(status="failed", error="处理失败，请检查连接、模型环境和音轨后重试")
-                result["failed_count"] += 1
-            await context.set_result(result)
-            await context.set_progress((index + 1) / len(pending) * 100, f"已处理 {index + 1}/{len(pending)}")
+                logger.exception("视频号转写失败 task={} item={}", context.task_id, item["index"])
+                async with result_lock:
+                    item.update(status="failed", error="处理失败，请检查连接、模型环境和音轨后重试")
+                    result["failed_count"] += 1
+            async with result_lock:
+                finished_count += 1
+                await persist_result()
+                await context.set_progress(
+                    finished_count / len(pending) * 100,
+                    f"并行转写 {finished_count}/{len(pending)}（并发 {concurrency}）",
+                )
+
+        async def worker() -> None:
+            while True:
+                try:
+                    video, item = queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    return
+                try:
+                    await process_video(video, item)
+                finally:
+                    queue.task_done()
+
+        async with asyncio.TaskGroup() as group:
+            for _ in range(concurrency):
+                group.create_task(worker())
+        if cancelled:
+            raise asyncio.CancelledError
     if result["failed_count"] and not result["completed_count"]:
         raise WxChannelsError("本次视频均处理失败，可在执行记录中重试")
     await context.set_progress(100, "转换结束" if pending else "视频均已转换，已自动跳过")

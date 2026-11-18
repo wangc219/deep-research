@@ -54,9 +54,9 @@ def test_compose_probe_targets_resolve():
     assert callable(getattr(importlib.import_module(module), factory))
     worker_module = compose["services"]["worker"]["command"].split()[-1]
     assert callable(importlib.import_module(worker_module).run)
-    assert (matrix.ROOT / matrix.compose_args()[-1]).resolve() == directory / "compose.yml"
+    assert (matrix.ROOT / matrix.compose_args()[-1]).resolve() == (directory / "compose.yml").resolve()
     if (directory.parents[2] / "compose.yaml").is_file():
-        assert matrix.ROOT == directory.parents[2]
+        assert matrix.ROOT.resolve() == directory.parents[2].resolve()
 
 
 def test_report_writes_both_outputs_without_external_access(tmp_path):

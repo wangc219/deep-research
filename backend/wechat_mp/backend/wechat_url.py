@@ -4,6 +4,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 _REVIEW_ID = re.compile(r"^MP_WXS_[0-9]+_(?P<short_id>[A-Za-z0-9_~-]{15,})$")
 _SHORT_ID = re.compile(r"^[A-Za-z0-9_~-]{15,}$")
+_LEGACY_SHORT_ID = re.compile(r"^[A-Za-z0-9_~-]{15,32}$")
 
 
 def short_id_from_review_id(review_id: str) -> str:
@@ -14,6 +15,14 @@ def short_id_from_review_id(review_id: str) -> str:
     if not match:
         return ""
     return match.group("short_id").replace("~", "_")
+
+
+def wechat_short_url_from_review_id(review_id: str) -> str:
+    """仅把旧式短标识转换成可直接访问的微信短链。"""
+    short_id = short_id_from_review_id(review_id)
+    if not _LEGACY_SHORT_ID.fullmatch(short_id):
+        return ""
+    return f"https://mp.weixin.qq.com/s/{short_id}"
 
 
 def normalize_wechat_short_url(url: str) -> str:

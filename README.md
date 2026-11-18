@@ -1,308 +1,248 @@
-# 智能研究平台
+# 智能研究平台（Deep Research）
 
-本仓库保留完整装备研究平台源码，并整合面向通用软件研发的文档解析研究入口和 AMiner 学术检索。文档入口的合并变化见 [来源与差异说明](CHANGES_FROM_DEEP_RESEARCH.md)，实际通过、失败和未验证项见 [文档研究验收记录](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md) 和 [AMiner 最终测试记录](artifacts/aminer-integration/final-validation.json)。
+面向装备与技术创新研究的一体化平台，包含多智能体深度研究、需求 Query 生成、证据检索、知识库、知识图谱、创新简报、企业权限和可审计交付。仓库提供前端、后端、数据库迁移、Docker Compose、锁定依赖与测试，可从全新机器完成部署。
 
-本仓库是「装备智能研究平台」的完整单体仓库。`platform_core` 提供共享平台内核，`equipment_deep_research` 封装装备研究领域能力，二者共享同一身份、项目、知识、模型、任务、审计和交付体系。
+当前主分支以本地实现为准，更新日期为 **2026-11-18**。
 
-平台将多智能体深度研究、装备需求 Query 生成、知识库、知识图谱、模型管理和企业权限整合在同一套 Web 工作台中。仓库同时保留当前产品源码、迁移工具、测试、设计文档、参考实现以及可公开的报告、截图和研究产物，便于在新设备上完整恢复开发与部署环境。
+## 核心能力
 
-架构采用“产品一体化、领域高内聚、协作低耦合”：用户看到一条连续的 Query → 研究 → 证据 → 能力画像 → 深研 → 报告链路；代码内部通过稳定端口和事件契约隔离平台通用能力与装备研究规则。详见 [一体化系统架构](docs/ARCHITECTURE.md)。
+- 多智能体研究：任务拆解、动态编排、检查点、恢复、人工审批和报告交付。
+- 装备研究：需求发现、Query 生成、技术路线、能力画像、制胜机理与创新方案。
+- 统一检索：SearXNG、Open Websearch、AMiner（可选）及知识库检索，带缓存、限流和正文补全。
+- 知识库：文档解析、OCR、分块、向量/BM25 混合检索、Rerank、评估和引用追踪。
+- 知识图谱：实体关系抽取、跨文档关系、实体对齐、多跳检索、图谱治理、审阅和版本追踪。
+- 企业能力：用户、租户、部门、角色权限、任务队列、SSE 回放、运行监控和审计。
+- 内容采集：公众号、视频号、网页材料和学术论文的采集、转写与入库。
 
-## 当前版本（2026-10-29）
+## 知识图谱实现边界
 
-当前代码包含通用 Agent Harness、装备研究主链、自适应公开检索、公众号与视频号采集，以及近期页面加载和云端运行优化。2026-10-29 已将生产服务器项目回同步至本地，按 SHA-256 核对 3,461 个文件；同步范围、备份和当时的测试结果见 [服务器回同步记录](artifacts/server-to-local-sync-20261029/report.json)。该记录是同步时的快照，之后的本地改动以 Git 提交和对应验证结果为准。
+可部署版本的知识图谱固定为 **项目 LLM + LightRAG 风格轻量 RAG**：
 
-- **检索融合**：SearXNG、Open Websearch 和已配置的供应商共用检索入口，支持关键词锚点、去重、跨 worker 缓存、并发控制与故障回退；管理员可在模型设置中调整并测试公开检索。
-- **持续研究**：通用研究与装备研究衔接，保留检查点、证据边界、任务取消和恢复；Agent 并发结合 worker 容量与供应商背压调节。
-- **采集与知识入库**：公众号账号池支持共享协调，用户下载成果与权限分别管理；视频号提供桌面采集程序、后台文字识别、Word 导出和知识库入库。
-- **工作台与运行维护**：按需加载页面、共享读取请求与轮询，分离不同类型的 worker；镜像构建复用稳定依赖层与云端 BuildKit 缓存。
+1. `lightrag_primary` 使用平台中配置的 LLM 直接完成实体/关系初抽。
+2. 通过 LightRAG gleaning、关系补全、跨文档关系、实体对齐和证据约束提升召回与可审计性。
+3. 图谱与文本向量写入 Milvus，权威关系及治理状态写入 PostgreSQL，Neo4j 用于图查询与展示。
+4. 本地和生产 Compose 均强制 `KNOWLEDGE_GRAPH_LIGHTWEIGHT_RAG_ONLY=true`，API 会拒绝其他抽取器类型。
 
-当前验证：前端 lint、616 项单元测试与构建通过；后端配置及研究专项 203 项、`make check` 的 13 项检查通过。此前入库回归发现的 21 项失败已修复，完整后端单元回归现为 **3,118 项通过、0 项失败**，其中新增 10 个角色权限用例；检索网关的 wheel 打包与隔离导入验证通过。详见 [失败原因与修复验证](artifacts/backend-unit-recovery-20261029/results.json)，首次入库结果保留在 [历史验证记录](artifacts/main-sync-20261029/validation.json)。这些结果不替代完整服务栈集成和端到端验收。
+部署不需要独立 IE sidecar、模型训练服务或本地模型权重。历史实验、训练包、真实语料和评测输出不属于部署源码，也不会进入 Git。
 
-功能开发、问题修复和测试均先在本地完成。推送 GitHub `main` 用于保存和交付源码；生产发布使用经过验证的明确版本，先备份、准备回滚，再切换并检查 readiness。详见 [项目协作约定](AGENTS.md) 和 [本地开发与发布流程](docs/LOCAL_DEVELOPMENT_AND_RELEASE.md)。
+## 系统组成
 
-## 主要能力
+```text
+浏览器
+  └─ Vue 3 / Vite Web
+       └─ FastAPI API / SSE
+            ├─ PostgreSQL：业务事实、权限、图谱治理与任务状态
+            ├─ Redis / ARQ：任务投递和短期事件
+            ├─ Milvus：向量及图谱投影
+            ├─ Neo4j：图查询与可视化
+            ├─ MinIO：文档与交付文件
+            ├─ SearXNG + Open Websearch：公开检索
+            └─ Sandbox：Agent 文件与代码执行
+```
 
-- 多路线装备需求研究：新制胜机理、传统能力缺口和局部战争案例。
-- 动态 Agent 编排：独立上下文、工具权限、预算、检查点、失败交接和有界并发。
-- 智能体模块化配置：组合模型、提示词、知识库、工具与专用子智能体；Skills/MCP 按需加载，支持在线安装、源码编辑、依赖和角色权限管理。见 [智能体能力对照与验收](docs/AGENT_CAPABILITIES.md)。
-- 沙盒工作区与文件交付：智能体读写授权范围内的文件，生成文档、表格、图表、交互网页和代码；支持浏览器预览、Markdown 编辑保存、聊天交付卡片及目录 ZIP 下载。
-- 通用文档研究：本地资料问答、连续追问、转为深研方案、BM25 检索排序、候选证据覆盖与关系筛选，以及 Markdown/HTML/CSV/JSON 交付。
-- 研究证据治理：公网检索、材料化、正文定位、质量评分、引用与交付清单。
-- AMiner 学术检索：智能对话、深研对话及技术攻关舱共享论文发现、摘要补证与一层参考文献追溯；父子智能体共享费用预算。
-- 自适应公开检索：SearXNG 与 Open Websearch 融合检索、来源锚点筛选、共享缓存和供应商故障回退。
-- 企业级平台能力：用户、租户、部门、角色权限、任务队列、SSE 事件回放和运行监控。
-- 视频号转 DOCX：自动复用微信连接、后台识别、Word 下载及文字稿入库。见 [使用与云部署](docs/VIDEO_CHANNELS.md)。
-- 知识基础设施：文档解析、混合检索、RAG 评估、知识图谱和知识导图。
-- 可审计交付：研究报告、能力画像、运行摘要、追踪事件、检查点和 SHA-256 清单。
+详细设计见 [系统架构](docs/ARCHITECTURE.md) 和 [运行维护](docs/RUNTIME_OPERATIONS.md)。
 
-## 快速开始
+## 快速部署
 
 ### 环境要求
 
-- Git
-- Docker Desktop 或 Docker Engine（含 Compose v2）
-- 建议至少 16 GB 内存和 30 GB 可用磁盘空间
-- 仅做本地源码开发时：Python 3.12–3.13、Node.js 22+、pnpm
+- Git（已配置 GitHub SSH Key）
+- Docker Engine 24+ 或 Docker Desktop
+- Docker Compose v2
+- 建议 8 核 CPU、16 GB 内存、30 GB 以上可用磁盘
+- 可访问 Docker Hub、GitHub Container Registry 和项目所使用的模型供应商
 
-### 从 GitHub 完整恢复
+仅在脱离容器进行源码开发时需要 Python 3.12–3.13、Node.js 22+、pnpm 11 和 `uv`。
 
-仓库包含当前源码、锁定依赖、Compose 配置和可复核验收材料。新设备首次冷安装仍需按目标环境验证镜像下载、外部模型配置及各依赖服务；历史验收范围和日期见文档与 `artifacts/`。通用文档入口的可选 Docker 部署与独立启动方式见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
+### 1. 克隆
 
 ```bash
 git clone git@github.com:wangc219/deep-research.git
 cd deep-research
 git switch main
+```
+
+### 2. 首次启动
+
+```bash
 bash scripts/platform.sh start
 ```
 
-`start` 会在首次运行时生成本机 `.env`、补齐安全随机值、构建镜像并启动完整服务栈。真实模型的供应商、模型 ID 和 API Key 请在登录后的「模型设置」页面配置；密钥不应提交到 Git。
+首次执行会：
 
-常用运维命令：
+- 交互生成本机 `.env`；
+- 为 JWT、API Key 派生、Sandbox 和 SearXNG 生成相互独立的随机密钥；
+- 拉取基础镜像并构建当前源码；
+- 执行数据库迁移并启动完整默认服务栈。
+
+`.env` 只保存在部署机器，禁止提交到 Git。聊天模型、Embedding 模型、模型供应商地址和 API Key 在启动后通过「模型设置」页面配置。
+
+### 3. 检查部署
 
 ```bash
 bash scripts/platform.sh status
-bash scripts/platform.sh logs
-bash scripts/platform.sh stop
-bash scripts/platform.sh update
+curl --fail http://localhost:5050/api/system/ready
 ```
 
 默认入口：
 
-- Web 工作台：<http://localhost:5173>
+- Web：<http://localhost:5173>
 - API：<http://localhost:5050>
-- API 就绪检查：<http://localhost:5050/api/system/ready>
+- Readiness：<http://localhost:5050/api/system/ready>
 
-## 仓库布局
+登录后至少完成以下配置：
 
-```text
-backend/
-  server/                         FastAPI HTTP/SSE 适配层
-  package/
-    platform_core/                平台内核
-    equipment_deep_research/      装备研究领域与编排
-    knowledgegraph/               需求发现与知识图谱
-  test/
-web/                              Vue 3 工作台（知识门户、对话、研究任务）
-docker/                           镜像与沙盒
-configs/                          装备研究 Harness 配置
-scripts/migration/                SQLite 历史数据迁移
-compose.yaml                      开发配置
-compose.local.yaml                日常运行覆盖层（默认无热重载）
-compose.prod.yaml                 生产环境配置
-output/                           可版本化的展示与导出产物
-artifacts/                        产品截图与验收素材
-projects/                         项目级演示、报告和验证结果
-report/                           设计、进展与交付报告
-```
+1. 在「模型设置」中添加并测试一个聊天/研究模型。
+2. 配置知识库使用的 Embedding 模型。
+3. 新建知识库并上传文档；知识图谱构建时选择已配置的项目 LLM。
+4. 如需 AMiner、公众号或视频号能力，再在对应管理页面配置凭据或本机采集端。
 
-首次或代码更新后一键构建启动：`bash scripts/platform.sh start`。该入口会自动补齐首次初始化，无需再手工串联两个脚本。日常启动使用 `bash scripts/platform.sh up`，不强制重建。默认保留全部业务服务，前端使用静态资源、后端关闭热重载。开发时使用 `PLATFORM_MODE=dev bash scripts/platform.sh start`。登录后进入 `/knowledge` 领域知识总门户。聊天模型、装备研究、需求 Query 和深研对话统一在「模型设置」(`/models`) 配置，不要把模型 ID 或 API Key 写进 `.env`。
-
-## 配置与运行模式
-
-配置字段参考 `.env.example`；`scripts/init.sh` 在首次运行时生成本机配置并补齐必需安全项。本地环境使用 `.env`，生产环境默认使用 `.env.prod`；二者均包含部署密钥，因此不会进入版本库。支持三种 Compose 模式：
+## 日常操作
 
 ```bash
-PLATFORM_MODE=local bash scripts/platform.sh start  # 默认，适合日常使用
-PLATFORM_MODE=dev bash scripts/platform.sh start    # 开发模式
-PLATFORM_MODE=prod bash scripts/platform.sh start   # 生产模式，读取 .env.prod
+# 启动已有镜像，不重新构建
+bash scripts/platform.sh up
+
+# 重新构建并切换到当前源码
+bash scripts/platform.sh update
+
+# 查看状态和最近日志
+bash scripts/platform.sh status
+bash scripts/platform.sh logs
+
+# 停止服务（保留数据）
+bash scripts/platform.sh stop
+
+# 只验证 Compose 配置
+bash scripts/platform.sh config
 ```
 
-如需更换端口、状态目录或 Compose 项目名，请先复制并修改环境模板。完整运行参数与资源建议见 [运行与资源优化](docs/RUNTIME_OPERATIONS.md)。
-
-## 公网检索
-
-智能对话、深研对话及其子智能体共用一个 `web_search` 工具。完整 Compose 默认随栈启动
-[SearXNG](https://github.com/searxng/searxng) 和
-[Open Websearch](https://github.com/aas-ee/open-websearch)，结合已配置供应商进行自适应融合检索；
-单个渠道失败时保留其他渠道取得的结果。豆包、Tavily 等渠道按实际配置和可用性参与检索或回退。
-跨 worker 的共享缓存、并发控制、重试、熔断和每轮调用预算限制重复请求与失败重试。
-调研探索员按单个子问题建立“核心对象/实体 + 作用或指标 + 场景/约束”的短查询；对同名或易漂移主题可用
-`required_terms` 指定最多三个必须命中的核心锚点。平台在多引擎结果合并后再次执行锚点过滤和标题优先排序，
-减少只命中泛词、相邻领域或错误对象的结果进入主智能体上下文。
-
-新设备迁移只需复制仓库与部署级 `.env` 后执行 `bash scripts/platform.sh start`。检索服务使用 Compose
-服务名 `http://open-websearch:3210` 与 `http://searxng:8080`，不依赖原设备 IP、绝对路径或宿主机浏览器。默认镜像按 digest
-锁定，可通过 `OPEN_WEBSEARCH_IMAGE` 显式升级；网络需走代理时设置
-`OPEN_WEBSEARCH_USE_PROXY=true` 和 `OPEN_WEBSEARCH_PROXY_URL`。诊断命令：
+开发模式使用热加载：
 
 ```bash
-docker compose exec open-websearch node build/index.js status --base-url http://127.0.0.1:3210 --json
-docker compose exec api python -c "import httpx; print(httpx.get('http://open-websearch:3210/health').json())"
-docker compose ps searxng open-websearch
+PLATFORM_MODE=dev bash scripts/platform.sh start
 ```
 
-SearXNG 引擎配置位于 `configs/searxng/settings.yml`，外部搜索引擎的可达性和结果数量会随网络环境变化。运行时设置与连接测试位于管理员的「模型设置 → 公开检索」。
+## 生产部署
 
-## AMiner 学术检索
-
-管理员或超级管理员在「模型设置」(`/models`) 的「AMiner 学术检索」卡片填写 AMiner 用户 ID 和 API Key，保存后使用「测试连接」验证免费标题搜索，再启用并保存。也可以先测试当前表单；测试输入不会被保存。新配置默认停用，普通用户使用平台提供的检索能力。密钥只返回脱敏状态，编辑时留空保留原密钥，替换或清除使用对应操作；不要将凭证写入仓库或 `.env`。免费连接测试不代表已经取得所有付费接口权限。
-
-凭证框同时接受原始 API Key 和 AMiner 控制台「一键生成 Token」得到的 JWT（也兼容带 `Bearer` 前缀粘贴）。原始 API Key 由服务端自动签发短期 JWT；控制台 Token 直接用于鉴权，到期后需在控制台重新生成并替换。若控制台展示的 Key 无法通过自动签名鉴权，可改用官方生成的 Token，并以免费连接测试结果为准。
-
-两类对话共用以下内置工具，调研探索员和事实核查员也可使用：
-
-| 工具 | 使用方式 |
-| --- | --- |
-| `academic_search` | 主题发现使用 Pro 搜索，已知论文标题使用免费标题搜索；可通过 `related_queries` 增加最多两个中英文术语或互补角度，合并去重后补齐免费题录与部分摘要。 |
-| `academic_get_papers` | 筛选拟引用论文后，按需获取完整摘要；支持仅补齐免费题录。 |
-| `academic_get_references` | 追溯核心论文引用的参考文献，只扩展一层；不是后续引用者列表。 |
-
-论文、研究进展和技术路线比较问题优先使用 AMiner，技术攻关舱预加载深研技能时也遵循这一策略。一般问答保持原流程，其他公开事实使用网页检索，内部事实使用已授权知识库。只向 AMiner 发送简短公开科研检索词，禁止发送完整会话、内部文档或能力画像原文。题录、部分摘要和完整摘要均不等于论文全文；精确实验数据只能引用实际取得的证据，同一论文经多个渠道找到仍只算一个独立来源。
-
-联合检索的每个不同检索词分别计入原有搜索限额，重复术语在发请求前消除。结果交错保留各角度候选，最终最多返回 `limit` 篇，并提供逐词覆盖、下一页提示、未执行查询和摘要缺口；跨查询总量不相加冒充独立论文数。`order=recent` 在各查询中按年份检索进展，`order=cited` 查找经典工作。题录或详情补全失败时保留已取得的更完整证据；未返回的论文、缺失的完整摘要及参考文献截断均显式标记。2026-10-16 真实接口验证见 [AMiner 检索验证记录](artifacts/aminer-retrieval-20261016/live-validation.json)。
-
-管理员可在高级设置中调整以下每轮共享限额。主智能体、子智能体和恢复运行使用同一父 Run 账本；外部请求发送前通过 PostgreSQL 事务预占次数和费用，重试也计入限额，缓存命中不占付费预算。
-
-| 默认限额 | 智能对话 | 深研对话（含技术攻关舱） |
-| --- | ---: | ---: |
-| Pro 搜索次数 | 2 | 6 |
-| 完整摘要详情次数 | 3 | 10 |
-| 参考文献查询次数 | 1 | 2 |
-| 预估费用上限 | 0.20 元 | 0.50 元 |
-
-预估账本按 Pro 搜索、详情各 0.01 元/次，参考文献 0.10 元/次计算，实际价格和权限以 [AMiner 官方文档](https://www.aminer.cn/open/board?tab=doc) 为准。搜索缓存 1 小时，题录、详情和参考文献缓存 24 小时。每次请求超时 10 秒，临时网络或服务错误最多重试一次。配置修改后后续调用读取新配置；鉴权失败、限流、停用或额度耗尽时，模型使用网页、知识库和已有证据继续完成回答。
-
-2026-10-12 应用侧验收：116 项后端相关回归、10 个真实模型自动调用场景、529 项前端测试以及前端 Lint 和构建通过。场景覆盖智能对话、深研、技术攻关舱全部技能预加载、研究子智能体、参考文献追溯、故障降级和引用来源核对。浏览器确认论文卡片和正文 URL/DOI 引用可点击。**本轮没有配置 AMiner 凭证，供应商响应采用模拟数据；真实鉴权、付费权限、检索质量和延迟仍需配置后验证。**具体运行边界见 [最终测试记录](artifacts/aminer-integration/final-validation.json)。
-
-2026-10-15 已使用控制台 Token 完成真实免费标题搜索、Pro 搜索、完整摘要和参考文献接口验收，并验证实际 PostgreSQL 费用预占链路。该次验证记录见 [AMiner 实接口接入记录](artifacts/aminer-live-20261015/validation.json)；原始 API Key 和 Token 仅保存在部署数据库中，不随仓库分发，新部署仍需自行配置。
-
-2026-10-19 增加围绕当前问题的学术证据筛选：普通对话与研究子智能体预加载轻量检索技能，明确要求论文检索/摘要来源时先执行首次检索，再以强相关候选的完整摘要支撑技术解释。仅关键词重合或同属宽泛领域的论文不作为核心证据；摘要未支持的性能与适用性推论需另行标注。误把 arXiv 编号、DOI 或 URL 当作 AMiner ID 时，在请求发出前返回可恢复的定位提示。
-
-调研探索员的交付定位是服务主智能体，而不是独立生成固定格式的小报告：优先返回能改变判断、补齐关键链条、揭示约束或推翻弱假设的高价值发现，并说明其对主研究的意义。技术原理、材料/器件、算法、工程可行性、性能边界或成熟度类子问题在未禁用且缺少既有论文证据时，运行时优先触发 AMiner 主题发现；一般公开事实仍走 Open Websearch。
-
-面向未来需求的装备创新研究以用户目标为主线，论文检索仅作按需辅助，不规定对话步骤、章节或固定推演链条，不要求先有现成装备或已知技术瓶颈。涉及技术实现且需要新证据、原理启发或可行性核实时，可用强相关论文启发、补证或修正构想，不为每个构想强行匹配论文，也不以取得或引用摘要作为完成标准。论文结论、类比迁移、工程推断和待验证假设应分开表达；摘要未覆盖的实现细节不得补写为事实，论文级结果不表示已验证装备级可用性。
-
-官方 MCP 连接已预置于「知识库 · 技能 → MCP」（`/extensions?tab=mcp`），地址为 `https://mcp.aminer.cn/mcp`，运行时复用模型设置中的 AMiner 凭证，不另存密钥。该连接默认停用，避免向普通技术研究加载学者、机构等旁支工具；管理员有明确需求时可启用。主题搜索、标题定位和完整摘要的三轮同条件实测中，REST 与 MCP 内容相同，REST 单请求中位耗时约 0.20 秒、MCP 约 0.97–1.03 秒，因此论文主路径保留已有 REST 工具、共享缓存与费用预算，MCP 默认关闭五个重复论文工具。该耗时只适用于本机本轮接口对比，不代表端到端回答稳定提速。记录见 [MCP 与相关性验证](artifacts/aminer-mcp-20261019/validation.json)。
-
-相关验证命令（需已启动完整开发栈并安装测试依赖）：
+生产模式使用 `compose.prod.yaml`、独立 `.env.prod` 和可追踪的发布标识。先生成配置：
 
 ```bash
-docker compose exec api python -m pytest \
-  test/unit/services/test_aminer.py \
-  test/integration/services/test_academic_retrieval.py \
-  test/integration/api/test_aminer_api.py -q
-docker compose exec web pnpm run lint:check
-docker compose exec web pnpm run test:unit
-docker compose exec web pnpm run build
+DEEP_RESEARCH_ENV_FILE=.env.prod bash scripts/init.sh
 ```
 
-真实模型探针默认跳过。显式设置下面两个环境变量时会调用平台已配置的模型，产生模型服务用量；AMiner 仍使用隔离模拟响应，不修改在线凭证配置：
+再构建并启动：
 
 ```bash
-docker compose exec \
-  -e RUN_AMINER_MODEL_PROBE=1 \
-  -e AMINER_PROBE_MODEL='<供应商ID>:<已配置模型ID>' \
-  api python -m pytest test/integration/services/test_academic_retrieval.py -k live_model -q
+export DEEP_RESEARCH_RELEASE_ID="release-$(date +%Y%m%d-%H%M%S)"
+export DEEP_RESEARCH_SOURCE_REVISION="$(git rev-parse --short=12 HEAD)"
+PLATFORM_MODE=prod \
+DEEP_RESEARCH_ENV_FILE=.env.prod \
+bash scripts/platform.sh start
 ```
 
-## 知识库能力
+生产发布前应备份当前版本和持久化数据，并准备可执行回滚；不要在运行容器中修改源码。完整流程见 [本地开发与发布流程](docs/LOCAL_DEVELOPMENT_AND_RELEASE.md)。
 
-知识库是平台内建共享能力，与智能对话、需求 Query、装备研究和深研链路复用同一套身份授权、检索、引用和审计服务：
+## 配置说明
 
-- 管理文件与真实目录，展示解析、分块、Chunk、Token 和向量入库状态；支持 PDF、Word、PPT、Excel、Markdown 等常用格式与多种 OCR/解析引擎。
-- 支持向量、BM25 和混合检索，可配置相似度阈值、候选数量、融合权重、图检索与 Rerank，并在检索工作台查看分数、来源文件和 Chunk 引用。
-- 支持上传或自动生成单跳、多跳问答基准，批量执行 RAG 评估并查看逐题结果与量化指标。
-- 支持从知识块抽取实体与关系到 Neo4j、浏览子图与节点详情，并按目录和文件元数据生成知识导图。
-- 支持本地 Milvus 知识库以及 Dify、Notion 等外部只读数据源；Agent、深研和装备研究任务通过统一检索端口调用。
-- 知识库按所有者、租户、部门、指定用户和读写范围授权；每次工具调用重新解析实时权限，显式知识库范围只能收窄授权。
+可公开的配置示例见 [.env.example](.env.example)。重要约定：
 
-服务端就绪检查必须显示 `knowledge_base.status=ok`；检索质量可在知识库详情的「检索测试」和「评估」页持续验证。完整映射与验收命令见 [知识库能力对齐基线](docs/KNOWLEDGE_BASE_ALIGNMENT.md)。
+- 部署密钥写入 `.env` 或 `.env.prod`，两者均已被 Git 忽略。
+- 模型 ID、供应商地址和 API Key 优先在 Web「模型设置」中维护。
+- `DEEP_RESEARCH_STATE_DIR` 可将 PostgreSQL、Redis、Milvus、MinIO、Neo4j 等持久化目录迁到独立磁盘。
+- `DEEP_RESEARCH_API_PORT` 和 `DEEP_RESEARCH_WEB_PORT` 可覆盖默认端口。
+- `KNOWLEDGE_GRAPH_LIGHTWEIGHT_RAG_ONLY` 在官方 Compose 中固定为 `true`，不应关闭。
+- 知识治理页面由 `VITE_ENABLE_KNOWLEDGE_GOVERNANCE` 控制，构建生产前端时需保持与后端功能开关一致。
 
-企业管理入口为 `/enterprise`，提供租户与部门组织、成员管理、功能读写权限和运行监控。研究任务、Query、画像、报告、收藏和深研对话按个人隔离，超级管理员可查看全局。部署迁移、权限规则与验收说明见 [企业多用户与双工作台融合](docs/ENTERPRISE_MULTIUSER.md)。
-
-历史 SQLite 导入：
+修改配置后运行：
 
 ```bash
-python scripts/migration/import_legacy_sqlite.py dry-run
-python scripts/migration/import_legacy_sqlite.py import \
-  --owner-uid <uid> \
-  --project-id <project> \
-  --artifact-root <该项目在宿主机上的工作目录>
-python scripts/migration/import_legacy_sqlite.py validate --batch-id <batch-id>
+bash scripts/platform.sh config
+bash scripts/platform.sh update
 ```
 
-导入器以只读方式打开旧 SQLite，兼容 `application.db`、`query-library.db`，并自动补录只有
-`outputs/runs/*/round_summary.json` 的早期任务。任务、Query、能力画像、收藏、深研记录及报告产物按
-旧 ID 幂等迁移；未知旧状态归一为 `completed`，导入任务保持只读。请先执行 `dry-run`，并确认
-`--owner-uid` 与 `--project-id` 的真实归属；导入器会拒绝把数据写入不属于该用户的项目。
+## 数据与备份
 
-## 开发与验证
+默认持久化数据位于 `docker/volumes/`，用户工作区、运行产物和上传文件位于部署状态目录及 `outputs/`。这些内容不属于源码仓库。
 
-后端依赖使用 `uv` 锁定，前端依赖使用 `pnpm` 锁定：
+迁移部署时应单独备份：
+
+- PostgreSQL 数据库；
+- MinIO 对象存储；
+- Milvus、Neo4j 和 Redis 持久化目录；
+- 用户工作区、上传文件和运行交付物；
+- `.env` / `.env.prod`（使用安全渠道传输）。
+
+旧存储布局迁移会停止写入服务，执行前必须确认无活动任务并保留可恢复备份：
+
+```bash
+bash scripts/migrate-storage.sh --env-file .env.prod -f compose.prod.yaml
+```
+
+## 本地开发
+
+安装锁定依赖：
 
 ```bash
 uv sync --project backend --group test
-pnpm --dir=web install --frozen-lockfile
+pnpm --dir web install --frozen-lockfile
 ```
 
-常用检查：
+常用验证：
 
 ```bash
 uv run --project backend --group test python -m pytest backend/test/unit -m "not slow" -q
-pnpm --dir=web test:unit
-pnpm --dir=web build
+uv run --project backend ruff check backend/package
+uv run --project backend ruff format backend/package --check
+pnpm --dir web lint:check
+pnpm --dir web test:unit
+pnpm --dir web build
 docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --quiet
 ```
 
-测试按 `backend/test/unit`、`backend/test/integration` 和 `backend/test/e2e` 分层；完整集成测试需要已启动的 PostgreSQL、Redis、Milvus、MinIO、Neo4j 和 Sandbox 服务。
+集成与端到端测试需要先启动 PostgreSQL、Redis、Milvus、MinIO、Neo4j、Sandbox 等完整服务。进入 `backend/` 或 `web/` 修改代码前，请同时阅读对应目录的 `AGENTS.md`。
 
-## 产物与数据说明
+## 仓库结构
 
-仓库会版本化可公开、可复核且有交付价值的源码和产物，包括 `output/`、`outputs/runs/`、`outputs/deep-thinking/`、`outputs/evals/`、`artifacts/`、`projects/`、`report/` 和 `screenshots/`。研究报告、来源材料、证据索引、追踪事件、能力画像、检查点、运行数据库和交付清单均随版本保存。以下内容刻意不进入 Git：
+```text
+backend/
+  package/platform_core/            平台内核、知识库、LightRAG 图谱与服务
+  package/equipment_deep_research/  装备研究领域与多智能体编排
+  server/                            FastAPI 路由、依赖和 worker 入口
+  test/                              单元、集成与端到端测试
+web/                                 Vue 3 工作台
+configs/                             检索与领域配置
+docker/                              API、Web、Sandbox 等镜像定义
+scripts/                             初始化、运行、迁移和发布检查
+compose.yaml                         开发基础栈
+compose.local.yaml                   默认本地覆盖层
+compose.prod.yaml                    生产栈
+docs/                                架构、运维、验收和开发文档
+```
 
-- `.env*` 实际配置、私钥和第三方 API Key；
-- `auth.json`、Codex 会话目录和本机登录状态；
-- Docker 数据卷、服务级数据库、数据库 WAL/SHM、缓存、虚拟环境和 `node_modules`；
-- `outputs/runtime/`、`outputs/runs/runtime/` 等进程锁、Codex Home 和临时 Agent 工作区。
-- `user-data/` 用户工作区、用户账号迁移包、`.tmp/`、`.tmp-docx-qa/`、`.vite/`，以及 `artifacts/` 中可由源码重建的发布压缩包与采集器二进制。
+## 常见问题
 
-这些目录属于设备状态而非可移植源码。全新克隆可通过初始化脚本重建；若要迁移正在运行的生产数据，请先停止写入，再按 [交付说明](docs/DELIVERY.md) 和 [企业多用户部署说明](docs/ENTERPRISE_MULTIUSER.md) 单独备份数据库、对象存储与状态目录，切勿把凭据直接提交到仓库。
+### 启动时提示缺少安全变量
 
-旧存储布局升级需要维护窗口和可恢复备份。云端使用 `sudo bash scripts/migrate-storage.sh --env-file .env.prod -f compose.prod.yaml -f docker/document-research/compose.yaml -f compose.cloud.yaml`，脚本停止应用写入者，等待动态沙盒全部退出，再为一次性迁移器签发停机证明；任一步失败都不会放行迁移。完成后应用保持停止，使用相同 Compose 配置的 `sudo bash scripts/cloud.sh up -d` 启动并检查 readiness。此入口会终止活动任务，应先确认没有仍需保留的运行中任务。
+重新执行 `bash scripts/platform.sh start`。初始化脚本会补齐缺失或不安全的随机密钥，不会覆盖有效密钥。
 
-## 文档索引
+### API 已启动但 Readiness 失败
 
-- [本地开发、服务器回同步与生产发布](docs/LOCAL_DEVELOPMENT_AND_RELEASE.md)
-- [2026-10-29 服务器源码同步与校验](artifacts/server-to-local-sync-20261029/report.json)
-- [云端容量与 worker 配置](docs/CLOUD_CAPACITY.md)
-- [简洁使用说明](docs/研究平台简洁使用说明.docx)
-- [管理员与普通用户详细使用手册](docs/研究平台使用说明-详细版.docx)
-- [装备智能研究平台简洁使用说明](docs/装备智能研究平台简洁使用说明.docx)
-- [系统功能测试说明](系统功能测试说明.docx)
-- [AMiner 最终测试记录与场景明细](artifacts/aminer-integration/final-validation.json)
-- [文档研究合并验收记录](artifacts/main-sync-validation-20261012/results.json)
-- [文档研究最新同步与可选公网检索验收](docs/validation/document-research/followup-sync-20261012/README.md)
-- [沙盒工作区与文件交付验收](docs/validation/document-research/delivery-20261012/README.md)
-- [文档研究配置与启动说明](docs/DOCUMENT_RESEARCH.md)
-- [系统架构](docs/ARCHITECTURE.md)
-- [快速上手](docs/QUICK_START.md)
-- [集成指南](docs/INTEGRATION_GUIDE.md)
-- [验收说明](docs/ACCEPTANCE.md)
-- [模型运行时集成](docs/MODEL_RUNTIME_INTEGRATION.md)
-- [平台知识库能力基线](docs/KNOWLEDGE_BASE_ALIGNMENT.md)
-- [平台内核来源与融合记录](docs/migration/PLATFORM_CORE_PROVENANCE.md)
-- [企业多用户与权限](docs/ENTERPRISE_MULTIUSER.md)
-- [第三方来源与许可证](THIRD_PARTY_NOTICES.md)
+```bash
+bash scripts/platform.sh status
+docker compose --env-file .env -f compose.yaml -f compose.local.yaml logs --tail=200 api postgres redis milvus graph minio
+```
 
-第三方代码来源与许可证见 `THIRD_PARTY_NOTICES.md`。旧的 `docker-compose.yml`、`apps/web` 以及根目录 `src/` 下的迁移前实现仅作为历史源码和比对材料，不进入当前 Compose 在线运行；当前可执行包统一位于 `backend/package/`。研究任务、需求 Query 与深研对话统一由 Vue、`/api/equipment`、PostgreSQL 和平台 Durable Task Worker 承载；旧数据只读迁移后继续展示。
+Readiness 会把核心依赖失败视为不可用；先处理报告中的具体组件，不要跳过检查直接对外提供服务。
 
-资源实测、启动模式、构建缓存与故障回退见 [运行与资源优化](docs/RUNTIME_OPERATIONS.md)。
+### 知识图谱提示不支持抽取器
 
-## 通用文档解析研发入口
+官方部署只允许 `lightrag_primary`。在知识图谱配置中选择 LightRAG，并确认已配置可用的项目 LLM。
 
-入口位于“知识库 · 技能 → 知识库 → 文档解析与研究”（`/extensions?tool=document-research`），原 `/document-research` 自动跳转到该分区，不再占用独立主导航。它用于普通软件文档解析研究：上传 PDF、DOCX、TXT、Markdown 需求或失败样本，先预览检索证据，再获取带原文引用的回答或生成比较方案、实验步骤与拟定验收指标。完成后可继续追问，或据此细化深研方案；每轮重新检索，最多沿用三个用户问题，重新确认外发范围。常规知识库文档的 OCR、解析、分块和索引仍在“资料库 → 对应知识库”中完成。两条流程的作用、数据边界和限制见[完整功能分析](docs/DOCUMENT_RESEARCH.md#功能作用与知识库的关系)。
+### 更新后页面仍是旧版本
 
-| 来源或产物 | 使用方式 |
-| --- | --- |
-| 本地资料 | 按本次任务勾选资料库；无需智谱知识库配置即可问答和研究。 |
-| 智谱知识库 | 可选的只读来源；配置后仅检索当前任务勾选且授权的库，未配置或未勾选可跳过。 |
-| Open Websearch | 默认公网搜索提供商，无需智谱密钥；按需勾选“启用公开网络检索”，只发送单独填写的公开关键词。管理员可设置地址、搜索引擎，也可显式切换为智谱公开搜索。 |
-| 模型设置 | 连接专用服务后在页面配置地址、模型名、密钥和思考强度；密钥不回显，留空保留，显式清除才删除。 |
-| 研究文件交付 | 预览和下载 Markdown、HTML、CSV、JSON，支持 ZIP 打包；Markdown 可编辑保存，编辑副本不改变原报告及其他格式。 |
+执行 `bash scripts/platform.sh update`，确认 Web 镜像完成重建，再检查浏览器缓存和 `/release.json` 中的源码版本。
 
-此入口使用专用服务、数据、访问令牌和模型配置，与原平台 `/models` 设置分别管理。默认 `scripts/platform.sh start` 不启用该服务；需按 [配置与启动说明](docs/DOCUMENT_RESEARCH.md) 启动本机服务，或启用可选 `docker/document-research/compose.yaml` 覆盖层及专用搜索服务，再连接页面。原智能对话、沙盒工作区和其他路由继续使用原平台。
+## 安全与许可证
 
-2026-10-12 最新同步验收：文档研究 373 项、前端 530 项、浏览器 20 场景通过，真实 Open Websearch 公网检索和独立生产容器接线通过。生成模型使用合成提供商；该结果不等于真实模型报告质量、候选解析器性能或当前完整平台部署已验收。此处前端数量对应文档研究同步版本，AMiner 的验收范围单独记录于上文。
-
-功能边界、实际失败过程和测试证据见 [最新同步验收](docs/validation/document-research/followup-sync-20261012/README.md) 与 [完整验收历史](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md)。
+提交前请确认没有 `.env`、私钥、访问令牌、数据库、用户上传、模型权重或真实业务语料进入暂存区。第三方来源和许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

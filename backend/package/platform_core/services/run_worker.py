@@ -32,6 +32,8 @@ from platform_core.services.agent_run_manifest_service import (
 )
 from platform_core.services.chat_service import get_agent_state_view, stream_agent_chat, stream_agent_resume
 from platform_core.services.input_message_service import restore_chat_input_message
+from platform_core.services.knowledge_governance_service import claim_due_source_runs
+from platform_core.services.innovation_brief_service import claim_due_brief_runs, publish_due_briefs
 from platform_core.services.run_queue_service import (
     RUN_RECONCILIATION_SECONDS,
     WORKER_HEALTH_INTERVAL_SECONDS,
@@ -651,7 +653,10 @@ def _is_last_try(ctx) -> bool:
 def _is_retryable_exception(exc: Exception) -> bool:
     if isinstance(exc, NonRetryableRunError):
         return False
-    return isinstance(exc, (RetryableRunError, OperationalError, ConnectionError, TimeoutError, asyncio.TimeoutError))
+    return isinstance(
+        exc,
+        RetryableRunError | OperationalError | ConnectionError | TimeoutError | asyncio.TimeoutError,
+    )
 
 
 def _worker_identity(ctx) -> str:
@@ -745,6 +750,19 @@ def _map_chunk_to_run_event(chunk: dict) -> tuple[str, dict]:
     if status == "finished":
         return "end", {"status": "completed", "chunk": chunk}
     return "custom", {"name": f"platform_core.{status}", "chunk": chunk}
+
+
+def _interaction_pending_event(chunk: dict) -> tuple[str, dict]:
+    """把尚在提交终态的交互请求投影为非终态热更新事件。"""
+    pending_chunk = {
+        **chunk,
+        "status": "interaction_pending",
+        "interaction_status": chunk.get("status"),
+    }
+    return "custom", {
+        "name": "platform_core.interaction_pending",
+        "chunk": pending_chunk,
+    }
 
 
 async def _append_end_event(run_id: str, status: str, *, thread_id: str | None, payload: dict | None = None):
@@ -1172,6 +1190,16 @@ async def process_agent_run(ctx, run_id: str):
                         }
                         if is_parent_approval:
                             pending_interrupt = (chunk, target_thread_id)
+                            # 提问内容已经生成时立即向页面发送非终态预告；Run 仍保持
+                            # running，直到 Message、Run 终态和 runtime cleanup 全部提交。
+                            # 前端可热更新显示问题，但在权威 interrupt 到达前不允许提交。
+                            preview_type, preview_payload = _interaction_pending_event(chunk)
+                            await _append_run_event_best_effort(
+                                run_id,
+                                preview_type,
+                                preview_payload,
+                                thread_id=target_thread_id,
+                            )
                         elif event_type != "end" and not (
                             target_thread_id == thread_id and status in {"error", "interrupted"}
                         ):
@@ -1546,6 +1574,9 @@ async def _reconcile_agent_run_leases_forever() -> None:
             await recover_pending_dispatches()
             await recover_scheduled_dispatches()
             await claim_and_dispatch_due_jobs()
+            await claim_due_source_runs()
+            await publish_due_briefs()
+            await claim_due_brief_runs()
             await _publish_reconciliation_health()
         except asyncio.CancelledError:
             raise
@@ -1636,9 +1667,17 @@ async def _worker_startup(ctx):
     await _publish_task_reconciliation_health()
     await recover_scheduled_dispatches()
     await claim_and_dispatch_due_jobs()
+    await claim_due_source_runs()
+    await publish_due_briefs()
+    await claim_due_brief_runs()
     await _publish_reconciliation_health()
     ctx[_RECONCILIATION_TASK_KEY] = asyncio.create_task(_reconcile_agent_run_leases_forever())
     ctx[_TASK_RECONCILIATION_TASK_KEY] = asyncio.create_task(_reconcile_durable_tasks_forever())
+    from platform_core.services.knowledge_graph_projection_worker import (
+        start_knowledge_graph_projection_worker,
+    )
+
+    start_knowledge_graph_projection_worker(ctx)
     from platform_core.services.resource_budget import governor_enabled, resource_governor
 
     if governor_enabled():
@@ -1649,6 +1688,11 @@ async def _worker_shutdown(ctx):
     """关闭 worker 共享连接。"""
 
     if isinstance(ctx, dict):
+        from platform_core.services.knowledge_graph_projection_worker import (
+            stop_knowledge_graph_projection_worker,
+        )
+
+        await stop_knowledge_graph_projection_worker(ctx)
         reconciliation_tasks = [
             ctx.pop(_RECONCILIATION_TASK_KEY, None),
             ctx.pop(_TASK_RECONCILIATION_TASK_KEY, None),

@@ -141,7 +141,11 @@ def asr_threads() -> int:
     """模型初始化和每个音频块使用相同的线程预算。"""
     budget = read_budget()
     if budget is not None:
-        return int(budget["asr_threads"])
+        parallelism = max(
+            1,
+            int(os.getenv("VIDEO_ASR_PROCESS_CONCURRENCY", "1")),
+        )
+        return max(1, int(budget["asr_threads"]) // parallelism)
     return max(1, int(os.getenv("OMP_NUM_THREADS", "2")))
 
 

@@ -4,6 +4,7 @@ import random
 
 import pytest
 from platform_core.knowledge.chunking.ragflow_like import nlp
+from platform_core.knowledge.chunking.block_metadata import MarkdownBlockMetadataIndex
 from platform_core.knowledge.chunking.ragflow_like.dispatcher import chunk_markdown
 from platform_core.knowledge.chunking.ragflow_like.nlp import bullets_category, count_tokens
 from platform_core.knowledge.chunking.ragflow_like.presets import (
@@ -15,7 +16,11 @@ from platform_core.knowledge.chunking.ragflow_like.presets import (
     map_to_internal_parser_id,
     resolve_chunk_processing_params,
 )
-from platform_core.knowledge.chunking.ragflow_like.utils.semantic_utils import split_mixed_sentences, split_sentences_chinese
+from platform_core.knowledge.implementations.milvus import MilvusKB
+from platform_core.knowledge.chunking.ragflow_like.utils.semantic_utils import (
+    split_mixed_sentences,
+    split_sentences_chinese,
+)
 from platform_core.knowledge.utils.kb_utils import resolve_processing_params, sanitize_processing_params
 
 
@@ -101,6 +106,174 @@ def test_chunk_records_include_reserved_position_fields() -> None:
     assert chunks[0]["start_token_pos"] is None
     assert chunks[0]["end_token_pos"] is None
     assert "start_char_pos" in chunks[1]
+
+
+def test_general_chunk_recovers_original_whitespace_and_exact_offsets() -> None:
+    content = "第一段内容。\n\n第二段内容。\n\n第三段内容。"
+    parser_blocks = [
+        {
+            "start_char": 0,
+            "end_char": len(content),
+            "page_number": 7,
+            "block_type": "paragraph",
+            "bbox": None,
+            "source_metadata": {"position_kind": "pdf_text_layer_page"},
+        }
+    ]
+
+    chunks = chunk_markdown(
+        markdown_content=content,
+        file_id="file_whitespace",
+        filename="paper.pdf",
+        processing_params={
+            "chunk_preset_id": "general",
+            "chunk_parser_config": {"chunk_token_num": 512},
+            "parser_name": "native_pdf",
+            "parser_version": "platform-unified-parser-v2",
+            "parser_blocks": parser_blocks,
+        },
+    )
+
+    assert len(chunks) == 1
+    assert chunks[0]["content"] == content
+    assert chunks[0]["start_char_pos"] == 0
+    assert chunks[0]["end_char_pos"] == len(content)
+    assert chunks[0]["page_number"] == 7
+    assert chunks[0]["source_metadata"]["position_kind"] == "markdown_char"
+    assert chunks[0]["source_metadata"]["source_text_match"] == "whitespace_normalized"
+    assert content[chunks[0]["start_char_pos"] : chunks[0]["end_char_pos"]] == chunks[0]["content"]
+
+
+def test_non_contiguous_derived_chunk_does_not_fabricate_source_span() -> None:
+    content = "# 问题一\n这是答案一。"
+
+    chunks = chunk_markdown(
+        markdown_content=content,
+        file_id="file_derived",
+        filename="faq.md",
+        processing_params={
+            "chunk_preset_id": "qa",
+            "chunk_parser_config": {},
+        },
+    )
+
+    derived = chunks[0]
+    assert derived["content"] == "问题：问题一\t回答：这是答案一。"
+    assert derived["start_char_pos"] is None
+    assert derived["end_char_pos"] is None
+    assert derived["source_metadata"]["position_kind"] == "derived_chunk"
+
+
+def test_chunk_records_persist_parser_lineage_and_markdown_structure() -> None:
+    content = "# 系统设计\n\n## 信号处理\n\n相控阵雷达提升多目标探测能力。"
+
+    chunks = chunk_markdown(
+        markdown_content=content,
+        file_id="file_blocks",
+        filename="paper.pdf",
+        processing_params={
+            "chunk_preset_id": "separator",
+            "chunk_parser_config": {"delimiter": "\\n\\n"},
+            "parser_name": "rapid_ocr",
+            "parser_version": "platform-unified-parser-v2",
+            "parser_source_metadata": {"file_extension": ".pdf"},
+            "document_version": 3,
+            "document_content_hash": "source-sha256",
+        },
+    )
+
+    paragraph = next(chunk for chunk in chunks if chunk["content"].startswith("相控阵雷达"))
+    assert paragraph["block_type"] == "paragraph"
+    assert paragraph["heading_path"] == ["系统设计", "信号处理"]
+    assert paragraph["parser_name"] == "rapid_ocr"
+    assert paragraph["parser_version"] == "platform-unified-parser-v2"
+    assert paragraph["document_version"] == 3
+    assert paragraph["page_number"] is None
+    assert paragraph["bbox"] is None
+    assert paragraph["source_metadata"] == {
+        "file_extension": ".pdf",
+        "document_content_hash": "source-sha256",
+        "source_file": "paper.pdf",
+        "position_kind": "markdown_char",
+    }
+
+    record = MilvusKB._build_chunk_pg_records(object(), "kb", [paragraph])[0]
+    assert record["block_type"] == "paragraph"
+    assert record["heading_path"] == ["系统设计", "信号处理"]
+    assert record["parser_name"] == "rapid_ocr"
+    assert record["parser_version"] == "platform-unified-parser-v2"
+    assert record["document_version"] == 3
+    assert record["source_metadata"]["document_content_hash"] == "source-sha256"
+    assert record["source_metadata"]["position_kind"] == "markdown_char"
+
+
+def test_chunk_records_use_parser_block_page_and_bbox_without_cross_page_fabrication() -> None:
+    content = "第一页内容。\n\n第二页目标段落。"
+    second_start = content.index("第二页")
+    parser_blocks = [
+        {
+            "start_char": 0,
+            "end_char": second_start - 2,
+            "page_number": 1,
+            "block_type": "paragraph",
+            "bbox": None,
+            "source_metadata": {"position_kind": "layout_page"},
+        },
+        {
+            "start_char": 0,
+            "end_char": second_start - 2,
+            "page_number": 1,
+            "block_type": "paragraph",
+            "bbox": [10, 20, 500, 200],
+            "source_metadata": {"position_kind": "layout_block"},
+        },
+        {
+            "start_char": second_start,
+            "end_char": len(content),
+            "page_number": 2,
+            "block_type": "paragraph",
+            "bbox": None,
+            "source_metadata": {"position_kind": "layout_page"},
+        },
+        {
+            "start_char": second_start,
+            "end_char": len(content),
+            "page_number": 2,
+            "block_type": "paragraph",
+            "bbox": [15, 30, 510, 230],
+            "source_metadata": {"position_kind": "layout_block"},
+        },
+    ]
+
+    chunks = chunk_markdown(
+        markdown_content=content,
+        file_id="file_pages",
+        filename="paper.pdf",
+        processing_params={
+            "chunk_preset_id": "separator",
+            "chunk_parser_config": {"delimiter": "\\n\\n"},
+            "parser_name": "pp_structure_v3_ocr",
+            "parser_version": "platform-unified-parser-v2",
+            "parser_blocks": parser_blocks,
+        },
+    )
+
+    first, second = chunks
+    assert (first["page_number"], first["bbox"]) == (1, [10, 20, 500, 200])
+    assert (second["page_number"], second["bbox"]) == (2, [15, 30, 510, 230])
+    assert second["source_metadata"]["source_block_indices"] == [2, 3]
+    assert second["source_metadata"]["source_page_numbers"] == [2]
+    assert second["source_metadata"]["parser_block"] == {"position_kind": "layout_block"}
+
+    spanning = MarkdownBlockMetadataIndex(content).metadata_for(
+        chunk_text=content,
+        start_char=0,
+        filename="paper.pdf",
+        processing_params={"parser_blocks": parser_blocks},
+    )
+    assert spanning["page_number"] == 1
+    assert spanning["bbox"] is None
+    assert spanning["source_metadata"]["source_page_numbers"] == [1, 2]
 
 
 @pytest.mark.parametrize("seed", [0, 94])

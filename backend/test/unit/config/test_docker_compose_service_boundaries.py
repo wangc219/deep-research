@@ -182,6 +182,39 @@ def test_agent_capacity_and_connection_pools_match_deployment_mode(filename: str
     assert services["postgres"]["command"][-1] == "max_connections=${POSTGRES_MAX_CONNECTIONS:-600}"
 
 
+def test_production_query_worker_consumes_only_the_dedicated_durable_queue() -> None:
+    """Query 生成不得再被携带旧代码的通用 Durable Task worker 抢占。"""
+
+    service = _load_compose("compose.prod.yaml")["services"]["equipment-query-worker"]
+
+    assert service["command"] == "python -m platform_core.services.equipment_query_durable_worker"
+    assert service["environment"]["DURABLE_TASK_WORKER_KIND"] == "equipment-query"
+    assert service["healthcheck"]["test"] == ["CMD", "python", "-m", "server.worker_health"]
+
+
+def test_development_compose_does_not_implicitly_enable_optional_paddlex() -> None:
+    """未启动 GPU profile 时，复杂版面应直接使用本地 Docling 而不是等待失联服务。"""
+    compose = _load_compose("compose.yaml")
+
+    assert compose["x-api-worker-env"]["PADDLEX_URI"] == "${PADDLEX_URI:-}"
+    assert compose["services"]["paddlex"]["profiles"] == ["all"]
+
+
+@pytest.mark.parametrize("filename", ["compose.yaml", "compose.prod.yaml"])
+def test_knowledge_graph_deployments_are_lightrag_only(filename: str) -> None:
+    """官方部署固定为项目 LLM + LightRAG，不携带本地模型 sidecar。"""
+    compose = _load_compose(filename)
+    services = compose["services"]
+
+    assert compose["x-api-worker-env"]["KNOWLEDGE_GRAPH_LIGHTWEIGHT_RAG_ONLY"] == "true"
+    assert {
+        "ie-extractor",
+        "local-embedding",
+        "lightrag-extractor",
+        "lightrag-document-extractor",
+    }.isdisjoint(services)
+
+
 @pytest.mark.parametrize("filename", ["compose.yaml", "compose.prod.yaml"])
 def test_worker_user_data_mount_is_writable_for_personal_skill_install(filename: str) -> None:
     """worker 需要在主 Agent 工具调用中原子安装个人 Skill。"""
@@ -305,7 +338,8 @@ def test_storage_migration_script_quiesces_runtime_before_issuing_proof() -> Non
     assert 'compose=(docker compose "$@")' in source
     assert "up -d --no-deps --build --wait sandbox-provisioner" in source
     assert "mktemp" in source
-    assert '-v "$proof_file:/app/legacy-saves/.storage-migration-quiesced:ro"' in source
+    assert '-v "$proof_file:/run/storage-migration-quiescence-proof:ro"' in source
+    assert "DEEP_RESEARCH_STORAGE_MIGRATION_QUIESCENCE_FILE=/run/storage-migration-quiescence-proof" in source
 
 
 def test_v071_options_migration_is_not_part_of_normal_startup() -> None:
@@ -391,8 +425,9 @@ def test_storage_migration_script_recovers_stopped_production_deployment(
     assert any(
         "run --rm" in command
         and "-v " in command
-        and ":/app/legacy-saves/.storage-migration-quiesced:ro" in command
+        and ":/run/storage-migration-quiescence-proof:ro" in command
         and "-e DEEP_RESEARCH_STORAGE_MIGRATION_QUIESCENCE_TOKEN=" in command
+        and "-e DEEP_RESEARCH_STORAGE_MIGRATION_QUIESCENCE_FILE=/run/storage-migration-quiescence-proof" in command
         for command in commands
     )
 
@@ -489,20 +524,22 @@ def test_storage_migration_refuses_unproven_quiescence(tmp_path: Path, failure: 
     log = tmp_path / "docker.log"
     docker = fake_bin / "docker"
     docker.write_text(
-        '#!/usr/bin/env bash\n'
-        "printf '%s\\n' \"$*\" >> \"$FAKE_DOCKER_LOG\"\n"
+        "#!/usr/bin/env bash\n"
+        'printf \'%s\\n\' "$*" >> "$FAKE_DOCKER_LOG"\n'
         'if [[ " $* " == *" exec -T sandbox-provisioner python - "* ]]; then\n'
-        '  cat >/dev/null\n'
+        "  cat >/dev/null\n"
         '  [[ "$FAILURE" != "quiesce" ]] || exit 1\n'
-        'fi\n'
+        "fi\n"
         'if [[ " $* " == *" ps --status running --services "* && "$FAILURE" == "writer" ]]; then echo worker; fi\n'
     )
     docker.chmod(0o755)
     result = subprocess.run(
         ["bash", str(_project_root() / "scripts/migrate-storage.sh"), "-f", "compose.prod.yaml"],
-        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}",
-             "FAKE_DOCKER_LOG": str(log), "FAILURE": failure},
-        capture_output=True, text=True, timeout=30, check=False,
+        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}", "FAKE_DOCKER_LOG": str(log), "FAILURE": failure},
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
     )
     assert result.returncode != 0
     assert "run --rm" not in log.read_text()

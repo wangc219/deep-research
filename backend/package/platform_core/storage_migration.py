@@ -128,7 +128,34 @@ async def main() -> None:
                 "knowledge",
                 knowledge_version,
                 KNOWLEDGE_SCHEMA_VERSION,
-                upgrade_from=(1, 2, 3, 4, 5, 6),
+                upgrade_from=(
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                ),
             )
 
             if business_version is None:
@@ -171,6 +198,222 @@ async def main() -> None:
                 await pg_manager.upgrade_knowledge_schema_v5_to_v6()
             if knowledge_version in {None, 1, 2, 3, 4, 5, 6}:
                 await pg_manager.upgrade_knowledge_schema_v6_to_v7()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7}:
+                await pg_manager.upgrade_knowledge_schema_v7_to_v8()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8}:
+                await pg_manager.upgrade_knowledge_schema_v8_to_v9()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9}:
+                await pg_manager.upgrade_knowledge_schema_v9_to_v10()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}:
+                await pg_manager.upgrade_knowledge_schema_v10_to_v11()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}:
+                await pg_manager.upgrade_knowledge_schema_v11_to_v12()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}:
+                await pg_manager.upgrade_knowledge_schema_v12_to_v13()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}:
+                await pg_manager.upgrade_knowledge_schema_v13_to_v14()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}:
+                await pg_manager.upgrade_knowledge_schema_v14_to_v15()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}:
+                await pg_manager.upgrade_knowledge_schema_v15_to_v16()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}:
+                await pg_manager.upgrade_knowledge_schema_v16_to_v17()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}:
+                await pg_manager.upgrade_knowledge_schema_v17_to_v18()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}:
+                await pg_manager.upgrade_knowledge_schema_v18_to_v19()
+            if knowledge_version in {None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}:
+                await pg_manager.upgrade_knowledge_schema_v19_to_v20()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v20_to_v21()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v21_to_v22()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v22_to_v23()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v23_to_v24()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v24_to_v25()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v25_to_v26()
+            if knowledge_version in {
+                None,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+            }:
+                await pg_manager.upgrade_knowledge_schema_v26_to_v27()
+            if knowledge_version != KNOWLEDGE_SCHEMA_VERSION:
                 await pg_manager.record_schema_version("knowledge", KNOWLEDGE_SCHEMA_VERSION)
 
             await _converge_database_state(fail_nonterminal_runs=requires_quiescence)

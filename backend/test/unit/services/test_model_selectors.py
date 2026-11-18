@@ -56,11 +56,17 @@ def _capture_embed_warnings(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return warnings
 
 
-def _requests_embedding_response(status_code: int, content: bytes | None = None) -> requests.Response:
+def _requests_embedding_response(
+    status_code: int,
+    content: bytes | None = None,
+    *,
+    headers: dict[str, str] | None = None,
+) -> requests.Response:
     response = requests.Response()
     response.status_code = status_code
     response.url = "https://example.com/v1/embeddings"
     response._content = content or b'{"error":"temporary error"}'
+    response.headers.update(headers or {})
     return response
 
 
@@ -445,7 +451,7 @@ def test_embedding_sync_400_logs_warning(monkeypatch):
 
     monkeypatch.setattr("platform_core.models.embed.requests.post", fake_post)
 
-    with pytest.raises(ValueError, match="400 Client Error"):
+    with pytest.raises(ValueError, match="status=400, error_type=HTTPError"):
         model.encode(["hello", "test"])
 
     assert len(calls) == 1
@@ -455,7 +461,9 @@ def test_embedding_sync_400_logs_warning(monkeypatch):
     assert "model=namespace/embedding-model" in warning
     assert "input_count=2" in warning
     assert "input_lengths=[5, 4]" in warning
-    assert "bad embedding input" in warning
+    assert "bad embedding input" not in warning
+    assert "response_body_bytes=31" in warning
+    assert "response_body_sha256=" in warning
 
 
 def test_embedding_sync_429_retries_ten_times_before_success(monkeypatch):
@@ -499,13 +507,41 @@ def test_embedding_sync_5xx_uses_short_retry_budget(monkeypatch):
 
     monkeypatch.setattr("platform_core.models.embed.requests.post", fake_post)
 
-    with pytest.raises(ValueError, match="503 Server Error"):
+    with pytest.raises(ValueError, match="status=503, error_type=HTTPError"):
         model.encode(["hello"])
 
     assert len(calls) == 3
     assert sleeps == [1.0, 2.0]
     assert len(warnings) == 2
     assert "retry=2/2" in warnings[-1]
+
+
+def test_local_embedding_sync_503_covers_model_cold_start(monkeypatch):
+    warnings = _capture_embed_warnings(monkeypatch)
+    sleeps = []
+    calls = []
+    monkeypatch.setattr("platform_core.models.embed.time.sleep", sleeps.append)
+
+    model = OtherEmbedding(
+        model="BAAI/bge-m3",
+        base_url="http://local-embedding:8092/v1/embeddings",
+        api_key="local-only",
+    )
+    success = _requests_embedding_response(200, b'{"data":[{"embedding":[0.1,0.2]}]}')
+
+    def fake_post(*_args, **_kwargs):
+        calls.append(1)
+        if len(calls) <= 4:
+            return _requests_embedding_response(503, headers={"Retry-After": "5"})
+        return success
+
+    monkeypatch.setattr("platform_core.models.embed.requests.post", fake_post)
+
+    assert model.encode(["hello"]) == [[0.1, 0.2]]
+    assert len(calls) == 5
+    assert sleeps == [5.0, 5.0, 5.0, 5.0]
+    assert len(warnings) == 4
+    assert "retry=4/6" in warnings[-1]
 
 
 @pytest.mark.asyncio
@@ -530,7 +566,7 @@ async def test_embedding_async_400_logs_warning(monkeypatch):
 
     monkeypatch.setattr("platform_core.models.embed.httpx.AsyncClient", FakeAsyncClient)
 
-    with pytest.raises(httpx.HTTPStatusError, match="400 Bad Request"):
+    with pytest.raises(ValueError, match="status=400, error_type=HTTPStatusError"):
         await model.aencode(["hello", "test"])
 
     assert len(warnings) == 1
@@ -539,7 +575,52 @@ async def test_embedding_async_400_logs_warning(monkeypatch):
     assert "model=namespace/embedding-model" in warning
     assert "input_count=2" in warning
     assert "input_lengths=[5, 4]" in warning
-    assert "bad embedding input" in warning
+    assert "bad embedding input" not in warning
+    assert "response_body_bytes=31" in warning
+    assert "response_body_sha256=" in warning
+
+
+@pytest.mark.asyncio
+async def test_embedding_async_timeout_never_exposes_input_text(monkeypatch):
+    warnings = []
+    errors = []
+    secret_text = "内部论文正文-不得写入日志"
+    captured = {}
+
+    class FakeAsyncClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            return False
+
+        async def post(self, url, **kwargs):
+            captured["timeout"] = kwargs["timeout"]
+            raise httpx.ReadTimeout("timed out", request=httpx.Request("POST", url))
+
+    async def fake_sleep(_delay):
+        return None
+
+    monkeypatch.setattr("platform_core.models.embed.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr("platform_core.models.embed.asyncio.sleep", fake_sleep)
+    monkeypatch.setattr(
+        "platform_core.models.embed.logger",
+        SimpleNamespace(warning=warnings.append, error=errors.append, info=lambda *_args, **_kwargs: None),
+    )
+    model = OtherEmbedding(
+        model="namespace/embedding-model",
+        base_url="https://example.com/v1/embeddings",
+        api_key="test-key",
+        request_timeout_seconds=321,
+    )
+
+    with pytest.raises(ValueError, match="Embedding async request failed: error_type=ReadTimeout") as exc_info:
+        await model.aencode([secret_text])
+
+    combined = "\n".join(warnings + errors + [str(exc_info.value)])
+    assert secret_text not in combined
+    assert "'input':" not in combined
+    assert captured["timeout"] == 321
 
 
 @pytest.mark.asyncio

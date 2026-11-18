@@ -64,10 +64,10 @@ test('布局导航不等待品牌或知识库，卸载后清理状态同步计�
     assert.ok(calls.includes('loadThreads'))
     assert.ok(calls.includes('loadProjects'))
     assert.ok(calls.includes('refreshConfig'))
-    assert.equal(interval.mock.callCount(), 2)
+    assert.equal(interval.mock.callCount(), 3)
     app.unmount()
     app = null
-    assert.equal(clear.mock.callCount(), 2)
+    assert.equal(clear.mock.callCount(), 3)
     assert.ok(clear.mock.calls.every((call) => call.arguments[0] === 123))
   } finally {
     app?.unmount()

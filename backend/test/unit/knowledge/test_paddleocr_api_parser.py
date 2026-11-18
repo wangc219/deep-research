@@ -147,6 +147,102 @@ def test_paddleocr_pp_ocrv6_submits_model_specific_payload(tmp_path: Path, monke
     }
 
 
+def test_paddleocr_vl_structured_result_preserves_page_spans() -> None:
+    parser = PaddleOCRVLParser(api_token="token")
+    rows = [
+        {
+            "result": {
+                "layoutParsingResults": [
+                    {"markdown": {"text": "第一页版面", "images": {}}},
+                    {"markdown": {"text": "第二页版面", "images": {}}},
+                ]
+            }
+        }
+    ]
+
+    result = parser._extract_document(rows, {})
+
+    assert result.markdown == "第一页版面\n\n第二页版面"
+    assert result.source_metadata == {"page_count": 2}
+    assert [(block.page_number, block.start_char, block.end_char) for block in result.blocks] == [
+        (1, 0, 5),
+        (2, 7, 12),
+    ]
+
+
+def test_paddleocr_vl_structured_result_preserves_exact_layout_bbox() -> None:
+    parser = PaddleOCRVLParser(api_token="token")
+    rows = [
+        {
+            "result": {
+                "layoutParsingResults": [
+                    {
+                        "markdown": {"text": "标题\n正文", "images": {}},
+                        "prunedResult": {
+                            "parsing_res_list": [
+                                {
+                                    "block_label": "section_title",
+                                    "block_content": "标题",
+                                    "block_bbox": [10, 20, 300, 80],
+                                },
+                                {
+                                    "block_label": "text",
+                                    "block_content": "无法回切的正文",
+                                    "block_bbox": [10, 90, 300, 150],
+                                },
+                                {
+                                    "block_label": "text",
+                                    "block_content": "正文",
+                                    "block_bbox": [True, 90, 300, 150],
+                                },
+                                {
+                                    "block_label": "text",
+                                    "block_content": "正文",
+                                    "block_bbox": [10, 90, float("nan"), 150],
+                                },
+                            ]
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    result = parser._extract_document(rows, {})
+
+    page_blocks = [block for block in result.blocks if block.source_metadata["position_kind"] == "layout_page"]
+    assert len(page_blocks) == 1
+    layout_blocks = [block for block in result.blocks if block.source_metadata["position_kind"] == "layout_block"]
+    assert len(layout_blocks) == 1
+    block = layout_blocks[0]
+    assert block.block_type == "heading"
+    assert block.bbox == (10.0, 20.0, 300.0, 80.0)
+    assert result.markdown[block.start_char : block.end_char] == "标题"
+
+
+def test_paddleocr_v6_structured_result_preserves_page_spans() -> None:
+    parser = PaddleOCRPPOCRv6Parser(api_token="token")
+    rows = [
+        {
+            "result": {
+                "ocrResults": [
+                    {"prunedResult": {"rec_texts": ["第一页第一行", "第一页第二行"]}},
+                    {"prunedResult": {"rec_texts": ["第二页"]}},
+                ]
+            }
+        }
+    ]
+
+    result = parser._extract_document(rows, {})
+
+    assert result.markdown == "第一页第一行\n第一页第二行\n第二页"
+    assert result.source_metadata == {"page_count": 2}
+    assert [result.markdown[block.start_char : block.end_char] for block in result.blocks] == [
+        "第一页第一行\n第一页第二行",
+        "第二页",
+    ]
+
+
 def test_paddleocr_url_input_uses_json_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     submitted: dict[str, Any] = {}
 

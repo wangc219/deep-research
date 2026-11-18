@@ -86,3 +86,29 @@ test('置顶线程不占用普通线程分页 offset 且不会提前结束加载
     await server.close()
   }
 })
+
+test('侧边栏在后端短暂回归时仍过滤内部简报线程', async () => {
+  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
+  setActivePinia(createPinia())
+  try {
+    const { threadApi } = await server.ssrLoadModule('/src/apis/agent_api.js')
+    threadApi.getThreads = async () => [
+      { id: 'normal', title: '气凝胶装备创新', metadata: {} },
+      {
+        id: 'brief-source',
+        title: '任意标题',
+        metadata: { source: 'innovation_brief' }
+      },
+      { id: 'brief-channel', title: '内部任务', metadata: { channel: 'internal' } },
+      { id: 'brief-legacy', title: '简报调研探索 · 历史订阅' }
+    ]
+
+    const { useChatThreadsStore } = await server.ssrLoadModule('/src/stores/chatThreads.js')
+    const store = useChatThreadsStore()
+    await store.loadThreads()
+
+    assert.deepEqual(store.threads.map((thread) => thread.id), ['normal'])
+  } finally {
+    await server.close()
+  }
+})

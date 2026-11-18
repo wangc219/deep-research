@@ -32,7 +32,7 @@ const API = {
 
             if (!resp.ok || !isJson) {
                 const errMsg = data.error || data.message || `HTTP ${resp.status}`;
-                if (data && (data.need_verify || data.waterwall)) {
+                if (data && (data.need_verify || (data.waterwall && data.waterwall.active))) {
                     if (window.WaterWall && typeof WaterWall.handleDetection === 'function') {
                         WaterWall.handleDetection(data.waterwall || data);
                     }
@@ -44,6 +44,12 @@ const API = {
                 error.status = resp.status;
                 error.data = data;
                 throw error;
+            }
+
+            if (data && (data.need_verify || (data.waterwall && data.waterwall.active))) {
+                if (window.WaterWall && typeof WaterWall.handleDetection === 'function') {
+                    WaterWall.handleDetection(data.waterwall || data);
+                }
             }
 
             return data;
@@ -115,12 +121,31 @@ const API = {
 
     // ── Articles API ─────────────────────────────────
     articles: {
-        list(fakeid, begin = 0, count = 10, keyword = '') {
-            const params = new URLSearchParams({ begin, count, keyword });
+        list(fakeid, begin = 0, count = 10, keyword = '', accountName = '') {
+            const params = new URLSearchParams({ begin, count, keyword, account_name: accountName });
             return API.get(`/api/wechat-mp/app/api/articles/list/${fakeid}?${params}`);
         },
-        download(articles, accountName) {
-            return API.post('/api/wechat-mp/app/api/articles/download', { articles, account_name: accountName });
+        pageCount(fakeid, count = 20) {
+            const params = new URLSearchParams({ count });
+            return API.get(`/api/wechat-mp/app/api/articles/page-count/${fakeid}?${params}`, { showError: false });
+        },
+        search(fakeid, keyword, begin = 0, count = 20, accountName = '', startTime = 0, endTime = 0) {
+            const params = new URLSearchParams({
+                keyword,
+                begin,
+                count,
+                account_name: accountName,
+                start_time: startTime,
+                end_time: endTime,
+            });
+            return API.get(`/api/wechat-mp/app/api/articles/search/${fakeid}?${params}`);
+        },
+        download(articles, accountName, includePdf = false) {
+            return API.post('/api/wechat-mp/app/api/articles/download', {
+                articles,
+                account_name: accountName,
+                include_pdf: includePdf,
+            });
         },
         downloadRange(payload) {
             return API.post('/api/wechat-mp/app/api/articles/download-range', payload);
@@ -128,8 +153,8 @@ const API = {
         cancelDownload(taskId) {
             return API.post(`/api/wechat-mp/app/api/articles/download-cancel/${taskId}`);
         },
-        downloadByUrl(urls) {
-            return API.post('/api/wechat-mp/app/api/articles/download-url', { urls });
+        downloadByUrl(urls, includePdf = false) {
+            return API.post('/api/wechat-mp/app/api/articles/download-url', { urls, include_pdf: includePdf });
         },
         downloadStatus(taskId) {
             return API.get(`/api/wechat-mp/app/api/articles/download-status/${taskId}`, { showError: false });

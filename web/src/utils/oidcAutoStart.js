@@ -15,7 +15,7 @@ export function sanitizeRedirect(value) {
   ) {
     return value
   }
-  return '/knowledge'
+  return '/agent'
 }
 
 // 检查是否已经尝试过自动触发 OIDC（同一会话内，避免无限循环）

@@ -41,12 +41,26 @@ class ParserCapability:
 
 
 PARSER_CAPABILITIES = {
+    "auto": ParserCapability(
+        service_name="auto",
+        display_name="智能路由（推荐）",
+        supported_extensions=(*_STANDARD_OCR_EXTENSIONS, ".webp"),
+        module_path="platform_core.knowledge.parser.intelligent_router",
+        class_name="IntelligentDocumentRouter",
+    ),
     "rapid_ocr": ParserCapability(
         service_name="rapid_ocr",
         display_name="RapidOCR (ONNX)",
         supported_extensions=_STANDARD_OCR_EXTENSIONS,
         module_path="platform_core.knowledge.parser.rapid_ocr",
         class_name="RapidOCRParser",
+    ),
+    "docling_pdf": ParserCapability(
+        service_name="docling_pdf",
+        display_name="Docling PDF（本地文本层版面）",
+        supported_extensions=PDF_FILE_EXTENSIONS,
+        module_path="platform_core.knowledge.parser.docling_pdf",
+        class_name="DoclingPdfParser",
     ),
     "mineru_ocr": ParserCapability(
         service_name="mineru_ocr",

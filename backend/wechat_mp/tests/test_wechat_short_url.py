@@ -5,7 +5,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.wechat_url import normalize_wechat_short_url, short_id_from_review_id
+from backend.wechat_url import (
+    normalize_wechat_short_url,
+    short_id_from_review_id,
+    wechat_short_url_from_review_id,
+)
 
 
 class WeChatShortUrlTests(unittest.TestCase):
@@ -51,6 +55,20 @@ class WeChatShortUrlTests(unittest.TestCase):
         self.assertEqual(
             short_id_from_review_id(review_id),
             "oi_Lh3K0LZ92f_LtQBSljQ",
+        )
+
+    def test_does_not_turn_opaque_weread_id_into_invalid_wechat_short_url(self):
+        review_id = (
+            "MP_WXS_3529992454_"
+            "WR1FAV44yAfhBDg8R5DajB6z2at3SoDs91Qh1rHDYi5xbB6X4mW88YFP81yf0c9E1r1wQEMZ2cz"
+        )
+
+        self.assertEqual(wechat_short_url_from_review_id(review_id), "")
+        self.assertEqual(
+            wechat_short_url_from_review_id(
+                "MP_WXS_3293703638_oi~Lh3K0LZ92f~LtQBSljQ"
+            ),
+            "https://mp.weixin.qq.com/s/oi_Lh3K0LZ92f_LtQBSljQ",
         )
 
     def test_rejects_malformed_review_ids(self):

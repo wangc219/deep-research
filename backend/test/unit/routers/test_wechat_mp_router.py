@@ -11,6 +11,9 @@ from server.routers import wechat_mp_router as router
 
 def request(method: str) -> Request:
     """构造无需启动完整应用的最小请求。"""
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
     return Request(
         {
             "type": "http",
@@ -23,7 +26,8 @@ def request(method: str) -> Request:
             "headers": [],
             "client": ("127.0.0.1", 1),
             "server": ("test", 80),
-        }
+        },
+        receive,
     )
 
 
@@ -90,3 +94,97 @@ async def test_ordinary_user_can_read_shared_account_status(monkeypatch):
     )
 
     assert response.body == b"owner-key:/api/account-pool"
+
+
+@pytest.mark.parametrize(
+    ("role", "expected_global_scope"),
+    [("user", False), ("admin", True), ("superadmin", True)],
+)
+async def test_article_listing_uses_role_appropriate_download_scope(
+    monkeypatch,
+    role,
+    expected_global_scope,
+):
+    """文章列表仅为管理员启用跨用户全局处理状态。"""
+    forwarded = {}
+    database = object()
+
+    async def forward_article_listing(incoming, key, path, uid, db, *, global_scope=False):
+        forwarded.update(
+            {
+                "method": incoming.method,
+                "key": key,
+                "path": path,
+                "uid": uid,
+                "db": db,
+                "global_scope": global_scope,
+            }
+        )
+        return Response(status_code=204)
+
+    monkeypatch.setattr(router.service, "register_owner", lambda uid: "owner-key")
+    monkeypatch.setattr(router, "forward_article_listing", forward_article_listing)
+
+    response = await router.application(
+        "api/articles/list/MP_WXS_1",
+        request("GET"),
+        SimpleNamespace(uid="viewer", role=role),
+        database,
+    )
+
+    assert response.status_code == 204
+    assert forwarded == {
+        "method": "GET",
+        "key": "owner-key",
+        "path": "/api/articles/list/MP_WXS_1",
+        "uid": "viewer",
+        "db": database,
+        "global_scope": expected_global_scope,
+    }
+
+
+async def test_forward_preserves_upstream_redirect_location(monkeypatch):
+    """原文解析接口的外部跳转地址必须穿过平台流式网关。"""
+
+    class Upstream:
+        status_code = 302
+        headers = {
+            "content-type": "text/html; charset=utf-8",
+            "location": "https://mp.weixin.qq.com/s/example",
+        }
+
+        async def aiter_raw(self):
+            if False:
+                yield b""
+
+        async def aclose(self):
+            return None
+
+    class Client:
+        def __init__(self, **_kwargs):
+            pass
+
+        def build_request(self, *_args, **_kwargs):
+            return object()
+
+        async def send(self, *_args, **_kwargs):
+            return Upstream()
+
+        async def aclose(self):
+            return None
+
+    async def ensure_worker(_key):
+        return "/tmp/wechat-mp-test.sock"
+
+    monkeypatch.setattr(router.service, "ensure_worker", ensure_worker)
+    monkeypatch.setattr(router.httpx, "AsyncHTTPTransport", lambda **_kwargs: object())
+    monkeypatch.setattr(router.httpx, "AsyncClient", Client)
+
+    response = await router.forward(
+        request("GET"),
+        "owner-key",
+        "/api/articles/open",
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == "https://mp.weixin.qq.com/s/example"

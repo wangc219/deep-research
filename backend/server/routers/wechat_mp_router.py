@@ -11,6 +11,7 @@ from sqlalchemy import select
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
 from platform_core.services import wechat_mp_service as service
+from platform_core.services.collection_artifact_service import merge_article_listing_states
 from platform_core.services.enterprise_service import feature_access
 from platform_core.storage.postgres.models_business import Department, User
 from server.utils.auth_middleware import get_current_user, get_db, get_required_user
@@ -132,7 +133,7 @@ async def feed_resource(path: str, request: Request, key: str = Depends(subscrip
 
 
 @router.api_route("/app/{path:path}", methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"])
-async def application(path: str, request: Request, user=Depends(module_user)):
+async def application(path: str, request: Request, user=Depends(module_user), db=Depends(get_db)):
     """页面、资源、任务进度与下载使用同一个用户身份。"""
     if path in {"", "index.html"}:
         return Response(
@@ -177,7 +178,67 @@ async def application(path: str, request: Request, user=Depends(module_user)):
     if requires_account_manager(path, request.method) and not can_manage_accounts(user):
         raise HTTPException(403, "共享微信读书账号仅允许管理员维护")
     key = service.register_owner(user.uid)
+    if request.method == "GET" and path.startswith(("api/articles/list/", "api/articles/search/")):
+        return await forward_article_listing(
+            request,
+            key,
+            "/" + path,
+            user.uid,
+            db,
+            global_scope=can_manage_accounts(user),
+        )
     return await forward(request, key, "/" + path)
+
+
+async def forward_article_listing(
+    request: Request,
+    key: str,
+    path: str,
+    uid: str,
+    db,
+    *,
+    global_scope: bool = False,
+):
+    """缓冲小型文章列表响应，并合并持久成果的五阶段状态。"""
+    try:
+        socket = await service.ensure_worker(key)
+    except (service.WechatMPUnavailable, OSError) as exc:
+        raise HTTPException(503, "公众号服务暂不可用，请重试") from exc
+    transport = httpx.AsyncHTTPTransport(uds=socket)
+    headers = {
+        name: request.headers[name]
+        for name in ("content-type", "accept", "if-none-match")
+        if name in request.headers
+    }
+    try:
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://wechat-mp",
+            timeout=httpx.Timeout(180, connect=10),
+        ) as client:
+            upstream = await client.get(path, params=request.query_params.multi_items(), headers=headers)
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "公众号服务连接中断，请重试") from exc
+    try:
+        payload = upstream.json()
+    except ValueError:
+        return Response(
+            upstream.content,
+            status_code=upstream.status_code,
+            media_type=upstream.headers.get("content-type", "application/json"),
+        )
+    if upstream.status_code < 400 and isinstance(payload, dict):
+        payload = await merge_article_listing_states(
+            db,
+            uid=uid,
+            payload=payload,
+            global_scope=global_scope,
+        )
+    return JSONResponse(
+        payload,
+        status_code=upstream.status_code,
+        headers={"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"},
+    )
 
 
 async def forward(request: Request, key: str, path: str):
@@ -232,6 +293,7 @@ async def forward(request: Request, key: str, path: str):
             "last-modified",
             "content-range",
             "accept-ranges",
+            "location",
             "content-security-policy",
             "x-content-type-options",
         }

@@ -13,7 +13,7 @@ const hasVisibleAssistantBody = (message) => {
 
 const defaultEnrichToolCalls = (message) => enrichTaskToolCalls(message?.tool_calls)
 
-/** 将相邻推理和工具调用按顺序归组，正文保持独立。 */
+/** 将相邻工具调用按顺序归组，正文保持独立。 */
 export const getConversationDisplayItems = (
   conv,
   { enrichToolCalls = defaultEnrichToolCalls, collapseIntermediate = false, runTiming = null } = {}
@@ -42,10 +42,9 @@ export const getConversationDisplayItems = (
       return
     }
 
-    const { reasoningContent } = MessageProcessor.parseAssistantMessageBody(message)
     const toolCalls = enrichToolCalls(message)
 
-    /** 为当前连续处理过程保留稳定的分组标识。 */
+    /** 为当前连续工具过程保留稳定的分组标识。 */
     const ensureToolGroup = (segment) => {
       if (!pendingToolGroup) {
         pendingToolGroup = {
@@ -58,20 +57,12 @@ export const getConversationDisplayItems = (
       return pendingToolGroup
     }
 
-    if (reasoningContent) {
-      ensureToolGroup('reasoning').entries.push({
-        type: 'reasoning',
-        key: `reasoning-${message.id || index}`,
-        content: reasoningContent
-      })
-    }
-
     if (hasVisibleAssistantBody(message)) {
       flushToolGroup()
       items.push({
         type: 'message',
         key: message.id || `message-${index}`,
-        message: reasoningContent ? { ...message, reasoning_content: '' } : message,
+        message,
         sourceIndex: index
       })
     }

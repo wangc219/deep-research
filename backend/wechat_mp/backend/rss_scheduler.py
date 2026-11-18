@@ -640,7 +640,7 @@ class RssScheduler:
             try:
                 for page_idx in range(max_pages):
                     res = _fetch_articles_page(fakeid, begin=begin, count=count, account_name=nickname)
-                    page_articles, _total = res[0], res[1]
+                    page_articles, can_continue = res[0], bool(res[2])
                     if not page_articles:
                         break
                     
@@ -664,8 +664,8 @@ class RssScheduler:
                             if title:
                                 history_titles.add((nickname, title))
                     
-                    # 如果当前页中包含了已有的老文章，或者新文章总数已经满足，或者返回的文章长度小于请求数，或者已抓完总数
-                    if has_old_article or len(page_articles) < count or (begin + len(page_articles) >= _total):
+                    # 中间页可能因文章删除/隐藏而少于请求条数，不能据此判定末页。
+                    if has_old_article or not can_continue:
                         break
                     
                     begin += count

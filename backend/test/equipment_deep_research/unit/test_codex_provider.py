@@ -84,12 +84,8 @@ class _RealLikeScriptedProvider(ScriptedFakeProvider):
 
 def _s6_test_shared_innovation_anchors(name: str) -> dict[str, str]:
     return {
-        "solution_thesis": (
-            f"{name}把持续链路依赖改为装备端受约束自主复核以恢复短时任务窗口"
-        ),
-        "core_innovation_thesis": (
-            "将任务成立前提从全程在线指挥改为发射前授权与装备端证据门控"
-        ),
+        "solution_thesis": (f"{name}把持续链路依赖改为装备端受约束自主复核以恢复短时任务窗口"),
+        "core_innovation_thesis": ("将任务成立前提从全程在线指挥改为发射前授权与装备端证据门控"),
     }
 
 
@@ -180,12 +176,7 @@ def _with_model_semantic_contract(
     """Attach the S3-S5 semantic judgement consumed by non-inferential S6 code."""
 
     row = dict(direction)
-    identity = str(
-        row.get("primary_equipment_identity")
-        or row.get("equipment_form")
-        or row.get("name")
-        or ""
-    )
+    identity = str(row.get("primary_equipment_identity") or row.get("equipment_form") or row.get("name") or "")
     row.setdefault("primary_equipment_identity", identity)
     row["equipment_semantic_assessment"] = {
         "classification": classification,
@@ -221,7 +212,7 @@ def test_s3_candidate_brief_preserves_creative_reasoning_without_rule_pileup() -
     assert "专名/代号型不得成为明显多数" in instruction
     assert "只引专名/代号部分" in instruction
     assert "名称没有专名或代号时，不得给整个名称加引号" in instruction
-    assert "每个候选只输出name和concise_winning_summary" in instruction
+    assert "每个候选必须输出schema规定的完整单一武器语义合同" in instruction
     assert "不要输出其他字段、备选名或推理过程" in instruction
     assert "naming_self_check" not in instruction
     assert len(instruction) < 1200
@@ -271,11 +262,19 @@ def test_s6_short_portrait_module_detector_checks_each_cjk_column() -> None:
     ]
 
 
-@pytest.mark.parametrize('failed_repair', [
-    'timeout', 'module_key', 'card_binding_id', 'hypothesis_id', 'missing_binding',
-])
+@pytest.mark.parametrize(
+    "failed_repair",
+    [
+        "timeout",
+        "module_key",
+        "card_binding_id",
+        "hypothesis_id",
+        "missing_binding",
+    ],
+)
 def test_dynamic_s6_repairs_only_failed_columns_and_isolates_failed_repairs(
-    monkeypatch, failed_repair,
+    monkeypatch,
+    failed_repair,
 ) -> None:
     backend = _RealLikeScriptedProvider([])
     backend.provider_type = "codex_cli"  # type: ignore[attr-defined]
@@ -319,21 +318,21 @@ def test_dynamic_s6_repairs_only_failed_columns_and_isolates_failed_repairs(
         payload_binding_ids.append(str(candidate["card_binding_id"]))
         modules = _complete_s6_test_modules(str(candidate["name"]))
         if "repair" in phase:
-            module_key = payload['portrait_module_key']
+            module_key = payload["portrait_module_key"]
             await asyncio.sleep(0)
-            if module_key == 'winning_logic' and failed_repair == 'timeout':
+            if module_key == "winning_logic" and failed_repair == "timeout":
                 raise TimeoutError("quality enhancement timed out")
             repair = {
-                'module_key': module_key,
-                'module_content': modules[module_key],
-                'card_binding_id': candidate['card_binding_id'],
-                'hypothesis_id': candidate['hypothesis_id'],
+                "module_key": module_key,
+                "module_content": modules[module_key],
+                "card_binding_id": candidate["card_binding_id"],
+                "hypothesis_id": candidate["hypothesis_id"],
             }
-            if module_key == 'winning_logic':
-                if failed_repair == 'missing_binding':
-                    repair.pop('card_binding_id')
+            if module_key == "winning_logic":
+                if failed_repair == "missing_binding":
+                    repair.pop("card_binding_id")
                 else:
-                    repair[failed_repair] = 'wrong-identity'
+                    repair[failed_repair] = "wrong-identity"
             return json.dumps(repair, ensure_ascii=False)
         modules["capability_effects"] = "形成受控打击能力。"
         modules["winning_logic"] = "敌方断链后我方仍可攻击。"
@@ -418,25 +417,23 @@ def test_dynamic_s6_repairs_only_failed_columns_and_isolates_failed_repairs(
     assert len(phases) == 8  # Spine + five first-pass columns + two repairs.
     assert sum(phase.endswith("_spine") for phase in phases) == 1
     assert sum("_module_" in phase and "repair" not in phase for phase in phases) == 5
-    assert {phase.rsplit('_module_', 1)[-1] for phase in phases if 'repair' in phase} == {
-        'capability_effects', 'winning_logic',
+    assert {phase.rsplit("_module_", 1)[-1] for phase in phases if "repair" in phase} == {
+        "capability_effects",
+        "winning_logic",
     }
     assert all(
-        phase.startswith("winning_s6_parallel_card_resume_01")
-        or phase.startswith("winning_s6_parallel_card_repair_01")
+        phase.startswith("winning_s6_parallel_card_resume_01") or phase.startswith("winning_s6_parallel_card_repair_01")
         for phase in phases
     )
     assert len(set(payload_binding_ids)) == 1
-    assert [item["name"] for item in result["concept_directions"]] == [
-        "“潮锋”时敏打击弹"
-    ]
+    assert [item["name"] for item in result["concept_directions"]] == ["“潮锋”时敏打击弹"]
     card = result["concept_directions"][0]
-    final_modules = card['capability_portrait_modules']
-    complete_modules = _complete_s6_test_modules(card['name'])
-    for key in ('overview', 'technology_implementation', 'operational_process', 'capability_effects'):
+    final_modules = card["capability_portrait_modules"]
+    complete_modules = _complete_s6_test_modules(card["name"])
+    for key in ("overview", "technology_implementation", "operational_process", "capability_effects"):
         assert final_modules[key] == complete_modules[key]
-    assert final_modules['winning_logic'] == '敌方断链后我方仍可攻击。'
-    assert any('栏目修复失败' in warning for warning in card['s6_authoring_quality_warnings'])
+    assert final_modules["winning_logic"] == "敌方断链后我方仍可攻击。"
+    assert any("栏目修复失败" in warning for warning in card["s6_authoring_quality_warnings"])
     assert _s6_short_portrait_modules(card["capability_portrait_modules"])
     assert card["s6_authoring_status"] == "authored_quality_limited"
     assert result["s6_quality_gate_limited"] is True
@@ -510,9 +507,7 @@ def test_dynamic_s6_card_input_preserves_frozen_codename_quotes() -> None:
     )
 
     assert payload["candidate_weapon"]["name"] == "“玄鳞”可变散射攻顶弹"
-    assert payload["candidate_weapon"]["primary_equipment_identity"] == (
-        "“玄鳞”可变散射攻顶弹"
-    )
+    assert payload["candidate_weapon"]["primary_equipment_identity"] == ("“玄鳞”可变散射攻顶弹")
 
 
 def test_dynamic_s6_card_input_carries_s5_mode_change_spine() -> None:
@@ -557,15 +552,9 @@ def test_parallel_reporter_token_budget_is_rendered_as_soft_guidance() -> None:
 def test_codex_command_cache_separates_search_context_sizes() -> None:
     cache = CommandCache()
 
-    high = cache.get_cache_key(
-        {"web_search": {"search_context_size": "high"}}, has_schema=True
-    )
-    medium = cache.get_cache_key(
-        {"web_search": {"search_context_size": "medium"}}, has_schema=True
-    )
-    low = cache.get_cache_key(
-        {"web_search": {"search_context_size": "low"}}, has_schema=True
-    )
+    high = cache.get_cache_key({"web_search": {"search_context_size": "high"}}, has_schema=True)
+    medium = cache.get_cache_key({"web_search": {"search_context_size": "medium"}}, has_schema=True)
+    low = cache.get_cache_key({"web_search": {"search_context_size": "low"}}, has_schema=True)
 
     assert len({high, medium, low}) == 3
     assert high.endswith("search:high")
@@ -618,10 +607,7 @@ def test_query_led_combat_equipment_theme_contract_is_non_exhaustive() -> None:
     assert "不得先选装备族" in contract["divergence_mode"]
     assert "替换成另一Query" in contract["cross_query_template_guard"]
     assert "毁伤" in contract["combat_subject_requirement"]
-    assert (
-        "成本、平台、时间、毁伤、体系、伦理与博弈逻辑"
-        in contract["foresight_first_rule"]
-    )
+    assert "成本、平台、时间、毁伤、体系、伦理与博弈逻辑" in contract["foresight_first_rule"]
     assert "跨代优势" in contract["foresight_first_rule"]
     assert "高维优速" in contract["foresight_first_rule"]
     assert "低优先级补全项" in contract["frontier_evidence_policy"]
@@ -651,9 +637,7 @@ def test_undersea_platform_titles_are_concrete_weapon_identities(title: str) -> 
 
 def test_weapon_discovery_and_s6_preflight_receive_query_led_themes() -> None:
     discovery_prompt = provider_module._discovery_system_prompt("weapon_equipment")
-    s6_contract = _s6_first_pass_quality_contract(
-        topic="强干扰下蜂群精确打击", handoff={}
-    )
+    s6_contract = _s6_first_pass_quality_contract(topic="强干扰下蜂群精确打击", handoff={})
 
     assert "当前query" in discovery_prompt
     assert "机械生成" in discovery_prompt
@@ -664,9 +648,7 @@ def test_weapon_discovery_and_s6_preflight_receive_query_led_themes() -> None:
     assert themes["combat_subject_requirement"].startswith("候选主体必须是")
 
 
-def test_query_divergence_brief_consumes_codex_semantics_without_keyword_catalog() -> (
-    None
-):
+def test_query_divergence_brief_consumes_codex_semantics_without_keyword_catalog() -> None:
     anti_ship = provider_module._query_combat_equipment_divergence_brief(
         "研究任务",
         structured_query_brief={
@@ -711,20 +693,12 @@ def test_query_divergence_brief_consumes_codex_semantics_without_keyword_catalog
             ],
         },
     )
-    no_model_brief = provider_module._query_combat_equipment_divergence_brief(
-        "包含任意术语的Query"
-    )
+    no_model_brief = provider_module._query_combat_equipment_divergence_brief("包含任意术语的Query")
 
-    assert (
-        anti_ship["query_specific_weapon_architectures"]
-        != underground["query_specific_weapon_architectures"]
-    )
+    assert anti_ship["query_specific_weapon_architectures"] != underground["query_specific_weapon_architectures"]
     assert "潜射低特征" in anti_ship["query_specific_weapon_architectures"][0]
     assert anti_ship["equipment_project_hypotheses"][0]["project_function"]
-    assert (
-        anti_ship["frontier_technology_hypotheses"][0]["enabling_principle"]
-        == "跨介质尾迹与多谱段散射联合测量"
-    )
+    assert anti_ship["frontier_technology_hypotheses"][0]["enabling_principle"] == "跨介质尾迹与多谱段散射联合测量"
     assert "project_name" not in anti_ship["equipment_project_hypotheses"][0]
     assert no_model_brief["query_specific_weapon_architectures"] == []
     assert "提示词表" in no_model_brief["generation_rules"][0]
@@ -741,10 +715,7 @@ def test_query_divergence_brief_does_not_use_keyword_weapon_lenses() -> None:
     )
 
     assert brief["conditional_priority_observation_lenses"] == []
-    assert (
-        "固定装备名称"
-        in provider_module._query_led_combat_equipment_theme_instruction()
-    )
+    assert "固定装备名称" in provider_module._query_led_combat_equipment_theme_instruction()
 
 
 def test_portfolio_innovation_audit_allows_missing_engineering_detail() -> None:
@@ -834,15 +805,11 @@ def test_dynamic_portfolio_keeps_selected_identity_and_s6_authored_portrait() ->
     assert merged[0]["name"] == selected[0]["name"]
     assert merged[0]["direct_evidence_refs"] == ["ev-weapon_equipment-a"]
     assert merged[0]["capability_portrait"] == "S6撰写的潜航器专属能力画像"
-    assert merged[0]["system_contribution_thesis"] == (
-        "潜航器以前出持续接触替代有人平台高风险驻留"
-    )
+    assert merged[0]["system_contribution_thesis"] == ("潜航器以前出持续接触替代有人平台高风险驻留")
     assert merged[0]["indicator_portrait"] == "以持续接触时间和暴露风险判退"
     assert merged[0]["operational_process"][0] == "隐蔽前出"
     assert merged[1]["capability_portrait"] == "S6撰写的鱼雷专属能力画像"
-    assert merged[1]["system_contribution_thesis"] == (
-        "鱼雷以水下自主复获续接载机撤离后的追击断点"
-    )
+    assert merged[1]["system_contribution_thesis"] == ("鱼雷以水下自主复获续接载机撤离后的追击断点")
     assert merged[1]["indicator_portrait"] == "以失联复获率和误击拒止率判退"
     assert merged[1]["expert_score"] == 0.81
 
@@ -953,9 +920,7 @@ def test_dynamic_s6_merge_drops_cross_card_contaminated_prose() -> None:
         },
     ]
 
-    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(
-        selected, authored
-    )
+    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(selected, authored)
 
     assert [item["hypothesis_id"] for item in merged] == ["candidate-b"]
 
@@ -974,9 +939,7 @@ def test_dynamic_s6_merge_never_positionally_cross_binds_known_ids() -> None:
         }
     ]
 
-    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(
-        selected, authored
-    )
+    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(selected, authored)
 
     assert [item["hypothesis_id"] for item in merged] == ["candidate-b"]
 
@@ -1091,9 +1054,7 @@ def test_winning_projection_preserves_model_selected_candidate_title() -> None:
 
 
 def test_s6_model_call_ignores_expired_run_deadline_without_downshifting() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
     provider.configure_run_budget(
         {
@@ -1133,9 +1094,7 @@ def test_s6_model_call_ignores_expired_run_deadline_without_downshifting() -> No
 
 
 def test_s6_card_repair_uses_narrow_low_reasoning_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     result = asyncio.run(
@@ -1160,9 +1119,7 @@ def test_s6_card_repair_uses_narrow_low_reasoning_profile() -> None:
 
 
 def test_parallel_s6_card_uses_soft_timeout_and_single_provider_attempt() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     result = asyncio.run(
@@ -1188,9 +1145,7 @@ def test_parallel_s6_card_uses_soft_timeout_and_single_provider_attempt() -> Non
 
 
 def test_parallel_s6_technology_column_enables_governed_live_search() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     result = asyncio.run(
@@ -1217,9 +1172,7 @@ def test_parallel_s6_technology_column_enables_governed_live_search() -> None:
 
 
 def test_parallel_s6_technology_module_retry_reuses_first_search_context() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1245,9 +1198,7 @@ def test_parallel_s6_technology_module_retry_reuses_first_search_context() -> No
 
 
 def test_parallel_s6_technology_offline_recovery_remains_bounded() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1259,10 +1210,7 @@ def test_parallel_s6_technology_offline_recovery_remains_bounded() -> None:
                 "portrait_module_attempt": 3,
             },
             3200,
-            phase=(
-                "winning_s6_parallel_card_01_module_technology_implementation"
-                "_offline_recovery"
-            ),
+            phase=("winning_s6_parallel_card_01_module_technology_implementation_offline_recovery"),
             output_schema={"ok": "boolean"},
         )
     )
@@ -1276,9 +1224,7 @@ def test_parallel_s6_technology_offline_recovery_remains_bounded() -> None:
 
 
 def test_parallel_s6_non_technology_column_does_not_force_live_search() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1298,9 +1244,7 @@ def test_parallel_s6_non_technology_column_does_not_force_live_search() -> None:
 
 
 def test_parallel_s6_resume_card_preserves_high_reasoning_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1323,9 +1267,7 @@ def test_parallel_s6_resume_card_preserves_high_reasoning_profile() -> None:
 
 
 def test_parallel_s6_card_repair_uses_shorter_medium_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1349,9 +1291,7 @@ def test_parallel_s6_card_repair_uses_shorter_medium_profile() -> None:
 
 def test_parallel_s6_card_can_opt_into_hard_timeout(monkeypatch) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "1")
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1371,9 +1311,7 @@ def test_parallel_s6_card_can_opt_into_hard_timeout(monkeypatch) -> None:
 
 
 def test_dynamic_swarm_specialist_allows_provider_retry() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     result = asyncio.run(
@@ -1395,9 +1333,7 @@ def test_dynamic_swarm_specialist_allows_provider_retry() -> None:
 
 
 def test_semantic_pair_clustering_uses_fast_bounded_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]])
     provider = ResponsesAgentProvider(backend)
 
     result = asyncio.run(
@@ -1422,15 +1358,7 @@ def test_semantic_pair_clustering_uses_fast_bounded_profile() -> None:
 
 
 def test_pre_generation_angle_selection_uses_fast_bounded_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [
-            [
-                ProviderStreamEvent.final(
-                    ProviderFinalTurn(text='{"selected_seed_ids":[]}')
-                )
-            ]
-        ]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"selected_seed_ids":[]}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1452,9 +1380,7 @@ def test_pre_generation_angle_selection_uses_fast_bounded_profile() -> None:
 
 
 def test_pre_generation_active_angle_selection_has_no_provider_hard_timeout() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"active_angle_ids":[]}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"active_angle_ids":[]}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1476,9 +1402,7 @@ def test_pre_generation_active_angle_selection_has_no_provider_hard_timeout() ->
 
 
 def test_post_divergence_frontier_mapping_uses_medium_reasoning_in_one_pass() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"angle_challenges":[]}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"angle_challenges":[]}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1499,9 +1423,7 @@ def test_post_divergence_frontier_mapping_uses_medium_reasoning_in_one_pass() ->
 
 
 def test_evidence_analysis_uses_compact_bounded_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"findings":[]}'))]]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"findings":[]}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1524,15 +1446,7 @@ def test_evidence_analysis_uses_compact_bounded_profile() -> None:
 
 
 def test_s5_handoff_contract_uses_bounded_authoring_profile() -> None:
-    backend = ScriptedFakeProvider(
-        [
-            [
-                ProviderStreamEvent.final(
-                    ProviderFinalTurn(text='{"indicator_portrait":"ok"}')
-                )
-            ]
-        ]
-    )
+    backend = ScriptedFakeProvider([[ProviderStreamEvent.final(ProviderFinalTurn(text='{"indicator_portrait":"ok"}'))]])
     provider = ResponsesAgentProvider(backend)
 
     asyncio.run(
@@ -1783,9 +1697,7 @@ def test_portfolio_candidate_handoff_keeps_decision_spine_with_bounded_size() ->
         )
     ).issubset(portfolio)
     assert "trl_constraints" not in portfolio
-    assert len(json.dumps(portfolio, ensure_ascii=False)) < len(
-        json.dumps(full, ensure_ascii=False)
-    )
+    assert len(json.dumps(portfolio, ensure_ascii=False)) < len(json.dumps(full, ensure_ascii=False))
     assert portfolio["mechanism_chain"][0] == repeated[0]
     assert portfolio["mechanism_chain"][-1] == repeated[-1]
     assert not any(
@@ -1825,9 +1737,7 @@ def test_portfolio_title_does_not_compose_name_from_equipment_form() -> None:
         score=0.8,
     )
 
-    assert provider_module._winning_portfolio_title(hypothesis) == (
-        "多层反无人走廊迫使低空装备转向窗口突防"
-    )
+    assert provider_module._winning_portfolio_title(hypothesis) == ("多层反无人走廊迫使低空装备转向窗口突防")
 
 
 def test_portfolio_title_removes_branch_and_s_node_internal_prefix() -> None:
@@ -1842,14 +1752,10 @@ def test_portfolio_title_removes_branch_and_s_node_internal_prefix() -> None:
         novelty_delta="断链续接",
     )
 
-    assert provider_module._winning_portfolio_title(hypothesis) == (
-        "抗辐射巡飞猎歼弹药接替失联精确火力链"
-    )
+    assert provider_module._winning_portfolio_title(hypothesis) == ("抗辐射巡飞猎歼弹药接替失联精确火力链")
 
 
-def test_remote_precision_portfolio_direction_uses_model_classification() -> (
-    None
-):
+def test_remote_precision_portfolio_direction_uses_model_classification() -> None:
     assert provider_module._is_remote_precision_portfolio_direction(
         {
             "name": "JASSM-ER类空射防区外巡航导弹",
@@ -1966,12 +1872,8 @@ def test_s6_handoff_is_query_led_and_excludes_execution_governance() -> None:
         topic="西太反介入条件下装备能力缺口",
         branch="B",
         prior_step_outputs={
-            "effect_chain": [
-                "S3 Agent 判断：远域感知受压后，目标识别到火力分配链路中断"
-            ],
-            "defense_decomposition": [
-                "Codex沿L1门控发现对手将通过分布式节点与诱饵实施反适应"
-            ],
+            "effect_chain": ["S3 Agent 判断：远域感知受压后，目标识别到火力分配链路中断"],
+            "defense_decomposition": ["Codex沿L1门控发现对手将通过分布式节点与诱饵实施反适应"],
             "gap_assessment": [
                 {
                     "capability": "远域目标连续跟踪",
@@ -2036,15 +1938,12 @@ def test_dynamic_s6_handoff_passes_only_selected_direct_combat_weapons() -> None
                             "对照现役远程打击任务链，无法形成稳定战果时判退。"
                         ),
                         "query_relevance": (
-                            "在岛链外缘火力交战阶段，针对敌方机动与干扰压力，"
-                            "直接打击并毁伤高价值目标。"
+                            "在岛链外缘火力交战阶段，针对敌方机动与干扰压力，直接打击并毁伤高价值目标。"
                         ),
                         "unique_operational_role": "断链后的末段自主猎歼",
                         "launch_or_release_domain": "岛链外缘远程火力释放域",
                         "target_and_direct_effect": "猎歼高价值机动目标",
-                        "concise_winning_summary": (
-                            "受扰断链后仍能自主复核目标，在末段窗口直接猎歼高价值机动目标。"
-                        ),
+                        "concise_winning_summary": ("受扰断链后仍能自主复核目标，在末段窗口直接猎歼高价值机动目标。"),
                         "non_substitutable_difference": "把复核与授权前移至弹上",
                         "portfolio_identity_contract": {"hypothesis_id": "direct-1"},
                         "evidence_boundary": "S3 Agent仅形成方向推断，仍需对象试验验证",
@@ -2068,33 +1967,20 @@ def test_dynamic_s6_handoff_passes_only_selected_direct_combat_weapons() -> None
         evidence_index=[],
     )
 
-    assert [
-        item["hypothesis_id"] for item in handoff["selected_equipment_portfolio"]
-    ] == [
+    assert [item["hypothesis_id"] for item in handoff["selected_equipment_portfolio"]] == [
         "direct-1",
         "legacy-s6-1",
     ]
     assert handoff["selected_equipment_portfolio"][0]["direct_combat_equipment"] is True
     assert "判退" in handoff["selected_equipment_portfolio"][0]["indicator_portrait"]
-    assert handoff["selected_equipment_portfolio"][0]["unique_operational_role"] == (
-        "断链后的末段自主猎歼"
-    )
-    assert handoff["selected_equipment_portfolio"][0][
-        "portfolio_identity_contract"
-    ] == {"hypothesis_id": "direct-1"}
-    assert (
-        "自主复核目标"
-        in handoff["selected_equipment_portfolio"][0]["concise_winning_summary"]
-    )
+    assert handoff["selected_equipment_portfolio"][0]["unique_operational_role"] == ("断链后的末段自主猎歼")
+    assert handoff["selected_equipment_portfolio"][0]["portfolio_identity_contract"] == {"hypothesis_id": "direct-1"}
+    assert "自主复核目标" in handoff["selected_equipment_portfolio"][0]["concise_winning_summary"]
     assert "evidence_boundary" not in handoff["selected_equipment_portfolio"][0]
-    assert handoff["selected_equipment_portfolio"][1]["source_hypothesis_title"] == (
-        "“断链”自主末段猎歼弹"
-    )
+    assert handoff["selected_equipment_portfolio"][1]["source_hypothesis_title"] == ("“断链”自主末段猎歼弹")
     assert handoff["s6_card_capacity"] == 12
     assert handoff["s6_parallelism"] == 32
-    assert (
-        "仅传入已通过动态组合评审的直接战斗武器" in handoff["selected_portfolio_rule"]
-    )
+    assert "仅传入已通过动态组合评审的直接战斗武器" in handoff["selected_portfolio_rule"]
     assert "前置候选阶段冻结" in handoff["selected_portfolio_rule"]
     assert "S6逐卡并行撰写能力画像" in handoff["selected_portfolio_rule"]
 
@@ -2135,10 +2021,7 @@ def test_s6_direction_repair_cannot_rename_pre_s6_candidate() -> None:
     )
 
     assert repaired["concept_directions"][0]["name"] == "仿生扑翼微型侦察打击弹"
-    assert (
-        repaired["concept_directions"][0]["capability_portrait"]
-        == "自然重写后的能力画像"
-    )
+    assert repaired["concept_directions"][0]["capability_portrait"] == "自然重写后的能力画像"
 
 
 def test_capability_portrait_modules_preserve_frozen_weapon_codename_quotes() -> None:
@@ -2223,9 +2106,7 @@ def test_s6_portrait_contract_accepts_non_kinetic_equipment_workflow() -> None:
             "name": "谱域门控电子对抗站",
             "primary_equipment_identity": "谱域门控电子对抗站",
             "equipment_form": "车载固定构型电子对抗站",
-            "capability_portrait": provider_module.assemble_capability_portrait_modules(
-                modules
-            ),
+            "capability_portrait": provider_module.assemble_capability_portrait_modules(modules),
         },
     )
 
@@ -2246,9 +2127,7 @@ def test_s6_winning_logic_content_is_owned_by_codex_not_keyword_gate() -> None:
         {
             "name": "潮前待机高速打击弹",
             "equipment_form": "潮前待机高速打击弹",
-            "capability_portrait": provider_module.assemble_capability_portrait_modules(
-                modules
-            ),
+            "capability_portrait": provider_module.assemble_capability_portrait_modules(modules),
         },
     )
 
@@ -2259,8 +2138,7 @@ def test_s6_winning_logic_content_is_owned_by_codex_not_keyword_gate() -> None:
 def test_s6_portrait_length_does_not_schedule_module_repair() -> None:
     overlong_logic = (
         "传统远程精确火力依赖持续目标更新并在发现后组织发射，对手能够利用链路迟滞、短时暴露和快速转移逃出打击窗口。"
-        + "该装备把受控接敌能力前置到目标邻近空间，以武器本体持续占位替代后方火力临时响应，"
-        * 4
+        + "该装备把受控接敌能力前置到目标邻近空间，以武器本体持续占位替代后方火力临时响应，" * 4
         + "迫使对手在保持节点静默与暴露任务功能之间选择，并使其防护资源长期分散。"
     )
     modules = {
@@ -2275,9 +2153,7 @@ def test_s6_portrait_length_does_not_schedule_module_repair() -> None:
         {
             "name": "邻空占位精打弹",
             "equipment_form": "邻空占位精打弹",
-            "capability_portrait": provider_module.assemble_capability_portrait_modules(
-                modules
-            ),
+            "capability_portrait": provider_module.assemble_capability_portrait_modules(modules),
             "operational_process": ["预置待机", "授权后接敌"],
         },
         semantic_contract_required=True,
@@ -2333,9 +2209,7 @@ def test_s6_portrait_repetition_is_not_a_local_string_gate() -> None:
         {
             "name": "“潜钟”长航时猎潜无人潜航器",
             "equipment_form": "长航时武装猎潜无人潜航器",
-            "capability_portrait": provider_module.assemble_capability_portrait_modules(
-                modules
-            ),
+            "capability_portrait": provider_module.assemble_capability_portrait_modules(modules),
             "operational_process": ["隐蔽释放并展开", "持续分类跟踪并受控交战"],
         },
         semantic_contract_required=True,
@@ -2412,9 +2286,7 @@ def test_dynamic_portfolio_does_not_replace_query_title_with_family_template() -
         changed_confrontation_variable="岛礁伏击窗口内的自主目标复核",
         mechanism_chain=["待机", "复核", "猎歼"],
         direct_military_effects=["压制伏击火力节点"],
-        equipment_forms=[
-            "形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和有限末段确认载荷"
-        ],
+        equipment_forms=["形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和有限末段确认载荷"],
         novelty_delta="以岛礁伏击窗组织自主猎歼",
     )
 
@@ -2480,9 +2352,7 @@ def test_s6_length_is_advisory_not_a_hard_quality_issue() -> None:
         handoff=handoff,
     )
 
-    assert not any(
-        "120至360" in issue or "当前" in issue and "字" in issue for issue in issues
-    )
+    assert not any("120至360" in issue or "当前" in issue and "字" in issue for issue in issues)
 
 
 def test_s6_normalization_does_not_replace_agent_title_with_equipment_form() -> None:
@@ -2519,9 +2389,7 @@ def test_s6_normalization_preserves_full_identity_for_launch_mode_label() -> Non
     assert normalized["concept_directions"][0]["name"] == "地射无人机"
 
 
-def test_s6_normalization_omits_internal_evidence_boundary_without_blocking_delivery() -> (
-    None
-):
+def test_s6_normalization_omits_internal_evidence_boundary_without_blocking_delivery() -> None:
     normalized = _normalize_s6_deterministic_format(
         {
             "concept_directions": [
@@ -2536,9 +2404,7 @@ def test_s6_normalization_omits_internal_evidence_boundary_without_blocking_deli
 
     assert "evidence_boundary" not in normalized["concept_directions"][0]
     assert (
-        provider_module._s6_delivery_blocking_issues(
-            ["S6第1项evidence_boundary为内部审计备注，交付时忽略该可选字段"]
-        )
+        provider_module._s6_delivery_blocking_issues(["S6第1项evidence_boundary为内部审计备注，交付时忽略该可选字段"])
         == []
     )
 
@@ -2588,9 +2454,7 @@ def test_s6_delivery_length_is_not_a_hard_gate() -> None:
     assert state["limited"] is True
 
 
-def test_s6_frontier_new_capability_accepts_analogous_evidence_but_upgrade_does_not() -> (
-    None
-):
+def test_s6_frontier_new_capability_accepts_analogous_evidence_but_upgrade_does_not() -> None:
     base_direction = {
         "name": "低特征纵深压制巡航弹",
         "type": "new_capability",
@@ -2610,9 +2474,7 @@ def test_s6_frontier_new_capability_accepts_analogous_evidence_but_upgrade_does_
         ],
     }
 
-    frontier_issues = _capability_direction_quality_issues(
-        {"concept_directions": [base_direction]}, handoff=handoff
-    )
+    frontier_issues = _capability_direction_quality_issues({"concept_directions": [base_direction]}, handoff=handoff)
     upgrade_issues = _capability_direction_quality_issues(
         {
             "concept_directions": [
@@ -2649,13 +2511,10 @@ def test_s6_semantic_contract_warns_on_completely_evidence_free_frontier_card() 
     assert evidence_issues == []
 
 
-def test_s6_delivery_does_not_block_missing_or_placeholder_indicator_portrait() -> (
-    None
-):
+def test_s6_delivery_does_not_block_missing_or_placeholder_indicator_portrait() -> None:
     issues = [
         "S6第1项缺少indicator_portrait",
-        "S6第2项indicator_portrait未形成由本装备机理推导的差异化测量轴、"
-        "对照基线与判退条件",
+        "S6第2项indicator_portrait未形成由本装备机理推导的差异化测量轴、对照基线与判退条件",
     ]
 
     assert provider_module._s6_delivery_blocking_issues(issues) == []
@@ -2689,10 +2548,7 @@ def test_s6_confidence_warning_is_not_delivery_blocking() -> None:
 
 
 def test_s6_same_card_long_sentence_reuse_is_advisory() -> None:
-    repeated = (
-        "验证阶段必须以强干扰下持续接触时间、误击拒止率和有人平台暴露时间"
-        "对照现役基线实施判退。"
-    )
+    repeated = "验证阶段必须以强干扰下持续接触时间、误击拒止率和有人平台暴露时间对照现役基线实施判退。"
     issues = provider_module._capability_language_issues(
         1,
         {
@@ -2791,9 +2647,7 @@ def test_s6_repair_targets_selects_later_duplicate_title_card() -> None:
 
     targets = _s6_repair_targets(
         result,
-        [
-            "S6最终方向名称必须互异，禁止多个不同装备被压缩为同一标题：多模复核反辐射巡飞猎歼弹"
-        ],
+        ["S6最终方向名称必须互异，禁止多个不同装备被压缩为同一标题：多模复核反辐射巡飞猎歼弹"],
     )
 
     assert targets == [4]
@@ -2853,10 +2707,7 @@ def test_dynamic_s6_card_binding_creates_distinct_codex_cli_providers() -> None:
         )
         for payload in payloads
     ]
-    scoped = [
-        provider._provider_for("winning_s6_image", isolation_id=isolation_id)
-        for isolation_id in isolation_ids
-    ]
+    scoped = [provider._provider_for("winning_s6_image", isolation_id=isolation_id) for isolation_id in isolation_ids]
 
     assert isolation_ids == [
         "s6-card-binding-1",
@@ -2868,9 +2719,7 @@ def test_dynamic_s6_card_binding_creates_distinct_codex_cli_providers() -> None:
     assert created == isolation_ids
 
 
-def test_s6_quality_gate_does_not_use_cross_card_text_similarity() -> (
-    None
-):
+def test_s6_quality_gate_does_not_use_cross_card_text_similarity() -> None:
     shared = (
         "面向强电磁压制与GNSS拒止，针对目标坐标过期、导航受扰和末端不可确认，"
         "利用目标信息时效约束与多模证据门控原理，采用组合导航可信评估、受约束搜索、"
@@ -2920,9 +2769,7 @@ def test_s6_title_gate_does_not_reject_upgrade_suffix_locally() -> None:
     assert issues == []
 
 
-def test_s6_overview_style_is_not_a_local_keyword_gate() -> (
-    None
-):
+def test_s6_overview_style_is_not_a_local_keyword_gate() -> None:
     issues = _capability_language_issues(
         1,
         {
@@ -3046,9 +2893,7 @@ def test_s6_local_normalization_preserves_concrete_compound_equipment_titles(
     assert normalized["concept_directions"][0]["name"] == title
 
 
-def test_s6_title_gate_does_not_classify_abstract_suffix_by_keywords() -> (
-    None
-):
+def test_s6_title_gate_does_not_classify_abstract_suffix_by_keywords() -> None:
     issues = _capability_language_issues(
         1,
         {
@@ -3151,12 +2996,8 @@ def test_s6_support_only_decision_is_consumed_from_s5_semantic_contract() -> Non
         ),
     ]
 
-    assert all(
-        provider_module._is_ordinary_support_direction(item) for item in directions
-    )
-    issues = _capability_direction_quality_issues(
-        {"concept_directions": directions}
-    )
+    assert all(provider_module._is_ordinary_support_direction(item) for item in directions)
+    issues = _capability_direction_quality_issues({"concept_directions": directions})
     assert not any("不得把普通通信" in issue for issue in issues)
 
 
@@ -3176,9 +3017,7 @@ def test_s6_camouflage_submodule_does_not_reclassify_fire_control_vehicle() -> N
     direction = {
         "name": "机动被动探测火控车",
         "function": "静默发现目标并输出火控摘要",
-        "equipment_form": (
-            "高机动被动射频/光电探测车、边缘火控计算单元和伪装机动发射协同模块"
-        ),
+        "equipment_form": ("高机动被动射频/光电探测车、边缘火控计算单元和伪装机动发射协同模块"),
         "military_value": "提升目标发现、火力分配和再打击质量",
     }
 
@@ -3222,9 +3061,7 @@ def test_s6_recognizes_mobile_counter_swarm_effect_vehicles(
     assert provider_module._is_ancillary_support_equipment_direction(direction) is False
 
 
-def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio() -> (
-    None
-):
+def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio() -> None:
     portrait = (
         "该方向面向强干扰条件下目标发现到火力打击阶段，通过具体装备完成目标识别、火力分配、"
         "拦截、毁伤评估和再次打击。相对现役基线，新增机制把传感器、火控和效应器组合为可验证"
@@ -3269,9 +3106,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
                 "现役预警机与联合火控系统",
                 "upgrade",
             ),
-            direction(
-                "分布式雷达目标猎获系统", "机动雷达与光电传感器", "new_capability"
-            ),
+            direction("分布式雷达目标猎获系统", "机动雷达与光电传感器", "new_capability"),
             direction("电子战目标压制系统", "电子战任务系统", "new_capability"),
         ]
     }
@@ -3288,9 +3123,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
 
     complete_portfolio = {
         "concept_directions": [
-            direction(
-                "现役防空导弹抗饱和拦截升级", "现役防空导弹与联合火控系统", "upgrade"
-            ),
+            direction("现役防空导弹抗饱和拦截升级", "现役防空导弹与联合火控系统", "upgrade"),
             direction(
                 "远域无人机目标猎歼系统",
                 "察打一体无人机与协同攻击载荷",
@@ -3301,9 +3134,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
                 "远程反舰导弹、发射单元与联合火控系统",
                 "new_capability",
             ),
-            direction(
-                "低空反无人高功率微波压制器", "高功率微波反无人效应器", "new_capability"
-            ),
+            direction("低空反无人高功率微波压制器", "高功率微波反无人效应器", "new_capability"),
             direction(
                 "深海无人潜航器鱼雷伏击系统",
                 "无人潜航器与重型鱼雷载荷",
@@ -3318,19 +3149,11 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
 
     fire_platform_portfolio = {
         "concept_directions": [
-            direction(
-                "抗干扰远程精确制导弹药", "陆基远程精确制导弹药", "new_capability"
-            ),
-            direction(
-                "可消耗无人搜索打击平台", "察打一体可消耗无人机", "new_capability"
-            ),
+            direction("抗干扰远程精确制导弹药", "陆基远程精确制导弹药", "new_capability"),
+            direction("可消耗无人搜索打击平台", "察打一体可消耗无人机", "new_capability"),
             direction("多模拒打巡飞弹药", "中小型巡飞弹药", "new_capability"),
-            direction(
-                "HIMARS/NMESIS断链拒止升级", "HIMARS、NMESIS机动发射车", "upgrade"
-            ),
-            direction(
-                "低特征前沿精确火力车", "模块化发射箱与低特征火力车", "new_capability"
-            ),
+            direction("HIMARS/NMESIS断链拒止升级", "HIMARS、NMESIS机动发射车", "upgrade"),
+            direction("低特征前沿精确火力车", "模块化发射箱与低特征火力车", "new_capability"),
         ]
     }
     fire_platform_issues = _capability_direction_quality_issues(fire_platform_portfolio)
@@ -3353,12 +3176,8 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
                 "远程反舰导弹、发射单元与联合火控系统",
                 "new_capability",
             ),
-            direction(
-                "分布式雷达目标猎获系统", "机动雷达与光电传感器", "new_capability"
-            ),
-            direction(
-                "联合火控目标分配系统", "联合火控系统与任务传感器", "new_capability"
-            ),
+            direction("分布式雷达目标猎获系统", "机动雷达与光电传感器", "new_capability"),
+            direction("联合火控目标分配系统", "联合火控系统与任务传感器", "new_capability"),
         ]
     }
     two_direct_issues = _capability_direction_quality_issues(two_direct_only)
@@ -3383,12 +3202,8 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
             ),
         ]
     }
-    false_positive_issues = _capability_direction_quality_issues(
-        ammunition_support_false_positive
-    )
-    assert not any(
-        "独立导弹或精确制导弹药方向" in issue for issue in false_positive_issues
-    )
+    false_positive_issues = _capability_direction_quality_issues(ammunition_support_false_positive)
+    assert not any("独立导弹或精确制导弹药方向" in issue for issue in false_positive_issues)
 
 
 def test_s6_query_mismatch_is_read_from_structured_agent_judgement() -> None:
@@ -3399,29 +3214,28 @@ def test_s6_query_mismatch_is_read_from_structured_agent_judgement() -> None:
         "现役系统改装，中期形成样机并开展体系联试；验证采用红蓝对抗、实弹或半实物试验，"
         "若有效交战闭环和毁伤闭合率不能提高，则降低优先级。"
     )
-    direction = _with_model_semantic_contract({
-        "name": "远程反舰导弹连续打击系统",
-        "type": "new_capability",
-        "function": "发现并打击海上高价值目标",
-        "equipment_form": "远程反舰导弹、发射单元与联合火控系统",
-        "operational_mechanism": "通过目标识别、火力分配和协同突防完成连续毁伤",
-        "military_value": "提升海上区域拒止、反舰毁伤和再打击能力",
-        "strike_countermeasure_value": "形成远程反舰打击与抗饱和反制效果",
-        "development_path": "近期分系统改进，中期样机研制与对抗验证",
-        "future_trigger": "强干扰与饱和突防威胁持续增加",
-        "adversary_adaptation": "对手采用诱饵、干扰和分布式机动",
-        "failure_boundary": "目标质量和制导火控精度不足时失效",
-        "baseline_system": "现役岸舰导弹和海上目标指示体系",
-        "capability_gap": "强干扰下连续目标保持和多波次毁伤能力不足",
-        "capability_portrait": (portrait * 2)[:500],
-        "query_relevance": (
-            "面向陆上边境巡逻任务，在日常警戒阶段应对普通车辆目标，"
-            "通过导弹打击提升火力效果"
-        ),
-    }, query_alignment_confirmed=False, precision_munition=True)
-    handoff = {
-        "query": "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距"
-    }
+    direction = _with_model_semantic_contract(
+        {
+            "name": "远程反舰导弹连续打击系统",
+            "type": "new_capability",
+            "function": "发现并打击海上高价值目标",
+            "equipment_form": "远程反舰导弹、发射单元与联合火控系统",
+            "operational_mechanism": "通过目标识别、火力分配和协同突防完成连续毁伤",
+            "military_value": "提升海上区域拒止、反舰毁伤和再打击能力",
+            "strike_countermeasure_value": "形成远程反舰打击与抗饱和反制效果",
+            "development_path": "近期分系统改进，中期样机研制与对抗验证",
+            "future_trigger": "强干扰与饱和突防威胁持续增加",
+            "adversary_adaptation": "对手采用诱饵、干扰和分布式机动",
+            "failure_boundary": "目标质量和制导火控精度不足时失效",
+            "baseline_system": "现役岸舰导弹和海上目标指示体系",
+            "capability_gap": "强干扰下连续目标保持和多波次毁伤能力不足",
+            "capability_portrait": (portrait * 2)[:500],
+            "query_relevance": ("面向陆上边境巡逻任务，在日常警戒阶段应对普通车辆目标，通过导弹打击提升火力效果"),
+        },
+        query_alignment_confirmed=False,
+        precision_munition=True,
+    )
+    handoff = {"query": "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距"}
 
     issues = _capability_direction_quality_issues(
         {
@@ -3470,8 +3284,7 @@ def test_s6_query_relevance_accepts_degraded_communications_topic_anchors() -> N
     direction = {
         "name": "远程精确制导弹药",
         "query_relevance": (
-            "面向弱通信条件下的首轮打击阶段，应对导航压制和目标更新稀疏压力，"
-            "保持对高价值节点的精确毁伤与区域拒止。"
+            "面向弱通信条件下的首轮打击阶段，应对导航压制和目标更新稀疏压力，保持对高价值节点的精确毁伤与区域拒止。"
         ),
     }
 
@@ -3486,42 +3299,45 @@ def test_s6_query_relevance_accepts_degraded_communications_topic_anchors() -> N
 
 def test_s6_direction_name_recognizes_loitering_munition_as_equipment_object() -> None:
     for row in (
-            {
-                "name": "中小型反辐射巡飞弹目标发现",
-                "equipment_form": "中小型反辐射巡飞弹与被动射频载荷",
-            },
-            {
-                "name": "PrSM Increment 1/2火力升级",
-                "equipment_form": "PrSM Increment 1/2类陆基远程精确制导弹药",
-            },
-            {
-                "name": "可消耗远程电子压制弹火力",
-                "equipment_form": "远程电子压制弹与被动射频导引载荷",
-            },
-            {
-                "name": "现役Tomahawk Block V火力升级",
-                "equipment_form": "现役Tomahawk Block V巡航导弹与舰载发射系统",
-            },
+        {
+            "name": "中小型反辐射巡飞弹目标发现",
+            "equipment_form": "中小型反辐射巡飞弹与被动射频载荷",
+        },
+        {
+            "name": "PrSM Increment 1/2火力升级",
+            "equipment_form": "PrSM Increment 1/2类陆基远程精确制导弹药",
+        },
+        {
+            "name": "可消耗远程电子压制弹火力",
+            "equipment_form": "远程电子压制弹与被动射频导引载荷",
+        },
+        {
+            "name": "现役Tomahawk Block V火力升级",
+            "equipment_form": "现役Tomahawk Block V巡航导弹与舰载发射系统",
+        },
     ):
-        assert provider_module._direction_name_has_equipment_object(
-            _with_model_semantic_contract(row, precision_munition=True)
-        ) is True
+        assert (
+            provider_module._direction_name_has_equipment_object(
+                _with_model_semantic_contract(row, precision_munition=True)
+            )
+            is True
+        )
 
 
-def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon() -> (
-    None
-):
+def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon() -> None:
     """A new-build ``打击舱`` is valid when its governed contract is complete."""
 
-    direction = _with_model_semantic_contract({
-        "name": "“判毁续击”分布式效应滑翔打击舱",
-        "type": "new_capability",
-        "primary_equipment_identity": "“判毁续击”分布式效应滑翔打击舱",
-        "equipment_form": "“判毁续击”分布式效应滑翔打击舱",
-        "function": "末段复核目标毁伤状态，对关键节点实施直接毁伤与必要补击",
-        "operational_mechanism": "分布式释放后按目标优先级滑翔接近，完成毁伤判定并独立触发补击",
-        "military_value": "在首击不确定和链路受压条件下闭合毁伤链，提升关键节点持续失能概率",
-    })
+    direction = _with_model_semantic_contract(
+        {
+            "name": "“判毁续击”分布式效应滑翔打击舱",
+            "type": "new_capability",
+            "primary_equipment_identity": "“判毁续击”分布式效应滑翔打击舱",
+            "equipment_form": "“判毁续击”分布式效应滑翔打击舱",
+            "function": "末段复核目标毁伤状态，对关键节点实施直接毁伤与必要补击",
+            "operational_mechanism": "分布式释放后按目标优先级滑翔接近，完成毁伤判定并独立触发补击",
+            "military_value": "在首击不确定和链路受压条件下闭合毁伤链，提升关键节点持续失能概率",
+        }
+    )
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     issues = provider_module._capability_direction_quality_issues(
@@ -3533,8 +3349,7 @@ def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon()
                     "adversary_adaptation": "对手转移目标并加强诱饵干扰",
                     "failure_boundary": "目标身份无法确认时拒打",
                     "query_relevance": (
-                        "面向强干扰和节点损耗条件下的打击阶段，"
-                        "应对对手诱饵压力，形成关键节点直接毁伤与必要补击效果。"
+                        "面向强干扰和节点损耗条件下的打击阶段，应对对手诱饵压力，形成关键节点直接毁伤与必要补击效果。"
                     ),
                     "baseline_system": "现有远程精确火力与一次性战斗部",
                     "capability_gap": "首击毁伤不确定时缺少低成本补击手段",
@@ -3548,23 +3363,31 @@ def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon()
 
 
 def test_s6_recognizes_semantic_combat_munition_compound() -> None:
-    direction = _with_model_semantic_contract({
-        "name": "远程可消耗电子诱骗弹火力",
-        "equipment_form": "远程电子诱骗弹与任务载荷",
-        "military_value": "压制防空雷达并为主攻弹群制造突防窗口",
-    }, precision_munition=True)
+    direction = _with_model_semantic_contract(
+        {
+            "name": "远程可消耗电子诱骗弹火力",
+            "equipment_form": "远程电子诱骗弹与任务载荷",
+            "military_value": "压制防空雷达并为主攻弹群制造突防窗口",
+        },
+        precision_munition=True,
+    )
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     assert provider_module._is_missile_precision_munition_direction(direction) is True
 
 
 def test_s6_rejects_support_mission_disguised_with_unmanned_and_firepower() -> None:
-    direction = _with_model_semantic_contract({
-        "name": "小型无人机回收/数据读取接口火力",
-        "equipment_form": "小型无人机、回收装置与数据读取接口",
-        "function": "回收平台并读取任务数据",
-        "military_value": "提升任务数据复盘效率",
-    }, classification="support_only", direct_combat_effect=False, support_only=True)
+    direction = _with_model_semantic_contract(
+        {
+            "name": "小型无人机回收/数据读取接口火力",
+            "equipment_form": "小型无人机、回收装置与数据读取接口",
+            "function": "回收平台并读取任务数据",
+            "military_value": "提升任务数据复盘效率",
+        },
+        classification="support_only",
+        direct_combat_effect=False,
+        support_only=True,
+    )
 
     assert provider_module._is_ordinary_support_direction(direction) is True
     assert provider_module._is_lethal_weapon_equipment_direction(direction) is False
@@ -3575,9 +3398,7 @@ def test_s6_normalizer_preserves_agent_query_relevance_without_local_projection(
         "name": "低空诱饵压制巡飞弹开窗",
         "type": "new_capability",
         "equipment_form": "低空诱饵压制巡飞弹",
-        "query_relevance": (
-            "在突防与交战阶段应对敌防空压制和诱饵压力，形成压制开窗并提升主弹毁伤效果。"
-        ),
+        "query_relevance": ("在突防与交战阶段应对敌防空压制和诱饵压力，形成压制开窗并提升主弹毁伤效果。"),
     }
 
     normalized = _normalize_s6_deterministic_format(
@@ -3602,9 +3423,7 @@ def test_s6_normalizer_does_not_append_query_terms_to_agent_relevance() -> None:
                     "name": "远程反舰导弹",
                     "type": "new_capability",
                     "equipment_form": "远程反舰导弹",
-                    "query_relevance": (
-                        "在补击与交战阶段应对目标机动压力，形成末段再捕获和直接毁伤。"
-                    ),
+                    "query_relevance": ("在补击与交战阶段应对目标机动压力，形成末段再捕获和直接毁伤。"),
                 }
             ]
         },
@@ -3649,9 +3468,7 @@ def test_s6_title_compactor_preserves_upgrade_combat_gain() -> None:
         "operational_mechanism": "目标记忆→末段再捕获→压制防空节点",
     }
 
-    assert provider_module._compact_capability_direction_title(direction) == (
-        "长航时反辐射巡飞弹药再捕获"
-    )
+    assert provider_module._compact_capability_direction_title(direction) == ("长航时反辐射巡飞弹药再捕获")
 
 
 def test_s6_normalizer_keeps_substantive_duplicates_visible_to_hard_gate() -> None:
@@ -3681,29 +3498,37 @@ def test_s6_language_gate_does_not_reclassify_equipment_names() -> None:
         "equipment_form": "JASSM空射巡航导弹与PrSM地射远程导弹联合升级",
     }
 
-    assert provider_module._capability_language_issues(
-        1,
-        direction,
-        semantic_contract_required=True,
-    ) == []
+    assert (
+        provider_module._capability_language_issues(
+            1,
+            direction,
+            semantic_contract_required=True,
+        )
+        == []
+    )
 
 
 def test_s6_gate_treats_mobile_rocket_launcher_as_bound_combat_equipment() -> None:
-    direction = _with_model_semantic_contract({
-        "name": "无人值守远程精确打击火箭发射车",
-        "equipment_form": "无人值守机动火箭发射车，配远程精确火箭弹兼容发射架",
-        "function": "对已暴露防空和远火节点实施快速补击",
-    })
+    direction = _with_model_semantic_contract(
+        {
+            "name": "无人值守远程精确打击火箭发射车",
+            "equipment_form": "无人值守机动火箭发射车，配远程精确火箭弹兼容发射架",
+            "function": "对已暴露防空和远火节点实施快速补击",
+        }
+    )
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     assert direction["equipment_semantic_assessment"]["concrete_equipment"] is True
 
 
 def test_s6_gate_recognizes_armed_unmanned_wingman_as_concrete_equipment() -> None:
-    direction = _with_model_semantic_contract({
-        "name": "远域反辐射压制无人僚机",
-        "equipment_form": "长航时低可探测武装无人僚机",
-    }, classification="unmanned_combat")
+    direction = _with_model_semantic_contract(
+        {
+            "name": "远域反辐射压制无人僚机",
+            "equipment_form": "长航时低可探测武装无人僚机",
+        },
+        classification="unmanned_combat",
+    )
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
 
@@ -3830,18 +3655,14 @@ def test_s6_first_pass_contract_frontloads_query_specific_weapon_preflight() -> 
         contract["portfolio"]["missile_and_unmanned_must_be_separate_cards"]
         == "only_when_both_are_query_aligned_and_selected"
     )
-    assert "按6项组合交付" in contract["portfolio"]["direct_weapon_portfolio_rule"]
+    assert "至少交付6项" in contract["portfolio"]["direct_weapon_portfolio_rule"]
+    assert "优质互异候选可继续入选" in contract["portfolio"]["direct_weapon_portfolio_rule"]
     assert "不设置固定武器类别配额" in contract["portfolio"]["direct_weapon_portfolio_rule"]
     assert contract["portfolio"]["membership_and_identity_locked_before_s6"] is True
     assert "至少两项" in contract["portfolio"]["same_family_independence_rule"]
     assert "只修复质量残差命中的位置" in contract["portfolio"]["resume_rule"]
-    assert (
-        contract["disruptive_dimension_use"]["internal_query_causal_lenses"] == "2..3"
-    )
-    assert (
-        "不作为固定数量后置阻断门"
-        in contract["disruptive_dimension_use"]["relationship_diversity_policy"]
-    )
+    assert contract["disruptive_dimension_use"]["internal_query_causal_lenses"] == "2..3"
+    assert "不作为固定数量后置阻断门" in contract["disruptive_dimension_use"]["relationship_diversity_policy"]
     submission_contract = " ".join(contract["per_card_submission_check"])
     assert "primary_equipment_identity" in submission_contract
     assert "semantic_consistency_check" in submission_contract
@@ -3850,17 +3671,12 @@ def test_s6_first_pass_contract_frontloads_query_specific_weapon_preflight() -> 
     assert "组合级语义复核" in submission_contract
     assert contract["s6_latency_budget"]["normal_model_passes"] == 1
     assert contract["s6_latency_budget"]["maximum_targeted_repair_passes"] == 1
-    assert (
-        contract["s6_latency_budget"]["repair_scope"]
-        == "failed_portrait_modules_only_identity_locked"
-    )
+    assert contract["s6_latency_budget"]["repair_scope"] == "failed_portrait_modules_only_identity_locked"
     assert "S5交接门闭合并锁定" in submission_contract
     assert contract["preflight_acceptance"]["passed"] is True
 
 
-def test_pre_s6_contract_does_not_locally_author_missing_s5_semantics() -> (
-    None
-):
+def test_pre_s6_contract_does_not_locally_author_missing_s5_semantics() -> None:
     prepared = _prepare_pre_s6_card_contract(
         {
             "name": "强扰断链复获反舰巡航弹",
@@ -3878,17 +3694,10 @@ def test_pre_s6_contract_does_not_locally_author_missing_s5_semantics() -> (
 
     assert "indicator_portrait" not in prepared
     assert "query_relevance" not in prepared
-    assert (
-        prepared["portfolio_identity_contract"]["pre_s6_quality_contract"][
-            "s6_mutation_allowed"
-        ]
-        is False
-    )
+    assert prepared["portfolio_identity_contract"]["pre_s6_quality_contract"]["s6_mutation_allowed"] is False
 
 
-def test_pre_s6_contract_inherits_capability_gap_from_frozen_candidate_semantics() -> (
-    None
-):
+def test_pre_s6_contract_inherits_capability_gap_from_frozen_candidate_semantics() -> None:
     prepared = _prepare_pre_s6_card_contract(
         {
             "name": "断链目标续认巡飞弹",
@@ -3899,9 +3708,7 @@ def test_pre_s6_contract_inherits_capability_gap_from_frozen_candidate_semantics
         query="不完备战场信息条件下精确打击",
     )
 
-    assert prepared["capability_gap"] == (
-        "目标机动和链路压制使发射前坐标快速过期"
-    )
+    assert prepared["capability_gap"] == ("目标机动和链路压制使发射前坐标快速过期")
 
 
 def test_s6_normalization_inherits_missing_capability_gap_from_legacy_card() -> None:
@@ -3916,9 +3723,7 @@ def test_s6_normalization_inherits_missing_capability_gap_from_legacy_card() -> 
         }
     )
 
-    assert normalized["concept_directions"][0]["capability_gap"] == (
-        "目标机动和链路压制使发射前坐标快速过期"
-    )
+    assert normalized["concept_directions"][0]["capability_gap"] == ("目标机动和链路压制使发射前坐标快速过期")
 
 
 def test_pre_s6_contract_omits_internal_evidence_boundary_before_authoring() -> None:
@@ -3935,16 +3740,11 @@ def test_pre_s6_contract_omits_internal_evidence_boundary_before_authoring() -> 
 
     assert "evidence_boundary" not in prepared
     contract = prepared["portfolio_identity_contract"]["pre_s6_quality_contract"]
-    assert contract["evidence_boundary_status"] == (
-        "omitted_internal_or_non_epistemic_boundary"
-    )
+    assert contract["evidence_boundary_status"] == ("omitted_internal_or_non_epistemic_boundary")
 
 
 def test_pre_s6_contract_preserves_public_epistemic_evidence_boundary() -> None:
-    boundary = (
-        "公开证据仅支持相邻项目的末段传感与抗扰导航，"
-        "不证明拟议巡航弹已经形成完整装备和实战毁伤效能。"
-    )
+    boundary = "公开证据仅支持相邻项目的末段传感与抗扰导航，不证明拟议巡航弹已经形成完整装备和实战毁伤效能。"
     prepared = _prepare_pre_s6_card_contract(
         {
             "name": "强扰断链复获反舰巡航弹",
@@ -3958,14 +3758,10 @@ def test_pre_s6_contract_preserves_public_epistemic_evidence_boundary() -> None:
 
     assert prepared["evidence_boundary"] == boundary
     contract = prepared["portfolio_identity_contract"]["pre_s6_quality_contract"]
-    assert contract["evidence_boundary_status"] == (
-        "accepted_public_epistemic_boundary"
-    )
+    assert contract["evidence_boundary_status"] == ("accepted_public_epistemic_boundary")
 
 
-def test_pre_s6_contract_does_not_keyword_rewrite_s5_identity_and_strips_internal_language() -> (
-    None
-):
+def test_pre_s6_contract_does_not_keyword_rewrite_s5_identity_and_strips_internal_language() -> None:
     prepared = _prepare_pre_s6_card_contract(
         {
             "name": "形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和确认载荷",
@@ -3979,9 +3775,7 @@ def test_pre_s6_contract_does_not_keyword_rewrite_s5_identity_and_strips_interna
         query="强电磁压制下远程精确毁伤",
     )
 
-    assert prepared["name"] == (
-        "形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和确认载荷"
-    )
+    assert prepared["name"] == ("形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和确认载荷")
     assert "primary_equipment_identity" not in prepared
     contract = prepared["portfolio_identity_contract"]["pre_s6_quality_contract"]
     assert contract["indicator_portrait"] == ""
@@ -4029,9 +3823,7 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         payload_key_sets.append(set(payload))
         if phase.startswith("winning_s6_parallel_card"):
             s6_payloads.append(dict(payload))
-        card_binding_ids.append(
-            str(payload.get("candidate_weapon", {}).get("card_binding_id", ""))
-        )
+        card_binding_ids.append(str(payload.get("candidate_weapon", {}).get("card_binding_id", "")))
         if "_module_" in phase:
             module_prompt_sections.append(
                 (
@@ -4210,12 +4002,9 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         )
     )
 
+    assert all(phase.startswith("winning_s6_parallel_card_resume_") for phase in phases)
     assert all(
-        phase.startswith("winning_s6_parallel_card_resume_") for phase in phases
-    )
-    assert all(
-        {"query_semantics", "candidate_weapon", "winning_logic_overview"}.issubset(keys)
-        for keys in payload_key_sets
+        {"query_semantics", "candidate_weapon", "winning_logic_overview"}.issubset(keys) for keys in payload_key_sets
     )
     forbidden_s6_context = {
         "failure_boundary",
@@ -4232,23 +4021,13 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         for phase, keys in zip(phases, payload_key_sets, strict=True)
         if phase.startswith("winning_s6_parallel_card")
     ]
-    assert all(
-        not (forbidden_s6_context & keys)
-        for keys in s6_payload_key_sets
-    )
+    assert all(not (forbidden_s6_context & keys) for keys in s6_payload_key_sets)
     if profile_id == "winning_swarm_dynamic_v2":
-        assert all(
-            not (
-                forbidden_s6_context
-                & set(payload.get("candidate_weapon", {}))
-            )
-            for payload in s6_payloads
-        )
+        assert all(not (forbidden_s6_context & set(payload.get("candidate_weapon", {}))) for payload in s6_payloads)
     shared_anchor_payloads = [
         payload
         for payload in s6_payloads
-        if payload.get("portrait_module_key")
-        in {"overview", "technology_implementation"}
+        if payload.get("portrait_module_key") in {"overview", "technology_implementation"}
     ]
     assert len(shared_anchor_payloads) == 10
     assert all(
@@ -4294,16 +4073,8 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         assert sum(1 for phase in phases if phase.endswith("_spine")) == 5
         assert sum(1 for phase in phases if "_module_" in phase) == 26
         assert all("parallel_card_id" in keys for keys in payload_key_sets)
-        spine_systems = [
-            system
-            for phase, system in zip(phases, systems, strict=True)
-            if phase.endswith("_spine")
-        ]
-        module_systems = [
-            system
-            for phase, system in zip(phases, systems, strict=True)
-            if "_module_" in phase
-        ]
+        spine_systems = [system for phase, system in zip(phases, systems, strict=True) if phase.endswith("_spine")]
+        module_systems = [system for phase, system in zip(phases, systems, strict=True) if "_module_" in phase]
         assert spine_systems
         assert all("五栏正文由其他并发会话撰写" in system for system in spine_systems)
         assert all("只完成本卡当前指定栏目" in system for system in module_systems)
@@ -4314,17 +4085,16 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             ("capability_effects", "S6_4"),
             ("winning_logic", "S6_5"),
         }
-        assert sum(
-            1
-            for name, module_key, _attempt in module_attempts
-            if name.endswith("-3") and module_key == "capability_effects"
-        ) == 2
-        assert all(
+        assert (
             sum(
                 1
-                for seen_name, seen_key, _attempt in module_attempts
-                if seen_name == name and seen_key == module_key
+                for name, module_key, _attempt in module_attempts
+                if name.endswith("-3") and module_key == "capability_effects"
             )
+            == 2
+        )
+        assert all(
+            sum(1 for seen_name, seen_key, _attempt in module_attempts if seen_name == name and seen_key == module_key)
             == (2 if name.endswith("-3") and module_key == "capability_effects" else 1)
             for name in {item[0] for item in module_attempts}
             for module_key in {
@@ -4352,27 +4122,19 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
     assert not any("任务输入、计算/处理" in system for system in systems)
     assert not any("到任务结果的实现链" in system for system in systems)
     assert not any("repair" in phase for phase in phases)
-    assert any(
-        event.get("event_type") == "winning_s5_handoff_quality_gate_completed"
-        for event in events
-    )
+    assert any(event.get("event_type") == "winning_s5_handoff_quality_gate_completed" for event in events)
     assert len(result["concept_directions"]) == 5
     if profile_id != "winning_swarm_dynamic_v2":
         assert result["s6_parallel_authoring"]["portrait_modules_concurrent"] is True
     assert provider._call_gate.snapshot()["limit"] == initial_gate_limit
-    expected_primary_dimension = (
-        "突防维度" if profile_id == "winning_swarm_dynamic_v2" else "毁伤维度"
-    )
+    expected_primary_dimension = "突防维度" if profile_id == "winning_swarm_dynamic_v2" else "毁伤维度"
     expected_portrait_prefix = (
         "能力分类：主：突防维度；辅：生存抗毁维度。"
         if profile_id == "winning_swarm_dynamic_v2"
         else "能力分类：主：毁伤维度；辅："
     )
     for direction in result["concept_directions"]:
-        assert (
-            direction["capability_classification"]["primary_dimension"]
-            == expected_primary_dimension
-        )
+        assert direction["capability_classification"]["primary_dimension"] == expected_primary_dimension
         assert direction["capability_portrait"].startswith(expected_portrait_prefix)
 
 
@@ -4423,9 +4185,7 @@ def test_parallel_s6_failure_moves_card_to_reference_without_run_failure(
         )
         if not phase.endswith("_spine"):
             assigned["capability_portrait_modules"] = modules
-            assigned["capability_portrait"] = (
-                provider_module.assemble_capability_portrait_modules(modules)
-            )
+            assigned["capability_portrait"] = provider_module.assemble_capability_portrait_modules(modules)
         return json.dumps(
             {
                 "direction": assigned,
@@ -4447,9 +4207,7 @@ def test_parallel_s6_failure_moves_card_to_reference_without_run_failure(
             "target_and_direct_effect": "压制并毁伤高价值机动目标",
             "non_substitutable_difference": f"独立改变任务链变量{index}",
             "military_value": "压缩目标暴露窗口并直接毁伤高价值机动目标",
-            "operational_mechanism": (
-                "由弹体在强干扰下完成目标复核、火力授权和直接毁伤闭环"
-            ),
+            "operational_mechanism": ("由弹体在强干扰下完成目标复核、火力授权和直接毁伤闭环"),
             "target_scenario": "岛链外缘强干扰条件下的高价值机动目标猎歼阶段",
             "problem_statement": "目标更新中断使传统远程火力错失短时暴露窗口",
             "scientific_principle": "以弹上多源复核和条件授权压缩交战闭环",
@@ -4521,10 +4279,7 @@ def test_parallel_s6_failure_moves_card_to_reference_without_run_failure(
     assert limited["s6_eligible"] is True
     assert limited["selection_status"] == "selected_limited"
     assert limited["concise_winning_summary"]
-    assert any(
-        event.get("event_type") == "winning_s6_card_authoring_limited"
-        for event in events
-    )
+    assert any(event.get("event_type") == "winning_s6_card_authoring_limited" for event in events)
 
 
 def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
@@ -4550,12 +4305,8 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
         del agent_id, system, schema, max_output_tokens
         model_phases.append(phase)
         candidate = dict(payload["candidate_weapon"])
-        source = next(
-            item for item in completed_cards if item["name"] == candidate["name"]
-        )
-        modules = source.get("capability_portrait_modules") or _complete_s6_test_modules(
-            candidate["name"]
-        )
+        source = next(item for item in completed_cards if item["name"] == candidate["name"])
+        modules = source.get("capability_portrait_modules") or _complete_s6_test_modules(candidate["name"])
         if "_module_" in phase:
             module_key = phase.rsplit("_module_", 1)[-1]
             return json.dumps(
@@ -4676,29 +4427,13 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
     assert model_phases
     assert sum(phase.endswith("_spine") for phase in model_phases) == 2
     assert sum("_module_" in phase for phase in model_phases) == 10
-    assert sum(
-        1
-        for phase in model_phases
-        if phase.startswith("winning_s6_parallel_card_resume_0")
-    ) == 12
-    assert all(
-        phase.startswith("winning_s6_parallel_card_resume_0") for phase in model_phases
-    )
-    assert [item["name"] for item in result["concept_directions"]] == [
-        item["name"] for item in completed_cards
-    ]
-    assert (
-        sum(
-            item.get("event_type") == "winning_s6_card_authoring_reused"
-            for item in events
-        )
-        == 0
-    )
+    assert sum(1 for phase in model_phases if phase.startswith("winning_s6_parallel_card_resume_0")) == 12
+    assert all(phase.startswith("winning_s6_parallel_card_resume_0") for phase in model_phases)
+    assert [item["name"] for item in result["concept_directions"]] == [item["name"] for item in completed_cards]
+    assert sum(item.get("event_type") == "winning_s6_card_authoring_reused" for item in events) == 0
 
 
-def test_s6_semantic_contract_validates_codex_self_check_without_weapon_keyword_table() -> (
-    None
-):
+def test_s6_semantic_contract_validates_codex_self_check_without_weapon_keyword_table() -> None:
     direction = {
         "name": "玄羽-7跨介质任务载体",
         "primary_equipment_identity": "跨介质任务载体本体及其受控效应载荷",
@@ -4753,9 +4488,7 @@ def test_s6_semantic_contract_validates_codex_self_check_without_weapon_keyword_
     assert any("语义一致性合同未通过" in issue for issue in inconsistent_issues)
 
 
-def test_s6_normalization_coerces_json_boolean_strings_without_rewriting_semantics() -> (
-    None
-):
+def test_s6_normalization_coerces_json_boolean_strings_without_rewriting_semantics() -> None:
     direction = {
         "name": "玄羽-7跨介质任务载体",
         "primary_equipment_identity": "跨介质任务载体本体",
@@ -4784,13 +4517,8 @@ def test_s6_normalization_coerces_json_boolean_strings_without_rewriting_semanti
 
     assert normalized_direction["name"] == "玄羽-7跨介质任务载体"
     assert normalized_direction["semantic_consistency_check"]["consistent"] is True
-    assert (
-        normalized_direction["operational_process"] == direction["operational_process"]
-    )
-    assert (
-        normalized_direction["semantic_consistency_check"]["process_actor"]
-        == "跨介质任务载体本体"
-    )
+    assert normalized_direction["operational_process"] == direction["operational_process"]
+    assert normalized_direction["semantic_consistency_check"]["process_actor"] == "跨介质任务载体本体"
 
 
 def test_s6_normalization_preserves_codex_locked_title_for_consistent_card() -> None:
@@ -4814,15 +4542,10 @@ def test_s6_normalization_preserves_codex_locked_title_for_consistent_card() -> 
     )
 
     assert normalized["concept_directions"][0]["name"] == "可消耗诱压无人弹"
-    assert (
-        normalized["concept_directions"][0]["equipment_form"]
-        == direction["equipment_form"]
-    )
+    assert normalized["concept_directions"][0]["equipment_form"] == direction["equipment_form"]
 
 
-def test_s6_disruptive_relationship_diversity_is_pre_generation_guidance_not_hard_gate() -> (
-    None
-):
+def test_s6_disruptive_relationship_diversity_is_pre_generation_guidance_not_hard_gate() -> None:
     names = [
         ("现役防空导弹抗饱和拦截升级", "upgrade"),
         ("远域无人机目标猎歼系统", "new_capability"),
@@ -4869,16 +4592,13 @@ def test_s6_disruptive_relationship_diversity_is_pre_generation_guidance_not_har
 
     shallow = {
         "concept_directions": [
-            direction(index, name, capability_type)
-            for index, (name, capability_type) in enumerate(names, start=1)
+            direction(index, name, capability_type) for index, (name, capability_type) in enumerate(names, start=1)
         ]
     }
     shallow_issues = _capability_direction_quality_issues(shallow)
     assert not any("至少需要3类与query因果相关" in issue for issue in shallow_issues)
 
-    rich = {
-        "concept_directions": [dict(item) for item in shallow["concept_directions"]]
-    }
+    rich = {"concept_directions": [dict(item) for item in shallow["concept_directions"]]}
     rich["concept_directions"][0]["novelty"] = "以低成本规模消耗反转成本交换"
     rich["concept_directions"][1]["novelty"] = "以长航时持续存在的平台重构发射关系"
     rich["concept_directions"][2]["novelty"] = "以毁伤评估和再打击压缩决策周期"
@@ -4887,26 +4607,28 @@ def test_s6_disruptive_relationship_diversity_is_pre_generation_guidance_not_har
 
 
 def test_s6_quality_gate_rejects_camouflage_as_a_weapon_portfolio_slot() -> None:
-    direction = _with_model_semantic_contract({
-        "name": "机动伪装诱饵阵地系统",
-        "type": "new_capability",
-        "function": "构设多谱段假目标并评估诱饵效果",
-        "equipment_form": "机动伪装车、热源假目标和效果评估终端",
-        "operational_mechanism": "在战役准备阶段压低对手目标识别和火力分配效率",
-        "military_value": "诱导对手消耗侦察与打击资源",
-        "strike_countermeasure_value": "形成诱骗与反侦察效果",
-        "development_path": "近期样机研制与对抗验证",
-        "future_trigger": "多谱段侦察威胁增加",
-        "adversary_adaptation": "对手采用多源交叉识别",
-        "failure_boundary": "假目标特征不一致时失效",
-        "query_relevance": "面向远程精确火力对抗准备阶段的多谱段侦察压力，降低对手打击效率",
-        "baseline_system": "现役伪装器材",
-        "capability_gap": "快速构设和效果评估不足",
-        "capability_portrait": (
-            "该装备用于战役准备阶段构设多谱段假目标并消耗对手侦察资源。" * 20
-        )[:360]
-        + "。",
-    }, classification="support_only", direct_combat_effect=False, support_only=True)
+    direction = _with_model_semantic_contract(
+        {
+            "name": "机动伪装诱饵阵地系统",
+            "type": "new_capability",
+            "function": "构设多谱段假目标并评估诱饵效果",
+            "equipment_form": "机动伪装车、热源假目标和效果评估终端",
+            "operational_mechanism": "在战役准备阶段压低对手目标识别和火力分配效率",
+            "military_value": "诱导对手消耗侦察与打击资源",
+            "strike_countermeasure_value": "形成诱骗与反侦察效果",
+            "development_path": "近期样机研制与对抗验证",
+            "future_trigger": "多谱段侦察威胁增加",
+            "adversary_adaptation": "对手采用多源交叉识别",
+            "failure_boundary": "假目标特征不一致时失效",
+            "query_relevance": "面向远程精确火力对抗准备阶段的多谱段侦察压力，降低对手打击效率",
+            "baseline_system": "现役伪装器材",
+            "capability_gap": "快速构设和效果评估不足",
+            "capability_portrait": ("该装备用于战役准备阶段构设多谱段假目标并消耗对手侦察资源。" * 20)[:360] + "。",
+        },
+        classification="support_only",
+        direct_combat_effect=False,
+        support_only=True,
+    )
 
     issues = _capability_direction_quality_issues(
         {"concept_directions": [direction] * 5},
@@ -5010,9 +4732,7 @@ def test_s6_local_diagnostics_do_not_trigger_scoped_or_full_regeneration() -> No
             "novelty": "从链路增强转向任务级韧性",
             "strike_countermeasure_value": "支撑防御性反制",
             "equipment_form": (
-                "现役预警机任务系统与抗扰数据链改装包"
-                if capability_type == "upgrade"
-                else f"{name}任务平台系统"
+                "现役预警机任务系统与抗扰数据链改装包" if capability_type == "upgrade" else f"{name}任务平台系统"
             ),
             "primary_equipment_identity": f"{name}及其任务载荷边界",
             "operational_mechanism": "维持侦察、指挥与火力打击协同",
@@ -5046,8 +4766,7 @@ def test_s6_local_diagnostics_do_not_trigger_scoped_or_full_regeneration() -> No
             "failure_boundary": "平台能源、接口或时延无法维持任务闭环时失效",
             "query_relevance": "对应当前query中的强干扰任务阶段、目标识别压力和火力打击续接需求",
             "indicator_portrait": (
-                "以强干扰下任务闭环响应时间、目标识别率、直接毁伤或拦截成功率"
-                "对照现役基线进行考核，低于门槛时判退"
+                "以强干扰下任务闭环响应时间、目标识别率、直接毁伤或拦截成功率对照现役基线进行考核，低于门槛时判退"
             ),
             "baseline_system": f"现役或类比{name}装备基线",
             "capability_gap": f"{name}在强干扰条件下缺少独立的目标猎获、火力协同与毁伤闭合能力",
@@ -5369,10 +5088,7 @@ def test_s6_substantive_local_diagnostic_does_not_repair_or_rerun_upstream(
         if agent_id == "winning_s6_image":
             result["confidence"] = 0.8
         if "concept_directions" in output_schema:
-            result["concept_directions"] = [
-                {"name": f"方向{index}", "type": "new_capability"}
-                for index in range(1, 4)
-            ]
+            result["concept_directions"] = [{"name": f"方向{index}", "type": "new_capability"} for index in range(1, 4)]
         if "evidence_validation" in output_schema:
             result["evidence_validation"] = {
                 "all_ids_valid": True,
@@ -5431,9 +5147,7 @@ def test_s6_transient_transport_failure_raises_without_fallback_portrait(
         del system, payload, max_output_tokens
         calls.append((agent_id, phase))
         if agent_id == "winning_s6_image" and phase == "winning_s6_image_deep":
-            raise ProviderRequestError(
-                "stream disconnected before completion: error decoding response body"
-            )
+            raise ProviderRequestError("stream disconnected before completion: error decoding response body")
         if phase == "winning_s6_card_repair":
             return '{"direction_repairs":[]}'
         if agent_id == "winning_round_critic":
@@ -5447,9 +5161,7 @@ def test_s6_transient_transport_failure_raises_without_fallback_portrait(
                 "invalid_ids": [],
                 "mismatched_claims": [],
             }
-        result["reasoning_node"] = _minimal_reasoning_node(
-            int(agent_id.split("_s", 1)[1][0])
-        )
+        result["reasoning_node"] = _minimal_reasoning_node(int(agent_id.split("_s", 1)[1][0]))
         result["reasoning_node"]["evidence_refs"] = ["packet-1"]
         return json.dumps(result, ensure_ascii=False)
 
@@ -5535,10 +5247,7 @@ def test_s6_persistent_quality_failure_stops_without_fallback(
         if "confidence" in output_schema:
             result["confidence"] = 0.8
         if "concept_directions" in output_schema:
-            result["concept_directions"] = [
-                {"name": f"方向{index}", "type": "new_capability"}
-                for index in range(1, 4)
-            ]
+            result["concept_directions"] = [{"name": f"方向{index}", "type": "new_capability"} for index in range(1, 4)]
         if "evidence_validation" in output_schema:
             result["evidence_validation"] = {
                 "all_ids_valid": True,
@@ -5546,11 +5255,7 @@ def test_s6_persistent_quality_failure_stops_without_fallback(
                 "mismatched_claims": [],
             }
         if "reasoning_node" in output_schema:
-            step = (
-                6
-                if agent_id == "winning_s6_image"
-                else int(agent_id.split("_s", 1)[1][0])
-            )
+            step = 6 if agent_id == "winning_s6_image" else int(agent_id.split("_s", 1)[1][0])
             result["reasoning_node"] = _minimal_reasoning_node(step)
             result["reasoning_node"]["evidence_refs"] = ["packet-1"]
         return json.dumps(result, ensure_ascii=False)
@@ -5610,9 +5315,7 @@ def test_traceability_middle_loop_uses_minimal_targeted_repairs(
                     {
                         "passed": False,
                         "rerun_from_step": rerun_from,
-                        "issues": [
-                            "S4 derived_from 索引越界，且对 effect_chain 的承接说明不足"
-                        ],
+                        "issues": ["S4 derived_from 索引越界，且对 effect_chain 的承接说明不足"],
                         "affected_fields": ["capability_mapping"],
                         "rerun_guidance": ["修正索引并补齐显式承接"],
                         "rerun_steps": [4, 5, 6],
@@ -5649,20 +5352,12 @@ def test_traceability_middle_loop_uses_minimal_targeted_repairs(
     )
 
     executed_agents = [agent_id for agent_id, _ in calls]
-    assert executed_agents.count("winning_s4_capability") == (
-        2 if 4 in expected_steps else 1
-    )
+    assert executed_agents.count("winning_s4_capability") == (2 if 4 in expected_steps else 1)
     assert executed_agents.count("winning_s5_gap") == 1
     assert executed_agents.count("winning_s6_image") == 2
-    assert (("winning_s4_capability", "winning_s4_targeted_repair") in calls) is (
-        4 in expected_steps
-    )
+    assert (("winning_s4_capability", "winning_s4_targeted_repair") in calls) is (4 in expected_steps)
     assert ("winning_s6_image", "winning_s6_card_repair") not in calls
-    backtrack = next(
-        row
-        for row in result["loop_trace"]
-        if row.get("event") == "intelligent_backtrack"
-    )
+    backtrack = next(row for row in result["loop_trace"] if row.get("event") == "intelligent_backtrack")
     assert backtrack["rerun_steps"] == expected_steps
 
 
@@ -5771,8 +5466,7 @@ def test_explicit_candidate_count_splits_compact_cohort_and_repairs_s4() -> None
     assert second_s4_payload["candidate_count_contract"]["target"] == 3
     assert "current_candidate_directions" in second_s4_payload
     assert not any(
-        row.get("physical_cohort_id") in {"cohort-s3-s4-s5", "cohort-s3-s5"}
-        for row in result["subagent_runs"]
+        row.get("physical_cohort_id") in {"cohort-s3-s4-s5", "cohort-s3-s5"} for row in result["subagent_runs"]
     )
     assert not any(agent_id.startswith("winning_cohort-s3") for agent_id, _ in calls)
     assert ("winning_s4_capability", "winning_s4_capability_standard") in calls
@@ -5810,9 +5504,7 @@ def test_codex_cli_provider_builds_isolated_ephemeral_invocation(
         captured["command"] = list(command)
         captured["prompt"] = prompt
         schema_path = command[command.index("--output-schema") + 1]
-        captured["output_schema"] = json.loads(
-            open(schema_path, encoding="utf-8").read()
-        )
+        captured["output_schema"] = json.loads(open(schema_path, encoding="utf-8").read())
         return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
 
     monkeypatch.setattr(provider, "_execute", fake_execute)
@@ -6018,9 +5710,7 @@ def test_codex_transcript_archive_failure_never_fails_model_delivery(
     monkeypatch.setattr(
         provider,
         "_execute",
-        lambda command, prompt: subprocess.CompletedProcess(
-            command, 0, stdout=stdout, stderr=""
-        ),
+        lambda command, prompt: subprocess.CompletedProcess(command, 0, stdout=stdout, stderr=""),
     )
 
     def fail_archive(path, content):
@@ -6070,9 +5760,7 @@ def test_codex_cli_provider_creates_task_scoped_isolated_copy(
     assert scoped is not provider
     assert scoped.snapshot()["context_isolation"] == "specialist-instance-1"
     assert scoped.snapshot()["session_mode"] == "ephemeral"
-    assert scoped.codex_home == (
-        provider.codex_home / "isolated" / "specialist-instance-1"
-    )
+    assert scoped.codex_home == (provider.codex_home / "isolated" / "specialist-instance-1")
     assert scoped.sandbox_mode == "read-only"
     assert "--ephemeral" in scoped._build_base_command()
 
@@ -6207,8 +5895,7 @@ def test_codex_failure_detail_filters_plugin_warnings_for_nonretryable_error() -
 
 def test_transient_relay_invalid_key_response_gets_one_provider_retry() -> None:
     detail = (
-        'unexpected status 401 Unauthorized: {"error":"Invalid API key"}, '
-        "url: https://relay.example.test/v1/responses"
+        'unexpected status 401 Unauthorized: {"error":"Invalid API key"}, url: https://relay.example.test/v1/responses'
     )
 
     assert _is_retryable_failure(detail) is True
@@ -6522,9 +6209,7 @@ def test_codex_provider_extends_timeout_only_for_explicit_quality_calls(
     events = asyncio.run(collect())
 
     assert captured["timeout_seconds"] == expected_timeout
-    assert (
-        events[-1].final_turn.metadata["provider_timeout_seconds"] == expected_timeout
-    )
+    assert events[-1].final_turn.metadata["provider_timeout_seconds"] == expected_timeout
     assert events[-1].final_turn.metadata["extended_provider_timeout"] is allow_extended
 
 
@@ -6607,9 +6292,7 @@ def test_compact_contract_is_converted_to_native_codex_json_schema() -> None:
     }
 
 
-def test_flexible_analysis_section_schema_remains_strict_json_schema_compatible() -> (
-    None
-):
+def test_flexible_analysis_section_schema_remains_strict_json_schema_compatible() -> None:
     assert _contract_to_json_schema("string | object | array") == {
         "anyOf": [
             {"type": "string"},
@@ -6628,9 +6311,7 @@ def test_codex_failure_detail_reads_top_level_responses_error() -> None:
         }
     )
 
-    assert _codex_failure_detail(stdout, "WARN plugin unavailable") == (
-        "Invalid schema for response_format"
-    )
+    assert _codex_failure_detail(stdout, "WARN plugin unavailable") == ("Invalid schema for response_format")
 
 
 def test_codex_cli_provider_loads_project_agent_runtime_skill(
@@ -6653,11 +6334,7 @@ def test_codex_cli_provider_loads_project_agent_runtime_skill(
     )
 
     command = provider._build_command({})
-    config_values = [
-        command[index + 1]
-        for index, value in enumerate(command[:-1])
-        if value == "--config"
-    ]
+    config_values = [command[index + 1] for index, value in enumerate(command[:-1]) if value == "--config"]
     assert any(value.startswith("skills.config=[") for value in config_values)
     assert any(str(skill) in value for value in config_values)
 
@@ -6816,16 +6493,10 @@ def test_codex_cli_provider_configures_api_key_and_base_url_without_exposing_sec
     assert len(auth["OPENAI_API_KEY"]) > 0
     assert auth_path.stat().st_mode & 0o777 == 0o600
     command = provider._build_command({})
-    config_values = [
-        command[index + 1]
-        for index, value in enumerate(command[:-1])
-        if value == "--config"
-    ]
+    config_values = [command[index + 1] for index, value in enumerate(command[:-1]) if value == "--config"]
     assert 'model_provider="equipment_research_gateway"' in config_values
     gateway_config = next(
-        value
-        for value in config_values
-        if value.startswith("model_providers.equipment_research_gateway=")
+        value for value in config_values if value.startswith("model_providers.equipment_research_gateway=")
     )
     assert 'base_url="https://codex.example.test/v1"' in gateway_config
     assert 'wire_api="responses"' in gateway_config
@@ -6977,29 +6648,15 @@ def test_codex_mode_runs_six_subagents_with_inner_and_middle_loops(monkeypatch) 
         result["reasoning_node"] = _minimal_reasoning_node(step)
     batches: list[list[ProviderStreamEvent]] = []
     for step, result in enumerate(step_results, start=1):
-        batches.append(
-            [
-                ProviderStreamEvent.final(
-                    ProviderFinalTurn(text=json.dumps(result, ensure_ascii=False))
-                )
-            ]
-        )
+        batches.append([ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(result, ensure_ascii=False)))])
         if step not in {4, 6}:
             batches.append(
-                [
-                    ProviderStreamEvent.final(
-                        ProviderFinalTurn(
-                            text='{"passed":true,"issues":[],"retry_guidance":[]}'
-                        )
-                    )
-                ]
+                [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[],"retry_guidance":[]}'))]
             )
     batches.append(
         [
             ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"rerun_from_step":0,"issues":[],"rerun_guidance":[]}'
-                )
+                ProviderFinalTurn(text='{"passed":true,"rerun_from_step":0,"issues":[],"rerun_guidance":[]}')
             )
         ]
     )
@@ -7035,22 +6692,13 @@ def test_codex_mode_runs_six_subagents_with_inner_and_middle_loops(monkeypatch) 
     assert result["reasoning_nodes"]["1"]["recognition"] == "S1可审计认识"
     assert result["subagent_runs"][0]["next_action"]["target_step"] == 2
     completed_progress_rows = [
-        row
-        for row in progress_rows
-        if not str(row.get("event_type", "")).startswith("winning_model_")
+        row for row in progress_rows if not str(row.get("event_type", "")).startswith("winning_model_")
     ]
     assert [row["step"] for row in completed_progress_rows if "step" in row] == [1, 2, 3, 4, 5, 6]
-    assert any(
-        row.get("event_type") == "winning_model_call_started" and row.get("step") == 3
-        for row in progress_rows
-    )
+    assert any(row.get("event_type") == "winning_model_call_started" and row.get("step") == 3 for row in progress_rows)
     assert len(result["codex_call_metrics"]) == 11
     assert "reasoning_node" not in {key for key in result if key != "reasoning_nodes"}
-    prompt_text = "\n".join(
-        str(message.content)
-        for messages, _, _ in backend.inputs
-        for message in messages
-    )
+    prompt_text = "\n".join(str(message.content) for messages, _, _ in backend.inputs for message in messages)
     assert "现役升级必须写明被升级对象、真正改变能力生成方式的软硬件改装路径" in prompt_text
     assert "禁止把自治、网关、算法、中间件、审计等通用技术" in prompt_text
     assert "公开证据不足，保留类别级" in prompt_text
@@ -7074,10 +6722,7 @@ def test_codex_mode_runs_six_subagents_with_inner_and_middle_loops(monkeypatch) 
                 and isinstance(candidate.get("input"), Mapping)
             ):
                 candidate = candidate["input"]
-            if (
-                isinstance(candidate, Mapping)
-                and "capability_synthesis_handoff" in candidate
-            ):
+            if isinstance(candidate, Mapping) and "capability_synthesis_handoff" in candidate:
                 s6_inputs.append(dict(candidate))
     assert len(s6_inputs) == 1
     s6_input = s6_inputs[0]
@@ -7107,11 +6752,7 @@ def test_codex_mode_runs_six_subagents_with_inner_and_middle_loops(monkeypatch) 
                 and isinstance(candidate.get("input"), Mapping)
             ):
                 candidate = candidate["input"]
-            contract = (
-                candidate.get("military_divergence_contract", {})
-                if isinstance(candidate, Mapping)
-                else {}
-            )
+            contract = candidate.get("military_divergence_contract", {}) if isinstance(candidate, Mapping) else {}
             if isinstance(contract, Mapping) and contract.get("step") in range(1, 6):
                 s1_s5_inputs[int(contract["step"])] = dict(candidate)
     assert set(s1_s5_inputs) == {1, 2, 3, 4, 5}
@@ -7298,14 +6939,12 @@ def test_codex_winning_graph_skips_steps_for_cross_domain_branch() -> None:
         }
     )
 
-    assert [
-        row["step"] for row in result["subagent_runs"] if row["status"] == "completed"
-    ] == [3, 4, 6]
-    assert [
-        row["step"]
-        for row in result["subagent_runs"]
-        if row["status"] == "skipped_by_branch_blueprint"
-    ] == [1, 2, 5]
+    assert [row["step"] for row in result["subagent_runs"] if row["status"] == "completed"] == [3, 4, 6]
+    assert [row["step"] for row in result["subagent_runs"] if row["status"] == "skipped_by_branch_blueprint"] == [
+        1,
+        2,
+        5,
+    ]
     assert [row["execution_mode"] for row in result["winning_step_plan"]] == [
         "skip",
         "skip",
@@ -7334,27 +6973,13 @@ def test_winning_retry_is_checked_by_harness_then_final_round_critic(
             )
         ],
         [ProviderStreamEvent.final(ProviderFinalTurn(text='{"effect_chain":["e2"]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(_minimal_s4_gate_result(), ensure_ascii=False)))],
         [
             ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text=json.dumps(_minimal_s4_gate_result(), ensure_ascii=False)
-                )
+                ProviderFinalTurn(text=json.dumps(_minimal_s6_gate_result("G"), ensure_ascii=False))
             )
         ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text=json.dumps(_minimal_s6_gate_result("G"), ensure_ascii=False)
-                )
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"rerun_from_step":0,"issues":[]}'
-                )
-            )
-        ],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"rerun_from_step":0,"issues":[]}'))],
     ]
     backend = ScriptedFakeProvider(batches)
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
@@ -7370,11 +6995,7 @@ def test_winning_retry_is_checked_by_harness_then_final_round_critic(
         }
     )
 
-    critic_calls = [
-        item
-        for item in result["codex_call_metrics"]
-        if item["agent_id"] == "winning_step_critic"
-    ]
+    critic_calls = [item for item in result["codex_call_metrics"] if item["agent_id"] == "winning_step_critic"]
     assert len(critic_calls) == 1
     assert len(backend.inputs) == 6
     assert sum(row["loop"] == "inner" for row in result["loop_trace"]) == 4
@@ -7397,33 +7018,11 @@ def test_winning_recall_does_not_repeat_same_step_with_unchanged_input(
                 )
             )
         ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"capability_mapping":["m"]}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"passed":true,"issues":[]}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"concept_directions":[]}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"passed":true,"issues":[]}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"rerun_from_step":0,"issues":[]}'
-                )
-            )
-        ],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"capability_mapping":["m"]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"concept_directions":[]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"rerun_from_step":0,"issues":[]}'))],
     ]
     backend = ScriptedFakeProvider(batches)
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
@@ -7439,11 +7038,7 @@ def test_winning_recall_does_not_repeat_same_step_with_unchanged_input(
         }
     )
 
-    s3_runs = [
-        row
-        for row in result["subagent_runs"]
-        if row["agent_id"] == "winning_s3_breakthrough"
-    ]
+    s3_runs = [row for row in result["subagent_runs"] if row["agent_id"] == "winning_s3_breakthrough"]
     assert len(backend.inputs) == 6
     assert len(s3_runs) == 1
     assert s3_runs[0]["critic_action"] == "recall"
@@ -7461,21 +7056,11 @@ def test_targeted_resume_reuses_prior_steps_and_dynamic_outputs(monkeypatch) -> 
         batches.extend(
             [
                 [ProviderStreamEvent.final(ProviderFinalTurn(text=payload))],
-                [
-                    ProviderStreamEvent.final(
-                        ProviderFinalTurn(text='{"passed":true,"issues":[]}')
-                    )
-                ],
+                [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[]}'))],
             ]
         )
     batches.append(
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"rerun_from_step":0,"issues":[]}'
-                )
-            )
-        ]
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"rerun_from_step":0,"issues":[]}'))]
     )
     backend = ScriptedFakeProvider(batches)
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
@@ -7486,9 +7071,7 @@ def test_targeted_resume_reuses_prior_steps_and_dynamic_outputs(monkeypatch) -> 
             "research_route": "traditional_gap",
             "discovery_blueprint": {
                 "primary_branch": "B",
-                "dynamic_subagents": [
-                    {"agent_instance_id": "dynamic-existing", "merge_target": "S3"}
-                ],
+                "dynamic_subagents": [{"agent_instance_id": "dynamic-existing", "merge_target": "S3"}],
             },
             "packets": [],
             "evidence_index": [],
@@ -7511,11 +7094,11 @@ def test_targeted_resume_reuses_prior_steps_and_dynamic_outputs(monkeypatch) -> 
     assert len(backend.inputs) == 6
     assert result["defense_decomposition"] == ["d1"]
     assert result["effect_chain"] == ["e1"]
-    assert [
-        row["step"]
-        for row in result["subagent_runs"]
-        if row["status"] == "reused_from_prior_analysis"
-    ] == [1, 2, 3]
+    assert [row["step"] for row in result["subagent_runs"] if row["status"] == "reused_from_prior_analysis"] == [
+        1,
+        2,
+        3,
+    ]
 
 
 def test_codex_winning_graph_runs_dynamic_specialists_before_merge() -> None:
@@ -7527,9 +7110,7 @@ def test_codex_winning_graph_runs_dynamic_specialists_before_merge() -> None:
                         {
                             "findings": ["关键部件替代路线不足"],
                             "evidence_refs": ["packet-1"],
-                            "contribution_to_steps": [
-                                {"step": 5, "contribution": "补充供应链差距"}
-                            ],
+                            "contribution_to_steps": [{"step": 5, "contribution": "补充供应链差距"}],
                             "assumptions": [],
                             "open_questions": [],
                             "merge_target": "S5",
@@ -7541,47 +7122,15 @@ def test_codex_winning_graph_runs_dynamic_specialists_before_merge() -> None:
                 )
             )
         ],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"effect_chain":["e"],"confidence":0.8}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[],"retry_guidance":[]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"capability_mapping":["m"],"confidence":0.8}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[],"retry_guidance":[]}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"concept_directions":[],"confidence":0.8}'))],
+        [ProviderStreamEvent.final(ProviderFinalTurn(text='{"passed":true,"issues":[],"retry_guidance":[]}'))],
         [
             ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"effect_chain":["e"],"confidence":0.8}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"issues":[],"retry_guidance":[]}'
-                )
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"capability_mapping":["m"],"confidence":0.8}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"issues":[],"retry_guidance":[]}'
-                )
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(text='{"concept_directions":[],"confidence":0.8}')
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"issues":[],"retry_guidance":[]}'
-                )
-            )
-        ],
-        [
-            ProviderStreamEvent.final(
-                ProviderFinalTurn(
-                    text='{"passed":true,"rerun_from_step":0,"issues":[],"rerun_guidance":[]}'
-                )
+                ProviderFinalTurn(text='{"passed":true,"rerun_from_step":0,"issues":[],"rerun_guidance":[]}')
             )
         ],
     ]
@@ -7612,9 +7161,7 @@ def test_codex_winning_graph_runs_dynamic_specialists_before_merge() -> None:
         }
     )
 
-    assert result["dynamic_subagent_outputs"][0]["agent_instance_id"] == (
-        "dynamic-supply-chain-1"
-    )
+    assert result["dynamic_subagent_outputs"][0]["agent_instance_id"] == ("dynamic-supply-chain-1")
     assert result["dynamic_subagent_runs"][0]["merge_target"] == "S5"
     assert result["subagent_runs"][0]["execution_mode"] == "dynamic"
     projected_dynamic_inputs = []
@@ -7629,19 +7176,13 @@ def test_codex_winning_graph_runs_dynamic_specialists_before_merge() -> None:
                 and isinstance(candidate.get("input"), Mapping)
             ):
                 candidate = candidate["input"]
-            prior = (
-                candidate.get("prior_step_outputs", {})
-                if isinstance(candidate, Mapping)
-                else {}
-            )
+            prior = candidate.get("prior_step_outputs", {}) if isinstance(candidate, Mapping) else {}
             if isinstance(prior, Mapping):
                 projected_dynamic_inputs.extend(prior.get("dynamic_inputs", []))
     assert projected_dynamic_inputs == []
 
 
-def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledger() -> (
-    None
-):
+def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledger() -> None:
     def candidate(index: int) -> dict:
         return {
             "title": f"候选{index}：机制族{index}",
@@ -7655,14 +7196,14 @@ def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledg
             "equipment_forms": [f"具体装备形态{index}"],
             "project_function": f"作战分队在受扰窗口使用具体装备{index}打击并毁伤目标{index}",
             "system_interfaces": [f"火控接口{index}", f"效应载荷接口{index}"],
-                "novelty_delta": f"相对基线形成实质差异{index}",
-                "frontier_principle": f"前沿作用原理{index}",
-                "technology_discontinuity": f"常规升级无法吸收的装备关系跃迁{index}",
-                "technology_horizon": "5-10年",
-                "engineering_bottleneck": f"可证伪工程瓶颈{index}",
-                "original_paradigm": f"传统制胜关系{index}",
-                "disruptive_shift": f"新的制胜关系{index}",
-                "independence_thesis": f"不是同族换名或一般性能提升{index}",
+            "novelty_delta": f"相对基线形成实质差异{index}",
+            "frontier_principle": f"前沿作用原理{index}",
+            "technology_discontinuity": f"常规升级无法吸收的装备关系跃迁{index}",
+            "technology_horizon": "5-10年",
+            "engineering_bottleneck": f"可证伪工程瓶颈{index}",
+            "original_paradigm": f"传统制胜关系{index}",
+            "disruptive_shift": f"新的制胜关系{index}",
+            "independence_thesis": f"不是同族换名或一般性能提升{index}",
             "evidence_ids": ["ev-1"],
             "evidence_boundary": "公开证据只支持组成技术，不证明完整效能",
             "counterevidence": [f"反证{index}"],
@@ -7722,9 +7263,7 @@ def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledg
             "discovery_blueprint": {
                 "primary_branch": "D",
                 "execution_profile_id": "swarm_quality_v1",
-                "adaptive_winning_step_modes": {
-                    str(step): "skip" for step in range(1, 7)
-                },
+                "adaptive_winning_step_modes": {str(step): "skip" for step in range(1, 7)},
                 "winning_swarm_policy": {
                     "enabled": True,
                     "max_dynamic_instances": 12,
@@ -7760,15 +7299,8 @@ def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledg
     assert swarm["core_schedule"]["quality_gate_passed"] is True
     assert swarm["final_merge"]["passed"] is True
     assert swarm["specialist_execution_batches"]
-    assert all(
-        1 <= item["wave"] <= 3 and item["task_ids"]
-        for item in swarm["specialist_execution_batches"]
-    )
-    assert all(
-        evidence_id == "ev-1"
-        for item in swarm["hypotheses"]
-        for evidence_id in item["evidence_ids"]
-    )
+    assert all(1 <= item["wave"] <= 3 and item["task_ids"] for item in swarm["specialist_execution_batches"])
+    assert all(evidence_id == "ev-1" for item in swarm["hypotheses"] for evidence_id in item["evidence_ids"])
     event_types = {row.get("event_type") for row in progress_rows}
     assert {
         "swarm_planned",
@@ -7780,43 +7312,25 @@ def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledg
         "hypothesis_created",
         "swarm_gate_evaluated",
     } <= event_types
-    recruitment_rows = [
-        row
-        for row in progress_rows
-        if row.get("event_type") == "specialist_recruitment_planned"
-    ]
+    recruitment_rows = [row for row in progress_rows if row.get("event_type") == "specialist_recruitment_planned"]
     assert 1 <= len(recruitment_rows) <= 12
-    assert len({row["session_ref"] for row in recruitment_rows}) == len(
-        recruitment_rows
-    )
+    assert len({row["session_ref"] for row in recruitment_rows}) == len(recruitment_rows)
     assert all(row["provider_type"] == "codex_cli" for row in recruitment_rows)
-    assert all(
-        row["execution_backend"] == "independent_codex_cli" for row in recruitment_rows
-    )
+    assert all(row["execution_backend"] == "independent_codex_cli" for row in recruitment_rows)
     assert all(row["context_isolation"] == "ephemeral" for row in recruitment_rows)
     assert all(row["allow_child_spawn"] is False for row in recruitment_rows)
     assert all(row["role_purpose"] for row in recruitment_rows)
     for recruitment in recruitment_rows:
         lifecycle = [
-            row["event_type"]
-            for row in progress_rows
-            if row.get("agent_id") == recruitment["agent_instance_id"]
+            row["event_type"] for row in progress_rows if row.get("agent_id") == recruitment["agent_instance_id"]
         ]
-        assert lifecycle.index("specialist_recruitment_planned") < lifecycle.index(
-            "specialist_session_started"
-        )
-        assert lifecycle.index("specialist_session_started") < lifecycle.index(
-            "specialist_session_completed"
-        )
+        assert lifecycle.index("specialist_recruitment_planned") < lifecycle.index("specialist_session_started")
+        assert lifecycle.index("specialist_session_started") < lifecycle.index("specialist_session_completed")
         if "specialist_completed" in lifecycle:
-            assert lifecycle.index("specialist_session_completed") < lifecycle.index(
-                "specialist_completed"
-            )
+            assert lifecycle.index("specialist_session_completed") < lifecycle.index("specialist_completed")
 
 
-def test_swarm_quality_profile_runs_core_s_agents_in_parallel_and_finalizes_merge() -> (
-    None
-):
+def test_swarm_quality_profile_runs_core_s_agents_in_parallel_and_finalizes_merge() -> None:
     backend = ScriptedFakeProvider([])
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
     provider = ResponsesAgentProvider(backend)
@@ -7872,20 +7386,18 @@ def test_swarm_quality_profile_runs_core_s_agents_in_parallel_and_finalizes_merg
                             "nearest_public_baseline": f"公开基线{breadth_index}",
                             "changed_confrontation_variable": f"变量{breadth_index}",
                             "mechanism_chain": [f"机理{breadth_index}", "形成任务闭环"],
-                            "direct_military_effects": [
-                                f"直接打击并毁伤目标{breadth_index}"
-                            ],
+                            "direct_military_effects": [f"直接打击并毁伤目标{breadth_index}"],
                             "equipment_forms": [f"具体装备{breadth_index}"],
                             "project_function": f"作战分队在受扰场景使用具体装备{breadth_index}打击并毁伤目标",
                             "system_interfaces": ["火控授权接口", "效应载荷接口"],
-                                "novelty_delta": f"实质差异{breadth_index}",
-                                "frontier_principle": f"前沿作用原理{breadth_index}",
-                                "technology_discontinuity": f"常规升级无法吸收的装备关系跃迁{breadth_index}",
-                                "technology_horizon": "5-10年",
-                                "engineering_bottleneck": f"可证伪工程瓶颈{breadth_index}",
-                                "original_paradigm": f"传统制胜关系{breadth_index}",
-                                "disruptive_shift": f"新的制胜关系{breadth_index}",
-                                "independence_thesis": f"不是同族换名或一般性能提升{breadth_index}",
+                            "novelty_delta": f"实质差异{breadth_index}",
+                            "frontier_principle": f"前沿作用原理{breadth_index}",
+                            "technology_discontinuity": f"常规升级无法吸收的装备关系跃迁{breadth_index}",
+                            "technology_horizon": "5-10年",
+                            "engineering_bottleneck": f"可证伪工程瓶颈{breadth_index}",
+                            "original_paradigm": f"传统制胜关系{breadth_index}",
+                            "disruptive_shift": f"新的制胜关系{breadth_index}",
+                            "independence_thesis": f"不是同族换名或一般性能提升{breadth_index}",
                             "evidence_ids": ["ev-1"],
                             "evidence_boundary": "证据不外推完整作战效能",
                             "counterevidence": ["存在反证"],
@@ -7957,9 +7469,7 @@ def test_swarm_quality_profile_runs_core_s_agents_in_parallel_and_finalizes_merg
     assert swarm["core_schedule"]["completed_steps"] == ["S1", "S2"]
     assert swarm["core_schedule"]["quality_gate_passed"] is True
     assert swarm["final_merge"]["passed"] is True
-    assert all(
-        "physical_cohort_id" not in row for row in result["subagent_runs"]
-    )
+    assert all("physical_cohort_id" not in row for row in result["subagent_runs"])
 
 
 def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merge(
@@ -8030,12 +7540,10 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "max_output_tokens": max_output_tokens,
                 }
             )
-                # Force all six S3/S4 producers to overlap at the shared
-                # refresh boundary. Exactly one selector call must serve every slot.
+            # Force all six S3/S4 producers to overlap at the shared
+            # refresh boundary. Exactly one selector call must serve every slot.
             await asyncio.sleep(0.02)
-            raise ProviderRequestError(
-                "Codex CLI timed out after 120 seconds"
-            )
+            raise ProviderRequestError("Codex CLI timed out after 120 seconds")
         if phase == "winning_post_divergence_seed_challenge_mapping":
             post_divergence_seed_mapper_agent_ids.append(str(agent_id))
             post_divergence_frontier_mapper_inputs.append(dict(payload))
@@ -8103,30 +7611,22 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "identity_status": "resolved",
                     "naming_contract_passed": True,
                     "frozen_name": assigned["name"],
-                    "primary_equipment_identity": assigned[
-                        "primary_equipment_identity"
-                    ],
+                    "primary_equipment_identity": assigned["primary_equipment_identity"],
                     "identity_resolution": "依据整卡军事语义确认唯一接敌与直接作用主体。",
-                    "concise_winning_summary": (
-                        "压缩拒止环境下的目标确认窗口，对高价值时敏目标实施自主精确毁伤。"
-                    ),
+                    "concise_winning_summary": ("压缩拒止环境下的目标确认窗口，对高价值时敏目标实施自主精确毁伤。"),
                 },
                 ensure_ascii=False,
             )
         if phase.startswith("winning_s6_parallel_card_"):
             assigned_card = dict(payload["candidate_weapon"])
-            assigned_card["concise_winning_summary"] = payload[
-                "winning_logic_overview"
-            ]
+            assigned_card["concise_winning_summary"] = payload["winning_logic_overview"]
             modules = _complete_s6_test_modules(str(assigned_card.get("name", "装备")))
             s6_authoring_inputs.append(
                 {
                     "phase": phase,
                     "system": system,
                     "name": assigned_card.get("name", ""),
-                    "concise_winning_summary": assigned_card.get(
-                        "concise_winning_summary", ""
-                    ),
+                    "concise_winning_summary": assigned_card.get("concise_winning_summary", ""),
                     "max_output_tokens": max_output_tokens,
                     "payload_keys": set(payload),
                 }
@@ -8143,9 +7643,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     },
                     ensure_ascii=False,
                 )
-            assigned_card.update(
-                _s6_test_shared_innovation_anchors(str(assigned_card.get("name", "装备")))
-            )
+            assigned_card.update(_s6_test_shared_innovation_anchors(str(assigned_card.get("name", "装备"))))
             assigned_card.update(
                 {
                     "operational_process": ["按候选专属制胜机理完成交战。"],
@@ -8161,9 +7659,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                 }
             )
             if not phase.endswith("_spine"):
-                assigned_card["capability_portrait"] = (
-                    "S6 Codex 会话基于候选身份自然撰写的作战能力画像。"
-                )
+                assigned_card["capability_portrait"] = "S6 Codex 会话基于候选身份自然撰写的作战能力画像。"
                 assigned_card["capability_portrait_modules"] = modules
             return json.dumps(
                 {
@@ -8187,15 +7683,12 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "decision_schema": dict(output_schema["decisions"][0]),
                     "system": str(system),
                     "allowed_ids": allowed_ids,
-                        "payload_keys": set(payload),
-                        "coverage_matrix": dict(payload.get("coverage_matrix", {})),
-                        "candidate_row_keys": [set(item) for item in candidate_rows],
+                    "payload_keys": set(payload),
+                    "coverage_matrix": dict(payload.get("coverage_matrix", {})),
+                    "candidate_row_keys": [set(item) for item in candidate_rows],
                 }
             )
-            visible_ids = [
-                item["hypothesis_id"]
-                for item in candidate_ledger.get("hypotheses", [])
-            ]
+            visible_ids = [item["hypothesis_id"] for item in candidate_ledger.get("hypotheses", [])]
             scoped_merge_inputs.append(("S5", allowed_ids, visible_ids))
             return json.dumps(
                 {
@@ -8204,22 +7697,23 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                             "hypothesis_id": hypothesis_id,
                             "decision": "retain",
                             "reason": "候选具有独立作战角色并可直接形成战果",
-                                "independence_basis": "核心机理不同",
-                                "innovation_priority": (
-                                    0.9 if position % 2 else 0.7
-                                ),
-                                "innovation_basis": "改变接敌几何与敌我交换关系",
-                                "disruption_tier": (
-                                    "paradigm_disruption"
-                                    if position % 2
-                                    else "new_quality_breakthrough"
-                                ),
-                                "material_innovation_breakpoint_present": True,
-                                "ordinary_upgrade_or_function_packaging": False,
-                                "displaced_operational_mode": "依赖高价值平台逐目标接敌",
-                                "new_operational_mode": "以分布式效应体持续占位并自主接敌",
-                                "winning_relation_shift": "从高价值平台互换转为可消耗效应密度压制",
-                            }
+                            "independence_basis": "核心机理不同",
+                            "innovation_priority": (0.9 if position % 2 else 0.7),
+                            "innovation_basis": "改变接敌几何与敌我交换关系",
+                            "disruption_tier": ("paradigm_disruption" if position % 2 else "new_quality_breakthrough"),
+                            "material_innovation_breakpoint_present": True,
+                            "ordinary_upgrade_or_function_packaging": False,
+                            "identity_contract_version": "single_weapon_v1",
+                            "single_weapon_identity_closes": True,
+                            "physical_main_body_specific": True,
+                            "novel_principle_explicit": True,
+                            "effect_carrier_closes": True,
+                            "independent_deployment_and_testable": True,
+                            "system_family_or_solution_bundle": False,
+                            "displaced_operational_mode": "依赖高价值平台逐目标接敌",
+                            "new_operational_mode": "以分布式效应体持续占位并自主接敌",
+                            "winning_relation_shift": "从高价值平台互换转为可消耗效应密度压制",
+                        }
                         for position, hypothesis_id in enumerate(allowed_ids, start=1)
                     ],
                     "portfolio_order": allowed_ids,
@@ -8235,11 +7729,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                         {
                             "left_hypothesis_id": left,
                             "right_hypothesis_id": right,
-                            "relationship": (
-                                "non_independent_variant"
-                                if index == 1
-                                else "independent"
-                            ),
+                            "relationship": ("non_independent_variant" if index == 1 else "independent"),
                             "axis_equivalence": {
                                 "target": True,
                                 "task_chain_breakpoint": True,
@@ -8247,14 +7737,10 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                                 "core_mechanism": index != 1,
                                 "direct_result": True,
                             },
-                            "material_difference_axes": (
-                                ["core_mechanism"] if index == 1 else ["target"]
-                            ),
+                            "material_difference_axes": (["core_mechanism"] if index == 1 else ["target"]),
                             "confidence": 0.9,
                         }
-                        for index, (left, right) in enumerate(
-                            payload["pair_ids"], start=1
-                        )
+                        for index, (left, right) in enumerate(payload["pair_ids"], start=1)
                     ],
                     "stop_reason": "all_pairs_compared",
                 },
@@ -8263,9 +7749,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         if phase == "winning_pre_generation_angle_selection":
             return json.dumps(
                 {
-                    "selected_seed_ids": [
-                        item["seed_id"] for item in payload["reserve_candidates"][:4]
-                    ],
+                    "selected_seed_ids": [item["seed_id"] for item in payload["reserve_candidates"][:4]],
                     "selection_reasons": [],
                     "rejected_groups": [],
                     "stop_reason": "independent_reserves_selected",
@@ -8313,9 +7797,19 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             )
         if phase == "winning_swarm_dynamic_seed":
             diversity_pool = [dict(payload.get("open_exploration_hint", {}))]
-            assert set(("name", "concise_winning_summary")) == set(
-                output_schema["hypotheses"][0]
-            )
+            assert {
+                "name",
+                "concise_winning_summary",
+                "single_weapon_identity",
+                "physical_main_body",
+                "novel_technical_principle",
+                "effect_carrier",
+                "principle_to_effect_chain",
+                "target_and_direct_effect",
+                "independent_deployment_boundary",
+                "independent_test_boundary",
+                "system_family_exclusion",
+            } == set(output_schema["hypotheses"][0])
             assert "title" not in output_schema["hypotheses"][0]
             assert "naming_style" not in output_schema["hypotheses"][0]
             assert "core_disruptive_difference" not in output_schema["hypotheses"][0]
@@ -8344,10 +7838,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             s3_visible_evidence_by_call.append(
                 (
                     s3_call_counts[instance_id],
-                    {
-                        str(item.get("evidence_id", ""))
-                        for item in payload.get("evidence_index", [])
-                    },
+                    {str(item.get("evidence_id", "")) for item in payload.get("evidence_index", [])},
                 )
             )
             initial_empty = False
@@ -8374,13 +7865,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     await asyncio.sleep(0.02)
             finally:
                 active_seed_calls -= 1
-                execution_order.append(
-                    (
-                        f"s3_done:{agent_id}"
-                        if diversity_pool
-                        else f"completion_done:{agent_id}"
-                    )
-                )
+                execution_order.append((f"s3_done:{agent_id}" if diversity_pool else f"completion_done:{agent_id}"))
             if initial_empty:
                 return json.dumps(
                     {
@@ -8391,44 +7876,43 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     ensure_ascii=False,
                 )
             marker = f"branch_token_{seed_index}_{agent_id}"
-            portfolio_completion = "portfolio_direction_shortfall" in task.get(
-                "trigger_residuals", []
-            )
+            portfolio_completion = "portfolio_direction_shortfall" in task.get("trigger_residuals", [])
             hypothesis_count = 2 if portfolio_completion else 1
             return json.dumps(
                 {
                     "hypotheses": [
-                            {
-                                "name": (
-                                    f"“断链复获”自主无人战斗平台-{marker}"
-                                    if not portfolio_completion
-                                    else (
-                                        f"“远矢”精确巡航效应器-{marker}"
-                                        if ordinal == 1
-                                        else f"“潜雷”可消耗电子压制无人平台-{marker}"
-                                    )
-                                ),
-                                "title": (
-                                (
-                                    f"远程精确巡航效应器-{marker}"
+                        {
+                            "name": (
+                                f"“断链复获”自主无人战斗平台-{marker}"
+                                if not portfolio_completion
+                                else (
+                                    f"“远矢”精确巡航效应器-{marker}"
                                     if ordinal == 1
-                                    else f"可消耗电子压制无人平台-{marker}"
+                                    else f"“潜雷”可消耗电子压制无人平台-{marker}"
                                 )
+                            ),
+                            "title": (
+                                (f"远程精确巡航效应器-{marker}" if ordinal == 1 else f"可消耗电子压制无人平台-{marker}")
                                 if portfolio_completion
                                 else f"断链复获自主无人战斗平台-{marker}"
                             ),
-                                    "winning_angle_id": "",
-                                    "combat_dimension": "OTHER:自主断链复获",
-                                "dimension_winning_logic": (
-                                    "在强干扰窗口改变目标再捕获与直接毁伤关系"
-                                ),
-                                "naming_style": "D/E/I任务能力",
-                                "core_disruptive_difference": (
-                                    f"改变断链条件下目标复获与直接毁伤关系-{marker}-{ordinal}"
-                                ),
-                                    "concise_winning_summary": (
-                                        f"在强干扰窗口由{marker}自主复获临机目标，压缩交战空窗并直接完成压制与毁伤。"
-                                    ),
+                            "winning_angle_id": "",
+                            "combat_dimension": "OTHER:自主断链复获",
+                            "dimension_winning_logic": ("在强干扰窗口改变目标再捕获与直接毁伤关系"),
+                            "naming_style": "D/E/I任务能力",
+                            "core_disruptive_difference": (f"改变断链条件下目标复获与直接毁伤关系-{marker}-{ordinal}"),
+                            "concise_winning_summary": (
+                                f"在强干扰窗口由{marker}自主复获临机目标，压缩交战空窗并直接完成压制与毁伤。"
+                            ),
+                            "single_weapon_identity": f"可独立部署的自主无人战斗平台-{marker}",
+                            "physical_main_body": f"自主无人战斗平台整机-{marker}",
+                            "novel_technical_principle": f"受扰条件下的机载自主复获机理-{marker}",
+                            "effect_carrier": f"平台内生效应载荷-{marker}",
+                            "principle_to_effect_chain": f"平台→自主复获→效应载荷→目标状态改变→直接毁伤-{marker}",
+                            "target_and_direct_effect": f"直接打击并毁伤目标-{marker}",
+                            "independent_deployment_boundary": f"一架完整自主无人战斗平台-{marker}",
+                            "independent_test_boundary": f"单机受扰复获与效应闭环试验-{marker}",
+                            "system_family_exclusion": f"单机整装独立接敌，不依赖装备集合-{marker}",
                             "original_paradigm": f"original-{marker}-{ordinal}",
                             "disruptive_shift": f"shift-{marker}-{ordinal}",
                             "independence_thesis": f"independent-{marker}-{ordinal}",
@@ -8436,44 +7920,29 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                             "changed_confrontation_variable": f"variable_{marker}_{ordinal}",
                             "mechanism_chain": [
                                 (
-                                    (
-                                        f"远域突防精确毁伤-{marker}"
-                                        if ordinal == 1
-                                        else f"低空诱导电子压制-{marker}"
-                                    )
+                                    (f"远域突防精确毁伤-{marker}" if ordinal == 1 else f"低空诱导电子压制-{marker}")
                                     if portfolio_completion
                                     else f"mechanism_{marker}"
                                 )
                             ],
                             "direct_military_effects": [
                                 (
-                                    (
-                                        f"纵深精确毁伤-{marker}"
-                                        if ordinal == 1
-                                        else f"压制防空火控窗口-{marker}"
-                                    )
+                                    (f"纵深精确毁伤-{marker}" if ordinal == 1 else f"压制防空火控窗口-{marker}")
                                     if portfolio_completion
                                     else f"直接打击并毁伤目标-{marker}"
                                 )
                             ],
                             "equipment_forms": [
                                 (
-                                    (
-                                        f"远程精确巡航弹药-{marker}"
-                                        if ordinal == 1
-                                        else f"可消耗电子攻击无人机-{marker}"
-                                    )
+                                    (f"远程精确巡航弹药-{marker}" if ordinal == 1 else f"可消耗电子攻击无人机-{marker}")
                                     if portfolio_completion
                                     else f"自主无人战斗平台-{marker}"
                                 )
                             ],
-                                "project_function": (
-                                    f"作战分队在受扰窗口使用自主无人战斗平台-{marker}"
-                                    f"直接打击、毁伤或压制敌方目标-{ordinal}"
-                                ),
-                                "reference_overview": (
-                                    "在强干扰造成任务链断裂时自主复获目标，并直接完成压制与毁伤。"
-                                ),
+                            "project_function": (
+                                f"作战分队在受扰窗口使用自主无人战斗平台-{marker}直接打击、毁伤或压制敌方目标-{ordinal}"
+                            ),
+                            "reference_overview": ("在强干扰造成任务链断裂时自主复获目标，并直接完成压制与毁伤。"),
                             "system_interfaces": [
                                 f"任务总线-{marker}-{ordinal}",
                                 f"火控授权接口-{marker}-{ordinal}",
@@ -8502,8 +7971,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     ],
                     "quality_residuals": (
                         ["evidence_insufficient"]
-                        if "mechanism_generator" in agent_id
-                        or "counter_adaptation_red_team" in agent_id
+                        if "mechanism_generator" in agent_id or "counter_adaptation_red_team" in agent_id
                         else []
                     ),
                     "stop_reason": "seed_complete",
@@ -8511,13 +7979,8 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                 ensure_ascii=False,
             )
         execution_order.append(f"downstream_start:{mission_node}:{agent_id}")
-        allowed_ids = list(
-            payload["candidate_ledger"].get("allowed_hypothesis_ids", [])
-        )
-        visible_ids = [
-            item["hypothesis_id"]
-            for item in payload["candidate_ledger"].get("hypotheses", [])
-        ]
+        allowed_ids = list(payload["candidate_ledger"].get("allowed_hypothesis_ids", []))
+        visible_ids = [item["hypothesis_id"] for item in payload["candidate_ledger"].get("hypotheses", [])]
         scoped_merge_inputs.append((mission_node, allowed_ids, visible_ids))
         contributions = [
             {
@@ -8555,9 +8018,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             "discovery_blueprint": {
                 "primary_branch": "D",
                 "execution_profile_id": "winning_swarm_dynamic_v2",
-                "adaptive_winning_step_modes": {
-                    str(step): "skip" for step in range(1, 7)
-                },
+                "adaptive_winning_step_modes": {str(step): "skip" for step in range(1, 7)},
                 "winning_swarm_policy": {
                     "enabled": True,
                     "policy_id": "winning_swarm_dynamic_v2",
@@ -8602,7 +8063,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                         "downstream_question": "何种武器架构能形成可控持续效果",
                         "evidence_ids": ["ev-1"],
                     }
-                ]
+                ],
             },
             "evidence_index": [
                 {"evidence_id": "ev-1", "created_by": "combat_scenario"},
@@ -8631,47 +8092,25 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     # Dynamic v2 guarantees the governed 8-instance floor, while the exact
     # role count remains elastic after removing fixed observation-lens lists.
     assert 8 <= len(swarm["task_graph"]) <= 21
-    assert (
-        sum(
-            row.get("event_type") == "winning_quality_repair_planned"
-            for row in progress_rows
-        )
-        == 0
-    )
-    assert not any(
-        row.get("event_type") == "winning_portfolio_gap_completion_planned"
-        for row in progress_rows
-    )
-    clustering_started = any(
-        row.get("event_type") == "winning_semantic_clustering_started"
-        for row in progress_rows
-    )
+    assert sum(row.get("event_type") == "winning_quality_repair_planned" for row in progress_rows) == 0
+    assert not any(row.get("event_type") == "winning_portfolio_gap_completion_planned" for row in progress_rows)
+    clustering_started = any(row.get("event_type") == "winning_semantic_clustering_started" for row in progress_rows)
     if clustering_started:
-        assert any(
-            row.get("event_type") == "winning_semantic_clustering_completed"
-            for row in progress_rows
-        )
+        assert any(row.get("event_type") == "winning_semantic_clustering_completed" for row in progress_rows)
     angle_plan_events = [
-        row
-        for row in progress_rows
-        if row.get("event_type") == "winning_pre_generation_angle_portfolio_planned"
+        row for row in progress_rows if row.get("event_type") == "winning_pre_generation_angle_portfolio_planned"
     ]
     assert len(angle_plan_events) == 1
     assert 3 <= angle_plan_events[0]["assigned_angle_count"] <= 6
     assert 3 <= angle_plan_events[0]["s3_capacity_slot_count"] <= 6
     assert angle_plan_events[0]["inactive_capacity_slot_count"] == 0
     materialized_events = [
-        row
-        for row in progress_rows
-        if row.get("event_type") == "winning_s3_active_agents_materialized"
+        row for row in progress_rows if row.get("event_type") == "winning_s3_active_agents_materialized"
     ]
     assert len(materialized_events) == 1
     assert 3 <= materialized_events[0]["active_instance_count"] <= 6
     assert materialized_events[0]["unused_capacity_count"] == 0
-    assert not any(
-        row.get("event_type") == "winning_s3_capacity_slot_skipped"
-        for row in progress_rows
-    )
+    assert not any(row.get("event_type") == "winning_s3_capacity_slot_skipped" for row in progress_rows)
     assert angle_plan_events[0]["reserve_angle_count"] == 0
     assert pre_generation_selector_inputs
     assert len(pre_generation_selector_inputs) == 1
@@ -8689,41 +8128,27 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for item in pre_generation_selector_inputs[0]["open_angle_seeds"]
     )
     assert pre_generation_selector_inputs[0]["max_output_tokens"] <= 900
-    active_policy = "".join(
-        candidate_policy_prompts["winning_pre_generation_active_angle_selection"]
-    )
+    active_policy = "".join(candidate_policy_prompts["winning_pre_generation_active_angle_selection"])
     assert "轻量开放角度提示器" in active_policy
     assert "不要命名装备、指定技术路线" in active_policy
     fallback_events = [
         row
         for row in progress_rows
-        if row.get("event_type")
-        == "winning_pre_generation_active_angle_selection_fallback"
+        if row.get("event_type") == "winning_pre_generation_active_angle_selection_fallback"
     ]
     assert len(fallback_events) == 1
     assert fallback_events[0]["failure_type"] == "ProviderRequestError"
     assert fallback_events[0]["fallback_source"] == "s1_s2_reasoning_seeds"
-    assert not any(
-        row.get("event_type") == "winning_candidate_competition_converged"
-        for row in progress_rows
-    )
+    assert not any(row.get("event_type") == "winning_candidate_competition_converged" for row in progress_rows)
     assert swarm["budget"]["planned_instances"] <= 21
     assert swarm["budget"]["maximum_observed_concurrency"] <= 6
     assert maximum_seed_concurrency >= 1
     assert angle_assignments
     initial_assignments = [
-        item
-        for item in angle_assignments
-        if "-reallocated-" not in str(item.get("assignment_id", ""))
+        item for item in angle_assignments if "-reallocated-" not in str(item.get("assignment_id", ""))
     ]
-    recovery_assignments = [
-        item
-        for item in angle_assignments
-        if "-reallocated-" in str(item.get("assignment_id", ""))
-    ]
-    initial_assignment_ids = {
-        str(item.get("assignment_id", "")) for item in initial_assignments
-    }
+    recovery_assignments = [item for item in angle_assignments if "-reallocated-" in str(item.get("assignment_id", ""))]
+    initial_assignment_ids = {str(item.get("assignment_id", "")) for item in initial_assignments}
     assert initial_assignment_ids <= {""}
     assert all(not item.get("project_name") for item in initial_assignments)
     assert all(any(str(value).strip() for value in item.values()) for item in initial_assignments)
@@ -8733,22 +8158,16 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             "battlefield_relationship",
             "desired_direct_result",
         }
-    assert not any(
-        row.get("event_type") == "winning_s3_empty_angle_reallocated"
-        for row in progress_rows
-    )
+    assert not any(row.get("event_type") == "winning_s3_empty_angle_reallocated" for row in progress_rows)
     s3_policy = "".join(candidate_policy_prompts["winning_swarm_dynamic_seed"])
-    assert all(
-        len(prompt) < 4500
-        for prompt in candidate_policy_prompts["winning_swarm_dynamic_seed"]
-    )
+    assert all(len(prompt) < 6500 for prompt in candidate_policy_prompts["winning_swarm_dynamic_seed"])
     assert "从Query的核心战场矛盾自由创造" in s3_policy
     assert "独特物理形态、结构构型、材料/介质、新物理原理" in s3_policy
     assert "装备独特运动方式、反传统隐喻、数量/密度/规模" in s3_policy
     assert "一般性的任务能力、功能效果和动作流程应进入concise_winning_summary" in s3_policy
     assert "背景剥离诱显巡飞弹" in s3_policy
     assert "不要默认两字意象加弹/雷/器/系统" in s3_policy
-    assert "每个候选只输出name和concise_winning_summary" in s3_policy
+    assert "每个候选必须输出完整的单一武器语义合同" in s3_policy
     assert "可提交1—3个候选" in s3_policy
     assert "宁缺毋滥" in s3_policy
     assert "面向未来战争需要的多样性来自不同制胜断点" in s3_policy
@@ -8759,9 +8178,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     assert "naming_comparison" not in s3_policy
     assert "naming_self_check" not in s3_policy
     first_s3_payload = next(
-        item
-        for item in s3_generation_payloads
-        if "counterfactual_disruptive_challenges" not in item
+        item for item in s3_generation_payloads if "counterfactual_disruptive_challenges" not in item
     )
     creative_payload_keys = {
         "query",
@@ -8815,10 +8232,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     creative_handoff = first_s3_payload["military_value_handoff"]
     assert set(creative_handoff) == {"claims"}
     assert len(creative_handoff["claims"]) == 2
-    assert all(
-        set(item) == {"mechanism", "military_effects"}
-        for item in creative_handoff["claims"]
-    )
+    assert all(set(item) == {"mechanism", "military_effects"} for item in creative_handoff["claims"])
     assert "must-not-leak" not in str(creative_handoff)
     forbidden_s3_keys = {
         "claim_bundles",
@@ -8832,10 +8246,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         "discovery_convergence",
         "discovery_blueprint",
     }
-    assert all(
-        forbidden_s3_keys.isdisjoint(payload)
-        for payload in s3_generation_payloads
-    )
+    assert all(forbidden_s3_keys.isdisjoint(payload) for payload in s3_generation_payloads)
     assert all(
         all(
             set(claim) == {"mechanism", "military_effects"}
@@ -8851,101 +8262,62 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     assert "post_divergence_innovation_naming_reference" not in first_s3_payload
     assert not post_divergence_seed_mapper_agent_ids
     assert not post_divergence_frontier_mapper_inputs
-    assert not any(
-        has_frontier_provocation
-        for _, has_frontier_provocation in s3_post_divergence_frontier_presence
-    )
+    assert not any(has_frontier_provocation for _, has_frontier_provocation in s3_post_divergence_frontier_presence)
     self_admission_events = [
-        row
-        for row in progress_rows
-        if row.get("event_type")
-        == "winning_s3_first_pass_self_admission_completed"
+        row for row in progress_rows if row.get("event_type") == "winning_s3_first_pass_self_admission_completed"
     ]
     assert len(self_admission_events) == sum(s3_call_counts.values())
-    assert all(
-        row.get("separate_precommit_model_call") is False
-        for row in self_admission_events
-    )
-    assert all(
-        row.get("candidate_maximum_per_session") == 3
-        for row in self_admission_events
-    )
-    assert not any(
-        str(row.get("event_type", "")).startswith("winning_s3_precommit_")
-        for row in progress_rows
-    )
+    assert all(row.get("separate_precommit_model_call") is False for row in self_admission_events)
+    assert all(row.get("candidate_maximum_per_session") == 3 for row in self_admission_events)
+    assert not any(str(row.get("event_type", "")).startswith("winning_s3_precommit_") for row in progress_rows)
     if clustering_started:
-        clustering_policy = "".join(
-            candidate_policy_prompts["winning_semantic_pair_clustering"]
-        )
+        clustering_policy = "".join(candidate_policy_prompts["winning_semantic_pair_clustering"])
         assert "同一装备家族本身不是重复" in clustering_policy
         assert "改变变量或核心机理任一实质不同" in clustering_policy
         clustering_completed = [
-            row
-            for row in progress_rows
-            if row.get("event_type") == "winning_semantic_clustering_completed"
+            row for row in progress_rows if row.get("event_type") == "winning_semantic_clustering_completed"
         ]
         assert clustering_completed
-    last_reasoning_done = max(
-        index
-        for index, row in enumerate(execution_order)
-        if row.startswith("reasoning_done:")
-    )
-    first_s3_start = min(
-        index
-        for index, row in enumerate(execution_order)
-        if row.startswith("s3_start:")
-    )
+    last_reasoning_done = max(index for index, row in enumerate(execution_order) if row.startswith("reasoning_done:"))
+    first_s3_start = min(index for index, row in enumerate(execution_order) if row.startswith("s3_start:"))
     assert last_reasoning_done < first_s3_start
     fanout_events = [
-        row
-        for row in progress_rows
-        if row.get("event_type") == "winning_s4_candidate_fanout_materialized"
+        row for row in progress_rows if row.get("event_type") == "winning_s4_candidate_fanout_materialized"
     ]
     assert not fanout_events
     s4_scopes = [row for row in scoped_merge_inputs if row[0] == "S4"]
     assert not s4_scopes
     s5_scopes = [row for row in scoped_merge_inputs if row[0] == "S5"]
     assert s5_scopes
-    assert all(
-        allowed_ids and set(allowed_ids) <= set(visible_ids)
-        for _, allowed_ids, visible_ids in s5_scopes
-    )
+    assert all(allowed_ids and set(allowed_ids) <= set(visible_ids) for _, allowed_ids, visible_ids in s5_scopes)
     incremental_s4_events = [
-        row
-        for row in progress_rows
-        if row.get("event_type") == "winning_s4_incremental_boundary_opened"
+        row for row in progress_rows if row.get("event_type") == "winning_s4_incremental_boundary_opened"
     ]
     assert len(incremental_s4_events) == 1
     first_s3_completed = min(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("mission_node") == "S3"
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("mission_node") == "S3"
     )
     last_s3_completed = max(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("mission_node") == "S3"
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("mission_node") == "S3"
     )
     first_s4_started = min(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("mission_node") == "S4"
+        if row.get("event_type") == "winning_agent_session_started" and row.get("mission_node") == "S4"
     )
     first_s3_started = min(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("mission_node") == "S3"
+        if row.get("event_type") == "winning_agent_session_started" and row.get("mission_node") == "S3"
     )
     first_s4_completed = min(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("mission_node") == "S4"
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("mission_node") == "S4"
     )
     assert incremental_s4_events[0]["completed_s3_instance_ids"] == []
     assert incremental_s4_events[0]["parallel_start"] is True
@@ -8955,42 +8327,29 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     first_s5_started = min(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("mission_node") == "S5"
+        if row.get("event_type") == "winning_agent_session_started" and row.get("mission_node") == "S5"
     )
     last_creative_completed = max(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("mission_node") in {"S3", "S4"}
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("mission_node") in {"S3", "S4"}
     )
     # Cross-pool S5 waits for the live creator set, then 2-3 reviewers
     # compare the complete candidate pool.
     assert first_s5_started > last_creative_completed
     assert 2 <= len(s5_scopes) <= 3
-    assert not any(
-        row.get("event_type") == "winning_contribution_rebase_required"
-        for row in progress_rows
-    )
+    assert not any(row.get("event_type") == "winning_contribution_rebase_required" for row in progress_rows)
     assert s3_task_inputs
     assert all(
-        item.get("merge_target") in {"S3", "S4"}
-        and item.get("allow_child_spawn") is False
-        for item in s3_task_inputs
+        item.get("merge_target") in {"S3", "S4"} and item.get("allow_child_spawn") is False for item in s3_task_inputs
     )
     assert all(
         not has_counterfactual_key
         for call_count, has_counterfactual_key in s3_counterfactual_key_presence
         if call_count == 1
     )
-    assert not any(
-        has_counterfactual_key
-        for _, has_counterfactual_key in s3_counterfactual_key_presence
-    )
-    assert not any(
-        has_post_divergence_seed
-        for _, has_post_divergence_seed in s3_post_divergence_seed_presence
-    )
+    assert not any(has_counterfactual_key for _, has_counterfactual_key in s3_counterfactual_key_presence)
+    assert not any(has_post_divergence_seed for _, has_post_divergence_seed in s3_post_divergence_seed_presence)
     assert all(
         "ev-weapon_equipment-web-prsm" not in evidence_ids
         for call_count, evidence_ids in s3_visible_evidence_by_call
@@ -9000,15 +8359,11 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     # but a public equipment catalogue is never required as an innovation
     # anchor even on retry.
     assert reviewer_inputs
-    assert all(
-        item["phase"] == "winning_swarm_dynamic_portfolio_review_fast"
-        for item in reviewer_inputs
-    )
+    assert all(item["phase"] == "winning_swarm_dynamic_portfolio_review_fast" for item in reviewer_inputs)
     assert all(item["max_output_tokens"] == 2400 for item in reviewer_inputs)
     assert all(item["evidence_count"] == 0 for item in reviewer_inputs)
     assert all(
-        item["schema_keys"]
-        == {"decisions", "portfolio_order", "portfolio_summary", "stop_reason"}
+        item["schema_keys"] == {"decisions", "portfolio_order", "portfolio_summary", "stop_reason"}
         for item in reviewer_inputs
     )
     assert all(
@@ -9031,6 +8386,13 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             "naming_reason",
             "direct_equipment",
             "weapon_object_specific",
+            "identity_contract_version",
+            "single_weapon_identity_closes",
+            "physical_main_body_specific",
+            "novel_principle_explicit",
+            "effect_carrier_closes",
+            "independent_deployment_and_testable",
+            "system_family_or_solution_bundle",
             "support_dependency_only",
             "known_science_consistent",
             "weapon_body_mechanism_closes",
@@ -9040,22 +8402,30 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             "displaced_operational_mode",
             "new_operational_mode",
             "winning_relation_shift",
+            "converged_candidate",
             "merge_target_hypothesis_id",
         }
         for item in reviewer_inputs
     )
     assert all("candidate_ledger" in item["payload_keys"] for item in reviewer_inputs)
     assert all(
-        item["payload_keys"] - {
-            "candidate_ledger", "coverage_matrix", "expert_review_feedback",
-            "run_id", "agent_instance_id", "mission_node", "batch",
+        item["payload_keys"]
+        - {
+            "candidate_ledger",
+            "coverage_matrix",
+            "expert_review_feedback",
+            "run_id",
+            "agent_instance_id",
+            "mission_node",
+            "batch",
         }
         == set()
         for item in reviewer_inputs
     )
     assert all(
         "coverage_matrix" in item["payload_keys"]
-        and set(item["coverage_matrix"]) >= {
+        and set(item["coverage_matrix"])
+        >= {
             "coverage_ratio",
             "duplicate_ratio",
             "primary_gaps",
@@ -9067,35 +8437,34 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for item in reviewer_inputs
     )
     assert all("只做创新性、颠覆性和候选独立性筛选" in item["system"] for item in reviewer_inputs)
+    assert all("普通性能加码、把现有功能智能化、流程提速" in item["system"] for item in reviewer_inputs)
     assert all(
-        "普通性能加码、把现有功能智能化、流程提速" in item["system"]
-        for item in reviewer_inputs
-    )
-    assert all(
-        "优先形成5—6条不同制胜角度、不同主装备身份的高质量组合" in item["system"]
-        and "最多保留6条" in item["system"]
+        "以至少6条不同制胜角度、不同主装备身份为交付基线" in item["system"]
+        and "通常最多10条" in item["system"]
+        and "不得只截取前6条" in item["system"]
         and "禁止为凑数回收已经判退的普通方向" in item["system"]
         for item in reviewer_inputs
     )
+    assert all(
+        "任何单项或多项false都不是运行时硬失败门" in item["system"]
+        and "本体仍抽象，也应返回完整converged_candidate" in item["system"]
+        for item in reviewer_inputs
+    )
     assert all("不改名、不补写装备字段" in item["system"] for item in reviewer_inputs)
-    assert all("输入候选严格只有hypothesis_id、name和concise_winning_summary" in item["system"] for item in reviewer_inputs)
+    assert all(
+        "输入候选严格只有hypothesis_id、name和concise_winning_summary" in item["system"] for item in reviewer_inputs
+    )
     assert all("不得要求或使用Query" in item["system"] for item in reviewer_inputs)
-    selected_innovation = [
-        item["innovation_priority"] for item in swarm["final_equipment_portfolio"]
-    ]
+    selected_innovation = [item["innovation_priority"] for item in swarm["final_equipment_portfolio"]]
     assert selected_innovation == sorted(selected_innovation, reverse=True)
     assert all(
-        item.get("disruption_tier")
-        in {"paradigm_disruption", "new_quality_breakthrough"}
+        item.get("disruption_tier") in {"paradigm_disruption", "new_quality_breakthrough"}
         and item.get("displaced_operational_mode")
         and item.get("new_operational_mode")
         and item.get("winning_relation_shift")
         for item in swarm["final_equipment_portfolio"]
     )
-    assert all(
-        item.get("innovation_priority") is not None
-        for item in swarm["candidate_lineage"]
-    )
+    assert all(item.get("innovation_priority") is not None for item in swarm["candidate_lineage"])
     # S6 card authoring and handoff contracts are covered by dedicated tests.
     # This integration probe ends at post-divergence convergence so it does
     # not couple soft-challenge behavior to one synthetic S5 portfolio shape.
@@ -9106,13 +8475,11 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     assert len(s6_authoring_inputs) == len(swarm["final_equipment_portfolio"])
     assert all(item["max_output_tokens"] == 3200 for item in s6_authoring_inputs)
     assert all(
-        item["payload_keys"]
-        == {"query_semantics", "candidate_weapon", "winning_logic_overview"}
+        item["payload_keys"] == {"query_semantics", "candidate_weapon", "winning_logic_overview"}
         for item in s6_authoring_inputs
     )
     assert all(
-        "输入严格只有query_semantics、candidate_weapon、winning_logic_overview三项"
-        in item["system"]
+        "输入严格只有query_semantics、candidate_weapon、winning_logic_overview三项" in item["system"]
         and "再直接写成决策短卡" in item["system"]
         and "每栏都以约400个有效中文字为中心" in item["system"]
         and "五栏合计通常约2000至2250字" in item["system"]
@@ -9131,17 +8498,12 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     assert all(item["concise_winning_summary"] for item in s6_authoring_inputs)
     assert len(s5_handoff_inputs) == len(swarm["final_equipment_portfolio"])
     assert s5_handoff_prompts
-    assert all(
-        "S3候选生成Codex会话已经在" in item
-        for item in s5_handoff_prompts
-    )
+    assert all("S3候选生成Codex会话已经在" in item for item in s5_handoff_prompts)
     assert all("唯一主装备" in item for item in s5_handoff_prompts)
     assert all("不得改名" in item for item in s5_handoff_prompts)
     assert all("逐字复制assigned_candidate.name" in item for item in s5_handoff_prompts)
     assert all("concise_winning_summary" in item for item in s5_handoff_prompts)
-    assert all(
-        "不参与身份判定、质量硬门或S6改名" in item for item in s5_handoff_prompts
-    )
+    assert all("不参与身份判定、质量硬门或S6改名" in item for item in s5_handoff_prompts)
     assert maximum_s5_handoff_concurrency >= min(2, len(s5_handoff_inputs))
     assert [item["name"] for item in s6_authoring_inputs] == [
         item["name"] for item in swarm["final_equipment_portfolio"]
@@ -9151,10 +8513,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         and provider_module._query_relevance_is_specific(item["query_relevance"])
         for item in swarm["final_equipment_portfolio"]
     )
-    assert all(
-        item.get("concise_winning_summary")
-        for item in swarm["final_equipment_portfolio"]
-    )
+    assert all(item.get("concise_winning_summary") for item in swarm["final_equipment_portfolio"])
     assert all(
         item.get("frontier_principle")
         and item.get("technology_discontinuity")
@@ -9162,18 +8521,15 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         and item.get("engineering_bottleneck")
         for item in swarm["final_equipment_portfolio"]
     )
-    assert sum(
-        row.get("event_type") == "winning_s5_handoff_contract_completed"
-        for row in progress_rows
-    ) == len(swarm["final_equipment_portfolio"])
+    assert sum(row.get("event_type") == "winning_s5_handoff_contract_completed" for row in progress_rows) == len(
+        swarm["final_equipment_portfolio"]
+    )
     # A generic Query no longer receives role/branch-prior cards. The Codex
     # specialist owns open-ended divergence and may receive an empty library.
     assert dynamic_seed_library_inputs
     assert all(context == {} for _, context in dynamic_seed_library_inputs)
     assert 1 <= len(swarm["final_equipment_portfolio"]) <= 7
-    assert swarm["portfolio_quality_gate"]["passed"] is True, swarm[
-        "portfolio_quality_gate"
-    ]
+    assert swarm["portfolio_quality_gate"]["passed"] is True, swarm["portfolio_quality_gate"]
     assert swarm["portfolio_quality_gate"]["capability_portrait_gate_passed"] is True
     assert swarm["portfolio_quality_gate"]["equipment_diversity_passed"] is True
     assert swarm["portfolio_quality_gate"]["direct_combat_main_body_passed"] is True
@@ -9205,9 +8561,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         and item["validation_plan"]
         for item in result["concept_directions"]
     )
-    assert all(
-        row[1] == row[2] for row in scoped_merge_inputs if row[0] in {"S4", "S5"}
-    )
+    assert all(row[1] == row[2] for row in scoped_merge_inputs if row[0] in {"S4", "S5"})
     present_archetypes = {item["archetype"] for item in swarm["task_graph"]}
     ordering_probe_archetypes = {
         "disruptive_mechanism_generator",
@@ -9221,9 +8575,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         # role is valid and must not reintroduce a fixed archetype catalogue.
         return
     fast_s3_id = next(
-        item["instance_id"]
-        for item in swarm["task_graph"]
-        if item["archetype"] == "disruptive_mechanism_generator"
+        item["instance_id"] for item in swarm["task_graph"] if item["archetype"] == "disruptive_mechanism_generator"
     )
     slow_s3_id = next(
         item["instance_id"]
@@ -9233,47 +8585,36 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
     fast_s3 = next(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("agent_id") == fast_s3_id
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("agent_id") == fast_s3_id
     )
     frontier_s4_id = next(
-        item["instance_id"]
-        for item in swarm["task_graph"]
-        if item["archetype"] == "frontier_equipment_miner"
+        item["instance_id"] for item in swarm["task_graph"] if item["archetype"] == "frontier_equipment_miner"
     )
     architect_s4_id = next(
-        item["instance_id"]
-        for item in swarm["task_graph"]
-        if item["archetype"] == "equipment_realization_architect"
+        item["instance_id"] for item in swarm["task_graph"] if item["archetype"] == "equipment_realization_architect"
     )
     evidence_s5_id = next(
-        item["instance_id"]
-        for item in swarm["task_graph"]
-        if item["archetype"] == "evidence_verifier"
+        item["instance_id"] for item in swarm["task_graph"] if item["archetype"] == "evidence_verifier"
     )
     frontier_s4_started = next(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("agent_id") == frontier_s4_id
+        if row.get("event_type") == "winning_agent_session_started" and row.get("agent_id") == frontier_s4_id
     )
     architect_s4_started = next(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("agent_id") == architect_s4_id
+        if row.get("event_type") == "winning_agent_session_started" and row.get("agent_id") == architect_s4_id
     )
     evidence_s5_started = next(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_started"
-        and row.get("agent_id") == evidence_s5_id
+        if row.get("event_type") == "winning_agent_session_started" and row.get("agent_id") == evidence_s5_id
     )
     slow_s3 = next(
         index
         for index, row in enumerate(progress_rows)
-        if row.get("event_type") == "winning_agent_session_completed"
-        and row.get("agent_id") == slow_s3_id
+        if row.get("event_type") == "winning_agent_session_completed" and row.get("agent_id") == slow_s3_id
     )
     assert frontier_s4_started < slow_s3
     assert fast_s3 < evidence_s5_started < slow_s3
@@ -9348,9 +8689,7 @@ def test_s6_title_compactor_preserves_agent_authored_novel_weapon_name() -> None
         "military_value": "断链后复获并直接毁伤机动水面目标",
     }
 
-    assert provider_module._compact_capability_direction_title(direction) == (
-        "潮痕-1有限区复获远程反舰巡航弹"
-    )
+    assert provider_module._compact_capability_direction_title(direction) == ("潮痕-1有限区复获远程反舰巡航弹")
 
 
 def test_s6_title_compactor_preserves_codex_name_without_dictionary_promotion() -> None:

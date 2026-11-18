@@ -1,4 +1,6 @@
 agent_harness_core
+defense_document_re_contract
+defense_ie_contract
 equipment_deep_research
 knowledgegraph
 platform_core

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import ipaddress
 from dataclasses import replace
 from difflib import SequenceMatcher
-import ipaddress
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from equipment_deep_research.query_library.models import (
@@ -11,7 +11,6 @@ from equipment_deep_research.query_library.models import (
     SourceReference,
     normalize_query,
 )
-
 
 DEFAULT_COVERAGE_SLOTS = (
     "需求牵引-战争任务与未来场景",
@@ -69,58 +68,6 @@ DEMAND_CHAIN_FIELDS = (
 )
 EVIDENCE_STATUSES = {"verified", "inferred", "unknown", "公开信号", "合理推演", "未知"}
 
-DOMAIN_TERMS = (
-    "无人",
-    "低空",
-    "远程火力",
-    "远程打击",
-    "精确打击",
-    "精确制导",
-    "导弹",
-    "弹药",
-    "火力",
-    "毁伤",
-    "压制",
-    "打击装备",
-    "预警",
-    "侦察",
-    "探测",
-    "雷达",
-    "防空",
-    "反导",
-    "指挥",
-    "通信",
-    "电磁",
-    "电子战",
-    "导航",
-    "投送",
-    "防护",
-    "保障",
-    "应急",
-    "救援",
-    "照明",
-    "供电",
-    "电源",
-    "终端",
-)
-RESEARCH_TERMS = ("研究", "分析", "研判", "评估", "论证", "挖掘", "识别", "推演")
-OUTCOME_TERMS = (
-    "装备",
-    "能力",
-    "体系",
-    "需求",
-    "发展",
-    "形态",
-    "效能",
-    "终端",
-    "供电系统",
-    "传感器",
-    "载荷",
-    "电源",
-    "天线",
-    "处理器",
-    "模块",
-)
 ACTIONABLE_HARM_TERMS = (
     "具体目标坐标",
     "目标清单",
@@ -131,10 +78,13 @@ ACTIONABLE_HARM_TERMS = (
     "规避安保",
     "人员伤亡最大化",
 )
-INTELLIGENCE_TERMS = ("智能", "自主", "算法")
-RED_OCEAN_TERMS = ("传统", "现役", "存量", "跨代", "做优", "升级", "缺口")
-BLUE_OCEAN_TERMS = ("新质", "蓝海", "新赛道", "颠覆", "拓新", "跨域")
-INDUSTRIAL_TERMS = ("通用", "系列", "规模", "低成本", "供应链", "产线", "装备族")
+GENERIC_REQUIREMENT_PHRASES = (
+    "满足未来任务",
+    "提升相关能力",
+    "增强相关能力",
+    "形成装备能力",
+    "形成相关能力",
+)
 SENSITIVE_QUERY_KEYS = {
     "access_token",
     "api_key",
@@ -148,13 +98,6 @@ SENSITIVE_QUERY_KEYS = {
     "sig",
     "token",
 }
-
-DOMAIN_ANCHOR_GROUPS = (
-    ("供电", "电源", "补能", "能源"),
-    ("照明", "灯具", "光源"),
-    ("应急", "救援", "灾害"),
-    ("通信", "链路", "网络", "终端"),
-)
 
 
 def coverage_plan(count: int) -> tuple[str, ...]:
@@ -266,65 +209,18 @@ def validate_generated_candidate(
     require_demand_chain: bool = True,
     topic: str = "",
 ) -> list[str]:
+    """只执行结构、安全和去重校验，不以领域词表或质量偏好阻断候选。"""
+
     issues: list[str] = []
     query = " ".join(candidate.query.split())
     if candidate.coverage_slot != expected_slot:
         issues.append(f"coverage_slot must be {expected_slot}")
-    if len(query) < 14:
-        issues.append("query is too short to be a clear research title")
-    if len(query) > 30:
-        issues.append("query should stay close to the preferred 18-25 character range")
-    if not any(term in query for term in DOMAIN_TERMS):
-        issues.append("query is outside the supported weapon-equipment capability domain")
-    if not any(term in query for term in RESEARCH_TERMS):
-        issues.append("query lacks an explicit research or analysis action")
-    combined_scope = f"{query} {candidate.supplemental_information}"
-    topic_anchors = [term for term in DOMAIN_TERMS if term in topic]
-    if topic_anchors and not any(term in combined_scope for term in topic_anchors):
-        issues.append("query does not share a subject anchor with the requested topic")
-    if not any(term in combined_scope for term in OUTCOME_TERMS):
-        issues.append("query and supplemental information do not lead to an equipment capability demand")
+    if not query:
+        issues.append("query is required")
+    if len(query) > 200:
+        issues.append("query exceeds the storage safety limit")
     if any(term in query for term in ACTIONABLE_HARM_TERMS):
         issues.append("query requests actionable targeting, attack, or weapon construction guidance")
-    if expected_slot in {
-        "技术驱动-技术现状与趋势",
-        "体系实战-全链条制胜机理",
-    } and not any(term in combined_scope for term in INTELLIGENCE_TERMS):
-        issues.append("required intelligent or autonomous capability lens is missing")
-    if expected_slot == "需求牵引-单装与体系能力缺口" and not any(term in combined_scope for term in RED_OCEAN_TERMS):
-        issues.append("traditional red-ocean cross-generation lens is missing")
-    if expected_slot == "颠覆逻辑-时间毁伤体系或伦理博弈" and not any(
-        term in combined_scope for term in BLUE_OCEAN_TERMS
-    ):
-        issues.append("new-quality blue-ocean lens is missing")
-    if expected_slot == "通用系列规模化-工业与装备族" and not any(term in combined_scope for term in INDUSTRIAL_TERMS):
-        issues.append("industrialization or equipment-family lens is missing")
-    if len(candidate.generation_rationale.strip()) < 10:
-        issues.append("generation_rationale is too short")
-    if len(candidate.supplemental_information.strip()) < 30:
-        issues.append("supplemental_information is too short to carry the detailed research dimensions")
-    if require_demand_chain:
-        chain = candidate.demand_chain
-        for field in DEMAND_CHAIN_FIELDS:
-            if len(str(chain.get(field, "")).strip()) < 6:
-                issues.append(f"demand_chain.{field} is missing or too generic")
-        evidence_status = str(chain.get("evidence_status", "")).strip()
-        if evidence_status not in EVIDENCE_STATUSES:
-            issues.append("demand_chain.evidence_status must distinguish verified, inferred, or unknown")
-        weapon_requirement = str(chain.get("weapon_requirement", ""))
-        if weapon_requirement and not any(term in weapon_requirement for term in OUTCOME_TERMS):
-            issues.append("demand_chain.weapon_requirement does not describe an equipment capability outcome")
-        if weapon_requirement and not _shares_domain_anchor(query, weapon_requirement):
-            issues.append("query is not anchored to its weapon requirement")
-        verdict = str(candidate.quality_review.get("verdict", "")).strip().lower()
-        if verdict not in {"pass", "通过"}:
-            issues.append("quality_review.verdict must pass after self-revision")
-        for field in ("causal_specificity", "differentiation", "researchability"):
-            value = str(candidate.quality_review.get(field, "")).strip().lower()
-            if value not in {"pass", "通过"}:
-                issues.append(f"quality_review.{field} must pass after self-revision")
-    if not candidate.source_references:
-        issues.append("at least one source reference is required")
     for prior in [*existing_queries, *accepted_queries]:
         if near_duplicate(query, prior):
             issues.append("query is an exact or near duplicate")
@@ -332,15 +228,43 @@ def validate_generated_candidate(
     return issues
 
 
-def _shares_domain_anchor(query: str, weapon_requirement: str) -> bool:
-    shared_terms = [
-        term
-        for term in (*DOMAIN_TERMS, "集群", "平台", "传感器", "指控", "补给", "维修")
-        if term in query and term in weapon_requirement
-    ]
-    if shared_terms:
-        return True
-    return any(
-        any(term in query for term in group) and any(term in weapon_requirement for term in group)
-        for group in DOMAIN_ANCHOR_GROUPS
-    )
+def review_generated_candidate(
+    candidate: GeneratedCandidate,
+    *,
+    topic: str = "",
+) -> list[str]:
+    """记录非阻断质量提示，供审计与后续研究补全，不用于淘汰开放候选。"""
+
+    notes: list[str] = []
+    query = " ".join(candidate.query.split())
+    if len(query) < 14:
+        notes.append("query is shorter than the preferred research-title range")
+    if len(query) > 30:
+        notes.append("query is longer than the preferred 18-25 character range")
+    if len(candidate.generation_rationale.strip()) < 10:
+        notes.append("generation_rationale could explain the situation and research value more fully")
+    if len(candidate.supplemental_information.strip()) < 30:
+        notes.append("supplemental_information could carry more research dimensions")
+    if candidate.demand_chain:
+        chain = candidate.demand_chain
+        for field in DEMAND_CHAIN_FIELDS:
+            if len(str(chain.get(field, "")).strip()) < 6:
+                notes.append(f"demand_chain.{field} is missing or too generic")
+        evidence_status = str(chain.get("evidence_status", "")).strip()
+        if evidence_status not in EVIDENCE_STATUSES:
+            notes.append("demand_chain.evidence_status should distinguish verified, inferred, or unknown")
+        weapon_requirement = str(chain.get("weapon_requirement", ""))
+        if weapon_requirement and any(term in weapon_requirement for term in GENERIC_REQUIREMENT_PHRASES):
+            notes.append("demand_chain.weapon_requirement is generic and should be refined during research")
+        verdict = str(candidate.quality_review.get("verdict", "")).strip().lower()
+        if verdict not in {"pass", "通过"}:
+            notes.append("quality_review.verdict did not pass the model's self-review")
+        for field in ("causal_specificity", "differentiation", "researchability"):
+            value = str(candidate.quality_review.get(field, "")).strip().lower()
+            if value not in {"pass", "通过"}:
+                notes.append(f"quality_review.{field} could be improved")
+    elif not candidate.demand_chain:
+        notes.append("demand_chain is unavailable and should be completed during research")
+    if not candidate.source_references:
+        notes.append("source grounding is unavailable and should be completed during research")
+    return notes

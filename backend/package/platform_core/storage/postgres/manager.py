@@ -19,6 +19,7 @@ from platform_core.storage.postgres.models_business import (
 )
 from platform_core.storage.postgres.models_business import Base as BusinessBase
 from platform_core.storage.postgres.models_knowledge import Base as KnowledgeBase
+from platform_core.storage.postgres import models_knowledge_governance as _knowledge_governance_models  # noqa: F401
 from platform_core.storage.postgres.models_equipment import EQUIPMENT_RUN_STATUS_SQL  # noqa: F401
 from platform_core.storage.postgres import models_equipment as _equipment_models  # noqa: F401
 from platform_core.storage_migrations.v073_enterprise import ENTERPRISE_SCHEMA_STATEMENTS
@@ -26,12 +27,60 @@ from platform_core.storage_migrations.v074_model_calls import MODEL_CALL_SCHEMA_
 from platform_core.storage_migrations.v075_user_uid import USER_UID_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v076_academic_retrieval import ACADEMIC_RETRIEVAL_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v077_mcp_access import MCP_ACCESS_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v078_knowledge_graph_v2 import KNOWLEDGE_GRAPH_V2_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v079_parsed_blocks import PARSED_BLOCK_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v080_knowledge_graph_evolution import (
+    KNOWLEDGE_GRAPH_EVOLUTION_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v081_knowledge_graph_acceptance import (
+    KNOWLEDGE_GRAPH_ACCEPTANCE_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v082_entity_mention_spans import (
+    ENTITY_MENTION_SPAN_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v083_relation_applicable_conditions import (
+    RELATION_APPLICABLE_CONDITIONS_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v084_annotation_campaigns import ANNOTATION_CAMPAIGN_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v085_graph_operability import (
+    KNOWLEDGE_GRAPH_OPERABILITY_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v086_relation_lifecycle import RELATION_LIFECYCLE_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v087_ontology_version_governance import (
+    ONTOLOGY_VERSION_GOVERNANCE_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v088_document_knowledge_audit import (
+    DOCUMENT_KNOWLEDGE_AUDIT_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v089_knowledge_governance import KNOWLEDGE_GOVERNANCE_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v090_pilot_acceptance_scope import PILOT_ACCEPTANCE_SCOPE_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v091_knowledge_card_profile import (
+    KNOWLEDGE_CARD_PROFILE_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v092_innovation_brief_discovery import (
+    INNOVATION_BRIEF_DISCOVERY_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v093_graph_extraction_status import (
+    GRAPH_EXTRACTION_STATUS_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v094_annotation_drafts import (
+    ANNOTATION_DRAFT_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v095_relation_review import (
+    RELATION_REVIEW_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v096_innovation_brief_scheduled_delivery import (
+    INNOVATION_BRIEF_SCHEDULED_DELIVERY_SCHEMA_STATEMENTS,
+)
+from platform_core.storage_migrations.v097_collection_artifact_category import (
+    COLLECTION_ARTIFACT_CATEGORY_SCHEMA_STATEMENTS,
+)
 from platform_core.utils import logger
 from platform_core.utils.singleton import SingletonMeta
 
 AGENT_RUN_TERMINAL_STATUS_SQL = ", ".join(f"'{status}'" for status in AGENT_RUN_TERMINAL_STATUSES)
 BUSINESS_SCHEMA_VERSION = 16
-KNOWLEDGE_SCHEMA_VERSION = 7
+KNOWLEDGE_SCHEMA_VERSION = 27
 SCHEMA_VERSION_TABLE = "platform_schema_migrations"
 LEGACY_SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
 EQUIPMENT_RESEARCH_SCHEMA_STATEMENTS = (
@@ -821,6 +870,146 @@ class PostgresManager(metaclass=SingletonMeta):
                 )
             )
 
+    async def upgrade_knowledge_schema_v7_to_v8(self) -> None:
+        """幂等增加本体、Span 证据、审核、revision 与投影 outbox。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_GRAPH_V2_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v8_to_v9(self) -> None:
+        """幂等增加页码、版面坐标、标题路径和解析器谱系。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in PARSED_BLOCK_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v9_to_v10(self) -> None:
+        """幂等增加实体 redirect、变更事件、创新假设和技术演化快照。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_GRAPH_EVOLUTION_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v10_to_v11(self) -> None:
+        """幂等增加来源文档版本、构建运行谱系和验收报告。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_GRAPH_ACCEPTANCE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v11_to_v12(self) -> None:
+        """幂等允许同一实体在同一 Chunk 保存多个不同 Span mention。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in ENTITY_MENTION_SPAN_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v12_to_v13(self) -> None:
+        """幂等增加关系适用条件，贯通抽取、审核和图检索。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in RELATION_APPLICABLE_CONDITIONS_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v13_to_v14(self) -> None:
+        """幂等增加双人独立标注、差异比较和专家仲裁持久化。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in ANNOTATION_CAMPAIGN_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v14_to_v15(self) -> None:
+        """幂等增加阶段级构建日志和独立冲突治理记录。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_GRAPH_OPERABILITY_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v15_to_v16(self) -> None:
+        """幂等增加关系生命周期、失效时间和替代关系记录。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in RELATION_LIFECYCLE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v16_to_v17(self) -> None:
+        """幂等补齐本体版本生效时间和生命周期约束。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in ONTOLOGY_VERSION_GOVERNANCE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v17_to_v18(self) -> None:
+        """幂等增加文档分流、研究链和知识卡。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in DOCUMENT_KNOWLEDGE_AUDIT_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v18_to_v19(self) -> None:
+        """幂等增加分类、统一来源、前沿简报和采集成果状态。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_GOVERNANCE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v19_to_v20(self) -> None:
+        """幂等记录 Pilot 标注活动显式验收语种范围。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in PILOT_ACCEPTANCE_SCOPE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v20_to_v21(self) -> None:
+        """幂等补齐文档知识卡的 GraphRAG 与创新画像字段。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in KNOWLEDGE_CARD_PROFILE_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v21_to_v22(self) -> None:
+        """幂等增加简报开放发现和调研探索员配置。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in INNOVATION_BRIEF_DISCOVERY_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v22_to_v23(self) -> None:
+        """幂等修复 JSON null 被误判为已有抽取结果的状态。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in GRAPH_EXTRACTION_STATUS_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v23_to_v24(self) -> None:
+        """幂等增加本人草稿和批量 revision 提交状态。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in ANNOTATION_DRAFT_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v24_to_v25(self) -> None:
+        """幂等增加逐关系复核审计字段。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in RELATION_REVIEW_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v25_to_v26(self) -> None:
+        """幂等增加前沿简报提前准备和准点发布字段。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in INNOVATION_BRIEF_SCHEDULED_DELIVERY_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
+    async def upgrade_knowledge_schema_v26_to_v27(self) -> None:
+        """幂等补齐历史采集成果导入记录的知识分类字段。"""
+        self._check_initialized()
+        async with self.async_engine.begin() as connection:
+            for statement in COLLECTION_ARTIFACT_CATEGORY_SCHEMA_STATEMENTS:
+                await connection.execute(text(statement))
+
     async def drop_tables(self):
         """删除所有表（慎用！）"""
         self._check_initialized()
@@ -997,17 +1186,7 @@ class PostgresManager(metaclass=SingletonMeta):
                 "UPDATE knowledge_chunks SET graph_structure_indexed = TRUE "
                 "WHERE graph_indexed IS TRUE AND graph_structure_indexed IS NOT TRUE"
             ),
-            (
-                "UPDATE knowledge_chunks SET graph_extraction_details = jsonb_build_object('status', 'succeeded') "
-                "WHERE (graph_extraction_details IS NULL "
-                "OR graph_extraction_details->>'status' = 'pending') "
-                "AND (extraction_result IS NOT NULL OR graph_structure_indexed IS TRUE OR graph_indexed IS TRUE)"
-            ),
-            (
-                "UPDATE knowledge_chunks SET graph_extraction_details = "
-                "jsonb_build_object('status', 'pending', 'attempt_count', 0) "
-                "WHERE graph_extraction_details IS NULL"
-            ),
+            *GRAPH_EXTRACTION_STATUS_SCHEMA_STATEMENTS,
             """
             CREATE TABLE IF NOT EXISTS knowledge_graph_entities (
                 id SERIAL PRIMARY KEY,
@@ -1067,6 +1246,7 @@ class PostgresManager(metaclass=SingletonMeta):
                 chunk_id VARCHAR(128) NOT NULL REFERENCES knowledge_chunks(chunk_id) ON DELETE CASCADE,
                 text TEXT,
                 extractor_type VARCHAR(128),
+                applicable_conditions JSONB NOT NULL DEFAULT '[]'::jsonb,
                 created_at TIMESTAMPTZ DEFAULT NOW(),
                 CONSTRAINT uq_knowledge_graph_triple_mentions_triple_chunk UNIQUE (triple_id, chunk_id)
             )

@@ -6,6 +6,7 @@ import re
 import shutil
 import time
 import zipfile
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -21,8 +22,10 @@ from platform_core.knowledge.parser.capabilities import PARSER_CAPABILITIES
 from platform_core.knowledge.parser.factory import DocumentProcessorFactory
 from platform_core.knowledge.parser.mineru import MinerUParser
 from platform_core.knowledge.parser.mineru_official import MinerUOfficialParser
+from platform_core.knowledge.parser.pp_structure_v3 import PPStructureV3Parser
 from platform_core.knowledge.parser.rapid_ocr import RapidOCRParser
-from platform_core.services.ocr_service import parse_document
+from platform_core.knowledge.parser.result import ParsedBlock, ParsedDocument
+from platform_core.services.ocr_service import parse_document, parse_document_with_metadata
 
 PARSER_FIXTURES = Path(__file__).parents[2] / "data"
 
@@ -154,6 +157,68 @@ def test_rapid_ocr_health_check_does_not_load_model(monkeypatch: pytest.MonkeyPa
     assert health["status"] == "healthy"
 
 
+def test_pp_structure_result_preserves_layout_page_spans(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    file_path = tmp_path / "layout.pdf"
+    file_path.write_bytes(b"pdf")
+    parser = PPStructureV3Parser(server_url="http://paddlex.test")
+    monkeypatch.setattr(parser, "check_health", lambda: {"status": "healthy", "message": "ok"})
+    monkeypatch.setattr(
+        parser,
+        "_call_layout_api",
+        lambda **kwargs: {
+            "errorCode": 0,
+            "result": {
+                "layoutParsingResults": [
+                    {
+                        "markdown": {"text": "第一页版面"},
+                        "prunedResult": {
+                            "parsing_res_list": [
+                                {
+                                    "block_label": "text",
+                                    "block_content": "第一页版面",
+                                    "block_bbox": [10, 20, 300, 80],
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "markdown": {"text": "第二页版面"},
+                        "prunedResult": {
+                            "parsing_res_list": [
+                                {
+                                    "block_label": "section_title",
+                                    "block_content": "第二页版面",
+                                    "block_bbox": [12, 24, 310, 88],
+                                }
+                            ]
+                        },
+                    },
+                ]
+            },
+        },
+    )
+
+    result = parser.process_file_result(str(file_path))
+
+    assert result.markdown == "第一页版面\n\n第二页版面"
+    assert result.parser_name == "pp_structure_v3_ocr"
+    assert result.source_metadata["page_count"] == 2
+    page_blocks = [block for block in result.blocks if block.source_metadata["position_kind"] == "layout_page"]
+    assert [(block.page_number, block.start_char, block.end_char) for block in page_blocks] == [
+        (1, 0, 5),
+        (2, 7, 12),
+    ]
+    assert [result.markdown[block.start_char : block.end_char] for block in page_blocks] == [
+        "第一页版面",
+        "第二页版面",
+    ]
+    layout_blocks = [block for block in result.blocks if block.source_metadata["position_kind"] == "layout_block"]
+    assert [(block.block_type, block.bbox) for block in layout_blocks] == [
+        ("paragraph", (10.0, 20.0, 300.0, 80.0)),
+        ("heading", (12.0, 24.0, 310.0, 88.0)),
+    ]
+
+
 def _build_pdf(file_path: Path, text: str | list[str]) -> None:
     """用标准库构造带文本的最小 PDF，避免测试引入额外 PDF 依赖。"""
     pages = [text] if isinstance(text, str) else text
@@ -208,6 +273,58 @@ def test_pdfreader_preserves_page_order_blank_pages_and_trimming(tmp_path: Path)
     assert pdfreader(file_path) == "First page\n\n\n\nLast page"
 
 
+def test_pdfreader_result_preserves_page_spans(tmp_path: Path):
+    """原生文本层结果保留页码和可回切的逐页字符区间。"""
+    from platform_core.knowledge.parser.unified import pdfreader_result
+
+    file_path = tmp_path / "page-spans.pdf"
+    _build_pdf(file_path, ["First page", "Second page"])
+
+    result = pdfreader_result(file_path)
+
+    assert result.markdown == "First page\n\nSecond page"
+    assert result.source_metadata == {"file_extension": ".pdf", "page_count": 2}
+    assert [(block.page_number, block.start_char, block.end_char) for block in result.blocks] == [
+        (1, 0, 10),
+        (2, 12, 23),
+    ]
+    assert [result.markdown[block.start_char : block.end_char] for block in result.blocks] == [
+        "First page",
+        "Second page",
+    ]
+
+
+def test_pdfreader_result_reuses_trailing_download_trace_recovery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """正式原生解析与预检使用同一尾部追踪数据恢复逻辑。"""
+    from pypdf.errors import PdfStreamError
+    from platform_core.knowledge.parser.unified import pdfreader_result
+
+    file_path = tmp_path / "traced.pdf"
+    _build_pdf(file_path, ["Original page"])
+    original = file_path.read_bytes()
+    file_path.write_bytes(original + b"transferOut:download-trace")
+
+    class RecoveredPage:
+        def extract_text(self, **_kwargs):
+            return "Recovered page"
+
+    def reader(source):
+        if not isinstance(source, BytesIO):
+            raise PdfStreamError("trailing trace")
+        return SimpleNamespace(pages=[RecoveredPage()])
+
+    monkeypatch.setattr("platform_core.knowledge.parser.intelligent_router.PdfReader", reader)
+
+    result = pdfreader_result(file_path)
+
+    assert result.markdown == "Recovered page"
+    assert result.source_metadata["trailing_data_recovered"] is True
+    assert file_path.read_bytes() == original + b"transferOut:download-trace"
+
+
 def test_pdfreader_rejects_corrupt_pdf(tmp_path: Path):
     """损坏 PDF 显式失败，不返回伪成功空文本。"""
     from pypdf.errors import PdfReadError
@@ -233,6 +350,105 @@ async def test_parse_document_pdf_returns_markdown_text(tmp_path: Path):
 
     assert "Parser" in markdown
     assert "content" in markdown
+
+
+@pytest.mark.asyncio
+async def test_parse_document_metadata_records_native_pdf_lineage(tmp_path: Path):
+    file_path = tmp_path / "parser_lineage.pdf"
+    _build_pdf(file_path, "Parser PDF lineage")
+
+    result = await parse_document_with_metadata(str(file_path), params={"ocr_engine": "disable"})
+
+    assert "Parser" in result.markdown
+    assert result.parser_name == "native_pdf"
+    assert result.parser_version == "platform-unified-parser-v2"
+    assert result.source_metadata == {"file_extension": ".pdf", "page_count": 1}
+    assert len(result.blocks) == 1
+    assert result.blocks[0].page_number == 1
+
+
+@pytest.mark.asyncio
+async def test_resolved_pdf_preflight_reuses_trailing_data_recovery(tmp_path: Path):
+    """统一入口的 PDFium 前检不得先于原生解析拒绝可恢复的下载追踪尾部。"""
+    file_path = tmp_path / "traced.pdf"
+    _build_pdf(file_path, "Parser PDF lineage")
+    original = file_path.read_bytes()
+    traced = original + b"Fulltextuser:Group.szdxccache:False\x92\x00\x00\x00wftrace"
+    file_path.write_bytes(traced)
+
+    result = await parser_unified.parse_resolved_document_result(
+        str(file_path),
+        params={"ocr_engine": "disable"},
+    )
+
+    assert "Parser" in result.markdown
+    assert result.source_metadata["trailing_data_recovered"] is True
+    assert file_path.read_bytes() == traced
+
+
+@pytest.mark.asyncio
+async def test_resolved_pdf_replaces_invalid_unicode_surrogates_without_shifting_spans(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """解析边界一对一替换非法代理字符，确保 UTF-8 可写且 Span 不偏移。"""
+    file_path = tmp_path / "invalid-unicode.pdf"
+    _build_pdf(file_path, "valid pdf")
+    parsed = ParsedDocument(
+        markdown="A\udbc2B",
+        parser_name="native_pdf",
+        source_metadata={"file_extension": ".pdf", "page_count": 1},
+        blocks=(ParsedBlock(start_char=0, end_char=3, page_number=1),),
+    )
+
+    async def parse_result(*_args, **_kwargs):
+        return parsed
+
+    monkeypatch.setattr(parser_unified, "parse_pdf_result_async", parse_result)
+
+    result = await parser_unified.parse_resolved_document_result(
+        str(file_path),
+        params={"ocr_engine": "disable"},
+    )
+
+    assert result.markdown == "A\ufffdB"
+    assert result.markdown.encode("utf-8")
+    assert result.blocks == parsed.blocks
+    assert result.source_metadata["invalid_unicode_surrogates_replaced"] == 1
+
+
+@pytest.mark.asyncio
+async def test_resolved_pdf_preserves_structured_ocr_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    file_path = tmp_path / "structured.pdf"
+    _build_pdf(file_path, "valid pdf")
+    expected = ParsedDocument(
+        markdown="版面解析结果",
+        parser_name="pp_structure_v3_ocr",
+        source_metadata={"file_extension": ".pdf", "page_count": 1},
+        blocks=(
+            ParsedBlock(
+                start_char=0,
+                end_char=6,
+                page_number=1,
+                block_type="paragraph",
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        DocumentProcessorFactory,
+        "process_file_result",
+        lambda *args, **kwargs: expected,
+    )
+
+    result = await parser_unified.parse_resolved_document_result(
+        str(file_path),
+        params={"ocr_engine": "pp_structure_v3_ocr", "_ocr_processor_kwargs": {}},
+    )
+
+    assert result.markdown == expected.markdown
+    assert result.parser_name == "pp_structure_v3_ocr"
+    assert result.blocks == expected.blocks
+    assert result.source_metadata["page_count"] == 1
 
 
 @pytest.mark.asyncio
@@ -270,6 +486,22 @@ async def test_parse_document_docx_returns_markdown_text(tmp_path: Path, monkeyp
     markdown = await parse_document(str(file_path))
 
     assert "Parser DOCX content" in markdown
+
+
+@pytest.mark.asyncio
+async def test_parse_document_metadata_records_docx_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    file_path = tmp_path / "parser_lineage.docx"
+    _build_docx(file_path, "Parser DOCX lineage")
+
+    def _raise_docling_error(*args, **kwargs):
+        raise RuntimeError("force fallback to python-docx")
+
+    monkeypatch.setattr(parser_unified, "_convert_with_docling", _raise_docling_error)
+
+    result = await parse_document_with_metadata(str(file_path))
+
+    assert "Parser DOCX lineage" in result.markdown
+    assert result.parser_name == "python_docx"
 
 
 @pytest.mark.parametrize(
@@ -507,13 +739,13 @@ async def test_parse_document_png_returns_markdown_text_with_mocked_ocr(
     _build_png(file_path)
 
     async def _fake_parse_image_async(file, params=None):
-        return "Parser PNG content"
+        return ParsedDocument(markdown="Parser PNG content", parser_name="rapid_ocr")
 
     async def _resolve_params(params=None, db=None):
         del db
         return params or {}
 
-    monkeypatch.setattr(parser_unified, "parse_image_async", _fake_parse_image_async)
+    monkeypatch.setattr(parser_unified, "parse_image_result_async", _fake_parse_image_async)
     monkeypatch.setattr("platform_core.services.ocr_service.resolve_ocr_task_params", _resolve_params)
 
     markdown = await parse_document(str(file_path), params={"ocr_engine": "rapid_ocr"})
@@ -530,9 +762,9 @@ def test_parse_image_ignores_ocr_engine_config(tmp_path: Path, monkeypatch: pyte
         captured["processor_type"] = processor_type
         captured["file"] = file
         captured["params"] = params
-        return "OCR content"
+        return ParsedDocument(markdown="OCR content", parser_name=processor_type)
 
-    monkeypatch.setattr(DocumentProcessorFactory, "process_file", _fake_process_file)
+    monkeypatch.setattr(DocumentProcessorFactory, "process_file_result", _fake_process_file)
 
     result = parser_unified.parse_image(
         str(file_path),
@@ -607,7 +839,7 @@ async def test_parse_document_uses_config_default_ocr_when_engine_missing(
         captured["processor_type"] = processor_type
         captured["file"] = file
         captured["params"] = params
-        return "default OCR content"
+        return ParsedDocument(markdown="default OCR content", parser_name=processor_type)
 
     async def _build_processor_kwargs(db, engine_id):
         del db, engine_id
@@ -617,7 +849,7 @@ async def test_parse_document_uses_config_default_ocr_when_engine_missing(
         return {"default_ocr_engine": "mineru_ocr"}
 
     monkeypatch.setattr("platform_core.config.options.Option.get", _system_options_get)
-    monkeypatch.setattr(DocumentProcessorFactory, "process_file", _fake_process_file)
+    monkeypatch.setattr(DocumentProcessorFactory, "process_file_result", _fake_process_file)
     monkeypatch.setattr("platform_core.services.ocr_service._build_processor_kwargs", _build_processor_kwargs)
 
     result = await parse_document(str(file_path), params={}, db=object())

@@ -56,6 +56,11 @@ const GENERATION_ERROR_HINTS = [
 export function generationErrorSummary(item = {}) {
   const raw = cleanText(item.error || item.payload?.error)
   if (!raw) return ''
+  const legacyHardGate = raw.includes('outside the supported weapon-equipment capability domain')
+    || raw.includes('query is not anchored to its weapon requirement')
+  if (legacyHardGate) {
+    return '该记录由旧版关键词/字面锚点硬校验产生；当前版本已取消这两项限制，能力语言无需重复装备名。请点击“重试”，已保存的合格结果会继续复用。'
+  }
   const hints = GENERATION_ERROR_HINTS
     .filter(([needle]) => raw.includes(needle))
     .map(([, hint]) => hint)

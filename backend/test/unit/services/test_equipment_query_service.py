@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 
 from platform_core.services import equipment_research_service as service
+from platform_core.services.equipment_query_task import research_query_situation
 from platform_core.storage.postgres.models_equipment import EquipmentQuery
 
 
@@ -133,9 +134,7 @@ async def test_historical_query_is_superadmin_only_and_native_query_stays_privat
 
     user = SimpleNamespace(uid="owner", role=role)
     if role == "superadmin":
-        visible = await service.get_query(
-            db=object(), user=user, query_id=historical.id, include_revisions=False
-        )
+        visible = await service.get_query(db=object(), user=user, query_id=historical.id, include_revisions=False)
         assert visible["query_id"] == historical.id
     else:
         with pytest.raises(HTTPException) as error:
@@ -152,3 +151,43 @@ async def test_historical_query_is_superadmin_only_and_native_query_stays_privat
             include_revisions=False,
         )
     assert error.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_query_situation_research_uses_explorer_search_lane(monkeypatch):
+    from platform_core.agents.toolkits.buildin import tools
+    from public_web_search_gateway import register_public_web_search
+
+    original = tools.execute_public_web_search
+    calls = []
+
+    def fake_search(query, **kwargs):
+        calls.append((query, kwargs))
+        result_index = len(calls)
+        return {
+            "status": "ok",
+            "results": [
+                {
+                    "title": "近期公开演训资料",
+                    "url": f"https://example.test/recent-exercise-{result_index}",
+                    "content": "复杂电磁环境下的公开演训显示，远程精打链路需要更强的自主接续与抗干扰能力。",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(tools, "execute_public_web_search", fake_search)
+    try:
+        grounding, metadata = await research_query_situation(
+            topic="远程精打武器装备需求研究",
+            supplemental_information="关注自主识别与任务接续",
+            reference_urls=(),
+        )
+    finally:
+        register_public_web_search(original)
+
+    assert len(calls) == 3
+    assert all(call[1]["fusion_strategy"] == "parallel" for call in calls)
+    assert grounding["signals"]
+    assert len(grounding["sources"]) == 3
+    assert len({item["search_query"] for item in metadata["web_sources"]}) == 3
+    assert metadata["research_lane"] == "research_explorer_public_search"

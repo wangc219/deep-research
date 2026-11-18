@@ -32,6 +32,42 @@ const SAFE_CONFLICT_CODES = new Set([
   'run_interrupted',
   'resume_superseded'
 ])
+const SAFE_ARCHIVE_ERROR_MESSAGES = new Map([
+  ['archive_too_large', '批量下载超过 500 MB，请减少所选成果'],
+  ['all_artifacts_unavailable', '所选成果均不可用'],
+  ['archive_failed', '成果打包失败，请检查所选文件后重试']
+])
+
+function safeArchivePath(value) {
+  if (typeof value !== 'string') return undefined
+  const normalized = value.replaceAll('\\', '/')
+  if (/^[a-zA-Z]:\//.test(normalized)) return undefined
+  const absolute = normalized.startsWith('/')
+  const parts = normalized.split('/').filter(Boolean)
+  if (!parts.length || parts.some((part) => part === '..')) return undefined
+  if (absolute && parts[0] !== '采集成果') return undefined
+  if (parts[0] === '采集成果') parts.shift()
+  return parts.slice(-4).join('/').slice(0, 512)
+}
+
+function safeArchiveFailure(item) {
+  if (!item || typeof item !== 'object') return null
+  const knownMessages = new Set([
+    '成果不存在',
+    '成果没有可用文件',
+    '加入该文件后将超过 500 MB 限制'
+  ])
+  const error = knownMessages.has(item.error) ? item.error : '文件不可用或已移除'
+  const path = safeArchivePath(item.path)
+  const size = Number(item.size)
+  return {
+    ...(typeof item.id === 'string' ? { id: item.id.slice(0, 128) } : {}),
+    ...(typeof item.title === 'string' ? { title: item.title.slice(0, 300) } : {}),
+    ...(path ? { path } : {}),
+    ...(Number.isSafeInteger(size) && size >= 0 ? { size } : {}),
+    error
+  }
+}
 
 /**
  * 统一构建查询参数，保留 0 和 false，省略空值。
@@ -80,6 +116,25 @@ function safeResponseHeaders(headers) {
 function safeErrorData(errorData, status, publicMessage) {
   if (status === 409 && errorData?.detail && typeof errorData.detail === 'object') {
     const detail = errorData.detail
+    if (SAFE_ARCHIVE_ERROR_MESSAGES.has(detail.code)) {
+      const totalBytes = Number(detail.total_bytes)
+      const limitBytes = Number(detail.limit_bytes)
+      return {
+        detail: {
+          code: detail.code,
+          message: SAFE_ARCHIVE_ERROR_MESSAGES.get(detail.code),
+          failures: Array.isArray(detail.failures)
+            ? detail.failures.slice(0, 100).map(safeArchiveFailure).filter(Boolean)
+            : [],
+          ...(Number.isSafeInteger(totalBytes) && totalBytes >= 0
+            ? { total_bytes: totalBytes }
+            : {}),
+          ...(Number.isSafeInteger(limitBytes) && limitBytes >= 0
+            ? { limit_bytes: limitBytes }
+            : {})
+        }
+      }
+    }
     if (SAFE_CONFLICT_CODES.has(detail.code)) {
       return {
         detail: {
@@ -109,6 +164,12 @@ function safeErrorData(errorData, status, publicMessage) {
 function safePublicErrorMessage(errorData, status, fallbackMessage) {
   const detail = typeof errorData?.detail === 'string' ? errorData.detail.trim() : ''
   if (status === 409 && SAFE_CONFLICT_MESSAGES.has(detail)) return detail
+  const detailCode = errorData?.detail && typeof errorData.detail === 'object'
+    ? errorData.detail.code
+    : null
+  if (status === 409 && SAFE_ARCHIVE_ERROR_MESSAGES.has(detailCode)) {
+    return SAFE_ARCHIVE_ERROR_MESSAGES.get(detailCode)
+  }
   return fallbackMessage
 }
 

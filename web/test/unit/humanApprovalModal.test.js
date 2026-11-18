@@ -276,6 +276,17 @@ test('输入框上方提问卡片提交纯文本，并在跳过时省略当前�
       app.mount(root)
       return root
     }
+    const pendingHost = mountQuestions({ requestKey: 'thread:run-pending', ready: false })
+    await nextTick()
+    assert.ok(textContent(pendingHost).includes('问题已实时到达'))
+    assert.equal(textContent(pendingHost).includes('后未作答'), false)
+    assert.equal(
+      find(pendingHost, (node) => node.type === 'button' && node.props.class === 'btn btn-approve')
+        .props.disabled,
+      true
+    )
+
+    app.unmount()
     const timedHost = mountQuestions({ requestKey: 'thread:run-auto' })
     await nextTick()
     assert.ok(textContent(timedHost).includes('2:00 后未作答'))

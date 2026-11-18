@@ -143,7 +143,7 @@ class TestMarkdownAndPDF(unittest.TestCase):
 
     @patch("backend.downloader.get_cdn_client")
     @patch("backend.downloader.get_data_client")
-    def test_download_single_article_generates_md_and_pdf(self, mock_data_client, mock_cdn_client):
+    def test_download_single_article_defaults_to_markdown_only(self, mock_data_client, mock_cdn_client):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.content = (
@@ -169,23 +169,52 @@ class TestMarkdownAndPDF(unittest.TestCase):
         art_path = Path(result["path"])
         self.assertTrue(art_path.exists())
 
-        # 检查是否生成了 .html, .md, .pdf
+        # 新下载默认仅生成 Markdown + media，不长期保存 HTML/TXT/JSON，也不默认生成 PDF。
         html_files = list(art_path.glob("*.html"))
         md_files = list(art_path.glob("*.md"))
         pdf_files = list(art_path.glob("*.pdf"))
 
-        self.assertGreater(len(html_files), 0, "应生成 .html 文件")
+        self.assertEqual(html_files, [])
         self.assertGreater(len(md_files), 0, "应生成 .md 文件")
-        self.assertGreater(len(pdf_files), 0, "应生成 .pdf 文件")
+        self.assertEqual(pdf_files, [])
+        self.assertFalse((art_path / "content.txt").exists())
+        self.assertFalse((art_path / "data.json").exists())
+        self.assertFalse((art_path / "metadata.json").exists())
+        self.assertTrue(result["has_markdown"])
+        self.assertFalse(result["has_pdf"])
 
-        # 检查 metadata.json
-        meta_file = art_path / "metadata.json"
-        self.assertTrue(meta_file.exists())
-        meta = json.loads(meta_file.read_text(encoding="utf-8"))
-        self.assertTrue(meta.get("has_markdown"))
-        self.assertTrue(meta.get("has_pdf"))
-        self.assertTrue(meta.get("markdown_file").endswith(".md"))
-        self.assertTrue(meta.get("pdf_file").endswith(".pdf"))
+    @patch("backend.downloader.export_html_to_pdf")
+    @patch("backend.downloader.get_cdn_client")
+    @patch("backend.downloader.get_data_client")
+    def test_download_single_article_pdf_is_opt_in(
+        self,
+        mock_data_client,
+        mock_cdn_client,
+        mock_export,
+    ):
+        response = MagicMock(status_code=200)
+        response.content = (
+            '<html><head><meta property="og:title" content="PDF 可选测试"></head>'
+            '<body><div id="js_content"><p>正文</p></div></body></html>'
+        ).encode()
+        response.iter_content.return_value = [b"image"]
+        mock_data_client.return_value.get.return_value = response
+        mock_cdn_client.return_value.get.return_value = response
+
+        def create_pdf(_html_path, pdf_path, title=""):
+            pdf_path.write_bytes(b"%PDF-1.7\nmock")
+            return True
+
+        mock_export.side_effect = create_pdf
+        result = download_single_article(
+            "https://mp.weixin.qq.com/s/mock_pdf",
+            self.test_dir / "pdf-out",
+            include_pdf=True,
+        )
+        artifact = Path(result["path"])
+        self.assertTrue(result["has_pdf"])
+        self.assertEqual(len(list(artifact.glob("*.pdf"))), 1)
+        self.assertEqual(list(artifact.glob("*.html")), [])
 
 
 if __name__ == "__main__":

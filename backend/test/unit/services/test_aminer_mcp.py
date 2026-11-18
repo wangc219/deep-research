@@ -35,8 +35,8 @@ async def test_aminer_runtime_uses_latest_credentials_without_persisting_or_redi
 
 
 @pytest.mark.asyncio
-async def test_raw_key_gets_short_lived_bearer_without_churning_cache(monkeypatch):
-    """原始 Key 复用短期签名，五分钟桶内连接配置保持稳定。"""
+async def test_console_key_is_forwarded_without_resigning_or_churning_cache(monkeypatch):
+    """官方 MCP 直接复用当前控制台 Key，连接解析不修改持久配置。"""
     secret = "test-secret-key-at-least-32-characters"
     config = {"enabled": True, "user_id": "user", "api_key": secret}
     monkeypatch.setattr(aminer_api_opts.__class__, "get", AsyncMock(return_value=config))
@@ -46,11 +46,19 @@ async def test_raw_key_gets_short_lived_bearer_without_churning_cache(monkeypatc
     monkeypatch.setattr("platform_core.agents.mcp.service.time.time", lambda: 1800000200)
     second = await resolve_mcp_runtime_config(server, db=object())
     assert first == second
-    token = first["headers"]["Authorization"].removeprefix("Bearer ")
-    claims = jwt.decode(token, secret, algorithms=["HS256"], options={"verify_exp": False})
-    assert claims["user_id"] == "user"
-    assert claims["exp"] - claims["timestamp"] == 600
+    assert first["headers"]["Authorization"] == f"Bearer {secret}"
     assert server.headers is None
+
+
+@pytest.mark.asyncio
+async def test_expired_console_token_disables_aminer_mcp_for_the_run(monkeypatch):
+    """过期 Token 不注入远程 MCP，避免学者、机构与专利工具重复鉴权失败。"""
+    token = jwt.encode({"user_id": "user", "exp": 1}, "test-secret-key-at-least-32-characters", algorithm="HS256")
+    config = {"enabled": True, "user_id": "user", "api_key": token}
+    monkeypatch.setattr(aminer_api_opts.__class__, "get", AsyncMock(return_value=config))
+    server = MCPServer(slug="aminer-official", transport="streamable_http")
+
+    assert await resolve_mcp_runtime_config(server, db=object()) is None
 
 
 def test_builtin_aminer_disables_only_duplicate_paper_paths():

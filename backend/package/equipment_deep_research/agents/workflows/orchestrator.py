@@ -1,5 +1,5 @@
 """Orchestrator selection, blueprint, convergence, audit and winning entrypoints."""
-# ruff: noqa: F821
+# ruff: noqa: E501, F821
 
 from __future__ import annotations
 
@@ -14,6 +14,9 @@ from typing import Any
 
 from equipment_deep_research.agents.dynamic_prompt_resources import (
     load_dynamic_winning_prompt,
+)
+from equipment_deep_research.agents.orchestrator_prompt import (
+    BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA,
 )
 from equipment_deep_research.agents.workflows import coordinator as _legacy
 from equipment_deep_research.agents.workflows.winning_flows.naming import (
@@ -3388,8 +3391,8 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
         str(getattr(host, "provider_kind", "")),
     )
 
-    def _run_model_blueprint() -> dict[str, Any]:
-        return _parse_json_object(
+    def _run_model_blueprint() -> tuple[dict[str, Any], dict[str, Any]]:
+        candidate = _parse_json_object(
             asyncio.run(
                 host._run_core_json(
                     "orchestrator",
@@ -3401,14 +3404,51 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
                 )
             )
         )
+        if not _has_valid_blueprint_branch(candidate):
+            return {}, {}
+
+        review_payload = {
+            "original_query": str(payload.get("topic", "")),
+            "supplemental_information": str(payload.get("supplemental_information", "")),
+            "explicit_constraints": list(payload.get("explicit_constraints", [])),
+            "requested_discovery_branch": str(payload.get("requested_discovery_branch", "auto")),
+            "research_route": str(payload.get("research_route", "auto")),
+            "candidate_blueprint": candidate,
+        }
+        review = _parse_json_object(
+            asyncio.run(
+                host._run_core_json(
+                    "auditor",
+                    orchestrator_system_prompt("blueprint_alignment_review"),
+                    review_payload,
+                    BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA,
+                    3200,
+                    phase="blueprint_alignment_review",
+                )
+            )
+        )
+        verdict = str(review.get("verdict", "")).strip().lower()
+        if verdict == "aligned":
+            selected = candidate
+        elif verdict == "revise":
+            corrected = review.get("corrected_blueprint")
+            selected = dict(corrected) if isinstance(corrected, Mapping) else {}
+            if not _has_valid_blueprint_branch(selected):
+                return {}, _blueprint_review_record(review)
+        else:
+            return {}, _blueprint_review_record(review)
+
+        selected["query_semantic_review"] = _blueprint_review_record(review)
+        return selected, selected["query_semantic_review"]
 
     try:
-        result = _run_model_blueprint()
+        result, semantic_review = _run_model_blueprint()
         host._last_blueprint_runtime = {
             "status": "model_completed" if result else "model_empty",
             "elapsed_seconds": round(monotonic() - started_at, 3),
             "fallback": not bool(result),
             "transport": str(getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")),
+            "semantic_review_verdict": str(semantic_review.get("verdict", "unavailable")),
         }
         return result
     except Exception as exc:
@@ -3425,7 +3465,7 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
                     "run_id": str(payload.get("run_id", "")),
                     "failure_type": type(exc).__name__,
                     "error_message": str(exc)[:300],
-                    "fallback": "deterministic_query_blueprint",
+                    "fallback": "neutral_query_blueprint",
                     "transport": str(
                         getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")
                     ),
@@ -3440,6 +3480,43 @@ def design_discovery_blueprint(host, payload: dict[str, Any]) -> dict[str, Any]:
             "transport": str(getattr(host, "_last_blueprint_transport", "") or getattr(host, "provider_kind", "")),
         }
         return {}
+
+
+def _has_valid_blueprint_branch(value: Mapping[str, Any]) -> bool:
+    """只校验蓝图协议结构，不在本地判断Query语义。"""
+
+    return str(value.get("primary_branch", "")) in set("ABCDEFGH")
+
+
+def _blueprint_review_record(value: Mapping[str, Any]) -> dict[str, Any]:
+    """保留独立语义校验的有界审计记录。"""
+
+    contract = value.get("query_contract")
+    raw_contract = dict(contract) if isinstance(contract, Mapping) else {}
+
+    def bounded_list(key: str, limit: int = 8) -> list[str]:
+        items = raw_contract.get(key, [])
+        if not isinstance(items, Sequence) or isinstance(items, (str, bytes)):
+            return []
+        return [str(item).strip()[:500] for item in items[:limit] if str(item).strip()]
+
+    issues = value.get("issues", [])
+    if not isinstance(issues, Sequence) or isinstance(issues, (str, bytes)):
+        issues = []
+    return {
+        "verdict": str(value.get("verdict", "")).strip().lower(),
+        "query_contract": {
+            "core_subjects_and_relations": bounded_list("core_subjects_and_relations"),
+            "requested_perspective": str(raw_contract.get("requested_perspective", ""))[:700],
+            "requested_outcome": str(raw_contract.get("requested_outcome", ""))[:700],
+            "must_preserve": bounded_list("must_preserve"),
+            "must_not_assume": bounded_list("must_not_assume"),
+            "open_unknowns": bounded_list("open_unknowns"),
+        },
+        "issues": [str(item).strip()[:700] for item in issues[:8] if str(item).strip()],
+        "rationale": str(value.get("rationale", ""))[:1200],
+        "confidence": value.get("confidence", 0.0),
+    }
 
 
 def converge_discovery_outputs(host, payload: dict[str, Any]) -> dict[str, Any]:

@@ -102,14 +102,17 @@ async def resolve_mcp_runtime_config(server: MCPServer, *, db: AsyncSession | No
         async with pg_manager.get_async_session_context() as session:
             return await resolve_mcp_runtime_config(server, db=session)
     from platform_core.config.options import aminer_api_opts
-    from platform_core.services.aminer_client import aminer_authorization_token
+    from platform_core.services.aminer_client import AMinerError, aminer_authorization_token
 
     credentials = await aminer_api_opts.get(db)
     if not credentials.get("enabled") or not credentials.get("user_id") or not credentials.get("api_key"):
         return None
-    # 原始 Key 每五分钟刷新一次，避免逐秒签名导致工具缓存持续失效；Token 至少剩余五分钟。
+    # 五分钟桶让运行配置保持稳定；过期控制台 Token 不注入远程 MCP。
     issued_at = int(time.time()) // 300 * 300
-    token = aminer_authorization_token(credentials, issued_at=issued_at)
+    try:
+        token = aminer_authorization_token(credentials, issued_at=issued_at)
+    except AMinerError:
+        return None
     return {**config, "headers": {"Authorization": f"Bearer {token}"}}
 
 

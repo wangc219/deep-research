@@ -197,9 +197,16 @@ def test_web_search_option_defaults_match_adaptive_fusion_policy():
 
     assert resolved["adaptive_fusion_enabled"] is True
     assert resolved["searxng_enabled"] is True
-    assert resolved["general_engines"] == ["sogou wechat"]
+    assert resolved["general_engines"] == ["github", "crossref"]
+    assert resolved["academic_engines"] == [
+        "arxiv",
+        "pubmed",
+        "europepmc",
+        "openairepublications",
+        "crossref",
+    ]
     assert resolved["min_relevant_results"] == 6
-    assert resolved["total_timeout_seconds"] == 10
+    assert resolved["total_timeout_seconds"] == 30
     assert resolved["rrf_k"] == 60
 
 
@@ -211,7 +218,7 @@ async def test_web_search_option_validates_engine_catalog_timeout_and_deduplicat
     record = await options.update_option_value(
         db_session,
         key,
-        {"general_engines": ["Brave", "brave", "github"], "total_timeout_seconds": 9},
+        {"general_engines": ["Brave", "brave", "github"], "total_timeout_seconds": 30},
         "admin",
     )
     assert record.value["general_engines"] == ["brave", "github"]
@@ -222,7 +229,7 @@ async def test_web_search_option_validates_engine_catalog_timeout_and_deduplicat
         await options.update_option_value(
             db_session,
             key,
-            {"total_timeout_seconds": 5, "searxng_timeout_seconds": 8},
+            {"total_timeout_seconds": 10, "searxng_timeout_seconds": 15},
             "admin",
         )
 
@@ -239,4 +246,4 @@ async def test_web_search_runtime_snapshot_publishes_resolved_configuration(monk
     published = json.loads(fake_redis.values[options.WEB_SEARCH_RUNTIME_OPTIONS_KEY])
     assert resolved["adaptive_fusion_enabled"] is False
     assert published == resolved
-    assert published["total_timeout_seconds"] == 10
+    assert published["total_timeout_seconds"] == 30

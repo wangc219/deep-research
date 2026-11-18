@@ -1,8 +1,4 @@
-"""
-文章下载核心模块
-将微信公众号文章离线下载为 HTML + 图片/视频
-从 wechat_mp_batch_downloader.py 重构而来
-"""
+"""微信公众号文章下载核心：Markdown + 本地媒体，PDF 按次可选。"""
 
 import sys
 import os
@@ -20,7 +16,10 @@ from html.parser import HTMLParser
 from backend.config import (
     DEFAULT_HEADERS, get_proxies_dict, get_settings, report_proxy_status
 )
-from backend.wechat_url import normalize_wechat_short_url, short_id_from_review_id
+from backend.wechat_url import (
+    normalize_wechat_short_url,
+    wechat_short_url_from_review_id,
+)
 from backend.avatar_cache import extract_account_avatar, extract_avatar_account_id
 from backend.request_profile import (
     SIGNATURE_WINDOW,
@@ -809,9 +808,8 @@ def resolve_canonical_short_url(url: str, review_id: str = "") -> str:
         return _canonical_url_cache[cache_key]
 
     # 1. 从 review_id 的完整账号前缀后提取 short_id，保留下划线
-    sid = short_id_from_review_id(review_id)
-    if sid:
-        res = f"https://mp.weixin.qq.com/s/{sid}"
+    res = wechat_short_url_from_review_id(review_id)
+    if res:
         _canonical_url_cache[cache_key] = res
         return res
 
@@ -823,9 +821,8 @@ def resolve_canonical_short_url(url: str, review_id: str = "") -> str:
         res = s.post("https://i.weread.qq.com/mp/getreviewid", json={"urls": [url]}, headers=h, timeout=6).json()
         for item in res.get("reviewIds", []):
             rid = item.get("reviewId", "")
-            sid = short_id_from_review_id(rid)
-            if sid:
-                resolved = f"https://mp.weixin.qq.com/s/{sid}"
+            resolved = wechat_short_url_from_review_id(rid)
+            if resolved:
                 _canonical_url_cache[cache_key] = resolved
                 return resolved
     except Exception as e:
@@ -1046,7 +1043,14 @@ def fetch_wechat_article_html(url: str, review_id: str = "") -> tuple[str, str, 
     return "", clean_orig_url, http_error or browser_error or "抓取文章失败"
 
 
-def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redirect_depth: int = 0, review_id: str = "") -> dict:
+def download_single_article(
+    url: str,
+    out_dir: Path,
+    title_hint: str = "",
+    _redirect_depth: int = 0,
+    review_id: str = "",
+    include_pdf: bool = False,
+) -> dict:
     """
     下载单篇文章 (具备三级抗风控抓取能力)
 
@@ -1142,7 +1146,13 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
             original_url = clean_wechat_article_url(original_url)
             if art_dir.exists():
                 shutil.rmtree(art_dir, ignore_errors=True)
-            return download_single_article(original_url, out_dir, title_hint, _redirect_depth=_redirect_depth + 1)
+            return download_single_article(
+                original_url,
+                out_dir,
+                title_hint,
+                _redirect_depth=_redirect_depth + 1,
+                include_pdf=include_pdf,
+            )
 
     # 提取封面 URL、描述和发布时间
     cover_url = ""
@@ -1202,9 +1212,11 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
         safe_title = sanitize(page_title)
 
     art_dir = out_dir / safe_title
-    if art_dir.exists() and any(art_dir.glob("*.html")):
+    if art_dir.exists() and any(art_dir.glob("*.md")):
         counter = 1
-        while (out_dir / f"{safe_title}_{counter}").exists() and any((out_dir / f"{safe_title}_{counter}").glob("*.html")):
+        while (out_dir / f"{safe_title}_{counter}").exists() and any(
+            (out_dir / f"{safe_title}_{counter}").glob("*.md")
+        ):
             counter += 1
         art_dir = out_dir / f"{safe_title}_{counter}"
 
@@ -1214,9 +1226,7 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
     # 提取正文区域
     content_html = extract_article_content(raw_html)
 
-    # 内容过滤：屏蔽广告块、二维码、以及被当作小节标题的横幅图片。
-    # 只影响「清洗后」的产物（.html / content.txt / .md / PDF），
-    # _raw.html 与 data.json 仍保留原始正文，方便回头重跑。
+    # 内容过滤只作用于 Markdown 与可选 PDF，不长期保存 HTML/TXT/JSON 用户产物。
     try:
         from backend.content_filter import filter_article_html
 
@@ -1341,40 +1351,6 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
         '</body>\n</html>'
     )
 
-    html_path = art_dir / f"{safe_title}.html"
-    html_path.write_text(full_html, encoding="utf-8")
-
-    # 生成并保存原始 HTML (保持外部资源链接不变)
-    raw_localized = content_html
-    raw_localized = re.sub(r'data-src="([^"]*)"', r'src="\1"', raw_localized)
-    raw_full_html = (
-        '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n'
-        '  <meta charset="UTF-8">\n'
-        '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
-        f'  <title>{safe_title}</title>\n'
-        '  <style>\n'
-        '    @page { margin: 15mm 12mm; size: A4; }\n'
-        '    body { max-width: 720px; margin: 0 auto; padding: 20px;\n'
-        "           font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Hiragino Sans GB', 'Helvetica Neue', sans-serif;\n"
-        '           line-height: 1.8; color: #333; word-break: break-word; }\n'
-        '    img, video { max-width: 100%; height: auto; display: block; margin: 14px auto;\n'
-        '                 page-break-inside: avoid; break-inside: avoid; border-radius: 4px; }\n'
-        '    h1, h2, h3, h4, h5, h6 { page-break-after: avoid; break-after: avoid; color: #111; }\n'
-        '    h1 { font-size: 24px; margin-bottom: 16px; }\n'
-        '    blockquote { margin: 14px 0; padding: 10px 16px; background: #f8f9fa; border-left: 4px solid #07c160; color: #555; }\n'
-        '    table { width: 100%; border-collapse: collapse; margin: 15px 0; }\n'
-        '    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }\n'
-        '    th { background-color: #f2f2f2; font-weight: 600; }\n'
-        '    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; background-color: #f6f8fa; border-radius: 4px; }\n'
-        '    pre { padding: 12px; overflow-x: auto; line-height: 1.5; }\n'
-        '    #js_content, .rich_media_content { visibility: visible !important; }\n'
-        '  </style>\n</head>\n<body>\n'
-        f'<h1>{safe_title}</h1>\n'
-        '<div id="js_content">\n' + raw_localized + '\n</div>\n'
-        '</body>\n</html>'
-    )
-    (art_dir / f"{safe_title}_raw.html").write_text(raw_full_html, encoding="utf-8")
-
     # 提取公众号 source 名字
     source = ""
     nickname_match = re.search(r'\bnickname\s*=\s*["\']([^"\']+)["\']', raw_html)
@@ -1402,49 +1378,36 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
         if author_match:
             author = unescape(author_match.group(1)).strip()
 
-    new_json_data = {
-        "source": source,
-        "author": author,
-        "title": page_title or safe_title,
-        "url": url,
-        "cover_url": cover_url,
-        "publish_time": publish_time,
-        "content": raw_localized
-    }
-    (art_dir / "data.json").write_text(json.dumps(new_json_data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    # 保存纯文本内容（用于 AI 一键转写）
-    clean_text = clean_html_to_text(filtered_html)
-    (art_dir / "content.txt").write_text(clean_text, encoding="utf-8")
-
-    # 1. 保存 Markdown (.md) 文件
-    save_markdown = settings.get("save_markdown", True)
+    # Markdown 是稳定主产物，不再受旧的格式设置开关影响。
     md_file_path = None
-    if save_markdown:
-        try:
-            md_meta = {
-                "title": page_title or safe_title,
-                "author": author,
-                "source": source,
-                "cover_url": cover_url,
-                "publish_time": publish_time,
-            }
-            md_text = html_to_markdown(filtered_html, meta=md_meta, media_map=url_map)
-            md_file_path = art_dir / f"{safe_title}.md"
-            md_file_path.write_text(md_text, encoding="utf-8")
-        except Exception:
-            pass
+    try:
+        md_meta = {
+            "title": page_title or safe_title,
+            "author": author,
+            "source": source,
+            "cover_url": cover_url,
+            "publish_time": publish_time,
+        }
+        md_text = html_to_markdown(filtered_html, meta=md_meta, media_map=url_map)
+        md_file_path = art_dir / f"{safe_title}.md"
+        md_file_path.write_text(md_text, encoding="utf-8")
+    except Exception as exc:
+        shutil.rmtree(art_dir, ignore_errors=True)
+        return {"success": False, "title": safe_title, "error": f"生成 Markdown 失败: {exc}"}
 
-    # 2. 导出 PDF (.pdf) 文件
-    save_pdf = settings.get("save_pdf", True)
+    # PDF 仅按本次请求生成；渲染 HTML 用完即删。
     pdf_file_path = None
-    if save_pdf:
+    if include_pdf:
+        html_path = art_dir / f".{safe_title}.pdf-source.html"
         try:
+            html_path.write_text(full_html, encoding="utf-8")
             target_pdf = art_dir / f"{safe_title}.pdf"
             if export_html_to_pdf(html_path, target_pdf, title=safe_title):
                 pdf_file_path = target_pdf
         except Exception:
             pass
+        finally:
+            html_path.unlink(missing_ok=True)
 
     # 保存元数据
     meta = {
@@ -1461,18 +1424,11 @@ def download_single_article(url: str, out_dir: Path, title_hint: str = "", _redi
         "resources_count": len(url_map),
         "videos_count": len(video_iframes),
         "leftover_urls": len(find_mmbiz_urls(localized)),
-        "has_clean_text": True,
-        "clean_text_file": "content.txt",
         "has_markdown": md_file_path is not None and md_file_path.exists(),
         "markdown_file": f"{safe_title}.md" if (md_file_path and md_file_path.exists()) else "",
         "has_pdf": pdf_file_path is not None and pdf_file_path.exists(),
         "pdf_file": f"{safe_title}.pdf" if (pdf_file_path and pdf_file_path.exists()) else "",
     }
-    (art_dir / "metadata.json").write_text(
-        json.dumps(meta, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
-
     return {
         "success": True,
         "title": safe_title,

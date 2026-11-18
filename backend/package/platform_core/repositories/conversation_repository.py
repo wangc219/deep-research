@@ -40,7 +40,9 @@ MESSAGE_SEARCH_EXCLUDED_TYPES = (
     TOOL_AUDIT_MESSAGE_TYPE,
     SUPERSEDED_MESSAGE_TYPE,
 )
-INVOCATION_CONVERSATION_SOURCES = ("agent_call", "agent_evaluation")
+INVOCATION_CONVERSATION_SOURCES = ("agent_call", "agent_evaluation", "innovation_brief")
+INTERNAL_CONVERSATION_CHANNELS = ("internal",)
+INTERNAL_CONVERSATION_TITLE_PREFIXES = ("简报调研探索 ·",)
 
 # ==== 历史对话检索参数 ====
 MEMORY_HISTORY_SEARCH_MAX_LIMIT = 10  # 单次历史搜索最多返回的消息条数。
@@ -107,6 +109,28 @@ class ConversationRepository:
                 Conversation.extra_metadata.is_(None),
                 source.is_(None),
                 source.notin_(sources),
+            )
+        ]
+
+    def _exclude_channel_conditions(self, channels: tuple[str, ...]):
+        if not channels:
+            return []
+        channel = Conversation.extra_metadata["channel"].as_string()
+        return [
+            or_(
+                Conversation.extra_metadata.is_(None),
+                channel.is_(None),
+                channel.notin_(channels),
+            )
+        ]
+
+    def _exclude_title_prefix_conditions(self, prefixes: tuple[str, ...]):
+        if not prefixes:
+            return []
+        return [
+            or_(
+                Conversation.title.is_(None),
+                and_(*(~Conversation.title.startswith(prefix) for prefix in prefixes)),
             )
         ]
 
@@ -488,6 +512,8 @@ class ConversationRepository:
         limit: int | None = None,
         offset: int = 0,
         exclude_sources: tuple[str, ...] = (),
+        exclude_channels: tuple[str, ...] = (),
+        exclude_title_prefixes: tuple[str, ...] = (),
     ) -> list[Conversation]:
         """List conversations with pinned conversations always included first.
 
@@ -501,6 +527,8 @@ class ConversationRepository:
         if agent_id:
             base_conditions.append(Conversation.agent_id == agent_id)
         base_conditions.extend(self._exclude_source_conditions(exclude_sources))
+        base_conditions.extend(self._exclude_channel_conditions(exclude_channels))
+        base_conditions.extend(self._exclude_title_prefix_conditions(exclude_title_prefixes))
 
         # First, get all pinned conversations (no limit)
         pinned_query = (
@@ -547,6 +575,8 @@ class ConversationRepository:
         limit: int = 20,
         offset: int = 0,
         exclude_sources: tuple[str, ...] = (),
+        exclude_channels: tuple[str, ...] = (),
+        exclude_title_prefixes: tuple[str, ...] = (),
     ) -> tuple[list[dict], bool]:
         normalized_query = str(query or "").strip()
         if not normalized_query:
@@ -558,6 +588,8 @@ class ConversationRepository:
         if agent_id:
             conversation_conditions.append(Conversation.agent_id == agent_id)
         conversation_conditions.extend(self._exclude_source_conditions(exclude_sources))
+        conversation_conditions.extend(self._exclude_channel_conditions(exclude_channels))
+        conversation_conditions.extend(self._exclude_title_prefix_conditions(exclude_title_prefixes))
 
         message_conditions = self._message_search_conditions(normalized_query)
         summary = (
@@ -762,6 +794,8 @@ class ConversationRepository:
             Conversation.uid == str(uid),
             Conversation.status == "active",
             *self._exclude_source_conditions(INVOCATION_CONVERSATION_SOURCES),
+            *self._exclude_channel_conditions(INTERNAL_CONVERSATION_CHANNELS),
+            *self._exclude_title_prefix_conditions(INTERNAL_CONVERSATION_TITLE_PREFIXES),
             ~child_thread_exists.exists(),
         ]
 

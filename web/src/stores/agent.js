@@ -17,10 +17,14 @@ function sortAgents(agents) {
   })
 }
 
-function getPreferredAgentId(agents, persistedId) {
+export function getPreferredAgentId(agents, persistedId) {
   const chatAgents = agents.filter((agent) => !agent.is_subagent)
-  if (persistedId && chatAgents.some((agent) => agent.id === persistedId)) return persistedId
-  return chatAgents.find(isBuiltinAgent)?.id || chatAgents[0]?.id || null
+  return (
+    chatAgents.find(isBuiltinAgent)?.id ||
+    (persistedId && chatAgents.some((agent) => agent.id === persistedId) ? persistedId : null) ||
+    chatAgents[0]?.id ||
+    null
+  )
 }
 
 function extractContext(agent) {
@@ -211,6 +215,14 @@ export const useAgentStore = defineStore(
       }
     }
 
+    async function selectDefaultAgent() {
+      const targetAgentId = getPreferredAgentId(agents.value, null)
+      if (targetAgentId && targetAgentId !== selectedAgentId.value) {
+        await selectAgent(targetAgentId)
+      }
+      return targetAgentId
+    }
+
     async function saveAgentConfig() {
       const targetAgentId = selectedAgentId.value
       if (!targetAgentId) return
@@ -322,6 +334,7 @@ export const useAgentStore = defineStore(
       fetchAgentDetail,
       fetchMentionResources,
       selectAgent,
+      selectDefaultAgent,
       saveAgentConfig,
       createAgent,
       updateAgentProfile,

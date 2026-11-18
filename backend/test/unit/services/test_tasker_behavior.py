@@ -197,9 +197,31 @@ async def test_arq_publication_uses_fresh_messages_instead_of_stale_job_lock(mon
 
     monkeypatch.setattr(task_queue_service, "get_arq_pool", pool)
 
-    await task_queue_service.publish_task("task-1")
+    await task_queue_service.publish_task("task-1", task_type="knowledge_parse")
 
     assert calls == [(("process_task", "task-1"), {})]
+
+
+async def test_equipment_query_publication_uses_dedicated_queue(monkeypatch):
+    calls = []
+
+    class Pool:
+        async def enqueue_job(self, *args, **kwargs):
+            calls.append((args, kwargs))
+
+    async def pool():
+        return Pool()
+
+    monkeypatch.setattr(task_queue_service, "get_arq_pool", pool)
+
+    await task_queue_service.publish_task("task-query", task_type="equipment_query_generation")
+
+    assert calls == [
+        (
+            ("process_task", "task-query"),
+            {"_queue_name": task_queue_service.EQUIPMENT_QUERY_TASK_QUEUE},
+        )
+    ]
 
 
 async def test_submit_persists_before_arq_publication(monkeypatch):
@@ -207,7 +229,7 @@ async def test_submit_persists_before_arq_publication(monkeypatch):
     tasker = Tasker()
     tasker._repo = repo
 
-    async def publish(task_id: str):
+    async def publish(task_id: str, **_kwargs):
         assert repo.record is not None
         repo.events.append("publish")
         return True
@@ -227,7 +249,7 @@ async def test_publication_failure_keeps_persisted_pending_intent(monkeypatch):
     tasker = Tasker()
     tasker._repo = repo
 
-    async def fail_publication(*_args):
+    async def fail_publication(*_args, **_kwargs):
         raise ConnectionError("redis unavailable")
 
     monkeypatch.setattr(task_service, "get_task_definition", lambda _task_type: FakeDefinition(None))
@@ -246,7 +268,7 @@ async def test_unique_submit_uses_database_dedupe_and_does_not_republish(monkeyp
     tasker._repo = repo
     published: list[str] = []
 
-    async def publish(task_id: str):
+    async def publish(task_id: str, **_kwargs):
         published.append(task_id)
         return True
 
@@ -423,14 +445,22 @@ async def test_research_capacity_is_read_from_live_system_options(monkeypatch):
     monkeypatch.setattr(task_service, "system_options", SimpleNamespace(get=get_options))
 
     assert await task_service.resolve_task_capacity("equipment_research") == 7
-    assert await task_service.resolve_task_capacity("equipment_query_generation") == task_service.EQUIPMENT_QUERY_MAX_RUNNING
+    assert (
+        await task_service.resolve_task_capacity("equipment_query_generation")
+        == task_service.EQUIPMENT_QUERY_MAX_RUNNING
+    )
 
 
-def test_equipment_tasks_get_long_model_call_lease_without_changing_short_tasks():
+def test_blocking_tasks_get_long_call_lease_without_changing_short_tasks():
     assert task_service.resolve_task_lease_seconds("equipment_research") == 600
     assert task_service.resolve_task_lease_seconds("equipment_query_generation") == 600
     assert task_service.resolve_task_lease_seconds("equipment_deep_turn") == 600
-    assert task_service.resolve_task_lease_seconds("knowledge_parse") == task_service.TASK_LEASE_SECONDS
+    assert task_service.resolve_task_lease_seconds("knowledge_parse") == 600
+    assert task_service.resolve_task_lease_seconds("knowledge_index") == 600
+    assert task_service.resolve_task_lease_seconds("knowledge_graph_index") == 600
+    assert task_service.resolve_task_lease_seconds("knowledge_virtual_folder_migration") == (
+        task_service.TASK_LEASE_SECONDS
+    )
 
 
 async def test_duplicate_delivery_cannot_execute_without_claim(monkeypatch):

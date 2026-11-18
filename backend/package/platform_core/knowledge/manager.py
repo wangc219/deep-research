@@ -373,6 +373,7 @@ class KnowledgeBaseManager:
             "share_config": self._normalize_share_config(row.share_config),
             "created_by": row.created_by,
             "created_at": row.created_at,
+            "category_id": getattr(row, "category_id", None),
             **normalized_stats,
         }
 
@@ -542,6 +543,7 @@ class KnowledgeBaseManager:
         share_config: dict | None = None,
         created_by: str | None = None,
         created_by_department_id: int | str | None = None,
+        category_id: str | None = None,
         **kwargs,
     ) -> KnowledgeBaseDetail:
         """
@@ -616,6 +618,7 @@ class KnowledgeBaseManager:
                 "additional_params": persisted_additional_params,
                 "share_config": share_config,
                 "created_by": created_by,
+                "category_id": category_id,
             }
         )
         os.makedirs(os.path.join(kb_instance.work_dir, kb_id), exist_ok=True)
@@ -662,6 +665,7 @@ class KnowledgeBaseManager:
         file_id: str,
         operator_id: str | None = None,
         *,
+        allow_reparse: bool = False,
         processing_task_id: str | None = None,
         processing_owner: str | None = None,
     ) -> dict:
@@ -675,6 +679,7 @@ class KnowledgeBaseManager:
                 file_id,
                 operator_id,
                 additional_params=config.additional_params,
+                allow_reparse=allow_reparse,
                 processing_task_id=processing_task_id,
                 processing_owner=processing_owner,
             ),
@@ -1185,6 +1190,8 @@ class KnowledgeBaseManager:
         kb_id: str,
         name: str,
         description: str,
+        embedding_model_spec: str | None = None,
+        update_embedding_model_spec: bool = False,
         llm_model_spec: str | None = None,
         update_llm_model_spec: bool = False,
         additional_params: dict | None = None,
@@ -1209,6 +1216,25 @@ class KnowledgeBaseManager:
             "name": name,
             "description": description,
         }
+        if update_embedding_model_spec:
+            if kb_type != "milvus":
+                raise ValueError("只有 Milvus 知识库支持修改 embedding 模型")
+            if not embedding_model_spec:
+                raise ValueError("embedding_model_spec 不能为空")
+
+            from platform_core.models.providers.cache import model_cache
+
+            embedding_info = model_cache.get_model_info(embedding_model_spec)
+            if not embedding_info or embedding_info.model_type != "embedding":
+                raise ValueError(f"不支持的 embedding 模型: {embedding_model_spec}")
+            if embedding_model_spec != kb.embedding_model_spec:
+                from platform_core.repositories.knowledge_chunk_repository import KnowledgeChunkRepository
+
+                chunk_count = await KnowledgeChunkRepository().count_by_kb_id(kb_id)
+                database = await self.get_database_info(kb_id)
+                if chunk_count or (database and (database.indexed_count or database.processing_count)):
+                    raise ValueError("知识库已有 Chunk 或入库任务，修改 embedding 模型前必须显式重建索引")
+                update_data["embedding_model_spec"] = embedding_model_spec
         if update_llm_model_spec:
             update_data["llm_model_spec"] = llm_model_spec
 

@@ -20,12 +20,11 @@ from docling.datamodel.base_models import InputFormat
 from docling.datamodel.document import InputDocument
 from docling_core.types.doc import DoclingDocument
 from markdownify import markdownify as md_convert
-from pypdf import PdfReader
-
 from platform_core.knowledge.parser.capabilities import (
     IMAGE_FILE_EXTENSIONS,
     get_ocr_engine_ids,
 )
+from platform_core.knowledge.parser.result import ParsedBlock, ParsedDocument
 from platform_core.knowledge.parser.zip_utils import process_zip_file as _process_zip_file
 from platform_core.knowledge.utils.pdf_utils import validate_pdf_page_tree_loadable
 from platform_core.storage.minio import get_minio_client
@@ -38,10 +37,19 @@ _OFFICE_BACKENDS = {
     ".xls": (InputFormat.XLS, MsExcelDocumentBackend),
 }
 _docling_office_lock = threading.Lock()
+_INVALID_UNICODE_SURROGATE_PATTERN = re.compile(r"[\ud800-\udfff]")
 
 
 def pdfreader(file_path, params=None):
     """读取 PDF 文件并返回 text 文本。"""
+    return pdfreader_result(file_path, params=params).markdown
+
+
+def pdfreader_result(file_path, params=None) -> ParsedDocument:
+    """读取 PDF 文本层并保留逐页 exclusive-end 字符位置。"""
+    from platform_core.knowledge.parser.intelligent_router import read_pdf_with_trailing_data_recovery
+
+    del params
     if isinstance(file_path, str):
         file_path = Path(file_path)
 
@@ -49,19 +57,51 @@ def pdfreader(file_path, params=None):
     assert file_path.suffix.lower() == ".pdf", "File format not supported"
 
     with file_path.open("rb") as pdf_file:
-        reader = PdfReader(pdf_file)
-        return "\n\n".join(page.extract_text(extraction_mode="plain").strip() for page in reader.pages)
+        reader, trailing_data_recovered = read_pdf_with_trailing_data_recovery(pdf_file)
+        page_texts = [page.extract_text(extraction_mode="plain").strip() for page in reader.pages]
+
+    blocks: list[ParsedBlock] = []
+    offset = 0
+    for page_index, page_text in enumerate(page_texts):
+        if page_index:
+            offset += 2
+        start_char = offset
+        offset += len(page_text)
+        blocks.append(
+            ParsedBlock(
+                start_char=start_char,
+                end_char=offset,
+                page_number=page_index + 1,
+                block_type="paragraph" if page_text else "empty",
+                source_metadata={"position_kind": "pdf_text_layer_page"},
+            )
+        )
+
+    source_metadata = {"file_extension": ".pdf", "page_count": len(page_texts)}
+    if trailing_data_recovered:
+        source_metadata["trailing_data_recovered"] = True
+    return ParsedDocument(
+        markdown="\n\n".join(page_texts),
+        parser_name="native_pdf",
+        source_metadata=source_metadata,
+        blocks=tuple(blocks),
+    )
 
 
 def parse_pdf(file, params=None):
     """解析 PDF 文件，支持多种 OCR 方式。"""
+    return parse_pdf_result(file, params=params).markdown
+
+
+def parse_pdf_result(file, params=None) -> ParsedDocument:
+    """解析 PDF，并通过统一工厂保留解析器提供的 Block 位置。"""
     from platform_core.knowledge.parser.base import DocumentProcessorException
     from platform_core.knowledge.parser.factory import DocumentProcessorFactory
 
     opt_ocr, processor_params = _resolve_ocr_engine_params(params)
 
     if opt_ocr == "disable":
-        return pdfreader(file, params=processor_params)
+        return pdfreader_result(file, params=processor_params)
 
     image_bucket, image_prefix = _resolve_image_storage_params(processor_params)
     processor_params.setdefault("image_bucket", image_bucket)
@@ -69,7 +109,7 @@ def parse_pdf(file, params=None):
     processor_kwargs = processor_params.pop("_ocr_processor_kwargs", {})
 
     try:
-        return DocumentProcessorFactory.process_file(opt_ocr, file, processor_params, processor_kwargs)
+        return DocumentProcessorFactory.process_file_result(opt_ocr, file, processor_params, processor_kwargs)
     except DocumentProcessorException as e:
         logger.error(f"文档处理失败: {e.service_name} - {str(e)}")
         raise
@@ -80,6 +120,11 @@ def parse_pdf(file, params=None):
 
 def parse_image(file, params=None):
     """解析图像文件，支持多种 OCR 方式。"""
+    return parse_image_result(file, params=params).markdown
+
+
+def parse_image_result(file, params=None) -> ParsedDocument:
+    """解析图像，并保留版面解析器提供的 Block 位置。"""
     from platform_core.knowledge.parser.base import DocumentProcessorException
     from platform_core.knowledge.parser.factory import DocumentProcessorFactory
 
@@ -96,7 +141,7 @@ def parse_image(file, params=None):
     processor_kwargs = processor_params.pop("_ocr_processor_kwargs", {})
 
     try:
-        return DocumentProcessorFactory.process_file(opt_ocr, file, processor_params, processor_kwargs)
+        return DocumentProcessorFactory.process_file_result(opt_ocr, file, processor_params, processor_kwargs)
     except DocumentProcessorException as e:
         logger.error(f"图像处理失败: {e.service_name} - {str(e)}")
         raise
@@ -113,6 +158,15 @@ async def parse_pdf_async(file, params=None):
     return await asyncio.to_thread(parse_pdf, file, params=params)
 
 
+async def parse_pdf_result_async(file, params=None) -> ParsedDocument:
+    """解析 PDF，并在解析器支持时保留页级原文位置。"""
+    if (params or {}).get("ocr_engine") == "rapid_ocr":
+        from platform_core.knowledge.parser.local_ocr_pool import process_local_document_result
+
+        return await process_local_document_result(file, params or {})
+    return await asyncio.to_thread(parse_pdf_result, file, params)
+
+
 async def parse_image_async(file, params=None):
     if (params or {}).get("ocr_engine") == "rapid_ocr":
         from platform_core.knowledge.parser.local_ocr_pool import process_local_document
@@ -121,8 +175,22 @@ async def parse_image_async(file, params=None):
     return await asyncio.to_thread(parse_image, file, params=params)
 
 
+async def parse_image_result_async(file, params=None) -> ParsedDocument:
+    """异步解析图片并保留可用的版面 Block。"""
+    if (params or {}).get("ocr_engine") == "rapid_ocr":
+        from platform_core.knowledge.parser.local_ocr_pool import process_local_document_result
+
+        return await process_local_document_result(file, params or {})
+    return await asyncio.to_thread(parse_image_result, file, params)
+
+
 async def parse_resolved_document(source: str, params: dict | None = None) -> str:
     """使用已解析的运行时参数，将本地或 MinIO 文件转换为 Markdown。"""
+    return (await parse_resolved_document_result(source, params=params)).markdown
+
+
+async def parse_resolved_document_result(source: str, params: dict | None = None) -> ParsedDocument:
+    """转换文档并返回无凭据的解析器谱系。"""
     from platform_core.knowledge.utils.kb_utils import is_minio_url, parse_minio_url
     from platform_core.storage.minio.client import get_minio_client
 
@@ -164,43 +232,63 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
     try:
         file_path_obj = Path(actual_file_path)
         file_ext = file_path_obj.suffix.lower()
+        parser_name = "unknown"
+        parsed_blocks: tuple[ParsedBlock, ...] = ()
+        parser_source_metadata: dict[str, Any] = {"file_extension": file_ext}
 
         if file_ext == ".pdf":
             await asyncio.to_thread(validate_pdf_page_tree_loadable, file_path_obj)
-            result = await parse_pdf_async(str(file_path_obj), params=params)
+            pdf_result = await parse_pdf_result_async(str(file_path_obj), params=params)
+            result = pdf_result.markdown
+            parsed_blocks = pdf_result.blocks
+            parser_source_metadata.update(pdf_result.source_metadata)
+            engine = str((params or {}).get("ocr_engine") or "")
+            parser_name = "native_pdf" if engine == "disable" else engine or "unresolved_pdf"
 
         elif file_ext in [".txt", ".md"]:
             async with aiofiles.open(file_path_obj, encoding="utf-8") as f:
                 content = await f.read()
             result = content
+            parser_name = "native_markdown" if file_ext == ".md" else "native_text"
 
         elif file_ext == ".docx":
             try:
                 result = await asyncio.to_thread(_convert_with_docling, file_path_obj, params=params)
+                parser_name = "docling"
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Docling 解析 DOCX 失败，回退到 python-docx: {file_path_obj.name}, {e}")
                 result = await asyncio.to_thread(_convert_docx_with_python_docx, file_path_obj)
+                parser_name = "python_docx"
 
         elif file_ext == ".pptx":
             result = await asyncio.to_thread(_convert_with_docling, file_path_obj, params=params)
+            parser_name = "docling"
 
         elif file_ext in IMAGE_FILE_EXTENSIONS:
-            result = await parse_image_async(str(file_path_obj), params=params)
+            image_result = await parse_image_result_async(str(file_path_obj), params=params)
+            result = image_result.markdown
+            parsed_blocks = image_result.blocks
+            parser_source_metadata.update(image_result.source_metadata)
+            parser_name = str((params or {}).get("ocr_engine") or "unresolved_image")
 
         elif file_ext in [".html", ".htm"]:
             async with aiofiles.open(file_path_obj, encoding="utf-8") as f:
                 content = await f.read()
             text = await asyncio.to_thread(md_convert, content, heading_style="ATX")
             result = f"{text}"
+            parser_name = "markdownify"
 
         elif file_ext == ".csv":
             result = await asyncio.to_thread(_convert_csv_to_markdown, file_path_obj)
+            parser_name = "pandas_csv"
 
         elif file_ext == ".xls":
             result = await asyncio.to_thread(_convert_xls_to_markdown, file_path_obj)
+            parser_name = "pandas_xlrd"
 
         elif file_ext == ".xlsx":
             result = await asyncio.to_thread(_convert_with_docling, file_path_obj, params=params)
+            parser_name = "docling"
 
         elif file_ext == ".json":
             import json
@@ -210,6 +298,7 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
             data = json.loads(content)
             json_str = json.dumps(data, ensure_ascii=False, indent=2)
             result = f"```json\n{json_str}\n```"
+            parser_name = "stdlib_json"
 
         elif file_ext == ".zip":
             image_bucket, image_prefix = _resolve_image_storage_params(params)
@@ -218,6 +307,7 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
                 image_bucket=image_bucket,
                 image_prefix=image_prefix,
             )
+            parser_name = "zip_dispatch"
 
         else:
             raise ValueError(f"Unsupported file type: {file_ext}")
@@ -239,7 +329,16 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to clean up temp file {actual_file_path}: {e}")
 
-    return result
+    result_text, surrogate_replacements = _INVALID_UNICODE_SURROGATE_PATTERN.subn("\ufffd", str(result))
+    if surrogate_replacements:
+        parser_source_metadata["invalid_unicode_surrogates_replaced"] = surrogate_replacements
+
+    return ParsedDocument(
+        markdown=result_text,
+        parser_name=parser_name,
+        source_metadata=parser_source_metadata,
+        blocks=parsed_blocks,
+    )
 
 
 def _convert_office_document(file_path: Path) -> DoclingDocument:

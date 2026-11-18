@@ -4,16 +4,27 @@ import asyncio
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any
 
+from platform_core.config import get_int_env
 from platform_core.knowledge.graphs.milvus_graph_service import MilvusGraphService
 from platform_core.knowledge.runtime import knowledge_base
 from platform_core.knowledge.utils import params_for_uploaded_document
 from platform_core.repositories.knowledge_file_repository import KnowledgeFileRepository
 from platform_core.services.knowledge_folder_service import knowledge_folder_service
-from platform_core.services.task_service import TaskContext
+from platform_core.services.knowledge_graph_pipeline_service import KnowledgeGraphPipelineService
+from platform_core.services.knowledge_graph_projection_rebuild_service import (
+    KnowledgeGraphProjectionRebuildService,
+)
+from platform_core.services.task_service import TaskContext, tasker
 from platform_core.utils.logging_config import logger
 
 DOCUMENT_ACTION_BATCH_SIZE = 500
 DOCUMENT_ACTION_RESULT_ITEM_LIMIT = 200
+DOCUMENT_ACTION_TASK_FILE_LIMIT = get_int_env("KNOWLEDGE_DOCUMENT_ACTION_TASK_FILE_LIMIT", 100)
+if DOCUMENT_ACTION_TASK_FILE_LIMIT > DOCUMENT_ACTION_BATCH_SIZE:
+    raise RuntimeError(f"KNOWLEDGE_DOCUMENT_ACTION_TASK_FILE_LIMIT must be <= {DOCUMENT_ACTION_BATCH_SIZE}")
+GRAPH_BUILD_TASK_CHUNK_LIMIT = get_int_env("KNOWLEDGE_GRAPH_TASK_CHUNK_LIMIT", 500)
+if GRAPH_BUILD_TASK_CHUNK_LIMIT > 5000:
+    raise RuntimeError("KNOWLEDGE_GRAPH_TASK_CHUNK_LIMIT must be <= 5000")
 DEFAULT_DOCUMENT_PARSE_CONCURRENCY = 2
 MAX_DOCUMENT_PARSE_CONCURRENCY = 4
 
@@ -62,6 +73,88 @@ async def fail_knowledge_file_task(session, task_record, error: str) -> None:
         task_id=task_record.id,
         error=error,
     )
+
+
+async def finish_knowledge_file_task(session, task_record, result: dict) -> None:
+    """在当前批次成功事务内创建下一批，保证大规模任务可自动续跑。"""
+    continuation = result.get("continuation") if isinstance(result, dict) else None
+    if not isinstance(continuation, dict) or not continuation.get("required"):
+        return
+    payload = continuation.get("payload")
+    if not isinstance(payload, dict):
+        raise ValueError("知识文件续跑任务缺少有效 payload")
+
+    action = str(payload.get("action") or "")
+    if action not in {"parse", "index"}:
+        raise ValueError(f"知识文件续跑任务 action 非法: {action}")
+    scope = str(payload.get("scope") or "")
+    if scope not in {"pending", "rebuild"}:
+        raise ValueError(f"知识文件续跑任务 scope 非法: {scope}")
+
+    task_record.dedupe_key = None
+    await session.flush()
+    next_task, created = await tasker.create_unique_in_session(
+        session,
+        name=task_record.name,
+        task_type=f"knowledge_{action}",
+        payload=payload,
+        payload_match={"kb_id": payload["kb_id"], "scope": scope, "action": action},
+    )
+    continuation["task_id"] = next_task.id
+    continuation["created"] = created
+
+
+async def finish_knowledge_graph_task(session, task_record, result: dict) -> None:
+    """在当前图谱批次成功事务内创建下一批，避免长任务超时丢失续跑。"""
+    continuation = result.get("continuation") if isinstance(result, dict) else None
+    if not isinstance(continuation, dict) or not continuation.get("required"):
+        return
+    payload = continuation.get("payload")
+    if not isinstance(payload, dict):
+        raise ValueError("图谱续跑任务缺少有效 payload")
+    if payload.get("action") != "build" or not payload.get("kb_id"):
+        raise ValueError("图谱续跑任务 payload 非法")
+
+    task_record.dedupe_key = None
+    await session.flush()
+    next_task, created = await tasker.create_unique_in_session(
+        session,
+        name=task_record.name,
+        task_type="knowledge_graph_index",
+        payload=payload,
+        payload_match={"kb_id": payload["kb_id"]},
+    )
+    continuation["task_id"] = next_task.id
+    continuation["created"] = created
+
+
+async def finish_knowledge_ingest_task(session, task_record, result: dict) -> None:
+    """回写来源暂存项和采集成果的最终 KnowledgeFile 关系。"""
+    from platform_core.services.collection_artifact_service import finish_artifact_ingestion
+    from platform_core.storage.postgres.models_knowledge_governance import KnowledgeSourceItem
+
+    await finish_artifact_ingestion(session, task_record, result)
+    source_item_ids = list((task_record.payload or {}).get("source_item_ids") or [])
+    result_items = list(result.get("items") or [])
+    for source_item_id, item in zip(source_item_ids, result_items):
+        source_item = await session.get(KnowledgeSourceItem, source_item_id)
+        if source_item is not None:
+            source_item.knowledge_file_id = item.get("file_id")
+            source_item.review_status = "approved"
+
+
+async def fail_knowledge_ingest_task(session, task_record, error: str) -> None:
+    """原子收敛知识文件、来源暂存项和成果入库失败状态。"""
+    from platform_core.services.collection_artifact_service import fail_artifact_ingestion
+    from platform_core.storage.postgres.models_knowledge_governance import KnowledgeSourceItem
+
+    await fail_knowledge_file_task(session, task_record, error)
+    await fail_artifact_ingestion(session, task_record, error)
+    for source_item_id in list((task_record.payload or {}).get("source_item_ids") or []):
+        source_item = await session.get(KnowledgeSourceItem, source_item_id)
+        if source_item is not None:
+            source_item.review_status = "failed"
+            source_item.review_note = error[:2000]
 
 
 async def run_knowledge_ingest(context: TaskContext) -> dict:
@@ -234,6 +327,7 @@ async def _run_file_ids(context: TaskContext, *, action: str) -> dict:
     kb_id = payload["kb_id"]
     file_ids = list(payload["file_ids"])
     params = dict(payload.get("params") or {})
+    reparse = bool(payload.get("reparse", False)) if action == "parse" else False
     operator_id = payload["operator_id"]
     label = "解析" if action == "parse" else "入库"
     processing_owner = {
@@ -258,6 +352,7 @@ async def _run_file_ids(context: TaskContext, *, action: str) -> dict:
                     kb_id,
                     file_id,
                     operator_id=operator_id,
+                    allow_reparse=reparse,
                     **processing_owner,
                 )
             else:
@@ -306,7 +401,11 @@ async def _run_pending_files(context: TaskContext, *, action: str) -> dict:
     processed_count = 0
     failed_count = 0
     result_items: list[dict] = []
-    after_file_id = None
+    after_file_id = payload.get("after_file_id")
+    task_file_limit = min(
+        max(int(payload.get("task_file_limit") or DOCUMENT_ACTION_TASK_FILE_LIMIT), 1),
+        DOCUMENT_ACTION_BATCH_SIZE,
+    )
     concurrency = resolve_document_concurrency(params) if action == "parse" else 1
     progress_lock = asyncio.Lock()
 
@@ -339,29 +438,64 @@ async def _run_pending_files(context: TaskContext, *, action: str) -> dict:
                 f"已{label} {processed_count}/{progress_total} 个文档，并发 {concurrency}",
             )
 
-    while True:
+    exhausted = False
+    while processed_count < task_file_limit:
+        page_limit = min(DOCUMENT_ACTION_BATCH_SIZE, task_file_limit - processed_count)
         file_ids = await knowledge_base.list_document_file_ids_by_statuses(
             kb_id,
             statuses=statuses,
             after_file_id=after_file_id,
-            limit=DOCUMENT_ACTION_BATCH_SIZE,
+            limit=page_limit,
         )
         if not file_ids:
+            exhausted = True
             break
         await run_document_batch(file_ids, process_file, concurrency=concurrency)
         after_file_id = file_ids[-1]
 
     await context.raise_if_cancelled()
+    next_file_ids = []
+    if not exhausted:
+        next_file_ids = await knowledge_base.list_document_file_ids_by_statuses(
+            kb_id,
+            statuses=statuses,
+            after_file_id=after_file_id,
+            limit=1,
+        )
+    remaining_estimate = max(initial_total - processed_count, len(next_file_ids))
+    continuation = None
+    if next_file_ids:
+        continuation = {
+            "required": True,
+            "remaining_estimate": remaining_estimate,
+            "after_file_id": after_file_id,
+            "payload": {
+                "kb_id": kb_id,
+                "scope": payload["scope"],
+                "action": action,
+                "statuses": statuses,
+                "count": remaining_estimate,
+                "params": params,
+                "operator_id": operator_id,
+                "after_file_id": after_file_id,
+                "task_file_limit": task_file_limit,
+            },
+        }
     result = {
         "items": result_items,
         "processed": processed_count,
         "failed": failed_count,
         "result_truncated": processed_count > len(result_items),
+        "continuation": continuation,
     }
     await context.set_result(result)
     await context.set_progress(
         100.0,
-        f"{label}完成，失败 {failed_count} 个" if processed_count else f"没有待{label}文档",
+        (
+            f"本批{label}完成 {processed_count} 个，已安排续跑"
+            if continuation
+            else (f"{label}完成，失败 {failed_count} 个" if processed_count else f"没有待{label}文档")
+        ),
     )
     return result
 
@@ -379,10 +513,27 @@ async def run_knowledge_graph(context: TaskContext) -> dict:
     """根据持久 action 重建图谱构建或向量修复任务。"""
     payload = context.payload
     kb_id = payload["kb_id"]
-    service = MilvusGraphService()
+    graph_service = MilvusGraphService()
+    started_by = payload.get("operator_id")
+    if payload.get("action") == "rebuild_projections":
+        result = await KnowledgeGraphProjectionRebuildService(graph_service=graph_service).rebuild(
+            kb_id=kb_id, context=context
+        )
+        await context.raise_if_cancelled()
+        await context.set_result(result)
+        await context.set_progress(100.0, "PostgreSQL 权威图投影重建完成")
+        return result
+
+    pipeline_service = KnowledgeGraphPipelineService(graph_service=graph_service)
+
     if payload.get("action") == "retry_failed":
         await context.set_progress(5.0, "准备重跑抽取失败的 Chunk")
-        result = await service.build_pending_chunks(kb_id, context=context, failed_only=True)
+        result = await pipeline_service.build_pending_chunks(
+            kb_id=kb_id,
+            context=context,
+            failed_only=True,
+            started_by=started_by,
+        )
         await context.raise_if_cancelled()
         await context.set_result(result)
         await context.set_progress(
@@ -394,20 +545,48 @@ async def run_knowledge_graph(context: TaskContext) -> dict:
     if payload.get("action") == "reconcile":
         mode = payload.get("reconcile_mode") or "failed"
         await context.set_progress(5.0, "准备修复图谱向量索引")
-        reconcile_result = await service.reconcile_vectors(kb_id, all_vectors=mode == "all_vectors")
-        result = await service.build_pending_chunks(kb_id, context=context)
+        reconcile_result = await graph_service.reconcile_vectors(kb_id, all_vectors=mode == "all_vectors")
+        vector_projection = await graph_service.drain_pending_graph_vectors(kb_id, context=context)
         await context.raise_if_cancelled()
-        result["reconcile"] = reconcile_result
+        result = {
+            "kb_id": kb_id,
+            "reconcile": reconcile_result,
+            "vector_projection": vector_projection,
+        }
         await context.set_result(result)
         await context.set_progress(100.0, "图谱向量索引修复完成")
         return result
 
     await context.set_progress(5.0, "准备构建图谱")
-    result = await service.build_pending_chunks(kb_id, context=context)
+    chunk_limit = int(payload.get("chunk_limit") or GRAPH_BUILD_TASK_CHUNK_LIMIT)
+    if not 1 <= chunk_limit <= 5000:
+        raise ValueError("图谱任务 chunk_limit 必须在 1 到 5000 之间")
+    result = await pipeline_service.build_pending_chunks(
+        kb_id=kb_id,
+        context=context,
+        started_by=started_by,
+        max_chunks=chunk_limit,
+    )
+    retryable_remaining = int(result.get("retryable_remaining") or 0)
+    if retryable_remaining > 0:
+        result["continuation"] = {
+            "required": True,
+            "remaining_estimate": retryable_remaining,
+            "payload": {
+                "kb_id": kb_id,
+                "action": "build",
+                "operator_id": started_by,
+                "chunk_limit": chunk_limit,
+            },
+        }
     await context.raise_if_cancelled()
     await context.set_result(result)
     await context.set_progress(
         100.0,
-        f"图谱构建执行完成，成功 {result['success']} 个，抽取失败 {result['extraction_failed']} 个",
+        (
+            f"本批图谱构建完成 {result['success']} 个，已安排续跑"
+            if result.get("continuation")
+            else f"图谱构建执行完成，成功 {result['success']} 个，抽取失败 {result['extraction_failed']} 个"
+        ),
     )
     return result

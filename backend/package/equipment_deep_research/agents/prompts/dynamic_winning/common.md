@@ -511,14 +511,14 @@ S5模型不可用，按S3/S4已提交的直接装备身份、制胜逻辑和语�
         "按创新性45%、制胜效能性25%、需求性15%、科学可行性10%、发展性5%进行组合评分，并结合相对独立性取舍；证据完备度不进入S5主评分",
         "创新性内部按机理/装备创新性75%、命名新质度15%、命名与本体一致性10%形成有效创新性；名称只是受限加权项，不能替代真实武器机理",
         "需求性只判断Query对应的现实威胁、任务短板与关键问题；科学可行性只判断原理是否闭合，不做证据、成熟度或工程审计",
-        "只输出选择结果、五项分数与一句简短理由，不改名、不补写候选属性",
-        "名称与武器本体、作用对象、核心机理或直接战果明显错位时判退或要求回到S3/S4修正；名称普通但机理成立时不得仅因命名朴素判退",
+        "输出选择结果、五项分数与一句简短理由；方向正确但本体抽象时，在不改变原机理、对象和直接战果的前提下优先收敛为更具体的单一武器",
+        "名称与武器本体、作用对象、核心机理或直接战果不够贴合时优先用converged_candidate修正；名称普通但机理成立时不得仅因命名朴素判退",
         "为每项标注颠覆层级与旧模式→新模式→制胜关系改写，先保留范式颠覆和新质突破，再考虑显著创新"
       ],
       "quality_gates": [
         "候选输入严格限于Query边界、hypothesis_id、name、concise_winning_summary和可选semantic_spine",
-        "不设入选硬下限；本席位不因局部容量截断合格候选，最终先保留各制胜维度优胜项，再跨维度按综合评价和关系互异性优先形成5—6项、最多保留6项，机理或依据不足时明确受限且不回填普通升级",
-        "不得以装备类型配额、证据完备度或内部字符串规则替代五项评分与独立性判断"
+        "不设分数硬下限；本席位不因6项基线或局部容量截断合格候选，最终先保留各制胜维度优胜项，再跨维度按综合评价和关系互异性形成至少6项的交付基线，并继续保留更多真正高质量、机制互异且可独立验收的候选，通常最多10项；机理或依据不足时明确受限且不回填普通升级",
+        "不得以装备类型配额、证据完备度、内部字符串规则或任何主观布尔组合形成运行时硬失败门"
       ],
       "output_fields": [
         "decisions", "portfolio_order", "portfolio_summary", "stop_reason", "reason",
@@ -573,7 +573,7 @@ S5模型不可用，按S3/S4已提交的直接装备身份、制胜逻辑和语�
   },
   "dynamic_methodology": ["从Query语义开放发散候选；保持轻型创造会话", "只交接当前节点的最小语义"],
   "dynamic_creative_methodology": ["S3与S4都是创新武器候选创建入口；每个独立席位基于Query自主形成多维制胜假设，再提交具体主装备候选"],
-  "dynamic_s5_methodology": ["S5对去重后的完整候选池做跨席位比较，筛选创新性、新颖性和相对独立性，并按五项权重形成综合评分", "输出排序、淘汰理由、同构关系和需要验证的脆弱假设；不得只在单一创作者切片内打分"],
+  "dynamic_s5_methodology": ["S5对去重后的完整候选池做跨席位比较，筛选创新性、新颖性和相对独立性，并按五项权重形成综合评分", "输出排序、淘汰理由、制胜机制同构关系和需要验证的脆弱假设；只有核心技术原理、作用链、改变的对抗变量与直接战果实质一致时才合并，名称、形态、谱系或维度相似不能单独触发合并；不得只在单一创作者切片内打分"],
   "dynamic_quality_gates": ["输出服务当前Query，保持主装备和直接战果可理解", "面向未来战争打赢需要改变至少一项时空、成本、暴露、决策权或效应交换"],
   "legacy_methodology": ["先形成Query任务对象—威胁—阶段—制胜矛盾语义图", "从Query语义开放发散候选，不从装备目录或公开型号起步", "只处理声明的质量残差并写入声明节点"],
   "legacy_quality_gates": ["候选主装备、目标、发射域、毁伤机理与Query形成直接因果闭环", "事实、推断与拟议假设分离，证据边界和失效条件明确", "不得复用共享示例名称或以固定装备族覆盖主题", "新研候选由Codex动态选择描述名、专名或可解释代号，不预设统一格式；名称须呈现具体主装备身份及其创新制胜特征"]
@@ -1133,7 +1133,7 @@ A分支需要3份独立战法验证，当前{validation_count}份
 
 <!-- prompt: s3_s4.creative_contract -->
 兼容性提示：两个候选不得使用同一类型。
-你是新质武器概念首席创造者，从Query的核心战场矛盾自由创造；面向未来战争打赢需要，先比较战场矛盾、接敌关系、构型、作用对象、直接战果和对手代价，不按装备目录、技术词表、固定维度或名称模板凑数。每席必须比较至少三种不同的装备架构；候选须是可单独指认、研发、部署和验收的物理武器本体，能直接打击、毁伤、压制、拦截或拒止。不能把火控节点、目标标记器、航迹灯、通信中继、算法或保障单独充当主体，但可内生到发射、携带或释放效应载荷的弹药。允许前沿构型但不得违反已知物理，核心效应须有合理作用载体并能落到武器本体；静默检查科学可实现性，本阶段不写工程瓶颈、成熟度、参数或验证边界。名称须识别武器本体，创新可从独特物理形态、结构构型、材料/介质、新物理原理、形态物质、技术原理、任务能力、装备独特运动方式、反传统隐喻、数量/密度/规模、战争时空与体系经济逻辑、专名隐喻自然生长；一般性的任务能力、功能效果和动作流程应进入concise_winning_summary。不要为覆盖类型而组合。名称与摘要须说明具体作用、作用对象、核心机理和直接战果；输入的random_naming_style_assignment按候选顺序使用，多个候选不得使用同一类型，名称主体尽量8—12个汉字。不要默认两字意象加弹/雷/器/系统；背景剥离诱显巡飞弹、断链自证巡飞弹、裂隙蜂群巡飞弹属于功能/动作短语直接粘装备尾词的功能或意象换皮反例，环境/威胁条件＋自证/自校正/复获/续接＋装备后缀同样属于硬拼，重复底名换皮不算多样。可参考“玄磁”超材料隐身巡弋器、等离子流控飞行器的本体锚点但不得照抄。专名/代号型不得成为明显多数，只引专名/代号部分；名称没有专名或代号时，不得给整个名称加引号。名称创新还应在作用载体、接敌几何、作战时序或对手代价上形成可观察差异。每个候选只输出name和concise_winning_summary；若只是普通改型、支援节点或无法闭合本体—机理—对象—战果，返回空hypotheses并说明原因。只输出严格JSON，不要输出其他字段、备选名或推理过程。
+你是新质武器概念首席创造者，从Query的核心战场矛盾自由创造；面向未来战争打赢需要，先比较战场矛盾、接敌关系、构型、作用对象、直接战果和对手代价，不按装备目录、技术词表、固定维度或名称模板凑数。每席必须比较至少三种不同的装备架构；候选须是可单独指认、研发、制造、部署、试验和淘汰的单一物理武器本体，能直接打击、毁伤、压制、拦截或拒止。不能把火控节点、目标标记器、航迹灯、通信中继、算法或保障单独充当主体，但可内生到发射、携带或释放效应载荷的弹药。允许前沿构型但不得违反已知物理，核心效应须有合理作用载体并能落到武器本体；静默检查科学可实现性，本阶段不写成熟度或性能参数。名称须识别武器本体，创新可从独特物理形态、结构构型、材料/介质、新物理原理、形态物质、技术原理、任务能力、装备独特运动方式、反传统隐喻、数量/密度/规模、战争时空与体系经济逻辑、专名隐喻自然生长；一般性的任务能力、功能效果和动作流程应进入concise_winning_summary。不要为覆盖类型而组合。名称与摘要须说明具体作用、作用对象、核心机理和直接战果；输入的random_naming_style_assignment按候选顺序使用，多个候选不得使用同一类型，名称主体尽量8—12个汉字。不要默认两字意象加弹/雷/器/系统；背景剥离诱显巡飞弹、断链自证巡飞弹、裂隙蜂群巡飞弹属于功能/动作短语直接粘装备尾词的功能或意象换皮反例，环境/威胁条件＋自证/自校正/复获/续接＋装备后缀同样属于硬拼，重复底名换皮不算多样。可参考“玄磁”超材料隐身巡弋器、等离子流控飞行器的本体锚点但不得照抄。专名/代号型不得成为明显多数，只引专名/代号部分；名称没有专名或代号时，不得给整个名称加引号。名称创新还应在作用载体、接敌几何、作战时序或对手代价上形成可观察差异。每个候选必须输出schema规定的完整单一武器语义合同；若只是普通改型、支援节点或无法闭合本体—新质原理—效应载体—对象—战果及独立部署/试验边界，返回空hypotheses并说明原因。只输出严格JSON，不要输出其他字段、备选名或推理过程。
 <!-- /prompt -->
 
 ## s3_s4.quality_first
@@ -1593,7 +1593,7 @@ A分支需要3份独立战法验证，当前{validation_count}份
 ## s3_s4.task_purpose
 
 <!-- prompt: s3_s4.task_purpose -->
-从Query的核心战场矛盾自由创造新质武器，先读完整Query及{target}。每席固定携带恰好三个open_slot，仅为开放容器，不是题目、类别或配额；可接受、重构、交叉或舍弃{dimension_catalog}，并可提出OTHER/自定义维度。内部比较至少三条互异制胜关系及各自武器架构，同维取优、跨维保留；检查敌方威胁成形前前出可能。候选主体只输出name和concise_winning_summary，并按结构声明dimension_selections/considered_dimensions；不得将OPEN/AUTO当维度。可从Query的核心战场矛盾自由创造，不从固定装备类别反推。
+从Query的核心战场矛盾自由创造新质武器，先读完整Query及{target}。每席固定携带恰好三个open_slot，仅为开放容器，不是题目、类别或配额；可接受、重构、交叉或舍弃{dimension_catalog}，并可提出OTHER/自定义维度。内部比较至少三条互异制胜关系及各自武器架构，同维取优、跨维保留；检查敌方威胁成形前前出可能。候选输出name、concise_winning_summary和schema规定的单一武器语义合同，并按结构声明dimension_selections/considered_dimensions；不得将OPEN/AUTO当维度。可从Query的核心战场矛盾自由创造，不从固定装备类别反推。
 <!-- /prompt -->
 
 ## s3_s4.angle_assignment_shared_rule
@@ -2151,7 +2151,16 @@ S1/S2推理完成后，S3与S4全部创作席位立即等权并发启动，彼�
   "hypotheses": [
     {
       "name": "候选装备名称，必须落到具体武器本体",
-      "concise_winning_summary": "直接说明Query矛盾、制胜关系和直接战果"
+      "concise_winning_summary": "直接说明Query矛盾、制胜关系和直接战果",
+      "single_weapon_identity": "one uniquely identifiable weapon type, not a capability set or solution bundle",
+      "physical_main_body": "the one physical main body that is manufactured and fielded",
+      "novel_technical_principle": "the decisive new-quality physical, chemical, biological, material, device or algorithmic principle embodied by that main body",
+      "effect_carrier": "the physical carrier that transfers the principle into an effect on the target",
+      "principle_to_effect_chain": "main body -> novel principle -> effect carrier -> target state change -> direct military result",
+      "target_and_direct_effect": "the specific target and directly observable result caused by this weapon",
+      "independent_deployment_boundary": "the smallest complete unit that can be independently fielded, operated and withdrawn",
+      "independent_test_boundary": "one decisive experiment that can accept or reject this weapon concept as a whole",
+      "system_family_exclusion": "why this is one weapon type rather than an architecture, capability cluster, platform family or collection of equipment"
     }
   ],
   "dimension_selections": [
@@ -2196,6 +2205,13 @@ S1/S2推理完成后，S3与S4全部创作席位立即等权并发启动，彼�
       "naming_reason": "one concise holistic reason for the naming judgement; do not score spelling, length or keyword rarity",
       "direct_equipment": "true|false; the candidate itself directly produces the military effect",
       "weapon_object_specific": "true|false; the name and summary identify one deployable weapon object",
+      "identity_contract_version": "single_weapon_v1",
+      "single_weapon_identity_closes": "true|false; one weapon type remains after removing its external command, support and cooperating nodes",
+      "physical_main_body_specific": "true|false; one manufactured and fielded physical main body is explicit",
+      "novel_principle_explicit": "true|false; one decisive new-quality technical principle is explicit and embodied by that main body",
+      "effect_carrier_closes": "true|false; a physical carrier connects the principle to the target state change and direct result",
+      "independent_deployment_and_testable": "true|false; the smallest deployment unit and a concept-level accept/reject experiment are both identifiable",
+      "system_family_or_solution_bundle": "true|false; true when the candidate is actually an architecture, capability cluster, platform family or equipment collection",
       "support_dependency_only": "true|false; true when it is only a support/C2/sensor node",
       "known_science_consistent": "true|false; scientific plausibility of the stated mechanism only",
       "weapon_body_mechanism_closes": "true|false; the mechanism closes through the weapon body and effect carrier",
@@ -2207,6 +2223,19 @@ S1/S2推理完成后，S3与S4全部创作席位立即等权并发启动，彼�
       "displaced_operational_mode": "the conventional combat mode displaced by this candidate",
       "new_operational_mode": "the new combat mode enabled by this candidate",
       "winning_relation_shift": "the concise before-to-after change in the adversarial exchange",
+      "converged_candidate": {
+        "name": "required only when the S3/S4 draft does not close single_weapon_v1; otherwise return an empty object",
+        "concise_winning_summary": "the converged weapon's mechanism, target and direct result",
+        "single_weapon_identity": "one uniquely identifiable weapon type",
+        "physical_main_body": "the one physical main body manufactured and fielded",
+        "novel_technical_principle": "the decisive new-quality principle embodied by that main body",
+        "effect_carrier": "the physical carrier transferring the principle to the target",
+        "principle_to_effect_chain": "main body -> principle -> carrier -> target state change -> direct result",
+        "target_and_direct_effect": "the specific target and observable direct result",
+        "independent_deployment_boundary": "the smallest complete deployment unit",
+        "independent_test_boundary": "one decisive whole-concept accept/reject experiment",
+        "system_family_exclusion": "why the result is one weapon type rather than an architecture, capability cluster, platform family or equipment collection"
+      },
       "merge_target_hypothesis_id": "exact target id when decision is merge; empty otherwise"
     }
   ],

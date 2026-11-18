@@ -6,6 +6,7 @@
 
 import os
 import json
+import logging
 import time
 import uuid
 import random
@@ -28,6 +29,7 @@ from backend.account_pool import (
 from backend.weread_signer import gen_signature
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+logger = logging.getLogger(__name__)
 
 APP_HEADERS = {
     'User-Agent': 'WeRead/7.5.0 (Android; 33; arm64-v8a)',
@@ -140,9 +142,11 @@ def _background_poll_login(uuid_val: str, device_profile: dict):
 
     s = get_weread_session()
     start_time = time.time()
+    last_code = None
     while time.time() - start_time < 300 and not _poll_stop_event.is_set():
         try:
-            resp = s.get(poll_url, headers=poll_headers, timeout=28)
+            current_url = poll_url + (f'&last={last_code}' if last_code else '')
+            resp = s.get(current_url, headers=poll_headers, timeout=28)
             res = resp.json()
             errcode = res.get('wx_errcode') if 'wx_errcode' in res else res.get('errcode')
 
@@ -195,6 +199,7 @@ def _background_poll_login(uuid_val: str, device_profile: dict):
                     return
 
             elif errcode == 404:
+                last_code = '404'
                 _set_login_state("scanned", "已扫码，请在手机微信上点击确认登录", 60)
             elif errcode == 408:
                 # 继续等待

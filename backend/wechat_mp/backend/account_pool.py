@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 LOGIN_VALID_SECONDS = 30 * 24 * 60 * 60   # 凭证保存周期
 COOLDOWN_SECONDS = 5 * 60                 # 频控单次冷却 5 分钟
 FAILURE_KICK_THRESHOLD = 5                # 连续失败 5 次踢出
+FAILURE_RETRY_PENALTY_SECONDS = 15        # 普通失败暂缓后重新进入公平轮换
 
 
 def _gen_id(vid: str = "") -> str:
@@ -226,8 +227,17 @@ class AccountPool:
                     self._save(accounts)
                 return None
 
-            # 按 (失败次数, 最久未用) 排序调度
-            active.sort(key=lambda a: (a.get("failures", 0), a.get("last_used", 0)))
+            # 失败账号先做有界退避，但不能永久排在零失败账号之后；否则一次瞬时
+            # 网络失败就可能让双账号池退化成单账号。last_used 持续前移后，暂缓
+            # 账号会自动重新进入轮换并通过后续成功上报清零 failures。
+            active.sort(
+                key=lambda a: (
+                    a.get("last_used", 0)
+                    + min(a.get("failures", 0), FAILURE_KICK_THRESHOLD - 1)
+                    * FAILURE_RETRY_PENALTY_SECONDS,
+                    a.get("last_used", 0),
+                )
+            )
             selected = active[0]
             selected["last_used"] = now
             changed = True

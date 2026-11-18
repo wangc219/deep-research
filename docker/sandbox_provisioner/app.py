@@ -21,7 +21,7 @@ from urllib import request
 import httpx
 from dotenv import dotenv_values
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -375,6 +375,10 @@ class SandboxCapacityError(RuntimeError):
     """Sandbox 基础设施容量已耗尽。"""
 
 
+class SandboxRuntimeUnavailableError(RuntimeError):
+    """配置的 Sandbox runtime 镜像在当前节点不可用。"""
+
+
 class SandboxQuiesceTimeoutError(RuntimeError):
     """Sandbox 全局静默未在调用方 deadline 内完成。"""
 
@@ -598,6 +602,37 @@ class LocalContainerProvisionerBackend:
         self._skill_projections_host_path = self._normalize_host_bind_path(
             self._skill_projections_host_path
         )
+
+    def runtime_health(self) -> dict[str, str]:
+        """检查 Docker 节点是否已持有配置的 Sandbox runtime 镜像。"""
+        try:
+            image = self._client.images.get(self._sandbox_image)
+        except self._docker.errors.ImageNotFound:
+            return {
+                "status": "unavailable",
+                "sandbox_image": self._sandbox_image,
+                "message": (
+                    "configured sandbox runtime image is missing locally: "
+                    f"{self._sandbox_image}; pull or build it before creating sandboxes"
+                ),
+            }
+        except self._docker.errors.DockerException as exc:
+            return {
+                "status": "error",
+                "sandbox_image": self._sandbox_image,
+                "message": f"failed to inspect sandbox runtime image: {exc}",
+            }
+
+        return {
+            "status": "ok",
+            "sandbox_image": self._sandbox_image,
+            "sandbox_image_id": str(image.id),
+        }
+
+    def _require_runtime_image(self) -> None:
+        health = self.runtime_health()
+        if health["status"] != "ok":
+            raise SandboxRuntimeUnavailableError(health["message"])
 
     @staticmethod
     def _normalize_host_bind_path(path_value: str | None) -> str:
@@ -1026,6 +1061,7 @@ class LocalContainerProvisionerBackend:
                         exc,
                     )
 
+            self._require_runtime_image()
             shared_workspace = None
             user_skills = None
             if not ephemeral_storage:
@@ -1917,14 +1953,21 @@ def sandbox_response(record: SandboxRecord) -> SandboxResponse:
 @app.get("/health")
 def health():
     tracked = len(idle_reaper._last_activity_at)  # noqa: SLF001
-    return {
+    runtime_health = getattr(backend_impl, "runtime_health", None)
+    runtime = runtime_health() if callable(runtime_health) else {"status": "ok"}
+    payload = {
         "status": "ok",
         "backend": backend_name,
         "runtime_profile": runtime_profile_name,
+        "runtime": runtime,
         "idle_timeout_seconds": idle_reaper._idle_timeout_seconds,  # noqa: SLF001
         "idle_check_interval_seconds": idle_reaper._check_interval_seconds,  # noqa: SLF001
         "tracked_sandboxes": tracked,
     }
+    if runtime["status"] != "ok":
+        payload["status"] = "unavailable"
+        return JSONResponse(status_code=503, content=payload)
+    return payload
 
 
 @app.post(
@@ -1952,7 +1995,7 @@ def create_sandbox(payload: CreateSandboxRequest):
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            except SandboxCapacityError as exc:
+            except (SandboxCapacityError, SandboxRuntimeUnavailableError) as exc:
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
             except Exception as exc:  # noqa: BLE001
                 raise HTTPException(status_code=500, detail=str(exc)) from exc

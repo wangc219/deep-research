@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from equipment_deep_research.agents.orchestrator_prompt import (
     AGENT_SELECTION_OUTPUT_SCHEMA,
+    BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA,
     BLUEPRINT_OUTPUT_SCHEMA,
     META_REPLAN_OUTPUT_SCHEMA,
     ORCHESTRATOR_PROMPT_VERSION,
@@ -25,7 +26,7 @@ def test_orchestrator_prompt_covers_architecture_decision_order() -> None:
 def test_orchestrator_prompt_keeps_weapon_innovation_space_open() -> None:
     prompt = orchestrator_system_prompt("blueprint_design")
 
-    assert ORCHESTRATOR_PROMPT_VERSION == "2.9"
+    assert ORCHESTRATOR_PROMPT_VERSION == "2.12"
     assert len(prompt) < 3000
     assert "不得给出装备名称、装备家族、技术路线" in prompt
     assert "固定颠覆种子、共享示例、公开型号和常见装备目录不得进入蓝图首轮上下文" in prompt
@@ -47,3 +48,13 @@ def test_orchestrator_output_schemas_keep_decisions_auditable() -> None:
     assert "baseline_agent_plan" in BLUEPRINT_OUTPUT_SCHEMA
     assert "coverage_matrix" in AGENT_SELECTION_OUTPUT_SCHEMA
     assert "stop_reason" in META_REPLAN_OUTPUT_SCHEMA
+
+
+def test_alignment_review_uses_independent_semantic_contract() -> None:
+    prompt = orchestrator_system_prompt("blueprint_alignment_review")
+
+    assert "独立的研究任务语义校验智能体" in prompt
+    assert "不得使用关键词计数、字符串包含、领域词表" in prompt
+    assert "不得反向改写用户真正要研究的主题" in prompt
+    assert "corrected_blueprint" in BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA
+    assert "query_contract" in BLUEPRINT_ALIGNMENT_REVIEW_SCHEMA

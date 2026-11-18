@@ -337,6 +337,9 @@ async def make_generation(manager, user):
 
 
 def stub_model(monkeypatch):
+    async def no_situation_research(**_kwargs):
+        return {}, {}
+
     monkeypatch.setattr(
         equipment_model_adapter,
         "resolve_managed_equipment_model",
@@ -344,6 +347,7 @@ def stub_model(monkeypatch):
     )
     monkeypatch.setattr(equipment_model_adapter, "create_equipment_provider", lambda *_args, **_kwargs: object())
     monkeypatch.setattr("equipment_deep_research.query_library.generator.ModelQueryGenerator", ProbeGenerator)
+    monkeypatch.setattr(equipment_query_task, "research_query_situation", no_situation_research)
     ProbeGenerator.ground_calls = ProbeGenerator.divergence_calls = 0
     ProbeGenerator.entered = ProbeGenerator.release = None
     ProbeGenerator.missing = True
@@ -366,7 +370,7 @@ async def test_handler_partial_failure_retry_reuses_saved_result_and_planning(qu
         task = await db.get(TaskRecord, context.task_id)
         task.status = "failed"
 
-    async def no_publish(_task_id):
+    async def no_publish(_task_id, **_kwargs):
         return None
 
     monkeypatch.setattr(svc, "publish_task", no_publish)
@@ -464,10 +468,13 @@ async def test_invalid_or_all_duplicate_generation_fails_without_template_candid
             )
 
 
-async def test_model_urls_are_not_tool_evidence_and_generic_outcomes_still_fail():
+async def test_model_urls_are_not_tool_evidence_and_generic_outcomes_are_advisory():
     from equipment_deep_research.query_library.generator import _candidate_from_payload, _grounding_sources
     from equipment_deep_research.query_library.models import SourceReference
-    from equipment_deep_research.query_library.quality import validate_generated_candidate
+    from equipment_deep_research.query_library.quality import (
+        review_generated_candidate,
+        validate_generated_candidate,
+    )
 
     claimed = {"sources": [{"title": "模型写出的来源", "url": "https://example.test/invented"}]}
     assert _grounding_sources(claimed, {}) == ()
@@ -481,19 +488,20 @@ async def test_model_urls_are_not_tool_evidence_and_generic_outcomes_still_fail(
     )
     row["demand_chain"]["weapon_requirement"] = "仅需要能够满足未来任务"
     generic = _candidate_from_payload(row, sources)
-    assert any(
-        "weapon_requirement" in issue
-        for issue in validate_generated_candidate(
-            generic, expected_slot=coverage_plan(1)[0], existing_queries=[], accepted_queries=[]
-        )
+    assert not validate_generated_candidate(
+        generic,
+        expected_slot=coverage_plan(1)[0],
+        existing_queries=[],
+        accepted_queries=[],
     )
+    assert any("weapon_requirement" in note for note in review_generated_candidate(generic))
 
 
 async def test_http_generation_accepts_no_project_and_replays_idempotent_request(query_db, query_http, monkeypatch):
     async def model(_db, _model_spec):
         return {"model_spec": "test:model"}
 
-    async def no_publish(_task_id):
+    async def no_publish(_task_id, **_kwargs):
         return None
 
     monkeypatch.setattr(svc, "_resolve_requested_model", model)
@@ -594,9 +602,35 @@ async def test_event_batches_commit_before_redis_and_serialize_concurrent_writer
     async with manager.get_async_session_context() as db:
         assert (await db.get(EquipmentResearchRun, run_id)).status == "reporting"
 
+    await equipment_research_task._append_events(
+        run_id,
+        [
+            (
+                "resume\x00trace",
+                {
+                    "event": {
+                        "event_type": "run_resumed",
+                        "summary": "从检查点\x00恢复",
+                        "payload": {"nested": ["A\x00B"]},
+                    }
+                },
+            )
+        ],
+    )
+    async with manager.get_async_session_context() as db:
+        nul_row = await db.scalar(
+            select(EquipmentResearchEvent).where(
+                EquipmentResearchEvent.run_id == run_id,
+                EquipmentResearchEvent.event_type == "resumetrace",
+            )
+        )
+        assert nul_row is not None
+        assert nul_row.payload["event"]["summary"] == "从检查点恢复"
+        assert nul_row.payload["event"]["payload"]["nested"] == ["AB"]
+
     # 终态不可再被迟到事件修改。
     async with manager.get_async_session_context() as db:
         run = await db.get(EquipmentResearchRun, run_id)
         run.status = "cancelled"
     await equipment_research_task._append_events(run_id, [("late-event", {})])
-    assert len(publications) == 243
+    assert len(publications) == 244

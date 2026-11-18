@@ -56,6 +56,18 @@ def test_snapshot_expires_and_rejects_invalid_thread_budget(monkeypatch, tmp_pat
     assert policy.read_budget()["research_slots"] == 0
 
 
+def test_parallel_asr_processes_share_thread_budget(monkeypatch):
+    monkeypatch.setenv("RESOURCE_GOVERNOR_ENABLED", "true")
+    monkeypatch.setenv("VIDEO_ASR_PROCESS_CONCURRENCY", "2")
+    monkeypatch.setattr(
+        policy,
+        "read_budget",
+        lambda: {"asr_threads": 4, "memory_pressure": False},
+    )
+
+    assert policy.asr_threads() == 2
+
+
 @pytest.mark.asyncio
 async def test_admission_respects_budget_and_operator_research_limit(monkeypatch):
     monkeypatch.setattr(policy, "read_budget", lambda: {"research_slots": 2, "bulk_slots": 4, "memory_pressure": False})

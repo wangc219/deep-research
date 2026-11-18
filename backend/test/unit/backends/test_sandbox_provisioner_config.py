@@ -61,8 +61,68 @@ def _docker_backend(module, tmp_path, run_container):
     backend._skill_projections_container_path = tmp_path.parent / "skill-projections"
     backend._user_data_container_path.mkdir(exist_ok=True)
     backend._skill_projections_container_path.mkdir(exist_ok=True)
-    backend._client = SimpleNamespace(containers=SimpleNamespace(run=run_container))
+    backend._client = SimpleNamespace(
+        containers=SimpleNamespace(run=run_container),
+        images=SimpleNamespace(get=lambda _image: SimpleNamespace(id="sha256:runtime")),
+    )
     return backend
+
+
+def test_docker_runtime_health_requires_configured_image_locally():
+    module = _load_module()
+
+    class DockerException(Exception):
+        pass
+
+    class ImageNotFound(DockerException):
+        pass
+
+    backend = object.__new__(module.LocalContainerProvisionerBackend)
+    backend._sandbox_image = "deepquest-sandbox-runtime:1.11.0-artifacts"
+    backend._docker = SimpleNamespace(
+        errors=SimpleNamespace(
+            DockerException=DockerException,
+            ImageNotFound=ImageNotFound,
+        )
+    )
+    backend._client = SimpleNamespace(
+        images=SimpleNamespace(
+            get=lambda _image: (_ for _ in ()).throw(ImageNotFound("missing"))
+        )
+    )
+
+    health = backend.runtime_health()
+
+    assert health["status"] == "unavailable"
+    assert health["sandbox_image"] == "deepquest-sandbox-runtime:1.11.0-artifacts"
+    assert "missing locally" in health["message"]
+    with pytest.raises(module.SandboxRuntimeUnavailableError, match="missing locally"):
+        backend._require_runtime_image()
+
+
+def test_health_endpoint_reports_missing_runtime_image(monkeypatch):
+    module = _load_module()
+    monkeypatch.setenv(
+        "SANDBOX_PROVISIONER_TOKEN", "test-provisioner-token-that-is-long-enough"
+    )
+    monkeypatch.setattr(
+        module,
+        "backend_impl",
+        SimpleNamespace(
+            runtime_health=lambda: {
+                "status": "unavailable",
+                "sandbox_image": "deepquest-sandbox-runtime:1.11.0-artifacts",
+                "message": "configured sandbox runtime image is missing locally",
+            }
+        ),
+    )
+
+    with TestClient(module.app) as client:
+        response = client.get("/health")
+
+    assert response.status_code == 503
+    assert response.json()["status"] == "unavailable"
+    assert response.json()["runtime"]["status"] == "unavailable"
 
 
 def test_directory_validation_identifies_missing_mount_prerequisite(tmp_path):

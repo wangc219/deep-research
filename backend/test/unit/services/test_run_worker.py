@@ -789,7 +789,7 @@ async def test_finish_run_marks_usage_unavailable_when_state_read_fails(monkeypa
 
 @pytest.mark.asyncio
 async def test_process_agent_run_publishes_interrupt_after_final_state(monkeypatch: pytest.MonkeyPatch):
-    """审批中断必须在最终状态落流后结束，避免前端过早刷新历史。"""
+    """交互内容先热更新，权威中断仍必须等最终状态落流后发布。"""
     run_obj = _build_run()
     _patch_common(monkeypatch, run_obj)
 
@@ -800,6 +800,8 @@ async def test_process_agent_run_publishes_interrupt_after_final_state(monkeypat
     async def fake_append_event(run_id: str, event_type: str, payload: dict, **kwargs):
         del run_id, kwargs
         events.append({"event_type": event_type, "payload": payload})
+        if payload.get("name") == "platform_core.interaction_pending":
+            lifecycle.append("preview")
         if event_type in {"interrupt", "end"}:
             lifecycle.append(event_type)
 
@@ -835,9 +837,18 @@ async def test_process_agent_run_publishes_interrupt_after_final_state(monkeypat
 
     await run_worker.process_agent_run({"job_try": 1}, "run-1")
 
-    assert [event["event_type"] for event in events] == ["metadata", "custom", "interrupt", "end"]
+    assert [event["event_type"] for event in events] == [
+        "metadata",
+        "custom",
+        "custom",
+        "interrupt",
+        "end",
+    ]
+    preview = next(event for event in events if event["payload"].get("name") == "platform_core.interaction_pending")
+    assert preview["payload"]["chunk"]["status"] == "interaction_pending"
+    assert preview["payload"]["chunk"]["interaction_status"] == "human_approval_required"
     assert terminal_statuses == ["interrupted"]
-    assert lifecycle == ["release", "interrupt", "end"]
+    assert lifecycle == ["preview", "release", "interrupt", "end"]
 
 
 @pytest.mark.asyncio
@@ -1523,6 +1534,19 @@ async def test_worker_startup_ensures_builtin_mcp_servers(monkeypatch: pytest.Mo
     async def fake_claim_and_dispatch_due_jobs():
         calls.append("claim_and_dispatch_due_jobs")
 
+    async def fake_claim_due_source_runs():
+        calls.append("claim_due_source_runs")
+
+    async def fake_claim_due_brief_runs():
+        calls.append("claim_due_brief_runs")
+
+    async def fake_publish_due_briefs():
+        calls.append("publish_due_briefs")
+
+    def fake_start_knowledge_graph_projection_worker(ctx):
+        del ctx
+        calls.append("start_knowledge_graph_projection_worker")
+
     monkeypatch.setattr(run_worker.pg_manager, "initialize", fake_initialize)
     monkeypatch.setattr(run_worker.pg_manager, "require_current_schema", fake_require_current_schema)
     monkeypatch.setattr(run_worker.pg_manager, "get_async_session_context", fake_session_ctx)
@@ -1544,8 +1568,17 @@ async def test_worker_startup_ensures_builtin_mcp_servers(monkeypatch: pytest.Mo
     monkeypatch.setattr(run_worker, "_reconcile_durable_tasks_forever", fake_task_reconciliation_loop)
     monkeypatch.setattr(run_worker, "recover_scheduled_dispatches", fake_recover_scheduled_dispatches)
     monkeypatch.setattr(run_worker, "claim_and_dispatch_due_jobs", fake_claim_and_dispatch_due_jobs)
+    monkeypatch.setattr(run_worker, "claim_due_source_runs", fake_claim_due_source_runs)
+    monkeypatch.setattr(run_worker, "claim_due_brief_runs", fake_claim_due_brief_runs)
+    monkeypatch.setattr(run_worker, "publish_due_briefs", fake_publish_due_briefs)
     options_module = importlib.import_module("platform_core.config.options")
     monkeypatch.setattr(options_module, "ensure_options_in_db", fake_ensure_options_in_db)
+    projection_module = importlib.import_module("platform_core.services.knowledge_graph_projection_worker")
+    monkeypatch.setattr(
+        projection_module,
+        "start_knowledge_graph_projection_worker",
+        fake_start_knowledge_graph_projection_worker,
+    )
 
     ctx = {}
     await run_worker._worker_startup(ctx)
@@ -1566,7 +1599,11 @@ async def test_worker_startup_ensures_builtin_mcp_servers(monkeypatch: pytest.Mo
         "publish_task_reconciliation_health",
         "recover_scheduled_dispatches",
         "claim_and_dispatch_due_jobs",
+        "claim_due_source_runs",
+        "publish_due_briefs",
+        "claim_due_brief_runs",
         "publish_reconciliation_health",
+        "start_knowledge_graph_projection_worker",
         "reconciliation_loop",
         "task_reconciliation_loop",
     ]

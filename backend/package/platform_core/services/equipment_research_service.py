@@ -670,7 +670,7 @@ async def _enqueue(db: AsyncSession, run: EquipmentResearchRun, *, action: str) 
         payload_match={"run_id": run.id, "action": action},
     )
     await db.commit()
-    await publish_task(task.id)
+    await publish_task(task.id, task_type=task.type)
 
 
 async def _bind_live_model(db: AsyncSession, run: EquipmentResearchRun) -> None:
@@ -741,6 +741,8 @@ async def resume_run(*, db: AsyncSession, user: User, run_id: str) -> dict[str, 
         raise HTTPException(status_code=409, detail=f"{run.status} 不能恢复")
     await _bind_live_model(db, run)
     run.status = "queued"
+    # 旧失败原因保留在事件审计中；恢复后的当前运行状态不再携带历史错误。
+    run.error = ""
     run.updated_at = utc_now_naive()
     repo = EquipmentResearchRepository(db)
     event = await repo.append_event(run.id, "run_resumed", {"status": "queued", "actor": user.uid})
@@ -2147,60 +2149,189 @@ def _project_deep_context_card(version: Any) -> dict[str, Any]:
     }
 
 
-def _load_reference_weapons(run: EquipmentResearchRun, formal_hypothesis_ids: set[str]) -> list[dict[str, Any]]:
-    candidates: dict[str, dict[str, Any]] = {}
-    for root in _research_run_roots(run):
-        trace_path = root / "trace.jsonl"
-        if not trace_path.is_file() or trace_path.is_symlink():
-            continue
+_REFERENCE_WEAPON_EVENT_TYPES = {
+    "winning_candidate_branch_created",
+    "winning_full_pool_portfolio_decision",
+    "winning_full_pool_portfolio_decision_aggregated",
+}
+_MAX_REFERENCE_AGENT_SESSION_FILES = 64
+_MAX_REFERENCE_AGENT_SESSION_BYTES = 32 * 1024 * 1024
+_MAX_REFERENCE_EVENT_RECORDS = 50_000
+
+
+def _reference_event_rows(path: Path, *, run_id: str, limit: int) -> tuple[list[dict[str, Any]], int]:
+    """从单个受信运行产物中只读取参考武器所需事件。"""
+
+    if limit <= 0:
+        return [], 0
+    try:
+        if path.is_symlink() or not path.is_file():
+            return [], 0
+        if path.stat().st_size > _MAX_REFERENCE_AGENT_SESSION_BYTES:
+            return [], 0
+    except OSError:
+        return [], 0
+
+    rows: list[dict[str, Any]] = []
+    scanned = 0
+    try:
+        with path.open("rb") as stream:
+            for index, raw_line in enumerate(stream):
+                if index >= limit:
+                    break
+                scanned += 1
+                if not raw_line.strip() or len(raw_line) > _MAX_RESEARCH_ARTIFACT_LINE_BYTES:
+                    continue
+                try:
+                    value = json.loads(raw_line)
+                except (UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+                    continue
+                if not isinstance(value, dict):
+                    continue
+                event = _normalize_research_interaction(value, index=index, run_id=run_id)
+                if event and event["event_type"] in _REFERENCE_WEAPON_EVENT_TYPES:
+                    details = event.get("details")
+                    if not isinstance(details, dict) or not details.get("hypothesis_id"):
+                        unwrapped = _unwrap_research_event(value)
+                        direct_payload = unwrapped.get("payload")
+                        direct = (
+                            direct_payload
+                            if isinstance(direct_payload, dict) and direct_payload.get("hypothesis_id")
+                            else unwrapped
+                        )
+                        if isinstance(direct, dict):
+                            event = {**event, "details": _sanitize_research_artifact(direct)}
+                    rows.append(event)
+    except OSError:
+        logger.warning("读取参考武器事件失败：%s", path, exc_info=True)
+    return rows, scanned
+
+
+def _reference_agent_session_paths(run_root: Path) -> list[Path]:
+    """返回当前运行目录内有界且非符号链接的 Agent 会话事件文件。"""
+
+    try:
+        if run_root.is_symlink() or not run_root.is_dir():
+            return []
+        resolved_root = run_root.resolve(strict=True)
+        sessions = run_root / "agent_sessions"
+        if sessions.is_symlink() or not sessions.is_dir():
+            return []
+        resolved_sessions = sessions.resolve(strict=True)
+        resolved_sessions.relative_to(resolved_root)
+        paths = sorted(
+            sessions.iterdir(),
+            key=lambda item: (
+                0 if item.name.startswith("winning-agent-") else 1,
+                item.name,
+            ),
+        )
+    except (OSError, ValueError):
+        return []
+
+    result: list[Path] = []
+    for path in paths:
+        if len(result) >= _MAX_REFERENCE_AGENT_SESSION_FILES:
+            break
         try:
-            with trace_path.open("r", encoding="utf-8") as stream:
-                for index, line in enumerate(stream):
-                    if index >= 30000:
-                        break
-                    try:
-                        record = json.loads(line)
-                    except (TypeError, json.JSONDecodeError):
-                        continue
-                    envelope = record.get("payload") if isinstance(record.get("payload"), dict) else record
-                    details = envelope.get("payload") if isinstance(envelope.get("payload"), dict) else envelope
-                    hypothesis_id = str(details.get("hypothesis_id") or "").strip()
-                    if not hypothesis_id:
-                        continue
-                    event_type = str(details.get("event_type") or envelope.get("event_type") or "")
-                    if event_type != "winning_candidate_branch_created" and hypothesis_id not in candidates:
-                        continue
-                    item = candidates.setdefault(hypothesis_id, {"hypothesis_id": hypothesis_id})
-                    title = str(
-                        details.get("title") or details.get("name") or details.get("primary_equipment_identity") or ""
-                    ).strip()
-                    if title:
-                        item["title"] = title[:400]
-                    identity = str(details.get("primary_equipment_identity") or title).strip()
-                    if identity:
-                        item["primary_equipment_identity"] = identity[:400]
-                    forms = details.get("equipment_forms", details.get("equipment_form", []))
-                    if isinstance(forms, str):
-                        forms = [forms]
-                    if isinstance(forms, list):
-                        item["equipment_forms"] = [
-                            str(value).strip()[:400] for value in forms[:8] if str(value).strip()
-                        ]
-                    overview = str(
-                        details.get("reference_overview") or details.get("concise_winning_summary") or ""
-                    ).strip()
-                    if overview:
-                        item["overview"] = overview[:3000]
-                    if details.get("score") is not None:
-                        try:
-                            item["score"] = float(details["score"])
-                        except (TypeError, ValueError):
-                            pass
-                    if details.get("s6_eligible") is not None:
-                        item["s6_eligible"] = bool(details["s6_eligible"])
-        except (OSError, UnicodeError):
-            logger.warning("读取研究任务参考武器失败：%s", trace_path, exc_info=True)
-        if candidates:
+            if path.suffix != ".jsonl" or path.is_symlink() or not path.is_file():
+                continue
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(resolved_sessions)
+            if resolved.stat().st_size > _MAX_REFERENCE_AGENT_SESSION_BYTES:
+                continue
+        except (OSError, ValueError):
+            continue
+        result.append(resolved)
+    return result
+
+
+def _load_reference_weapons(run: EquipmentResearchRun, formal_hypothesis_ids: set[str]) -> list[dict[str, Any]]:
+    """从正式谱系、主轨迹和当前运行的 Agent 会话恢复参考武器。"""
+
+    candidates: dict[str, dict[str, Any]] = {}
+
+    def add_candidate(value: Any, *, event_type: str = "") -> None:
+        if not isinstance(value, dict):
+            return
+        hypothesis_id = str(value.get("hypothesis_id") or "").strip()
+        if not hypothesis_id:
+            return
+        item = candidates.setdefault(hypothesis_id, {"hypothesis_id": hypothesis_id})
+        title = str(value.get("title") or value.get("name") or value.get("primary_equipment_identity") or "").strip()
+        if title:
+            item["title"] = title[:400]
+        identity = str(value.get("primary_equipment_identity") or title).strip()
+        if identity:
+            item["primary_equipment_identity"] = identity[:400]
+        forms = value.get("equipment_forms", value.get("equipment_form", []))
+        if isinstance(forms, str):
+            forms = [forms]
+        if isinstance(forms, list):
+            normalized_forms = [str(form).strip()[:400] for form in forms[:8] if str(form).strip()]
+            if normalized_forms:
+                item["equipment_forms"] = normalized_forms
+        overview = str(
+            value.get("overview") or value.get("reference_overview") or value.get("concise_winning_summary") or ""
+        ).strip()
+        if overview:
+            item["overview"] = overview[:3000]
+        if value.get("score") is not None:
+            try:
+                item["score"] = float(value["score"])
+            except (TypeError, ValueError):
+                pass
+        for field in ("s6_eligible", "selection_status", "selection_reason"):
+            if value.get(field) not in (None, ""):
+                item[field] = value[field]
+
+        disposition = str(value.get("disposition") or value.get("decision") or "").lower()
+        if event_type in {
+            "winning_full_pool_portfolio_decision",
+            "winning_full_pool_portfolio_decision_aggregated",
+        } and disposition in {"reject", "merge"}:
+            item["selection_status"] = "reference"
+            item["s6_eligible"] = False
+            reason = str(value.get("reason") or "").strip()
+            if reason:
+                item["selection_reason"] = reason[:1000]
+
+    summary = _load_run_json(run, "round_summary.json")
+    swarm = summary.get("winning_swarm") if isinstance(summary.get("winning_swarm"), dict) else {}
+    for field in ("candidate_lineage", "hypotheses"):
+        rows = swarm.get(field, []) if isinstance(swarm, dict) else []
+        if isinstance(rows, list):
+            for row in rows:
+                add_candidate(row)
+    ledger = swarm.get("hypothesis_ledger") if isinstance(swarm, dict) else {}
+    ledger_rows = ledger.get("hypotheses", []) if isinstance(ledger, dict) else []
+    if isinstance(ledger_rows, list):
+        for row in ledger_rows:
+            add_candidate(row)
+
+    remaining_records = _MAX_REFERENCE_EVENT_RECORDS
+    for root in _research_run_roots(run):
+        event_paths: list[Path] = []
+        trace_path = _safe_research_artifact_path(root, "trace.jsonl")
+        if trace_path is not None:
+            event_paths.append(trace_path)
+        event_paths.extend(_reference_agent_session_paths(root))
+        for event_path in event_paths:
+            if remaining_records <= 0:
+                break
+            rows, scanned = _reference_event_rows(
+                event_path,
+                run_id=str(run.id),
+                limit=remaining_records,
+            )
+            remaining_records -= scanned
+            for event in rows:
+                details = event.get("details") if isinstance(event.get("details"), dict) else {}
+                event_type = str(event.get("event_type") or "")
+                add_candidate(details, event_type=event_type)
+                for field in ("candidate", "hypothesis", "portfolio_item", "direction"):
+                    add_candidate(details.get(field), event_type=event_type)
+        if remaining_records <= 0:
             break
 
     rows = [
@@ -2208,6 +2339,8 @@ def _load_reference_weapons(run: EquipmentResearchRun, formal_hypothesis_ids: se
         for hypothesis_id, item in candidates.items()
         if hypothesis_id not in formal_hypothesis_ids
         and item.get("s6_eligible") is not True
+        and str(item.get("selection_status") or "").strip().lower()
+        not in {"selected", "selected_limited", "final", "formal"}
         and str(item.get("title") or item.get("primary_equipment_identity") or "").strip()
     ]
     rows.sort(key=lambda item: (-float(item.get("score") or 0), str(item.get("title") or "")))
@@ -2884,9 +3017,14 @@ def _research_interaction_workflow(
         or str(item.get("selection_status") or item.get("portfolio_status") or "")
         in {"selected", "selected_limited", "final"}
     ]
-    failure_event = next(
-        (item for item in reversed(events) if "failed" in str(item.get("event_type") or "")),
-        None,
+    current_failed = str(getattr(run, "status", "") or "") == "failed"
+    failure_event = (
+        next(
+            (item for item in reversed(events) if "failed" in str(item.get("event_type") or "")),
+            None,
+        )
+        if current_failed
+        else None
     )
     loops = {}
     for key, event_type in _LOOP_EVENT_TYPES.items():
@@ -2905,7 +3043,7 @@ def _research_interaction_workflow(
             }
             if failure_event
             else {"detail": str(getattr(run, "error", "") or "")}
-            if getattr(run, "error", "")
+            if current_failed and getattr(run, "error", "")
             else {}
         ),
         "active_agent_ids": active_agent_ids,
@@ -3015,7 +3153,7 @@ async def _enqueue_typed(
     tasker = Tasker()
     task = await tasker.create_in_session(db, name=name, task_type=task_type, payload=payload, payload_match=match)
     await db.commit()
-    await publish_task(task.id)
+    await publish_task(task.id, task_type=task.type)
 
 
 async def submit_query_generation(

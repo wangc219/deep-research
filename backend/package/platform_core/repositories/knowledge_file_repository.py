@@ -193,6 +193,9 @@ class KnowledgeFileRepository:
         "processing_owner",
         "created_by",
         "updated_by",
+        "category_id",
+        "source_id",
+        "source_item_id",
     }
 
     @staticmethod
@@ -696,14 +699,13 @@ class KnowledgeFileRepository:
                         else_=0,
                     )
                 ).label("processing_count"),
-                func.sum(
-                    case((non_folder & KnowledgeFile.status.in_(["done", "indexed"]), 1), else_=0)
-                ).label("indexed_count"),
+                func.sum(case((non_folder & KnowledgeFile.status.in_(["done", "indexed"]), 1), else_=0)).label(
+                    "indexed_count"
+                ),
                 func.sum(
                     case(
                         (
-                            non_folder
-                            & KnowledgeFile.status.in_(["error_parsing", "error_indexing", "failed"]),
+                            non_folder & KnowledgeFile.status.in_(["error_parsing", "error_indexing", "failed"]),
                             1,
                         ),
                         else_=0,

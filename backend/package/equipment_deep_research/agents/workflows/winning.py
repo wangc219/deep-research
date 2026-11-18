@@ -1,5 +1,5 @@
 """Winning coordinator: mode selection, common S-step contracts, gates and finalization."""
-# ruff: noqa: F841
+# ruff: noqa: E501, F841
 
 from __future__ import annotations
 
@@ -1390,6 +1390,29 @@ async def analyze_winning_subagents(
             "reason": "DeepSeek Responses latency/backpressure protection",
         }
     swarm_controller = WinningSwarmController(swarm_policy)
+    if winning_mode.dynamic_swarm and not candidate_count_contract.get("explicit"):
+        profile_minimum = max(
+            1,
+            int(swarm_controller.policy.get("finalist_minimum", 6) or 6),
+        )
+        profile_maximum = max(
+            profile_minimum,
+            int(
+                swarm_controller.policy.get(
+                    "finalist_maximum",
+                    profile_minimum,
+                )
+                or profile_minimum
+            ),
+        )
+        candidate_count_contract = {
+            "explicit": False,
+            "minimum": profile_minimum,
+            "target": profile_minimum,
+            "maximum": profile_maximum,
+            "source": "profile_default",
+        }
+        accumulated["candidate_count_contract"] = dict(candidate_count_contract)
     initial_flow = winning_mode.initial_flow(
         swarm_enabled=swarm_controller.enabled,
         resuming=bool(requested_resume_steps),
@@ -3699,6 +3722,15 @@ async def analyze_winning_subagents(
                 "用户候选数量合同未完全满足："
                 f"要求{minimum_count}至{maximum_count}张正式能力画像，"
                 f"实际形成{final_candidate_count}张；保留证据缺口并按受限交付，不伪造候选。"
+            )
+    elif dynamic_swarm_enabled:
+        minimum_count = int(candidate_count_contract["minimum"])
+        if final_candidate_count < minimum_count:
+            candidate_count_warnings.append(
+                "动态蜂群最低交付未满足："
+                f"S5应至少向S6交付{minimum_count}项具体装备，"
+                f"实际形成{final_candidate_count}张正式能力画像；"
+                "当前结果保持受限，不得以0画像或数量缺口静默标记完整完成。"
             )
     nonblocking_s6_warnings = list(dict.fromkeys([*nonblocking_s6_warnings, *candidate_count_warnings]))[:32]
     accumulated["candidate_count_contract"] = {

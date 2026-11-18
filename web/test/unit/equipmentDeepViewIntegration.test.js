@@ -156,3 +156,11 @@ test('能力画像单栏入口锁定装备身份并把深挖问题预填到统�
   assert.match(deepView, /\.seed-count:not\(\.current-section-count\)/)
   assert.match(deepView, /当前深挖：\{\{ activeResearchSection \}\}/)
 })
+
+test('历史深研会话加载消息后清理已发送的残留草稿', () => {
+  assert.match(nativeChat, /shouldDiscardPersistedThreadDraft/)
+  assert.match(
+    nativeChat,
+    /await fetchThreadMessages\([\s\S]*?discardAlreadySentRestoredDraft\(chatId\)/
+  )
+})

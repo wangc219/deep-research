@@ -1,6 +1,37 @@
 """内置模型供应商定义。"""
 
+import os
 from typing import Any
+
+
+def build_local_embedding_provider(base_url: str | None = None) -> dict[str, Any]:
+    """构造可由本地环境覆盖端点的 BGE-M3 供应商定义。"""
+    resolved_base_url = (
+        base_url or os.getenv("LOCAL_EMBEDDING_PROVIDER_BASE_URL") or "http://local-embedding:8092/v1"
+    ).rstrip("/")
+    if not resolved_base_url.startswith(("http://", "https://")):
+        raise ValueError("LOCAL_EMBEDDING_PROVIDER_BASE_URL 必须是 HTTP(S) URL")
+
+    return {
+        "provider_id": "local-embedding",
+        "display_name": "Local BGE-M3",
+        "provider_type": "openai",
+        "base_url": resolved_base_url,
+        "embedding_base_url": f"{resolved_base_url}/embeddings",
+        "embedding_models_endpoint": f"{resolved_base_url}/models",
+        "api_key": "local-only",
+        "capabilities": ["embedding"],
+        "enabled_models": [
+            {
+                "id": "BAAI/bge-m3",
+                "type": "embedding",
+                "display_name": "BAAI/bge-m3 (Local)",
+                "source": "manual",
+                "dimension": 1024,
+                "batch_size": 8,
+            }
+        ],
+    }
 
 
 def _qwen_chat_model(
@@ -167,6 +198,7 @@ QWEN_DASHSCOPE_CATALOG: list[dict[str, Any]] = [
 
 
 BUILTIN_PROVIDERS: list[dict[str, Any]] = [
+    build_local_embedding_provider(),
     {
         "provider_id": "fluxionai",
         "display_name": "Fluxion AI",

@@ -14,6 +14,12 @@ import requests
 
 from platform_core.knowledge.parser.base import BaseDocumentProcessor, DocumentParserException
 from platform_core.knowledge.parser.capabilities import get_parser_capability
+from platform_core.knowledge.parser.paddlex_layout import (
+    PaddleXLayoutPage,
+    build_paddlex_page_blocks,
+    extract_paddlex_layout_blocks,
+)
+from platform_core.knowledge.parser.result import ParsedBlock, ParsedDocument
 from platform_core.models.usage_observer import ModelCallObservation
 from platform_core.storage.minio import get_minio_client
 from platform_core.utils import logger
@@ -51,6 +57,15 @@ class PaddleOCRAPIParser(BaseDocumentProcessor):
         }
 
     def process_file(self, file_path: str, params: dict[str, Any] | None = None) -> str:
+        """兼容原字符串调用方。"""
+        return self._process_file_output(file_path, params, self._extract_markdown)
+
+    def process_file_result(self, file_path: str, params: dict[str, Any] | None = None) -> ParsedDocument:
+        """返回 PaddleOCR 可定位的页级 Markdown Block。"""
+        return self._process_file_output(file_path, params, self._extract_document)
+
+    def _process_file_output(self, file_path, params, extractor):
+        """执行一次远端 OCR 作业，并由调用方选择字符串或结构化输出。"""
         if not os.path.exists(file_path) and not file_path.startswith(("http://", "https://")):
             raise DocumentParserException(f"文件不存在: {file_path}", self.get_service_name(), "file_not_found")
 
@@ -74,14 +89,15 @@ class PaddleOCRAPIParser(BaseDocumentProcessor):
                     max_wait_seconds=float(params.get("max_wait_seconds") or 600),
                 )
                 rows = self._download_jsonl(result_url)
-                text = self._extract_markdown(rows, params)
+                output = extractor(rows, params)
 
             processing_time = time.time() - start_time
+            text = output.markdown if isinstance(output, ParsedDocument) else output
             logger.info(
                 f"PaddleOCR API 处理成功: {Path(file_path).name} ({self.model}) - "
                 f"{len(text)} 字符 ({processing_time:.2f}s)"
             )
-            return text
+            return output
         except DocumentParserException:
             raise
         except Exception as exc:
@@ -220,6 +236,14 @@ class PaddleOCRAPIParser(BaseDocumentProcessor):
     def _extract_markdown(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> str:
         raise NotImplementedError
 
+    def _extract_document(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> ParsedDocument:
+        """未提供版面页的模型降级为无位置结构化结果。"""
+        return ParsedDocument(
+            markdown=self._extract_markdown(rows, params),
+            parser_name=self.get_service_name(),
+            source_metadata={"page_count": 0},
+        )
+
     def _upload_markdown_image(self, image_url: str, image_path: str, params: dict[str, Any]) -> str:
         response = requests.get(image_url, timeout=60)
         if response.status_code != 200:
@@ -265,7 +289,20 @@ class PaddleOCRVLParser(PaddleOCRAPIParser):
     }
 
     def _extract_markdown(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> str:
-        markdown_parts: list[str] = []
+        return "\n\n".join(page.text for page in self._extract_layout_pages(rows, params)).strip()
+
+    def _extract_document(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> ParsedDocument:
+        pages = self._extract_layout_pages(rows, params)
+        markdown, blocks = build_paddlex_page_blocks(pages)
+        return ParsedDocument(
+            markdown=markdown,
+            parser_name=self.get_service_name(),
+            source_metadata={"page_count": len(pages)},
+            blocks=blocks,
+        )
+
+    def _extract_layout_pages(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> list[PaddleXLayoutPage]:
+        pages: list[PaddleXLayoutPage] = []
 
         for row in rows:
             result = row.get("result") or {}
@@ -283,9 +320,15 @@ class PaddleOCRVLParser(PaddleOCRAPIParser):
                     text = text.replace(str(image_url), uploaded_url)
 
                 if text.strip():
-                    markdown_parts.append(text.strip())
+                    pages.append(
+                        PaddleXLayoutPage(
+                            page_number=len(pages) + 1,
+                            text=text.strip(),
+                            layout_blocks=extract_paddlex_layout_blocks(item.get("prunedResult") or {}),
+                        )
+                    )
 
-        return "\n\n".join(markdown_parts).strip()
+        return pages
 
 
 class PaddleOCRPPOCRv6Parser(PaddleOCRAPIParser):
@@ -302,15 +345,51 @@ class PaddleOCRPPOCRv6Parser(PaddleOCRAPIParser):
     }
 
     def _extract_markdown(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> str:
-        lines: list[str] = []
+        return "\n".join(self._extract_markdown_pages(rows, params)).strip()
+
+    def _extract_document(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> ParsedDocument:
+        pages = self._extract_markdown_pages(rows, params)
+        return _document_from_pages(pages, parser_name=self.get_service_name(), separator="\n")
+
+    def _extract_markdown_pages(self, rows: list[dict[str, Any]], params: dict[str, Any]) -> list[str]:
+        del params
+        pages: list[str] = []
 
         for row in rows:
             result = row.get("result") or {}
             for item in result.get("ocrResults") or []:
                 pruned_result = item.get("prunedResult") or {}
                 rec_texts = pruned_result.get("rec_texts") or []
-                for text in rec_texts:
-                    if isinstance(text, str) and text.strip():
-                        lines.append(text.strip())
+                lines = [text.strip() for text in rec_texts if isinstance(text, str) and text.strip()]
+                if lines:
+                    pages.append("\n".join(lines))
 
-        return "\n".join(lines).strip()
+        return pages
+
+
+def _document_from_pages(pages: list[str], *, parser_name: str, separator: str) -> ParsedDocument:
+    """用与 Markdown 拼接完全一致的偏移构造页级 Block。"""
+    markdown = separator.join(pages).strip()
+    blocks: list[ParsedBlock] = []
+    offset = 0
+    for page_index, page_text in enumerate(pages):
+        if page_index:
+            offset += len(separator)
+        start_char = offset
+        offset += len(page_text)
+        blocks.append(
+            ParsedBlock(
+                start_char=start_char,
+                end_char=offset,
+                page_number=page_index + 1,
+                block_type="paragraph",
+                source_metadata={"position_kind": "layout_page"},
+            )
+        )
+
+    return ParsedDocument(
+        markdown=markdown,
+        parser_name=parser_name,
+        source_metadata={"page_count": len(pages)},
+        blocks=tuple(blocks),
+    )

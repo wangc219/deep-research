@@ -4,7 +4,8 @@ import test from 'node:test'
 import {
   DRAFT_THREAD_ID,
   createThreadDraftStore,
-  createThreadDraftSession
+  createThreadDraftSession,
+  shouldDiscardPersistedThreadDraft
 } from '../../src/utils/thread_draft.js'
 
 // 构造可注入的内存存储，模拟 localStorage 行为
@@ -158,5 +159,67 @@ test('localStorage 不可用时草稿功能静默降级不抛错', () => {
     session.switchThread('thread-a', '文本')
     session.saveInput('文本')
     session.clearDraftThread()
+    session.clearCurrentThread()
   })
+})
+
+test('恢复草稿与已持久化用户消息一致时判定为已发送残留', () => {
+  assert.equal(
+    shouldDiscardPersistedThreadDraft('远程精打武器的末段识别如何优化？', [
+      { type: 'human', content: '远程精打武器的末段识别如何优化？' }
+    ]),
+    true
+  )
+})
+
+test('恢复草稿与用户消息仅有空白和换行差异时仍判定为已发送残留', () => {
+  assert.equal(
+    shouldDiscardPersistedThreadDraft('杀伤链重构\n  与任务接续', [
+      { role: 'user', content: '  杀伤链重构 与任务接续  ' }
+    ]),
+    true
+  )
+})
+
+test('支持 OpenAI 和 LangChain 风格的用户消息内容块', () => {
+  assert.equal(
+    shouldDiscardPersistedThreadDraft('末段自主识别 分级决策', [
+      {
+        role: 'human',
+        content: [{ text: '末段自主识别' }, { content: '分级决策' }]
+      }
+    ]),
+    true
+  )
+})
+
+test('未发送草稿与历史用户消息不同时继续保留', () => {
+  assert.equal(
+    shouldDiscardPersistedThreadDraft('这是新的追问草稿', [
+      { type: 'human', content: '这是已经发送的问题' }
+    ]),
+    false
+  )
+})
+
+test('助手消息即使与草稿相同也不能触发清理', () => {
+  assert.equal(
+    shouldDiscardPersistedThreadDraft('需要继续验证的设想', [
+      { type: 'ai', role: 'assistant', content: '需要继续验证的设想' }
+    ]),
+    false
+  )
+})
+
+test('清理当前线程不会影响其他线程草稿', () => {
+  const store = createThreadDraftStore(createMemoryStorage())
+  const session = createThreadDraftSession(store)
+
+  session.switchThread('thread-a', '')
+  session.saveInput('A 已发送残留')
+  store.write('thread-b', 'B 未发送草稿')
+  session.clearCurrentThread()
+
+  assert.equal(store.read('thread-a'), '')
+  assert.equal(store.read('thread-b'), 'B 未发送草稿')
 })
